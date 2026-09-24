@@ -712,14 +712,17 @@ public class NamedQueryParameterTest {
                 + "com/jdimension/jlawyer/persistence");
         Assume.assumeTrue("entity sources not found at " + entities, entities.isDirectory());
 
+        // Die Abfrage kann ueber mehrere Zeichenkettenteile laufen; nur den ersten zu lesen hiesse,
+        // jede laengere Abfrage nur halb zu pruefen - ein Parameter im zweiten Teil galte als nicht
+        // erklaert, und der Test meldete einen Fehler, den es nicht gibt, oder uebersaehe einen.
         Pattern named = Pattern.compile(
-                "@NamedQuery\\(\\s*name\\s*=\\s*\"([^\"]+)\"\\s*,\\s*query\\s*=\\s*\"([^\"]+)\"",
+                "@NamedQuery\\(\\s*name\\s*=\\s*\"([^\"]+)\"\\s*,\\s*query\\s*=\\s*((?:\"[^\"]*\"\\s*\\+?\\s*)+)",
                 Pattern.DOTALL);
         for (File file : entities.listFiles((d, n) -> n.endsWith(".java"))) {
             Matcher m = named.matcher(new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8));
             while (m.find()) {
                 Set<String> params = new LinkedHashSet<>();
-                Matcher p = QUERY_PARAM.matcher(m.group(2));
+                Matcher p = QUERY_PARAM.matcher(joined(m.group(2)));
                 while (p.find()) {
                     params.add(p.group(1));
                 }
@@ -727,6 +730,18 @@ public class NamedQueryParameterTest {
             }
         }
         return queries;
+    }
+
+    /**
+     * The whole query, from however many string parts it was written in.
+     */
+    private String joined(String literals) {
+        StringBuilder sb = new StringBuilder();
+        Matcher part = Pattern.compile("\"([^\"]*)\"").matcher(literals);
+        while (part.find()) {
+            sb.append(part.group(1));
+        }
+        return sb.toString();
     }
 
     private File basedir() {

@@ -742,6 +742,17 @@ public class ClaimLedgerEntry implements Serializable {
     @ManyToOne
     private ClaimComponent component;
 
+    /**
+     * Who paid, where that is not the debtor himself.
+     *
+     * An attachment is answered by the employer or the bank, and that is the news: the debtor still
+     * owes, and somebody else transferred. The debtor field says who owes; it does not say where
+     * the money came from.
+     */
+    @JoinColumn(name = "third_party_debtor_id", referencedColumnName = "id")
+    @ManyToOne
+    private EnforcementThirdPartyDebtor thirdPartyDebtor;
+
     public ClaimLedgerEntry() {
     }
 
@@ -885,6 +896,20 @@ public class ClaimLedgerEntry implements Serializable {
      */
     public ClaimComponent getComponent() {
         return component;
+    }
+
+    /**
+     * @return who paid, where that was a third-party debtor
+     */
+    public EnforcementThirdPartyDebtor getThirdPartyDebtor() {
+        return thirdPartyDebtor;
+    }
+
+    /**
+     * @param thirdPartyDebtor who paid
+     */
+    public void setThirdPartyDebtor(EnforcementThirdPartyDebtor thirdPartyDebtor) {
+        this.thirdPartyDebtor = thirdPartyDebtor;
     }
 
     /**

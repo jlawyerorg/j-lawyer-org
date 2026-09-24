@@ -663,8 +663,10 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.AttachedClaimType;
 import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
 import com.jdimension.jlawyer.persistence.EnforcementMeasure;
+import com.jdimension.jlawyer.persistence.EnforcementThirdPartyDebtor;
 import com.jdimension.jlawyer.persistence.EnforcementTitle;
 import com.jdimension.jlawyer.persistence.EnforcementTitleType;
 import com.jdimension.jlawyer.pojo.ContinuingInterest;
@@ -776,6 +778,32 @@ public class EnforcementFormDataSource {
             EnforcementItemisation itemisation, AddressBean filedBy, Date day,
             String fileNumber, String place, EnforcementCostView.Block[] costs) {
 
+        return valuesOf(measure, creditors, debtors, title, itemisation, filedBy, day, fileNumber,
+                place, costs, null);
+    }
+
+    /**
+     * The same, with the third-party debtors the measure named.
+     *
+     * @param measure the measure
+     * @param creditors the creditors
+     * @param debtors the debtors
+     * @param title the title
+     * @param itemisation the itemisation
+     * @param filedBy who files
+     * @param day the day
+     * @param fileNumber the case reference
+     * @param place the place
+     * @param costs the costs of this measure
+     * @param thirdPartyDebtors whoever owes the debtor and is told to pay the creditor instead
+     * @return the values
+     */
+    public Map<String, String> valuesOf(EnforcementMeasure measure, List<ClaimLedgerParty> creditors,
+            List<ClaimLedgerParty> debtors, EnforcementTitle title,
+            EnforcementItemisation itemisation, AddressBean filedBy, Date day,
+            String fileNumber, String place, EnforcementCostView.Block[] costs,
+            List<EnforcementThirdPartyDebtor> thirdPartyDebtors) {
+
         Map<String, String> values = new LinkedHashMap<>();
 
         addressee(values, measure);
@@ -786,6 +814,7 @@ public class EnforcementFormDataSource {
         amounts(values, itemisation);
         itemisation(values, itemisation, title);
         costs(values, costs);
+        thirdParty(values, thirdPartyDebtors);
 
         values.put("akte.zeichen", nonNull(fileNumber));
         values.put("ort", nonNull(place));
@@ -1053,6 +1082,61 @@ public class EnforcementFormDataSource {
     }
 
     /**
+     * The third-party debtor an attachment is addressed to.
+     *
+     * The order names him, his address and what is attached at him - the wage, the account, the
+     * rent. What exactly the official forms make of a second and third one is a question for their
+     * profiles; until those are written, the first one has the block and the others are named, so
+     * that nothing goes out that says there is only one.
+     */
+    private void thirdParty(Map<String, String> values,
+            List<EnforcementThirdPartyDebtor> thirdPartyDebtors) {
+
+        EnforcementThirdPartyDebtor first = thirdPartyDebtors == null || thirdPartyDebtors.isEmpty()
+                ? null : thirdPartyDebtors.get(0);
+        AddressBean contact = first == null ? null : first.getContact();
+        ContactSalutation anrede = new ContactSalutation();
+
+        values.put("drittschuldner.ist_herr", tick(anrede.isMale(contact)));
+        values.put("drittschuldner.ist_frau", tick(anrede.isFemale(contact)));
+        values.put("drittschuldner.ist_unternehmen", tick(anrede.isCompany(contact)));
+        values.put("drittschuldner.ist_sonstige", tick(first != null && contact == null));
+
+        values.put("drittschuldner.name", first == null ? EMPTY : first.getEffectiveDesignation());
+        values.put("drittschuldner.vorname", contact == null || anrede.isCompany(contact)
+                ? EMPTY : nonNull(contact.getFirstName()));
+        // Die Anschrift steht am Drittschuldner als Text, wie sie in den Beschluss ging; nur wenn
+        // dort nichts steht, wird der Kontakt gefragt.
+        values.put("drittschuldner.anschrift", first == null ? EMPTY : nonNull(first.getAddress()));
+        values.put("drittschuldner.strasse", contact == null ? EMPTY : nonNull(contact.getStreet()));
+        values.put("drittschuldner.hausnummer", contact == null ? EMPTY : nonNull(contact.getStreetNumber()));
+        values.put("drittschuldner.plz", contact == null ? EMPTY : nonNull(contact.getZipCode()));
+        values.put("drittschuldner.ort", contact == null ? EMPTY : nonNull(contact.getCity()));
+        values.put("drittschuldner.land", foreignCountry(contact));
+
+        values.put("drittschuldner.forderungsart", first == null || first.getAttachedClaim() == null
+                ? EMPTY : first.getAttachedClaim().getLabel());
+        values.put("drittschuldner.forderungsdetail",
+                first == null ? EMPTY : nonNull(first.getAttachedClaimDetail()));
+        values.put("drittschuldner.ist_arbeitseinkommen", tick(first != null
+                && first.getAttachedClaim() == AttachedClaimType.EMPLOYMENT_INCOME));
+        values.put("drittschuldner.ist_konto", tick(first != null
+                && first.getAttachedClaim() == AttachedClaimType.BANK_ACCOUNT));
+        values.put("drittschuldner.ist_miete", tick(first != null
+                && first.getAttachedClaim() == AttachedClaimType.RENT));
+
+        StringBuilder further = new StringBuilder();
+        if (thirdPartyDebtors != null) {
+            for (int i = 1; i < thirdPartyDebtors.size(); i++) {
+                further.append(further.length() == 0 ? "" : ", ")
+                        .append(thirdPartyDebtors.get(i).getEffectiveDesignation());
+            }
+        }
+        values.put("drittschuldner.weitere", further.toString());
+        values.put("drittschuldner.ist_weitere", tick(further.length() > 0));
+    }
+
+    /**
      * Every key this vocabulary answers, for the administration that writes a profile.
      *
      * Produced by building the values of an empty measure: a key that is only set when data happens
@@ -1061,7 +1145,7 @@ public class EnforcementFormDataSource {
      * @return the keys, in a stable order
      */
     public java.util.Set<String> knownKeys() {
-        return valuesOf(null, null, null, null, null, null, null, null, null, null).keySet();
+        return valuesOf(null, null, null, null, null, null, null, null, null, null, null).keySet();
     }
 
     private ClaimLedgerParty first(List<ClaimLedgerParty> parties) {

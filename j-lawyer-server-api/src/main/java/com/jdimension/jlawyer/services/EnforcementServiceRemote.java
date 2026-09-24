@@ -668,6 +668,8 @@ import com.jdimension.jlawyer.persistence.EnforcementMeasure;
 import com.jdimension.jlawyer.persistence.EnforcementMeasureOutcome;
 import com.jdimension.jlawyer.persistence.EnforcementMeasureType;
 import com.jdimension.jlawyer.pojo.AcroFormFieldInfo;
+import com.jdimension.jlawyer.persistence.ClaimLedgerEntry;
+import com.jdimension.jlawyer.persistence.EnforcementThirdPartyDebtor;
 import com.jdimension.jlawyer.pojo.EnforcementCostProposal;
 import com.jdimension.jlawyer.pojo.EnforcementItemisation;
 import com.jdimension.jlawyer.pojo.EnforcementMeasureOption;
@@ -979,5 +981,92 @@ public interface EnforcementServiceRemote {
      * @throws Exception if the template does not exist or no mapping is shipped for its form
      */
     int replaceFormMapping(String templateId) throws Exception;
+
+
+    /**
+     * The third-party debtors named in an attachment measure.
+     *
+     * An attachment does not reach into the debtor's pocket; it reaches whoever owes him something
+     * - the employer, the bank, the tenant. Those persons owe the creditor nothing and are
+     * therefore no parties of the ledger: they belong to the one measure that named them.
+     *
+     * @param measureId the measure
+     * @return its third-party debtors
+     * @throws Exception if the measure does not exist or the user may not access its case
+     */
+    List<EnforcementThirdPartyDebtor> getThirdPartyDebtors(String measureId) throws Exception;
+
+    /**
+     * Adds a third-party debtor to a measure.
+     *
+     * Where the service date is given, the two-week period of § 840 Abs. 1 ZPO is computed from it
+     * and a follow-up is created for it.
+     *
+     * @param measureId the measure
+     * @param debtor the third-party debtor
+     * @return the stored third-party debtor
+     * @throws Exception if the measure does not exist or the user may not access its case
+     */
+    EnforcementThirdPartyDebtor addThirdPartyDebtor(String measureId,
+            EnforcementThirdPartyDebtor debtor) throws Exception;
+
+    /**
+     * Updates a third-party debtor.
+     *
+     * Changing the service date moves the period of § 840 Abs. 1 ZPO with it and replaces the
+     * follow-up. The measure he belongs to is not changed: a third-party debtor is named in one
+     * order and does not move to another.
+     *
+     * @param debtor the third-party debtor
+     * @return the stored third-party debtor
+     * @throws Exception if he does not exist or the user may not access his case
+     */
+    EnforcementThirdPartyDebtor updateThirdPartyDebtor(EnforcementThirdPartyDebtor debtor)
+            throws Exception;
+
+    /**
+     * Removes a third-party debtor and closes the follow-up watching his declaration.
+     *
+     * @param debtorId the third-party debtor
+     * @throws Exception if he does not exist or the user may not access his case
+     */
+    void removeThirdPartyDebtor(String debtorId) throws Exception;
+
+    /**
+     * Records that the declaration under § 840 ZPO has arrived.
+     *
+     * The follow-up that watched the period is closed: what it waited for has happened, however
+     * late. A period nobody watches is not a formality - a third-party debtor who stays silent is
+     * liable for the damage (§ 840 Abs. 2 S. 2 ZPO), and nobody claims what nobody noticed.
+     *
+     * @param debtorId the third-party debtor
+     * @param receivedOn the day the declaration arrived, or null for today
+     * @param note what he declared, as he put it
+     * @return the stored third-party debtor
+     * @throws Exception if he does not exist or the user may not access his case
+     */
+    EnforcementThirdPartyDebtor recordDeclaration(String debtorId, Date receivedOn, String note)
+            throws Exception;
+
+
+    /**
+     * Books a payment made by a third-party debtor.
+     *
+     * It is a payment on the same claim and follows the same rules: the ledger allocates it by its
+     * mode, in the legal one by §§ 366, 367 BGB. What is recorded in addition is where the money
+     * came from - on an attachment that is the news, because the debtor still owes and somebody
+     * else transferred.
+     *
+     * @param debtorId the third-party debtor who paid
+     * @param amount what he transferred
+     * @param paidOn the day of the payment, or null for today
+     * @param description what the booking is called, or null for one naming him
+     * @return the bookings that were created
+     * @throws Exception if he does not exist, the amount is not positive, his measure belongs to no
+     * ledger, or the user may not access the case
+     */
+    List<ClaimLedgerEntry> bookThirdPartyPayment(String debtorId, BigDecimal amount, Date paidOn,
+            String description) throws Exception;
+
 
 }

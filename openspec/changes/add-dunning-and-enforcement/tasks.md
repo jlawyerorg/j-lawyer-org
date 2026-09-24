@@ -772,7 +772,48 @@
       Fourteen tests, five mutations killed: deducting a reversed payment twice, treating any
       booking as a payment, filing untitled costs as a further claim, declaring everything titled
       when the coverage is unknown, and writing the computed rate where the margin belongs.
-- [ ] 4.5 Third-party debtors incl. § 840 ZPO declaration deadline and payment booking
+- [x] 4.5 Third-party debtors incl. § 840 ZPO declaration deadline and payment booking.
+      An attachment does not reach into the debtor's pocket; it reaches whoever owes him something -
+      the employer, the bank, the tenant. Those persons owe the creditor nothing, so they are no
+      parties of the ledger: `enforcement_third_party_debtors` (`V3_6_0_47`) hangs each of them on
+      the one measure that named him, with the kind of claim attached at him (`AttachedClaimType`:
+      Arbeitseinkommen § 850c ZPO, Kontoguthaben § 833a ZPO, Miete, sonstige), what identifies it -
+      an IBAN, a staff number - and the two dates that carry the work.
+      Those dates are the point of the whole record. Service of the order starts the two weeks of
+      § 840 Abs. 1 ZPO; `ThirdPartyDeclarationDeadline` computes them and `EnforcementService`
+      creates a follow-up for them through the same `FollowUpCalendarSelector` the dunning side
+      uses, replaces it when the service date is corrected, and closes it when the declaration
+      arrives - however late. A period nobody watches is not a formality: a third-party debtor who
+      stays silent is liable for the damage (§ 840 Abs. 2 S. 2 ZPO), and nobody claims what nobody
+      noticed. The follow-up therefore names that liability in its text rather than saying "Frist".
+      A payment from him is a payment on the same claim and must not become a second kind of
+      booking: `bookThirdPartyPayment` hands it to the ledger's own `bookPaymentAutomatically`, so
+      it is allocated by the account's mode - in the legal one by §§ 366, 367 BGB - and only the
+      description records where the money came from, which on an attachment is the news.
+      The vocabulary `drittschuldner.*` in `EnforcementFormDataSource` fills the block from the
+      first of them, with `drittschuldner.weitere` naming the rest, so that nothing goes out that
+      claims there is only one. What the official forms make of a second and third one is a question
+      for the profiles of Anlagen 2-5, which wait for the 2026 forms (5.5a).
+      The client keeps them in a window of their own (`ThirdPartyDebtorDialog`), reached from the
+      enforcement tab: several of them belong to one order, each carries his own period, and the
+      overdue ones say so beside the date. The contact is picked from the parties of the case where
+      he is one - the debtor's bank rarely is - and taken over only into empty fields: what stands
+      in the order is written and a later corrected contact must not rewrite it.
+      *A defect the deployment found.* The new entity was not listed in either `persistence.xml`,
+      and both units close themselves with `exclude-unlisted-classes`: the class existed, its facade
+      compiled, its tests passed, and the server refused to start with "references an unknown
+      entity" as soon as `ClaimLedgerEntry.thirdPartyDebtor` was resolved. Nothing before deployment
+      said so, and the same list has to be kept in two files. `PersistenceUnitClassesTest` now
+      compares both units against the entity sources in both directions - a missing class and one
+      that is listed but gone - and was checked by planting each of them.
+      *And the same lesson as the cost dialog, in its second form.* The window opened too narrow for
+      its own contents, because `pack()` ran inside `initComponents` - at that moment the table had
+      no columns, the combo boxes no entries and the hint no text, so it was measured against
+      nothing. It is packed at the end of `setMeasure` now and keeps that as its minimum, which also
+      leaves the width to the user's font rather than to a number in the layout: measured with
+      FlatLaf it comes out at 922x582 where the layout alone promised 680.
+      *Still open:* the manual test round for this window, and a service-level test of the follow-up
+      behaviour, which today rests on `ThirdPartyDeclarationDeadline` (7 tests) alone.
 - [~] 4.6 Enforcement cost proposal and booking (§ 788 ZPO, Nr. 3309/3310 VV RVG, GvKostG, court
       fees), joint or single debtor, advanced-by-firm handling. **Proposal, booking and the dialog
       are built; section IV of Anlage 6 is not filled from them yet, and the GvKostG table waits

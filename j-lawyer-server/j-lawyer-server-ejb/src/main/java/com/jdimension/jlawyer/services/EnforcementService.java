@@ -669,6 +669,9 @@ import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.AppUserBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.CalendarSetup;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ClaimLedger;
@@ -677,6 +680,8 @@ import com.jdimension.jlawyer.persistence.CaseAccountEntry;
 import com.jdimension.jlawyer.persistence.EnforcementAddresseeType;
 import com.jdimension.jlawyer.persistence.ClaimComponentType;
 import com.jdimension.jlawyer.persistence.ClaimComponent;
+import com.jdimension.jlawyer.persistence.ClaimLedgerEntry;
+import com.jdimension.jlawyer.persistence.ClaimLedgerEntryFacadeLocal;
 import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
 import com.jdimension.jlawyer.persistence.FeeItem;
 import com.jdimension.jlawyer.persistence.FeeItemFacadeLocal;
@@ -696,6 +701,8 @@ import com.jdimension.jlawyer.persistence.EnforcementTitle;
 import com.jdimension.jlawyer.persistence.EnforcementTitleFacadeLocal;
 import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.pojo.ClaimStatement;
+import com.jdimension.jlawyer.persistence.EnforcementThirdPartyDebtor;
+import com.jdimension.jlawyer.persistence.EnforcementThirdPartyDebtorFacadeLocal;
 import com.jdimension.jlawyer.persistence.EnforcementTitleType;
 import com.jdimension.jlawyer.pojo.EnforcementCostPosition;
 import com.jdimension.jlawyer.pojo.EnforcementCostProposal;
@@ -768,6 +775,14 @@ public class EnforcementService implements EnforcementServiceRemote, Enforcement
     private SecurityServiceLocal securityFacade;
     @EJB
     private AppUserBeanFacadeLocal userFacade;
+    @EJB
+    private EnforcementThirdPartyDebtorFacadeLocal thirdPartyDebtorsFacade;
+    @EJB
+    private ClaimLedgerEntryFacadeLocal claimLedgerEntriesFacade;
+    @EJB
+    private ArchiveFileReviewsBeanFacadeLocal archiveFileReviewsFacade;
+    @EJB
+    private CalendarServiceLocal calendarService;
     @EJB
     private FeeScaleFacadeLocal feeScalesFacade;
     @EJB
@@ -1343,6 +1358,229 @@ public class EnforcementService implements EnforcementServiceRemote, Enforcement
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
+    public List<EnforcementThirdPartyDebtor> getThirdPartyDebtors(String measureId) throws Exception {
+        return this.thirdPartyDebtorsFacade.findByMeasure(requireMeasure(measureId));
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public EnforcementThirdPartyDebtor addThirdPartyDebtor(String measureId,
+            EnforcementThirdPartyDebtor debtor) throws Exception {
+
+        if (debtor == null) {
+            throw new Exception("Es wurde kein Drittschuldner übergeben!");
+        }
+        EnforcementMeasure measure = requireMeasure(measureId);
+        debtor.setId(new StringGenerator().getID().toString());
+        debtor.setMeasure(measure);
+        // Die Frist laeuft ab Zustellung; wird die gleich mit erfasst, laeuft sie ab sofort mit.
+        applyServiceDate(debtor, debtor.getServedDate());
+        this.thirdPartyDebtorsFacade.create(debtor);
+        return this.thirdPartyDebtorsFacade.find(debtor.getId());
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public EnforcementThirdPartyDebtor updateThirdPartyDebtor(EnforcementThirdPartyDebtor debtor)
+            throws Exception {
+
+        if (debtor == null || debtor.getId() == null) {
+            throw new Exception("Es wurde kein Drittschuldner übergeben!");
+        }
+        EnforcementThirdPartyDebtor stored = this.thirdPartyDebtorsFacade.find(debtor.getId());
+        if (stored == null) {
+            throw new Exception("Der Drittschuldner existiert nicht mehr.");
+        }
+        requireAccess(stored);
+
+        // Feld fuer Feld, wie ueberall hier: ein merge der abgeloesten Entity schriebe auch das,
+        // was der Aufrufer nie geladen hat - die Maßnahme etwa, an der er haengt.
+        stored.setContact(debtor.getContact());
+        stored.setDesignation(debtor.getDesignation());
+        stored.setAddress(debtor.getAddress());
+        stored.setAttachedClaim(debtor.getAttachedClaim());
+        stored.setAttachedClaimDetail(debtor.getAttachedClaimDetail());
+        stored.setDeclarationNote(debtor.getDeclarationNote());
+        stored.setNotes(debtor.getNotes());
+        applyServiceDate(stored, debtor.getServedDate());
+
+        this.thirdPartyDebtorsFacade.edit(stored);
+        return this.thirdPartyDebtorsFacade.find(stored.getId());
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void removeThirdPartyDebtor(String debtorId) throws Exception {
+
+        EnforcementThirdPartyDebtor stored = this.thirdPartyDebtorsFacade.find(debtorId);
+        if (stored == null) {
+            throw new Exception("Der Drittschuldner existiert nicht mehr.");
+        }
+        requireAccess(stored);
+        closeDeclarationFollowUp(stored);
+        this.thirdPartyDebtorsFacade.remove(stored);
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public EnforcementThirdPartyDebtor recordDeclaration(String debtorId, Date receivedOn,
+            String note) throws Exception {
+
+        EnforcementThirdPartyDebtor stored = this.thirdPartyDebtorsFacade.find(debtorId);
+        if (stored == null) {
+            throw new Exception("Der Drittschuldner existiert nicht mehr.");
+        }
+        requireAccess(stored);
+
+        stored.setDeclarationReceived(receivedOn == null ? new Date() : receivedOn);
+        if (note != null && !note.trim().isEmpty()) {
+            stored.setDeclarationNote(note);
+        }
+        // Die Wiedervorlage hat ihren Zweck erfuellt - sie weiter offen zu lassen, hiesse nach
+        // etwas zu suchen, das da ist.
+        closeDeclarationFollowUp(stored);
+        stored.setReviewId(null);
+
+        this.thirdPartyDebtorsFacade.edit(stored);
+        return this.thirdPartyDebtorsFacade.find(stored.getId());
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public List<ClaimLedgerEntry> bookThirdPartyPayment(String debtorId, BigDecimal amount,
+            Date paidOn, String description) throws Exception {
+
+        EnforcementThirdPartyDebtor debtor = this.thirdPartyDebtorsFacade.find(debtorId);
+        if (debtor == null) {
+            throw new Exception("Der Drittschuldner existiert nicht mehr.");
+        }
+        requireAccess(debtor);
+        if (amount == null || amount.signum() <= 0) {
+            throw new Exception("Der Zahlungsbetrag muss größer als null sein!");
+        }
+        ClaimLedger ledger = debtor.getMeasure() == null ? null : debtor.getMeasure().getLedger();
+        if (ledger == null) {
+            throw new Exception("Die Maßnahme gehört zu keinem Forderungskonto!");
+        }
+
+        // Verteilt wird nach dem Tilgungsmodus des Kontos - die Zahlung eines Drittschuldners ist
+        // eine Zahlung auf dieselbe Forderung und folgt denselben Regeln (§§ 366, 367 BGB).
+        Date day = paidOn == null ? new Date() : paidOn;
+        List<ClaimLedgerEntry> booked = this.claimLedgerService.bookPaymentAutomatically(
+                ledger.getId(), amount, day,
+                description == null || description.trim().isEmpty()
+                        ? "Zahlung des Drittschuldners " + debtor.getEffectiveDesignation()
+                        : description.trim());
+
+        // Dass das Geld vom Arbeitgeber kam und nicht vom Schuldner, ist bei einer Pfaendung die
+        // eigentliche Nachricht; sie gehoert an die Buchung und nicht in eine Bemerkung.
+        for (ClaimLedgerEntry entry : booked) {
+            entry.setThirdPartyDebtor(debtor);
+            this.claimLedgerEntriesFacade.edit(entry);
+        }
+        return booked;
+    }
+
+    /**
+     * Takes over a service date and, with it, the period it starts.
+     */
+    private void applyServiceDate(EnforcementThirdPartyDebtor debtor, Date servedOn) {
+
+        Date before = debtor.getServedDate();
+        boolean changed = before == null ? servedOn != null
+                : servedOn == null || before.getTime() != servedOn.getTime();
+        debtor.setServedDate(servedOn);
+        if (!changed) {
+            return;
+        }
+
+        ThirdPartyDeclarationDeadline rule = new ThirdPartyDeclarationDeadline();
+        debtor.setDeclarationDue(rule.dueAfter(servedOn));
+
+        closeDeclarationFollowUp(debtor);
+        debtor.setReviewId(null);
+        if (servedOn == null || debtor.getDeclarationReceived() != null) {
+            return;
+        }
+        createDeclarationFollowUp(debtor, rule);
+    }
+
+    /**
+     * The follow-up that watches the period of § 840 Abs. 1 ZPO.
+     *
+     * A period nobody watches is not a formality but a claim given away: a third-party debtor who
+     * says nothing is liable for the damage (§ 840 Abs. 2 S. 2 ZPO), and nobody can claim what
+     * nobody noticed.
+     */
+    private void createDeclarationFollowUp(EnforcementThirdPartyDebtor debtor,
+            ThirdPartyDeclarationDeadline rule) {
+
+        ClaimLedger ledger = debtor.getMeasure() == null ? null : debtor.getMeasure().getLedger();
+        ArchiveFileBean caseFile = ledger == null ? null : ledger.getArchiveFileKey();
+        if (caseFile == null || debtor.getDeclarationDue() == null) {
+            return;
+        }
+
+        ArchiveFileReviewsBean followUp = new ArchiveFileReviewsBean();
+        followUp.setEventType(ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP);
+        followUp.setBeginDate(debtor.getDeclarationDue());
+        followUp.setEndDate(debtor.getDeclarationDue());
+        followUp.setSummary(rule.followUpSummary(debtor));
+        followUp.setDescription(rule.followUpDescription(debtor));
+        followUp.setDone(false);
+        try {
+            followUp.setAssignee(context.getCallerPrincipal().getName());
+        } catch (Throwable t) {
+            log.warn("Unable to determine caller when creating a declaration follow-up", t);
+        }
+
+        CalendarSetup setup;
+        try {
+            setup = new FollowUpCalendarSelector().select(
+                    this.securityFacade.getCalendarsForUser(context.getCallerPrincipal().getName()),
+                    followUp.getEventType(), caseFile.getLastCalendarSetupFollowups());
+        } catch (Exception ex) {
+            log.error("Unable to determine a calendar for the declaration follow-up", ex);
+            return;
+        }
+        if (setup == null) {
+            log.warn("No calendar takes follow-ups for this user; declaration follow-up not created");
+            return;
+        }
+        followUp.setCalendarSetup(setup);
+        try {
+            ArchiveFileReviewsBean stored = this.calendarService.addReview(caseFile.getId(), followUp);
+            debtor.setReviewId(stored == null ? null : stored.getId());
+        } catch (Exception ex) {
+            log.error("Unable to create the declaration follow-up", ex);
+        }
+    }
+
+    /**
+     * Closes the follow-up of a period that no longer needs watching.
+     */
+    private void closeDeclarationFollowUp(EnforcementThirdPartyDebtor debtor) {
+        if (debtor.getReviewId() == null) {
+            return;
+        }
+        ArchiveFileReviewsBean followUp = this.archiveFileReviewsFacade.find(debtor.getReviewId());
+        if (followUp != null && !followUp.isDone()) {
+            followUp.setDone(true);
+            this.archiveFileReviewsFacade.edit(followUp);
+        }
+    }
+
+    /**
+     * The case of a third-party debtor has to be one the user may see.
+     */
+    private void requireAccess(EnforcementThirdPartyDebtor debtor) throws Exception {
+        if (debtor.getMeasure() != null) {
+            requireMeasure(debtor.getMeasure().getId());
+        }
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
     public EnforcementCostProposal proposeCosts(String measureId, BigDecimal vatRate,
             boolean vatDeductible, boolean hearing) throws Exception {
 
@@ -1541,7 +1779,8 @@ public class EnforcementService implements EnforcementServiceRemote, Enforcement
         AddressBean filedBy = filingUser();
         return this.formData.valuesOf(measure, creditors, debtors, measure.getTitle(), itemisation,
                 filedBy, day, caseFile == null ? null : caseFile.getFileNumber(),
-                filedBy == null ? null : filedBy.getCity(), costsOf(measure, ledger));
+                filedBy == null ? null : filedBy.getCity(), costsOf(measure, ledger),
+                this.thirdPartyDebtorsFacade.findByMeasure(measure));
     }
 
     /**

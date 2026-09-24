@@ -2818,6 +2818,28 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
      * @return List of created ledger entries
      * @throws Exception if validation fails or user is not authorized
      */
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public List<ClaimLedgerEntry> bookPaymentAutomatically(String ledgerId, BigDecimal amount,
+            Date paidOn, String description) throws Exception {
+
+        ClaimLedger ledger = requireLedger(ledgerId);
+        if (amount == null || amount.signum() <= 0) {
+            throw new Exception("Der Zahlungsbetrag muss größer als null sein!");
+        }
+        Date day = paidOn == null ? new Date() : paidOn;
+
+        // Verteilt wird nach dem Tilgungsmodus des Kontos. Die Aufteilung gehoert auf den Server:
+        // sie folgt §§ 366, 367 BGB, und wer eine Zahlung ohne Oberflaeche bucht - eine Pfaendung
+        // etwa - darf dieselbe Regel erwarten wie jeder andere Weg.
+        PaymentSplitCalculator calculator = new PaymentSplitCalculator(claimComponentsFacade,
+                claimComponentInterestRuleFacade, claimLedgerEntriesFacade, claimInterestCalculator());
+        PaymentSplitProposal proposal = calculator.calculateAutomaticSplit(ledger, amount, null, day);
+        proposal.setDescription(description);
+
+        return createPaymentSplit(proposal);
+    }
+
     @RolesAllowed({"writeArchiveFileRole"})
     public List<ClaimLedgerEntry> createPaymentSplit(PaymentSplitProposal proposal) throws Exception {
         String principalId = context.getCallerPrincipal().getName();

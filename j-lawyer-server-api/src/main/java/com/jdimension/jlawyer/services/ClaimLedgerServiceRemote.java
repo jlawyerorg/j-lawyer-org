@@ -1183,4 +1183,44 @@ public interface ClaimLedgerServiceRemote {
     DefaultInterestProposal proposeDefaultInterest(String ledgerId, String componentId,
             Date defaultSince) throws Exception;
 
+
+    /**
+     * Books a payment and lets the ledger allocate it.
+     *
+     * The allocation follows the mode of the ledger and, in the legal one, §§ 366, 367 BGB: costs
+     * before interest before principal. It is done here rather than by the caller so that a payment
+     * booked without a screen in front of it - one made by a third-party debtor on an attachment,
+     * for instance - is allocated by the same rule as every other.
+     *
+     * @param ledgerId the ledger
+     * @param amount what was paid
+     * @param paidOn the day it was paid, or null for today
+     * @param description what the booking is called
+     * @return the bookings that were created, one per position the payment reached
+     * @throws Exception if the ledger does not exist, the amount is not positive, the payment
+     * exceeds what is owed, or the user may not access the case
+     */
+    List<ClaimLedgerEntry> bookPaymentAutomatically(String ledgerId, java.math.BigDecimal amount,
+            Date paidOn, String description) throws Exception;
+
+
+    /**
+     * Where the claim stands, as one glance: the stations it has passed and what is due next.
+     *
+     * Nothing in it is a state somebody sets. Every station follows from an event that left a trace
+     * of its own - a dunning letter that went out, an application the court has, a title, a measure
+     * - because a status field maintained by hand says what somebody last remembered to say, and
+     * that is what nobody can rely on when opening a file they have not touched in a year.
+     *
+     * Beside the stations it carries what has taken the matter off that line - an objection that
+     * sent it to the litigation court, an instalment agreement, the two years of § 802d ZPO - and
+     * the next deadline out of both procedures, overdue ones first. The stations say how far the
+     * matter has come; only the deadline says whether anybody has to do something.
+     *
+     * @param ledgerId the claim ledger
+     * @return its status; never null
+     * @throws Exception if the ledger does not exist or the user may not access its case
+     */
+    ClaimProcessStatus getProcessStatus(String ledgerId) throws Exception;
+
 }
