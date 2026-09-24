@@ -693,10 +693,15 @@ public class PdfFormsAccess {
             // Create tempFile in the same directory as inputFile
             File tempFile = new File(inputFile.getParentFile(), System.currentTimeMillis() + ".pdf");
             
-            PDDocument document = PDDocument.load(inputFile);
-            replacePlaceHolders(document, values);
-            document.save(tempFile);
-            document.close();
+            try (PDDocument document = PDDocument.load(inputFile)) {
+                replacePlaceHolders(document, values);
+                // official forms are often encrypted with an empty user password and an unknown owner password
+                // PDFBox refuses to save those unless the security handler is removed
+                if (document.isEncrypted()) {
+                    document.setAllSecurityToBeRemoved(true);
+                }
+                document.save(tempFile);
+            }
             
             // Replace the original file with the modified one
             Files.move(tempFile.toPath(), inputFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
