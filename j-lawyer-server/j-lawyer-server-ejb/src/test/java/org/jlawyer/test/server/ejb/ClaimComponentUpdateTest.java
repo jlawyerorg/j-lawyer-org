@@ -1,5 +1,4 @@
-/*
-                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -661,619 +660,128 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.editors.files;
+package org.jlawyer.test.server.ejb;
 
-import com.jdimension.jlawyer.client.components.MultiCalDialog;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.persistence.ClaimComponent;
-import com.jdimension.jlawyer.persistence.ClaimLedger;
-import com.jdimension.jlawyer.persistence.ClaimLedgerEntry;
-import com.jdimension.jlawyer.persistence.LedgerEntryType;
-import com.jdimension.jlawyer.persistence.PaymentAllocation;
-import com.jdimension.jlawyer.persistence.PaymentSplitProposal;
-import com.jdimension.jlawyer.pojo.ClaimComponentBalance;
-import com.jdimension.jlawyer.pojo.ClaimLedgerTotals;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.math.BigDecimal;
-import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.logging.Level;
-import javax.swing.JDialog;
-import javax.swing.JOptionPane;
-import org.apache.log4j.Logger;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import static org.junit.Assert.assertEquals;
+import org.junit.Assume;
+import org.junit.Test;
 
 /**
+ * Checks that changing a claim position stores every field it carries.
+ *
+ * `updateClaimComponent` copies field by field onto the stored position - which is right, because
+ * merging a detached entity writes things nobody loaded. The price is a list, and a list falls
+ * behind: for a long time it held four entries while the position carried seventeen. The catalogue
+ * number, the further entries the catalogue demands, the start of interest and the recurrence were
+ * all silently discarded. Nothing said so. The dialog closed, the position reopened, and the values
+ * were the old ones again.
+ *
+ * A field added to the entity therefore has to be added to the copy as well, and this test is what
+ * says so - at build time, rather than a firm noticing months later that an entry never stuck.
  *
  * @author jens
  */
-public class ClaimLedgerEntryEditorDialog extends javax.swing.JDialog {
-    
-    private static final Logger log = Logger.getLogger(ClaimLedgerEntryEditorDialog.class.getName());
-    
-    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
-    private boolean okPressed = false;
-    
-    private ClaimLedger ledger = null;
-    private ClaimLedgerEntry entry = null;
-    /** Whether an existing booking is being changed rather than a new one entered. */
-    private final boolean editing;
-    private List<ClaimComponent> components = null;
-    private ClaimLedgerTotals currentTotals = null;
-    private PaymentSplitProposal splitProposal = null;
+public class ClaimComponentUpdateTest {
 
     /**
-     * Creates new form ClaimLedgerEntryEditorDialog
+     * What is deliberately not taken over.
      *
-     * @param parent
-     * @param modal
-     * @param entry
-     * @param ledger
-     * @param components
+     * The identity is not a value. The ledger is not changed here: a position does not move between
+     * ledgers. The interest rules are written separately, below the copy, because they are rows of
+     * their own and not a field.
      */
-    public ClaimLedgerEntryEditorDialog(JDialog parent, boolean modal, ClaimLedgerEntry entry, ClaimLedger ledger, List<ClaimComponent> components) {
-        super(parent, modal);
-        initComponents();
-        
-        this.entry = entry;
-        this.editing = entry != null;
-        this.ledger = ledger;
-        this.components = components;
-        
-        this.cmbType.removeAllItems();
-        for (LedgerEntryType t : LedgerEntryType.values()) {
-            // Hauptforderungen nur bei Anlage einer Komponente, niemals manuell als Buchung
-            if (!t.equals(LedgerEntryType.MAIN_CLAIM)) {
-                this.cmbType.addItem(t);
-            }
-        }
-        
-        this.cmbComponent.removeAllItems();
-        for (ClaimComponent c : components) {
-            this.cmbComponent.addItem(c);
-        }
+    private static final Set<String> NOT_COPIED =
+            new LinkedHashSet<>(Arrays.asList("id", "ledger", "interestRules"));
 
-        this.txtValue.setValue(0);
-        this.txtDate.setText(df.format(new Date()));
+    private File basedir() {
+        String dir = System.getProperty("basedir");
+        return dir == null ? new File(".").getAbsoluteFile().getParentFile() : new File(dir);
+    }
 
-        // Listener für Typ-Änderung hinzufügen
-        this.cmbType.addItemListener(e -> {
-            if (e.getStateChange() == java.awt.event.ItemEvent.SELECTED) {
-                updateValueFieldEnabled();
-                checkOverpayment();
-            }
-        });
-
-        // Listener für Komponenten-Änderung
-        this.cmbComponent.addItemListener(e -> {
-            if (e.getStateChange() == java.awt.event.ItemEvent.SELECTED) {
-                checkOverpayment();
-            }
-        });
-
-        // Listener für Betrag-Änderung
-        this.txtValue.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            public void changedUpdate(javax.swing.event.DocumentEvent e) { checkOverpayment(); }
-            public void removeUpdate(javax.swing.event.DocumentEvent e) { checkOverpayment(); }
-            public void insertUpdate(javax.swing.event.DocumentEvent e) { checkOverpayment(); }
-        });
-
-        // Initialen Status setzen
-        updateValueFieldEnabled();
-
-        // Split-Button nur bei neuen Buchungen anzeigen, nicht beim Bearbeiten
-        if (entry != null) {
-            this.cmdShowSplit.setVisible(false);
-
-            // UI-Felder mit Werten des zu bearbeitenden Entries befüllen
-            this.txtDate.setText(df.format(entry.getEntryDate()));
-            // Die Liste fuehrt die Hauptforderung nicht: sie entsteht mit der Forderungsposition
-            // und wird nie von Hand gebucht. Eine bestehende Buchung dieser Art muss trotzdem
-            // zeigen koennen, was sie ist - sonst stuende hier der erste Eintrag der Liste,
-            // "Zinsen", und die Buchung saehe aus wie etwas, das sie nicht ist.
-            if (entry.getType() != null) {
-                boolean listed = false;
-                for (int i = 0; i < this.cmbType.getItemCount(); i++) {
-                    listed = listed || entry.getType().equals(this.cmbType.getItemAt(i));
-                }
-                if (!listed) {
-                    this.cmbType.addItem(entry.getType());
-                }
-            }
-            this.cmbType.setSelectedItem(entry.getType());
-            this.cmbType.setEnabled(false);
-            this.cmbComponent.setSelectedItem(entry.getComponent());
-            this.cmbComponent.setEnabled(false);
-            this.txtValue.setValue(entry.getAmount());
-
-            if (entry.getDescription() != null) {
-                this.txtDescription.setText(entry.getDescription());
-            }
-
-            if (entry.getComment() != null) {
-                this.txtComment.setText(entry.getComment());
-            }
-        }
+    private String read(File file) throws IOException {
+        return new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
     }
 
     /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
+     * The fields the entity persists, read from its source - the annotations say which they are.
      */
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-    private void initComponents() {
+    private Set<String> persistentFields() throws IOException {
+        File entity = new File(basedir(), "../../j-lawyer-server-entities/src/main/java/"
+                + "com/jdimension/jlawyer/persistence/ClaimComponent.java");
+        Assume.assumeTrue("the entity source is not present", entity.isFile());
 
-        jLabel1 = new javax.swing.JLabel();
-        txtDate = new javax.swing.JTextField();
-        cmdDate = new javax.swing.JButton();
-        jLabel2 = new javax.swing.JLabel();
-        cmbType = new javax.swing.JComboBox<>();
-        jLabel3 = new javax.swing.JLabel();
-        cmbComponent = new javax.swing.JComboBox<>();
-        jLabel4 = new javax.swing.JLabel();
-        txtValue = new javax.swing.JFormattedTextField();
-        txtDescription = new javax.swing.JTextField();
-        jLabel5 = new javax.swing.JLabel();
-        txtComment = new javax.swing.JTextField();
-        jLabel6 = new javax.swing.JLabel();
-        lblOverpaymentWarning = new javax.swing.JLabel();
-        cmdShowSplit = new javax.swing.JButton();
-        cmdCancel = new javax.swing.JButton();
-        cmdOk = new javax.swing.JButton();
-
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("Forderungskonto: Buchung");
-
-        jLabel1.setFont(jLabel1.getFont());
-        jLabel1.setText("Buchungsdatum:");
-
-        txtDate.setEditable(false);
-
-        cmdDate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule.png"))); // NOI18N
-        cmdDate.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdDateActionPerformed(evt);
-            }
-        });
-
-        jLabel2.setText("Buchungstyp:");
-
-        jLabel3.setText("Position:");
-
-        jLabel4.setText("Betrag:");
-
-        txtValue.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#,##0.00"))));
-
-        jLabel5.setText("Bezeichung:");
-
-        jLabel6.setText("Kommentar:");
-
-        lblOverpaymentWarning.setForeground(new java.awt.Color(255, 102, 0));
-        lblOverpaymentWarning.setText(" ");
-
-        cmdShowSplit.setText("Verteilung anzeigen...");
-        cmdShowSplit.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdShowSplitActionPerformed(evt);
-            }
-        });
-
-        cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
-        cmdCancel.setText("Abbrechen");
-        cmdCancel.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdCancelActionPerformed(evt);
-            }
-        });
-
-        cmdOk.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
-        cmdOk.setText("Speichern");
-        cmdOk.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdOkActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(lblOverpaymentWarning, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel1)
-                            .addComponent(jLabel2)
-                            .addComponent(jLabel3)
-                            .addComponent(jLabel4)
-                            .addComponent(jLabel5)
-                            .addComponent(jLabel6))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(txtDescription)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(txtValue, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(cmbComponent, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addComponent(txtDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(cmdDate))
-                                    .addComponent(cmbType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addComponent(txtComment)))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(0, 451, Short.MAX_VALUE)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(cmdShowSplit, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(cmdOk)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cmdCancel)))))
-                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
-                    .addComponent(txtDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(cmdDate, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel2)
-                    .addComponent(cmbType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel3)
-                    .addComponent(cmbComponent, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel4)
-                    .addComponent(txtValue, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txtDescription, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel5))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txtComment, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel6))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblOverpaymentWarning)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmdShowSplit)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cmdCancel)
-                    .addComponent(cmdOk))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-
-        pack();
-    }// </editor-fold>//GEN-END:initComponents
-
-    private void cmdDateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDateActionPerformed
-        MultiCalDialog dlg = new MultiCalDialog(this.txtDate, this, true);
-        dlg.setVisible(true);
-    }//GEN-LAST:event_cmdDateActionPerformed
-
-    private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
-        okPressed = false;
-        setVisible(false);
-        this.dispose();
-    }//GEN-LAST:event_cmdCancelActionPerformed
-
-    private void cmdOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdOkActionPerformed
-        okPressed = true;
-        setVisible(false);
-        this.dispose();
-    }//GEN-LAST:event_cmdOkActionPerformed
-    
-    public boolean isOkPressed() {
-        return okPressed;
+        Set<String> fields = new LinkedHashSet<>();
+        Matcher m = Pattern.compile(
+                "@(?:Column|JoinColumn|OneToMany|ManyToOne|Enumerated)[^;]*?"
+                + "\\s(?:private|protected)\\s+[\\w.<>\\[\\]]+\\s+(\\w+)\\s*(?:=|;)",
+                Pattern.DOTALL).matcher(read(entity));
+        while (m.find()) {
+            fields.add(m.group(1));
+        }
+        return fields;
     }
 
     /**
-     * Aktiviert oder deaktiviert das Betragsfeld basierend auf dem ausgewählten Typ.
-     * Bei INTEREST wird das Feld deaktiviert, da der Betrag automatisch berechnet wird.
+     * The fields the service copies, read from the copy itself.
      */
-    private void updateValueFieldEnabled() {
-        LedgerEntryType selectedType = (LedgerEntryType) cmbType.getSelectedItem();
-        boolean enabled = (selectedType != LedgerEntryType.INTEREST);
-        txtValue.setEnabled(enabled);
+    private Set<String> copiedFields() throws IOException {
+        File service = new File(basedir(), "src/main/java/com/jdimension/jlawyer/services/"
+                + "ClaimLedgerService.java");
+        Assume.assumeTrue("the service source is not present", service.isFile());
+
+        String source = read(service);
+        int start = source.indexOf("public ClaimComponent updateClaimComponent");
+        Assume.assumeTrue("updateClaimComponent not found", start > 0);
+        int end = source.indexOf("\n    }", start);
+        String body = source.substring(start, end < 0 ? source.length() : end);
+
+        Set<String> copied = new LinkedHashSet<>();
+        Matcher m = Pattern.compile("before\\.set(\\w+)\\(component\\.(?:get|is)\\w+\\(\\)\\)")
+                .matcher(body);
+        while (m.find()) {
+            String name = m.group(1);
+            copied.add(Character.toLowerCase(name.charAt(0)) + name.substring(1));
+        }
+        return copied;
     }
 
-    /**
-     * Prüft, ob eine Überzahlung vorliegt und zeigt entsprechende Warnung an.
-     */
-    private void checkOverpayment() {
-        try {
-            // Only check for PAYMENT type
-            LedgerEntryType selectedType = (LedgerEntryType) cmbType.getSelectedItem();
-            if (selectedType != LedgerEntryType.PAYMENT) {
-                lblOverpaymentWarning.setVisible(false);
-                cmdShowSplit.setVisible(false);
-                return;
-            }
+    @Test
+    public void everyFieldOfApositionIsStoredWhenItIsChanged() throws Exception {
+        Set<String> persistent = persistentFields();
+        Assume.assumeFalse("no fields found", persistent.isEmpty());
 
-            ClaimComponent selectedComponent = (ClaimComponent) cmbComponent.getSelectedItem();
-            if (selectedComponent == null || currentTotals == null) {
-                lblOverpaymentWarning.setVisible(false);
-                cmdShowSplit.setVisible(false);
-                return;
+        List<String> forgotten = new ArrayList<>();
+        Set<String> copied = copiedFields();
+        for (String field : persistent) {
+            if (NOT_COPIED.contains(field)) {
+                continue;
             }
-
-            // Get payment amount
-            Object valueObj = txtValue.getValue();
-            if (valueObj == null) {
-                lblOverpaymentWarning.setVisible(false);
-                cmdShowSplit.setVisible(false);
-                return;
+            if (!copied.contains(field)) {
+                forgotten.add(field);
             }
-
-            BigDecimal paymentAmount = BigDecimal.valueOf(((Number) valueObj).doubleValue());
-            if (paymentAmount.compareTo(BigDecimal.ZERO) <= 0) {
-                lblOverpaymentWarning.setVisible(false);
-                cmdShowSplit.setVisible(false);
-                return;
-            }
-
-            ClaimComponentBalance balance = currentTotals.getComponentBalance(selectedComponent.getId());
-            if (balance != null && paymentAmount.compareTo(balance.getTotalOpenBalance()) > 0) {
-                DecimalFormat df = new DecimalFormat("#,##0.00 €");
-                lblOverpaymentWarning.setText("⚠ Warnung: Zahlung übersteigt offenen Betrag (" +
-                        df.format(balance.getTotalOpenBalance()) + ")");
-                lblOverpaymentWarning.setVisible(true);
-                cmdShowSplit.setVisible(true);
-            } else {
-                lblOverpaymentWarning.setVisible(false);
-                cmdShowSplit.setVisible(false);
-            }
-        } catch (Exception e) {
-            // Invalid number or other error, hide warnings
-            lblOverpaymentWarning.setVisible(false);
-            cmdShowSplit.setVisible(false);
         }
+        assertEquals("Felder, die beim Bearbeiten einer Position verlorengehen: " + forgotten,
+                0, forgotten.size());
     }
 
-    private void cmdShowSplitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdShowSplitActionPerformed
-        try {
-            ClaimComponent selectedComponent = (ClaimComponent) cmbComponent.getSelectedItem();
-            BigDecimal paymentAmount = BigDecimal.valueOf(((Number) txtValue.getValue()).doubleValue());
-            Date paymentDate = df.parse(txtDate.getText());
-
-            // Create calculator with server-side entity manager
-            // Since we're on client-side, we need to call the server
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
-            ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
-
-            // Calculate totals to get fresh data
-            ClaimLedgerTotals totals = afs.calculateClaimLedgerTotals(ledger.getId(), paymentDate);
-
-            // Create a basic proposal for the calculator
-            PaymentSplitProposal proposal = new PaymentSplitProposal(ledger, paymentAmount, paymentDate);
-            proposal.setOriginalComponent(selectedComponent);
-            proposal.setDescription(txtDescription.getText());
-            proposal.setComment(txtComment.getText());
-
-            // Calculate automatic split using server-side calculator
-            // For now, we do a simple client-side calculation
-            // TODO: Add server method to calculate split proposal
-            List<PaymentAllocation> allocations = new ArrayList<>();
-
-            // Get components sorted by legal order
-            List<ClaimComponent> sortedComponents = new ArrayList<>(components);
-            sortedComponents.sort((c1, c2) -> {
-                int p1 = getTilgungsPriority(c1);
-                int p2 = getTilgungsPriority(c2);
-                return Integer.compare(p1, p2);
-            });
-
-            BigDecimal remainingAmount = paymentAmount;
-            DecimalFormat currencyFormat = new DecimalFormat("#,##0.00");
-
-            // Payment allocation according to § 366/367 BGB: Interest before Principal
-            for (ClaimComponent comp : sortedComponents) {
-                if (remainingAmount.compareTo(BigDecimal.ZERO) <= 0) {
-                    break;
-                }
-
-                ClaimComponentBalance balance = totals.getComponentBalance(comp.getId());
-                if (balance == null || balance.getTotalOpenBalance().compareTo(BigDecimal.ZERO) <= 0) {
-                    continue;
-                }
-
-                BigDecimal openInterest = balance.getOpenInterest();
-                BigDecimal openPrincipal = balance.getOpenPrincipal();
-
-                // First: Pay interest (§ 367 BGB - Interest before Principal)
-                if (openInterest.compareTo(BigDecimal.ZERO) > 0 && remainingAmount.compareTo(BigDecimal.ZERO) > 0) {
-                    BigDecimal interestPayment = remainingAmount.min(openInterest);
-
-                    PaymentAllocation interestAllocation = new PaymentAllocation(comp, interestPayment);
-                    interestAllocation.setInterestAllocation(true);
-                    interestAllocation.setOriginalOpenAmount(openInterest);
-                    interestAllocation.setOpenInterestAmount(openInterest);
-                    interestAllocation.setOpenPrincipalAmount(openPrincipal);
-                    interestAllocation.setRemainingBalance(openInterest.subtract(interestPayment));
-                    interestAllocation.setFullyPaid(interestAllocation.getRemainingBalance().compareTo(BigDecimal.ZERO) == 0);
-                    interestAllocation.setLegalReference("§ 367 BGB (Zinsen vor Forderungsbetrag)");
-
-                    // Enhanced description with amount and context
-                    String desc = "Zinsen: " + currencyFormat.format(interestPayment) + " € (von "
-                        + currencyFormat.format(openInterest) + " € offen)";
-                    interestAllocation.setAllocationDescription(desc);
-
-                    allocations.add(interestAllocation);
-                    remainingAmount = remainingAmount.subtract(interestPayment);
-                }
-
-                // Second: Pay principal
-                if (openPrincipal.compareTo(BigDecimal.ZERO) > 0 && remainingAmount.compareTo(BigDecimal.ZERO) > 0) {
-                    BigDecimal principalPayment = remainingAmount.min(openPrincipal);
-
-                    PaymentAllocation principalAllocation = new PaymentAllocation(comp, principalPayment);
-                    principalAllocation.setInterestAllocation(false);
-                    principalAllocation.setOriginalOpenAmount(openPrincipal);
-                    principalAllocation.setOpenInterestAmount(openInterest);
-                    principalAllocation.setOpenPrincipalAmount(openPrincipal);
-                    principalAllocation.setRemainingBalance(openPrincipal.subtract(principalPayment));
-                    principalAllocation.setFullyPaid(principalAllocation.getRemainingBalance().compareTo(BigDecimal.ZERO) == 0);
-                    principalAllocation.setLegalReference("§ 366 BGB (Tilgungsreihenfolge)");
-
-                    // Enhanced description with amount and context
-                    String desc = "Forderungsbetrag: " + currencyFormat.format(principalPayment) + " € (von "
-                        + currencyFormat.format(openPrincipal) + " € offen)";
-                    principalAllocation.setAllocationDescription(desc);
-
-                    allocations.add(principalAllocation);
-                    remainingAmount = remainingAmount.subtract(principalPayment);
-                }
-            }
-
-            proposal.setAllocations(allocations);
-            proposal.setSurplus(remainingAmount);
-            proposal.setFollowsLegalOrder(true);
-
-            // Open preview dialog
-            PaymentSplitPreviewDialog previewDialog = new PaymentSplitPreviewDialog(this, true, proposal);
-            previewDialog.setVisible(true);
-
-            if (previewDialog.isApproved()) {
-                // User approved the split - store it and close this dialog
-                splitProposal = proposal;
-                okPressed = true;
-                dispose();
-            }
-        } catch (Exception ex) {
-            log.error("Error creating payment split", ex);
-            javax.swing.JOptionPane.showMessageDialog(this,
-                    "Fehler beim Erstellen der Zahlungsverteilung: " + ex.getMessage(),
-                    "Fehler", javax.swing.JOptionPane.ERROR_MESSAGE);
+    @Test
+    public void theExceptionsAreStillTheOnesNamedHere() throws Exception {
+        // Waechst die Ausnahmeliste unbemerkt, prueft der Test irgendwann nichts mehr.
+        Set<String> persistent = persistentFields();
+        for (String exception : NOT_COPIED) {
+            assertEquals(exception + " ist kein Feld der Position mehr - die Ausnahme gehört "
+                    + "entfernt", true, persistent.contains(exception));
         }
-    }//GEN-LAST:event_cmdShowSplitActionPerformed
-
-    private int getTilgungsPriority(ClaimComponent component) {
-        if (component.getType() == null) {
-            return 99;
-        }
-        switch (component.getType()) {
-            case COST_NON_INTEREST_BEARING:
-                return 1;
-            case COST_INTEREST_BEARING:
-                return 2;
-            case MAIN_CLAIM:
-                return 3;
-            default:
-                return 99;
-        }
-    }
-
-    public void setCurrentTotals(ClaimLedgerTotals totals) {
-        this.currentTotals = totals;
-    }
-
-    public PaymentSplitProposal getSplitProposal() {
-        return splitProposal;
-    }
-
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(ClaimLedgerEntryEditorDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(ClaimLedgerEntryEditorDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(ClaimLedgerEntryEditorDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(ClaimLedgerEntryEditorDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-
-        /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(() -> {
-            ClaimLedgerEntryEditorDialog dialog = new ClaimLedgerEntryEditorDialog(null, true, null, null, null);
-            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                @Override
-                public void windowClosing(java.awt.event.WindowEvent e) {
-                    System.exit(0);
-                }
-            });
-            dialog.setVisible(true);
-        });
-    }
-
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JComboBox<ClaimComponent> cmbComponent;
-    private javax.swing.JComboBox<LedgerEntryType> cmbType;
-    private javax.swing.JButton cmdCancel;
-    private javax.swing.JButton cmdDate;
-    private javax.swing.JButton cmdOk;
-    private javax.swing.JButton cmdShowSplit;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
-    private javax.swing.JLabel lblOverpaymentWarning;
-    private javax.swing.JTextField txtComment;
-    private javax.swing.JTextField txtDate;
-    private javax.swing.JTextField txtDescription;
-    private javax.swing.JFormattedTextField txtValue;
-    // End of variables declaration//GEN-END:variables
-
-    ClaimLedgerEntry getEntry() {
-        if (this.entry == null) {
-            this.entry = new ClaimLedgerEntry();
-        }
-        
-        this.entry.setAmount(BigDecimal.valueOf(((Number) this.txtValue.getValue()).doubleValue()));
-        this.entry.setComment(this.txtComment.getText());
-        if (!this.editing) {
-            // aus demselben Grund wie die Art: die Liste ist beim Bearbeiten abgeschaltet
-            this.entry.setComponent((ClaimComponent) this.cmbComponent.getSelectedItem());
-        }
-        this.entry.setDescription(this.txtDescription.getText());
-        try {
-            this.entry.setEntryDate(df.parse(this.txtDate.getText()));
-        } catch (Exception ex) {
-            log.error(ex);
-            this.entry.setEntryDate(new Date());
-            JOptionPane.showMessageDialog(this, "Ungültiges Datum - verwende aktuelles Datum.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
-        }
-        this.entry.setLedger(this.ledger);
-        // Beim Bearbeiten bleibt die Art, wie sie ist. Sie steht in einer abgeschalteten Liste,
-        // und was dort steht, hat der Benutzer nicht gewaehlt - eine Hauptforderung wurde so beim
-        // blossen Oeffnen und Speichern zur Zinsbuchung. Danach zaehlte sie nicht mehr zur
-        // Forderung, und weil Zinsen auf die Forderung laufen, fielen mit ihr auch die Zinsen weg.
-        if (!this.editing) {
-            this.entry.setType((LedgerEntryType) this.cmbType.getSelectedItem());
-        }
-        
-        return this.entry;
     }
 }

@@ -1055,6 +1055,13 @@ public interface ClaimLedgerServiceRemote {
     /**
      * Updates a booking of a claim ledger.
      *
+     * The amount, the date, the description and the comment are taken over. What a booking IS -
+     * its kind and the claim component it belongs to - is decided when it is made and is not
+     * changed here: rewriting it would rewrite the history of the ledger. A principal claim turned
+     * into an interest booking stops counting towards the claim, and as interest runs on the
+     * claim, the interest goes with it. A booking made under the wrong kind is reversed and
+     * entered again, which is the movement a ledger knows.
+     *
      * @param entry the booking to update
      * @return the stored booking
      * @throws Exception if the booking does not exist or the user may not access its case

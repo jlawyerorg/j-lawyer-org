@@ -1280,7 +1280,11 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
 
         ClaimLedger ledger = requireLedger(ledgerId);
 
-        Date effectiveKeyDate = keyDate == null ? new Date() : keyDate;
+        // Zum Tagesende, wie in calculateClaimLedgerTotals: der Stichtag einer Massnahme kommt
+        // aus einem @Temporal(DATE)-Feld und stuende sonst auf Mitternacht - alles, was an diesem
+        // Tag gebucht wurde, laege dahinter. Die Aufstellung zeigte Positionen von null neben
+        // Summen, die die Forderung enthalten, und beides aus demselben Aufruf.
+        Date effectiveKeyDate = ClaimLedgerKeyDate.endOfDay(keyDate);
 
         ClaimStatement statement = new ClaimStatement();
         statement.setLedgerId(ledger.getId());
@@ -1398,7 +1402,11 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
             throw new Exception("Das Forderungskonto ist keiner Akte zugeordnet!");
         }
 
-        Date effectiveKeyDate = keyDate == null ? new Date() : keyDate;
+        // Zum Tagesende, wie in calculateClaimLedgerTotals: der Stichtag einer Massnahme kommt
+        // aus einem @Temporal(DATE)-Feld und stuende sonst auf Mitternacht - alles, was an diesem
+        // Tag gebucht wurde, laege dahinter. Die Aufstellung zeigte Positionen von null neben
+        // Summen, die die Forderung enthalten, und beides aus demselben Aufruf.
+        Date effectiveKeyDate = ClaimLedgerKeyDate.endOfDay(keyDate);
         ClaimStatement statement = assembleClaimStatement(ledgerId, effectiveKeyDate, includeSubLedgers);
 
         byte[] pdf;
@@ -1503,7 +1511,11 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
     public List<ClaimLedgerSummary> getBalanceList(BalanceListFilter filter, Date keyDate) throws Exception {
 
         BalanceListFilter effectiveFilter = filter == null ? new BalanceListFilter() : filter;
-        Date effectiveKeyDate = keyDate == null ? new Date() : keyDate;
+        // Zum Tagesende, wie in calculateClaimLedgerTotals: der Stichtag einer Massnahme kommt
+        // aus einem @Temporal(DATE)-Feld und stuende sonst auf Mitternacht - alles, was an diesem
+        // Tag gebucht wurde, laege dahinter. Die Aufstellung zeigte Positionen von null neben
+        // Summen, die die Forderung enthalten, und beides aus demselben Aufruf.
+        Date effectiveKeyDate = ClaimLedgerKeyDate.endOfDay(keyDate);
 
         List<String> allowedCases;
         try {
@@ -2510,10 +2522,14 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
             interestRules=new ArrayList<>();
 
         ClaimComponent before = this.claimComponentsFacade.find(component.getId());
+        if (before == null) {
+            throw new Exception("Die Forderungsposition existiert nicht mehr. "
+                    + "Bitte das Forderungskonto neu laden.");
+        }
         ClaimLedger ledger = before.getLedger();
         if (ledger == null) {
-            log.error("Claim ledger with id " + ledger.getId() + " not found");
-            throw new Exception("Forderungskonto mit ID " + ledger.getId() + " existiert nicht!");
+            log.error("Claim component " + component.getId() + " belongs to no ledger");
+            throw new Exception("Die Forderungsposition gehört zu keinem Forderungskonto!");
         }
 
         ArchiveFileBean aFile = ledger.getArchiveFileKey();
@@ -2536,12 +2552,46 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
             throw new Exception("Forderungskonto darf von diesem Nutzer nicht bearbeitet werden!");
         }
 
-        before.setComment(component.getComment());
+        // Der Betrag der Position ist nicht, was geschuldet wird - die Buchungen sind es. Wird er
+        // geaendert, muss die Aenderung das Konto erreichen, sonst zeigt die Position 500 Euro,
+        // waehrend das Konto 5.000 fuehrt, und jede Auswertung folgt dem Konto.
+        ClaimComponentAmountChange.Decision amountChange = new ClaimComponentAmountChange().decide(
+                this.claimLedgerEntriesFacade.findByComponent(before),
+                before.getPrincipalAmount(), component.getPrincipalAmount());
+        if (amountChange.isRefused()) {
+            throw new Exception(amountChange.getRefusal());
+        }
+
+        // Jedes Feld, das die Position fuehrt - und nicht nur die vier, die einmal hier standen.
+        // Katalognummer, Zusatzangaben, Zinsbeginn und die Wiederholung waren nicht dabei: wer sie
+        // im Dialog aenderte, sah sie beim naechsten Oeffnen wieder so, wie sie vorher waren, ohne
+        // dass jemand widersprochen haette. Was hier fehlt, faellt nirgends auf - deshalb prueft
+        // ClaimComponentUpdateTest die Liste gegen die Felder der Entity.
         before.setName(component.getName());
-        before.setPrincipalAmount(component.getPrincipalAmount());
+        before.setComment(component.getComment());
         before.setType(component.getType());
+        before.setPrincipalAmount(component.getPrincipalAmount());
+        before.setInterestStartMode(component.getInterestStartMode());
+        before.setRecurrenceStartMonth(component.getRecurrenceStartMonth());
+        before.setRecurrenceEndMonth(component.getRecurrenceEndMonth());
+        before.setOriginReference(component.getOriginReference());
+        before.setPaymentClaim(component.isPaymentClaim());
+        before.setCatalogueNumber(component.getCatalogueNumber());
+        before.setFreeTextClaim(component.isFreeTextClaim());
+        before.setCataloguePropertyZip(component.getCataloguePropertyZip());
+        before.setCataloguePropertyCity(component.getCataloguePropertyCity());
+        before.setCatalogueContractDesignation(component.getCatalogueContractDesignation());
+        before.setCatalogueReferenceDetail(component.getCatalogueReferenceDetail());
+        before.setClaimReason(component.getClaimReason());
+        before.setClaimReasonReference(component.getClaimReasonReference());
 
         this.claimComponentsFacade.edit(before);
+
+        if (amountChange.getEntry() != null) {
+            ClaimLedgerEntry initial = amountChange.getEntry();
+            initial.setAmount(component.getPrincipalAmount());
+            this.claimLedgerEntriesFacade.edit(initial);
+        }
 
         List<InterestRule> existingRules = this.claimComponentInterestRuleFacade.findByComponent(before);
         for (InterestRule ir : existingRules) {
@@ -2563,10 +2613,18 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
         String principalId = context.getCallerPrincipal().getName();
 
         ClaimComponent currentComponent = this.claimComponentsFacade.find(componentId);
+        if (currentComponent == null) {
+            // Eine Position, die es nicht mehr gibt, ist kein Programmfehler - die Tabelle kann sie
+            // noch zeigen, waehrend sie schon geloescht ist. Das gehoert gesagt, nicht geworfen:
+            // vorher stand hier eine NullPointerException, und die Oberflaeche zeigte einen
+            // Stacktrace statt eines Satzes.
+            throw new Exception("Die Forderungsposition existiert nicht mehr. "
+                    + "Bitte das Forderungskonto neu laden.");
+        }
         ClaimLedger ledger = currentComponent.getLedger();
         if (ledger == null) {
-            log.error("Claim ledger with id " + ledger.getId() + " not found");
-            throw new Exception("Forderungskonto mit ID " + ledger.getId() + " existiert nicht!");
+            log.error("Claim component " + componentId + " belongs to no ledger");
+            throw new Exception("Die Forderungsposition gehört zu keinem Forderungskonto!");
         }
 
         ArchiveFileBean aFile = ledger.getArchiveFileKey();
@@ -2735,8 +2793,17 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
         existingEntry.setDescription(entry.getDescription());
         existingEntry.setComment(entry.getComment());
         existingEntry.setEntryDate(entry.getEntryDate());
-        existingEntry.setType(entry.getType());
-        existingEntry.setComponent(entry.getComponent());
+        // Art und Position bleiben, wie sie sind. Was eine Buchung IST, entscheidet sich beim
+        // Buchen; sie nachtraeglich umzuwidmen schreibt die Geschichte des Kontos um. Eine
+        // Hauptforderung, die zur Zinsbuchung wird, zaehlt nicht mehr zur Forderung - und weil
+        // Zinsen auf die Forderung laufen, verschwinden mit ihr auch die Zinsen. Genau das ist
+        // passiert: der Dialog fuehrt die Hauptforderung nicht in seiner Auswahlliste, uebernahm
+        // beim Speichern aber deren ersten Eintrag, und ein blosses Oeffnen und Bestaetigen
+        // verwandelte die Forderung in Zinsen. Der Dialog ist geheilt; hier steht der Riegel,
+        // der auch fuer jeden anderen Aufrufer gilt.
+        //
+        // Wer eine Buchung falscher Art erfasst hat, storniert sie und bucht neu - das ist die
+        // Bewegung, die ein Konto kennt.
 
         this.claimLedgerEntriesFacade.edit(existingEntry);
 
@@ -2915,12 +2982,7 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
 
         String principalId = context.getCallerPrincipal().getName();
         
-        if(forDate==null) {
-            forDate=new Date();
-        }
-        forDate.setHours(23);
-        forDate.setMinutes(59);
-        forDate.setSeconds(59);
+        Date endOfKeyDate = ClaimLedgerKeyDate.endOfDay(forDate);
 
         ClaimLedger ledger = this.claimLedgersFacade.find(ledgerId);
         if (ledger == null) {
@@ -3032,8 +3094,8 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
 
         // 1️⃣ Summierung existierender Buchungen
         for (ClaimLedgerEntry entry : this.claimLedgerEntriesFacade.findByLedger(ledger)) {
-            // only calculate for entries up to forDate
-            if(entry.getEntryDate().getTime()>forDate.getTime())
+            // only calculate for entries up to endOfKeyDate
+            if(entry.getEntryDate().getTime()>endOfKeyDate.getTime())
                 break;
             
             BigDecimal amount = entry.getAmount();
@@ -3073,7 +3135,7 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
                 continue;
             }
 
-            BigDecimal accruedInterest = claimInterestCalculator().calculateAccruedInterest(cmp, forDate);
+            BigDecimal accruedInterest = claimInterestCalculator().calculateAccruedInterest(cmp, endOfKeyDate);
 
             if (cmp.getType() != null && cmp.getType().isMainClaim()) {
                 totalInterestMain = totalInterestMain.add(accruedInterest);

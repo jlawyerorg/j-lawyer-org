@@ -1064,6 +1064,11 @@ public class ClaimLedgerPartyDialog extends javax.swing.JDialog {
         refreshRepresentatives();
 
         updateHint();
+   
+        // Nachdem alle Felder gefuellt sind: initComponents() packt den Dialog mit leeren Listen,
+        // und die Bezeichnungen der Beteiligten und Gerichte sind laenger als nichts.
+        pack();
+        setMinimumSize(getSize());
     }
 
     /**
