@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ClaimLedger;
 import com.jdimension.jlawyer.persistence.EnforcementTitle;
 import com.jdimension.jlawyer.pojo.ClaimLedgerTotals;
+import com.jdimension.jlawyer.pojo.ClaimProcessStatus;
 import com.jdimension.jlawyer.services.ClaimLedgerServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Container;
@@ -679,6 +680,7 @@ import java.util.Date;
 import java.util.List;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -724,6 +726,10 @@ public class ClaimLedgerEntryPanel extends javax.swing.JPanel {
      * Fills the open total and the status shown on the card, so that the state of a claim can be
      * read without opening it.
      *
+     * The status line says the same as the timeline of the ledger: where the matter stands, what has
+     * taken it off its course, and the next deadline. It is shown in red when that deadline is
+     * overdue or the matter has left its course.
+     *
      * A card must never break the case view: if the figures cannot be loaded, the badges stay empty
      * and the reason is logged rather than shown as an error dialog.
      */
@@ -732,15 +738,17 @@ public class ClaimLedgerEntryPanel extends javax.swing.JPanel {
         this.lblOpenAmount.setToolTipText(null);
         this.lblStatus.setText("");
         this.lblStatus.setToolTipText(null);
+        this.lblStatus.setForeground(null);
 
         if (this.ledger == null || this.ledger.getId() == null) {
             return;
         }
 
+        ClaimLedgerServiceRemote ledgerService = null;
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            ClaimLedgerServiceRemote ledgerService = locator.lookupClaimLedgerServiceRemote();
+            ledgerService = locator.lookupClaimLedgerServiceRemote();
 
             ClaimLedgerTotals totals = ledgerService.calculateClaimLedgerTotals(this.ledger.getId(), new Date());
             if (totals != null) {
@@ -754,52 +762,95 @@ public class ClaimLedgerEntryPanel extends javax.swing.JPanel {
                 amountTip.append("</html>");
                 this.lblOpenAmount.setToolTipText(amountTip.toString());
             }
+        } catch (Exception ex) {
+            log.error("Unable to determine the open total of claim ledger " + this.ledger.getId(), ex);
+        }
+
+        if (ledgerService == null) {
+            return;
+        }
+
+        try {
+            StringBuilder status = new StringBuilder();
+            boolean alert = false;
+
+            ClaimProcessStatus process = ledgerService.getProcessStatus(this.ledger.getId());
+            if (process.getCurrentDescription() != null) {
+                status.append(process.getCurrentDescription());
+            } else if (process.getCurrentStage() != null) {
+                status.append(process.getCurrentStage().getLabel());
+            }
+            if (process.getDeviation() != null) {
+                appendPart(status, process.getDeviation());
+                alert = true;
+            }
 
             List<EnforcementTitle> titles = ledgerService.getTitles(this.ledger.getId());
-            if (titles == null || titles.isEmpty()) {
-                this.lblStatus.setText("kein Titel");
-                this.lblStatus.setToolTipText("Für dieses Forderungskonto ist kein Vollstreckungstitel erfasst.");
-            } else {
-                EnforcementTitle earliest = null;
-                boolean allEnforceable = true;
+            boolean allEnforceable = true;
+            Date earliestLimitation = null;
+            if (titles != null) {
                 for (EnforcementTitle t : titles) {
                     if (!t.isEnforceable()) {
                         allEnforceable = false;
                     }
                     if (t.getLimitationDate() != null
-                            && (earliest == null || earliest.getLimitationDate() == null
-                                || t.getLimitationDate().before(earliest.getLimitationDate()))) {
-                        earliest = t;
+                            && (earliestLimitation == null || t.getLimitationDate().before(earliestLimitation))) {
+                        earliestLimitation = t.getLimitationDate();
                     }
                 }
+            }
+            if (!allEnforceable) {
+                // an incomplete title blocks enforcement, which the user should see on the card
+                appendPart(status, "Titel unvollständig");
+            }
+            if (earliestLimitation != null) {
+                appendPart(status, "Verjährung " + this.dateFormat.format(earliestLimitation));
+            }
 
-                StringBuilder status = new StringBuilder();
-                status.append(titles.size() == 1 ? "tituliert" : titles.size() + " Titel");
-                if (!allEnforceable) {
-                    // an incomplete title blocks enforcement, which the user should see on the card
-                    status.append(" (unvollständig)");
-                }
-                if (earliest != null && earliest.getLimitationDate() != null) {
-                    status.append(", Verjährung ").append(this.dateFormat.format(earliest.getLimitationDate()));
-                }
-                this.lblStatus.setText(status.toString());
+            if (process.getNextDeadline() != null) {
+                boolean overdue = process.getNextDeadline().before(new Date());
+                alert = alert || overdue;
+                appendPart(status, (overdue ? "überfällig seit " : "nächste Frist: ")
+                        + this.dateFormat.format(process.getNextDeadline())
+                        + (process.getNextDeadlineLabel() == null ? "" : " - " + process.getNextDeadlineLabel()));
+            }
 
-                StringBuilder statusTip = new StringBuilder("<html>");
+            this.lblStatus.setText(status.toString());
+            if (alert) {
+                this.lblStatus.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+            }
+
+            // the line may be cut off in a narrow case view, so the tooltip always holds all of it
+            StringBuilder statusTip = new StringBuilder("<html><div width=\"450\">");
+            statusTip.append(escapeHtml(status.toString()));
+            if (titles != null && !titles.isEmpty()) {
+                statusTip.append("<br/><br/>");
                 for (EnforcementTitle t : titles) {
-                    statusTip.append(t.toString());
+                    statusTip.append(escapeHtml(t.toString()));
                     List<String> missing = t.getMissingPrerequisites();
                     if (!missing.isEmpty()) {
-                        statusTip.append(" - fehlt: ").append(String.join(", ", missing));
+                        statusTip.append(" - fehlt: ").append(escapeHtml(String.join(", ", missing)));
                     }
                     statusTip.append("<br/>");
                 }
-                statusTip.append("</html>");
-                this.lblStatus.setToolTipText(statusTip.toString());
             }
+            statusTip.append("</div></html>");
+            this.lblStatus.setToolTipText(statusTip.toString());
 
         } catch (Exception ex) {
             log.error("Unable to determine the status of claim ledger " + this.ledger.getId(), ex);
         }
+    }
+
+    private static void appendPart(StringBuilder sb, String part) {
+        if (sb.length() > 0) {
+            sb.append(" \u00b7 ");
+        }
+        sb.append(part);
+    }
+
+    private static String escapeHtml(String s) {
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 
     /**
@@ -866,24 +917,28 @@ public class ClaimLedgerEntryPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmdStatement)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(lblName, javax.swing.GroupLayout.DEFAULT_SIZE, 613, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(lblStatus, javax.swing.GroupLayout.PREFERRED_SIZE, 180, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(lblOpenAmount, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(lblName, 0, 613, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(lblOpenAmount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(lblStatus, 0, 0, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(8, 8, 8)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(cmdOpen, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(cmdDelete, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(cmdStatement, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(lblName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(lblStatus, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(lblOpenAmount, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                    .addComponent(cmdOpen)
+                    .addComponent(cmdDelete)
+                    .addComponent(cmdStatement)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(lblName)
+                            .addComponent(lblOpenAmount))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblStatus)))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
