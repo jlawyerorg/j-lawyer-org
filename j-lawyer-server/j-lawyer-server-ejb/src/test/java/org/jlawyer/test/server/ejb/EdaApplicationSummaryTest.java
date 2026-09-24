@@ -660,261 +660,216 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package org.jlawyer.test.server.ejb;
 
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.persistence.DunningCase;
-import com.jdimension.jlawyer.persistence.DunningCaseEvent;
-import com.jdimension.jlawyer.persistence.DunningCaseStatus;
-import com.jdimension.jlawyer.pojo.DunningClaimInput;
-import com.jdimension.jlawyer.pojo.DunningMessageProposal;
-import com.jdimension.jlawyer.pojo.EdaDocumentView;
-import com.jdimension.jlawyer.pojo.DunningWorklistFilter;
-import com.jdimension.jlawyer.pojo.DunningWorklistRow;
-import com.jdimension.jlawyer.pojo.DunningValidationResult;
-import java.math.BigDecimal;
+import com.jdimension.jlawyer.documents.EdaApplicationPdfWriter;
+import com.jdimension.jlawyer.eda.EdaApplicationSummarizer;
+import com.jdimension.jlawyer.eda.EdaApplicationSummary;
+import com.jdimension.jlawyer.eda.EdaCharset;
+import java.io.File;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import javax.ejb.Remote;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import org.junit.Assume;
+import org.junit.Test;
 
 /**
- * The court dunning procedure.
+ * Holds our reading of an application against the courts' own.
  *
- * At present this exposes the readiness check for an application; the operations that carry a
- * procedure through its stages join it as they are built.
+ * Beside every reference file lies the overview the Online-Mahnantrag printed from the same data.
+ * It is the only independent statement of what the file means: our summarizer and our generator
+ * were written from the same specification and by the same hand, so a test of one against the other
+ * would prove nothing. The printed overview was not.
+ *
+ * Compared are the entries both sides name, by their label. Where the web application shows
+ * something the file does not carry - the court fee, which it works out itself - there is nothing
+ * to compare, and nothing is claimed.
  *
  * @author jens
  */
-@Remote
-public interface DunningServiceRemote {
+public class EdaApplicationSummaryTest {
 
     /**
-     * Checks whether a dunning application can be filed, without producing or changing anything.
-     *
-     * Every problem is reported together rather than the first one raised, so a user learns in one
-     * pass what needs fixing. The check reads; it stores nothing.
-     *
-     * Note what it does not yet cover: whether the data also fits the field lengths and value
-     * domains of the record format is a separate question that needs the Satzbeschreibung, and that
-     * check joins this one with the EDA core.
-     *
-     * @param dunningCaseId the procedure to check
-     * @param claimValue the value that would be applied for; the caller determines it, because
-     * whether a position counts as an ancillary claim (§ 43 GKG) is a judgement
-     * @return every finding, blocking and otherwise; never null
-     * @throws Exception if the procedure does not exist or the user may not see its case
+     * The labels both sides use for the same thing. Everything else differs in wording, not in
+     * substance, and comparing wording would test the courts' phrasing rather than our reading.
      */
-    DunningValidationResult validateApplication(String dunningCaseId, BigDecimal claimValue) throws Exception;
+    private static final List<String> SHARED_LABELS = Arrays.asList(
+            "Anrede", "Vorname", "Nachname", "Rechtsform", "Name", "Straße", "PLZ/Ort/Nation",
+            "Anspruch", "Mitteilungsform", "Rechnungsnummer", "ab/vom", "bis", "Betrag",
+            "Beauftragungsdatum", "Antragsdatum", "Summe der Hauptforderungen");
+
+    private File directory() {
+        String base = System.getProperty("basedir");
+        File directory = new File(base == null ? "." : base, "src/test/resources/eda/reference");
+        Assume.assumeTrue("the reference files are not present", directory.isDirectory());
+        return directory;
+    }
+
+    private List<File> referenceFiles() {
+        File[] files = directory().listFiles((d, n) -> n.endsWith(".eda"));
+        Assume.assumeTrue("no reference files", files != null && files.length > 0);
+        List<File> sorted = new ArrayList<>(Arrays.asList(files));
+        sorted.sort((a, b) -> a.getName().compareTo(b.getName()));
+        return sorted;
+    }
+
+    private EdaApplicationSummary summaryOf(File eda) throws Exception {
+        String content = new String(Files.readAllBytes(eda.toPath()),
+                Charset.forName(EdaCharset.CHARSET_NAME));
+        return new EdaApplicationSummarizer().summarize(content, eda.getName());
+    }
 
     /**
-     * Produces the EDA file for a dunning application, stores it in the case and records that the
-     * application has gone out.
-     *
-     * Nothing is produced that has not been checked. The data is validated first and the finished
-     * file is verified structurally afterwards; if either fails, no document is stored and no status
-     * is changed - an unverified file must never leave the firm, and a procedure must not claim to
-     * have applied for something it did not send.
-     *
-     * @param dunningCaseId the procedure to file
-     * @param claimValue the value applied for
-     * @param claims what is applied for, in the order it should appear
-     * @param fileName the six-character name the file announces itself under
-     * @return the stored document
-     * @throws Exception if the data is incomplete, the file fails verification, or it cannot be
-     * stored; the message names what went wrong
+     * Every "label: value" our summary states, by label. A label that occurs twice keeps its first
+     * value, which is the one the overview of the court shows first as well.
      */
-    ArchiveFileDocumentsBean exportApplication(String dunningCaseId, BigDecimal claimValue,
-            List<DunningClaimInput> claims, String fileName) throws Exception;
+    private Map<String, List<String>> valuesOf(EdaApplicationSummary summary) {
+        Map<String, List<String>> values = new LinkedHashMap<>();
+        for (EdaApplicationSummary.Line line : summary.getHeader()) {
+            values.computeIfAbsent(line.getLabel(), k -> new ArrayList<>()).add(line.getValue());
+        }
+        for (EdaApplicationSummary.Section section : summary.getSections()) {
+            for (EdaApplicationSummary.Line line : section.getLines()) {
+                if (line.getLabel() != null) {
+                    values.computeIfAbsent(line.getLabel(), k -> new ArrayList<>()).add(line.getValue());
+                }
+            }
+        }
+        return values;
+    }
 
     /**
-     * Reads the court messages in a document and proposes what each of them belongs to.
-     *
-     * Nothing is applied and nothing is stored. This is what a user is shown before confirming: one
-     * entry per message, with the procedure the system found for it or the statement that it found
-     * none and the user has to choose.
-     *
-     * The search runs across all procedures rather than within the document's case. Courts send
-     * collective files - the trailer counts the messages in one - so a single document can carry news
-     * for many procedures in many cases; where it was filed is provenance, not context.
-     *
-     * @param documentId the document holding the exchange file
-     * @return one proposal per message, in the order they appear
-     * @throws Exception if the document does not exist, is empty, or the user may not see its case
+     * The same, read out of the overview the court printed.
      */
-    List<DunningMessageProposal> analyseCourtMessages(String documentId) throws Exception;
+    private Map<String, List<String>> valuesOfPrintedOverview(File pdf) throws Exception {
+        Map<String, List<String>> values = new LinkedHashMap<>();
+        try (PDDocument document = PDDocument.load(pdf)) {
+            String text = new PDFTextStripper().getText(document);
+            for (String line : text.split("\n")) {
+                int colon = line.indexOf(':');
+                if (colon <= 0) {
+                    continue;
+                }
+                String label = line.substring(0, colon).trim();
+                String value = line.substring(colon + 1).trim();
+                if (label.isEmpty() || value.isEmpty()) {
+                    continue;
+                }
+                values.computeIfAbsent(label, k -> new ArrayList<>()).add(value);
+            }
+        }
+        return values;
+    }
 
     /**
-     * Resolves an EDA exchange file of a case against the Satzbeschreibungen, so it can be read.
-     *
-     * The files are fixed-length records of 128 bytes with nothing separating the fields inside
-     * them; reading one by eye means counting columns. This returns the same file with its records
-     * and fields named, together with what the file says about itself - the record type, the format
-     * version, the Kennziffer, and whether it is an application the firm sent or a message the court
-     * sent back. That direction is derived from the record type, not from where the file sits.
-     *
-     * Records no Satzbeschreibung covers are still returned, with their raw line and without fields,
-     * so a file from a newer format version stays partly readable rather than appearing empty.
-     *
-     * @param documentId the document holding the exchange file
-     * @return the file as it can be shown, never null
-     * @throws Exception if the document does not exist, is empty, or its case is not accessible
+     * The courts' overview writes an amount as "5.000,00 EUR" and so do we; a date as "21.09.2026"
+     * and so do we. What differs is white space around the currency, and nothing else.
      */
-    EdaDocumentView describeEdaDocument(String documentId) throws Exception;
+    private String normalise(String value) {
+        return value.replace(" ", " ").replaceAll("\\s+", " ").trim();
+    }
 
-    /**
-     * Lays out the application of an exchange file as a page.
-     *
-     * The file is a sequence of fixed-width records, which is what the viewer shows and what is
-     * needed to check a file against the specification. It is not what is needed to check an
-     * application against the intention behind it. The page arranges the same data the way the
-     * courts' own Online-Mahnantrag prints its overview - who files, for whom, against whom and
-     * what is claimed - so that the two can be held side by side.
-     *
-     * Nothing is computed and nothing is added: a figure the file does not carry, such as the court
-     * fee, is left out rather than worked out.
-     *
-     * @param documentId the document holding the exchange file
-     * @return the page as a PDF
-     * @throws Exception if the document does not exist, is empty, holds no application, or its case
-     * is not accessible
-     */
-    byte[] renderEdaDocument(String documentId) throws Exception;
+    @Test
+    public void everyReferenceFileCanBeRead() throws Exception {
+        List<String> empty = new ArrayList<>();
+        for (File eda : referenceFiles()) {
+            if (summaryOf(eda).isEmpty()) {
+                empty.add(eda.getName());
+            }
+        }
+        assertEquals("Dateien, aus denen sich nichts lesen liess: " + empty, 0, empty.size());
+    }
 
-    /**
-     * Lays out the application of an exchange file and files the page in the same case.
-     *
-     * @param documentId the document holding the exchange file
-     * @return the document that was created
-     * @throws Exception if the document does not exist, is empty, holds no application, belongs to
-     * no case, or its case is not accessible
-     */
-    ArchiveFileDocumentsBean storeEdaDocumentRendering(String documentId) throws Exception;
+    @Test
+    public void theApplicationIsArrangedTheWayTheCourtArrangesIt() throws Exception {
+        for (File eda : referenceFiles()) {
+            EdaApplicationSummary summary = summaryOf(eda);
 
-    /**
-     * Applies the court messages of a document, as the user assigned them.
-     *
-     * A message left unassigned is not applied and not stored anywhere - it stays in the document,
-     * and running this again later picks it up. That is why nothing is lost by confirming only part
-     * of a file.
-     *
-     * A message that would move a procedure backwards is reported and skipped. Re-running an import
-     * is a normal thing to do, so an older message must not undo what a newer one already recorded.
-     *
-     * @param documentId the document holding the exchange file
-     * @param assignments the procedure chosen per message, keyed by the message's position in the
-     * file as {@code analyseCourtMessages} reported it; a position left out stays unapplied
-     * @return what happened to each message, in words for the user
-     * @throws Exception if the document cannot be read
-     */
-    List<String> applyCourtMessages(String documentId, Map<Integer, String> assignments) throws Exception;
+            List<String> headings = new ArrayList<>();
+            for (EdaApplicationSummary.Section section : summary.getSections()) {
+                if (section.getLevel() == 0) {
+                    headings.add(section.getTitle());
+                }
+            }
+            assertTrue(eda.getName() + ": " + headings,
+                    headings.containsAll(Arrays.asList("Prozessbevollmächtigter", "Antragsteller",
+                            "Antragsgegner", "Ansprüche")));
+            assertEquals(eda.getName() + ": die Reihenfolge der Abschnitte ist die des Musters",
+                    Arrays.asList("Prozessbevollmächtigter", "Antragsteller", "Antragsgegner",
+                            "Ansprüche"), headings);
+        }
+    }
 
-    /**
-     * Returns the dunning procedures conducted over a claim ledger.
-     *
-     * @param ledgerId the claim ledger
-     * @return the procedures, most recently created first; never null
-     * @throws Exception if the ledger does not exist or its case is not accessible
-     */
-    List<DunningCase> getDunningCases(String ledgerId) throws Exception;
+    @Test
+    public void whatBothSidesNameTheyNameAlike() throws Exception {
+        // Der eigentliche Prüfstein: was das Gericht aus derselben Datei gedruckt hat.
+        List<String> differing = new ArrayList<>();
+        int compared = 0;
 
-    /**
-     * Creates a dunning procedure over a claim ledger.
-     *
-     * The procedure starts in preparation and carries the court and Kennziffer it is given. Its own
-     * reference is what every later message from the court will echo back, so it is generated where
-     * the caller supplies none - a procedure without one cannot be matched to its replies.
-     *
-     * @param ledgerId the claim ledger
-     * @param dunningCase the procedure to create
-     * @return the created procedure as it was stored
-     * @throws Exception if the ledger does not exist, its case is not accessible, or it cannot be
-     * stored
-     */
-    DunningCase addDunningCase(String ledgerId, DunningCase dunningCase) throws Exception;
+        for (File eda : referenceFiles()) {
+            File pdf = new File(eda.getParentFile(),
+                    eda.getName().substring(0, eda.getName().length() - 4) + ".pdf");
+            if (!pdf.isFile()) {
+                continue;
+            }
+            Map<String, List<String>> ours = valuesOf(summaryOf(eda));
+            Map<String, List<String>> theirs = valuesOfPrintedOverview(pdf);
 
-    /**
-     * Updates the master data of a dunning procedure - court, Kennziffer, reference, description.
-     *
-     * The status is not changed here. Moving a procedure is recorded through
-     * {@link #recordStatus(String, DunningCaseStatus, java.util.Date, String)}, which journals who
-     * did it and on what basis.
-     *
-     * @param dunningCase the procedure with its changed values
-     * @return the updated procedure
-     * @throws Exception if it does not exist or its case is not accessible
-     */
-    DunningCase updateDunningCase(DunningCase dunningCase) throws Exception;
+            for (String label : SHARED_LABELS) {
+                List<String> mine = ours.get(label);
+                List<String> printed = theirs.get(label);
+                if (mine == null || printed == null) {
+                    continue;
+                }
+                int count = Math.min(mine.size(), printed.size());
+                for (int i = 0; i < count; i++) {
+                    compared++;
+                    if (!normalise(mine.get(i)).equals(normalise(printed.get(i)))) {
+                        differing.add(eda.getName() + " " + label + " #" + (i + 1)
+                                + ": wir \"" + mine.get(i) + "\", Gericht \"" + printed.get(i) + "\"");
+                    }
+                }
+            }
+        }
+        assertTrue("es wurde nichts verglichen - die Muster fehlen?", compared > 20);
+        assertEquals("Angaben, die von der Übersicht des Gerichts abweichen: " + differing,
+                0, differing.size());
+    }
 
-    /**
-     * Deletes a dunning procedure that has not left the firm.
-     *
-     * Only a procedure still in preparation can be deleted - one without a court file number, and
-     * without any procedural date recorded. Up to that point it is an entry somebody made, and
-     * deleting it removes a mistake rather than a record.
-     *
-     * Once an application has gone to the court the answer is a status instead: withdrawn or
-     * completed. Deleting then would not undo the procedure at the court, it would only destroy what
-     * the firm knows about it - the journal with its dates, users and sources, the deadlines
-     * computed from the procedural dates, and the service date from which the interest of components
-     * awarded interest on service runs. The condition is enforced here and not only in the user
-     * interface.
-     *
-     * The journal entries and the deadline records of the procedure go with it. So do the follow-ups
-     * those deadlines created, which would otherwise remain in the calendar pointing at a procedure
-     * that no longer exists.
-     *
-     * @param dunningCaseId the procedure to delete
-     * @throws Exception if it does not exist, its case is not accessible, or it has left the firm -
-     * the message then says which of those it is
-     */
-    void removeDunningCase(String dunningCaseId) throws Exception;
+    @Test
+    public void thePageCarriesWhatTheSummarySays() throws Exception {
+        // Der Durchstich bis aufs Blatt: was in der Übersicht steht, muss auch gedruckt ankommen.
+        File eda = new File(directory(), "01-natperson-katalog11.eda");
+        Assume.assumeTrue(eda.isFile());
 
-    /**
-     * Records that a procedure has reached a new status.
-     *
-     * The change is journalled with the procedural date, the user and the fact that a person entered
-     * it rather than a court message reporting it. That distinction is the first thing to look at
-     * when a procedure turns out to have been recorded wrongly.
-     *
-     * @param dunningCaseId the procedure
-     * @param status the status it reaches
-     * @param eventDate the procedural date - the day of service, of issue - which is what deadlines
-     * are computed from, not the day of entry
-     * @param comment a note on the change, or null
-     * @return the updated procedure
-     * @throws Exception if the procedure does not exist or its case is not accessible
-     */
-    DunningCase recordStatus(String dunningCaseId, DunningCaseStatus status, java.util.Date eventDate,
-            String comment) throws Exception;
+        byte[] pdf = new EdaApplicationPdfWriter().write(summaryOf(eda));
+        assertTrue(pdf.length > 0);
 
-    /**
-     * Returns the journal of a procedure.
-     *
-     * @param dunningCaseId the procedure
-     * @return its status changes, oldest first, so the list reads as the course of the procedure
-     * @throws Exception if the procedure does not exist or its case is not accessible
-     */
-    List<DunningCaseEvent> getHistory(String dunningCaseId) throws Exception;
-
-    /**
-     * Returns the dunning procedures the calling user may see, filtered.
-     *
-     * Only cases the user has access to appear; the list is a view of their own work, not of the
-     * firm's. Each row carries the next open deadline, because the question the list answers is what
-     * needs doing, and a status without a date does not answer it.
-     *
-     * @param filter what to show; null means everything the user may see
-     * @return the rows, the most urgent deadline first; never null
-     * @throws Exception if the list cannot be assembled
-     */
-    List<DunningWorklistRow> getWorklist(DunningWorklistFilter filter) throws Exception;
-
-    /**
-     * Renders a worklist as CSV, so it can be worked through outside the program.
-     *
-     * @param rows the rows to render, as returned by {@link #getWorklist(DunningWorklistFilter)}
-     * @return the CSV text
-     * @throws Exception if it cannot be rendered
-     */
-    String exportWorklistAsCsv(List<DunningWorklistRow> rows) throws Exception;
+        File written = File.createTempFile("eda-", ".pdf");
+        try {
+            Files.write(written.toPath(), pdf);
+            String text;
+            try (PDDocument document = PDDocument.load(written)) {
+                text = new PDFTextStripper().getText(document);
+            }
+            for (String expected : Arrays.asList("Mahnbescheidsantrag", "Antragsteller",
+                    "Antragsgegner", "Ansprüche", "Erika", "Gläubiger", "Max", "Schuldner",
+                    "Kaufvertrag", "(Katalog-Nr. 11)", "5.000,00 EUR", "R-2025-0815")) {
+                assertTrue("im Blatt fehlt: " + expected, text.contains(expected));
+            }
+            assertFalse("das Blatt darf nichts erfinden - eine Gerichtsgebuehr steht nicht in der "
+                    + "Datei", text.contains("Gerichtsgebühr"));
+        } finally {
+            written.delete();
+        }
+    }
 }

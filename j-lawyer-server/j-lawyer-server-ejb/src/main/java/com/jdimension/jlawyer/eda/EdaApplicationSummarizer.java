@@ -660,261 +660,585 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package com.jdimension.jlawyer.eda;
 
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.persistence.DunningCase;
-import com.jdimension.jlawyer.persistence.DunningCaseEvent;
-import com.jdimension.jlawyer.persistence.DunningCaseStatus;
-import com.jdimension.jlawyer.pojo.DunningClaimInput;
-import com.jdimension.jlawyer.pojo.DunningMessageProposal;
-import com.jdimension.jlawyer.pojo.EdaDocumentView;
-import com.jdimension.jlawyer.pojo.DunningWorklistFilter;
-import com.jdimension.jlawyer.pojo.DunningWorklistRow;
-import com.jdimension.jlawyer.pojo.DunningValidationResult;
+import com.jdimension.jlawyer.persistence.LitigationCourtType;
+import com.jdimension.jlawyer.referencedata.MainClaimCatalogueEntry;
+import com.jdimension.jlawyer.referencedata.ReferenceData;
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.List;
-import java.util.Map;
-import javax.ejb.Remote;
+import java.util.Locale;
 
 /**
- * The court dunning procedure.
+ * Reads an EDA application the way the courts' own Online-Mahnantrag prints it.
  *
- * At present this exposes the readiness check for an application; the operations that carry a
- * procedure through its stages join it as they are built.
+ * The records of the file are not in the order a reader needs them, and their names say nothing to
+ * anyone who has not read the specification: "C13", "AGN2", "ASPBET". The overview of the
+ * Online-Mahnantrag arranges the same data as four blocks - who files, for whom, against whom, and
+ * what is claimed - and that arrangement is what a lawyer checks an application against before it
+ * goes out. It is reproduced here, from the file rather than from our own data, so that what is
+ * shown is what was written.
+ *
+ * Nothing is computed. Where the overview of the web application shows a figure the file does not
+ * carry - the court fee, for instance - it is left out rather than worked out: a rendering that
+ * quietly adds something is no longer a rendering of the file.
  *
  * @author jens
  */
-@Remote
-public interface DunningServiceRemote {
+public class EdaApplicationSummarizer {
 
     /**
-     * Checks whether a dunning application can be filed, without producing or changing anything.
+     * Turns the content of an exchange file into the overview.
      *
-     * Every problem is reported together rather than the first one raised, so a user learns in one
-     * pass what needs fixing. The check reads; it stores nothing.
-     *
-     * Note what it does not yet cover: whether the data also fits the field lengths and value
-     * domains of the record format is a separate question that needs the Satzbeschreibung, and that
-     * check joins this one with the EDA core.
-     *
-     * @param dunningCaseId the procedure to check
-     * @param claimValue the value that would be applied for; the caller determines it, because
-     * whether a position counts as an ancillary claim (§ 43 GKG) is a judgement
-     * @return every finding, blocking and otherwise; never null
-     * @throws Exception if the procedure does not exist or the user may not see its case
+     * @param content the file, already decoded
+     * @param documentName the name of the document it came from
+     * @return the overview, empty where the file holds no application
      */
-    DunningValidationResult validateApplication(String dunningCaseId, BigDecimal claimValue) throws Exception;
+    public EdaApplicationSummary summarize(String content, String documentName) {
+
+        EdaApplicationSummary summary = new EdaApplicationSummary();
+        summary.setDocumentName(documentName);
+        if (content == null || content.isEmpty()) {
+            return summary;
+        }
+
+        EdaApplicationSummary.Section representative = null;
+        EdaApplicationSummary.Section applicant = null;
+        EdaApplicationSummary.Section respondent = null;
+        EdaApplicationSummary.Section claim = null;
+        int applicants = 0;
+        int respondents = 0;
+        int claims = 0;
+        int applicantAgents = 0;
+        int respondentAgents = 0;
+        EdaApplicationSummary.Section pendingInterest = null;
+        boolean jointDebtors = false;
+        String applicantLegalForm = null;
+        String respondentLegalForm = null;
+
+        for (String line : EdaRecords.split(content)) {
+            EdaRecordLayout layout = EdaMahnbescheidLayouts.findByRecordKey(line);
+            if (layout == null) {
+                continue;
+            }
+            EdaRecord record = new EdaRecordCodec().parse(layout, line);
+            String id = layout.getId();
+
+            switch (id) {
+                case "AA":
+                    summary.getHeader().add(new EdaApplicationSummary.Line(
+                            "Verfahrenswährung", "EUR"));
+                    if (notEmpty(record.get("DATUM"))) {
+                        summary.getHeader().add(new EdaApplicationSummary.Line(
+                                "Antragsdatum", date(record.get("DATUM"))));
+                    }
+                    break;
+
+                case "C01":
+                    representative = representativeOf(summary);
+                    // Eine Kennziffer ist eine Kennung und keine Zahl: "07774512" ohne die
+                    // fuehrende Null waere eine andere.
+                    representative.add("Kennziffer", trim(record.get("PVKEZI")));
+                    representative.add("Kennziffer des Antragstellers", trim(record.get("ASKEZI")));
+                    representative.add("Mahngericht", place(record.get("MGPLZ"), record.get("MGO")));
+                    jointDebtors = notEmpty(record.get("AGGMM"));
+                    if ("X".equalsIgnoreCase(trim(record.get("VGLM1")))) {
+                        representative.state("Der Anspruch ist von einer Gegenleistung abhängig, "
+                                + "die erbracht ist.");
+                    }
+                    if ("X".equalsIgnoreCase(trim(record.get("VGLM2")))) {
+                        representative.state("Der Anspruch ist von einer Gegenleistung abhängig, "
+                                + "die nicht erbracht ist.");
+                    }
+                    break;
+
+                case "C07":
+                    // Kein zweiter Abschnitt: der Prozessbevollmächtigte ist einer, auch wenn ihn
+                    // die Datei über mehrere Sätze verteilt.
+                    representative = representativeOf(summary);
+                    representative.add("Funktion", office(record.get("ASPVANR")));
+                    representative.add("Name/Bezeichnung", record.get("ASPVN"));
+                    break;
+                case "C08":
+                    representative = representativeOf(summary);
+                    representative.add("Rechtsform", record.get("ASPVRF"));
+                    representative.add("Straße", record.get("ASPHSH"));
+                    representative.add("PLZ/Ort/Nation",
+                            place(record.get("ASPVPLZ"), record.get("ASPVO"), record.get("ASPVAL")));
+                    break;
+                case "C09":
+                    representative = representativeOf(summary);
+                    representative.add("Gesetzlicher Vertreter - Funktion", record.get("ASPVGVFU"));
+                    representative.add("Gesetzlicher Vertreter - Name", record.get("ASPVGVN"));
+                    break;
+                case "C10":
+                    representative = representativeOf(summary);
+                    representative.add("Geschäftszeichen", record.get("ASPVGZ"));
+                    representative.add("Abweichende Auslagen von Nr. 7002 VV RVG",
+                            amount(record.get("ASPVMBAUSL")));
+                    representative.add("Minderungsbetrag aus Nr. 2300/2302 VV RVG",
+                            amount(record.get("VV2300MBET")));
+                    representative.add("Abweichender Mehrwertsteuersatz",
+                            rate(record.get("ASPVMWSTS"), null));
+                    representative.add("Beauftragungsdatum", date(record.get("ASPVAUFD")));
+                    if (notEmpty(record.get("VORSTM"))) {
+                        representative.state("Der Antragsteller ist nicht zum Vorsteuerabzug berechtigt.");
+                    }
+                    if (notEmpty(record.get("USTM"))) {
+                        representative.state("Der Prozessbevollmächtigte ist von der Zahlung von "
+                                + "Umsatzsteuer befreit.");
+                    }
+                    break;
+
+                case "C02":
+                    applicants++;
+                    applicantAgents = 0;
+                    heading(summary, "Antragsteller", 0, applicants == 1);
+                    applicant = section(summary, applicants + ". Antragsteller", 1);
+                    applicantLegalForm = record.get("ASRF");
+                    party(applicant, record.get("ASANR"), record.get("ASRF"),
+                            record.get("ASN1"), record.get("ASN2"));
+                    break;
+                case "C03":
+                    if (applicant != null) {
+                        applicant.add("Name", join(record.get("ASN3"), record.get("ASN4")));
+                    }
+                    break;
+                case "C04":
+                    if (applicant != null) {
+                        applicant.add("Straße", record.get("ASSH"));
+                        applicant.add("PLZ/Ort/Nation",
+                                place(record.get("ASPLZ"), record.get("ASO"), record.get("ASAL")));
+                    }
+                    break;
+                case "C05":
+                    applicantAgents++;
+                    EdaApplicationSummary.Section applicantAgent =
+                            section(summary, applicantAgents + ". Gesetzlicher Vertreter", 2);
+                    agent(applicantAgent, record.get("ASGVFU"), record.get("ASGVN"), applicantLegalForm);
+                    break;
+                case "C06":
+                    lastSection(summary).add("Straße", record.get("ASGVSH"));
+                    lastSection(summary).add("PLZ/Ort/Nation",
+                            place(record.get("ASGVPLZ"), record.get("ASGVO"), record.get("ASGVAL")));
+                    break;
+
+                case "C13":
+                    respondents++;
+                    respondentAgents = 0;
+                    heading(summary, "Antragsgegner", 0, respondents == 1);
+                    if (respondents == 1 && jointDebtors) {
+                        headingOf(summary, "Antragsgegner").state("Antragsgegner sind Gesamtschuldner");
+                    }
+                    respondent = section(summary, respondents + ". Antragsgegner", 1);
+                    respondentLegalForm = record.get("AGRF");
+                    party(respondent, record.get("AGANR"), record.get("AGRF"),
+                            record.get("AGN1"), record.get("AGN2"));
+                    break;
+                case "C14":
+                    if (respondent != null) {
+                        respondent.add("Name", join(record.get("AGN3"), record.get("AGN4")));
+                    }
+                    break;
+                case "C15":
+                    if (respondent != null) {
+                        respondent.add("Straße", record.get("AGSH"));
+                        respondent.add("PLZ/Ort/Nation",
+                                place(record.get("AGPLZ"), record.get("AGO"), record.get("AGAL")));
+                    }
+                    break;
+                case "C16":
+                    EdaApplicationSummary.Section court = section(summary, "Prozessgericht", 2);
+                    court.add("Anschrift", courtName(record.get("PGM"), record.get("PGO")));
+                    court.add("PLZ/Ort", place(record.get("PGPLZ"), record.get("PGO")));
+                    break;
+                case "C17":
+                    respondentAgents++;
+                    EdaApplicationSummary.Section respondentAgent =
+                            section(summary, respondentAgents + ". Gesetzlicher Vertreter", 2);
+                    agent(respondentAgent, record.get("AGGVFU"), record.get("AGGVN"), respondentLegalForm);
+                    break;
+                case "C18":
+                    lastSection(summary).add("Straße", record.get("AGGVSH"));
+                    lastSection(summary).add("PLZ/Ort/Nation",
+                            place(record.get("AGGVPLZ"), record.get("AGGVO"), record.get("AGGVAL")));
+                    break;
+
+                case "C20":
+                    claims++;
+                    heading(summary, "Ansprüche", 0, claims == 1);
+                    claim = section(summary, claims + ". Katalogisierbarer Anspruch", 1);
+                    if (pendingInterest != null) {
+                        summary.getSections().add(pendingInterest);
+                        pendingInterest = null;
+                    }
+                    claim.add("Anspruch", catalogueName(record.get("ASPKAT1")));
+                    claim.state(catalogueNumber(record.get("ASPKAT1")));
+                    claim.add("Mitteilungsform", record.get("ASPGR"));
+                    claim.add("Rechnung".equalsIgnoreCase(trim(record.get("ASPGR")))
+                            ? "Rechnungsnummer" : "Nummer", record.get("ASPRNR"));
+                    claim.add("ab/vom", date(record.get("ASPVD")));
+                    claim.add("bis", date(record.get("ASPBD")));
+                    claim.add("Betrag", amount(record.get("ASPBET")));
+                    break;
+                case "C21":
+                    if (claim != null) {
+                        claim.add("Straße des Objekts", record.get("ASPZMSH"));
+                        claim.add("PLZ/Ort des Objekts",
+                                place(record.get("ASPZMPLZ"), record.get("ASPZMO")));
+                    }
+                    break;
+                case "C22":
+                    if (claim != null) {
+                        claim.add("Vertragsart", record.get("ASPVART"));
+                    }
+                    break;
+                case "C23":
+                    claims++;
+                    heading(summary, "Ansprüche", 0, claims == 1);
+                    claim = section(summary, claims + ". Sonstiger Anspruch", 1);
+                    if (pendingInterest != null) {
+                        summary.getSections().add(pendingInterest);
+                        pendingInterest = null;
+                    }
+                    claim.add("Bezeichnung", record.get("ASPSONST1"));
+                    break;
+                case "C24":
+                    if (claim != null) {
+                        claim.add("Bezeichnung", record.get("ASPSONST2"));
+                        claim.add("ab/vom", date(record.get("ASPVD")));
+                        claim.add("bis", date(record.get("ASPBD")));
+                        claim.add("Betrag", amount(record.get("ASPBET")));
+                    }
+                    break;
+                case "C25":
+                    if (claim != null) {
+                        claim.add("Abtretung / Forderungsübergang", record.get("ASPABTR"));
+                    }
+                    break;
+                case "C19":
+                    // Die ausgerechneten Zinsen stehen in der Datei VOR ihrem Anspruch. Gelesen
+                    // werden sie darunter; sie warten deshalb, bis der Anspruch aufgemacht ist.
+                    pendingInterest = new EdaApplicationSummary.Section("Ausgerechnete Zinsen", 2);
+                    pendingInterest.add("Betrag", amount(record.get("AZIAUBET")));
+                    pendingInterest.add("Zinssatz", rate(record.get("AZISATZ"), null));
+                    pendingInterest.add("ab/vom", date(record.get("AZIVD")));
+                    pendingInterest.add("bis", date(record.get("AZIBD")));
+                    break;
+                case "C26":
+                    EdaApplicationSummary.Section running = section(summary, "Laufende Zinsen", 2);
+                    running.add("Zinssatz", rate(record.get("ZISATZ"), record.get("ZISAM")));
+                    running.add("aus", amount(record.get("ZIRGBET")));
+                    running.add("ab/vom", date(record.get("ZIVD")));
+                    running.add("bis", date(record.get("ZIBD")));
+                    break;
+
+                case "BB":
+                    // Die Summe gehoert im Muster unter die Ueberschrift "Ansprueche" und vor die
+                    // einzelnen Ansprueche - sie steht in der Datei aber ganz am Ende, im
+                    // Nachsatz. Sie wird deshalb dorthin nachgetragen, wo sie gelesen wird.
+                    EdaApplicationSummary.Section claimsHeading = headingOf(summary, "Ansprüche");
+                    if (claimsHeading != null) {
+                        claimsHeading.add("Summe der Hauptforderungen", amount(record.get("SUASP")));
+                        claimsHeading.add("Anzahl der Ansprüche", digits(record.get("ASPANZ")));
+                    }
+                    break;
+
+                default:
+                    // Nebenforderungen und Auslagen tragen ihre Betraege in gleich gebauten
+                    // Saetzen; sie bekommen einen Abschnitt mit dem Namen ihrer Satzart, damit
+                    // nichts unerwaehnt bleibt, was im Antrag steht.
+                    if (id.startsWith("C2") || id.startsWith("C3")) {
+                        ancillary(summary, layout, record);
+                    }
+                    break;
+            }
+        }
+
+        // Ein Abschnitt ohne Zeilen behauptet eine Angabe, die der Antrag nicht macht.
+        summary.getSections().removeIf(sec -> sec.getLevel() > 0 && sec.getLines().isEmpty());
+        return summary;
+    }
 
     /**
-     * Produces the EDA file for a dunning application, stores it in the case and records that the
-     * application has gone out.
-     *
-     * Nothing is produced that has not been checked. The data is validated first and the finished
-     * file is verified structurally afterwards; if either fails, no document is stored and no status
-     * is changed - an unverified file must never leave the firm, and a procedure must not claim to
-     * have applied for something it did not send.
-     *
-     * @param dunningCaseId the procedure to file
-     * @param claimValue the value applied for
-     * @param claims what is applied for, in the order it should appear
-     * @param fileName the six-character name the file announces itself under
-     * @return the stored document
-     * @throws Exception if the data is incomplete, the file fails verification, or it cannot be
-     * stored; the message names what went wrong
+     * Costs and further ancillary claims: same shape, different heading.
      */
-    ArchiveFileDocumentsBean exportApplication(String dunningCaseId, BigDecimal claimValue,
-            List<DunningClaimInput> claims, String fileName) throws Exception;
+    private void ancillary(EdaApplicationSummary summary, EdaRecordLayout layout, EdaRecord record) {
+        EdaApplicationSummary.Section section =
+                section(summary, shortTitleOf(layout.getDescription()), 1);
+        for (EdaField field : layout.getFields()) {
+            if (field.isFiller()) {
+                continue;
+            }
+            String value = record.get(field.getName());
+            if (!notEmpty(value)) {
+                continue;
+            }
+            // Nach der Bezeichnung und nicht nach dem Feldnamen: der Betrag der Mahnkosten heisst
+            // "MAHNK", der der Auskunftskosten "AUSKK" - die Namen folgen keiner Regel, die
+            // Bezeichnungen schon.
+            String label = EdaFieldLabels.labelOf(field.getName());
+            if (label != null && label.contains("Betrag")) {
+                section.add(label, amount(value));
+            } else if (label != null && label.contains("Zinssatz")) {
+                section.add(label, rate(value, null));
+            } else if (label != null && label.contains("Datum")) {
+                section.add(label, date(value));
+            } else {
+                section.add(label, value.trim());
+            }
+        }
+        if (section.getLines().isEmpty()) {
+            summary.getSections().remove(section);
+        }
+    }
+
+    private String shortTitleOf(String description) {
+        if (description == null) {
+            return "Weitere Angaben";
+        }
+        int dash = description.indexOf('–');
+        return dash < 0 ? description : description.substring(dash + 1).replace('–', '-').trim();
+    }
 
     /**
-     * Reads the court messages in a document and proposes what each of them belongs to.
-     *
-     * Nothing is applied and nothing is stored. This is what a user is shown before confirming: one
-     * entry per message, with the procedure the system found for it or the statement that it found
-     * none and the user has to choose.
-     *
-     * The search runs across all procedures rather than within the document's case. Courts send
-     * collective files - the trailer counts the messages in one - so a single document can carry news
-     * for many procedures in many cases; where it was filed is provenance, not context.
-     *
-     * @param documentId the document holding the exchange file
-     * @return one proposal per message, in the order they appear
-     * @throws Exception if the document does not exist, is empty, or the user may not see its case
+     * A participant, as the overview writes one: a natural person by salutation, first and last
+     * name, a legal person by its legal form and name.
      */
-    List<DunningMessageProposal> analyseCourtMessages(String documentId) throws Exception;
+    private void party(EdaApplicationSummary.Section section, String salutationKey,
+            String legalForm, String name1, String name2) {
+
+        EdaSalutationKey key = null;
+        try {
+            key = EdaSalutationKey.fromCode(salutationKey);
+        } catch (RuntimeException ignored) {
+            // ein unbekannter Schluessel ist kein Grund, die Uebersicht abzubrechen
+        }
+        boolean natural = key != null && key.isNaturalPerson();
+
+        if (natural) {
+            section.add("Anrede", key.getLabel());
+            section.add("Vorname", name1);
+            section.add("Nachname", name2);
+        } else {
+            // Nur die Rechtsform, die im Antrag steht. Der Anredeschluessel ist kein Ersatz dafuer:
+            // seine Bezeichnung ist ein Satz ueber das Format ("ohne Anredeschluessel, Rechtsform
+            // im eigenen Feld") und keine Angabe ueber den Beteiligten.
+            section.add("Rechtsform", legalForm);
+            section.add("Name", join(name1, name2));
+        }
+    }
 
     /**
-     * Resolves an EDA exchange file of a case against the Satzbeschreibungen, so it can be read.
-     *
-     * The files are fixed-length records of 128 bytes with nothing separating the fields inside
-     * them; reading one by eye means counting columns. This returns the same file with its records
-     * and fields named, together with what the file says about itself - the record type, the format
-     * version, the Kennziffer, and whether it is an application the firm sent or a message the court
-     * sent back. That direction is derived from the record type, not from where the file sits.
-     *
-     * Records no Satzbeschreibung covers are still returned, with their raw line and without fields,
-     * so a file from a newer format version stays partly readable rather than appearing empty.
-     *
-     * @param documentId the document holding the exchange file
-     * @return the file as it can be shown, never null
-     * @throws Exception if the document does not exist, is empty, or its case is not accessible
+     * A statutory representative. Where the record carries no name of its own, what stands in the
+     * field for the office is the name - that is how a company representing a company is entered,
+     * the general partner of an AG & Co. KG for instance.
      */
-    EdaDocumentView describeEdaDocument(String documentId) throws Exception;
+    private void agent(EdaApplicationSummary.Section section, String office, String name,
+            String legalFormOfParty) {
+
+        if (notEmpty(name)) {
+            section.add("Funktion", office);
+            section.add("Name", name);
+        } else {
+            // Vertritt eine Gesellschaft die Partei - die Komplementaerin einer GmbH & Co. KG etwa -,
+            // steht ihr Name im Feld fuer die Stellung. Das Gericht benennt ihn nach der Rechtsform
+            // der Partei: "Name der GmbH".
+            String kind = trim(legalFormOfParty);
+            int space = kind.indexOf(' ');
+            if (space > 0) {
+                kind = kind.substring(0, space);
+            }
+            section.add(kind.isEmpty() ? "Name" : "Name der " + kind, office);
+        }
+    }
+
+    private EdaApplicationSummary.Section section(EdaApplicationSummary summary, String title, int level) {
+        EdaApplicationSummary.Section section = new EdaApplicationSummary.Section(title, level);
+        summary.getSections().add(section);
+        return section;
+    }
 
     /**
-     * Lays out the application of an exchange file as a page.
-     *
-     * The file is a sequence of fixed-width records, which is what the viewer shows and what is
-     * needed to check a file against the specification. It is not what is needed to check an
-     * application against the intention behind it. The page arranges the same data the way the
-     * courts' own Online-Mahnantrag prints its overview - who files, for whom, against whom and
-     * what is claimed - so that the two can be held side by side.
-     *
-     * Nothing is computed and nothing is added: a figure the file does not carry, such as the court
-     * fee, is left out rather than worked out.
-     *
-     * @param documentId the document holding the exchange file
-     * @return the page as a PDF
-     * @throws Exception if the document does not exist, is empty, holds no application, or its case
-     * is not accessible
+     * Adds a main heading, but only once - the records of a second applicant must not repeat it.
      */
-    byte[] renderEdaDocument(String documentId) throws Exception;
+    private void heading(EdaApplicationSummary summary, String title, int level, boolean first) {
+        if (first) {
+            summary.getSections().add(new EdaApplicationSummary.Section(title, level));
+        }
+    }
 
     /**
-     * Lays out the application of an exchange file and files the page in the same case.
-     *
-     * @param documentId the document holding the exchange file
-     * @return the document that was created
-     * @throws Exception if the document does not exist, is empty, holds no application, belongs to
-     * no case, or its case is not accessible
+     * The main heading of a name, where one was written.
      */
-    ArchiveFileDocumentsBean storeEdaDocumentRendering(String documentId) throws Exception;
+    private EdaApplicationSummary.Section headingOf(EdaApplicationSummary summary, String title) {
+        for (EdaApplicationSummary.Section section : summary.getSections()) {
+            if (section.getLevel() == 0 && title.equals(section.getTitle())) {
+                return section;
+            }
+        }
+        return null;
+    }
+
+    private EdaApplicationSummary.Section lastSection(EdaApplicationSummary summary) {
+        List<EdaApplicationSummary.Section> sections = summary.getSections();
+        if (sections.isEmpty()) {
+            return section(summary, "", 2);
+        }
+        return sections.get(sections.size() - 1);
+    }
 
     /**
-     * Applies the court messages of a document, as the user assigned them.
-     *
-     * A message left unassigned is not applied and not stored anywhere - it stays in the document,
-     * and running this again later picks it up. That is why nothing is lost by confirming only part
-     * of a file.
-     *
-     * A message that would move a procedure backwards is reported and skipped. Re-running an import
-     * is a normal thing to do, so an older message must not undo what a newer one already recorded.
-     *
-     * @param documentId the document holding the exchange file
-     * @param assignments the procedure chosen per message, keyed by the message's position in the
-     * file as {@code analyseCourtMessages} reported it; a position left out stays unapplied
-     * @return what happened to each message, in words for the user
-     * @throws Exception if the document cannot be read
+     * What the catalogue calls the claim. The number follows on a line of its own, as it does in
+     * the overview of the court.
      */
-    List<String> applyCourtMessages(String documentId, Map<Integer, String> assignments) throws Exception;
+    private String catalogueName(String number) {
+        String digits = digits(number);
+        if (!notEmpty(digits)) {
+            return null;
+        }
+        try {
+            MainClaimCatalogueEntry entry =
+                    ReferenceData.getMainClaimCatalogue().findByNumber(Integer.parseInt(digits));
+            if (entry != null) {
+                return entry.getDesignation();
+            }
+        } catch (RuntimeException ignored) {
+            // eine unbekannte Nummer wird genannt statt verschwiegen
+        }
+        return "Katalog-Nr. " + digits;
+    }
+
+    private String catalogueNumber(String number) {
+        String digits = digits(number);
+        return notEmpty(digits) ? "(Katalog-Nr. " + digits + ")" : null;
+    }
 
     /**
-     * Returns the dunning procedures conducted over a claim ledger.
-     *
-     * @param ledgerId the claim ledger
-     * @return the procedures, most recently created first; never null
-     * @throws Exception if the ledger does not exist or its case is not accessible
+     * The office of a representative, as the application keys it.
      */
-    List<DunningCase> getDunningCases(String ledgerId) throws Exception;
+    private String office(String code) {
+        switch (trim(code)) {
+            case "1": return "Rechtsanwalt";
+            case "2": return "Rechtsanwälte";
+            case "3": return "Rechtsbeistand";
+            case "4": return "Person";
+            case "5": return "Rechtsanwältin";
+            case "6": return "Rechtsanwältinnen";
+            case "7": return "Rechtsanwaltsgemeinschaft";
+            case "8": return "Inkassodienstleister";
+            case "9": return "Verbraucherzentrale";
+            default: return null;
+        }
+    }
 
     /**
-     * Creates a dunning procedure over a claim ledger.
-     *
-     * The procedure starts in preparation and carries the court and Kennziffer it is given. Its own
-     * reference is what every later message from the court will echo back, so it is generated where
-     * the caller supplies none - a procedure without one cannot be matched to its replies.
-     *
-     * @param ledgerId the claim ledger
-     * @param dunningCase the procedure to create
-     * @return the created procedure as it was stored
-     * @throws Exception if the ledger does not exist, its case is not accessible, or it cannot be
-     * stored
+     * The one section for the representative, made where it does not exist yet.
      */
-    DunningCase addDunningCase(String ledgerId, DunningCase dunningCase) throws Exception;
+    private EdaApplicationSummary.Section representativeOf(EdaApplicationSummary summary) {
+        EdaApplicationSummary.Section existing = headingOf(summary, "Prozessbevollmächtigter");
+        return existing != null ? existing : section(summary, "Prozessbevollmächtigter", 0);
+    }
+
+    private String courtName(String key, String place) {
+        String code = trim(key);
+        for (LitigationCourtType type : LitigationCourtType.values()) {
+            if (type.getCode().equals(code)) {
+                String name = type.toString();
+                int bracket = name.indexOf(" (");
+                return (bracket < 0 ? name : name.substring(0, bracket)) + " " + trim(place);
+            }
+        }
+        return notEmpty(place) ? trim(place) : null;
+    }
 
     /**
-     * Updates the master data of a dunning procedure - court, Kennziffer, reference, description.
-     *
-     * The status is not changed here. Moving a procedure is recorded through
-     * {@link #recordStatus(String, DunningCaseStatus, java.util.Date, String)}, which journals who
-     * did it and on what basis.
-     *
-     * @param dunningCase the procedure with its changed values
-     * @return the updated procedure
-     * @throws Exception if it does not exist or its case is not accessible
+     * An amount, which the file carries in cents without a separator.
      */
-    DunningCase updateDunningCase(DunningCase dunningCase) throws Exception;
+    private String amount(String value) {
+        String digits = digits(value);
+        if (!notEmpty(digits)) {
+            return null;
+        }
+        BigDecimal euros = new BigDecimal(digits).movePointLeft(2);
+        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.GERMANY);
+        return new DecimalFormat("#,##0.00", symbols).format(euros) + " EUR";
+    }
 
     /**
-     * Deletes a dunning procedure that has not left the firm.
-     *
-     * Only a procedure still in preparation can be deleted - one without a court file number, and
-     * without any procedural date recorded. Up to that point it is an entry somebody made, and
-     * deleting it removes a mistake rather than a record.
-     *
-     * Once an application has gone to the court the answer is a status instead: withdrawn or
-     * completed. Deleting then would not undo the procedure at the court, it would only destroy what
-     * the firm knows about it - the journal with its dates, users and sources, the deadlines
-     * computed from the procedural dates, and the service date from which the interest of components
-     * awarded interest on service runs. The condition is enforced here and not only in the user
-     * interface.
-     *
-     * The journal entries and the deadline records of the procedure go with it. So do the follow-ups
-     * those deadlines created, which would otherwise remain in the calendar pointing at a procedure
-     * that no longer exists.
-     *
-     * @param dunningCaseId the procedure to delete
-     * @throws Exception if it does not exist, its case is not accessible, or it has left the firm -
-     * the message then says which of those it is
+     * A rate, which the file carries as thousandths of a percent.
      */
-    void removeDunningCase(String dunningCaseId) throws Exception;
+    private String rate(String value, String kind) {
+        String digits = digits(value);
+        if (!notEmpty(digits)) {
+            return null;
+        }
+        BigDecimal percent = new BigDecimal(digits).movePointLeft(3);
+        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.GERMANY);
+        String rate = new DecimalFormat("0.##", symbols).format(percent) + " %";
+        if ("B".equalsIgnoreCase(trim(kind))) {
+            return rate + " über dem Basiszinssatz";
+        }
+        return rate;
+    }
 
     /**
-     * Records that a procedure has reached a new status.
-     *
-     * The change is journalled with the procedural date, the user and the fact that a person entered
-     * it rather than a court message reporting it. That distinction is the first thing to look at
-     * when a procedure turns out to have been recorded wrongly.
-     *
-     * @param dunningCaseId the procedure
-     * @param status the status it reaches
-     * @param eventDate the procedural date - the day of service, of issue - which is what deadlines
-     * are computed from, not the day of entry
-     * @param comment a note on the change, or null
-     * @return the updated procedure
-     * @throws Exception if the procedure does not exist or its case is not accessible
+     * A date, which the file carries as six digits.
      */
-    DunningCase recordStatus(String dunningCaseId, DunningCaseStatus status, java.util.Date eventDate,
-            String comment) throws Exception;
+    private String date(String value) {
+        String digits = digits(value);
+        if (digits == null || digits.length() != 6) {
+            return null;
+        }
+        return digits.substring(4, 6) + "." + digits.substring(2, 4) + ".20" + digits.substring(0, 2);
+    }
+
+    private String place(String zip, String city) {
+        return place(zip, city, null);
+    }
+
+    private String place(String zip, String city, String country) {
+        StringBuilder sb = new StringBuilder();
+        if (notEmpty(zip)) {
+            sb.append(trim(zip));
+        }
+        if (notEmpty(city)) {
+            sb.append(sb.length() == 0 ? "" : " ").append(trim(city));
+        }
+        if (notEmpty(country)) {
+            sb.append(sb.length() == 0 ? "" : " ").append(trim(country));
+        }
+        return sb.length() == 0 ? null : sb.toString();
+    }
+
+    private String join(String first, String second) {
+        String a = trim(first);
+        String b = trim(second);
+        if (a.isEmpty()) {
+            return b.isEmpty() ? null : b;
+        }
+        return b.isEmpty() ? a : a + " " + b;
+    }
 
     /**
-     * Returns the journal of a procedure.
-     *
-     * @param dunningCaseId the procedure
-     * @return its status changes, oldest first, so the list reads as the course of the procedure
-     * @throws Exception if the procedure does not exist or its case is not accessible
+     * The digits of a field, without the leading zeroes the format pads with.
      */
-    List<DunningCaseEvent> getHistory(String dunningCaseId) throws Exception;
+    private String digits(String value) {
+        String trimmed = trim(value);
+        int i = 0;
+        while (i < trimmed.length() - 1 && trimmed.charAt(i) == '0') {
+            i++;
+        }
+        return trimmed.substring(i);
+    }
 
-    /**
-     * Returns the dunning procedures the calling user may see, filtered.
-     *
-     * Only cases the user has access to appear; the list is a view of their own work, not of the
-     * firm's. Each row carries the next open deadline, because the question the list answers is what
-     * needs doing, and a status without a date does not answer it.
-     *
-     * @param filter what to show; null means everything the user may see
-     * @return the rows, the most urgent deadline first; never null
-     * @throws Exception if the list cannot be assembled
-     */
-    List<DunningWorklistRow> getWorklist(DunningWorklistFilter filter) throws Exception;
+    private String trim(String value) {
+        return value == null ? "" : value.trim();
+    }
 
-    /**
-     * Renders a worklist as CSV, so it can be worked through outside the program.
-     *
-     * @param rows the rows to render, as returned by {@link #getWorklist(DunningWorklistFilter)}
-     * @return the CSV text
-     * @throws Exception if it cannot be rendered
-     */
-    String exportWorklistAsCsv(List<DunningWorklistRow> rows) throws Exception;
+    private boolean notEmpty(String value) {
+        return value != null && !value.trim().isEmpty();
+    }
 }

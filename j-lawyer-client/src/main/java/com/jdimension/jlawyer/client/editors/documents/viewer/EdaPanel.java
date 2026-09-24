@@ -694,6 +694,7 @@ public class EdaPanel extends javax.swing.JPanel implements PreviewPanel {
     private static final Logger log = Logger.getLogger(EdaPanel.class.getName());
 
     private String docId = null;
+    private boolean rendered = false;
     private final String docName;
 
     /**
@@ -706,6 +707,79 @@ public class EdaPanel extends javax.swing.JPanel implements PreviewPanel {
         initComponents();
         this.docId = docId;
         this.docName = docName;
+
+        // Die Seite wird erst gebaut, wenn jemand sie sehen will: sie kostet einen Serveraufruf,
+        // und wer die Saetze pruefen will, braucht sie nicht.
+        this.tabs.addChangeListener(e -> {
+            if (this.tabs.getSelectedComponent() == this.pnlApplication && !this.rendered) {
+                renderApplication();
+            }
+        });
+    }
+
+    /**
+     * Builds the readable page of the application and shows it.
+     */
+    private void renderApplication() {
+
+        this.rendered = true;
+        byte[] pdf;
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            pdf = locator.lookupDunningServiceRemote().renderEdaDocument(this.docId);
+        } catch (Exception ex) {
+            log.error("Unable to render EDA document " + this.docId, ex);
+            javax.swing.JLabel failed = new javax.swing.JLabel("<html>Die Datei konnte nicht "
+                    + "dargestellt werden: " + ex.getMessage() + "</html>");
+            failed.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+            this.pnlApplication.removeAll();
+            this.pnlApplication.add(failed, java.awt.BorderLayout.CENTER);
+            this.pnlApplication.revalidate();
+            this.pnlApplication.repaint();
+            // ein weiterer Versuch darf moeglich sein - der Server kann kurz weg gewesen sein
+            this.rendered = false;
+            return;
+        }
+
+        javax.swing.JButton store = new javax.swing.JButton("In der Akte ablegen");
+        store.setToolTipText("Diese Darstellung als PDF-Dokument in derselben Akte speichern");
+        store.addActionListener(e -> storeApplication());
+        javax.swing.JPanel bar = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT));
+        bar.add(store);
+
+        // Der Konstruktor merkt sich die Bytes nur; gezeichnet wird erst in showContent. Ohne den
+        // Aufruf bleibt der Reiter leer - und zwar ohne Fehler, was das Schlimmste daran ist.
+        PdfImageScrollingPanel view = new PdfImageScrollingPanel(true, this.docName + ".pdf", pdf, null);
+
+        this.pnlApplication.removeAll();
+        this.pnlApplication.add(bar, java.awt.BorderLayout.NORTH);
+        this.pnlApplication.add(view, java.awt.BorderLayout.CENTER);
+        this.pnlApplication.revalidate();
+        this.pnlApplication.repaint();
+
+        view.showContent(this.docId, pdf);
+    }
+
+    /**
+     * Files the page in the case the exchange file belongs to.
+     */
+    private void storeApplication() {
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean stored =
+                    locator.lookupDunningServiceRemote().storeEdaDocumentRendering(this.docId);
+            javax.swing.JOptionPane.showMessageDialog(this,
+                    "Die Darstellung liegt als \"" + stored.getName() + "\" in der Akte.",
+                    "Abgelegt", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception ex) {
+            log.error("Unable to store the rendering of EDA document " + this.docId, ex);
+            javax.swing.JOptionPane.showMessageDialog(this,
+                    "Die Darstellung konnte nicht abgelegt werden: " + ex.getMessage(),
+                    com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR,
+                    javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     @Override
@@ -847,6 +921,7 @@ public class EdaPanel extends javax.swing.JPanel implements PreviewPanel {
         tabs = new javax.swing.JTabbedPane();
         jScrollPaneTree = new javax.swing.JScrollPane();
         treeRecords = new javax.swing.JTree();
+        pnlApplication = new javax.swing.JPanel();
         jScrollPaneRaw = new javax.swing.JScrollPane();
         txtRaw = new javax.swing.JTextArea();
 
@@ -856,6 +931,9 @@ public class EdaPanel extends javax.swing.JPanel implements PreviewPanel {
         jScrollPaneTree.setViewportView(treeRecords);
 
         tabs.addTab("Aufbereitet", jScrollPaneTree);
+
+        pnlApplication.setLayout(new java.awt.BorderLayout());
+        tabs.addTab("Antragsdaten", pnlApplication);
 
         txtRaw.setEditable(false);
         txtRaw.setColumns(20);
@@ -891,6 +969,7 @@ public class EdaPanel extends javax.swing.JPanel implements PreviewPanel {
     private javax.swing.JScrollPane jScrollPaneRaw;
     private javax.swing.JScrollPane jScrollPaneTree;
     private javax.swing.JLabel lblHeader;
+    private javax.swing.JPanel pnlApplication;
     private javax.swing.JTabbedPane tabs;
     private javax.swing.JTree treeRecords;
     private javax.swing.JTextArea txtRaw;

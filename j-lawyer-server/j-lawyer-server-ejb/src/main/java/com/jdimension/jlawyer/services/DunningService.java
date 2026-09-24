@@ -662,6 +662,9 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.documents.EdaApplicationPdfWriter;
+import com.jdimension.jlawyer.eda.EdaApplicationSummarizer;
+import com.jdimension.jlawyer.eda.EdaApplicationSummary;
 import com.jdimension.jlawyer.eda.EdaCharset;
 import com.jdimension.jlawyer.eda.EdaClaimMapper;
 import com.jdimension.jlawyer.eda.EdaDocumentDescriber;
@@ -1039,6 +1042,80 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
         }
         return new EdaDocumentDescriber().describe(
                 new String(content, Charset.forName(EdaCharset.CHARSET_NAME)), document.getName());
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public byte[] renderEdaDocument(String documentId) throws Exception {
+        return render(documentId).getContent();
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public ArchiveFileDocumentsBean storeEdaDocumentRendering(String documentId) throws Exception {
+
+        Rendering rendering = render(documentId);
+        if (rendering.getCaseId() == null) {
+            throw new Exception("Das Dokument gehört zu keiner Akte und kann dort nicht abgelegt werden.");
+        }
+        return this.archiveFileService.addDocument(rendering.getCaseId(), rendering.getName(),
+                rendering.getContent(), null, null);
+    }
+
+    /**
+     * Reads an exchange file and lays its application out as a page.
+     */
+    private Rendering render(String documentId) throws Exception {
+
+        ArchiveFileDocumentsBean document = this.archiveFileService.getDocument(documentId);
+        if (document == null) {
+            throw new Exception("Das Dokument existiert nicht!");
+        }
+        if (document.getArchiveFileKey() != null) {
+            requireAccess(document.getArchiveFileKey());
+        }
+        byte[] content = this.archiveFileService.getDocumentContent(documentId);
+        if (content == null || content.length == 0) {
+            throw new Exception("Das Dokument \"" + document.getName() + "\" ist leer.");
+        }
+
+        EdaApplicationSummary summary = new EdaApplicationSummarizer().summarize(
+                new String(content, Charset.forName(EdaCharset.CHARSET_NAME)), document.getName());
+        if (summary.isEmpty()) {
+            throw new Exception("Die Datei \"" + document.getName() + "\" enthält keinen Antrag, "
+                    + "der sich darstellen ließe.");
+        }
+
+        String name = document.getName();
+        int dot = name.lastIndexOf('.');
+        Rendering rendering = new Rendering();
+        rendering.name = (dot > 0 ? name.substring(0, dot) : name) + ".pdf";
+        rendering.content = new EdaApplicationPdfWriter().write(summary);
+        rendering.caseId = document.getArchiveFileKey() == null
+                ? null : document.getArchiveFileKey().getId();
+        return rendering;
+    }
+
+    /**
+     * A rendered application, on its way either to the caller or into the case.
+     */
+    private static class Rendering {
+
+        private String name;
+        private byte[] content;
+        private String caseId;
+
+        String getName() {
+            return name;
+        }
+
+        byte[] getContent() {
+            return content;
+        }
+
+        String getCaseId() {
+            return caseId;
+        }
     }
 
     /**
@@ -1571,13 +1648,15 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
             // column the invoice number would use - the courts' wizard refuses the account number
             // of catalogue 36 anywhere but "im Feld Rechnungsnummer". There is one field, so giving
             // both means one of them is not transmitted, and which one is not ours to decide.
+            String reference = notEmpty(input.getInvoiceNumber())
+                    ? input.getInvoiceNumber() : component.getClaimReasonReference();
             if (CatalogueAddition.of(component.getCatalogueNumber())
                     == CatalogueAddition.REFERENCE_DETAIL
-                    && notEmpty(input.getInvoiceNumber())
+                    && notEmpty(reference)
                     && notEmpty(component.getCatalogueReferenceDetail())) {
 
                 throw new Exception("Zur Forderungsposition \"" + component.getName()
-                        + "\" sind sowohl eine Rechnungsnummer als auch die Zusatzangabe zur "
+                        + "\" sind sowohl eine Nummer zum Beleg als auch die Zusatzangabe zur "
                         + "Katalognummer " + component.getCatalogueNumber().trim() + " erfasst. Der "
                         + "Antrag hat dafür nur ein Feld: die Zusatzangabe steht dort, wo sonst die "
                         + "Rechnungsnummer steht. Bitte eine von beiden entfernen.");
