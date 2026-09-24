@@ -662,666 +662,89 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.jdimension.jlawyer.client.events.EventBroker;
+import com.jdimension.jlawyer.client.events.ReviewUpdatedEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.persistence.ClaimLedger;
-import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
-import com.jdimension.jlawyer.persistence.EnforcementMeasure;
-import com.jdimension.jlawyer.persistence.EnforcementMeasureOutcome;
-import com.jdimension.jlawyer.persistence.EnforcementTitle;
-import com.jdimension.jlawyer.services.EnforcementServiceRemote;
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import javax.swing.JOptionPane;
-import javax.swing.table.DefaultTableModel;
 import org.apache.log4j.Logger;
 
 /**
- * The enforcement tab of a claim ledger: the measures taken on its titles and the forms they
- * produce.
+ * Tells the rest of the client about follow-ups that were created on the server.
  *
- * The third-party debtors of a measure are kept in a window of their own: they belong to the one
- * order that named them, several of them can be named in it, and each carries a period of his own.
+ * The follow-ups of the enforcement - the day to ask the bailiff, the § 840 ZPO period of a
+ * third-party debtor, the § 802d ZPO date two years out - are not created by the window the user
+ * is looking at. They arise on the server, from a measure being dispatched or an outcome being
+ * recorded, and the client therefore never sees them come into being. Without this they appeared
+ * in the case only after it was closed and opened again, which looks exactly like nothing having
+ * happened.
  *
- * What is still missing here is deliberate. The options of § 802a Abs. 2 ZPO - distraint, an
- * amicable settlement, the asset disclosure - are options of a single measure and want a form of
- * their own rather than a row of check boxes here.
+ * Everything is announced as a change and not as an addition, deliberately. Whether a follow-up is
+ * new or merely moved is something the server knows and the caller does not, and the case updates
+ * the row it already has or adds it if it has none. Announcing an addition twice would put the
+ * same date in the case twice, which is worse than announcing it late.
  *
  * @author jens
  */
-public class ClaimLedgerEnforcementPanel extends javax.swing.JPanel {
+final class EnforcementFollowUpEvents {
 
-    private static final Logger log = Logger.getLogger(ClaimLedgerEnforcementPanel.class.getName());
+    private static final Logger log = Logger.getLogger(EnforcementFollowUpEvents.class.getName());
 
-    private static final SimpleDateFormat DAY = new SimpleDateFormat("dd.MM.yyyy");
-
-    private static final int COL_DATE = 0;
-    private static final int COL_TYPE = 1;
-    private static final int COL_ADDRESSEE = 2;
-    private static final int COL_OUTCOME = 3;
-    private static final int COL_FORM = 4;
-
-    private ArchiveFileBean caseDto = null;
-    private ClaimLedger ledger = null;
-
-    private final List<EnforcementMeasure> measures = new ArrayList<>();
-
-    private List<com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean> cachedCaseParties = null;
-
-    /**
-     * Creates the panel.
-     */
-    public ClaimLedgerEnforcementPanel() {
-        initComponents();
-
-        this.tblMeasures.setModel(new DefaultTableModel(
-                new Object[]{"Datum", "Maßnahme", "Empfänger", "Ergebnis", "Formularfassung"}, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                // Was hier steht, ist Vorgangsgeschichte - sie wird über die Schaltflächen
-                // fortgeschrieben und nicht in der Tabelle überschrieben.
-                return false;
-            }
-        });
-        this.tblMeasures.getSelectionModel().addListSelectionListener(e -> updateButtons());
-        updateButtons();
+    private EnforcementFollowUpEvents() {
     }
 
     /**
-     * Shows the measures of a claim ledger.
+     * The follow-ups the enforcement of a ledger currently has.
      *
-     * @param caseDto the case the ledger belongs to
-     * @param ledger the claim ledger
-     */
-    public void setLedger(ArchiveFileBean caseDto, ClaimLedger ledger) {
-        this.caseDto = caseDto;
-        this.ledger = ledger;
-        this.cachedCaseParties = null;
-        loadMeasures();
-    }
-
-    private EnforcementServiceRemote enforcement() throws Exception {
-        ClientSettings settings = ClientSettings.getInstance();
-        return JLawyerServiceLocator.getInstance(settings.getLookupProperties())
-                .lookupEnforcementServiceRemote();
-    }
-
-    private void loadMeasures() {
-        DefaultTableModel model = (DefaultTableModel) this.tblMeasures.getModel();
-        model.setRowCount(0);
-        this.measures.clear();
-
-        if (this.ledger == null || this.ledger.getId() == null) {
-            updateButtons();
-            return;
-        }
-        try {
-            List<EnforcementMeasure> loaded = enforcement().getMeasures(this.ledger.getId());
-            if (loaded != null) {
-                this.measures.addAll(loaded);
-            }
-        } catch (Exception ex) {
-            log.error("Unable to load the enforcement measures of ledger " + this.ledger.getId(), ex);
-            JOptionPane.showMessageDialog(this,
-                    "Die Vollstreckungsmaßnahmen konnten nicht geladen werden: " + ex.getMessage(),
-                    "Fehler", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        for (EnforcementMeasure measure : this.measures) {
-            model.addRow(new Object[]{
-                measure.getOrderedDate() == null ? "" : DAY.format(measure.getOrderedDate()),
-                measure.getMeasureType() == null ? "" : measure.getMeasureType().getName(),
-                measure.getAddresseeDesignation() == null ? "" : firstLineOf(measure.getAddresseeDesignation()),
-                describeOutcome(measure),
-                measure.getFormVersion() == null ? "" : measure.getFormVersion()});
-        }
-        updateButtons();
-    }
-
-    /**
-     * The outcome with its date, because when something ended is as much a part of it as what.
-     */
-    private String describeOutcome(EnforcementMeasure measure) {
-        if (measure.getOutcome() == null) {
-            return "";
-        }
-        String label = measure.getOutcome().getLabel();
-        return measure.getOutcomeDate() == null
-                ? label : label + " (" + DAY.format(measure.getOutcomeDate()) + ")";
-    }
-
-    private String firstLineOf(String text) {
-        int end = text.indexOf('\n');
-        return (end < 0 ? text : text.substring(0, end)).trim();
-    }
-
-    /**
-     * The parties of the case, to pick a third-party debtor from them.
+     * Asked for before an operation that will remove them, so that what they became can still be
+     * announced afterwards.
      *
-     * Loaded once and kept: a third-party debtor is usually not among them - the debtor's bank
-     * rarely is a party of the case - but where he is, his contact record is the better source than
-     * a name typed again.
+     * @param ledgerId the claim ledger, or null
+     * @return them, or an empty list; never null
      */
-    private List<com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean> caseParties() {
-        if (this.caseDto == null || this.caseDto.getId() == null) {
+    static List<ArchiveFileReviewsBean> collect(String ledgerId) {
+        if (ledgerId == null) {
             return new ArrayList<>();
         }
-        if (this.cachedCaseParties != null) {
-            return this.cachedCaseParties;
-        }
         try {
             ClientSettings settings = ClientSettings.getInstance();
-            List<com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean> loaded =
-                    JLawyerServiceLocator.getInstance(settings.getLookupProperties())
-                            .lookupArchiveFileServiceRemote()
-                            .getInvolvementDetailsForCase(this.caseDto.getId(), false);
-            this.cachedCaseParties = loaded == null ? new ArrayList<>() : loaded;
+            List<ArchiveFileReviewsBean> followUps = JLawyerServiceLocator
+                    .getInstance(settings.getLookupProperties())
+                    .lookupEnforcementServiceRemote().getFollowUps(ledgerId);
+            return followUps == null ? new ArrayList<>() : followUps;
         } catch (Exception ex) {
-            log.error("Unable to load the parties of case " + this.caseDto.getId(), ex);
-            JOptionPane.showMessageDialog(this,
-                    "Die Beteiligten der Akte konnten nicht geladen werden: " + ex.getMessage(),
-                    "Fehler", JOptionPane.ERROR_MESSAGE);
-            this.cachedCaseParties = new ArrayList<>();
-        }
-        return this.cachedCaseParties;
-    }
-
-    private EnforcementMeasure selectedMeasure() {
-        int row = this.tblMeasures.getSelectedRow();
-        return row < 0 || row >= this.measures.size() ? null : this.measures.get(row);
-    }
-
-    private void updateButtons() {
-        EnforcementMeasure measure = selectedMeasure();
-        boolean hasLedger = this.ledger != null && this.ledger.getId() != null;
-
-        this.cmdNewMeasure.setEnabled(hasLedger);
-        this.cmdRefresh.setEnabled(hasLedger);
-        this.cmdEditMeasure.setEnabled(measure != null);
-        this.cmdCosts.setEnabled(measure != null);
-        this.cmdRemoveMeasure.setEnabled(measure != null);
-        this.cmdRecordOutcome.setEnabled(measure != null);
-        this.cmdThirdParty.setEnabled(measure != null);
-        // Formulare gibt es nur zu Maßnahmen, für die eines vorgesehen ist. Eine
-        // Vollstreckungsandrohung ist ein Schreiben, kein amtliches Formular.
-        boolean hasForms = measure != null && measure.getMeasureType() != null
-                && measure.getMeasureType().hasForms();
-        this.cmdGenerateForms.setEnabled(hasForms);
-
-        // Ein grauer Knopf ohne Begründung ist dasselbe Rätsel wie eine leere Liste. Wer eine
-        // Maßnahme gewählt hat und den Knopf nicht drücken kann, soll wissen, warum.
-        if (measure != null && !hasForms) {
-            this.txtHint.setText("Für \"" + measure.getMeasureType() + "\" sieht die ZVFV kein "
-                    + "amtliches Formular vor - eine Vollstreckungsandrohung oder eine Anfrage ist "
-                    + "ein Schreiben. Welche Formulare zu einer Maßnahmeart gehören, steht in den "
-                    + "Stammdaten der Maßnahmearten.");
-            this.txtHint.setCaretPosition(0);
+            // Kein Grund, den Vorgang scheitern zu lassen: die Wiedervorlage steht, sie wird nur
+            // erst beim naechsten Oeffnen der Akte sichtbar.
+            log.error("Unable to read the enforcement follow-ups of ledger " + ledgerId, ex);
+            return new ArrayList<>();
         }
     }
 
     /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
+     * Announces the current follow-ups of a ledger.
+     *
+     * @param ledgerId the claim ledger, or null
      */
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-    private void initComponents() {
+    static void publishFor(String ledgerId) {
+        publish(collect(ledgerId));
+    }
 
-        scrlMeasures = new javax.swing.JScrollPane();
-        tblMeasures = new javax.swing.JTable();
-        cmdNewMeasure = new javax.swing.JButton();
-        cmdRemoveMeasure = new javax.swing.JButton();
-        cmdEditMeasure = new javax.swing.JButton();
-        cmdRecordOutcome = new javax.swing.JButton();
-        cmdGenerateForms = new javax.swing.JButton();
-        cmdCosts = new javax.swing.JButton();
-        cmdThirdParty = new javax.swing.JButton();
-        cmdRefresh = new javax.swing.JButton();
-        scrlHint = new javax.swing.JScrollPane();
-        txtHint = new javax.swing.JTextArea();
-
-        tblMeasures.setModel(new javax.swing.table.DefaultTableModel());
-        tblMeasures.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        scrlMeasures.setViewportView(tblMeasures);
-
-        cmdNewMeasure.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
-        cmdNewMeasure.setText("Maßnahme");
-        cmdNewMeasure.setToolTipText("Eine Zwangsvollstreckungsmaßnahme auf einen Titel dieses Forderungskontos beginnen");
-        cmdNewMeasure.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdNewMeasureActionPerformed(evt);
+    /**
+     * Announces follow-ups that were read earlier.
+     *
+     * @param followUps what to announce; null and empty are allowed
+     */
+    static void publish(List<ArchiveFileReviewsBean> followUps) {
+        if (followUps == null || followUps.isEmpty()) {
+            return;
+        }
+        EventBroker broker = EventBroker.getInstance();
+        for (ArchiveFileReviewsBean followUp : followUps) {
+            if (followUp != null) {
+                broker.publishEvent(new ReviewUpdatedEvent(null, null, followUp));
             }
-        });
-
-        cmdEditMeasure.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png"))); // NOI18N
-        cmdEditMeasure.setToolTipText("Maßnahme ändern - Empfänger, Datum, Titel und Anmerkungen");
-        cmdEditMeasure.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdEditMeasureActionPerformed(evt);
-            }
-        });
-
-        cmdRemoveMeasure.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
-        cmdRemoveMeasure.setToolTipText("Maßnahme entfernen; die erzeugten Dokumente bleiben in der Akte");
-        cmdRemoveMeasure.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdRemoveMeasureActionPerformed(evt);
-            }
-        });
-
-        cmdRecordOutcome.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
-        cmdRecordOutcome.setText("Ergebnis");
-        cmdRecordOutcome.setToolTipText("Festhalten, was aus der Maßnahme geworden ist");
-        cmdRecordOutcome.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdRecordOutcomeActionPerformed(evt);
-            }
-        });
-
-        cmdGenerateForms.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/file_doc.png"))); // NOI18N
-        cmdGenerateForms.setText("Formulare erzeugen");
-        cmdGenerateForms.setToolTipText("Die amtlichen Formulare der ZVFV ausfüllen und in der Akte ablegen");
-        cmdGenerateForms.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdGenerateFormsActionPerformed(evt);
-            }
-        });
-
-        cmdCosts.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/money.png"))); // NOI18N
-        cmdCosts.setText("Kosten");
-        cmdCosts.setToolTipText("Die Kosten dieser Maßnahme nach § 788 ZPO vorschlagen und ins Forderungskonto buchen");
-        cmdCosts.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdCostsActionPerformed(evt);
-            }
-        });
-
-        cmdThirdParty.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/kmultiple.png"))); // NOI18N
-        cmdThirdParty.setText("Drittschuldner");
-        cmdThirdParty.setToolTipText("Die Drittschuldner dieser Pf\u00e4ndung und ihre Erkl\u00e4rung nach \u00a7 840 ZPO");
-        cmdThirdParty.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdThirdPartyActionPerformed(evt);
-            }
-        });
-
-        cmdRefresh.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/reload.png"))); // NOI18N
-        cmdRefresh.setToolTipText("Neu laden");
-        cmdRefresh.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdRefreshActionPerformed(evt);
-            }
-        });
-
-        txtHint.setEditable(false);
-        txtHint.setColumns(20);
-        txtHint.setLineWrap(true);
-        txtHint.setRows(2);
-        txtHint.setWrapStyleWord(true);
-        txtHint.setFocusable(false);
-        scrlHint.setViewportView(txtHint);
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(scrlMeasures, javax.swing.GroupLayout.DEFAULT_SIZE, 700, Short.MAX_VALUE)
-                    .addComponent(scrlHint, javax.swing.GroupLayout.DEFAULT_SIZE, 700, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(cmdNewMeasure)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdEditMeasure)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdRemoveMeasure)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(cmdRecordOutcome)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdGenerateForms)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdCosts)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdThirdParty)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(cmdRefresh)))
-                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(scrlMeasures, javax.swing.GroupLayout.DEFAULT_SIZE, 260, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cmdNewMeasure)
-                    .addComponent(cmdEditMeasure)
-                    .addComponent(cmdRemoveMeasure)
-                    .addComponent(cmdRecordOutcome)
-                    .addComponent(cmdGenerateForms)
-                    .addComponent(cmdCosts)
-                    .addComponent(cmdThirdParty)
-                    .addComponent(cmdRefresh))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(scrlHint, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
-        );
-    }// </editor-fold>//GEN-END:initComponents
-
-    private void cmdNewMeasureActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewMeasureActionPerformed
-        if (this.ledger == null || this.ledger.getId() == null) {
-            return;
         }
-
-        List<EnforcementTitle> titles = new ArrayList<>();
-        try {
-            ClientSettings settings = ClientSettings.getInstance();
-            List<EnforcementTitle> loaded = JLawyerServiceLocator
-                    .getInstance(settings.getLookupProperties()).lookupClaimLedgerServiceRemote()
-                    .getTitles(this.ledger.getId());
-            if (loaded != null) {
-                titles.addAll(loaded);
-            }
-        } catch (Exception ex) {
-            log.error("Unable to load the titles of ledger " + this.ledger.getId(), ex);
-            JOptionPane.showMessageDialog(this,
-                    "Die Titel konnten nicht geladen werden: " + ex.getMessage(),
-                    "Fehler", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        EnforcementMeasureDialog dialog = new EnforcementMeasureDialog(
-                (java.awt.Dialog) javax.swing.SwingUtilities.getWindowAncestor(this), true);
-        dialog.setLedger(this.ledger.getId(), titles);
-        dialog.setLocationRelativeTo(this);
-        dialog.setVisible(true);
-
-        if (!dialog.isSaved()) {
-            return;
-        }
-        try {
-            enforcement().addMeasure(this.ledger.getId(), dialog.getMeasure());
-            // Die Wiedervorlage entsteht auf dem Server; ohne diese Meldung stuende sie erst nach
-            // einem Neuladen der Akte in deren Kalender.
-            EnforcementFollowUpEvents.publishFor(this.ledger.getId());
-        } catch (Exception ex) {
-            log.error("Unable to add an enforcement measure to ledger " + this.ledger.getId(), ex);
-            JOptionPane.showMessageDialog(this,
-                    "Die Maßnahme konnte nicht angelegt werden: " + ex.getMessage(),
-                    "Fehler", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        loadMeasures();
-    }//GEN-LAST:event_cmdNewMeasureActionPerformed
-
-    private void cmdCostsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCostsActionPerformed
-        EnforcementMeasure measure = selectedMeasure();
-        if (measure == null || this.ledger == null || this.ledger.getId() == null) {
-            return;
-        }
-
-        com.jdimension.jlawyer.pojo.EnforcementCostProposal proposal;
-        List<ClaimLedgerParty> debtors = new ArrayList<>();
-        try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            // Umsatzsteuersatz und Vorsteuerabzug entscheidet die Kanzlei; bis das an Kanzlei oder
-            // Konto hinterlegt ist, gilt der Regelsatz und der Regelfall, dass der Gläubiger die
-            // Steuer trägt. Beides bleibt im Dialog änderbar.
-            proposal = locator.lookupEnforcementServiceRemote().proposeCosts(measure.getId(),
-                    new java.math.BigDecimal("19.00"), false, false);
-            for (ClaimLedgerParty party : locator.lookupClaimLedgerServiceRemote()
-                    .getParties(this.ledger.getId())) {
-                if (party.getRole() == com.jdimension.jlawyer.persistence.ClaimPartyRole.DEBTOR) {
-                    debtors.add(party);
-                }
-            }
-        } catch (Exception ex) {
-            log.error("Unable to propose the costs of enforcement measure " + measure.getId(), ex);
-            JOptionPane.showMessageDialog(this,
-                    "Die Kosten konnten nicht ermittelt werden: " + ex.getMessage(),
-                    "Fehler", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        java.awt.Window owner = javax.swing.SwingUtilities.getWindowAncestor(this);
-        EnforcementCostDialog dialog = new EnforcementCostDialog((java.awt.Dialog) owner, true);
-        dialog.setProposal(measure, proposal, debtors);
-        dialog.setLocationRelativeTo(this);
-        dialog.setVisible(true);
-
-        // Gebucht wurde im Forderungskonto, nicht hier. Ohne diesen Anstoss stuende die Buchung
-        // erst nach Schliessen und Wiederoeffnen in den Reitern, und bis dahin saehe es aus, als
-        // waere nichts geschehen.
-        if (dialog.isBooked() && owner instanceof ClaimLedgerDialog) {
-            ((ClaimLedgerDialog) owner).reload();
-        }
-    }//GEN-LAST:event_cmdCostsActionPerformed
-
-    private void cmdThirdPartyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdThirdPartyActionPerformed
-        EnforcementMeasure measure = selectedMeasure();
-        if (measure == null) {
-            return;
-        }
-
-        java.awt.Window owner = javax.swing.SwingUtilities.getWindowAncestor(this);
-        ThirdPartyDebtorDialog dialog = new ThirdPartyDebtorDialog((java.awt.Dialog) owner, true);
-        dialog.setMeasure(measure, caseParties());
-        dialog.setLocationRelativeTo(this);
-        dialog.setVisible(true);
-
-        // Eine Zahlung des Drittschuldners ist eine Zahlung auf die Forderung - sie steht in den
-        // Buchungen und in den Summen, nicht hier. Ohne diesen Anstoss saehe es aus, als waere
-        // nichts geschehen.
-        if (dialog.isBooked() && owner instanceof ClaimLedgerDialog) {
-            ((ClaimLedgerDialog) owner).reload();
-        }
-    }//GEN-LAST:event_cmdThirdPartyActionPerformed
-
-    private void cmdEditMeasureActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEditMeasureActionPerformed
-        EnforcementMeasure measure = selectedMeasure();
-        if (measure == null || this.ledger == null || this.ledger.getId() == null) {
-            return;
-        }
-
-        List<EnforcementTitle> titles = new ArrayList<>();
-        try {
-            ClientSettings settings = ClientSettings.getInstance();
-            List<EnforcementTitle> loaded = JLawyerServiceLocator
-                    .getInstance(settings.getLookupProperties()).lookupClaimLedgerServiceRemote()
-                    .getTitles(this.ledger.getId());
-            if (loaded != null) {
-                titles.addAll(loaded);
-            }
-        } catch (Exception ex) {
-            log.error("Unable to load the titles of ledger " + this.ledger.getId(), ex);
-            JOptionPane.showMessageDialog(this,
-                    "Die Titel konnten nicht geladen werden: " + ex.getMessage(),
-                    "Fehler", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        EnforcementMeasureDialog dialog = new EnforcementMeasureDialog(
-                (java.awt.Dialog) javax.swing.SwingUtilities.getWindowAncestor(this), true);
-        dialog.setLedger(this.ledger.getId(), titles);
-        dialog.setMeasure(measure);
-        dialog.setLocationRelativeTo(this);
-        dialog.setVisible(true);
-
-        if (!dialog.isSaved()) {
-            return;
-        }
-        try {
-            enforcement().updateMeasure(dialog.getMeasure());
-            EnforcementFollowUpEvents.publishFor(this.ledger.getId());
-        } catch (Exception ex) {
-            log.error("Unable to update enforcement measure " + measure.getId(), ex);
-            JOptionPane.showMessageDialog(this,
-                    "Die Maßnahme konnte nicht geändert werden: " + ex.getMessage(),
-                    "Fehler", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        loadMeasures();
-    }//GEN-LAST:event_cmdEditMeasureActionPerformed
-
-    private void cmdRemoveMeasureActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemoveMeasureActionPerformed
-        EnforcementMeasure measure = selectedMeasure();
-        if (measure == null) {
-            return;
-        }
-        if (JOptionPane.showConfirmDialog(this,
-                "Die Maßnahme \"" + measure + "\" entfernen?\n\n"
-                + "Die dafür erzeugten Dokumente bleiben in der Akte - sie sind bei einem Gericht "
-                + "oder einem Gerichtsvollzieher gewesen.",
-                "Maßnahme entfernen", JOptionPane.YES_NO_OPTION,
-                JOptionPane.WARNING_MESSAGE) != JOptionPane.YES_OPTION) {
-            return;
-        }
-        // Vorher eingesammelt: mit der Maßnahme verschwinden die Fristsaetze, und danach waere
-        // nicht mehr zu erfahren, welche Kalendereintraege zu ihr gehoerten. Geschlossen werden sie
-        // beim Entfernen, gemeldet wird dieser neue Stand.
-        List<com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean> followUps =
-                EnforcementFollowUpEvents.collect(this.ledger == null ? null : this.ledger.getId());
-        try {
-            enforcement().removeMeasure(measure.getId());
-            EnforcementFollowUpEvents.publish(followUps);
-        } catch (Exception ex) {
-            log.error("Unable to remove enforcement measure " + measure.getId(), ex);
-            JOptionPane.showMessageDialog(this,
-                    "Die Maßnahme konnte nicht entfernt werden: " + ex.getMessage(),
-                    "Fehler", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        loadMeasures();
-    }//GEN-LAST:event_cmdRemoveMeasureActionPerformed
-
-    private void cmdRecordOutcomeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRecordOutcomeActionPerformed
-        EnforcementMeasure measure = selectedMeasure();
-        if (measure == null) {
-            return;
-        }
-
-        EnforcementMeasureOutcome[] outcomes = EnforcementMeasureOutcome.values();
-        String[] labels = new String[outcomes.length];
-        for (int i = 0; i < outcomes.length; i++) {
-            labels[i] = outcomes[i].getLabel();
-        }
-        Object selection = JOptionPane.showInputDialog(this,
-                "Was ist aus der Maßnahme geworden?", "Ergebnis",
-                JOptionPane.QUESTION_MESSAGE, null, labels,
-                measure.getOutcome() == null ? labels[0] : measure.getOutcome().getLabel());
-        if (selection == null) {
-            return;
-        }
-        EnforcementMeasureOutcome outcome = outcomes[java.util.Arrays.asList(labels)
-                .indexOf(selection.toString())];
-
-        String entered = JOptionPane.showInputDialog(this,
-                "Datum des Ergebnisses:", DAY.format(new Date()));
-        if (entered == null) {
-            return;
-        }
-        Date outcomeDate;
-        try {
-            outcomeDate = DAY.parse(entered.trim());
-        } catch (java.text.ParseException ex) {
-            JOptionPane.showMessageDialog(this,
-                    "Das Datum konnte nicht gelesen werden. Erwartet wird TT.MM.JJJJ.",
-                    "Eingabe", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        try {
-            enforcement().recordOutcome(measure.getId(), outcome, outcomeDate);
-            // Das Ergebnis schliesst die Wiedervorlage - auch das ist eine Aenderung, die die Akte
-            // zeigen soll, ohne dass jemand sie neu laedt.
-            EnforcementFollowUpEvents.publishFor(this.ledger.getId());
-        } catch (Exception ex) {
-            log.error("Unable to record the outcome of enforcement measure " + measure.getId(), ex);
-            JOptionPane.showMessageDialog(this,
-                    "Das Ergebnis konnte nicht gespeichert werden: " + ex.getMessage(),
-                    "Fehler", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        // Eine fruchtlose Pfändung ist keine Sackgasse, sondern die Voraussetzung für das Nächste -
-        // die Vermögensauskunft nach § 802c ZPO und danach das Schuldnerverzeichnis.
-        if (outcome == EnforcementMeasureOutcome.UNSUCCESSFUL) {
-            this.txtHint.setText("Die Pfändung war fruchtlos. Damit ist der Weg zur Vermögensauskunft "
-                    + "nach § 802c ZPO eröffnet und, wenn der Schuldner sie abgibt oder verweigert, "
-                    + "zur Eintragung ins Schuldnerverzeichnis (§ 882c ZPO).");
-        }
-        loadMeasures();
-    }//GEN-LAST:event_cmdRecordOutcomeActionPerformed
-
-    private void cmdGenerateFormsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdGenerateFormsActionPerformed
-        EnforcementMeasure measure = selectedMeasure();
-        if (measure == null) {
-            return;
-        }
-
-        int flatten = JOptionPane.showConfirmDialog(this,
-                "Die Formulare festschreiben, sodass sie nicht mehr bearbeitet werden können?\n\n"
-                + "Ja: fertig zum Versand.\n"
-                + "Nein: die Felder bleiben ausfüllbar, etwa um Angaben zu ergänzen, die das "
-                + "Forderungskonto nicht führt.",
-                "Formulare erzeugen", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-        if (flatten == JOptionPane.CANCEL_OPTION || flatten == JOptionPane.CLOSED_OPTION) {
-            return;
-        }
-
-        List<ArchiveFileDocumentsBean> documents;
-        try {
-            documents = enforcement().generateForms(measure.getId(), flatten == JOptionPane.YES_OPTION);
-        } catch (Exception ex) {
-            log.error("Unable to generate the forms of enforcement measure " + measure.getId(), ex);
-            JOptionPane.showMessageDialog(this,
-                    "Die Formulare konnten nicht erzeugt werden:\n\n" + ex.getMessage(),
-                    "Fehler", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        StringBuilder sb = new StringBuilder("In der Akte abgelegt:\n");
-        for (ArchiveFileDocumentsBean document : documents) {
-            sb.append("\n  ").append(document.getName());
-        }
-        JOptionPane.showMessageDialog(this, sb.toString(), "Formulare erzeugt",
-                JOptionPane.INFORMATION_MESSAGE);
-
-        // Die neuen Dokumente sollen im Reiter "Dokumente" sichtbar werden, ohne dass die Akte
-        // geschlossen und neu geöffnet werden muss - je Dokument eines, denn das Ereignis trägt
-        // das Dokument und nicht die Akte.
-        for (ArchiveFileDocumentsBean document : documents) {
-            com.jdimension.jlawyer.client.events.EventBroker.getInstance().publishEvent(
-                    new com.jdimension.jlawyer.client.events.DocumentAddedEvent(document));
-        }
-
-        loadMeasures();
-    }//GEN-LAST:event_cmdGenerateFormsActionPerformed
-
-    private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
-        loadMeasures();
-    }//GEN-LAST:event_cmdRefreshActionPerformed
-
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton cmdCosts;
-    private javax.swing.JButton cmdEditMeasure;
-    private javax.swing.JButton cmdGenerateForms;
-    private javax.swing.JButton cmdNewMeasure;
-    private javax.swing.JButton cmdRecordOutcome;
-    private javax.swing.JButton cmdRefresh;
-    private javax.swing.JButton cmdRemoveMeasure;
-    private javax.swing.JButton cmdThirdParty;
-    private javax.swing.JScrollPane scrlHint;
-    private javax.swing.JScrollPane scrlMeasures;
-    private javax.swing.JTable tblMeasures;
-    private javax.swing.JTextArea txtHint;
-    // End of variables declaration//GEN-END:variables
+    }
 }

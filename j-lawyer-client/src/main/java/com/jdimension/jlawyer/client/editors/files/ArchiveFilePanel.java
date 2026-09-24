@@ -1219,6 +1219,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         b.subscribeConsumer(this, Event.TYPE_DOCUMENTREMOVED);
         b.subscribeConsumer(this, Event.TYPE_DOCUMENTUPDATED);
         b.subscribeConsumer(this, Event.TYPE_REVIEWADDED);
+        b.subscribeConsumer(this, Event.TYPE_REVIEWUPDATED);
         b.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_MESSAGEDELETED);
         b.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_NEWMESSAGES);
         
@@ -10307,18 +10308,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
             }
         } else if (e instanceof ReviewAddedEvent) {
-            if (this.dto != null) {
-                // can be null in subclass of ArchiveFilePanel
-                if (this.dto.getId() != null) {
-                    ArchiveFileReviewsBean eventRev = ((ReviewAddedEvent) e).getReview();
-                    if (this.dto.getId().equals(eventRev.getArchiveFileKey().getId())) {
-                        ArchiveFileReviewReasonsTableModel model = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
-                        Object[] row = ArchiveFileReviewReasonsTableModel.eventToRow(eventRev);
-                        model.addRow(row);
-                        ComponentUtils.autoSizeColumns(tblReviewReasons);
-                    }
-                }
-            }
+            applyReviewToTable(((ReviewAddedEvent) e).getReview());
+        } else if (e instanceof ReviewUpdatedEvent) {
+            applyReviewToTable(((ReviewUpdatedEvent) e).getReview());
         } else if (e instanceof InstantMessageDeletedEvent) {
 
             boolean removed = false;
@@ -10348,6 +10340,50 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
             });
         }
+    }
+
+    /**
+     * Zeigt eine angelegte oder geänderte Wiedervorlage im Reiter "Kalender" dieser Akte.
+     *
+     * Eingefügt oder aktualisiert, je nachdem, ob die Zeile schon dasteht. Beides über denselben
+     * Weg, weil der Unterschied für den Aufrufer nicht immer feststeht: eine Wiedervorlage, die auf
+     * dem Server entstanden ist, meldet sich beim Client als Änderung, und sie zweimal anzulegen
+     * wäre schlimmer, als sie gar nicht zu zeigen.
+     *
+     * Erledigte bleiben stehen - sie sind Teil dessen, was in der Akte geschehen ist -, aber sie
+     * stehen dann als erledigt da, und genau das war ohne diese Behandlung erst nach einem
+     * Neuladen der Akte zu sehen.
+     *
+     * @param review die Wiedervorlage; fremde und leere werden übergangen
+     */
+    private void applyReviewToTable(ArchiveFileReviewsBean review) {
+
+        // kann in einer Unterklasse von ArchiveFilePanel null sein
+        if (this.dto == null || this.dto.getId() == null || review == null
+                || review.getArchiveFileKey() == null
+                || !this.dto.getId().equals(review.getArchiveFileKey().getId())) {
+            return;
+        }
+
+        SwingUtilities.invokeLater(() -> {
+            ArchiveFileReviewReasonsTableModel model =
+                    (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
+            Object[] row = ArchiveFileReviewReasonsTableModel.eventToRow(review);
+
+            for (int i = 0; i < model.getRowCount(); i++) {
+                Object cell = model.getValueAt(i, ArchiveFileReviewReasonsTableModel.COLUMN_EVENT);
+                if (cell instanceof ArchiveFileReviewsBean && review.getId() != null
+                        && review.getId().equals(((ArchiveFileReviewsBean) cell).getId())) {
+                    for (int column = 0; column < row.length; column++) {
+                        model.setValueAt(row[column], i, column);
+                    }
+                    ComponentUtils.autoSizeColumns(tblReviewReasons);
+                    return;
+                }
+            }
+            model.addRow(row);
+            ComponentUtils.autoSizeColumns(tblReviewReasons);
+        });
     }
 
     private boolean isInvolvementChanged(List<ArchiveFileAddressesBean> server, ArchiveFileAddressesBean local) {
