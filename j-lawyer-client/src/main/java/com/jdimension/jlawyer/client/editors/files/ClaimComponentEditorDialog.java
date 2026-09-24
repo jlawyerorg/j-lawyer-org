@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.persistence.ClaimComponent;
+import com.jdimension.jlawyer.persistence.ClaimReason;
 import com.jdimension.jlawyer.persistence.ClaimComponentType;
 import com.jdimension.jlawyer.persistence.ClaimLedger;
 import com.jdimension.jlawyer.persistence.InterestRule;
@@ -794,6 +795,9 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
         return this.entry;
     }
 
+    /** Was in der Auswahl steht, solange die Anspruchsbegründung nicht erfasst ist. */
+    private static final String REASON_UNSET = "- nicht erfasst -";
+
     /** Was in der Auswahl steht, wenn die Position nicht über den Katalog geht. */
     private static final String CATALOGUE_FREE_TEXT = "sonstiger Anspruch (Begründung im Feld Name)";
 
@@ -809,6 +813,14 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
      * Eintrag und keine Ausnahme, sondern der vom Format vorgesehene Weg.
      */
     private void initializeCatalogue() {
+        // Die Liste der Mahngerichte, und ein leerer Eintrag: nicht erfasst ist nicht dasselbe wie
+        // "Schreiben". Was niemand gesagt hat, behauptet der Dialog auch nicht.
+        this.cmbReason.removeAllItems();
+        this.cmbReason.addItem(REASON_UNSET);
+        for (ClaimReason reason : ClaimReason.values()) {
+            this.cmbReason.addItem(reason);
+        }
+
         this.cmbCatalogue.removeAllItems();
         this.cmbCatalogue.addItem(CATALOGUE_FREE_TEXT);
         for (MainClaimCatalogueEntry entry : ReferenceData.getMainClaimCatalogue().getEntries()) {
@@ -852,6 +864,8 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
 
         this.lblCatalogue.setVisible(mainClaim);
         this.cmbCatalogue.setVisible(mainClaim);
+        this.lblReason.setVisible(mainClaim);
+        this.cmbReason.setVisible(mainClaim);
 
         String number = mainClaim ? selectedCatalogueNumber() : null;
         CatalogueAddition addition = CatalogueAddition.of(number);
@@ -872,6 +886,13 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
         this.txtAdditionCity.setVisible(addition == CatalogueAddition.PROPERTY_LOCATION);
         this.cmbContractType.setVisible(addition == CatalogueAddition.CONTRACT_TYPE);
         this.txtReferenceDetail.setVisible(addition == CatalogueAddition.REFERENCE_DETAIL);
+
+        // Die Zusatzangabe der Nummern 36, 42 und 61 belegt genau die Spalte, in der sonst die
+        // Nummer des Belegs steht. Ein Feld anzubieten, dessen Inhalt nicht uebertragen werden
+        // koennte, laedt zu einer Eingabe ein, die der Antrag wegwirft.
+        boolean columnTaken = addition == CatalogueAddition.REFERENCE_DETAIL;
+        this.lblReasonReference.setVisible(mainClaim && !columnTaken);
+        this.txtReasonReference.setVisible(mainClaim && !columnTaken);
     }
 
     private void cmbCatalogueActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbCatalogueActionPerformed
@@ -902,6 +923,9 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
         this.txtAdditionCity.setText(nonNull(component.getCataloguePropertyCity()));
         this.cmbContractType.setSelectedItem(nonNull(component.getCatalogueContractDesignation()));
         this.txtReferenceDetail.setText(nonNull(component.getCatalogueReferenceDetail()));
+        this.cmbReason.setSelectedItem(component.getClaimReason() == null
+                ? REASON_UNSET : component.getClaimReason());
+        this.txtReasonReference.setText(nonNull(component.getClaimReasonReference()));
         updateCatalogueAddition();
     }
 
@@ -928,6 +952,14 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
                 ? emptyToNull(String.valueOf(this.cmbContractType.getSelectedItem())) : null);
         component.setCatalogueReferenceDetail(addition == CatalogueAddition.REFERENCE_DETAIL
                 ? emptyToNull(this.txtReferenceDetail.getText()) : null);
+
+        // Die Begründung gehört zur Forderung, nicht zu den Kosten: eine Auslage beruht auf nichts,
+        // was das Gericht als Anspruchsgrund druckt.
+        Object reason = this.cmbReason.getSelectedItem();
+        component.setClaimReason(mainClaim && reason instanceof ClaimReason
+                ? (ClaimReason) reason : null);
+        component.setClaimReasonReference(mainClaim && addition != CatalogueAddition.REFERENCE_DETAIL
+                ? emptyToNull(this.txtReasonReference.getText()) : null);
     }
 
     private String nonNull(String s) {
@@ -962,6 +994,10 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
         jLabel4 = new javax.swing.JLabel();
         lblCatalogue = new javax.swing.JLabel();
         cmbCatalogue = new javax.swing.JComboBox<>();
+        lblReason = new javax.swing.JLabel();
+        cmbReason = new javax.swing.JComboBox<>();
+        lblReasonReference = new javax.swing.JLabel();
+        txtReasonReference = new javax.swing.JTextField();
         lblAddition = new javax.swing.JLabel();
         txtAdditionZip = new javax.swing.JTextField();
         txtAdditionCity = new javax.swing.JTextField();
@@ -1008,6 +1044,20 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
         lblCatalogue.setFont(lblCatalogue.getFont());
         lblCatalogue.setText("Anspruchsart:");
         lblCatalogue.setToolTipText("Die Katalognummer des Mahnbescheidsantrags. Die Mahngerichte führen dafür einen geschlossenen Katalog.");
+
+        lblReason.setFont(lblReason.getFont());
+        lblReason.setText("Anspruchsbegründung:");
+        lblReason.setToolTipText("Worauf der Anspruch beruht - der Mahnbescheid druckt es: \"aus Rechnung Nr. 4711 vom 15.09.2025\"");
+
+        cmbReason.setModel(new javax.swing.DefaultComboBoxModel<>());
+        cmbReason.setToolTipText("Die Liste der Mahngerichte; etwas anderes nimmt der Antrag nicht an.");
+
+        lblReasonReference.setFont(lblReasonReference.getFont());
+        lblReasonReference.setText("Nummer/Beleg:");
+        lblReasonReference.setToolTipText("Die Nummer des Belegs, auf dem der Anspruch beruht - der Mahnbescheid druckt sie hinter der Begründung");
+
+        txtReasonReference.setFont(txtReasonReference.getFont());
+        txtReasonReference.setToolTipText("Höchstens 35 Zeichen - so viele führt die Austauschdatei");
 
         cmbCatalogue.setModel(new javax.swing.DefaultComboBoxModel<>());
         cmbCatalogue.addActionListener(new java.awt.event.ActionListener() {
@@ -1132,12 +1182,16 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
                                     .addComponent(jLabel3)
                                     .addComponent(jLabel4)
                                     .addComponent(lblCatalogue)
+                                    .addComponent(lblReason)
+                                    .addComponent(lblReasonReference)
                                     .addComponent(lblAddition))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(txtName)
                                     .addComponent(txtDescription)
                                     .addComponent(cmbCatalogue)
+                                    .addComponent(cmbReason)
+                                    .addComponent(txtReasonReference)
                                     .addGroup(layout.createSequentialGroup()
                                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                             .addComponent(cmbType, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -1211,6 +1265,14 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblCatalogue)
                     .addComponent(cmbCatalogue, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblReason)
+                    .addComponent(cmbReason, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblReasonReference)
+                    .addComponent(txtReasonReference, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblAddition)
@@ -1441,11 +1503,15 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
     private javax.swing.JComboBox<String> cmbInterestBaseRelated;
     private javax.swing.JComboBox<ClaimComponentType> cmbType;
     private javax.swing.JComboBox<String> cmbCatalogue;
+    private javax.swing.JComboBox<Object> cmbReason;
     private javax.swing.JComboBox<String> cmbContractType;
     private javax.swing.JLabel lblCatalogue;
+    private javax.swing.JLabel lblReason;
+    private javax.swing.JLabel lblReasonReference;
     private javax.swing.JLabel lblAddition;
     private javax.swing.JTextField txtAdditionZip;
     private javax.swing.JTextField txtAdditionCity;
+    private javax.swing.JTextField txtReasonReference;
     private javax.swing.JTextField txtReferenceDetail;
     private javax.swing.JButton cmdAddInterestRule;
     private javax.swing.JButton cmdCancel;

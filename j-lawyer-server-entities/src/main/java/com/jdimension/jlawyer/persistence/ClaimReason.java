@@ -660,452 +660,88 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.test.server.ejb;
-
-import com.jdimension.jlawyer.eda.EdaClaimMapper;
-import com.jdimension.jlawyer.eda.EdaFieldLengthException;
-import com.jdimension.jlawyer.eda.EdaRecord;
-import com.jdimension.jlawyer.persistence.ClaimComponent;
-import com.jdimension.jlawyer.persistence.ClaimComponentType;
-import com.jdimension.jlawyer.persistence.InterestRule;
-import com.jdimension.jlawyer.persistence.InterestStartMode;
-import com.jdimension.jlawyer.persistence.InterestType;
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.Date;
-import java.util.List;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import org.junit.Test;
+package com.jdimension.jlawyer.persistence;
 
 /**
- * Writing claims and their interest into the record areas of the application.
+ * What a claim is based on - the document the debtor was told of it by.
  *
- * The court issues the Mahnbescheid over what these records say. Two distinctions carry weight: a
- * catalogued claim needs its number and no reasoning while a free-text claim needs the reasoning and
- * no number, and an empty interest from-date is not a missing value but the statement that interest
- * runs from service.
+ * The dunning court prints it: "aus Rechnung Nr. 4711 vom 15.09.2025". The exchange format carries
+ * it in a field of its own (ASPGR), and the Online-Mahnantrag offers exactly this list, no more. It
+ * is therefore a closed vocabulary here as well: free text would pass our own validation and be
+ * queried by the court, weeks later, by post.
+ *
+ * The label is what goes into the file, spelt as the courts spell it.
  *
  * @author jens
  */
-public class EdaClaimMapperTest {
+public enum ClaimReason {
 
-    private final EdaClaimMapper mapper = new EdaClaimMapper();
+    /** Ein Schreiben an den Schuldner. */
+    SCHREIBEN("Schreiben"),
+    /** Eine Rechnung. */
+    RECHNUNG("Rechnung"),
+    /** Eine Mahnung. */
+    MAHNUNG("Mahnung"),
+    /** Ein Kontoauszug. */
+    KONTOAUSZUG("Kontoauszug"),
+    /** Eine Aufstellung. */
+    AUFSTELLUNG("Aufstellung"),
+    /** Ein Vertrag. */
+    VERTRAG("Vertrag"),
+    /** Eine Stromrechnung. */
+    STROMRECHNUNG("Stromrechnung"),
+    /** Eine Gasrechnung. */
+    GASRECHNUNG("Gasrechnung"),
+    /** Etwas anderes - das Gericht fragt dann nach. */
+    ANDERE("andere");
 
-    private static Date date(int y, int m, int d) {
-        return Date.from(LocalDate.of(y, m, d).atStartOfDay(ZoneId.systemDefault()).toInstant());
+    private final String label;
+
+    ClaimReason(String label) {
+        this.label = label;
     }
 
-    private ClaimComponent component(String name, String catalogueNumber) {
-        ClaimComponent c = new ClaimComponent();
-        c.setId("c1");
-        c.setName(name);
-        c.setType(ClaimComponentType.MAIN_CLAIM);
-        c.setCatalogueNumber(catalogueNumber);
-        return c;
+    /**
+     * @return the wording the exchange file and the dunning order carry
+     */
+    public String getLabel() {
+        return label;
     }
 
-    private InterestRule rule(InterestType type, String rate, Date validFrom) {
-        InterestRule r = new InterestRule();
-        r.setInterestType(type);
-        if (type == InterestType.FIXED) {
-            r.setFixedRate(new BigDecimal(rate));
-        } else {
-            r.setBaseMargin(new BigDecimal(rate));
-        }
-        r.setValidFrom(validFrom);
-        return r;
-    }
-
-    private EdaRecord recordOf(List<EdaRecord> records, String layoutId) {
-        for (EdaRecord r : records) {
-            if (layoutId.equals(r.getLayout().getId())) {
-                return r;
+    /**
+     * The entry of a wording, for reading back what was written.
+     *
+     * @param label the wording
+     * @return the entry, or null where none carries it
+     */
+    public static ClaimReason ofLabel(String label) {
+        String wanted = label == null ? "" : label.trim();
+        for (ClaimReason reason : values()) {
+            if (reason.label.equalsIgnoreCase(wanted)) {
+                return reason;
             }
         }
         return null;
     }
 
-    @Test
-    public void aCataloguedClaimIsEnteredByItsNumber() throws Exception {
-        EdaClaimMapper.Claim claim = new EdaClaimMapper.Claim(
-                component("Kaufpreis", "11"), new BigDecimal("5000.00"));
-        claim.setInvoiceNumber("RE-2026-0815");
-        claim.setFrom(date(2026, 1, 15));
-
-        EdaRecord record = recordOf(mapper.map(claim), "C20");
-
-        assertEquals("11", record.get("ASPKAT1"));
-        // Die Anspruchsbegründung, nicht der Name der Position: hier stand "Kaufpreis", und der
-        // Mahnbescheid druckte damit "aus Kaufpreis Nr. RE-2026-0815". Ohne Erfassung wird sie
-        // abgeleitet - eine Rechnungsnummer liegt vor, also eine Rechnung.
-        assertEquals("Rechnung", record.get("ASPGR"));
-        assertEquals("RE-2026-0815", record.get("ASPRNR"));
-        assertEquals("260115", record.get("ASPVD"));
-        assertEquals("the amount is written in cents", "500000", record.get("ASPBET"));
+    /**
+     * What to propose where nobody has said it.
+     *
+     * A claim with an invoice number rests on an invoice; without one, the mildest statement is
+     * that the debtor was written to. This is a proposal and not a finding: the editor shows it,
+     * and the person filing accepts or corrects it. The generator falls back to the same value for
+     * data entered before this was recorded, because the field cannot stay empty and the name of
+     * the position - which stood there - was worse.
+     *
+     * @param invoiceNumber the number of the document, where one is known
+     * @return the proposal, never null
+     */
+    public static ClaimReason proposeFor(String invoiceNumber) {
+        return invoiceNumber != null && !invoiceNumber.trim().isEmpty() ? RECHNUNG : SCHREIBEN;
     }
 
-    @Test
-    public void aClaimWithoutACatalogueNumberCarriesItsReasoning() throws Exception {
-        EdaClaimMapper.Claim claim = new EdaClaimMapper.Claim(
-                component("Schadenersatz wegen beschädigter Ware", null), new BigDecimal("250.00"));
-
-        List<EdaRecord> records = mapper.map(claim);
-
-        assertNull("a free-text claim has no catalogue record", recordOf(records, "C20"));
-        assertEquals("Schadenersatz wegen beschädigter Ware", recordOf(records, "C23").get("ASPSOBG1"));
-        assertEquals("25000", recordOf(records, "C23").get("ASPSOBET"));
-    }
-
-    @Test
-    public void aLongReasoningRunsAcrossBothRecords() throws Exception {
-        StringBuilder text = new StringBuilder();
-        while (text.length() < 120) {
-            text.append("Lieferung und Montage der Anlage; ");
-        }
-        String reasoning = text.substring(0, 120);
-
-        List<EdaRecord> records = mapper.map(
-                new EdaClaimMapper.Claim(component(reasoning, null), new BigDecimal("100.00")));
-
-        String rejoined = recordOf(records, "C23").get("ASPSOBG1") + recordOf(records, "C24").get("ASPSOBG2");
-        assertEquals("nothing may be lost between the two records", reasoning, rejoined);
-    }
-
-    @Test
-    public void aReasoningBeyondBothRecordsIsRefused() {
-        StringBuilder text = new StringBuilder();
-        while (text.length() <= EdaClaimMapper.FREE_TEXT_LIMIT) {
-            text.append("Begruendung ");
-        }
-        try {
-            mapper.map(new EdaClaimMapper.Claim(component(text.toString(), null), new BigDecimal("1")));
-            fail("a truncated reasoning changes what is applied for");
-        } catch (EdaFieldLengthException expected) {
-            assertTrue(expected.getMessage().contains("Papierform"));
-        }
-    }
-
-    @Test
-    public void residentialRentCarriesTheAddressOfTheFlat() throws Exception {
-        ClaimComponent rent = component("Miete", "19");
-        rent.setCataloguePropertyZip("70173");
-        rent.setCataloguePropertyCity("Stuttgart");
-
-        EdaRecord addition = recordOf(mapper.map(
-                new EdaClaimMapper.Claim(rent, new BigDecimal("900.00"))), "C21");
-
-        assertEquals("the flat's address is not the debtor's", "70173", addition.get("ASPZMPLZ"));
-        assertEquals("Stuttgart", addition.get("ASPZMO"));
-    }
-
-    @Test
-    public void damagesFromAContractCarryTheTypeOfContract() throws Exception {
-        ClaimComponent damages = component("Schadenersatz", "28");
-        damages.setCatalogueContractDesignation("KAUF");
-
-        EdaRecord addition = recordOf(mapper.map(
-                new EdaClaimMapper.Claim(damages, new BigDecimal("500.00"))), "C22");
-
-        assertEquals("KAUF", addition.get("ASPZV"));
-    }
-
-    @Test
-    public void aCatalogueClaimWithoutAdditionsGetsNoAdditionalRecords() throws Exception {
-        List<EdaRecord> records = mapper.map(
-                new EdaClaimMapper.Claim(component("Kaufpreis", "11"), new BigDecimal("100.00")));
-
-        assertNull(recordOf(records, "C21"));
-        assertNull(recordOf(records, "C22"));
-    }
-
-    // ----- interest -----
-
-    @Test
-    public void aFixedRateIsMarkedAsFixed() throws Exception {
-        EdaClaimMapper.Claim claim = new EdaClaimMapper.Claim(
-                component("Kaufpreis", "11"), new BigDecimal("5000.00"));
-        claim.getInterestRules().add(rule(InterestType.FIXED, "5", date(2026, 2, 1)));
-        claim.setInterestFrom(date(2026, 2, 1));
-
-        EdaRecord interest = recordOf(mapper.map(claim), "C26");
-
-        assertEquals("5000", interest.get("ZISATZ"));
-        assertEquals("F", interest.get("ZISAM"));
-        assertEquals("the ledger works in yearly rates", "1", interest.get("ZIARTM"));
-        assertEquals("260201", interest.get("ZIVD"));
-    }
-
-    @Test
-    public void aRateAboveTheBaseRateIsMarkedAsSuch() throws Exception {
-        EdaClaimMapper.Claim claim = new EdaClaimMapper.Claim(
-                component("Kaufpreis", "11"), new BigDecimal("5000.00"));
-        claim.getInterestRules().add(rule(InterestType.BASIS_RELATED, "9", date(2026, 2, 1)));
-
-        EdaRecord interest = recordOf(mapper.map(claim), "C26");
-
-        assertEquals("9000", interest.get("ZISATZ"));
-        assertEquals("B", interest.get("ZISAM"));
-    }
-
-    @Test
-    public void interestFromServiceLeavesTheFromDateEmptyOnPurpose() throws Exception {
-        EdaClaimMapper.Claim claim = new EdaClaimMapper.Claim(
-                component("Kaufpreis", "11"), new BigDecimal("5000.00"));
-        claim.getInterestRules().add(rule(InterestType.BASIS_RELATED, "5", date(2026, 2, 1)));
-        claim.setInterestStartMode(InterestStartMode.ON_SERVICE);
-        claim.setInterestFrom(date(2026, 2, 1));
-
-        EdaRecord interest = recordOf(mapper.map(claim), "C26");
-
-        assertNull("an empty from-date tells the court that interest runs from service; writing a "
-                + "date instead would claim interest for a period nobody asked for",
-                interest.get("ZIVD"));
-        assertEquals("5000", interest.get("ZISATZ"));
-    }
-
-    @Test
-    public void severalInterestRulesProduceSeveralRecords() throws Exception {
-        EdaClaimMapper.Claim claim = new EdaClaimMapper.Claim(
-                component("Kaufpreis", "11"), new BigDecimal("5000.00"));
-        claim.getInterestRules().add(rule(InterestType.FIXED, "4", date(2026, 1, 1)));
-        claim.getInterestRules().add(rule(InterestType.BASIS_RELATED, "9", date(2026, 6, 1)));
-
-        int interestRecords = 0;
-        for (EdaRecord r : mapper.map(claim)) {
-            if ("C26".equals(r.getLayout().getId())) {
-                interestRecords++;
-            }
-        }
-        assertEquals(2, interestRecords);
-    }
-
-    @Test
-    public void aClaimWithoutInterestGetsNoInterestRecord() throws Exception {
-        List<EdaRecord> records = mapper.map(
-                new EdaClaimMapper.Claim(component("Kaufpreis", "11"), new BigDecimal("100.00")));
-
-        assertNull(recordOf(records, "C26"));
-    }
-
-    // ----- the further records a claim can carry -----
-
-    @Test
-    public void interestAlreadyWorkedOutIsClaimedAsAnAmountOfItsOwn() throws Exception {
-        // different from the running interest of C26: there the court calculates, here the applicant
-        // states a figure and the period it covers. Both can appear on one claim
-        EdaClaimMapper.Claim claim = new EdaClaimMapper.Claim(
-                component("Kaufpreis", "11"), new BigDecimal("5000.00"));
-        claim.setComputedInterestAmount(new BigDecimal("123.45"));
-        claim.setComputedInterestRate(new BigDecimal("5"));
-        claim.setComputedInterestFrom(date(2026, 1, 1));
-        claim.setComputedInterestTo(date(2026, 6, 30));
-
-        EdaRecord record = recordOf(mapper.map(claim), "C19");
-
-        assertEquals("12345", record.get("AZIAUBET"));
-        assertEquals("5000", record.get("AZISATZ"));
-        assertEquals("260101", record.get("AZIVD"));
-        assertEquals("260630", record.get("AZIBD"));
-    }
-
-    @Test
-    public void anAssignedClaimNamesWhoAssignedItAndWhen() throws Exception {
-        // without this the debtor is asked to pay somebody who, on the face of the claim, is a
-        // stranger to the contract
-        EdaClaimMapper.Claim claim = new EdaClaimMapper.Claim(
-                component("Kaufpreis", "11"), new BigDecimal("5000.00"));
-        claim.setAssignmentDate(date(2026, 2, 15));
-        claim.setAssignorName("Ursprungsgläubiger GmbH");
-        claim.setAssignorPostalCode("70173");
-        claim.setAssignorCity("Stuttgart");
-
-        EdaRecord record = recordOf(mapper.map(claim), "C25");
-
-        assertEquals("260215", record.get("ABTD"));
-        assertEquals("Ursprungsgläubiger GmbH", record.get("ABTN"));
-        assertEquals("70173", record.get("ABTPLZ"));
-    }
-
-    @Test
-    public void aConsumerCreditClaimCarriesTheContractDateAndInitialRate() throws Exception {
-        EdaClaimMapper.Claim claim = new EdaClaimMapper.Claim(
-                component("Darlehensrückzahlung", "4"), new BigDecimal("5000.00"));
-        claim.setConsumerCreditContractDate(date(2024, 5, 20));
-        claim.setConsumerCreditInitialRate(new BigDecimal("7.9"));
-
-        EdaRecord record = recordOf(mapper.map(claim), "C27");
-
-        assertEquals("240520", record.get("VKGD"));
-        assertEquals("7900", record.get("VKGZISA"));
-    }
-
-    @Test
-    public void aClaimWithoutTheseCircumstancesGetsNoneOfTheirRecords() throws Exception {
-        List<EdaRecord> records = mapper.map(new EdaClaimMapper.Claim(
-                component("Kaufpreis", "11"), new BigDecimal("5000.00")));
-
-        assertNull(recordOf(records, "C19"));
-        assertNull("an empty assignment record would suggest the claim changed hands",
-                recordOf(records, "C25"));
-        assertNull(recordOf(records, "C27"));
-    }
-
-    @Test
-    public void aRuleWithoutARateIsSkippedRatherThanWrittenAsZero() throws Exception {
-        EdaClaimMapper.Claim claim = new EdaClaimMapper.Claim(
-                component("Kaufpreis", "11"), new BigDecimal("5000.00"));
-        claim.getInterestRules().add(rule(InterestType.FIXED, "0", date(2026, 1, 1)));
-        claim.getInterestRules().get(0).setFixedRate(null);
-
-        assertNull("zero per cent interest is a claim; an unset rate is not",
-                recordOf(mapper.map(claim), "C26"));
-    }
-
-    // ----- Zusatzangaben, die eine Spalte der Anspruchszeile belegen -----
-
-    @Test
-    public void theAccountNumberTakesTheColumnOfTheInvoiceNumber() throws Exception {
-        // Der Assistent der Gerichte sagt es wörtlich: "Bitte die Kontonummer im Feld
-        // Rechnungsnummer eintragen." Es gibt ein Feld, nicht zwei - die Zusatzangabe verdrängt.
-        ClaimComponent c = component("Kontoüberziehung", "36");
-        c.setCatalogueReferenceDetail("DE02120300000000202051");
-        EdaClaimMapper.Claim claim = new EdaClaimMapper.Claim(c, new BigDecimal("5000.00"));
-        claim.setInvoiceNumber("RE-2026-0815");
-
-        EdaRecord record = recordOf(mapper.map(claim), "C20");
-
-        assertEquals("DE02120300000000202051", record.get("ASPRNR"));
-        assertEquals("die Anspruchsbegründung bleibt, wo sie ist",
-                "Rechnung", record.get("ASPGR"));
-    }
-
-    @Test
-    public void theMeterNumberTakesTheSameColumn() throws Exception {
-        ClaimComponent c = component("Stromlieferung", "42");
-        c.setCatalogueReferenceDetail("Zähler 7788-01");
-        EdaClaimMapper.Claim claim = new EdaClaimMapper.Claim(c, new BigDecimal("500.00"));
-        claim.setInvoiceNumber("RE-2026-0815");
-
-        assertEquals("Zähler 7788-01", recordOf(mapper.map(claim), "C20").get("ASPRNR"));
-    }
-
-    @Test
-    public void theKindOfOptionalServiceTakesTheSameColumnAgain() throws Exception {
-        // Der Katalog verweist für 61 auf die 2. Spalte und für 36 auf die 3., was nach zwei
-        // verschiedenen Orten klingt und keiner ist: der Assistent verlangt auch hier
-        // "im Feld Rechnungsnummer". Was die Spalten auf dem Papiervordruck zählen, zählt für die
-        // Datei nicht.
-        ClaimComponent c = component("Wahlleistung", "61");
-        c.setCatalogueReferenceDetail("Chefarztbehandlung");
-        EdaClaimMapper.Claim claim = new EdaClaimMapper.Claim(c, new BigDecimal("500.00"));
-        claim.setInvoiceNumber("RE-2026-0815");
-
-        EdaRecord record = recordOf(mapper.map(claim), "C20");
-
-        assertEquals("Chefarztbehandlung", record.get("ASPRNR"));
-        assertEquals("die Anspruchsbegründung bleibt, wo sie ist",
-                "Rechnung", record.get("ASPGR"));
-    }
-
-    @Test
-    public void thePeriodOfNumber70DisplacesNothing() throws Exception {
-        // 70 verlangt einen Zeitraum, und das ist das von/bis der Anspruchszeile selbst - der
-        // Assistent fragt dort nach keiner weiteren Angabe. Was jemand trotzdem einträgt, darf
-        // nichts verdrängen.
-        ClaimComponent c = component("Kita-Beitrag", "70");
-        c.setCatalogueReferenceDetail("01.01.2025 - 31.07.2025");
-        EdaClaimMapper.Claim claim = new EdaClaimMapper.Claim(c, new BigDecimal("500.00"));
-        claim.setInvoiceNumber("RE-2026-0815");
-
-        EdaRecord record = recordOf(mapper.map(claim), "C20");
-
-        assertEquals("Rechnung", record.get("ASPGR"));
-        assertEquals("RE-2026-0815", record.get("ASPRNR"));
-    }
-
-    @Test
-    public void anOrdinaryNumberIsUnaffected() throws Exception {
-        // eine Zusatzangabe an einer Nummer, die keine verlangt, darf nichts verdrängen
-        ClaimComponent c = component("Kaufpreis", "11");
-        c.setCatalogueReferenceDetail("irrtümlich erfasst");
-        EdaClaimMapper.Claim claim = new EdaClaimMapper.Claim(c, new BigDecimal("500.00"));
-        claim.setInvoiceNumber("RE-2026-0815");
-
-        EdaRecord record = recordOf(mapper.map(claim), "C20");
-
-        assertEquals("Rechnung", record.get("ASPGR"));
-        assertEquals("RE-2026-0815", record.get("ASPRNR"));
-    }
-
-    @Test
-    public void theRecordedReasonGoesIntoTheApplication() throws Exception {
-        // Was die Kanzlei erfasst hat, gilt - auch wenn eine Rechnungsnummer etwas anderes
-        // nahelegen wuerde.
-        ClaimComponent c = component("Kaufpreis", "11");
-        c.setClaimReason(com.jdimension.jlawyer.persistence.ClaimReason.VERTRAG);
-        EdaClaimMapper.Claim claim = new EdaClaimMapper.Claim(c, new BigDecimal("500.00"));
-        claim.setInvoiceNumber("RE-2026-0815");
-
-        EdaRecord record = recordOf(mapper.map(claim), "C20");
-
-        assertEquals("Vertrag", record.get("ASPGR"));
-    }
-
-    @Test
-    public void theNumberRecordedAtThePositionIsUsedWhenTheApplicationNamesNone() throws Exception {
-        // Sie gehoert zur Forderung: dieselbe Rechnung nennt die Mahnung und jeder weitere Antrag.
-        // Frueher wurde sie bei jedem Erzeugen neu getippt und war danach fort.
-        ClaimComponent c = component("Kaufpreis", "11");
-        c.setClaimReasonReference("R-2025-0815");
-        EdaClaimMapper.Claim claim = new EdaClaimMapper.Claim(c, new BigDecimal("500.00"));
-
-        EdaRecord record = recordOf(mapper.map(claim), "C20");
-
-        assertEquals("R-2025-0815", record.get("ASPRNR"));
-    }
-
-    @Test
-    public void whatTheApplicationNamesGoesBeforeWhatThePositionHolds() throws Exception {
-        // Fuer diese eine Einreichung darf die Nummer berichtigt worden sein, ohne dass jemand die
-        // Stammdaten aendert.
-        ClaimComponent c = component("Kaufpreis", "11");
-        c.setClaimReasonReference("R-2025-0815");
-        EdaClaimMapper.Claim claim = new EdaClaimMapper.Claim(c, new BigDecimal("500.00"));
-        claim.setInvoiceNumber("R-2025-0816");
-
-        EdaRecord record = recordOf(mapper.map(claim), "C20");
-
-        assertEquals("R-2025-0816", record.get("ASPRNR"));
-    }
-
-    @Test
-    public void theCatalogueAdditionStillTakesTheColumnFromThePositionsNumber() throws Exception {
-        // Die Zusatzangabe der Nummer 36 belegt dieselbe Spalte. Sie verdraengt auch die an der
-        // Position erfasste Nummer - sonst ginge die Kontonummer nicht hinaus, die das Gericht
-        // ausdruecklich dort verlangt.
-        ClaimComponent c = component("Kontoüberziehung", "36");
-        c.setCatalogueReferenceDetail("DE02120300000000202051");
-        c.setClaimReasonReference("R-2025-0815");
-        EdaClaimMapper.Claim claim = new EdaClaimMapper.Claim(c, new BigDecimal("500.00"));
-
-        EdaRecord record = recordOf(mapper.map(claim), "C20");
-
-        assertEquals("DE02120300000000202051", record.get("ASPRNR"));
-    }
-
-    @Test
-    public void withoutAnInvoiceNumberTheProposalIsTheMildestStatement() throws Exception {
-        // "Schreiben" behauptet am wenigsten: dass dem Schuldner geschrieben wurde. Eine Rechnung
-        // zu behaupten, die es nicht gibt, waere eine Angabe gegenueber dem Gericht.
-        EdaClaimMapper.Claim claim =
-                new EdaClaimMapper.Claim(component("Kaufpreis", "11"), new BigDecimal("500.00"));
-
-        EdaRecord record = recordOf(mapper.map(claim), "C20");
-
-        assertEquals("Schreiben", record.get("ASPGR"));
+    @Override
+    public String toString() {
+        return label;
     }
 }

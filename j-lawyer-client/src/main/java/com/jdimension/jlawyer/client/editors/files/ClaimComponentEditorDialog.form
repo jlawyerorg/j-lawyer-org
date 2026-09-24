@@ -44,6 +44,8 @@
                                   <Component id="jLabel3" alignment="0" min="-2" max="-2" attributes="0"/>
                                   <Component id="jLabel4" alignment="0" min="-2" max="-2" attributes="0"/>
                                   <Component id="lblCatalogue" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="lblReason" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="lblReasonReference" alignment="0" min="-2" max="-2" attributes="0"/>
                                   <Component id="lblAddition" alignment="0" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
@@ -51,6 +53,8 @@
                                   <Component id="txtName" max="32767" attributes="0"/>
                                   <Component id="txtDescription" max="32767" attributes="0"/>
                                   <Component id="cmbCatalogue" max="32767" attributes="0"/>
+                                  <Component id="cmbReason" max="32767" attributes="0"/>
+                                  <Component id="txtReasonReference" max="32767" attributes="0"/>
                                   <Group type="102" attributes="0">
                                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
                                           <Component id="cmbType" max="32767" attributes="0"/>
@@ -147,6 +151,16 @@
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="lblCatalogue" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="cmbCatalogue" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="lblReason" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmbReason" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="lblReasonReference" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="txtReasonReference" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
@@ -383,6 +397,43 @@
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmbCatalogueActionPerformed"/>
       </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblReason">
+      <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <Font component="lblReason" property="font" relativeSize="true" size="0"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="Anspruchsbegründung:"/>
+        <Property name="toolTipText" type="java.lang.String" value="Worauf der Anspruch beruht - der Mahnbescheid druckt es: &quot;aus Rechnung Nr. 4711 vom 15.09.2025&quot;"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JComboBox" name="cmbReason">
+      <Properties>
+        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+          <StringArray count="0"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="Die Liste der Mahngerichte; etwas anderes nimmt der Antrag nicht an."/>
+      </Properties>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;Object&gt;"/>
+      </AuxValues>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblReasonReference">
+      <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <Font component="lblReasonReference" property="font" relativeSize="true" size="0"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="Nummer/Beleg:"/>
+        <Property name="toolTipText" type="java.lang.String" value="Die Nummer des Belegs, auf dem der Anspruch beruht - der Mahnbescheid druckt sie hinter der Begr&#xfc;ndung"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JTextField" name="txtReasonReference">
+      <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <Font component="txtReasonReference" property="font" relativeSize="true" size="0"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="H&#xf6;chstens 35 Zeichen - so viele f&#xfc;hrt die Austauschdatei"/>
+      </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="lblAddition">
       <Properties>

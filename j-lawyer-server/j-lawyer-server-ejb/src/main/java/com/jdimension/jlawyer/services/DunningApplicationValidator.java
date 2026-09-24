@@ -949,6 +949,16 @@ public class DunningApplicationValidator {
         String number = component.getCatalogueNumber();
         String name = isBlank(component.getName()) ? "Hauptforderung" : component.getName();
 
+        // Die Anspruchsbegruendung druckt das Gericht: "aus Rechnung Nr. 4711 vom 15.09.2025". Ist
+        // sie nicht erfasst, leitet der Erzeuger sie ab - das geht, sagt aber die Kanzlei nicht,
+        // sondern errät sie. Deshalb ein Hinweis und keine Sperre.
+        if (component.getClaimReason() == null) {
+            result.warning("Anspruchsbegründung",
+                    name + ": es ist nicht erfasst, worauf der Anspruch beruht (Rechnung, Mahnung, "
+                    + "Vertrag ...). Der Antrag geht dann mit einer abgeleiteten Angabe hinaus.",
+                    component.getId());
+        }
+
         if (isBlank(number)) {
             // a free-text claim is allowed; the format carries a designation for it
             return;

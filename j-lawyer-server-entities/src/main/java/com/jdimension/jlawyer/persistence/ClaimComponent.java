@@ -793,6 +793,31 @@ public class ClaimComponent implements Serializable {
     @Column(name = "catalogue_reference_detail")
     private String catalogueReferenceDetail;
 
+    /**
+     * What the claim is based on - the document the debtor was told of it by.
+     *
+     * The dunning court prints it beside the number and the date: "aus Rechnung Nr. 4711 vom
+     * 15.09.2025". Until this was recorded, the exchange file carried the name of the position in
+     * its place, which named the thing bought rather than the ground of the claim.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "claim_reason", length = 30)
+    private ClaimReason claimReason;
+
+    /**
+     * The number of the document the claim rests on - an invoice number, say.
+     *
+     * It belongs to the claim and not to an application: the same invoice is named in a reminder,
+     * in the claim statement and in every application made from now on. It used to be typed into
+     * the dunning dialog for one generation and was gone afterwards.
+     *
+     * The exchange format carries 35 characters for it, in the very column that the additional
+     * entry of catalogue numbers 36, 42 and 61 occupies. Where such a number is chosen, the two
+     * cannot both be transmitted, and which one goes is not ours to decide.
+     */
+    @Column(name = "claim_reason_reference", length = 35)
+    private String claimReasonReference;
+
     @OneToMany(mappedBy = "component", cascade = CascadeType.REMOVE)
     private List<InterestRule> interestRules = new ArrayList<>();
     
@@ -1098,6 +1123,34 @@ public class ClaimComponent implements Serializable {
      */
     public void setCatalogueReferenceDetail(String catalogueReferenceDetail) {
         this.catalogueReferenceDetail = catalogueReferenceDetail;
+    }
+
+    /**
+     * @return what the claim is based on, or null where it has not been said
+     */
+    public ClaimReason getClaimReason() {
+        return claimReason;
+    }
+
+    /**
+     * @param claimReason what the claim is based on
+     */
+    public void setClaimReason(ClaimReason claimReason) {
+        this.claimReason = claimReason;
+    }
+
+    /**
+     * @return the number of the document the claim rests on, or null where none is recorded
+     */
+    public String getClaimReasonReference() {
+        return claimReasonReference;
+    }
+
+    /**
+     * @param claimReasonReference the number of the document the claim rests on
+     */
+    public void setClaimReasonReference(String claimReasonReference) {
+        this.claimReasonReference = claimReasonReference;
     }
 
 

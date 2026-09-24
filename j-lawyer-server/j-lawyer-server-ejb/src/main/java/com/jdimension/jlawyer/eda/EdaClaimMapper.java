@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.eda;
 
 import com.jdimension.jlawyer.persistence.ClaimComponent;
+import com.jdimension.jlawyer.persistence.ClaimReason;
 import com.jdimension.jlawyer.referencedata.CatalogueAddition;
 import com.jdimension.jlawyer.persistence.InterestRule;
 import com.jdimension.jlawyer.persistence.InterestStartMode;
@@ -956,8 +957,17 @@ public class EdaClaimMapper {
         boolean detailTakesTheColumn = notEmpty(detail)
                 && CatalogueAddition.of(component.getCatalogueNumber()) == CatalogueAddition.REFERENCE_DETAIL;
 
-        record.set("ASPGR", component.getName());
-        record.set("ASPRNR", detailTakesTheColumn ? detail.trim() : claim.getInvoiceNumber());
+        // Die Anspruchsbegruendung, nicht der Name der Position: das Feld druckt das Gericht als
+        // "aus Rechnung Nr. 4711 vom 15.09.2025". Hier stand einmal component.getName(), also
+        // "PKW" - die Sache statt des Grundes.
+        ClaimReason reason = component.getClaimReason() == null
+                ? ClaimReason.proposeFor(claim.getInvoiceNumber()) : component.getClaimReason();
+        record.set("ASPGR", reason.getLabel());
+        // Die Nummer des Belegs: was der Antrag mitbringt, geht vor - dort kann sie fuer diese eine
+        // Einreichung berichtigt worden sein -, sonst die an der Position erfasste.
+        String reference = notEmpty(claim.getInvoiceNumber())
+                ? claim.getInvoiceNumber() : component.getClaimReasonReference();
+        record.set("ASPRNR", detailTakesTheColumn ? detail.trim() : reference);
         record.set("ASPVD", EdaValues.date(claim.getFrom()));
         record.set("ASPBD", EdaValues.date(claim.getTo()));
         record.set("ASPBET", EdaValues.amount(claim.getAmount()));

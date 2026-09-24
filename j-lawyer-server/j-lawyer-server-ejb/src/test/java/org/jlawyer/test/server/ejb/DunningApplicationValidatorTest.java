@@ -751,7 +751,28 @@ public class DunningApplicationValidatorTest {
         c.setName(name);
         c.setType(ClaimComponentType.MAIN_CLAIM);
         c.setCatalogueNumber(catalogueNumber);
+        // Eine vollstaendige Position sagt auch, worauf der Anspruch beruht; ohne das meldet die
+        // Pruefung einen Hinweis, und darum geht es in diesen Faellen nicht.
+        c.setClaimReason(com.jdimension.jlawyer.persistence.ClaimReason.RECHNUNG);
         return c;
+    }
+
+    @Test
+    public void apositionThatDoesNotSayWhatItRestsOnIsPointedOut() {
+        // Ohne Erfassung leitet der Erzeuger die Anspruchsbegruendung ab. Das geht - aber dann hat
+        // sie niemand gesagt, und im Mahnbescheid steht sie trotzdem.
+        ClaimComponent silent = mainClaim("c1", "Kaufpreis", "11");
+        silent.setClaimReason(null);
+
+        DunningValidationResult result = validate(completeCase(), completeParties(),
+                Arrays.asList(silent), "5000.00");
+
+        boolean mentioned = false;
+        for (com.jdimension.jlawyer.pojo.DunningValidationIssue issue : result.getIssues()) {
+            mentioned = mentioned || "Anspruchsbegründung".equals(issue.getField());
+        }
+        assertTrue("der fehlende Anspruchsgrund muss auffallen", mentioned);
+        assertTrue("er darf den Antrag aber nicht aufhalten", result.getBlockingIssues().isEmpty());
     }
 
     private DunningValidationResult validate(DunningCase c, List<ClaimLedgerParty> parties,

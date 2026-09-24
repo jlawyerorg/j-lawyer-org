@@ -841,7 +841,10 @@ public class DunningExportDialog extends javax.swing.JDialog {
                 nullSafe(c.getName()),
                 c.getType() == null ? "" : c.getType().getLabel(),
                 c.getPrincipalAmount() == null ? "" : currencyFormat.format(c.getPrincipalAmount()),
-                "",
+                // Aus der Position vorbelegt: die Nummer des Belegs gehoert zur Forderung und wurde
+                // frueher bei jedem Erzeugen neu getippt. Was hier steht, geht hinaus - fuer diese
+                // eine Einreichung darf sie abweichen, ohne die Position zu aendern.
+                nullSafe(c.getClaimReasonReference()),
                 ""});
         }
     }
