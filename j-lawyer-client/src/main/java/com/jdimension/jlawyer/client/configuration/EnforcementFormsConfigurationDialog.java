@@ -698,7 +698,10 @@ public class EnforcementFormsConfigurationDialog extends javax.swing.JDialog {
 
     private static final Logger log = Logger.getLogger(EnforcementFormsConfigurationDialog.class.getName());
 
-    private static final SimpleDateFormat DAY = new SimpleDateFormat("dd.MM.yyyy");
+    // Kein static: SimpleDateFormat ist nicht nebenlaeufigkeitsfest, und ein statisches Feld
+    // teilen sich alle Aufrufe. Zwei gleichzeitige Vorgaenge koennen sich dabei das Ergebnis
+    // verderben - ein falsches Datum in einer Wiedervorlage faellt niemandem auf.
+    private final SimpleDateFormat dayFormat = new SimpleDateFormat("dd.MM.yyyy");
 
     private final List<EnforcementFormTemplate> templates = new ArrayList<>();
 
@@ -760,8 +763,8 @@ public class EnforcementFormsConfigurationDialog extends javax.swing.JDialog {
                 template.getFormKey() == null ? "" : template.getFormKey().replace("_", " "),
                 template.getName(),
                 template.getVersion() == null ? "" : template.getVersion(),
-                template.getValidFrom() == null ? "" : DAY.format(template.getValidFrom()),
-                template.getValidTo() == null ? "" : DAY.format(template.getValidTo())});
+                template.getValidFrom() == null ? "" : dayFormat.format(template.getValidFrom()),
+                template.getValidTo() == null ? "" : dayFormat.format(template.getValidTo())});
         }
         ((DefaultTableModel) this.tblFields.getModel()).setRowCount(0);
         updateHint();
@@ -1132,12 +1135,12 @@ public class EnforcementFormsConfigurationDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdRemoveTemplateActionPerformed
 
     private Date askForDate(String question, Date preset) {
-        String entered = JOptionPane.showInputDialog(this, question, DAY.format(preset));
+        String entered = JOptionPane.showInputDialog(this, question, dayFormat.format(preset));
         if (entered == null) {
             return null;
         }
         try {
-            return DAY.parse(entered.trim());
+            return dayFormat.parse(entered.trim());
         } catch (java.text.ParseException ex) {
             JOptionPane.showMessageDialog(this,
                     "Das Datum konnte nicht gelesen werden. Erwartet wird TT.MM.JJJJ.",

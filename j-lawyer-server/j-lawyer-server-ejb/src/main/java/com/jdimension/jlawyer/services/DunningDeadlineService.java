@@ -702,7 +702,10 @@ import org.apache.log4j.Logger;
 public class DunningDeadlineService implements DunningDeadlineServiceLocal {
 
     private static final Logger log = Logger.getLogger(DunningDeadlineService.class.getName());
-    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy");
+    // Kein static: SimpleDateFormat ist nicht nebenlaeufigkeitsfest, und ein statisches Feld
+    // teilen sich alle Aufrufe. Zwei gleichzeitige Vorgaenge koennen sich dabei das Ergebnis
+    // verderben - ein falsches Datum in einer Wiedervorlage faellt niemandem auf.
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
 
     @Resource
     private SessionContext context;
@@ -817,8 +820,8 @@ public class DunningDeadlineService implements DunningDeadlineServiceLocal {
 
         if (stored != null) {
             report.add(computed.getType().getLabel() + ": Wiedervorlage zum "
-                    + DATE_FORMAT.format(computed.getReminderDate()) + " angelegt (Frist "
-                    + DATE_FORMAT.format(computed.getDeadline()) + ").");
+                    + dateFormat.format(computed.getReminderDate()) + " angelegt (Frist "
+                    + dateFormat.format(computed.getDeadline()) + ").");
         }
     }
 
@@ -844,14 +847,14 @@ public class DunningDeadlineService implements DunningDeadlineServiceLocal {
                 ? null : this.archiveFileReviewsFacade.find(stored.getReviewId());
         if (review == null) {
             report.add(computed.getType().getLabel() + ": Frist jetzt "
-                    + DATE_FORMAT.format(computed.getDeadline())
+                    + dateFormat.format(computed.getDeadline())
                     + " - es gibt keine Wiedervorlage dazu, sie wurde offenbar gelöscht.");
             return;
         }
         if (review.isDone()) {
             // somebody has worked this date off; moving it silently would hide that its basis moved
             report.add(computed.getType().getLabel() + ": Die Frist verschiebt sich auf "
-                    + DATE_FORMAT.format(computed.getDeadline())
+                    + dateFormat.format(computed.getDeadline())
                     + ", die zugehörige Wiedervorlage ist aber bereits als erledigt markiert und "
                     + "wurde nicht geändert. Bitte prüfen Sie sie.");
             return;
@@ -864,8 +867,8 @@ public class DunningDeadlineService implements DunningDeadlineServiceLocal {
         this.archiveFileReviewsFacade.edit(review);
 
         report.add(computed.getType().getLabel() + ": Frist auf "
-                + DATE_FORMAT.format(computed.getDeadline()) + " angepasst, Wiedervorlage zum "
-                + DATE_FORMAT.format(computed.getReminderDate()) + ".");
+                + dateFormat.format(computed.getDeadline()) + " angepasst, Wiedervorlage zum "
+                + dateFormat.format(computed.getReminderDate()) + ".");
     }
 
     private void close(DunningCaseDeadline stored, String reason, List<String> report) {
@@ -887,14 +890,14 @@ public class DunningDeadlineService implements DunningDeadlineServiceLocal {
     }
 
     private String summaryOf(DunningDeadline computed) {
-        return computed.getType().getLabel() + " am " + DATE_FORMAT.format(computed.getDeadline());
+        return computed.getType().getLabel() + " am " + dateFormat.format(computed.getDeadline());
     }
 
     private String descriptionOf(DunningDeadline computed) {
         StringBuilder sb = new StringBuilder();
         sb.append(computed.getType().getLabel()).append(" (")
                 .append(computed.getType().getLegalBasis()).append(")\n");
-        sb.append("Frist: ").append(DATE_FORMAT.format(computed.getDeadline())).append("\n");
+        sb.append("Frist: ").append(dateFormat.format(computed.getDeadline())).append("\n");
         if (computed.isShiftedToWorkingDay()) {
             sb.append("Das rechnerische Fristende fiel auf einen Samstag, Sonntag oder Feiertag; "
                     + "die Frist endet daher am nächsten Werktag (§ 222 Abs. 2 ZPO).\n");
@@ -905,10 +908,10 @@ public class DunningDeadlineService implements DunningDeadlineServiceLocal {
         return sb.toString();
     }
 
-    private static boolean sameDay(Date a, Date b) {
+    private boolean sameDay(Date a, Date b) {
         if (a == null || b == null) {
             return a == b;
         }
-        return DATE_FORMAT.format(a).equals(DATE_FORMAT.format(b));
+        return dateFormat.format(a).equals(dateFormat.format(b));
     }
 }

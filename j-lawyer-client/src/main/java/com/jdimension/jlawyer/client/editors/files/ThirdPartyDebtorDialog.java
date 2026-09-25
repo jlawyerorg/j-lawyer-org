@@ -702,7 +702,10 @@ public class ThirdPartyDebtorDialog extends javax.swing.JDialog {
 
     private static final Logger log = Logger.getLogger(ThirdPartyDebtorDialog.class.getName());
 
-    private static final SimpleDateFormat DAY = new SimpleDateFormat("dd.MM.yyyy");
+    // Kein static: SimpleDateFormat ist nicht nebenlaeufigkeitsfest, und ein statisches Feld
+    // teilen sich alle Aufrufe. Zwei gleichzeitige Vorgaenge koennen sich dabei das Ergebnis
+    // verderben - ein falsches Datum in einer Wiedervorlage faellt niemandem auf.
+    private final SimpleDateFormat dayFormat = new SimpleDateFormat("dd.MM.yyyy");
 
     private static final int COL_NAME = 0;
     private static final int COL_CLAIM = 1;
@@ -786,7 +789,7 @@ public class ThirdPartyDebtorDialog extends javax.swing.JDialog {
         for (AttachedClaimType type : AttachedClaimType.values()) {
             this.cmbClaim.addItem(type);
         }
-        DAY.setLenient(false);
+        dayFormat.setLenient(false);
     }
 
     /**
@@ -887,7 +890,7 @@ public class ThirdPartyDebtorDialog extends javax.swing.JDialog {
     }
 
     private String day(Date date) {
-        return date == null ? "" : DAY.format(date);
+        return date == null ? "" : dayFormat.format(date);
     }
 
     private EnforcementThirdPartyDebtor selectedDebtor() {
@@ -999,7 +1002,7 @@ public class ThirdPartyDebtorDialog extends javax.swing.JDialog {
      */
     private Date dayOf(javax.swing.JTextField field) throws ParseException {
         String entered = field.getText() == null ? "" : field.getText().trim();
-        return entered.isEmpty() ? null : DAY.parse(entered);
+        return entered.isEmpty() ? null : dayFormat.parse(entered);
     }
 
     /**
@@ -1395,13 +1398,13 @@ public class ThirdPartyDebtorDialog extends javax.swing.JDialog {
         String entered = JOptionPane.showInputDialog(this,
                 "Eingang der Drittschuldnererklärung:",
                 this.txtDeclaration.getText() == null || this.txtDeclaration.getText().trim().isEmpty()
-                        ? DAY.format(new Date()) : this.txtDeclaration.getText().trim());
+                        ? dayFormat.format(new Date()) : this.txtDeclaration.getText().trim());
         if (entered == null) {
             return;
         }
         Date receivedOn;
         try {
-            receivedOn = DAY.parse(entered.trim());
+            receivedOn = dayFormat.parse(entered.trim());
         } catch (ParseException ex) {
             JOptionPane.showMessageDialog(this,
                     "Das Datum konnte nicht gelesen werden. Erwartet wird TT.MM.JJJJ.",
@@ -1460,13 +1463,13 @@ public class ThirdPartyDebtorDialog extends javax.swing.JDialog {
         }
 
         String enteredDate = JOptionPane.showInputDialog(this,
-                "Tag der Zahlung:", DAY.format(new Date()));
+                "Tag der Zahlung:", dayFormat.format(new Date()));
         if (enteredDate == null) {
             return;
         }
         Date paidOn;
         try {
-            paidOn = DAY.parse(enteredDate.trim());
+            paidOn = dayFormat.parse(enteredDate.trim());
         } catch (ParseException ex) {
             JOptionPane.showMessageDialog(this,
                     "Das Datum konnte nicht gelesen werden. Erwartet wird TT.MM.JJJJ.",

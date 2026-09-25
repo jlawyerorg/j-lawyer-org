@@ -696,7 +696,10 @@ public class ClaimLedgerDeadlinesPanel extends javax.swing.JPanel {
 
     private static final Logger log = Logger.getLogger(ClaimLedgerDeadlinesPanel.class.getName());
 
-    private static final SimpleDateFormat DAY = new SimpleDateFormat("dd.MM.yyyy");
+    // Kein static: SimpleDateFormat ist nicht nebenlaeufigkeitsfest, und ein statisches Feld
+    // teilen sich alle Aufrufe. Zwei gleichzeitige Vorgaenge koennen sich dabei das Ergebnis
+    // verderben - ein falsches Datum in einer Wiedervorlage faellt niemandem auf.
+    private final SimpleDateFormat dayFormat = new SimpleDateFormat("dd.MM.yyyy");
 
     private static final int COL_DATE = 0;
     private static final int COL_DEADLINE = 1;
@@ -797,7 +800,7 @@ public class ClaimLedgerDeadlinesPanel extends javax.swing.JPanel {
 
         for (EnforcementMeasureDeadline deadline : this.deadlines) {
             deadlineModel.addRow(new Object[]{
-                deadline.getDeadlineDate() == null ? "" : DAY.format(deadline.getDeadlineDate()),
+                deadline.getDeadlineDate() == null ? "" : dayFormat.format(deadline.getDeadlineDate()),
                 deadline.getDeadlineType() == null ? "" : deadline.getDeadlineType().getLabel(),
                 measureOf(deadline),
                 describe(deadline)});
@@ -806,7 +809,7 @@ public class ClaimLedgerDeadlinesPanel extends javax.swing.JPanel {
         if (documents != null) {
             for (EnforcementMeasureDocument document : documents) {
                 documentModel.addRow(new Object[]{
-                    document.getCreatedDate() == null ? "" : DAY.format(document.getCreatedDate()),
+                    document.getCreatedDate() == null ? "" : dayFormat.format(document.getCreatedDate()),
                     document.getDocument() == null ? "" : document.getDocument().getName(),
                     (document.getFormKey() == null ? "" : document.getFormKey())
                     + (document.getFormVersion() == null ? "" : " (" + document.getFormVersion() + ")"),
@@ -824,7 +827,7 @@ public class ClaimLedgerDeadlinesPanel extends javax.swing.JPanel {
         }
         return measure.getMeasureType().getName()
                 + (measure.getDispatchedDate() == null
-                        ? "" : ", ab " + DAY.format(measure.getDispatchedDate()));
+                        ? "" : ", ab " + dayFormat.format(measure.getDispatchedDate()));
     }
 
     /**

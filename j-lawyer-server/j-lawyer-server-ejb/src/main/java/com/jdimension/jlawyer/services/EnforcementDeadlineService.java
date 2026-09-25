@@ -703,7 +703,10 @@ import org.apache.log4j.Logger;
 public class EnforcementDeadlineService implements EnforcementDeadlineServiceLocal {
 
     private static final Logger log = Logger.getLogger(EnforcementDeadlineService.class.getName());
-    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy");
+    // Kein static: SimpleDateFormat ist nicht nebenlaeufigkeitsfest, und ein statisches Feld
+    // teilen sich alle Aufrufe. Zwei gleichzeitige Vorgaenge koennen sich dabei das Ergebnis
+    // verderben - ein falsches Datum in einer Wiedervorlage faellt niemandem auf.
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
 
     @Resource
     private SessionContext context;
@@ -785,7 +788,7 @@ public class EnforcementDeadlineService implements EnforcementDeadlineServiceLoc
         if (type == EnforcementDeadlineType.REPORT && measure.getOutcome() != null) {
             return "Das Ergebnis der Maßnahme ist erfasst: " + measure.getOutcome().getLabel()
                     + (measure.getOutcomeDate() == null
-                            ? "" : " am " + DATE_FORMAT.format(measure.getOutcomeDate())) + ".";
+                            ? "" : " am " + dateFormat.format(measure.getOutcomeDate())) + ".";
         }
         return "Die Frist ist durch den weiteren Gang der Maßnahme entfallen.";
     }
@@ -852,7 +855,7 @@ public class EnforcementDeadlineService implements EnforcementDeadlineServiceLoc
 
         if (stored != null) {
             report.add(computed.getType().getLabel() + ": Wiedervorlage zum "
-                    + DATE_FORMAT.format(computed.getDeadline()) + " angelegt.");
+                    + dateFormat.format(computed.getDeadline()) + " angelegt.");
         }
     }
 
@@ -880,13 +883,13 @@ public class EnforcementDeadlineService implements EnforcementDeadlineServiceLoc
                 ? null : this.archiveFileReviewsFacade.find(stored.getReviewId());
         if (review == null) {
             report.add(computed.getType().getLabel() + ": Frist jetzt "
-                    + DATE_FORMAT.format(computed.getDeadline())
+                    + dateFormat.format(computed.getDeadline())
                     + " - es gibt keine Wiedervorlage dazu, sie wurde offenbar gelöscht.");
             return;
         }
         if (review.isDone()) {
             report.add(computed.getType().getLabel() + ": Die Frist verschiebt sich auf "
-                    + DATE_FORMAT.format(computed.getDeadline())
+                    + dateFormat.format(computed.getDeadline())
                     + ", die zugehörige Wiedervorlage ist aber bereits als erledigt markiert und "
                     + "wurde nicht geändert. Bitte prüfen Sie sie.");
             return;
@@ -899,7 +902,7 @@ public class EnforcementDeadlineService implements EnforcementDeadlineServiceLoc
         this.archiveFileReviewsFacade.edit(review);
 
         report.add(computed.getType().getLabel() + ": Frist auf "
-                + DATE_FORMAT.format(computed.getDeadline()) + " angepasst.");
+                + dateFormat.format(computed.getDeadline()) + " angepasst.");
     }
 
     private void close(EnforcementMeasureDeadline stored, String reason, List<String> report) {
@@ -923,7 +926,7 @@ public class EnforcementDeadlineService implements EnforcementDeadlineServiceLoc
 
     private String summaryOf(EnforcementDeadline computed) {
         return computed.getType().getLabel() + " am "
-                + DATE_FORMAT.format(computed.getDeadline());
+                + dateFormat.format(computed.getDeadline());
     }
 
     private String descriptionOf(EnforcementMeasure measure, EnforcementDeadline computed) {
@@ -933,7 +936,7 @@ public class EnforcementDeadlineService implements EnforcementDeadlineServiceLoc
         if (measure != null && measure.getMeasureType() != null) {
             sb.append("Maßnahme: ").append(measure.getMeasureType().getName()).append("\n");
         }
-        sb.append("Termin: ").append(DATE_FORMAT.format(computed.getDeadline())).append("\n");
+        sb.append("Termin: ").append(dateFormat.format(computed.getDeadline())).append("\n");
         if (computed.isShiftedToWorkingDay()) {
             sb.append("Der errechnete Tag fiel auf einen Samstag, Sonntag oder Feiertag; der Termin "
                     + "liegt daher auf dem nächsten Werktag.\n");
@@ -944,10 +947,10 @@ public class EnforcementDeadlineService implements EnforcementDeadlineServiceLoc
         return sb.toString();
     }
 
-    private static boolean sameDay(Date a, Date b) {
+    private boolean sameDay(Date a, Date b) {
         if (a == null || b == null) {
             return a == b;
         }
-        return DATE_FORMAT.format(a).equals(DATE_FORMAT.format(b));
+        return dateFormat.format(a).equals(dateFormat.format(b));
     }
 }

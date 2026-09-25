@@ -862,6 +862,9 @@ public class EnforcementDeadlineCalculator {
         return d;
     }
 
+    // DayOfWeek ist eine Aufzaehlung und kein wertbasierter Typ; == ist hier richtig und lesbarer
+    // als equals. Der Prüfer behandelt alle Typen aus java.time gleich (java:S8696).
+    @SuppressWarnings("java:S8696")
     private boolean isNonWorkingDay(LocalDate day) {
         return day.getDayOfWeek() == DayOfWeek.SATURDAY
                 || day.getDayOfWeek() == DayOfWeek.SUNDAY

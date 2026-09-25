@@ -693,8 +693,11 @@ import themes.colors.DefaultColorTheme;
  */
 public class ClaimProcessTimelinePanel extends JPanel {
 
-    private static final SimpleDateFormat DAY = new SimpleDateFormat("dd.MM.yy");
-    private static final SimpleDateFormat FULL_DAY = new SimpleDateFormat("dd.MM.yyyy");
+    // Kein static: SimpleDateFormat ist nicht nebenlaeufigkeitsfest, und ein statisches Feld
+    // teilen sich alle Aufrufe. Zwei gleichzeitige Vorgaenge koennen sich dabei das Ergebnis
+    // verderben - ein falsches Datum in einer Wiedervorlage faellt niemandem auf.
+    private final SimpleDateFormat dayFormat = new SimpleDateFormat("dd.MM.yy");
+    private final SimpleDateFormat fullDayFormat = new SimpleDateFormat("dd.MM.yyyy");
 
     private static final int DOT = 11;
     private static final int TOP = 14;
@@ -774,7 +777,7 @@ public class ClaimProcessTimelinePanel extends JPanel {
             sb.append(step.isReached() ? "&#9679; " : "&#9675; ")
                     .append(step.getStage() == null ? "" : step.getStage().getLabel());
             if (step.getReachedOn() != null) {
-                sb.append(" (").append(FULL_DAY.format(step.getReachedOn())).append(")");
+                sb.append(" (").append(fullDayFormat.format(step.getReachedOn())).append(")");
             }
             if (step.getDetail() != null && !step.getDetail().isEmpty()) {
                 sb.append(" - ").append(step.getDetail());
@@ -857,7 +860,7 @@ public class ClaimProcessTimelinePanel extends JPanel {
                 if (s.getReachedOn() != null) {
                     g2.setFont(small);
                     g2.setColor(s.isReached() ? REACHED : PENDING);
-                    drawCentered(g2, DAY.format(s.getReachedOn()), x, labelBaseline + line,
+                    drawCentered(g2, dayFormat.format(s.getReachedOn()), x, labelBaseline + line,
                             i, count, usable);
                 }
             }
@@ -876,7 +879,7 @@ public class ClaimProcessTimelinePanel extends JPanel {
                 boolean overdue = this.status.getNextDeadline().before(new Date());
                 g2.setColor(overdue ? OVERDUE : PENDING);
                 g2.drawString((overdue ? "überfällig seit " : "nächste Frist: ")
-                        + FULL_DAY.format(this.status.getNextDeadline())
+                        + fullDayFormat.format(this.status.getNextDeadline())
                         + (this.status.getNextDeadlineLabel() == null
                                 ? "" : " - " + this.status.getNextDeadlineLabel()),
                         SIDE, textY + line);

@@ -695,7 +695,10 @@ import java.util.List;
  */
 public class ClaimProcessStatusAssembler {
 
-    private static final SimpleDateFormat DAY = new SimpleDateFormat("dd.MM.yyyy");
+    // Kein static: SimpleDateFormat ist nicht nebenlaeufigkeitsfest, und ein statisches Feld
+    // teilen sich alle Aufrufe. Zwei gleichzeitige Vorgaenge koennen sich dabei das Ergebnis
+    // verderben - ein falsches Datum in einer Wiedervorlage faellt niemandem auf.
+    private final SimpleDateFormat dayFormat = new SimpleDateFormat("dd.MM.yyyy");
 
     /**
      * What the timeline is built from.
@@ -900,7 +903,7 @@ public class ClaimProcessStatusAssembler {
 
         Date waitUntil = assetDisclosureWait(input.getEnforcementDeadlines(), day);
         if (waitUntil != null) {
-            return "wartet bis " + DAY.format(waitUntil)
+            return "wartet bis " + dayFormat.format(waitUntil)
                     + ": eine erneute Vermögensauskunft ist erst dann zu verlangen (§ 802d ZPO)";
         }
         return null;

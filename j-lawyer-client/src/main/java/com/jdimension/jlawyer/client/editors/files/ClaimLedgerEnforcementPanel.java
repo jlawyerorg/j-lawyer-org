@@ -697,7 +697,10 @@ public class ClaimLedgerEnforcementPanel extends javax.swing.JPanel {
 
     private static final Logger log = Logger.getLogger(ClaimLedgerEnforcementPanel.class.getName());
 
-    private static final SimpleDateFormat DAY = new SimpleDateFormat("dd.MM.yyyy");
+    // Kein static: SimpleDateFormat ist nicht nebenlaeufigkeitsfest, und ein statisches Feld
+    // teilen sich alle Aufrufe. Zwei gleichzeitige Vorgaenge koennen sich dabei das Ergebnis
+    // verderben - ein falsches Datum in einer Wiedervorlage faellt niemandem auf.
+    private final SimpleDateFormat dayFormat = new SimpleDateFormat("dd.MM.yyyy");
 
     private static final int COL_DATE = 0;
     private static final int COL_TYPE = 1;
@@ -801,7 +804,7 @@ public class ClaimLedgerEnforcementPanel extends javax.swing.JPanel {
 
         for (EnforcementMeasure measure : this.measures) {
             model.addRow(new Object[]{
-                measure.getOrderedDate() == null ? "" : DAY.format(measure.getOrderedDate()),
+                measure.getOrderedDate() == null ? "" : dayFormat.format(measure.getOrderedDate()),
                 measure.getMeasureType() == null ? "" : measure.getMeasureType().getName(),
                 measure.getAddresseeDesignation() == null ? "" : firstLineOf(measure.getAddresseeDesignation()),
                 withThirdParty.contains(measure.getId()) ? THIRD_PARTY_ICON : null,
@@ -820,7 +823,7 @@ public class ClaimLedgerEnforcementPanel extends javax.swing.JPanel {
         }
         String label = measure.getOutcome().getLabel();
         return measure.getOutcomeDate() == null
-                ? label : label + " (" + DAY.format(measure.getOutcomeDate()) + ")";
+                ? label : label + " (" + dayFormat.format(measure.getOutcomeDate()) + ")";
     }
 
     private String firstLineOf(String text) {
@@ -1252,13 +1255,13 @@ public class ClaimLedgerEnforcementPanel extends javax.swing.JPanel {
                 .indexOf(selection.toString())];
 
         String entered = JOptionPane.showInputDialog(this,
-                "Datum des Ergebnisses:", DAY.format(new Date()));
+                "Datum des Ergebnisses:", dayFormat.format(new Date()));
         if (entered == null) {
             return;
         }
         Date outcomeDate;
         try {
-            outcomeDate = DAY.parse(entered.trim());
+            outcomeDate = dayFormat.parse(entered.trim());
         } catch (java.text.ParseException ex) {
             JOptionPane.showMessageDialog(this,
                     "Das Datum konnte nicht gelesen werden. Erwartet wird TT.MM.JJJJ.",
