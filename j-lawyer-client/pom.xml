@@ -527,6 +527,36 @@
             <artifactId>j-lawyer-bea-wrapper</artifactId>
             <version>0.0.0</version>
         </dependency>
+        <!-- MP3/OGG-Decoder-SPIs für javax.sound.sampled. Ermöglichen dem
+             ReadOnlySoundplayerPanel MP3/OGG abzuspielen und in das
+             kanonische WAV-Format (16 kHz mono, siehe AudioUtils.getAudioFormat())
+             zu konvertieren. tritonus-all liefert die SampleRate-/ChannelMix-
+             Converter, ohne die AudioSystem weder resamplen noch downmixen kann. -->
+        <dependency>
+            <groupId>com.googlecode.soundlibs</groupId>
+            <artifactId>mp3spi</artifactId>
+            <version>1.9.5.4</version>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.soundlibs</groupId>
+            <artifactId>jlayer</artifactId>
+            <version>1.0.1.4</version>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.soundlibs</groupId>
+            <artifactId>vorbisspi</artifactId>
+            <version>1.0.3.3</version>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.soundlibs</groupId>
+            <artifactId>jorbis</artifactId>
+            <version>0.0.17.4</version>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.soundlibs</groupId>
+            <artifactId>tritonus-all</artifactId>
+            <version>0.3.7.2</version>
+        </dependency>
     </dependencies>
 
     <build>

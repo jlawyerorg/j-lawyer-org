@@ -779,7 +779,7 @@ public class DocumentViewerFactory {
                 mdp.showContent(id, ("FEHLER: " + ex.getMessage()).getBytes(StandardCharsets.UTF_8));
             }
             return mdp;
-        } else if (lFileName.endsWith(".wav") || lFileName.endsWith(".ogg") || lFileName.endsWith(".mp3")) {
+        } else if (lFileName.endsWith(".wav")) {
             SoundplayerPanel spp = new SoundplayerPanel(id, fileName, readOnly, saveCallback);
             spp.setSize(new Dimension(width, height));
             spp.setMaximumSize(new Dimension(width, height));
@@ -790,6 +790,17 @@ public class DocumentViewerFactory {
                 spp.showStatus("FEHLER: " + ex.getMessage());
             }
             return spp;
+        } else if (lFileName.endsWith(".mp3") || lFileName.endsWith(".ogg")) {
+            ReadOnlySoundplayerPanel rsp = new ReadOnlySoundplayerPanel(id, fileName, caseDto);
+            rsp.setSize(new Dimension(width, height));
+            rsp.setMaximumSize(new Dimension(width, height));
+            rsp.setPreferredSize(new Dimension(width, height));
+            try {
+                rsp.showContent(id, content);
+            } catch (Exception ex) {
+                rsp.showStatus("FEHLER: " + ex.getMessage());
+            }
+            return rsp;
         } else if (lFileName.endsWith(".html")) {
             HtmlPanel hp = new HtmlPanel(id, readOnly);
             hp.setSize(new Dimension(width, height));
