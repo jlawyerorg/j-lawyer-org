@@ -18,7 +18,9 @@ package com.jdimension.jlawyer.client.utils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ServiceLoader;
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
@@ -58,46 +60,61 @@ public class AudioConvertUtils {
      */
     public static byte[] decodeToStandardWav(byte[] input) throws IOException, UnsupportedAudioFileException {
         AudioFormat targetFmt = AudioUtils.getAudioFormat();
-        try (AudioInputStream src = openEncodedStream(input)) {
-            AudioFormat srcFmt = src.getFormat();
-            AudioFormat pcmSrcFmt = new AudioFormat(
-                    AudioFormat.Encoding.PCM_SIGNED,
-                    srcFmt.getSampleRate(),
-                    16,
-                    srcFmt.getChannels(),
-                    srcFmt.getChannels() * 2,
-                    srcFmt.getSampleRate(),
-                    false);
-            try (AudioInputStream pcm = AudioSystem.getAudioInputStream(pcmSrcFmt, src);
-                 AudioInputStream target = AudioSystem.getAudioInputStream(targetFmt, pcm)) {
-                return writeToWavWithKnownLength(target, targetFmt);
+        File tempFile = File.createTempFile("j-lawyer-audio-", ".bin");
+        try {
+            Files.write(tempFile.toPath(), input);
+            try (AudioInputStream src = openEncodedFile(tempFile)) {
+                AudioFormat srcFmt = src.getFormat();
+                AudioFormat pcmSrcFmt = new AudioFormat(
+                        AudioFormat.Encoding.PCM_SIGNED,
+                        srcFmt.getSampleRate(),
+                        16,
+                        srcFmt.getChannels(),
+                        srcFmt.getChannels() * 2,
+                        srcFmt.getSampleRate(),
+                        false);
+                try (AudioInputStream pcm = AudioSystem.getAudioInputStream(pcmSrcFmt, src);
+                     AudioInputStream target = AudioSystem.getAudioInputStream(targetFmt, pcm)) {
+                    return writeToWavWithKnownLength(target, targetFmt);
+                }
+            }
+        } finally {
+            if (!tempFile.delete()) {
+                tempFile.deleteOnExit();
             }
         }
     }
 
     /**
-     * Öffnet die Audiobytes über die auf dem Classpath registrierten
-     * {@link AudioFileReader}-SPIs.
+     * Öffnet eine Audiodatei über die auf dem Classpath registrierten
+     * {@link AudioFileReader}-SPIs — mit File statt InputStream, damit
+     * Reader mit Random-Access-Bedarf funktionieren.
      *
-     * Wir umgehen bewusst {@link AudioSystem#getAudioInputStream(java.io.InputStream)}:
+     * Konkret braucht JAAD (AAC/M4A-Container) freien Seek zurück zur
+     * "moov"-Box, die bei nicht-fast-start-MP4-Dateien am Datei-ENDE liegt;
+     * mit einem reinen InputStream scheitert JAAD mit "movie box at end
+     * of file, need random access". Ein temporäres File löst das.
+     *
+     * Zusätzlich umgehen wir bewusst {@link AudioSystem#getAudioInputStream(java.io.File)}:
      * der in tritonus-all mitgelieferte AiffAudioFileReader wirft bei
-     * Nicht-AIFF-Streams eine {@link java.io.EOFException} statt einer
-     * {@link UnsupportedAudioFileException}. AudioSystem fängt nur letztere ab
-     * und probiert dann den nächsten Provider — die EOFException propagiert
-     * hingegen und bricht die Suche ab, bevor z.B. vorbisspi überhaupt zum
-     * Zug kommt. Deshalb iterieren wir hier selbst durch die Provider und
-     * behandeln jede Fehlerart als "dieser Reader passt nicht, weiter".
+     * Nicht-AIFF-Quellen eine {@link IOException} statt einer
+     * {@link UnsupportedAudioFileException}. AudioSystem fängt nur
+     * letztere ab und probiert dann den nächsten Provider — die
+     * IOException propagiert und bricht die Suche ab, bevor
+     * vorbisspi/mp3spi/jaad zum Zug kommen. Also iterieren wir selbst
+     * und behandeln jede Fehlerart als "dieser Reader passt nicht,
+     * weiter".
      */
-    private static AudioInputStream openEncodedStream(byte[] audioBytes) throws UnsupportedAudioFileException, IOException {
+    private static AudioInputStream openEncodedFile(File audioFile) throws UnsupportedAudioFileException, IOException {
         UnsupportedAudioFileException lastUAFE = null;
         for (AudioFileReader reader : ServiceLoader.load(AudioFileReader.class)) {
             try {
-                return reader.getAudioInputStream(new ByteArrayInputStream(audioBytes));
+                return reader.getAudioInputStream(audioFile);
             } catch (UnsupportedAudioFileException uafe) {
                 lastUAFE = uafe;
             } catch (IOException | RuntimeException | LinkageError ex) {
                 if (log.isDebugEnabled()) {
-                    log.debug("AudioFileReader " + reader.getClass().getName() + " rejected stream: " + ex);
+                    log.debug("AudioFileReader " + reader.getClass().getName() + " rejected file: " + ex);
                 }
             }
         }
@@ -105,7 +122,7 @@ public class AudioConvertUtils {
         // ServiceLoader publiziert sind — falls hier doch mal eine WAV
         // hereingereicht wird.
         try {
-            return AudioSystem.getAudioInputStream(new ByteArrayInputStream(audioBytes));
+            return AudioSystem.getAudioInputStream(audioFile);
         } catch (UnsupportedAudioFileException uafe) {
             throw (lastUAFE != null) ? lastUAFE : uafe;
         }
