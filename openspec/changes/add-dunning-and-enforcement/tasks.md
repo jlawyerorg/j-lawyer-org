@@ -812,8 +812,16 @@
       nothing. It is packed at the end of `setMeasure` now and keeps that as its minimum, which also
       leaves the width to the user's font rather than to a number in the layout: measured with
       FlatLaf it comes out at 922x582 where the layout alone promised 680.
-      *Still open:* the manual test round for this window, and a service-level test of the follow-up
-      behaviour, which today rests on `ThirdPartyDeclarationDeadline` (7 tests) alone.
+      *Five findings from the manual round, three of them real defects.* The list of measures showed
+      nothing about which of them names a third-party debtor, so one had to open each row to find
+      out - it has a column now, filled from one query per ledger rather than one per row. The
+      declaration the user typed was stored and never shown again, which makes the question pointless
+      - the dialog has a field for it. And the follow-up closed by a declaration reached the case
+      only after a reload: `recordDeclaration` cleared the `review_id` after closing the entry, so
+      nothing could find it to announce it. The link is kept now; it also records which entry watched
+      the period.
+      *Still open:* a service-level test of the follow-up behaviour, which today rests on
+      `ThirdPartyDeclarationDeadline` (7 tests) alone.
 - [~] 4.6 Enforcement cost proposal and booking (§ 788 ZPO, Nr. 3309/3310 VV RVG, GvKostG, court
       fees), joint or single debtor, advanced-by-firm handling. **Proposal, booking and the dialog
       are built; section IV of Anlage 6 is not filled from them yet, and the GvKostG table waits
@@ -963,6 +971,11 @@
       server knows and the caller does not, and announcing an addition twice would put the same date
       in the case twice. Where an operation removes follow-ups, they are read **before** it and
       announced afterwards, since afterwards there is no way to learn which they were.
+      *Two findings from the manual round.* The hint beside the dispatch date never appeared: it
+      asked the combo box for an `EnforcementMeasureOption`, and the box holds an `OptionItem`
+      wrapper, so the check was never true and the label stayed empty. And the documents only showed
+      after pressing "Neu laden", because generating forms refreshed the measures but not the tab
+      that lists what came out of them.
       *Open:* the deadlines are not in `EnforcementEndpointV8` yet, and there is still no master
       data screen for measure types - `follow_up_days` and the new flag are editable only by SQL,
       which matters more now that they do something.

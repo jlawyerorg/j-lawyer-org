@@ -702,8 +702,19 @@ public class ClaimLedgerEnforcementPanel extends javax.swing.JPanel {
     private static final int COL_DATE = 0;
     private static final int COL_TYPE = 1;
     private static final int COL_ADDRESSEE = 2;
-    private static final int COL_OUTCOME = 3;
-    private static final int COL_FORM = 4;
+    private static final int COL_THIRDPARTY = 3;
+    private static final int COL_OUTCOME = 4;
+    private static final int COL_FORM = 5;
+
+    /**
+     * Steht an einer Maßnahme, die einen Drittschuldner benennt.
+     *
+     * Ohne dieses Zeichen müsste man jede Zeile einzeln öffnen, um zu sehen, ob eine Bank oder ein
+     * Arbeitgeber dahintersteht - und eine Pfändung, deren Drittschuldner niemand pflegt, bleibt
+     * unbemerkt liegen.
+     */
+    private static final javax.swing.ImageIcon THIRD_PARTY_ICON = new javax.swing.ImageIcon(
+            ClaimLedgerEnforcementPanel.class.getResource("/icons/kmultiple.png"));
 
     private ArchiveFileBean caseDto = null;
     private ClaimLedger ledger = null;
@@ -719,14 +730,21 @@ public class ClaimLedgerEnforcementPanel extends javax.swing.JPanel {
         initComponents();
 
         this.tblMeasures.setModel(new DefaultTableModel(
-                new Object[]{"Datum", "Maßnahme", "Empfänger", "Ergebnis", "Formularfassung"}, 0) {
+                new Object[]{"Datum", "Maßnahme", "Empfänger", "Drittschuldner", "Ergebnis",
+                    "Formularfassung"}, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 // Was hier steht, ist Vorgangsgeschichte - sie wird über die Schaltflächen
                 // fortgeschrieben und nicht in der Tabelle überschrieben.
                 return false;
             }
+
+            @Override
+            public Class<?> getColumnClass(int column) {
+                return column == COL_THIRDPARTY ? javax.swing.Icon.class : String.class;
+            }
         });
+        this.tblMeasures.getColumnModel().getColumn(COL_THIRDPARTY).setMaxWidth(90);
         this.tblMeasures.getSelectionModel().addListSelectionListener(e -> updateButtons());
         updateButtons();
     }
@@ -759,10 +777,19 @@ public class ClaimLedgerEnforcementPanel extends javax.swing.JPanel {
             updateButtons();
             return;
         }
+        java.util.Set<String> withThirdParty = new java.util.HashSet<>();
         try {
             List<EnforcementMeasure> loaded = enforcement().getMeasures(this.ledger.getId());
             if (loaded != null) {
                 this.measures.addAll(loaded);
+            }
+            // Einmal für das ganze Konto und nicht je Zeile: sonst kostete die Liste so viele
+            // Aufrufe, wie sie Zeilen hat.
+            for (com.jdimension.jlawyer.persistence.EnforcementThirdPartyDebtor debtor
+                    : enforcement().getThirdPartyDebtorsOfLedger(this.ledger.getId())) {
+                if (debtor.getMeasure() != null) {
+                    withThirdParty.add(debtor.getMeasure().getId());
+                }
             }
         } catch (Exception ex) {
             log.error("Unable to load the enforcement measures of ledger " + this.ledger.getId(), ex);
@@ -777,6 +804,7 @@ public class ClaimLedgerEnforcementPanel extends javax.swing.JPanel {
                 measure.getOrderedDate() == null ? "" : DAY.format(measure.getOrderedDate()),
                 measure.getMeasureType() == null ? "" : measure.getMeasureType().getName(),
                 measure.getAddresseeDesignation() == null ? "" : firstLineOf(measure.getAddresseeDesignation()),
+                withThirdParty.contains(measure.getId()) ? THIRD_PARTY_ICON : null,
                 describeOutcome(measure),
                 measure.getFormVersion() == null ? "" : measure.getFormVersion()});
         }
@@ -1301,6 +1329,13 @@ public class ClaimLedgerEnforcementPanel extends javax.swing.JPanel {
         for (ArchiveFileDocumentsBean document : documents) {
             com.jdimension.jlawyer.client.events.EventBroker.getInstance().publishEvent(
                     new com.jdimension.jlawyer.client.events.DocumentAddedEvent(document));
+        }
+
+        // Und der Reiter "Fristen & Dokumente" fuehrt, aus welcher Maßnahme welches Papier kam.
+        // Ohne diesen Anstoss stuende es dort erst nach einem Druck auf "Neu laden".
+        java.awt.Window owner = javax.swing.SwingUtilities.getWindowAncestor(this);
+        if (owner instanceof ClaimLedgerDialog) {
+            ((ClaimLedgerDialog) owner).reload();
         }
 
         loadMeasures();

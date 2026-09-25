@@ -1148,4 +1148,18 @@ public interface EnforcementServiceRemote {
      */
     List<ArchiveFileReviewsBean> getFollowUps(String ledgerId) throws Exception;
 
+
+    /**
+     * The third-party debtors named in any measure of a claim ledger.
+     *
+     * A third-party debtor belongs to one measure, which is where he is maintained. For a list of
+     * measures that is one question too many: whoever looks at it wants to see which of them names
+     * a bank or an employer, and asking measure by measure would mean one call per row.
+     *
+     * @param ledgerId the claim ledger
+     * @return them, oldest measure first
+     * @throws Exception if the ledger does not exist or the user may not access its case
+     */
+    List<EnforcementThirdPartyDebtor> getThirdPartyDebtorsOfLedger(String ledgerId) throws Exception;
+
 }

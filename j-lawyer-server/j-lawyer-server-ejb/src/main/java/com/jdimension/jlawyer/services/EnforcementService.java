@@ -1517,6 +1517,13 @@ public class EnforcementService implements EnforcementServiceRemote, Enforcement
     }
 
     @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<EnforcementThirdPartyDebtor> getThirdPartyDebtorsOfLedger(String ledgerId)
+            throws Exception {
+        return this.thirdPartyDebtorsFacade.findByLedger(requireLedger(ledgerId));
+    }
+
+    @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public EnforcementThirdPartyDebtor addThirdPartyDebtor(String measureId,
             EnforcementThirdPartyDebtor debtor) throws Exception {
@@ -1592,8 +1599,10 @@ public class EnforcementService implements EnforcementServiceRemote, Enforcement
         }
         // Die Wiedervorlage hat ihren Zweck erfuellt - sie weiter offen zu lassen, hiesse nach
         // etwas zu suchen, das da ist.
-        closeDeclarationFollowUp(stored);
-        stored.setReviewId(null);
+        //
+        // Die Verknuepfung bleibt dabei bestehen. Sie haelt fest, welcher Kalendereintrag diese
+        // Frist ueberwacht hat, und ohne sie findet der Aufrufer den geschlossenen Eintrag nicht
+        // mehr - in der offenen Akte stand er dann weiter als offen, bis jemand sie neu lud.
 
         this.thirdPartyDebtorsFacade.edit(stored);
         return this.thirdPartyDebtorsFacade.find(stored.getId());

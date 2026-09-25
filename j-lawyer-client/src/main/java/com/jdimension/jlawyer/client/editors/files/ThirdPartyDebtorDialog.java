@@ -913,6 +913,8 @@ public class ThirdPartyDebtorDialog extends javax.swing.JDialog {
                 ? "" : debtor.getAttachedClaimDetail());
         this.txtServed.setText(day(debtor.getServedDate()));
         this.txtDeclaration.setText(day(debtor.getDeclarationReceived()));
+        this.txtNote.setText(debtor.getDeclarationNote() == null ? "" : debtor.getDeclarationNote());
+        this.txtNote.setCaretPosition(0);
         showDue(debtor);
         updateButtons();
     }
@@ -970,6 +972,7 @@ public class ThirdPartyDebtorDialog extends javax.swing.JDialog {
         this.txtClaimDetail.setText("");
         this.txtServed.setText("");
         this.txtDeclaration.setText("");
+        this.txtNote.setText("");
         this.lblDue.setText("");
     }
 
@@ -1026,6 +1029,9 @@ public class ThirdPartyDebtorDialog extends javax.swing.JDialog {
         lblDeclaration = new javax.swing.JLabel();
         txtDeclaration = new javax.swing.JTextField();
         cmdDeclarationReceived = new javax.swing.JButton();
+        lblNote = new javax.swing.JLabel();
+        scrlNote = new javax.swing.JScrollPane();
+        txtNote = new javax.swing.JTextArea();
         scrlHint = new javax.swing.JScrollPane();
         txtHint = new javax.swing.JTextArea();
         cmdAdd = new javax.swing.JButton();
@@ -1088,6 +1094,16 @@ public class ThirdPartyDebtorDialog extends javax.swing.JDialog {
                 cmdDeclarationReceivedActionPerformed(evt);
             }
         });
+
+        lblNote.setText("Erklärung:");
+        lblNote.setToolTipText("Was der Drittschuldner erklärt hat - ob er die Forderung anerkennt, ob schon andere gepfändet haben, ob er zahlt");
+        lblNote.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+
+        txtNote.setColumns(20);
+        txtNote.setLineWrap(true);
+        txtNote.setRows(2);
+        txtNote.setWrapStyleWord(true);
+        scrlNote.setViewportView(txtNote);
 
         txtHint.setEditable(false);
         txtHint.setColumns(20);
@@ -1153,7 +1169,8 @@ public class ThirdPartyDebtorDialog extends javax.swing.JDialog {
                             .addComponent(lblAddress)
                             .addComponent(lblClaim)
                             .addComponent(lblServed)
-                            .addComponent(lblDeclaration))
+                            .addComponent(lblDeclaration)
+                            .addComponent(lblNote))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(cmbContact, javax.swing.GroupLayout.DEFAULT_SIZE, 620, Short.MAX_VALUE)
@@ -1170,7 +1187,8 @@ public class ThirdPartyDebtorDialog extends javax.swing.JDialog {
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(txtDeclaration, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cmdDeclarationReceived))))
+                                .addComponent(cmdDeclarationReceived))
+                            .addComponent(scrlNote, javax.swing.GroupLayout.DEFAULT_SIZE, 620, Short.MAX_VALUE)))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(cmdAdd)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1215,6 +1233,10 @@ public class ThirdPartyDebtorDialog extends javax.swing.JDialog {
                     .addComponent(lblDeclaration)
                     .addComponent(txtDeclaration, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(cmdDeclarationReceived))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblNote)
+                    .addComponent(scrlNote, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(scrlHint, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -1301,6 +1323,7 @@ public class ThirdPartyDebtorDialog extends javax.swing.JDialog {
                 ? AttachedClaimType.OTHER : (AttachedClaimType) this.cmbClaim.getSelectedItem());
         debtor.setAttachedClaimDetail(emptyToNull(this.txtClaimDetail.getText()));
         debtor.setServedDate(served);
+        debtor.setDeclarationNote(emptyToNull(this.txtNote.getText()));
 
         Date storedReceived = this.editing == null ? null : this.editing.getDeclarationReceived();
         try {
@@ -1387,8 +1410,10 @@ public class ThirdPartyDebtorDialog extends javax.swing.JDialog {
         }
 
         String note = JOptionPane.showInputDialog(this,
-                "Was hat der Drittschuldner erklärt?", debtor.getDeclarationNote() == null
-                        ? "" : debtor.getDeclarationNote());
+                "Was hat der Drittschuldner erklärt?",
+                emptyToNull(this.txtNote.getText()) == null
+                        ? (debtor.getDeclarationNote() == null ? "" : debtor.getDeclarationNote())
+                        : this.txtNote.getText().trim());
         if (note == null) {
             return;
         }
@@ -1490,16 +1515,19 @@ public class ThirdPartyDebtorDialog extends javax.swing.JDialog {
     private javax.swing.JLabel lblDeclaration;
     private javax.swing.JLabel lblDesignation;
     private javax.swing.JLabel lblDue;
+    private javax.swing.JLabel lblNote;
     private javax.swing.JLabel lblServed;
     private javax.swing.JScrollPane scrlAddress;
     private javax.swing.JScrollPane scrlDebtors;
     private javax.swing.JScrollPane scrlHint;
+    private javax.swing.JScrollPane scrlNote;
     private javax.swing.JTable tblDebtors;
     private javax.swing.JTextArea txtAddress;
     private javax.swing.JTextField txtClaimDetail;
     private javax.swing.JTextField txtDeclaration;
     private javax.swing.JTextField txtDesignation;
     private javax.swing.JTextArea txtHint;
+    private javax.swing.JTextArea txtNote;
     private javax.swing.JTextField txtServed;
     // End of variables declaration//GEN-END:variables
 }

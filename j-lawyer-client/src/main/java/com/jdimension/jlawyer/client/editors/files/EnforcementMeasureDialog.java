@@ -793,12 +793,11 @@ public class EnforcementMeasureDialog extends javax.swing.JDialog {
      * not been told that he was deciding.
      */
     private void updateDispatchHint() {
-        Object selected = this.cmbMeasureType.getSelectedItem();
-        int days = 0;
-        if (selected instanceof EnforcementMeasureOption
-                && ((EnforcementMeasureOption) selected).getMeasureType() != null) {
-            days = ((EnforcementMeasureOption) selected).getMeasureType().getFollowUpDays();
-        }
+        // Ueber selectedOption(): im Auswahlkasten liegen OptionItem-Huellen und keine Optionen,
+        // und die Pruefung auf den falschen Typ traf nie zu - der Hinweis blieb immer leer.
+        EnforcementMeasureOption option = selectedOption();
+        int days = option == null || option.getMeasureType() == null
+                ? 0 : option.getMeasureType().getFollowUpDays();
         String entered = this.txtDispatchedDate.getText() == null
                 ? "" : this.txtDispatchedDate.getText().trim();
 

@@ -37,6 +37,7 @@
                           <Component id="lblClaim" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="lblServed" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="lblDeclaration" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblNote" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
@@ -58,6 +59,7 @@
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="cmdDeclarationReceived" min="-2" max="-2" attributes="0"/>
                           </Group>
+                          <Component id="scrlNote" alignment="0" pref="620" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                   <Group type="102" alignment="0" attributes="0">
@@ -113,6 +115,11 @@
                   <Component id="lblDeclaration" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="txtDeclaration" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="cmdDeclarationReceived" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="lblNote" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="scrlNote" alignment="0" min="-2" pref="52" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="scrlHint" min="-2" pref="48" max="-2" attributes="0"/>
@@ -253,6 +260,29 @@
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdDeclarationReceivedActionPerformed"/>
       </Events>
     </Component>
+    <Component class="javax.swing.JLabel" name="lblNote">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Erkl&#228;rung:"/>
+        <Property name="toolTipText" type="java.lang.String" value="Was der Drittschuldner erkl&#228;rt hat - ob er die Forderung anerkennt, ob schon andere gepf&#228;ndet haben, ob er zahlt"/>
+        <Property name="verticalAlignment" type="int" value="1"/>
+      </Properties>
+    </Component>
+    <Container class="javax.swing.JScrollPane" name="scrlNote">
+      <AuxValues>
+        <AuxValue name="autoScrollPane" type="java.lang.Boolean" value="true"/>
+      </AuxValues>
+      <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
+      <SubComponents>
+        <Component class="javax.swing.JTextArea" name="txtNote">
+          <Properties>
+            <Property name="columns" type="int" value="20"/>
+            <Property name="lineWrap" type="boolean" value="true"/>
+            <Property name="rows" type="int" value="2"/>
+            <Property name="wrapStyleWord" type="boolean" value="true"/>
+          </Properties>
+        </Component>
+      </SubComponents>
+    </Container>
     <Container class="javax.swing.JScrollPane" name="scrlHint">
       <AuxValues>
         <AuxValue name="autoScrollPane" type="java.lang.Boolean" value="true"/>

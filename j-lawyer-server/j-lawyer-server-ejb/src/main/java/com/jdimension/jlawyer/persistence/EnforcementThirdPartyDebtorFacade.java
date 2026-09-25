@@ -696,6 +696,13 @@ public class EnforcementThirdPartyDebtorFacade extends AbstractFacade<Enforcemen
     }
 
     @Override
+    public List<EnforcementThirdPartyDebtor> findByLedger(ClaimLedger ledger) {
+        return (List<EnforcementThirdPartyDebtor>) em
+                .createNamedQuery("EnforcementThirdPartyDebtor.findByLedger")
+                .setParameter("ledger", ledger).getResultList();
+    }
+
+    @Override
     public List<EnforcementThirdPartyDebtor> findOutstanding(Date day) {
         return (List<EnforcementThirdPartyDebtor>) em
                 .createNamedQuery("EnforcementThirdPartyDebtor.findOutstanding")

@@ -697,6 +697,9 @@ import javax.persistence.TemporalType;
     @NamedQuery(name = "EnforcementThirdPartyDebtor.findByMeasure",
             query = "SELECT d FROM EnforcementThirdPartyDebtor d WHERE d.measure = :measure "
             + "ORDER BY d.designation ASC"),
+    @NamedQuery(name = "EnforcementThirdPartyDebtor.findByLedger",
+            query = "SELECT d FROM EnforcementThirdPartyDebtor d WHERE d.measure.ledger = :ledger "
+            + "ORDER BY d.measure.orderedDate ASC"),
     @NamedQuery(name = "EnforcementThirdPartyDebtor.findOutstanding",
             query = "SELECT d FROM EnforcementThirdPartyDebtor d WHERE d.declarationReceived IS NULL "
             + "AND d.declarationDue IS NOT NULL AND d.declarationDue <= :day "

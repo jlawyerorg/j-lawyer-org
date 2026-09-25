@@ -691,6 +691,12 @@ public interface EnforcementThirdPartyDebtorFacadeLocal {
     List<EnforcementThirdPartyDebtor> findByMeasure(EnforcementMeasure measure);
 
     /**
+     * @param ledger the claim ledger
+     * @return the third-party debtors named in any of its measures
+     */
+    List<EnforcementThirdPartyDebtor> findByLedger(ClaimLedger ledger);
+
+    /**
      * Those whose declaration under § 840 ZPO is due and has not arrived.
      *
      * @param day the day to measure against
