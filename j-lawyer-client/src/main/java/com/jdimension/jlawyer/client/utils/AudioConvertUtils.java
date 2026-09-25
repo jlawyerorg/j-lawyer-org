@@ -52,9 +52,7 @@ public class AudioConvertUtils {
                     srcFmt.getSampleRate(),
                     false);
             try (AudioInputStream pcm = AudioSystem.getAudioInputStream(pcmFmt, src)) {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                AudioSystem.write(pcm, AudioFileFormat.Type.WAVE, baos);
-                return baos.toByteArray();
+                return writeToWavWithKnownLength(pcm, pcmFmt);
             }
         }
     }
@@ -79,10 +77,35 @@ public class AudioConvertUtils {
                     false);
             try (AudioInputStream pcm = AudioSystem.getAudioInputStream(pcmSrcFmt, src);
                  AudioInputStream target = AudioSystem.getAudioInputStream(targetFmt, pcm)) {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                AudioSystem.write(target, AudioFileFormat.Type.WAVE, baos);
-                return baos.toByteArray();
+                return writeToWavWithKnownLength(target, targetFmt);
             }
+        }
+    }
+
+    /**
+     * Puffert einen PCM-Stream vollständig in den Speicher und schreibt das
+     * Ergebnis als WAV mit korrekt gesetzten Chunk-Längen zurück. Notwendig,
+     * weil AudioSystem.write(stream, WAVE, outputStream) bei Quellen mit
+     * getFrameLength() == NOT_SPECIFIED — was mp3spi, vorbisspi und jaad
+     * durchweg liefern — einen WAV-Header mit falscher Datenlänge (typisch
+     * 0 oder -1) schreibt. Der resultierende WAV ist syntaktisch korrekt,
+     * meldet aber 0 Samples: Clip.open() liefert Stille, computePeaks()
+     * eine leere Waveform und keine der beiden Stellen wirft eine Exception.
+     */
+    private static byte[] writeToWavWithKnownLength(AudioInputStream pcm, AudioFormat fmt) throws IOException {
+        ByteArrayOutputStream pcmData = new ByteArrayOutputStream();
+        byte[] buf = new byte[8192];
+        int r;
+        while ((r = pcm.read(buf)) > 0) {
+            pcmData.write(buf, 0, r);
+        }
+        byte[] pcmBytes = pcmData.toByteArray();
+        int frameSize = fmt.getFrameSize();
+        long frames = frameSize > 0 ? pcmBytes.length / frameSize : pcmBytes.length;
+        try (AudioInputStream withLen = new AudioInputStream(new ByteArrayInputStream(pcmBytes), fmt, frames)) {
+            ByteArrayOutputStream wav = new ByteArrayOutputStream();
+            AudioSystem.write(withLen, AudioFileFormat.Type.WAVE, wav);
+            return wav.toByteArray();
         }
     }
 
