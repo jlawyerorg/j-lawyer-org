@@ -10355,9 +10355,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
             }
         } else if (e instanceof ReviewAddedEvent) {
-            applyReviewToTable(((ReviewAddedEvent) e).getReview());
+            applyReviewToTable(((ReviewAddedEvent) e).getReview(), true);
         } else if (e instanceof ReviewUpdatedEvent) {
-            applyReviewToTable(((ReviewUpdatedEvent) e).getReview());
+            applyReviewToTable(((ReviewUpdatedEvent) e).getReview(), false);
         } else if (e instanceof InstantMessageDeletedEvent) {
 
             boolean removed = false;
@@ -10392,18 +10392,20 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     /**
      * Zeigt eine angelegte oder geänderte Wiedervorlage im Reiter "Kalender" dieser Akte.
      *
-     * Eingefügt oder aktualisiert, je nachdem, ob die Zeile schon dasteht. Beides über denselben
-     * Weg, weil der Unterschied für den Aufrufer nicht immer feststeht: eine Wiedervorlage, die auf
-     * dem Server entstanden ist, meldet sich beim Client als Änderung, und sie zweimal anzulegen
-     * wäre schlimmer, als sie gar nicht zu zeigen.
-     *
      * Erledigte bleiben stehen - sie sind Teil dessen, was in der Akte geschehen ist -, aber sie
      * stehen dann als erledigt da, und genau das war ohne diese Behandlung erst nach einem
      * Neuladen der Akte zu sehen.
      *
+     * Eine Änderung darf keine Zeile anlegen. Das Löschen einer Wiedervorlage meldet in dieser
+     * Maske ebenfalls eine Änderung - der Desktop erfährt darüber, dass seine Liste der heute
+     * fälligen neu zu laden ist -, und die gelöschte Zeile wieder einzufügen wäre schlimmer als
+     * jede verspätete Anzeige. Wer eine Zeile anlegen lassen will, meldet eine Neuanlage; das tut
+     * auch, wer eine auf dem Server entstandene Wiedervorlage bekannt macht.
+     *
      * @param review die Wiedervorlage; fremde und leere werden übergangen
+     * @param mayInsert ob eine noch nicht vorhandene Zeile angelegt werden darf
      */
-    private void applyReviewToTable(ArchiveFileReviewsBean review) {
+    private void applyReviewToTable(ArchiveFileReviewsBean review, boolean mayInsert) {
 
         // kann in einer Unterklasse von ArchiveFilePanel null sein
         if (this.dto == null || this.dto.getId() == null || review == null
@@ -10428,8 +10430,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     return;
                 }
             }
-            model.addRow(row);
-            ComponentUtils.autoSizeColumns(tblReviewReasons);
+            if (mayInsert) {
+                model.addRow(row);
+                ComponentUtils.autoSizeColumns(tblReviewReasons);
+            }
         });
     }
 

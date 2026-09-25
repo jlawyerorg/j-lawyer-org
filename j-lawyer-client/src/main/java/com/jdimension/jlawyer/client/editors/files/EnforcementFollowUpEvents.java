@@ -663,7 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.events.EventBroker;
-import com.jdimension.jlawyer.client.events.ReviewUpdatedEvent;
+import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -681,10 +681,11 @@ import org.apache.log4j.Logger;
  * in the case only after it was closed and opened again, which looks exactly like nothing having
  * happened.
  *
- * Everything is announced as a change and not as an addition, deliberately. Whether a follow-up is
- * new or merely moved is something the server knows and the caller does not, and the case updates
- * the row it already has or adds it if it has none. Announcing an addition twice would put the
- * same date in the case twice, which is worse than announcing it late.
+ * Everything is announced as an addition, whether it is new or was only moved. The case inserts the
+ * row or updates the one it already has, so announcing the same follow-up twice costs nothing -
+ * whereas announcing a *change* would not make a new follow-up appear at all: a change may not
+ * create a row, because deleting a follow-up is reported as a change too, and re-inserting a
+ * deleted one would be worse than showing a new one late.
  *
  * @author jens
  */
@@ -743,7 +744,7 @@ final class EnforcementFollowUpEvents {
         EventBroker broker = EventBroker.getInstance();
         for (ArchiveFileReviewsBean followUp : followUps) {
             if (followUp != null) {
-                broker.publishEvent(new ReviewUpdatedEvent(null, null, followUp));
+                broker.publishEvent(new ReviewAddedEvent(followUp));
             }
         }
     }
