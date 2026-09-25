@@ -912,7 +912,11 @@ public class EnforcementService implements EnforcementServiceRemote, Enforcement
 
         // PDFBox liest aus einer Datei; die Vorlage liegt in der Datenbank. Der Umweg über eine
         // temporäre Datei ist kürzer als ein zweiter Lesepfad, und sie wird in jedem Fall gelöscht.
-        File temporary = File.createTempFile("zvfv-", ".pdf");
+        //
+        // Files.createTempFile und nicht File.createTempFile: das Verzeichnis ist auf jedem Server
+        // für alle beschreibbar, und File.createTempFile legt die Datei mit der Standardmaske an -
+        // gemessen rw-rw-r--, also für jedes lokale Konto lesbar. Der nio-Weg vergibt rw-------.
+        File temporary = Files.createTempFile("zvfv-", ".pdf").toFile();
         try {
             Files.write(temporary.toPath(), template.getPdfContent());
             List<AcroFormFieldInfo> fields = new ArrayList<>();
@@ -1470,8 +1474,11 @@ public class EnforcementService implements EnforcementServiceRemote, Enforcement
         Map<String, String> fields = this.formPreparation.fieldsFor(mappings, values);
         List<String> mandatory = this.formPreparation.mandatoryFieldsOf(mappings);
 
-        File source = File.createTempFile("zvfv-vorlage-", ".pdf");
-        File target = File.createTempFile("zvfv-", ".pdf");
+        // Dieselbe Vorsicht wie beim Lesen der Vorlage, und hier wiegt sie schwerer: in der
+        // Zieldatei steht ein ausgefülltes Formular mit Namen, Anschrift und Forderungshöhe des
+        // Schuldners. Sie darf nicht für jedes lokale Konto lesbar im Temp-Verzeichnis liegen.
+        File source = Files.createTempFile("zvfv-vorlage-", ".pdf").toFile();
+        File target = Files.createTempFile("zvfv-", ".pdf").toFile();
         try {
             Files.write(source.toPath(), template.getPdfContent());
             AcroFormFillResult result = this.filler.fill(source, fields, mandatory, target, flatten);

@@ -834,6 +834,7 @@ public class SecurityUtils {
      * @return the subset of caseIds the user may see, empty if caseIds is empty
      * @throws Exception on database errors
      */
+    @SuppressWarnings("java:S2077")
     public static List<String> filterAllowedCases(String principalId, Collection<String> caseIds, SecurityServiceLocal securityFacade) throws Exception {
         List<String> list = new ArrayList<>();
         if (caseIds == null || caseIds.isEmpty()) {
@@ -864,6 +865,11 @@ public class SecurityUtils {
         String groupIn = groupPlaceholders.toString();
         String caseIn = casePlaceholders.toString();
 
+        // In den Abfragetext geht nichts ein als die Zahl der Fragezeichen: caseIn und groupIn
+        // bestehen ausschliesslich aus "?" und Kommas, die aus der Groesse der Sammlungen
+        // entstehen, und jeder Wert wird unten gebunden. Eine IN-Liste veraenderlicher Laenge
+        // laesst sich in SQL nicht anders binden; der Prüfer sieht nur, dass hier eine Abfrage
+        // zusammengesetzt wird, und meldet sie deshalb (java:S2077).
         String sql = "select distinct (t1.id) from (\n"
                 + "select id from cases where id in (" + caseIn + ") and owner_group in (" + groupIn + ")\n"
                 + "union \n"

@@ -854,7 +854,7 @@ public class EdaApplicationSummaryTest {
         byte[] pdf = new EdaApplicationPdfWriter().write(summaryOf(eda));
         assertTrue(pdf.length > 0);
 
-        File written = File.createTempFile("eda-", ".pdf");
+        File written = java.nio.file.Files.createTempFile("eda-", ".pdf").toFile();
         try {
             Files.write(written.toPath(), pdf);
             String text;
