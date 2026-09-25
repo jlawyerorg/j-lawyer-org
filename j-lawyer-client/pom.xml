@@ -557,21 +557,6 @@
             <artifactId>tritonus-all</artifactId>
             <version>0.3.7.2</version>
         </dependency>
-        <!-- AAC-Decoder (pure Java, LC-AAC in .aac/ADTS und im MP4-Container .m4a).
-             Registriert einen javax.sound.sampled AudioFileReader-SPI, sodass
-             AudioSystem.getAudioInputStream(...) AAC transparent liefert.
-
-             Der tianscar-Fork ist der einzige, der bei einem MP4-Container mit
-             moov-Box am Dateiende (Default bei iTunes und ffmpeg ohne
-             -movflags faststart) via RandomAccessFile den nötigen Seek zurück
-             bewerkstelligt; der bekanntere sfuhrm-Fork reicht Files intern nur
-             als InputStream weiter und scheitert an genau dem Layout mit
-             "movie box at end of file, need random access". -->
-        <dependency>
-            <groupId>com.tianscar.javasound</groupId>
-            <artifactId>jaad</artifactId>
-            <version>0.9.4</version>
-        </dependency>
     </dependencies>
 
     <build>

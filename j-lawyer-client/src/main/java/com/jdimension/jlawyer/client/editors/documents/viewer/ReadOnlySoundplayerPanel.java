@@ -264,13 +264,9 @@ public class ReadOnlySoundplayerPanel extends javax.swing.JPanel implements Prev
         try {
             // Wir wissen genau, welches Format standardWav hat: 44-Byte-Standard-
             // WAV-Header + PCM 16 kHz mono 16-Bit LE (AudioUtils.getAudioFormat()).
-            // Deshalb umgehen wir bewusst AudioSystem.getAudioInputStream(bytes),
-            // die den Byte-Strom durch alle registrierten AudioFileReader-SPIs
-            // laufen lässt — der tianscar-JAAD-AAC-Reader wirft z.B. bei
-            // Nicht-AAC-Input eine NullPointerException statt der spezifizierten
-            // UnsupportedAudioFileException, die AudioSystem nach oben propagiert.
-            // Clip.open(AudioFormat, byte[], int, int) hängt direkt am nativen
-            // Audio-Layer und interessiert sich nicht für Container-Parsing.
+            // Deshalb öffnen wir den Clip direkt auf die PCM-Payload — schneller
+            // als der Umweg über AudioSystem.getAudioInputStream(bytes) und
+            // unabhängig von SPI-Reihenfolgen und Provider-Bugs.
             AudioFormat fmt = AudioUtils.getAudioFormat();
             int headerLen = 44;
             byte[] pcmData = standardWav;
@@ -412,15 +408,10 @@ public class ReadOnlySoundplayerPanel extends javax.swing.JPanel implements Prev
     }
 
     /**
-     * Berechnet Peak-Werte direkt aus 16-Bit-Mono-LE-PCM.
-     *
-     * WaveformPanel.computePeaks() geht den Umweg über
-     * AudioSystem.getAudioInputStream(bytes), das jeden Byte-Strom durch alle
-     * registrierten AudioFileReader-SPIs schleust — z.B. den tianscar-JAAD-AAC-
-     * Reader, der bei Nicht-AAC-Input mit NullPointerException statt
-     * UnsupportedAudioFileException reagiert und die Kette killt. Da wir das
-     * Format hier exakt kennen, ist der direkte Weg beides — robuster und
-     * schneller.
+     * Berechnet Peak-Werte direkt aus 16-Bit-Mono-LE-PCM. WaveformPanel.
+     * computePeaks() geht denselben AudioSystem-SPI-Umweg wie das
+     * Clip-Öffnen; da wir das Format exakt kennen, ist der direkte Weg
+     * beides — schneller und unabhängig von SPI-Reihenfolgen.
      */
     private static float[] computePcm16MonoPeaks(byte[] data, int offset, int length, int targetPeaks) {
         int samples = length / 2;
