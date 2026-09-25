@@ -19,11 +19,14 @@ package com.jdimension.jlawyer.client.utils;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ServiceLoader;
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.UnsupportedAudioFileException;
+import javax.sound.sampled.spi.AudioFileReader;
+import org.apache.log4j.Logger;
 
 /**
  * Dekodiert MP3/OGG-Audiodaten in PCM-WAV. Nutzt die auf dem Classpath
@@ -31,6 +34,8 @@ import javax.sound.sampled.UnsupportedAudioFileException;
  * vorbisspi + jorbis, tritonus-all für Resampling/Downmix).
  */
 public class AudioConvertUtils {
+
+    private static final Logger log = Logger.getLogger(AudioConvertUtils.class);
 
     private AudioConvertUtils() {
     }
@@ -41,7 +46,7 @@ public class AudioConvertUtils {
      * ReadOnlySoundplayerPanel.
      */
     public static byte[] decodeForPlayback(byte[] input) throws IOException, UnsupportedAudioFileException {
-        try (AudioInputStream src = AudioSystem.getAudioInputStream(new ByteArrayInputStream(input))) {
+        try (AudioInputStream src = openEncodedStream(input)) {
             AudioFormat srcFmt = src.getFormat();
             AudioFormat pcmFmt = new AudioFormat(
                     AudioFormat.Encoding.PCM_SIGNED,
@@ -65,7 +70,7 @@ public class AudioConvertUtils {
      */
     public static byte[] decodeToStandardWav(byte[] input) throws IOException, UnsupportedAudioFileException {
         AudioFormat targetFmt = AudioUtils.getAudioFormat();
-        try (AudioInputStream src = AudioSystem.getAudioInputStream(new ByteArrayInputStream(input))) {
+        try (AudioInputStream src = openEncodedStream(input)) {
             AudioFormat srcFmt = src.getFormat();
             AudioFormat pcmSrcFmt = new AudioFormat(
                     AudioFormat.Encoding.PCM_SIGNED,
@@ -79,6 +84,42 @@ public class AudioConvertUtils {
                  AudioInputStream target = AudioSystem.getAudioInputStream(targetFmt, pcm)) {
                 return writeToWavWithKnownLength(target, targetFmt);
             }
+        }
+    }
+
+    /**
+     * Öffnet die Audiobytes über die auf dem Classpath registrierten
+     * {@link AudioFileReader}-SPIs.
+     *
+     * Wir umgehen bewusst {@link AudioSystem#getAudioInputStream(java.io.InputStream)}:
+     * der in tritonus-all mitgelieferte AiffAudioFileReader wirft bei
+     * Nicht-AIFF-Streams eine {@link java.io.EOFException} statt einer
+     * {@link UnsupportedAudioFileException}. AudioSystem fängt nur letztere ab
+     * und probiert dann den nächsten Provider — die EOFException propagiert
+     * hingegen und bricht die Suche ab, bevor z.B. vorbisspi überhaupt zum
+     * Zug kommt. Deshalb iterieren wir hier selbst durch die Provider und
+     * behandeln jede Fehlerart als "dieser Reader passt nicht, weiter".
+     */
+    private static AudioInputStream openEncodedStream(byte[] audioBytes) throws UnsupportedAudioFileException, IOException {
+        UnsupportedAudioFileException lastUAFE = null;
+        for (AudioFileReader reader : ServiceLoader.load(AudioFileReader.class)) {
+            try {
+                return reader.getAudioInputStream(new ByteArrayInputStream(audioBytes));
+            } catch (UnsupportedAudioFileException uafe) {
+                lastUAFE = uafe;
+            } catch (IOException | RuntimeException | LinkageError ex) {
+                if (log.isDebugEnabled()) {
+                    log.debug("AudioFileReader " + reader.getClass().getName() + " rejected stream: " + ex);
+                }
+            }
+        }
+        // Fallback für die JDK-eigenen Reader (WAV/AU/AIFF), die nicht per
+        // ServiceLoader publiziert sind — falls hier doch mal eine WAV
+        // hereingereicht wird.
+        try {
+            return AudioSystem.getAudioInputStream(new ByteArrayInputStream(audioBytes));
+        } catch (UnsupportedAudioFileException uafe) {
+            throw (lastUAFE != null) ? lastUAFE : uafe;
         }
     }
 

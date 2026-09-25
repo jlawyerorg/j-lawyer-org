@@ -271,11 +271,13 @@ public class ReadOnlySoundplayerPanel extends javax.swing.JPanel implements Prev
             clip.addLineListener((LineEvent event) -> {
                 if (event.getType() == LineEvent.Type.STOP && (clip.getMicrosecondPosition() == clip.getMicrosecondLength())) {
                     clip.setMicrosecondPosition(0);
-                    if (timer != null) {
-                        timer.stop();
-                    }
-                    updateTimeLabel();
-                    cmdPlayPause.setText("Play");
+                    javax.swing.SwingUtilities.invokeLater(() -> {
+                        if (timer != null) {
+                            timer.stop();
+                        }
+                        updateTimeLabel();
+                        cmdPlayPause.setText("Play");
+                    });
                 }
             });
 
@@ -295,33 +297,46 @@ public class ReadOnlySoundplayerPanel extends javax.swing.JPanel implements Prev
     }
 
     private void togglePlayPause() {
-        if (clip != null) {
-            if (clip.isRunning()) {
-                clip.stop();
-                if (timer != null) {
-                    timer.stop();
-                }
-                this.cmdPlayPause.setText("Play");
-            } else {
-                clip.start();
-                if (timer != null) {
-                    timer.start();
-                }
-                this.cmdPlayPause.setText("Pause");
+        if (clip == null) {
+            return;
+        }
+        if (clip.isRunning()) {
+            // clip.stop() greift auf die native Audio-Line zu und kann auf
+            // Linux/PulseAudio bei großen dekodierten Puffern kurz blockieren
+            // — off-EDT laufen lassen, damit die UI reagierbar bleibt.
+            cmdPlayPause.setText("Play");
+            if (timer != null) {
+                timer.stop();
             }
+            runOffEdt(() -> clip.stop());
+        } else {
+            clip.start();
+            if (timer != null) {
+                timer.start();
+            }
+            this.cmdPlayPause.setText("Pause");
         }
     }
 
     private void stop() {
-        if (clip != null) {
+        if (clip == null) {
+            return;
+        }
+        cmdPlayPause.setText("Play");
+        if (timer != null) {
+            timer.stop();
+        }
+        runOffEdt(() -> {
             clip.stop();
             clip.setMicrosecondPosition(0);
-            if (timer != null) {
-                timer.stop();
-            }
-            updateTimeLabel();
-            this.cmdPlayPause.setText("Play");
-        }
+            javax.swing.SwingUtilities.invokeLater(this::updateTimeLabel);
+        });
+    }
+
+    private static void runOffEdt(Runnable r) {
+        Thread t = new Thread(r, "ReadOnlySoundplayerPanel-clip-op");
+        t.setDaemon(true);
+        t.start();
     }
 
     private void closeAudioResources() {
