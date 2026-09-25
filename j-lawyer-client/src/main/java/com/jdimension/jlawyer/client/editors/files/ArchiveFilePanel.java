@@ -666,7 +666,6 @@ package com.jdimension.jlawyer.client.editors.files;
 import com.iradraconis.shrinkify.ShrinkifyGui;
 import java.util.concurrent.CompletableFuture;
 import com.jdimension.jlawyer.ai.AiCapability;
-import com.jdimension.jlawyer.ai.AiModel;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
 import com.jdimension.jlawyer.ai.InputData;
 import com.jdimension.jlawyer.ai.Message;
@@ -9946,28 +9945,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private void cmdIngoChatActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdIngoChatActionPerformed
         try {
             AssistantAccess ingo = AssistantAccess.getInstance();
-            Map<AssistantConfig, List<AiCapability>> chatCapabilities = ingo.filterCapabilities(AiCapability.REQUESTTYPE_CHAT, AiCapability.INPUTTYPE_NONE);
-
-            ClientSettings cs = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(cs.getLookupProperties());
-            Map<AssistantConfig, List<AiModel>> modelsMap = locator.lookupIntegrationServiceRemote().getAssistantModels();
-            Set<String> toolModelNames = new HashSet<>();
-            for (List<AiModel> models : modelsMap.values()) {
-                for (AiModel m : models) {
-                    if (m.isSupportsTools()) {
-                        toolModelNames.add(m.getName());
-                    }
-                }
-            }
-
-            Map<AssistantConfig, List<AiCapability>> toolCapabilities = new HashMap<>();
-            for (Map.Entry<AssistantConfig, List<AiCapability>> entry : chatCapabilities.entrySet()) {
-                for (AiCapability c : entry.getValue()) {
-                    if (c.getModelRef() != null && toolModelNames.contains(c.getModelRef())) {
-                        toolCapabilities.computeIfAbsent(entry.getKey(), k -> new ArrayList<>()).add(c);
-                    }
-                }
-            }
+            Map<AssistantConfig, List<AiCapability>> toolCapabilities = ingo.filterToolChatCapabilities();
 
             if (toolCapabilities.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Es sind keine Chat-Aktionen mit Tool-Unterstützung konfiguriert.", "Ingo", JOptionPane.INFORMATION_MESSAGE);

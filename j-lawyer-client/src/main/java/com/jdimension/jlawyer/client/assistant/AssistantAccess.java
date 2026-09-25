@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.persistence.AssistantConfig;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ai.AiCapability;
+import com.jdimension.jlawyer.ai.AiModel;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
 import com.jdimension.jlawyer.ai.ConfigurationData;
 import com.jdimension.jlawyer.ai.ConfigurationUtils;
@@ -682,8 +683,10 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import javax.json.Json;
@@ -927,6 +930,39 @@ public class AssistantAccess {
         }
         return filtered;
 
+    }
+
+    /**
+     * Returns all chat capabilities (without input) whose model supports tool calls. These are
+     * the actions that can make use of a case ID passed as context.
+     *
+     * @return chat capabilities with tool support, grouped by assistant configuration
+     * @throws Exception
+     */
+    public Map<AssistantConfig, List<AiCapability>> filterToolChatCapabilities() throws Exception {
+        Map<AssistantConfig, List<AiCapability>> chatCapabilities = this.filterCapabilities(AiCapability.REQUESTTYPE_CHAT, AiCapability.INPUTTYPE_NONE);
+
+        ClientSettings cs = ClientSettings.getInstance();
+        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(cs.getLookupProperties());
+        Map<AssistantConfig, List<AiModel>> modelsMap = locator.lookupIntegrationServiceRemote().getAssistantModels();
+        Set<String> toolModelNames = new HashSet<>();
+        for (List<AiModel> models : modelsMap.values()) {
+            for (AiModel m : models) {
+                if (m.isSupportsTools()) {
+                    toolModelNames.add(m.getName());
+                }
+            }
+        }
+
+        Map<AssistantConfig, List<AiCapability>> toolCapabilities = new HashMap<>();
+        for (Map.Entry<AssistantConfig, List<AiCapability>> entry : chatCapabilities.entrySet()) {
+            for (AiCapability c : entry.getValue()) {
+                if (c.getModelRef() != null && toolModelNames.contains(c.getModelRef())) {
+                    toolCapabilities.computeIfAbsent(entry.getKey(), k -> new ArrayList<>()).add(c);
+                }
+            }
+        }
+        return toolCapabilities;
     }
 
     public void resetCapabilities() {

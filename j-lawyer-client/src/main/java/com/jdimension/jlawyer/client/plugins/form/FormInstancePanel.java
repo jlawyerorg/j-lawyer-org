@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.ai.ParameterData;
 import com.jdimension.jlawyer.client.assistant.AssistantAccess;
 import com.jdimension.jlawyer.client.assistant.AssistantExtractPanel;
 import com.jdimension.jlawyer.client.assistant.AssistantFlowAdapter;
+import com.jdimension.jlawyer.client.assistant.AssistantInputAdapter;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
@@ -694,6 +695,7 @@ import java.util.List;
 import java.util.Map;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JTabbedPane;
 import org.jboss.logging.Logger;
 
@@ -715,6 +717,7 @@ public class FormInstancePanel extends javax.swing.JPanel implements AssistantFl
     private AiCapability extractCapability = null;
     private AssistantConfig extractConfig = null;
     private List<InputData> aiInputs=null;
+    private Map<AssistantConfig, List<AiCapability>> chatCapabilities = null;
 
     /**
      * Creates new form FormInstancePanel
@@ -748,6 +751,14 @@ public class FormInstancePanel extends javax.swing.JPanel implements AssistantFl
             log.error(ex);
             JOptionPane.showMessageDialog(this, "" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
+
+        try {
+            this.chatCapabilities = ingo.filterToolChatCapabilities();
+        } catch (Exception ex) {
+            log.error("Error loading Ingo chat capabilities", ex);
+            this.chatCapabilities = null;
+        }
+        this.cmdIngoChat.setEnabled(this.chatCapabilities != null && !this.chatCapabilities.isEmpty());
 
         JPanel ui = new JPanel();
         try {
@@ -815,6 +826,7 @@ public class FormInstancePanel extends javax.swing.JPanel implements AssistantFl
         taDescription = new javax.swing.JTextArea();
         cmdSaveAsDocument = new javax.swing.JButton();
         cmdFormAi = new javax.swing.JButton();
+        cmdIngoChat = new javax.swing.JButton();
 
         cmdRemoveForm.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
         cmdRemoveForm.setToolTipText("Falldatenblatt löschen");
@@ -853,9 +865,19 @@ public class FormInstancePanel extends javax.swing.JPanel implements AssistantFl
         });
 
         cmdFormAi.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/j-lawyer-ai.png"))); // NOI18N
+        cmdFormAi.setText("mit Ingo ausfüllen");
         cmdFormAi.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdFormAiActionPerformed(evt);
+            }
+        });
+
+        cmdIngoChat.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/j-lawyer-ai.png"))); // NOI18N
+        cmdIngoChat.setText("Ingo Chat");
+        cmdIngoChat.setToolTipText("Assistent Ingo - Chat zu diesen Falldaten öffnen");
+        cmdIngoChat.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdIngoChatActionPerformed(evt);
             }
         });
 
@@ -874,6 +896,8 @@ public class FormInstancePanel extends javax.swing.JPanel implements AssistantFl
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdFormAi)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdIngoChat)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 532, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdShowPlaceHolders)))
@@ -890,7 +914,8 @@ public class FormInstancePanel extends javax.swing.JPanel implements AssistantFl
                             .addComponent(cmdShowPlaceHolders, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                         .addComponent(cmdSaveAsDocument))
-                    .addComponent(cmdFormAi))
+                    .addComponent(cmdFormAi)
+                    .addComponent(cmdIngoChat))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(scrollPlugin, javax.swing.GroupLayout.DEFAULT_SIZE, 372, Short.MAX_VALUE)
                 .addContainerGap())
@@ -992,6 +1017,68 @@ public class FormInstancePanel extends javax.swing.JPanel implements AssistantFl
 
     }//GEN-LAST:event_cmdFormAiActionPerformed
 
+    private void cmdIngoChatActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdIngoChatActionPerformed
+        try {
+            AssistantAccess ingo = AssistantAccess.getInstance();
+            if (this.chatCapabilities == null) {
+                this.chatCapabilities = ingo.filterToolChatCapabilities();
+            }
+
+            if (this.chatCapabilities.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Es sind keine Chat-Aktionen mit Tool-Unterstützung konfiguriert.", "Ingo", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            AssistantInputAdapter contextAdapter = new AssistantInputAdapter() {
+                @Override
+                public List<InputData> getInputs(AiCapability c) {
+                    List<InputData> inputs = new ArrayList<>();
+                    InputData formContext = new InputData();
+                    formContext.setType(InputData.TYPE_STRING);
+                    formContext.setBase64(false);
+                    formContext.setStringData(getChatContext());
+                    inputs.add(formContext);
+                    return inputs;
+                }
+
+                @Override
+                public List<Message> getMessages(AiCapability c) {
+                    return Collections.emptyList();
+                }
+            };
+
+            JPopupMenu popup = new JPopupMenu();
+            ingo.populateMenu(popup, this.chatCapabilities, contextAdapter, this.plugin.getCaseDto(), EditorsRegistry.getInstance().getMainWindow(), false);
+            popup.show(cmdIngoChat, 0, cmdIngoChat.getHeight());
+
+        } catch (Exception ex) {
+            log.error("Error loading Ingo chat capabilities", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Ingo-Aktionen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdIngoChatActionPerformed
+
+    /**
+     * Builds the chat context: the case reference plus all current values of this form
+     * including their labels, in the same HTML representation that is saved as a document.
+     * Evaluated when the chat is opened, so unsaved changes are included.
+     */
+    private String getChatContext() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Nutze für die folgende Konversation die Akte mit ID ").append(this.plugin.getCaseDto().getId()).append(" und Aktenzeichen ").append(this.plugin.getCaseDto().getFileNumber()).append(".");
+
+        String html = this.plugin.getAsHtml();
+        if (html != null) {
+            sb.append(System.lineSeparator()).append(System.lineSeparator());
+            sb.append("Falldaten \"").append(this.form.getFormType().getName()).append("\"");
+            if (this.form.getDescription() != null && !"".equals(this.form.getDescription().trim())) {
+                sb.append(" (").append(this.form.getDescription().trim()).append(")");
+            }
+            sb.append(":").append(System.lineSeparator()).append(System.lineSeparator());
+            sb.append(html);
+        }
+        return sb.toString();
+    }
+
     private List<InputData> getStringInputs(ArchiveFileDocumentsBean[] selected) {
         ArrayList<InputData> inputs = new ArrayList<>();
         try {
@@ -1087,6 +1174,7 @@ public class FormInstancePanel extends javax.swing.JPanel implements AssistantFl
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdFormAi;
+    private javax.swing.JButton cmdIngoChat;
     private javax.swing.JButton cmdRemoveForm;
     private javax.swing.JButton cmdSaveAsDocument;
     private javax.swing.JButton cmdShowPlaceHolders;
