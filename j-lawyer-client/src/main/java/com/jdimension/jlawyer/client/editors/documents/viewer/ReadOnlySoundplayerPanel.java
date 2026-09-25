@@ -52,6 +52,10 @@ public class ReadOnlySoundplayerPanel extends javax.swing.JPanel implements Prev
     private String documentId = null;
     private String documentName = null;
     private byte[] content = null;
+    /** Auf 16 kHz mono dekodiertes WAV: identisch mit dem, was der
+     *  Konvertier-Button in die Akte schreibt — einmal dekodieren, für
+     *  Play und Save wiederverwenden. */
+    private byte[] standardWav = null;
     private final ArchiveFileBean caseDto;
 
     private Clip clip;
@@ -245,9 +249,8 @@ public class ReadOnlySoundplayerPanel extends javax.swing.JPanel implements Prev
             return;
         }
 
-        byte[] playableWav;
         try {
-            playableWav = AudioConvertUtils.decodeForPlayback(content);
+            standardWav = AudioConvertUtils.decodeToStandardWav(content);
         } catch (Exception ex) {
             log.error("Could not decode audio for playback: " + documentName, ex);
             showStatus("Wiedergabe nicht möglich: " + ex.getMessage());
@@ -258,7 +261,7 @@ public class ReadOnlySoundplayerPanel extends javax.swing.JPanel implements Prev
         }
 
         try {
-            ByteArrayInputStream byteStream = new ByteArrayInputStream(playableWav);
+            ByteArrayInputStream byteStream = new ByteArrayInputStream(standardWav);
             AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(byteStream);
 
             clip = AudioSystem.getClip();
@@ -266,7 +269,7 @@ public class ReadOnlySoundplayerPanel extends javax.swing.JPanel implements Prev
 
             volumeControl = null;
             updateVolume();
-            updateWaveform(playableWav);
+            updateWaveform(standardWav);
 
             clip.addLineListener((LineEvent event) -> {
                 if (event.getType() == LineEvent.Type.STOP && (clip.getMicrosecondPosition() == clip.getMicrosecondLength())) {
@@ -422,23 +425,20 @@ public class ReadOnlySoundplayerPanel extends javax.swing.JPanel implements Prev
                     "Konvertierung", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        if (content == null || content.length == 0) {
+        if (content == null || content.length == 0 || standardWav == null) {
             return;
         }
-
-        long durationMicros = (clip != null) ? clip.getMicrosecondLength() : 0L;
-        long estimatedWavBytes = AudioConvertUtils.estimateStandardWavSize(durationMicros);
 
         String targetName = deriveWavName(documentName);
         String message = String.format(
                 "Datei als WAV (16 kHz mono) als neues Dokument in der Akte speichern?%n%n"
                 + "Neuer Dateiname: %s%n"
                 + "Original: %s (%s)%n"
-                + "Ziel-WAV ca. %s%n%n"
+                + "Ziel-WAV: %s%n%n"
                 + "Das Original bleibt in der Akte erhalten.",
                 targetName,
                 documentName, formatBytes(content.length),
-                formatBytes(estimatedWavBytes));
+                formatBytes(standardWav.length));
 
         int choice = JOptionPane.showConfirmDialog(this, message,
                 "In WAV konvertieren", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
@@ -447,15 +447,16 @@ public class ReadOnlySoundplayerPanel extends javax.swing.JPanel implements Prev
         }
 
         cmdConvertToWav.setEnabled(false);
-        showStatus("Konvertiere in WAV ...");
+        showStatus("Speichere WAV in der Akte ...");
 
-        final byte[] sourceBytes = this.content;
+        // Die im Wiedergabe-Pfad bereits dekodierten 16 kHz mono-Bytes
+        // wiederverwenden statt ein zweites Mal zu dekodieren.
+        final byte[] wavBytes = this.standardWav;
         final String caseId = caseDto.getId();
 
         SwingWorker<ArchiveFileDocumentsBean, Void> worker = new SwingWorker<ArchiveFileDocumentsBean, Void>() {
             @Override
             protected ArchiveFileDocumentsBean doInBackground() throws Exception {
-                byte[] wavBytes = AudioConvertUtils.decodeToStandardWav(sourceBytes);
                 ClientSettings settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
