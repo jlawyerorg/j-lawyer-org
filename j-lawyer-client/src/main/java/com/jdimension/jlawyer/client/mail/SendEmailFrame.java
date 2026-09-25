@@ -1152,6 +1152,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
             }
         });
 
+        updateInsertSignatureEnabledState();
     }
 
     private void initAutoSave() {
@@ -2098,6 +2099,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         jSeparator5 = new javax.swing.JToolBar.Separator();
         cmdSaveDraft = new javax.swing.JButton();
         cmdOpenTb = new javax.swing.JButton();
+        cmdInsertSignature = new javax.swing.JButton();
         txtCc = new javax.swing.JTextField();
         jLabel9 = new javax.swing.JLabel();
         txtTo = new javax.swing.JTextField();
@@ -2312,6 +2314,19 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
             }
         });
         jToolBar1.add(cmdOpenTb);
+
+        cmdInsertSignature.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/stylus_note.png"))); // NOI18N
+        cmdInsertSignature.setToolTipText("Signatur an Cursor-Position einfügen");
+        cmdInsertSignature.setEnabled(false);
+        cmdInsertSignature.setFocusable(false);
+        cmdInsertSignature.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        cmdInsertSignature.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        cmdInsertSignature.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdInsertSignatureActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(cmdInsertSignature);
 
         jLabel9.setText("BCC:");
 
@@ -3217,8 +3232,8 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                 this.cmbTemplatesActionPerformed(evt);
             }
         }
-            
-            
+
+        updateInsertSignatureEnabledState();
     }//GEN-LAST:event_cmbFromActionPerformed
 
     private void cmdAssistantMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdAssistantMouseReleased
@@ -3280,6 +3295,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
             SwingUtilities.updateComponentTreeUI(tp);
             SwingUtilities.updateComponentTreeUI(hp);
         }
+        updateInsertSignatureEnabledState();
     }//GEN-LAST:event_textActionPerformed
 
     private void htmlActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_htmlActionPerformed
@@ -3291,7 +3307,57 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
             SwingUtilities.updateComponentTreeUI(tp);
             SwingUtilities.updateComponentTreeUI(hp);
         }
+        updateInsertSignatureEnabledState();
     }//GEN-LAST:event_htmlActionPerformed
+
+    private void cmdInsertSignatureActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdInsertSignatureActionPerformed
+        MailboxSetup ms = this.getSelectedMailbox();
+        if (ms == null) {
+            return;
+        }
+        if (this.text.isSelected()) {
+            String sig = ms.getEmailSignatureTxt();
+            if (sig == null || sig.isEmpty()) {
+                return;
+            }
+            this.tp.insert(sig, this.tp.getCaretPosition());
+        } else {
+            String sig = ms.getEmailSignature();
+            if (sig == null || sig.isEmpty()) {
+                return;
+            }
+            sig = HtmlUtils.stripHeadAndBodyTags(sig);
+            // WebViewHtmlEditorPanel.insert ignores the position argument and inserts at the
+            // current caret via SunEditor's insertHTML — the pos value is irrelevant here.
+            this.hp.insert(sig, 0);
+        }
+    }//GEN-LAST:event_cmdInsertSignatureActionPerformed
+
+    /**
+     * Enables the "Signatur einfügen" toolbar button only when a signature matching
+     * the currently active content type (plain vs. HTML) is available on the selected
+     * mailbox. The two signature variants are checked independently — no cross-format
+     * conversion is performed.
+     */
+    private void updateInsertSignatureEnabledState() {
+        if (this.cmdInsertSignature == null) {
+            return;
+        }
+        MailboxSetup ms = this.getSelectedMailbox();
+        if (ms == null) {
+            this.cmdInsertSignature.setEnabled(false);
+            return;
+        }
+        boolean enabled;
+        if (this.text != null && this.text.isSelected()) {
+            String sig = ms.getEmailSignatureTxt();
+            enabled = sig != null && !sig.isEmpty();
+        } else {
+            String sig = ms.getEmailSignature();
+            enabled = sig != null && !sig.isEmpty();
+        }
+        this.cmdInsertSignature.setEnabled(enabled);
+    }
 
     private void chkEncryptionStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_chkEncryptionStateChanged
         if (this.chkEncryption.isSelected()) {
@@ -3628,6 +3694,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
     private javax.swing.JComboBox cmbTemplates;
     private javax.swing.JButton cmdAssistant;
     private javax.swing.JButton cmdAttach;
+    private javax.swing.JButton cmdInsertSignature;
     private javax.swing.JButton cmdOpenTb;
     private javax.swing.JButton cmdRecipients;
     private javax.swing.JButton cmdRecipientsBcc;
