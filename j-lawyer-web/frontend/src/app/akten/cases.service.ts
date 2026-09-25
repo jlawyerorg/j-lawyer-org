@@ -3,7 +3,7 @@ import { inject, Injectable, signal } from '@angular/core';
 import { catchError, defer, finalize, forkJoin, map, Observable, of, shareReplay, switchMap } from 'rxjs';
 import { API_ROOT } from '../core/api';
 import {
-  AccountEntry, AccountEntryWrite, CaseDetail, CaseDocument, CaseGroup, CaseHistoryEntry, CaseInvoice, CaseMessage, CaseOverview,
+  AccountEntry, AccountEntryWrite, CaseDetail, CaseDocument, CaseGroup, CaseHistoryEntry, CaseInvoice, CaseLink, CaseMessage, CaseOverview,
   CasePayment, CaseStatus, CaseTag, CaseTimesheet, CaseUserRef, CaseWrite, ContactRef, DocDateMode, DocFolder,
   DocMetaWrite, DocSortKey, DocTag, DocumentNameTemplate, DueDate, HIGHLIGHT_NONE, InvoicePool, InvoicePositionItem, InvoicePositionWrite, InvoiceType, InvoiceWrite,
   MultiValueTagDef, Party, PartyTypeOption, PartyUpdate, PartyWrite, PaymentWrite, PositionTemplate,
@@ -92,6 +92,12 @@ interface PaymentDto {
   id: string; paymentNumber: string; name: string; reason: string; status: string;
   total: number; currency: string; targetDate: string; creationDate: string;
   description?: string; contactId?: string; sender?: string; paymentType?: string;
+}
+// GET /v8/cases/{id}/links — a link, oriented from the requested case.
+interface CaseLinkDto {
+  id: string; description?: string; creationDate?: string; createdBy?: string;
+  linkedCaseId: string; linkedCaseFileNumber?: string; linkedCaseName?: string;
+  linkedCaseReason?: string; linkedCaseArchived?: boolean;
 }
 interface AccountEntryDto {
   id: string; entryDate: string; description: string; contactName?: string; contactId?: string; invoiceId?: string;
@@ -212,6 +218,37 @@ export class CasesService {
     return this.http.get<HistoryDto[]>(`${CASES_V8}/${id}/history`).pipe(
       map((rows) => (rows ?? []).map(toHistory)),
     );
+  }
+
+  /**
+   * Loads the case's links to other cases ("verknüpfte Akten", GET /v8/cases/{id}/links); [] on
+   * error. Links whose case the user may not see are filtered out server-side.
+   */
+  caseLinks(id: string): Observable<CaseLink[]> {
+    return this.http.get<CaseLinkDto[]>(`${CASES_V8}/${encodeURIComponent(id)}/links`).pipe(
+      map((rows) => (rows ?? []).map(toCaseLink)),
+      catchError(() => of([])),
+    );
+  }
+
+  /**
+   * Links the case to another one (PUT /v8/cases/{id}/links), returning the created link. Errors
+   * are passed through (not swallowed) so the caller can show the server's message — an already
+   * linked pair and a self-link are rejected server-side.
+   */
+  createCaseLink(id: string, linkedCaseId: string, description: string): Observable<CaseLink> {
+    return this.write(this.http.put<CaseLinkDto>(`${CASES_V8}/${encodeURIComponent(id)}/links`, { linkedCaseId, description }))
+      .pipe(map((dto) => toCaseLink(dto as CaseLinkDto)));
+  }
+
+  /** Updates a link's description (PUT /v8/cases/{id}/links/{linkId}). */
+  updateCaseLink(id: string, linkId: string, description: string): Observable<unknown> {
+    return this.write(this.http.put(`${CASES_V8}/${encodeURIComponent(id)}/links/${encodeURIComponent(linkId)}`, { description }));
+  }
+
+  /** Removes a link between two cases (DELETE /v8/cases/{id}/links/{linkId}). */
+  deleteCaseLink(id: string, linkId: string): Observable<unknown> {
+    return this.write(this.http.delete(`${CASES_V8}/${encodeURIComponent(id)}/links/${encodeURIComponent(linkId)}`));
   }
 
   /** Loads the case's invoices (GET /v7/cases/{id}/invoices); [] on error. */
@@ -1055,6 +1092,20 @@ function toHistory(dto: HistoryDto): CaseHistoryEntry {
     principal: dto.principal ?? '',
     changeDate: dto.changeDate ?? 0,
     changeDescription: dto.changeDescription ?? '',
+  };
+}
+
+function toCaseLink(dto: CaseLinkDto): CaseLink {
+  return {
+    id: dto.id,
+    description: dto.description ?? '',
+    creationDate: isoDate(dto.creationDate),
+    createdBy: dto.createdBy ?? '',
+    linkedCaseId: dto.linkedCaseId,
+    linkedCaseFileNumber: dto.linkedCaseFileNumber ?? '',
+    linkedCaseName: dto.linkedCaseName ?? '',
+    linkedCaseReason: dto.linkedCaseReason ?? '',
+    linkedCaseArchived: !!dto.linkedCaseArchived,
   };
 }
 

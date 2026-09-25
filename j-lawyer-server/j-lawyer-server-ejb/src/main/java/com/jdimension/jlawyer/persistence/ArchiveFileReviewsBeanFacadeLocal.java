@@ -663,6 +663,8 @@
  */
 package com.jdimension.jlawyer.persistence;
 
+import com.jdimension.jlawyer.services.CalendarEntryDTO;
+import java.util.Date;
 import java.util.List;
 import javax.ejb.Local;
 
@@ -694,5 +696,21 @@ public interface ArchiveFileReviewsBeanFacadeLocal {
     public List<ArchiveFileReviewsBean> findByDone(boolean done);
 
     public List<ArchiveFileReviewsBean> findByCalendarSetup(CalendarSetup calendar);
-    
+
+    /**
+     * Returns the calendar entries visible to a user, projected to the columns the cross-case
+     * calendar views display. Ordered by begin date ascending, so that a result cut short by the
+     * limit loses the entries furthest in the future and never an overdue one.
+     *
+     * @param groupIds the ids of the groups the user belongs to; an empty or null list is treated
+     * as "no groups", which still yields the entries of unprotected and unrestricted cases
+     * @param openOnly whether to return only entries that are not done yet
+     * @param fromDate start of the window, or null for no lower bound; entries reaching into the
+     * window from before it are included
+     * @param toDate end of the window, or null for no upper bound
+     * @param limit maximum number of entries, or 0 for no limit
+     * @return the entries, never null
+     */
+    public List<CalendarEntryDTO> findCalendarEntries(List<String> groupIds, boolean openOnly, Date fromDate, Date toDate, int limit);
+
 }

@@ -685,6 +685,7 @@ import com.jdimension.jlawyer.persistence.InvoiceType;
 import com.jdimension.jlawyer.persistence.Payment;
 import com.jdimension.jlawyer.persistence.Timesheet;
 import com.jdimension.jlawyer.persistence.TimesheetPosition;
+import com.jdimension.jlawyer.pojo.ClaimLedgerTotals;
 import com.jdimension.jlawyer.pojo.DataBucket;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -750,6 +751,14 @@ public interface ArchiveFileServiceLocal {
     public Collection<ArchiveFileTagsBean> getTags(String archiveFileId) throws Exception;
     public Collection<ArchiveFileTagsBean> getTagsUnrestricted(String archiveFileId) throws Exception;
     HashMap<String, ArrayList<ArchiveFileTagsBean>> getTags(List<String> archiveFileId) throws Exception;
+
+    List<CaseLinkDTO> getCaseLinks(String archiveFileId) throws Exception;
+
+    CaseLinkDTO linkCases(String archiveFileId, String otherArchiveFileId, String description) throws Exception;
+
+    void updateCaseLinkDescription(String linkId, String description) throws Exception;
+
+    void unlinkCases(String linkId) throws Exception;
 
     Collection getDocumentsUnrestricted(String archiveFileKey);
 
@@ -931,5 +940,7 @@ public interface ArchiveFileServiceLocal {
     void removeTimesheet(String timesheetId) throws Exception;
 
     String[] previewCaseNumbering(String pattern, int startFrom, int increment, boolean extension, String dividerMain, String dividerExt, boolean bPrefix, String prefix, boolean bSuffix, String suffix, boolean userAbbr, boolean groupAbbr) throws Exception;
+
+    ClaimLedgerTotals calculateClaimLedgerTotals(String ledgerId, java.util.Date forDate) throws Exception;
 
 }

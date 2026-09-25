@@ -43,15 +43,29 @@
                                   <Component id="jLabel2" alignment="0" min="-2" max="-2" attributes="0"/>
                                   <Component id="jLabel3" alignment="0" min="-2" max="-2" attributes="0"/>
                                   <Component id="jLabel4" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="lblCatalogue" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="lblReason" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="lblReasonReference" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="lblAddition" alignment="0" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="txtName" max="32767" attributes="0"/>
                                   <Component id="txtDescription" max="32767" attributes="0"/>
+                                  <Component id="cmbCatalogue" max="32767" attributes="0"/>
+                                  <Component id="cmbReason" max="32767" attributes="0"/>
+                                  <Component id="txtReasonReference" max="32767" attributes="0"/>
                                   <Group type="102" attributes="0">
                                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
                                           <Component id="cmbType" max="32767" attributes="0"/>
                                           <Component id="txtAmount" max="32767" attributes="0"/>
+                                          <Component id="cmbContractType" max="32767" attributes="0"/>
+                                          <Component id="txtReferenceDetail" max="32767" attributes="0"/>
+                                          <Group type="102" alignment="0" attributes="0">
+                                              <Component id="txtAdditionZip" min="-2" pref="70" max="-2" attributes="0"/>
+                                              <EmptySpace max="-2" attributes="0"/>
+                                              <Component id="txtAdditionCity" min="-2" pref="220" max="-2" attributes="0"/>
+                                          </Group>
                                       </Group>
                                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                                   </Group>
@@ -132,6 +146,29 @@
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="txtAmount" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="jLabel4" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="lblCatalogue" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmbCatalogue" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="lblReason" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmbReason" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="lblReasonReference" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="txtReasonReference" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="lblAddition" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="txtAdditionZip" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="txtAdditionCity" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmbContractType" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="txtReferenceDetail" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jSeparator1" min="-2" pref="10" max="-2" attributes="0"/>
@@ -338,6 +375,96 @@
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdValidFromActionPerformed"/>
       </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblCatalogue">
+      <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <Font component="lblCatalogue" property="font" relativeSize="true" size="0"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="Anspruchsart:"/>
+        <Property name="toolTipText" type="java.lang.String" value="Die Katalognummer des Mahnbescheidsantrags. Die Mahngerichte führen dafür einen geschlossenen Katalog."/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JComboBox" name="cmbCatalogue">
+      <Properties>
+        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+          <StringArray count="0"/>
+        </Property>
+      </Properties>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+      </AuxValues>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmbCatalogueActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblReason">
+      <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <Font component="lblReason" property="font" relativeSize="true" size="0"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="Anspruchsbegründung:"/>
+        <Property name="toolTipText" type="java.lang.String" value="Worauf der Anspruch beruht - der Mahnbescheid druckt es: &quot;aus Rechnung Nr. 4711 vom 15.09.2025&quot;"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JComboBox" name="cmbReason">
+      <Properties>
+        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+          <StringArray count="0"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="Die Liste der Mahngerichte; etwas anderes nimmt der Antrag nicht an."/>
+      </Properties>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;Object&gt;"/>
+      </AuxValues>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblReasonReference">
+      <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <Font component="lblReasonReference" property="font" relativeSize="true" size="0"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="Nummer/Beleg:"/>
+        <Property name="toolTipText" type="java.lang.String" value="Die Nummer des Belegs, auf dem der Anspruch beruht - der Mahnbescheid druckt sie hinter der Begr&#xfc;ndung"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JTextField" name="txtReasonReference">
+      <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <Font component="txtReasonReference" property="font" relativeSize="true" size="0"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="H&#xf6;chstens 35 Zeichen - so viele f&#xfc;hrt die Austauschdatei"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblAddition">
+      <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <Font component="lblAddition" property="font" relativeSize="true" size="0"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value=""/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JTextField" name="txtAdditionZip">
+      <Properties>
+        <Property name="toolTipText" type="java.lang.String" value="Postleitzahl"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JTextField" name="txtAdditionCity">
+      <Properties>
+        <Property name="toolTipText" type="java.lang.String" value="Ort"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JComboBox" name="cmbContractType">
+      <Properties>
+        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+          <StringArray count="0"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="Die Vertragsart, die die Mahngerichte zu Katalog-Nr. 28 zulassen"/>
+      </Properties>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+      </AuxValues>
+    </Component>
+    <Component class="javax.swing.JTextField" name="txtReferenceDetail">
     </Component>
     <Component class="javax.swing.JSeparator" name="jSeparator1">
     </Component>

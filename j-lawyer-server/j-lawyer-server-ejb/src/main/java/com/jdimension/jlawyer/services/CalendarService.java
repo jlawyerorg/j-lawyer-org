@@ -678,6 +678,7 @@ import com.jdimension.jlawyer.persistence.CalendarEntryTemplateFacadeLocal;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
 import com.jdimension.jlawyer.persistence.CalendarSetupFacadeLocal;
 import com.jdimension.jlawyer.persistence.EventTypes;
+import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.persistence.utils.JDBCUtils;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.server.constants.ArchiveFileConstants;
@@ -700,7 +701,9 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 import java.util.Set;
 import javax.annotation.Resource;
@@ -747,6 +750,8 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     private CalendarEntryTemplateFacadeLocal calendarEntryTemplates;
     @EJB
     private CalendarAccessFacadeLocal calendarAccess;
+    @EJB
+    private SingletonServiceLocal singletonService;
 
     @Inject
     @JMSConnectionFactory("java:/JmsXA")
@@ -943,6 +948,74 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     @RolesAllowed({"readArchiveFileRole"})
     public Collection<ArchiveFileReviewsBean> getAllOpenReviews() {
         return this.getAllOpenReviewsImpl(context.getCallerPrincipal().getName());
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public CalendarEntriesResponse getCalendarEntries(Date fromDate, Date toDate, boolean openOnly, int limit, long knownVersion) {
+
+        long currentVersion = this.singletonService.getCalendarVersion();
+        if (knownVersion == currentVersion) {
+            // the caller is up to date; answering without querying is the point of the version
+            return CalendarEntriesResponse.unchanged(currentVersion);
+        }
+
+        String principalId = context.getCallerPrincipal().getName();
+
+        List<String> groupIds = new ArrayList<>();
+        try {
+            for (Group g : this.securityFacade.getGroupsForUser(principalId)) {
+                groupIds.add(g.getId());
+            }
+        } catch (Exception ex) {
+            log.error("Unable to determine groups for user " + principalId, ex);
+        }
+
+        // callers hand in dates they keep using themselves - unlike searchReviews, which mutates
+        // them in place and forces its callers to allocate a fresh instance per call
+        Date from = fromDate == null ? null : new Date(fromDate.getTime());
+        Date to = toDate == null ? null : new Date(toDate.getTime());
+
+        // one more than asked for, so that hitting the limit is distinguishable from exactly
+        // filling it without counting the whole table first
+        int queryLimit = limit > 0 ? limit + 1 : 0;
+
+        List<CalendarEntryDTO> entries = this.archiveFileReviewsFacade.findCalendarEntries(groupIds, openOnly, from, to, queryLimit);
+
+        boolean truncated = false;
+        if (limit > 0 && entries.size() > limit) {
+            entries = new ArrayList<>(entries.subList(0, limit));
+            truncated = true;
+        }
+
+        internRepeatedValues(entries);
+
+        return new CalendarEntriesResponse(currentVersion, entries, truncated);
+    }
+
+    /**
+     * Replaces repeated strings with a single shared instance, so that the remoting protocol
+     * writes them once and back-references them afterwards instead of writing one copy per entry.
+     * Calendar, lawyer and assignee repeat across nearly every entry, which is where this pays.
+     *
+     * @param entries the entries to deduplicate in place
+     */
+    private static void internRepeatedValues(List<CalendarEntryDTO> entries) {
+        Map<String, String> pool = new HashMap<>();
+        for (CalendarEntryDTO e : entries) {
+            e.setCalendarId(intern(pool, e.getCalendarId()));
+            e.setCalendarName(intern(pool, e.getCalendarName()));
+            e.setCaseLawyer(intern(pool, e.getCaseLawyer()));
+            e.setAssignee(intern(pool, e.getAssignee()));
+        }
+    }
+
+    private static String intern(Map<String, String> pool, String value) {
+        if (value == null) {
+            return null;
+        }
+        String existing = pool.putIfAbsent(value, value);
+        return existing == null ? value : existing;
     }
 
     private Collection<ArchiveFileReviewsBean> getAllOpenReviewsImpl(String principalId) {

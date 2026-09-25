@@ -564,6 +564,25 @@
 }
 .lc-select:focus { outline: none; }
 
+/* Verknüpfte Akten: one clickable row per link (navigates to that case) + its actions. */
+.lnk { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
+.lnk + .lnk { border-top: 1px solid var(--jl-line); }
+.lnk-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; text-align: left;
+  padding: 2px 4px; margin-left: -4px; border: 0; border-radius: 7px; background: none; font: inherit; color: inherit; cursor: pointer; }
+.lnk-main:hover { background: var(--jl-surface-alt); }
+.lnk-az { font-size: .7rem; letter-spacing: .04em; color: var(--jl-ink-faint); font-weight: 600; font-variant-numeric: tabular-nums; }
+.lnk-nm { font-weight: 600; font-size: .9rem; color: var(--jl-blue); word-break: break-word; }
+.lnk-arch { margin-left: 6px; font-size: .72rem; font-weight: 600; color: var(--jl-ink-faint); }
+.lnk-desc { font-size: .78rem; color: var(--jl-ink-soft); word-break: break-word; }
+/* Case picker hits in the add-link dialog. */
+.lnk-hits { display: flex; flex-direction: column; gap: 2px; max-height: 210px; overflow-y: auto; }
+.lnk-hit { text-align: left; font: inherit; font-size: .85rem; padding: 6px 9px; border: 1px solid transparent; border-radius: 8px;
+  background: var(--jl-surface); color: var(--jl-ink); cursor: pointer; }
+.lnk-hit:hover { background: var(--jl-surface-alt); }
+.lnk-hit.on { border-color: var(--jl-blue); background: color-mix(in srgb, var(--jl-blue) 10%, transparent); }
+.lnk-hit b { font-variant-numeric: tabular-nums; margin-right: 6px; }
+.ov-error { margin: 0; font-size: .8rem; font-weight: 600; color: var(--jl-red); }
+
 /* ---- Generic overlay dialog (folder create) ---- */
 .ov-backdrop { position: fixed; inset: 0; z-index: 60; background: rgba(6, 14, 22, .5); }
 .ov-dialog {

@@ -710,6 +710,7 @@ import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.InstantMessageDeletedEvent;
 import com.jdimension.jlawyer.client.events.NewInstantMessagesEvent;
+import com.jdimension.jlawyer.client.events.PartyAddedEvent;
 import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
 import com.jdimension.jlawyer.client.events.ReviewUpdatedEvent;
 import com.jdimension.jlawyer.client.launcher.CaseDocumentStore;
@@ -755,6 +756,8 @@ import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.server.services.settings.UserSettingsKeys;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.CaseLinkDTO;
+import com.jdimension.jlawyer.services.CaseLinkExistsException;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.AddressDocumentServiceRemote;
@@ -765,6 +768,7 @@ import com.jdimension.jlawyer.ui.tagging.DocumentTagActionListener;
 import com.jdimension.jlawyer.ui.tagging.TagSelectedAction;
 import com.jdimension.jlawyer.server.constants.ArchiveFileConstants;
 import com.jdimension.jlawyer.server.constants.OptionConstants;
+import com.jdimension.jlawyer.ui.tagging.LinkedCaseChip;
 import com.jdimension.jlawyer.ui.tagging.MultiValueTag;
 import com.jdimension.jlawyer.ui.tagging.TagToggleButton;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
@@ -783,10 +787,11 @@ import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.KeyboardFocusManager;
+import java.awt.MouseInfo;
 import java.awt.Point;
+import java.awt.PointerInfo;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.DnDConstants;
@@ -802,7 +807,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
@@ -882,6 +886,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     // Remember last document shown in preview to improve multi-select behavior
     private String lastPreviewDocId = null;
+
+    // Linked cases (Aktenverknüpfung): the chips live in pnlLinkedCases in the case header, the
+    // "+" chip is always the last component of that row. Both are created in code because the
+    // row's content is dynamic - the GUI builder only knows the empty panel.
+    private javax.swing.JButton cmdAddLink;
+    // the last width pnlLinkedCases was laid out for; the WrapLayout's preferred height depends
+    // on it, and there is no scroll pane to supply one, so a width change needs a revalidate
+    private int linkedCasesLayoutWidth = -1;
 
     public void setLastPreviewDocId(String docId) {
         this.lastPreviewDocId = docId;
@@ -1006,6 +1018,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         this.tagPanel.setLayout(new WrapLayout());
         this.documentTagPanel.setLayout(new WrapLayout());
+        this.initLinkedCasesPanel();
 
         BoxLayout layout = new javax.swing.BoxLayout(this.pnlInvolvedParties, javax.swing.BoxLayout.Y_AXIS);
         this.pnlInvolvedParties.setLayout(layout);
@@ -1206,7 +1219,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         b.subscribeConsumer(this, Event.TYPE_DOCUMENTADDED);
         b.subscribeConsumer(this, Event.TYPE_DOCUMENTREMOVED);
         b.subscribeConsumer(this, Event.TYPE_DOCUMENTUPDATED);
+        b.subscribeConsumer(this, Event.TYPE_PARTYADDED);
         b.subscribeConsumer(this, Event.TYPE_REVIEWADDED);
+        b.subscribeConsumer(this, Event.TYPE_REVIEWUPDATED);
         b.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_MESSAGEDELETED);
         b.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_NEWMESSAGES);
         
@@ -1712,6 +1727,391 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.txtCustom2.setEnabled(!readOnly && !archived);
         this.taCustom3.setEnabled(!readOnly && !archived);
 
+        // the link chips stay clickable for navigation, only adding and changing is gated
+        this.refreshLinkedCasesRow();
+
+    }
+
+    /**
+     * Sets up the links row of the case header: a wrapping chip row, like the tag panel, plus the
+     * permanent "+" chip that leads to the two ways of adding a link.
+     */
+    private void initLinkedCasesPanel() {
+        this.pnlLinkedCases.setLayout(new WrapLayout(java.awt.FlowLayout.LEFT, 4, 2));
+
+        this.cmdAddLink = new javax.swing.JButton();
+        this.cmdAddLink.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png")));
+        this.cmdAddLink.setToolTipText("Akte verknüpfen");
+        this.cmdAddLink.putClientProperty("JButton.buttonType", "roundRect");
+        this.cmdAddLink.addActionListener((java.awt.event.ActionEvent evt) -> {
+            showAddLinkMenu();
+        });
+        this.pnlLinkedCases.add(this.cmdAddLink);
+
+        // the WrapLayout computes its preferred height from the current width, which GroupLayout
+        // only knows after a layout pass - so ask for another one whenever the width changed
+        this.pnlLinkedCases.addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent evt) {
+                int width = pnlLinkedCases.getWidth();
+                if (width != linkedCasesLayoutWidth) {
+                    linkedCasesLayoutWidth = width;
+                    pnlLinkedCases.revalidate();
+                }
+            }
+        });
+    }
+
+    /**
+     * Removes all link chips, keeping the "+" chip.
+     */
+    public void clearLinkedCases() {
+        SwingUtilities.invokeLater(() -> {
+            for (Component c : this.pnlLinkedCases.getComponents()) {
+                if (c instanceof LinkedCaseChip) {
+                    this.pnlLinkedCases.remove(c);
+                }
+            }
+            this.refreshLinkedCasesRow();
+        });
+    }
+
+    /**
+     * Shows the given links of the currently open case, replacing whatever was shown before.
+     *
+     * @param links the links, as returned by the server for this case
+     */
+    public void setLinkedCases(List<CaseLinkDTO> links) {
+        SwingUtilities.invokeLater(() -> {
+            for (Component c : this.pnlLinkedCases.getComponents()) {
+                if (c instanceof LinkedCaseChip) {
+                    this.pnlLinkedCases.remove(c);
+                }
+            }
+            if (links != null) {
+                for (CaseLinkDTO link : links) {
+                    this.pnlLinkedCases.add(this.createLinkedCaseChip(link), this.pnlLinkedCases.getComponentCount() - 1);
+                }
+            }
+            this.refreshLinkedCasesRow();
+        });
+    }
+
+    private LinkedCaseChip createLinkedCaseChip(CaseLinkDTO link) {
+        LinkedCaseChip chip = new LinkedCaseChip(link);
+        chip.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                if (evt.isPopupTrigger()) {
+                    showLinkedCaseMenu(chip, evt);
+                }
+            }
+
+            @Override
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                if (evt.isPopupTrigger()) {
+                    showLinkedCaseMenu(chip, evt);
+                }
+            }
+
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                if (evt.getButton() == java.awt.event.MouseEvent.BUTTON1 && !evt.isPopupTrigger()) {
+                    openLinkedCase(chip.getLink());
+                }
+            }
+        });
+        return chip;
+    }
+
+    /**
+     * The "+" chip is hidden where a link may not be created: in the read-only editor, for an
+     * archived case and as long as the case has not been saved.
+     */
+    private void refreshLinkedCasesRow() {
+        if (this.cmdAddLink == null) {
+            // setReadOnly may run before the row was set up
+            return;
+        }
+        this.cmdAddLink.setVisible(this.mayChangeLinks());
+        this.pnlLinkedCases.revalidate();
+        this.pnlLinkedCases.repaint();
+    }
+
+    /**
+     * Whether links of the open case may be created, changed or removed: not in the read-only
+     * editor, not without the write permission, not on an archived case and not before the case
+     * has been saved.
+     *
+     * The readOnly field is deliberately not used here - it is never assigned (see setReadOnly),
+     * so it would report "editable" for the read-only editor as well.
+     */
+    private boolean mayChangeLinks() {
+        if (this.isReadOnlyEditor()) {
+            return false;
+        }
+        if (!UserSettings.getInstance().isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
+            return false;
+        }
+        return this.dto != null && this.dto.getId() != null && !this.dto.isArchived();
+    }
+
+    /**
+     * @return true if this editor instance shows cases read-only; overridden by the read-only
+     * editor
+     */
+    protected boolean isReadOnlyEditor() {
+        return false;
+    }
+
+
+    private void showAddLinkMenu() {
+        javax.swing.JPopupMenu popup = new javax.swing.JPopupMenu();
+        javax.swing.JMenuItem mnuLinkExisting = new javax.swing.JMenuItem("bestehende Akte verknüpfen...");
+        mnuLinkExisting.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/link_24dp_0E72B5_FILL0_wght400_GRAD0_opsz24.png")));
+        mnuLinkExisting.addActionListener((java.awt.event.ActionEvent evt) -> {
+            linkExistingCase();
+        });
+        popup.add(mnuLinkExisting);
+
+        javax.swing.JMenuItem mnuNewLinked = new javax.swing.JMenuItem("neue verknüpfte Akte erstellen...");
+        mnuNewLinked.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png")));
+        mnuNewLinked.addActionListener((java.awt.event.ActionEvent evt) -> {
+            createNewLinkedCase();
+        });
+        popup.add(mnuNewLinked);
+
+        popup.show(this.cmdAddLink, 0, this.cmdAddLink.getHeight());
+    }
+
+    private void showLinkedCaseMenu(LinkedCaseChip chip, java.awt.event.MouseEvent evt) {
+        javax.swing.JPopupMenu popup = new javax.swing.JPopupMenu();
+        javax.swing.JMenuItem mnuOpen = new javax.swing.JMenuItem("öffnen");
+        mnuOpen.addActionListener((java.awt.event.ActionEvent e) -> {
+            openLinkedCase(chip.getLink());
+        });
+        popup.add(mnuOpen);
+
+        boolean mayEdit = this.mayChangeLinks();
+        if (mayEdit) {
+            javax.swing.JMenuItem mnuEditDescription = new javax.swing.JMenuItem("Beschreibung bearbeiten...");
+            mnuEditDescription.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png")));
+            mnuEditDescription.addActionListener((java.awt.event.ActionEvent e) -> {
+                editLinkDescription(chip);
+            });
+            popup.add(mnuEditDescription);
+
+            javax.swing.JMenuItem mnuRemoveLink = new javax.swing.JMenuItem("Verknüpfung entfernen");
+            mnuRemoveLink.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/delete_forever_20dp_0E72B5.png")));
+            mnuRemoveLink.addActionListener((java.awt.event.ActionEvent e) -> {
+                removeLink(chip);
+            });
+            popup.add(mnuRemoveLink);
+        }
+
+        popup.show(chip, evt.getX(), evt.getY());
+    }
+
+    private void openLinkedCase(CaseLinkDTO link) {
+        this.openCaseById(link.getOtherCaseId(), true);
+    }
+
+    /**
+     * Asks whether pending changes of the case shown right now are to be saved before navigating
+     * away from it.
+     *
+     * EditorsRegistry.setMainEditorsPaneView does this itself, but only when the component in the
+     * main pane actually changes. Navigating to a linked case reuses this very editor instance, so
+     * that check never fires and the pending changes would be overwritten silently by the case
+     * being loaded. Same wording and same three options as the dialog the registry shows.
+     *
+     * @return true if navigation may proceed
+     */
+    private boolean confirmSaveBeforeNavigation() {
+        if (!this.isDirty()) {
+            return true;
+        }
+
+        int ret = JOptionPane.showConfirmDialog(this,
+                java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("dialog.savebeforeexit"),
+                java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("dialog.savebeforeexit.title"),
+                JOptionPane.YES_NO_CANCEL_OPTION);
+        if (ret == JOptionPane.YES_OPTION) {
+            // navigate only if the case really was saved
+            return this.isDataValid() && this.save();
+        }
+        // no: discard and navigate, anything else (cancel, closed): stay
+        return ret == JOptionPane.NO_OPTION;
+    }
+
+    /**
+     * @param caseId the case to show in the main editor pane
+     * @param confirmSave whether to ask about pending changes first; false where the caller has
+     * asked already
+     */
+    private void openCaseById(String caseId, boolean confirmSave) {
+        if (confirmSave && !this.confirmSaveBeforeNavigation()) {
+            return;
+        }
+
+        try {
+            Object editor;
+            if (UserSettings.getInstance().isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
+                editor = EditorsRegistry.getInstance().getEditor(EditArchiveFileDetailsPanel.class.getName());
+            } else {
+                editor = EditorsRegistry.getInstance().getEditor(ViewArchiveFileDetailsPanel.class.getName());
+            }
+
+            if (editor instanceof ThemeableEditor) {
+                ((ThemeableEditor) editor).setBackgroundImage(this.backgroundImage);
+            }
+
+            if (editor instanceof PopulateOptionsEditor) {
+                ((PopulateOptionsEditor) editor).populateOptions();
+            }
+
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileBean aFile = locator.lookupArchiveFileServiceRemote().getArchiveFile(caseId);
+            if (aFile == null) {
+                JOptionPane.showMessageDialog(this, "Die verknüpfte Akte konnte nicht geladen werden.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            ((ArchiveFilePanel) editor).setArchiveFileDTO(aFile);
+            ((ArchiveFilePanel) editor).setOpenedFromEditorClass(this.openedFromEditorClass);
+            EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
+        } catch (Exception ex) {
+            log.error("Error opening linked case " + caseId, ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Öffnen der verknüpften Akte: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void linkExistingCase() {
+        if (this.dto == null || this.dto.getId() == null) {
+            return;
+        }
+
+        SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, null, null);
+        dlg.setVisible(true);
+        ArchiveFileBean target = dlg.getCaseSelection();
+        dlg.dispose();
+
+        if (target == null) {
+            return;
+        }
+
+        if (this.dto.getId().equals(target.getId())) {
+            JOptionPane.showMessageDialog(this, "Eine Akte kann nicht mit sich selbst verknüpft werden.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        String description = JOptionPane.showInputDialog(this, "Beschreibung der Verknüpfung (optional):", "Akte verknüpfen", JOptionPane.QUESTION_MESSAGE);
+        if (description == null) {
+            // dialog cancelled
+            return;
+        }
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            CaseLinkDTO link = locator.lookupArchiveFileServiceRemote().linkCases(this.dto.getId(), target.getId(), description);
+            this.pnlLinkedCases.add(this.createLinkedCaseChip(link), this.pnlLinkedCases.getComponentCount() - 1);
+            this.refreshLinkedCasesRow();
+        } catch (CaseLinkExistsException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception ex) {
+            log.error("Error linking case " + this.dto.getId() + " to " + target.getId(), ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Verknüpfen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void createNewLinkedCase() {
+        if (this.dto == null || this.dto.getId() == null) {
+            return;
+        }
+
+        // the new case is copied from what the server has stored, and the editor moves on to it -
+        // so pending changes have to be settled before anything is created, not afterwards
+        if (!this.confirmSaveBeforeNavigation()) {
+            return;
+        }
+
+        NewLinkedCaseDialog dlg = new NewLinkedCaseDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto.getName());
+        dlg.setVisible(true);
+        if (!dlg.isConfirmed()) {
+            dlg.dispose();
+            return;
+        }
+        String newName = dlg.getCaseName();
+        boolean includeForms = dlg.isIncludeForms();
+        String description = dlg.getLinkDescription();
+        dlg.dispose();
+
+        ArchiveFileBean created = null;
+        ThreadUtils.setWaitCursor(this, false);
+        try {
+            created = CaseUtils.duplicateCase(this.dto.getId(), newName, includeForms);
+        } catch (Exception ex) {
+            log.error("Error creating a new case from " + this.dto.getId(), ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Erstellen der Akte: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            ThreadUtils.setDefaultCursor(this, false);
+            return;
+        }
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            locator.lookupArchiveFileServiceRemote().linkCases(this.dto.getId(), created.getId(), description);
+        } catch (Exception ex) {
+            // the case exists - saying so is more useful than rolling it back behind the user's back
+            log.error("Error linking new case " + created.getId() + " to " + this.dto.getId(), ex);
+            JOptionPane.showMessageDialog(this, "Die Akte " + created.getFileNumber() + " wurde erstellt, die Verknüpfung konnte jedoch nicht angelegt werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        } finally {
+            ThreadUtils.setDefaultCursor(this, false);
+        }
+
+        EventBroker.getInstance().publishEvent(new CasesChangedEvent());
+
+        // the new case is where the user continues working; pending changes were settled above
+        this.openCaseById(created.getId(), false);
+    }
+
+    private void editLinkDescription(LinkedCaseChip chip) {
+        String description = (String) JOptionPane.showInputDialog(this, "Beschreibung der Verknüpfung:", "Verknüpfung bearbeiten",
+                JOptionPane.QUESTION_MESSAGE, null, null, chip.getLink().getDescription());
+        if (description == null) {
+            return;
+        }
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            locator.lookupArchiveFileServiceRemote().updateCaseLinkDescription(chip.getLink().getLinkId(), description);
+            chip.setLinkDescription(description);
+            this.refreshLinkedCasesRow();
+        } catch (Exception ex) {
+            log.error("Error updating description of case link " + chip.getLink().getLinkId(), ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Beschreibung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void removeLink(LinkedCaseChip chip) {
+        int response = JOptionPane.showConfirmDialog(this, "Verknüpfung mit Akte " + chip.getLink().getOtherCaseFileNumber() + " entfernen?", "Verknüpfung entfernen", JOptionPane.YES_NO_OPTION);
+        if (response != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            locator.lookupArchiveFileServiceRemote().unlinkCases(chip.getLink().getLinkId());
+            this.pnlLinkedCases.remove(chip);
+            this.refreshLinkedCasesRow();
+        } catch (Exception ex) {
+            log.error("Error removing case link " + chip.getLink().getLinkId(), ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Entfernen der Verknüpfung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     public ArrayList<AddressBean> getInvolvedAddresses() {
@@ -1739,6 +2139,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         if (this.dto != null) {
             this.cmdEditCaseNumber.setEnabled(UserUtils.isCurrentUserAdmin());
             this.cmdIngoChat.setEnabled(true);
+            this.cmdCaseNetwork.setEnabled(true);
         }
 
         this.txtFilterParties.setText("");
@@ -1753,6 +2154,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         this.closeInvolvedPartyEntryPanelSubscriptions();
         this.pnlInvolvedParties.removeAll();
+        this.clearLinkedCases();
 
         DefaultTableModel tm = ((DefaultTableModel) this.tblReviewReasons.getModel());
         while (tm.getRowCount() > 0) {
@@ -1891,6 +2293,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     public void clearInputs() {
         this.dto = null;
         this.cmdIngoChat.setEnabled(false);
+        this.cmdCaseNetwork.setEnabled(false);
 
         this.newEventPanel.reset();
 
@@ -1906,6 +2309,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.closeInvolvedPartyEntryPanelSubscriptions();
         this.pnlInvolvedParties.removeAll();
         this.pnlMessages.removeAll();
+        this.clearLinkedCases();
         //this.cmbDictateSign.setSelectedItem("");
         if(UserSettings.getInstance().getCurrentUser().isLawyer()) {
             this.cmbLawyer.setSelectedItem(UserSettings.getInstance().getCurrentUser().getPrincipalId());
@@ -2158,6 +2562,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.tabPaneArchiveFile.setSelectedIndex(4);
     }
 
+    public void selectFinance() {
+        this.tabPaneArchiveFile.setSelectedIndex(3);
+        this.subTabsFinance.setSelectedIndex(0);
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -2263,6 +2672,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         lblCaseChanged = new javax.swing.JLabel();
         cmdCopyCaseNumber = new javax.swing.JButton();
         cmdEditCaseNumber = new javax.swing.JButton();
+        pnlLinkedCases = new javax.swing.JPanel();
         splitMessages = new javax.swing.JSplitPane();
         splitNotes = new javax.swing.JSplitPane();
         jPanel2 = new javax.swing.JPanel();
@@ -2277,6 +2687,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         messageSendPanel1 = new com.jdimension.jlawyer.client.messenger.MessageSendPanel();
         tabParties = new javax.swing.JPanel();
         cmdSearchClient = new javax.swing.JButton();
+        cmdCaseNetwork = new javax.swing.JButton();
         jScrollPane8 = new javax.swing.JScrollPane();
         pnlInvolvedParties = new com.jdimension.jlawyer.client.editors.files.InvolvedPartiesPanel();
         txtFilterParties = new javax.swing.JTextField();
@@ -2592,17 +3003,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         mnuDocumentHighlights.setText("farblich hervorheben");
 
         mnuDocumentHighlight1.setText("erste Farbe");
-        mnuDocumentHighlight1.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                mnuDocumentHighlight1MousePressed(evt);
+        mnuDocumentHighlight1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDocumentHighlight1ActionPerformed(evt);
             }
         });
         mnuDocumentHighlights.add(mnuDocumentHighlight1);
 
         mnuDocumentHighlight2.setText("zweite Farbe");
-        mnuDocumentHighlight2.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                mnuDocumentHighlight2MousePressed(evt);
+        mnuDocumentHighlight2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDocumentHighlight2ActionPerformed(evt);
             }
         });
         mnuDocumentHighlights.add(mnuDocumentHighlight2);
@@ -3031,6 +3442,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
+        org.jdesktop.layout.GroupLayout pnlLinkedCasesLayout = new org.jdesktop.layout.GroupLayout(pnlLinkedCases);
+        pnlLinkedCases.setLayout(pnlLinkedCasesLayout);
+        pnlLinkedCasesLayout.setHorizontalGroup(
+            pnlLinkedCasesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 0, Short.MAX_VALUE)
+        );
+        pnlLinkedCasesLayout.setVerticalGroup(
+            pnlLinkedCasesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 0, Short.MAX_VALUE)
+        );
+
         org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -3071,7 +3493,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(org.jdesktop.layout.GroupLayout.TRAILING, txtReason)
                             .add(txtName)
-                            .add(cmbSubjectField, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                            .add(cmbSubjectField, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .add(pnlLinkedCases, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jSeparator7, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -3112,7 +3535,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                                     .add(jLabel9)
-                                    .add(cmbSubjectField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                                    .add(cmbSubjectField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(pnlLinkedCases, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                             .add(org.jdesktop.layout.GroupLayout.LEADING, tabPrivileges, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                         .add(2, 2, 2)))
                 .addContainerGap())
@@ -3241,6 +3666,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
+        cmdCaseNetwork.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/link_24dp_0E72B5_FILL0_wght400_GRAD0_opsz24.png"))); // NOI18N
+        cmdCaseNetwork.setToolTipText("Beteiligte, deren Beziehungen und weitere Akten als Netz darstellen");
+        cmdCaseNetwork.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCaseNetworkActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout pnlInvolvedPartiesLayout = new org.jdesktop.layout.GroupLayout(pnlInvolvedParties);
         pnlInvolvedParties.setLayout(pnlInvolvedPartiesLayout);
         pnlInvolvedPartiesLayout.setHorizontalGroup(
@@ -3265,6 +3698,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     .add(tabPartiesLayout.createSequentialGroup()
                         .add(cmdSearchClient)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdCaseNetwork)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(txtFilterParties, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 275, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
@@ -3275,6 +3710,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .addContainerGap()
                 .add(tabPartiesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(cmdSearchClient)
+                    .add(cmdCaseNetwork)
                     .add(txtFilterParties, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jScrollPane8, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 807, Short.MAX_VALUE))
@@ -5659,7 +6095,26 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             return;
         }
 
-        afab.setArchiveFileKey(dto);
+        this.addPartyToCase(adrb, afab);
+
+    }//GEN-LAST:event_cmdSearchClientActionPerformed
+
+    /**
+     * Adds a contact as a party of the open case and shows it in the party list.
+     *
+     * Shared by the "Beteiligte hinzufügen" search and by the action that adds a contact related
+     * to an existing party, so both store the party and build its row the same way.
+     *
+     * @param contact the contact to add
+     * @param involvement the involvement to store; its case is set here
+     */
+    public void addPartyToCase(AddressBean contact, ArchiveFileAddressesBean involvement) {
+        if (contact == null || involvement == null) {
+            return;
+        }
+
+        involvement.setArchiveFileKey(dto);
+        ArchiveFileAddressesBean afab = involvement;
         List<PartyTypeBean> allPartyTypes = null;
         try {
             ClientSettings settings = ClientSettings.getInstance();
@@ -5673,8 +6128,19 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             return;
         }
 
+        this.addPartyEntry(contact, afab, allPartyTypes);
+    }
+
+    /**
+     * Shows an already stored party in the party list of the open case, without storing anything.
+     *
+     * @param contact the contact of the party
+     * @param afab the stored involvement
+     * @param allPartyTypes all party types, as offered by the entry's party type selection
+     */
+    private void addPartyEntry(AddressBean contact, ArchiveFileAddressesBean afab, List<PartyTypeBean> allPartyTypes) {
         InvolvedPartyEntryPanel ipep = new InvolvedPartyEntryPanel(dto, this, this.pnlInvolvedParties, this.getClass().getName(), BeaAccess.isBeaEnabled(), allPartyTypes);
-        ipep.setEntry(adrb, afab, false);
+        ipep.setEntry(contact, afab, false);
         ipep.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         BoxLayout layout = new javax.swing.BoxLayout(this.pnlInvolvedParties, javax.swing.BoxLayout.Y_AXIS);
@@ -5687,8 +6153,43 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         ipep.repaint();
         ipep.doLayout();
         this.pnlInvolvedParties.doLayout();
+    }
 
-    }//GEN-LAST:event_cmdSearchClientActionPerformed
+    /**
+     * @param involvement a stored involvement
+     * @return true if the party list of the open case already shows this involvement
+     */
+    private boolean isPartyShown(ArchiveFileAddressesBean involvement) {
+        if (involvement.getId() == null) {
+            return false;
+        }
+        for (Component c : this.pnlInvolvedParties.getComponents()) {
+            if (c instanceof InvolvedPartyEntryPanel) {
+                ArchiveFileAddressesBean shown = ((InvolvedPartyEntryPanel) c).getInvolvement();
+                if (shown != null && involvement.getId().equals(shown.getId())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @return the contact ids that are already parties of the open case - so an action that adds a
+     * related contact can mark those that are involved already
+     */
+    public java.util.Set<String> getInvolvedContactIds() {
+        java.util.Set<String> ids = new java.util.HashSet<>();
+        for (Component c : this.pnlInvolvedParties.getComponents()) {
+            if (c instanceof InvolvedPartyEntryPanel) {
+                AddressBean party = ((InvolvedPartyEntryPanel) c).getAddress();
+                if (party != null && party.getId() != null) {
+                    ids.add(party.getId());
+                }
+            }
+        }
+        return ids;
+    }
 
     public boolean confirmSave(String question, String tagToActivate) {
         int response = JOptionPane.showConfirmDialog(this, question, "Akte speichern", JOptionPane.YES_NO_OPTION);
@@ -7968,14 +8469,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
     }//GEN-LAST:event_togCaseSyncActionPerformed
 
-    private void mnuDocumentHighlight1MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mnuDocumentHighlight1MousePressed
-        updateDocumentHighlights(1);
-    }//GEN-LAST:event_mnuDocumentHighlight1MousePressed
-
-    private void mnuDocumentHighlight2MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mnuDocumentHighlight2MousePressed
-        updateDocumentHighlights(2);
-    }//GEN-LAST:event_mnuDocumentHighlight2MousePressed
-
     private void cmdNewInvoiceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewInvoiceActionPerformed
         InvoiceDialog dlg = new InvoiceDialog(this, this.dto, EditorsRegistry.getInstance().getMainWindow(), true, this.pnlInvolvedParties.getInvolvedPartiesAddress());
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
@@ -9441,6 +9934,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         UserSettings.getInstance().setSettingAsBoolean(UserSettingsKeys.CONF_CASES_SEARCH_FULLTEXT_INCASE, this.togFulltextSearch.isSelected());
     }//GEN-LAST:event_togFulltextSearchActionPerformed
 
+    private void cmdCaseNetworkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCaseNetworkActionPerformed
+        if (this.dto == null || this.dto.getId() == null) {
+            return;
+        }
+        // a dialog rather than a tenth tab: the lazy loading of the other tabs dispatches on
+        // hardcoded tab indices, so a tab inserted here would break them
+        com.jdimension.jlawyer.ui.graph.RelationshipGraphDialog.showForCase(EditorsRegistry.getInstance().getMainWindow(), this.dto.getId());
+    }//GEN-LAST:event_cmdCaseNetworkActionPerformed
+
     private void cmdIngoChatActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdIngoChatActionPerformed
         try {
             AssistantAccess ingo = AssistantAccess.getInstance();
@@ -9570,6 +10072,38 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     }//GEN-LAST:event_mnuMoveReviewToOtherCaseActionPerformed
 
+    private void mnuDocumentHighlight1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDocumentHighlight1ActionPerformed
+        triggerDocumentHighlights(1);
+    }//GEN-LAST:event_mnuDocumentHighlight1ActionPerformed
+
+    private void mnuDocumentHighlight2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDocumentHighlight2ActionPerformed
+        triggerDocumentHighlights(2);
+    }//GEN-LAST:event_mnuDocumentHighlight2ActionPerformed
+
+    /**
+     * Opens the highlight picker for the current document selection. The picker is a
+     * modal dialog and must not be shown while the popup menu it was launched from is
+     * still on screen: the popup holds a native mouse grab, and activating another
+     * window against that grab is delayed by the window manager - on Windows until the
+     * foreground lock timeout expires, which makes the picker appear only seconds after
+     * the click. Showing it from a later EDT cycle lets the popup close first.
+     * The menu item itself cannot serve as the anchor for positioning the picker: the
+     * menu path is already cleared when a JMenuItem fires its action, so the item is no
+     * longer on screen. The mouse pointer still marks the spot that was clicked.
+     */
+    private void triggerDocumentHighlights(int highlightIndex) {
+        Point anchor = null;
+        PointerInfo pointer = MouseInfo.getPointerInfo();
+        JFrame mainWindow = EditorsRegistry.getInstance().getMainWindow();
+        if (pointer != null && mainWindow != null && mainWindow.getBounds().contains(pointer.getLocation())) {
+            // ignore a pointer that has wandered off the application, e.g. on keyboard activation
+            anchor = pointer.getLocation();
+        }
+
+        final Point pickerAnchor = anchor;
+        SwingUtilities.invokeLater(() -> updateDocumentHighlights(highlightIndex, pickerAnchor));
+    }
+
     public void exportSelectedDocumentsAsPdf() {
 
         ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
@@ -9613,10 +10147,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     }
 
-    private void updateDocumentHighlights(int highlightIndex) {
+    private void updateDocumentHighlights(int highlightIndex, Point pickerAnchor) {
         if (!this.readOnly) {
             HighlightPicker hp = new HighlightPicker(EditorsRegistry.getInstance().getMainWindow(), true);
-            hp.setLocationRelativeTo(this.mnuDocumentHighlights);
+            if (pickerAnchor != null) {
+                FrameUtils.centerDialogAt(hp, pickerAnchor);
+            } else {
+                FrameUtils.centerDialog(hp, EditorsRegistry.getInstance().getMainWindow());
+            }
             hp.setVisible(true);
             int highlightColor = Integer.MIN_VALUE;
             if (hp.getSelectedColor() != null) {
@@ -9801,19 +10339,25 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     }
                 }
             }
-        } else if (e instanceof ReviewAddedEvent) {
-            if (this.dto != null) {
-                // can be null in subclass of ArchiveFilePanel
-                if (this.dto.getId() != null) {
-                    ArchiveFileReviewsBean eventRev = ((ReviewAddedEvent) e).getReview();
-                    if (this.dto.getId().equals(eventRev.getArchiveFileKey().getId())) {
-                        ArchiveFileReviewReasonsTableModel model = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
-                        Object[] row = ArchiveFileReviewReasonsTableModel.eventToRow(eventRev);
-                        model.addRow(row);
-                        ComponentUtils.autoSizeColumns(tblReviewReasons);
+        } else if (e instanceof PartyAddedEvent) {
+            if (this.dto != null && this.dto.getId() != null) {
+                ArchiveFileAddressesBean involvement = ((PartyAddedEvent) e).getInvolvement();
+                if (involvement != null && involvement.getArchiveFileKey() != null && this.dto.getId().equals(involvement.getArchiveFileKey().getId()) && !this.isPartyShown(involvement)) {
+                    try {
+                        ClientSettings settings = ClientSettings.getInstance();
+                        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                        List<PartyTypeBean> allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
+                        involvement.setArchiveFileKey(dto);
+                        this.addPartyEntry(((PartyAddedEvent) e).getContact(), involvement, allPartyTypes);
+                    } catch (Exception ex) {
+                        log.error("Error showing party added to case " + this.dto.getId(), ex);
                     }
                 }
             }
+        } else if (e instanceof ReviewAddedEvent) {
+            applyReviewToTable(((ReviewAddedEvent) e).getReview(), true);
+        } else if (e instanceof ReviewUpdatedEvent) {
+            applyReviewToTable(((ReviewUpdatedEvent) e).getReview(), false);
         } else if (e instanceof InstantMessageDeletedEvent) {
 
             boolean removed = false;
@@ -9843,6 +10387,54 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
             });
         }
+    }
+
+    /**
+     * Zeigt eine angelegte oder geänderte Wiedervorlage im Reiter "Kalender" dieser Akte.
+     *
+     * Erledigte bleiben stehen - sie sind Teil dessen, was in der Akte geschehen ist -, aber sie
+     * stehen dann als erledigt da, und genau das war ohne diese Behandlung erst nach einem
+     * Neuladen der Akte zu sehen.
+     *
+     * Eine Änderung darf keine Zeile anlegen. Das Löschen einer Wiedervorlage meldet in dieser
+     * Maske ebenfalls eine Änderung - der Desktop erfährt darüber, dass seine Liste der heute
+     * fälligen neu zu laden ist -, und die gelöschte Zeile wieder einzufügen wäre schlimmer als
+     * jede verspätete Anzeige. Wer eine Zeile anlegen lassen will, meldet eine Neuanlage; das tut
+     * auch, wer eine auf dem Server entstandene Wiedervorlage bekannt macht.
+     *
+     * @param review die Wiedervorlage; fremde und leere werden übergangen
+     * @param mayInsert ob eine noch nicht vorhandene Zeile angelegt werden darf
+     */
+    private void applyReviewToTable(ArchiveFileReviewsBean review, boolean mayInsert) {
+
+        // kann in einer Unterklasse von ArchiveFilePanel null sein
+        if (this.dto == null || this.dto.getId() == null || review == null
+                || review.getArchiveFileKey() == null
+                || !this.dto.getId().equals(review.getArchiveFileKey().getId())) {
+            return;
+        }
+
+        SwingUtilities.invokeLater(() -> {
+            ArchiveFileReviewReasonsTableModel model =
+                    (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
+            Object[] row = ArchiveFileReviewReasonsTableModel.eventToRow(review);
+
+            for (int i = 0; i < model.getRowCount(); i++) {
+                Object cell = model.getValueAt(i, ArchiveFileReviewReasonsTableModel.COLUMN_EVENT);
+                if (cell instanceof ArchiveFileReviewsBean && review.getId() != null
+                        && review.getId().equals(((ArchiveFileReviewsBean) cell).getId())) {
+                    for (int column = 0; column < row.length; column++) {
+                        model.setValueAt(row[column], i, column);
+                    }
+                    ComponentUtils.autoSizeColumns(tblReviewReasons);
+                    return;
+                }
+            }
+            if (mayInsert) {
+                model.addRow(row);
+                ComponentUtils.autoSizeColumns(tblReviewReasons);
+            }
+        });
     }
 
     private boolean isInvolvementChanged(List<ArchiveFileAddressesBean> server, ArchiveFileAddressesBean local) {
@@ -10103,12 +10695,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         protected void processDrag(DropTargetDragEvent dtde) {
 
-            if (dtde.isDataFlavorSupported(DocumentsTransferable.DOCS_FLAVOR)) {
-                // internal document drag - only folder cells (FolderListCell) handle these
-                dtde.rejectDrag();
-            } else if (OutlookDropHelper.isOutlookDrop(dtde.getCurrentDataFlavors())) {
-                dtde.acceptDrag(DnDConstants.ACTION_COPY);
-            } else if (dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+            // internal document drags are rejected - only folder cells (FolderListCell) handle these
+            if (FileDropSupport.isFileTransfer(dtde.getCurrentDataFlavors())) {
                 dtde.acceptDrag(DnDConstants.ACTION_COPY);
             } else {
                 dtde.rejectDrag();
@@ -10149,132 +10737,25 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 return;
             }
 
-            if (OutlookDropHelper.isOutlookDrop(transferable.getTransferDataFlavors())) {
-                dtde.acceptDrop(dtde.getDropAction());
-                try {
-                    List<File> tempFiles = OutlookDropHelper.extractOutlookFiles(transferable);
-                    if (!tempFiles.isEmpty()) {
-                        ThreadUtils.setWaitCursor(p);
-
-                        ArrayList<File> files = new ArrayList<>(tempFiles);
-                        ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
-                        pi.setShowCancelButton(true);
-                        UploadDocumentsAction a = new UploadDocumentsAction(pi, p, dto, caseFolderPanel1, files, caseFolderPanel1.getFoldersListPanel().getRootFolder(), null);
-
-                        a.start();
-                        dtde.dropComplete(true);
-                    } else {
-                        log.error("Outlook drop: no files could be extracted");
-                        dtde.dropComplete(false);
-                    }
-                } catch (Exception ex) {
-                    log.error("Outlook drop error", ex);
-                    dtde.dropComplete(false);
-                }
-            } else if (dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-                dtde.acceptDrop(dtde.getDropAction());
-                try {
-
-                    List transferData = (List) transferable.getTransferData(DataFlavor.javaFileListFlavor);
-                    if (transferData != null && !transferData.isEmpty()) {
-
-                        ThreadUtils.setWaitCursor(p);
-
-                        ArrayList<File> files = new ArrayList<>();
-                        for (Object fo : transferData) {
-                            if (fo instanceof File) {
-                                files.add((File) fo);
-                            } else {
-                                log.error("transfer data: " + fo.getClass().getName());
-                            }
-                        }
-
-                        ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
-                        pi.setShowCancelButton(true);
-                        UploadDocumentsAction a = new UploadDocumentsAction(pi, p, dto, caseFolderPanel1, files, caseFolderPanel1.getFoldersListPanel().getRootFolder(), null);
-
-                        a.start();
-
-                        dtde.dropComplete(true);
-                    } else {
-                        log.error("transfer data is empty");
-                    }
-
-                } catch (Exception ex) {
-                    if (isVirtualFileDropFailure(ex, transferable)) {
-                        log.warn("Drop aborted: source advertised javaFileListFlavor but did not deliver any native data (typical for New Outlook for Windows, Outlook Web App, RDP/Citrix sessions, or drags from email reading pane)");
-                        javax.swing.JOptionPane.showMessageDialog(p,
-                                "Die Quellanwendung hat einen Drag & Drop signalisiert, aber keine verwertbaren Datei-Inhalte mitgesendet.\n\n"
-                                + "Mögliche Ursachen:\n"
-                                + "    • \"Neues Outlook für Windows\" (statt klassischem Outlook)\n"
-                                + "    • Outlook im Webbrowser (Outlook Web App)\n"
-                                + "    • Outlook über RDP / Citrix / Terminalserver\n"
-                                + "    • Drag aus dem Lesebereich statt aus der Nachrichtenliste\n\n"
-                                + "Workaround: Bitte ziehen Sie die E-Mail oder Datei zunächst auf den Desktop oder in einen Ordner\n"
-                                + "und von dort nach j-lawyer.",
-                                com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT,
-                                javax.swing.JOptionPane.WARNING_MESSAGE);
-                    } else {
-                        log.error("file drop error", ex);
-                        logTransferFlavors("file drop error - offered flavors:", transferable);
-                    }
-                }
-            } else {
-
-                try {
-                    log.error("drop not supported: " + dtde.getTransferable().getTransferDataFlavors());
-                    if (dtde.getTransferable().getTransferDataFlavors() != null) {
-                        for (int i = 0; i < dtde.getTransferable().getTransferDataFlavors().length; i++) {
-                            DataFlavor df = dtde.getTransferable().getTransferDataFlavors()[i];
-                            log.error("  " + df.getHumanPresentableName() + " - " + df.getDefaultRepresentationClassAsString() + " - " + df.getMimeType());
-                        }
-                    }
-                } catch (Throwable th) {
-                    log.error("Error determining transferable flavor", th);
-                }
+            if (!FileDropSupport.isFileTransfer(dtde.getCurrentDataFlavors())) {
+                FileDropSupport.logTransferFlavors("drop not supported - offered flavors:", transferable);
                 dtde.rejectDrop();
+                return;
             }
-        }
 
-        private boolean isVirtualFileDropFailure(Exception ex, Transferable transferable) {
-            if (!(ex instanceof IOException)) {
-                return false;
+            dtde.acceptDrop(dtde.getDropAction());
+            List<File> files = FileDropSupport.getDroppedFiles(transferable, p);
+            if (files.isEmpty()) {
+                dtde.dropComplete(false);
+                return;
             }
-            String msg = ex.getMessage();
-            if (msg == null || !msg.toLowerCase().contains("no native data")) {
-                return false;
-            }
-            DataFlavor[] flavors = transferable.getTransferDataFlavors();
-            if (flavors == null) {
-                return false;
-            }
-            if (OutlookDropHelper.isOutlookDrop(flavors)) {
-                return false;
-            }
-            for (DataFlavor f : flavors) {
-                String name = f.getHumanPresentableName();
-                if (name != null && name.toLowerCase().contains("file-list")) {
-                    return true;
-                }
-            }
-            return false;
-        }
 
-        private void logTransferFlavors(String message, Transferable transferable) {
-            try {
-                DataFlavor[] flavors = transferable.getTransferDataFlavors();
-                log.error(message + " count=" + (flavors == null ? 0 : flavors.length));
-                if (flavors != null) {
-                    for (int i = 0; i < flavors.length; i++) {
-                        DataFlavor df = flavors[i];
-                        log.error("  [" + i + "] name='" + df.getHumanPresentableName()
-                                + "' repr=" + df.getDefaultRepresentationClassAsString()
-                                + " mime=" + df.getMimeType());
-                    }
-                }
-            } catch (Throwable th) {
-                log.error("Error logging transferable flavors", th);
-            }
+            ThreadUtils.setWaitCursor(p);
+            ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
+            pi.setShowCancelButton(true);
+            UploadDocumentsAction a = new UploadDocumentsAction(pi, p, dto, caseFolderPanel1, files, caseFolderPanel1.getFoldersListPanel().getRootFolder(), null);
+            a.start();
+            dtde.dropComplete(true);
         }
     }
 
@@ -10306,6 +10787,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JButton cmdFavoriteDocuments;
     private javax.swing.JButton cmdFormsManager;
     private javax.swing.JButton cmdHeaderAddNote;
+    private javax.swing.JButton cmdCaseNetwork;
     private javax.swing.JButton cmdIngoChat;
     private javax.swing.JButton cmdLoadFullHistory;
     private javax.swing.JButton cmdNewClaimLedger;
@@ -10476,6 +10958,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JPanel pnlClaimLedgers;
     private javax.swing.JPanel pnlInvoices;
     protected com.jdimension.jlawyer.client.editors.files.InvolvedPartiesPanel pnlInvolvedParties;
+    protected javax.swing.JPanel pnlLinkedCases;
     private javax.swing.JPanel pnlMessages;
     private javax.swing.JPanel pnlMessagesView;
     private javax.swing.JPanel pnlPayments;

@@ -815,6 +815,45 @@ public class ServerStringUtils {
         return result;
     }
     
+    /**
+     * Shortens a SEPA value to the given maximum length. If possible, the value
+     * is cut at the last space within the limit so that words are not split;
+     * trailing separators are removed. If there is no suitable word boundary,
+     * the value is cut hard at the limit.
+     * Apply this to the already sanitized value (see {@link #sanitizeForSepa(String)}
+     * and {@link #sanitizeForSepaReference(String)}), because replacing umlauts
+     * makes a value longer.
+     *
+     * @param input the sanitized value
+     * @param maxLength maximum length allowed by the SEPA format for the field
+     * @return the value with at most maxLength characters, or empty string if
+     * input is null
+     */
+    public static String truncateForSepa(String input, int maxLength) {
+        if (input == null) {
+            return "";
+        }
+        if (input.length() <= maxLength) {
+            return input;
+        }
+
+        String hardCut = input.substring(0, maxLength);
+        String result = hardCut;
+        boolean onWordBoundary = input.charAt(maxLength) == ' ' || hardCut.endsWith(" ");
+        int lastSpace = hardCut.lastIndexOf(' ');
+        // cut at a word boundary only if the limit does not already fall on one
+        // and not too much of the value is lost
+        if (!onWordBoundary && lastSpace > maxLength / 2) {
+            result = hardCut.substring(0, lastSpace);
+        }
+        // remove dangling separators and spaces, e.g. "Amtsgericht Mayen -"
+        result = result.replaceAll("[\\s\\-/,:(+?]+$", "");
+        if (result.isEmpty()) {
+            return hardCut.trim();
+        }
+        return result;
+    }
+
     public static String toString(String[] stringArray) {
         return toString(stringArray, " ");
     }

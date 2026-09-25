@@ -783,6 +783,10 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @EJB
     private PartyTypeBeanFacadeLocal partyTypesFacade;
     @EJB
+    private ContactRelationTypeFacadeLocal contactRelationTypesFacade;
+    @EJB
+    private ContactRelationFacadeLocal contactRelationsFacade;
+    @EJB
     private ArchiveFileAddressesBeanFacadeLocal archiveFileAddressesFacade;
     @EJB
     private MappingTableFacadeLocal mappingTableFacade;
@@ -2171,6 +2175,95 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     public List<PartyTypeBean> getPartyTypes() {
         return this.partyTypesFacade.findAllInSequence();
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<ContactRelationType> getContactRelationTypes() {
+        return this.contactRelationTypesFacade.findAllInSequence();
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<ContactRelationType> getActiveContactRelationTypes() {
+        return this.contactRelationTypesFacade.findActiveInSequence();
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public ContactRelationType addContactRelationType(ContactRelationType relationType) throws Exception {
+        this.validateContactRelationType(relationType);
+
+        ContactRelationType existing = this.contactRelationTypesFacade.findByName(relationType.getName().trim());
+        if (existing != null) {
+            throw new Exception("Beziehungstyp mit Namen " + relationType.getName().trim() + " existiert bereits!");
+        }
+
+        this.normaliseContactRelationType(relationType);
+        StringGenerator idGen = new StringGenerator();
+        String id = idGen.getID().toString();
+        relationType.setId(id);
+
+        this.contactRelationTypesFacade.create(relationType);
+        return this.contactRelationTypesFacade.find(id);
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public ContactRelationType updateContactRelationType(ContactRelationType relationType) throws Exception {
+        this.validateContactRelationType(relationType);
+
+        ContactRelationType existing = this.contactRelationTypesFacade.findByName(relationType.getName().trim());
+        if (existing != null && !existing.getId().equals(relationType.getId())) {
+            throw new Exception("Beziehungstyp mit Namen " + relationType.getName().trim() + " existiert bereits!");
+        }
+
+        this.normaliseContactRelationType(relationType);
+        this.contactRelationTypesFacade.edit(relationType);
+        return this.contactRelationTypesFacade.find(relationType.getId());
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public void removeContactRelationType(ContactRelationType relationType) throws Exception {
+        long used = this.contactRelationsFacade.countByType(relationType.getId());
+        if (used > 0) {
+            throw new Exception("Beziehungstyp " + relationType.getName() + " wird noch von " + used
+                    + " Beziehung(en) benutzt und kann nicht gelöscht werden! Er kann stattdessen deaktiviert werden.");
+        }
+
+        this.contactRelationTypesFacade.remove(relationType);
+    }
+
+    private void validateContactRelationType(ContactRelationType relationType) throws Exception {
+        if (relationType == null) {
+            throw new Exception("Es wurde kein Beziehungstyp angegeben!");
+        }
+        if (relationType.getName() == null || "".equals(relationType.getName().trim())) {
+            throw new Exception("Beziehungstyp mit leerem Namen ist unzulässig!");
+        }
+        if (relationType.getLabelFrom() == null || "".equals(relationType.getLabelFrom().trim())) {
+            throw new Exception("Beziehungstyp ohne Bezeichnung ist unzulässig!");
+        }
+        if (!relationType.isSymmetric()
+                && (relationType.getLabelTo() == null || "".equals(relationType.getLabelTo().trim()))) {
+            throw new Exception("Gerichteter Beziehungstyp benötigt eine Bezeichnung für beide Richtungen!");
+        }
+    }
+
+    /**
+     * A symmetric type reads the same in both directions, so its second label is kept equal to the
+     * first one - the administration does not have to enter the same text twice, and nothing that
+     * renders a relationship needs a special case.
+     */
+    private void normaliseContactRelationType(ContactRelationType relationType) {
+        relationType.setName(relationType.getName().trim());
+        relationType.setLabelFrom(relationType.getLabelFrom().trim());
+        if (relationType.isSymmetric()) {
+            relationType.setLabelTo(relationType.getLabelFrom());
+        } else {
+            relationType.setLabelTo(relationType.getLabelTo().trim());
+        }
     }
 
     @Override

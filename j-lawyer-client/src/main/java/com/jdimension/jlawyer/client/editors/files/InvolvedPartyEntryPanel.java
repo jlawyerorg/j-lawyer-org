@@ -690,6 +690,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
+import com.jdimension.jlawyer.services.ContactRelationDTO;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.client.utils.OsmUtils;
 
@@ -712,6 +713,9 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
 
     private static final Logger log = Logger.getLogger(InvolvedPartyEntryPanel.class.getName());
     private AddressBean a = null;
+    // this party's relationships, read when the actions popup is first opened - never during the
+    // case load
+    private List<ContactRelationDTO> relations = null;
     private ArchiveFileAddressesBean afa = null;
     private ArchiveFileBean caseDto = null;
 
@@ -924,6 +928,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         mnuCallPhone = new javax.swing.JMenuItem();
         mnuSendFax = new javax.swing.JMenuItem();
         mnuRemoveParty = new javax.swing.JMenuItem();
+        mnuAddRelatedParty = new javax.swing.JMenu();
         mnuCopy = new javax.swing.JMenuItem();
         mnuFindAddress = new javax.swing.JMenu();
         mnuFindAddressOSM = new javax.swing.JMenuItem();
@@ -1023,6 +1028,10 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
             }
         });
         partiesPopup.add(mnuRemoveParty);
+
+        mnuAddRelatedParty.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/link_24dp_0E72B5_FILL0_wght400_GRAD0_opsz24.png"))); // NOI18N
+        mnuAddRelatedParty.setText("verknüpften Kontakt als Beteiligten hinzufügen");
+        partiesPopup.add(mnuAddRelatedParty);
 
         mnuCopy.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/editpaste.png"))); // NOI18N
         mnuCopy.setText("kopieren");
@@ -1473,8 +1482,119 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     }//GEN-LAST:event_mnuSendFaxActionPerformed
 
     private void cmdActionsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdActionsMousePressed
+        this.populateRelatedPartiesMenu();
         this.partiesPopup.show(evt.getComponent(), evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdActionsMousePressed
+
+    /**
+     * Fills the submenu offering this party's related contacts as further parties of the case -
+     * the managing director of a party company, the legal representative of a party.
+     *
+     * The relationships are read here, when the user opens the popup, and not when the case is
+     * loaded: paying for one call per party on every case load is exactly what the relationship
+     * model avoids. Within the life of this row the result is kept, so reopening the popup does
+     * not read again.
+     */
+    private void populateRelatedPartiesMenu() {
+        this.mnuAddRelatedParty.removeAll();
+
+        if (this.a == null || this.a.getId() == null || this.casePanel == null) {
+            this.mnuAddRelatedParty.setEnabled(false);
+            return;
+        }
+
+        if (this.relations == null) {
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                this.relations = locator.lookupAddressServiceRemote().getRelations(this.a.getId());
+            } catch (Exception ex) {
+                log.error("Error loading relations for contact " + this.a.getId(), ex);
+                this.relations = new ArrayList<>();
+            }
+        }
+
+        if (this.relations.isEmpty()) {
+            this.mnuAddRelatedParty.setEnabled(false);
+            javax.swing.JMenuItem none = new javax.swing.JMenuItem("keine verknüpften Kontakte");
+            none.setEnabled(false);
+            this.mnuAddRelatedParty.add(none);
+            return;
+        }
+
+        this.mnuAddRelatedParty.setEnabled(true);
+        java.util.Set<String> involved = this.casePanel.getInvolvedContactIds();
+        for (final ContactRelationDTO relation : this.relations) {
+            boolean alreadyInvolved = involved.contains(relation.getOtherContactId());
+            String text = relation.getLabel() + " - " + relation.getOtherContactDisplayName();
+            if (alreadyInvolved) {
+                text = text + " (bereits Beteiligte(r))";
+            }
+            javax.swing.JMenuItem item = new javax.swing.JMenuItem(text);
+            item.setEnabled(!alreadyInvolved);
+            if (!alreadyInvolved) {
+                item.addActionListener((java.awt.event.ActionEvent evt) -> {
+                    addRelatedContactAsParty(relation);
+                });
+            }
+            this.mnuAddRelatedParty.add(item);
+        }
+    }
+
+    /**
+     * Adds the contact at the other end of the given relationship as a party of the same case,
+     * asking for the role it takes there.
+     */
+    private void addRelatedContactAsParty(ContactRelationDTO relation) {
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            List<PartyTypeBean> partyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
+            if (partyTypes == null || partyTypes.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Es sind keine Beteiligtentypen konfiguriert.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            // the service returns them in their configured sequence; in a plain drop-down a
+            // name-sorted list is what the user can actually scan
+            partyTypes = new ArrayList<>(partyTypes);
+            partyTypes.sort((a, b) -> {
+                String nameA = a.getName() == null ? "" : a.getName();
+                String nameB = b.getName() == null ? "" : b.getName();
+                return nameA.compareToIgnoreCase(nameB);
+            });
+
+            PartyTypeBean partyType = (PartyTypeBean) JOptionPane.showInputDialog(this,
+                    "Als was ist " + relation.getOtherContactDisplayName() + " an der Akte beteiligt?",
+                    "Beteiligte(n) hinzufügen", JOptionPane.QUESTION_MESSAGE, null,
+                    partyTypes.toArray(), partyTypes.get(0));
+            if (partyType == null) {
+                return;
+            }
+
+            AddressBean contact = locator.lookupAddressServiceRemote().getAddress(relation.getOtherContactId());
+            if (contact == null) {
+                JOptionPane.showMessageDialog(this, "Der verknüpfte Kontakt konnte nicht geladen werden.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            ArchiveFileAddressesBean involvement = new ArchiveFileAddressesBean();
+            involvement.setAddressKey(contact);
+            involvement.setReferenceType(partyType);
+            this.casePanel.addPartyToCase(contact, involvement);
+        } catch (Exception ex) {
+            log.error("Error adding related contact " + relation.getOtherContactId() + " as a party", ex);
+            JOptionPane.showMessageDialog(this, "Beteiligte(r) konnte nicht hinzugefügt werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * @return the contact this row stands for
+     */
+    public AddressBean getAddress() {
+        return this.a;
+    }
 
     private void cmdToAddressActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdToAddressActionPerformed
         this.casePanel.switchToAddressView(this.a);
@@ -1621,6 +1741,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     private javax.swing.JMenu mnuFindRoute;
     private javax.swing.JMenuItem mnuFindRouteToAddressGoogle;
     private javax.swing.JMenuItem mnuFindRouteToAddressOSM;
+    private javax.swing.JMenu mnuAddRelatedParty;
     private javax.swing.JMenuItem mnuRemoveParty;
     private javax.swing.JMenuItem mnuSendBea;
     private javax.swing.JMenuItem mnuSendEmail;

@@ -680,6 +680,19 @@ public interface CalendarServiceLocal {
 
     Collection<ArchiveFileReviewsBean> getAllOpenReviewsUnrestricted();
     Collection<ArchiveFileReviewsBean> getAllOpenReviews();
+
+    /**
+     * Returns the calendar entries visible to the calling user, projected to the columns the
+     * cross-case calendar views display, conditional on the caller's known version.
+     *
+     * @param fromDate start of the window, or null for no lower bound
+     * @param toDate end of the window, or null for no upper bound
+     * @param openOnly whether to return only entries that have not been marked as done
+     * @param limit maximum number of entries to return, or 0 for no limit
+     * @param knownVersion the version the caller last received, or -1 to force a fetch
+     * @return the entries with the version they reflect, or an unchanged response
+     */
+    CalendarEntriesResponse getCalendarEntries(Date fromDate, Date toDate, boolean openOnly, int limit, long knownVersion);
     
     Collection<ArchiveFileReviewsBean> searchReviews(int status, int type, Date fromDate, Date toDate, int limit);
     

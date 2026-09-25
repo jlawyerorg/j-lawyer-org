@@ -699,6 +699,8 @@ public class ClaimLedgerEntryEditorDialog extends javax.swing.JDialog {
     
     private ClaimLedger ledger = null;
     private ClaimLedgerEntry entry = null;
+    /** Whether an existing booking is being changed rather than a new one entered. */
+    private final boolean editing;
     private List<ClaimComponent> components = null;
     private ClaimLedgerTotals currentTotals = null;
     private PaymentSplitProposal splitProposal = null;
@@ -717,6 +719,7 @@ public class ClaimLedgerEntryEditorDialog extends javax.swing.JDialog {
         initComponents();
         
         this.entry = entry;
+        this.editing = entry != null;
         this.ledger = ledger;
         this.components = components;
         
@@ -767,6 +770,19 @@ public class ClaimLedgerEntryEditorDialog extends javax.swing.JDialog {
 
             // UI-Felder mit Werten des zu bearbeitenden Entries befüllen
             this.txtDate.setText(df.format(entry.getEntryDate()));
+            // Die Liste fuehrt die Hauptforderung nicht: sie entsteht mit der Forderungsposition
+            // und wird nie von Hand gebucht. Eine bestehende Buchung dieser Art muss trotzdem
+            // zeigen koennen, was sie ist - sonst stuende hier der erste Eintrag der Liste,
+            // "Zinsen", und die Buchung saehe aus wie etwas, das sie nicht ist.
+            if (entry.getType() != null) {
+                boolean listed = false;
+                for (int i = 0; i < this.cmbType.getItemCount(); i++) {
+                    listed = listed || entry.getType().equals(this.cmbType.getItemAt(i));
+                }
+                if (!listed) {
+                    this.cmbType.addItem(entry.getType());
+                }
+            }
             this.cmbType.setSelectedItem(entry.getType());
             this.cmbType.setEnabled(false);
             this.cmbComponent.setSelectedItem(entry.getComponent());
@@ -1237,7 +1253,10 @@ public class ClaimLedgerEntryEditorDialog extends javax.swing.JDialog {
         
         this.entry.setAmount(BigDecimal.valueOf(((Number) this.txtValue.getValue()).doubleValue()));
         this.entry.setComment(this.txtComment.getText());
-        this.entry.setComponent((ClaimComponent) this.cmbComponent.getSelectedItem());
+        if (!this.editing) {
+            // aus demselben Grund wie die Art: die Liste ist beim Bearbeiten abgeschaltet
+            this.entry.setComponent((ClaimComponent) this.cmbComponent.getSelectedItem());
+        }
         this.entry.setDescription(this.txtDescription.getText());
         try {
             this.entry.setEntryDate(df.parse(this.txtDate.getText()));
@@ -1247,7 +1266,13 @@ public class ClaimLedgerEntryEditorDialog extends javax.swing.JDialog {
             JOptionPane.showMessageDialog(this, "Ungültiges Datum - verwende aktuelles Datum.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
         }
         this.entry.setLedger(this.ledger);
-        this.entry.setType((LedgerEntryType) this.cmbType.getSelectedItem());
+        // Beim Bearbeiten bleibt die Art, wie sie ist. Sie steht in einer abgeschalteten Liste,
+        // und was dort steht, hat der Benutzer nicht gewaehlt - eine Hauptforderung wurde so beim
+        // blossen Oeffnen und Speichern zur Zinsbuchung. Danach zaehlte sie nicht mehr zur
+        // Forderung, und weil Zinsen auf die Forderung laufen, fielen mit ihr auch die Zinsen weg.
+        if (!this.editing) {
+            this.entry.setType((LedgerEntryType) this.cmbType.getSelectedItem());
+        }
         
         return this.entry;
     }

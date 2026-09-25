@@ -721,5 +721,28 @@ public interface SingletonServiceRemote {
     void setFaxQueue(ArrayList<FaxQueueBean> faxQueue);
     
     List<AssistantReplacement> getAssistantReplacements();
-    
+
+    /**
+     * Returns a value that changes whenever any calendar entry is created, updated or deleted,
+     * by any user and through any service. Clients use it to decide whether reloading calendar
+     * entries is worth the traffic: store the value received with a set of entries, pass it back
+     * on the next poll, and reload only when it differs.
+     *
+     * The value is opaque. Compare it for equality only - it is neither a timestamp nor
+     * monotonically increasing across restarts, and no meaning may be derived from its value or
+     * from the size of a difference.
+     *
+     * The value is held in memory by a singleton bean, which has two consequences. It is reset
+     * when the server restarts, which is safe because the new value differs from the old one and
+     * therefore triggers a reload rather than leaving a client stale. And it is per server
+     * instance, not cluster-wide.
+     *
+     * Some changes cannot be observed this way: changes to a user's case permissions, a database
+     * restore, and writes that bypass the application server. Clients that must not miss those
+     * should reload unconditionally from time to time in addition to comparing this value.
+     *
+     * @return the current calendar version
+     */
+    long getCalendarVersion();
+
 }

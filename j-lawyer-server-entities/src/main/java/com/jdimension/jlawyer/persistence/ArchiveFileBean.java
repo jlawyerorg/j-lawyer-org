@@ -803,10 +803,22 @@ public class ArchiveFileBean implements Serializable {
     }
 
     public String getFileNumber() {
-        if (this.fileNumberExtension != null && this.fileNumberExtension.length() > 0) {
-            return this.fileNumberMain + this.fileNumberExtension;
+        return composeFileNumber(this.fileNumberMain, this.fileNumberExtension);
+    }
+
+    /**
+     * Builds the file number as it is displayed from its two stored parts. Used where the parts
+     * are read as columns instead of as an entity, e.g. by projection queries.
+     *
+     * @param fileNumberMain the main part
+     * @param fileNumberExtension the extension, may be null or empty
+     * @return the file number
+     */
+    public static String composeFileNumber(String fileNumberMain, String fileNumberExtension) {
+        if (fileNumberExtension != null && fileNumberExtension.length() > 0) {
+            return fileNumberMain + fileNumberExtension;
         } else {
-            return this.fileNumberMain;
+            return fileNumberMain;
         }
     }
 

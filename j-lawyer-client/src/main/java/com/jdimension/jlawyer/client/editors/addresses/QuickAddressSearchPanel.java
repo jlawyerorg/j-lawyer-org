@@ -695,8 +695,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.swing.AbstractAction;
 import javax.swing.Box;
@@ -712,6 +714,9 @@ import themes.colors.DefaultColorTheme;
  * @author jens
  */
 public class QuickAddressSearchPanel extends javax.swing.JPanel implements ThemeableEditor, ResetOnDisplayEditor {
+
+    // how many related contacts the delete warning lists before it summarises
+    private static final int MAX_LISTED_RELATED_CONTACTS = 20;
 
     private static final Logger log = Logger.getLogger(QuickAddressSearchPanel.class.getName());
 
@@ -993,16 +998,17 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
 
     private void mnuDeleteSelectedAddressesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDeleteSelectedAddressesActionPerformed
 
-        int response = JOptionPane.showConfirmDialog(this, "Ausgewählte Adresse(n) löschen?", "Adresse löschen", JOptionPane.YES_NO_OPTION);
-        if (response != JOptionPane.YES_OPTION) {
-            return;
-        }
-
         int[] selectedIndices = this.tblResults.getSelectedRows();
         ArrayList<String> ids = new ArrayList<>();
+        HashMap<String, String> namesById = new HashMap<>();
         for (int i = 0; i < selectedIndices.length; i++) {
             QuickAddressSearchRowIdentifier id = (QuickAddressSearchRowIdentifier) this.tblResults.getValueAt(selectedIndices[i], 0);
             ids.add(id.getAddressDTO().getId());
+            namesById.put(id.getAddressDTO().getId(), id.getAddressDTO().toDisplayName());
+        }
+
+        if (!this.confirmDeleteWithRelations(ids, namesById)) {
+            return;
         }
 
         ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
@@ -1029,6 +1035,59 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
         });
         action.start();
     }//GEN-LAST:event_mnuDeleteSelectedAddressesActionPerformed
+
+    /**
+     * Asks whether the selected contacts are really to be deleted, naming those that still carry
+     * relationships to other contacts and how many.
+     *
+     * The relationships do not prevent the deletion - they are descriptive metadata and are
+     * removed with the contact. What must not happen is that they disappear unnoticed, so the
+     * question is asked before anything is deleted, and it covers all selected contacts in one
+     * dialog. The counts come from the server in one call; the relationships themselves are not
+     * transported for this.
+     *
+     * @param ids the contacts about to be deleted
+     * @param namesById their display names, for the message
+     * @return true if the deletion may proceed
+     */
+    private boolean confirmDeleteWithRelations(List<String> ids, HashMap<String, String> namesById) {
+        Map<String, Integer> relationCounts = new HashMap<>();
+        if (!ids.isEmpty()) {
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                relationCounts = locator.lookupAddressServiceRemote().getRelationCounts(ids);
+            } catch (Exception ex) {
+                // a failing count must not block the deletion, it only costs the extra warning
+                log.error("Error determining relationship counts for the contacts to be deleted", ex);
+            }
+        }
+
+        StringBuilder question = new StringBuilder();
+        question.append("Ausgewählte Adresse(n) löschen?");
+
+        if (relationCounts != null && !relationCounts.isEmpty()) {
+            question.append("\n\nFolgende Adresse(n) sind noch mit anderen Kontakten verknüpft. Die Verknüpfungen werden mit gelöscht:\n");
+            int listed = 0;
+            for (String id : ids) {
+                Integer count = relationCounts.get(id);
+                if (count == null || count < 1) {
+                    continue;
+                }
+                if (listed >= MAX_LISTED_RELATED_CONTACTS) {
+                    question.append("\n... und weitere.");
+                    break;
+                }
+                String name = namesById.get(id);
+                question.append("\n- ").append(name == null ? id : name)
+                        .append(": ").append(count).append(count == 1 ? " Beziehung" : " Beziehungen");
+                listed = listed + 1;
+            }
+        }
+
+        int response = JOptionPane.showConfirmDialog(this, question.toString(), "Adresse löschen", JOptionPane.YES_NO_OPTION);
+        return response == JOptionPane.YES_OPTION;
+    }
 
     private void useSelection() {
         int row = this.tblResults.getSelectedRow();

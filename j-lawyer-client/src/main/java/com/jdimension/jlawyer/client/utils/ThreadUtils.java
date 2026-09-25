@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.utils;
 
 import com.jdimension.jlawyer.client.editors.webview.WebViewHtmlEditorPanel;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.services.CalendarEntryDTO;
 import de.costache.calendar.CalendarPanel;
 import java.awt.Color;
 import java.awt.Component;
@@ -1025,7 +1026,19 @@ public class ThreadUtils {
 
     public static void setCalendarItems(CalendarPanel calendarTarget, Collection<ArchiveFileReviewsBean> dtos) {
         SwingUtilities.invokeLater(() -> {
-            calendarTarget.setData(dtos);
+            calendarTarget.setReviewData(dtos);
+        });
+    }
+
+    /**
+     * Hands the calendar sheet the entries to render, on the event dispatch thread.
+     *
+     * @param calendarTarget the calendar sheet
+     * @param entries the entries to render
+     */
+    public static void setCalendarEntries(CalendarPanel calendarTarget, Collection<CalendarEntryDTO> entries) {
+        SwingUtilities.invokeLater(() -> {
+            calendarTarget.setData(entries);
         });
     }
 

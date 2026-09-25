@@ -710,6 +710,17 @@ public interface InvoiceServiceRemote {
     List<Invoice> getInvoicesByStatus(int... status) throws Exception;
 
     /**
+     * Searches invoices ("Belege") across all cases by invoice number or invoice name. The search term
+     * is matched case-insensitively as a substring against both fields. Only invoices belonging to
+     * cases the calling user is allowed to access are returned.
+     *
+     * @param query search term; a null or blank term yields an empty result
+     * @return matching invoices, newest first, capped at a server side maximum
+     * @throws Exception on server errors
+     */
+    List<Invoice> searchInvoices(String query) throws Exception;
+
+    /**
      * Returns aggregated invoice summaries (count and total gross) for each given status.
      * Only invoices with turnover-relevant invoice types are included.
      *

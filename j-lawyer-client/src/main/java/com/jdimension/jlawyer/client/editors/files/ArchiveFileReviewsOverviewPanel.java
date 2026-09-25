@@ -666,13 +666,25 @@ package com.jdimension.jlawyer.client.editors.files;
 import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
+import com.jdimension.jlawyer.client.events.Event;
+import com.jdimension.jlawyer.client.events.EventBroker;
+import com.jdimension.jlawyer.client.events.EventConsumer;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.TableUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.CalendarEntriesResponse;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.MouseEvent;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 
@@ -680,13 +692,47 @@ import org.apache.log4j.Logger;
  *
  * @author  jens
  */
-public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implements ThemeableEditor {
+public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implements ThemeableEditor, PopulateOptionsEditor, EventConsumer {
     
     private static final Logger log=Logger.getLogger(ArchiveFileReviewsOverviewPanel.class.getName());
-    
+
+    /**
+     * How often the view checks whether the calendar changed. A check that finds nothing is a
+     * single call returning a long, so this can be short without costing anything.
+     */
+    private static final long REFRESH_INTERVAL_MS = 60000L;
+
+    private static final long REFRESH_INITIAL_DELAY_MS = 5000L;
+
+    /**
+     * Delay used to coalesce a burst of calendar changes published within this client into one
+     * reload.
+     */
+    private static final long LOCAL_CHANGE_COALESCE_MS = 500L;
+
     private String detailsEditorClass;
     private Image backgroundImage=null;
     private boolean initializing=false;
+
+    /**
+     * The calendar version the entries currently displayed reflect. -1 means "nothing loaded yet,
+     * load unconditionally". Written only after a load actually succeeded, so that a failure
+     * leaves the view marked as out of date rather than as current.
+     */
+    private volatile long knownCalendarVersion = -1;
+
+    private Date lastLoaded = null;
+    private boolean lastLoadTruncated = false;
+
+    /**
+     * Guards against piling up loads when the server answers slowly: the timer keeps ticking
+     * while a load is still on its way.
+     */
+    private volatile boolean loading = false;
+
+    private Timer refreshTimer = null;
+    private CalendarOverviewRefreshTimerTask refreshTask = null;
+    private Timer localChangeTimer = null;
     
     /**
      * Creates new form ArchiveFileReviewsOverviewPanel
@@ -704,7 +750,6 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
         QuickArchiveFileSearchTableModel model=new QuickArchiveFileSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
         
-        this.cmdRefreshActionPerformed(null);
         
         String lastTab=UserSettings.getInstance().getSetting(UserSettings.CONF_CALENDAR_DEFAULTTAB, jTabbedPane1.getTitleAt(0));
         for(int i=0;i<this.jTabbedPane1.getTabCount();i++) {
@@ -713,8 +758,157 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
                 break;
             }
         }
+
+        this.startAutomaticRefresh();
+
+        EventBroker eb = EventBroker.getInstance();
+        eb.subscribeConsumer(this, Event.TYPE_REVIEWADDED);
+        eb.subscribeConsumer(this, Event.TYPE_REVIEWUPDATED);
+
         this.initializing=false;
         
+    }
+
+    /**
+     * Starts the periodic check for calendar changes.
+     *
+     * The editors registry caches this panel for the lifetime of the client and never disposes
+     * it, so there is no teardown hook to stop the timer from - a shutdown hook is the one place
+     * left, as in DesktopPanel.
+     */
+    private void startAutomaticRefresh() {
+        this.refreshTimer = new Timer("calendar-overview-refresh", true);
+        this.refreshTask = new CalendarOverviewRefreshTimerTask(this);
+        this.refreshTimer.schedule(this.refreshTask, REFRESH_INITIAL_DELAY_MS, REFRESH_INTERVAL_MS);
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            if (this.refreshTask != null) {
+                this.refreshTask.stop();
+            }
+            if (this.refreshTimer != null) {
+                this.refreshTimer.cancel();
+            }
+            if (this.localChangeTimer != null) {
+                this.localChangeTimer.cancel();
+            }
+        }));
+    }
+
+    /**
+     * Called whenever the user navigates to this view. The sheet reloads its interval, which is
+     * small; the list reloads only if the calendar changed since it was last loaded.
+     */
+    @Override
+    public void populateOptions() {
+        this.calendarPanel1.reloadVisibleInterval();
+        this.load(this.knownCalendarVersion, true);
+    }
+
+    /**
+     * @return the calendar version the displayed entries reflect, or -1 if nothing is loaded
+     */
+    public long getKnownCalendarVersion() {
+        return this.knownCalendarVersion;
+    }
+
+    /**
+     * Reloads because the periodic check saw a change, or because it is time to reload anyway.
+     * Silent: an automatic refresh must not interrupt the user with dialogs.
+     */
+    public void refreshAutomatically() {
+        this.load(this.knownCalendarVersion, true);
+        this.calendarPanel1.reloadVisibleInterval();
+    }
+
+    /**
+     * Records that the view could not be brought up to date, so that a quiet view is not mistaken
+     * for a current one.
+     */
+    public void refreshFailed() {
+        javax.swing.SwingUtilities.invokeLater(this::updateStatusAfterFailure);
+    }
+
+    /**
+     * Loads the list.
+     *
+     * @param version the version to compare against; -1 loads unconditionally
+     * @param silent true to suppress error dialogs, for refreshes the user did not ask for
+     */
+    private void load(long version, boolean silent) {
+        if (this.loading) {
+            return;
+        }
+        this.loading = true;
+        if (!silent) {
+            ThreadUtils.setWaitCursor(this);
+        }
+        // the sheet is not fed from here: it shows one interval and loads that interval itself,
+        // while this loads every open entry for the list
+        new Thread(new ArchiveFileReviewsSearchThread(this, this.tblResults, null,
+                version, silent, this::loadFinished)).start();
+    }
+
+    /**
+     * Takes note of what a load returned: the version the entries reflect, whether the safety
+     * limit cut them, and when it happened. Runs on the event dispatch thread.
+     *
+     * @param response what the server answered, or null if the call failed
+     */
+    private void loadFinished(CalendarEntriesResponse response) {
+        this.loading = false;
+        if (response == null) {
+            this.updateStatusAfterFailure();
+            return;
+        }
+        if (!response.isUnchanged()) {
+            this.lastLoadTruncated = response.isTruncated();
+        }
+        this.knownCalendarVersion = response.getVersion();
+        this.lastLoaded = new Date();
+        this.updateStatus();
+    }
+
+    private void updateStatus() {
+        StringBuilder sb = new StringBuilder();
+        if (this.lastLoaded != null) {
+            sb.append("Stand: ").append(new SimpleDateFormat("HH:mm").format(this.lastLoaded));
+        }
+        if (this.lastLoadTruncated) {
+            if (sb.length() > 0) {
+                sb.append("   ");
+            }
+            sb.append("Liste gekürzt: nur die ").append(ArchiveFileReviewsSearchThread.MAX_ENTRIES)
+                    .append(" frühesten Einträge, spätere fehlen");
+        }
+        this.lblStatus.setText(sb.toString());
+        this.lblStatus.setToolTipText(this.lastLoadTruncated
+                ? "Es gibt mehr offene Einträge als angezeigt werden können. Es fehlen die am weitesten in der Zukunft liegenden - überfällige Einträge sind vollständig enthalten."
+                : null);
+    }
+
+    private void updateStatusAfterFailure() {
+        StringBuilder sb = new StringBuilder("nicht aktualisierbar");
+        if (this.lastLoaded != null) {
+            sb.append(" - Stand: ").append(new SimpleDateFormat("HH:mm").format(this.lastLoaded));
+        }
+        this.lblStatus.setText(sb.toString());
+        this.lblStatus.setToolTipText("Die Daten konnten nicht aktualisiert werden. Es wird weiter versucht.");
+    }
+
+    @Override
+    public void onEvent(Event e) {
+        // a calendar entry was created or changed in this client; show it without waiting for the
+        // next interval, and coalesce a burst into one reload
+        if (this.localChangeTimer != null) {
+            this.localChangeTimer.cancel();
+        }
+        this.localChangeTimer = new Timer("calendar-overview-local-change", true);
+        this.localChangeTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                refreshAutomatically();
+            }
+        }, LOCAL_CHANGE_COALESCE_MS);
     }
     
     public void setBackgroundImage(Image image) {
@@ -742,6 +936,7 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
         mnuOpenArchiveFile = new javax.swing.JMenuItem();
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
+        lblStatus = new javax.swing.JLabel();
         jPanel1 = new javax.swing.JPanel();
         cmdExport = new javax.swing.JButton();
         cmdRefresh = new javax.swing.JButton();
@@ -765,6 +960,10 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
         lblPanelTitle.setFont(lblPanelTitle.getFont().deriveFont(lblPanelTitle.getFont().getStyle() | java.awt.Font.BOLD, lblPanelTitle.getFont().getSize()+12));
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
         lblPanelTitle.setText("Kalendereinträge (chronologisch)");
+
+        lblStatus.setForeground(new java.awt.Color(255, 255, 255));
+        lblStatus.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        lblStatus.setText("");
 
         jPanel1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
         jPanel1.setOpaque(false);
@@ -849,7 +1048,9 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(jLabel18)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(lblStatus))
                     .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 879, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -861,6 +1062,7 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
                     .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
                         .add(org.jdesktop.layout.GroupLayout.LEADING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, lblStatus, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 356, Short.MAX_VALUE)
@@ -870,7 +1072,7 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
 
     private void mnuOpenArchiveFileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuOpenArchiveFileActionPerformed
         int row=this.tblResults.getSelectedRow();
-            ArchiveFileReviewsRowIdentifier id=(ArchiveFileReviewsRowIdentifier)this.tblResults.getValueAt(row, 0);
+            CalendarEntryRowIdentifier id=(CalendarEntryRowIdentifier)this.tblResults.getValueAt(row, 0);
             Object editor=null;
             try {
                 editor=EditorsRegistry.getInstance().getEditor(this.detailsEditorClass);
@@ -882,10 +1084,10 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
                 if(editor instanceof PopulateOptionsEditor) {
                     ((PopulateOptionsEditor)editor).populateOptions();
                 }       
-                ((ArchiveFilePanel)editor).setArchiveFileDTO(id.getArchiveFileDTO());
+                ((ArchiveFilePanel)editor).setArchiveFileDTO(loadCase(id.getCaseId()));
                 ((ArchiveFilePanel)editor).setOpenedFromEditorClass(this.getClass().getName());
                 EditorsRegistry.getInstance().setMainEditorsPaneView((Component)editor);
-                ((ArchiveFilePanel)editor).selectEvent(id.getReviewDTO().getId());
+                ((ArchiveFilePanel)editor).selectEvent(id.getEntryId());
                 
             } catch (Exception ex) {
                 log.error("Error creating editor from class " + this.detailsEditorClass, ex);
@@ -896,7 +1098,7 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
     private void tblResultsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsMouseClicked
         if(evt.getClickCount()==2 && evt.getButton()==MouseEvent.BUTTON1) {
             int row=this.tblResults.getSelectedRow();
-            ArchiveFileReviewsRowIdentifier id=(ArchiveFileReviewsRowIdentifier)this.tblResults.getValueAt(row, 0);
+            CalendarEntryRowIdentifier id=(CalendarEntryRowIdentifier)this.tblResults.getValueAt(row, 0);
             Object editor=null;
             try {
                 editor=EditorsRegistry.getInstance().getEditor(this.detailsEditorClass);
@@ -908,10 +1110,10 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
                 if(editor instanceof PopulateOptionsEditor) {
                     ((PopulateOptionsEditor)editor).populateOptions();
                 }       
-                ((ArchiveFilePanel)editor).setArchiveFileDTO(id.getArchiveFileDTO());
+                ((ArchiveFilePanel)editor).setArchiveFileDTO(loadCase(id.getCaseId()));
                 ((ArchiveFilePanel)editor).setOpenedFromEditorClass(this.getClass().getName());
                 EditorsRegistry.getInstance().setMainEditorsPaneView((Component)editor);
-                ((ArchiveFilePanel)editor).selectEvent(id.getReviewDTO().getId());
+                ((ArchiveFilePanel)editor).selectEvent(id.getEntryId());
                 
             } catch (Exception ex) {
                 log.error("Error creating editor from class " + this.detailsEditorClass, ex);
@@ -928,16 +1130,38 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
     }//GEN-LAST:event_tblResultsMouseClicked
 
     private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
-        // perform search here
-        ThreadUtils.setWaitCursor(this);
-        new Thread(new ArchiveFileReviewsSearchThread(this, this.tblResults, this.calendarPanel1)).start();
-        // also reload done entries for the currently visible interval (no-op if the toggle is off)
-        this.calendarPanel1.reloadDoneEvents();
+        // a refresh the user asked for reloads regardless of the version - it is the way out if
+        // the version ever misses a change - and reports failures instead of swallowing them
+        this.load(-1, false);
+        this.calendarPanel1.reloadVisibleInterval();
 
     }//GEN-LAST:event_cmdRefreshActionPerformed
 
     public void refresh() {
         this.cmdRefreshActionPerformed(null);
+    }
+
+    /**
+     * Loads a case by id. The list holds ids rather than cases, because a case eagerly drags its
+     * owner group and its whole folder tree along and that is not worth one copy per row; opening
+     * a case loads it anyway.
+     *
+     * @param caseId the case to load, may be null
+     * @return the case, or null if there is none or it could not be loaded
+     */
+    private ArchiveFileBean loadCase(String caseId) {
+        if (caseId == null || caseId.length() == 0) {
+            return null;
+        }
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote caseService = locator.lookupArchiveFileServiceRemote();
+            return caseService.getArchiveFile(caseId);
+        } catch (Exception ex) {
+            log.error("Unable to load case " + caseId, ex);
+            return null;
+        }
     }
     
     private void cmdExportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportActionPerformed
@@ -968,6 +1192,7 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTabbedPane jTabbedPane1;
     protected javax.swing.JLabel lblPanelTitle;
+    private javax.swing.JLabel lblStatus;
     private javax.swing.JMenuItem mnuOpenArchiveFile;
     private javax.swing.JPopupMenu popupArchiveFileActions;
     private javax.swing.JTable tblResults;

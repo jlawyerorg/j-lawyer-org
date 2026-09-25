@@ -709,6 +709,15 @@ public class HitPanel extends javax.swing.JPanel {
         this.lblFileName.setText("<html><b>" + sh.getFileName() + "</b><br/>" + sh.getArchiveFileNumber() + " " + sh.getArchiveFileName() + "</html>");
         this.lblFileName.setToolTipText(sh.getText());
         this.lblFileName.setIcon(FileUtils.getInstance().getFileTypeIcon(sh.getFileName()));
+        // A metadata field search matches on a non-analyzed keyword field and is
+        // constant-scoring - every hit gets the same score. Showing a percentage there would
+        // claim a degree of match that was never computed, so the label stays empty.
+        if (!sh.isRelevanceRanked()) {
+            this.lblScore.setText("");
+            this.lblScore.setToolTipText("Feldsuche - keine Relevanzbewertung");
+            return;
+        }
+        this.lblScore.setToolTipText(null);
         this.lblScore.setText(df.format((float) sh.getScore()));
         if (sh.getScore() >= 0.50f) {
             this.lblScore.setForeground(Color.green.darker().darker());

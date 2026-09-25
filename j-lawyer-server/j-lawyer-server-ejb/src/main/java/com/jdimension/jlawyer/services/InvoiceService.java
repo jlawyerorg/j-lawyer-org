@@ -673,6 +673,7 @@ import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.AppUserBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.BankStatementsCSVConfig;
 import com.jdimension.jlawyer.persistence.BankStatementsCSVConfigFacadeLocal;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.InvoiceFacadeLocal;
 import com.jdimension.jlawyer.persistence.InvoicePool;
@@ -691,7 +692,9 @@ import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import com.jdimension.jlawyer.server.services.settings.UserSettingsKeys;
 import com.jdimension.jlawyer.server.utils.InvalidSchemaPatternException;
 import com.jdimension.jlawyer.server.utils.InvoiceNumberGenerator;
+import com.jdimension.jlawyer.server.utils.SecurityUtils;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
+import com.jdimension.jlawyer.server.utils.StringUtils;
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
@@ -724,6 +727,8 @@ import org.jlawyer.notification.OutgoingMailRequest;
 public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal {
 
     private static final Logger log = Logger.getLogger(InvoiceService.class.getName());
+
+    private static final int MAX_INVOICE_SEARCH_RESULTS = 100;
 
     SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
     NumberFormat nf = NumberFormat.getCurrencyInstance(Locale.GERMANY);
@@ -1073,6 +1078,40 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
             invoicesList.addAll(invoices.findByStatus(s));
         }
         return invoicesList;
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<Invoice> searchInvoices(String query) throws Exception {
+
+        if (query == null || query.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        String term = "%" + StringUtils.germanToUpperCase(query.trim()) + "%";
+
+        ArrayList<String> allowedCases;
+        try {
+            allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
+        } catch (Exception ex) {
+            log.error("Unable to determine allowed cases for user " + context.getCallerPrincipal().getName(), ex);
+            throw new Exception("Akten für Nutzer '" + context.getCallerPrincipal().getName() + "' konnten nicht ermittelt werden.", ex);
+        }
+
+        // over-fetch, because the permission check below drops rows afterwards
+        List<Invoice> hits = this.invoices.searchByNumberOrName(term, MAX_INVOICE_SEARCH_RESULTS * 5);
+        List<Invoice> result = new ArrayList<>();
+        for (Invoice inv : hits) {
+            ArchiveFileBean c = inv.getArchiveFileKey();
+            if (c == null || !allowedCases.contains(c.getId())) {
+                continue;
+            }
+            result.add(inv);
+            if (result.size() >= MAX_INVOICE_SEARCH_RESULTS) {
+                break;
+            }
+        }
+        return result;
     }
 
     @Override

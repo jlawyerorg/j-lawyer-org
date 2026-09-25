@@ -756,7 +756,10 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         this.txtDateTo.setText(df.format(this.dateTo));
 
         this.jTabbedPane1.addChangeListener((javax.swing.event.ChangeEvent e) -> {
-            if (jTabbedPane1.getSelectedIndex() == 3) {
+            // Am Reiter selbst, nicht an seiner Nummer: die Nummer war einmal richtig und ist es
+            // seit den Reitern fuer Mahnung und Vollstreckung nicht mehr - sie zeigte auf das
+            // Mahnverfahren, und die Aufstellung wurde nie aufgefrischt.
+            if (jTabbedPane1.getSelectedComponent() == jPanel7) {
                 refreshSummaryTable();
             }
         });
@@ -799,7 +802,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         this.updateBalanceChart();
 
         // Aufstellungs-Tab aktualisieren, falls aktiv
-        if (jTabbedPane1.getSelectedIndex() == 3) {
+        if (jTabbedPane1.getSelectedComponent() == jPanel7) {
             refreshSummaryTable();
         }
     }
@@ -928,11 +931,58 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         return this.currentEntry;
     }
 
+    /**
+     * Liest das Forderungskonto neu ein.
+     *
+     * Wer von aussen bucht - die Kosten einer Vollstreckungsmassnahme etwa -, aendert das Konto,
+     * ohne dass dieser Dialog davon erfaehrt. Die Buchung stand dann erst nach Schliessen und
+     * Wiederoeffnen in der Tabelle, und bis dahin sah es aus, als waere nichts geschehen.
+     */
+    public void reload() {
+        if (this.currentEntry != null) {
+            setEntry(this.currentEntry);
+        }
+    }
+
+    /**
+     * Zeigt im Kopf, wie weit die Sache gekommen ist.
+     *
+     * Abgeleitet wird der Stand auf dem Server aus dem, was erfasst ist - Mahnungen, Mahnsache,
+     * Titel, Maßnahmen. Scheitert das, bleibt die Leiste leer: ein falscher Stand im Kopf einer
+     * Akte ist schlimmer als gar keiner, denn er wird geglaubt.
+     */
+    private void updateTimeline(ClaimLedger ledger) {
+        if (ledger == null || ledger.getId() == null) {
+            this.pnlTimeline.setStatus(null);
+            return;
+        }
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            this.pnlTimeline.setStatus(JLawyerServiceLocator
+                    .getInstance(settings.getLookupProperties())
+                    .lookupClaimLedgerServiceRemote().getProcessStatus(ledger.getId()));
+        } catch (Exception ex) {
+            log.error("Unable to determine the process status of ledger " + ledger.getId(), ex);
+            this.pnlTimeline.setStatus(null);
+        }
+    }
+
     public final void setEntry(ClaimLedger ledger) {
 
         this.cmdSave.setEnabled(ledger != null && ledger.getId() != null);
 
         this.currentEntry = ledger;
+
+        // the master data and titles tabs load their own data; a ledger that has not been saved
+        // yet has neither parties nor titles
+        ClaimLedger savedLedger = (ledger != null && ledger.getId() != null) ? ledger : null;
+        this.pnlParties.setLedger(this.caseDto, savedLedger);
+        this.pnlTitles.setLedger(savedLedger);
+        this.pnlDunning.setLedger(savedLedger);
+        this.pnlCourtDunning.setLedger(this.caseDto, savedLedger);
+        this.pnlEnforcement.setLedger(this.caseDto, savedLedger);
+        this.pnlDeadlines.setLedger(this.caseDto, savedLedger);
+        updateTimeline(savedLedger);
 
         if (ledger == null) {
             this.setTitle("neues Forderungskonto erstellen");
@@ -1065,6 +1115,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         jLabel1 = new javax.swing.JLabel();
         txtName = new javax.swing.JTextField();
         jScrollPane2 = new javax.swing.JScrollPane();
+        pnlTimeline = new com.jdimension.jlawyer.client.editors.files.ClaimProcessTimelinePanel();
         taDescription = new javax.swing.JTextArea();
         jLabel4 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
@@ -1074,6 +1125,12 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         txtDateTo = new javax.swing.JTextField();
         cmdSelectDateTo = new javax.swing.JButton();
         jTabbedPane1 = new javax.swing.JTabbedPane();
+        pnlParties = new com.jdimension.jlawyer.client.editors.files.ClaimLedgerPartiesPanel();
+        pnlTitles = new com.jdimension.jlawyer.client.editors.files.ClaimLedgerTitlesPanel();
+        pnlDunning = new com.jdimension.jlawyer.client.editors.files.ClaimLedgerDunningPanel();
+        pnlCourtDunning = new com.jdimension.jlawyer.client.editors.files.ClaimLedgerCourtDunningPanel();
+        pnlEnforcement = new com.jdimension.jlawyer.client.editors.files.ClaimLedgerEnforcementPanel();
+        pnlDeadlines = new com.jdimension.jlawyer.client.editors.files.ClaimLedgerDeadlinesPanel();
         jPanel1 = new javax.swing.JPanel();
         jPanel3 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
@@ -1203,7 +1260,8 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                         .addComponent(cmdSelectDateTo)
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addComponent(jScrollPane2)
-                    .addComponent(txtName))
+                    .addComponent(txtName)
+                    .addComponent(pnlTimeline, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         lblHeaderLayout.setVerticalGroup(
@@ -1217,6 +1275,8 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 .addGroup(lblHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel4))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(pnlTimeline, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(lblHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(cmdSelectDateTo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -1319,7 +1379,11 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
             .addComponent(jPanel3, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
-        jTabbedPane1.addTab("Positionen", jPanel1);
+
+
+
+
+
 
         tblLedger.setFont(tblLedger.getFont());
         tblLedger.setModel(new javax.swing.table.DefaultTableModel(
@@ -1428,7 +1492,6 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
             .addComponent(jPanel4, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
-        jTabbedPane1.addTab("Buchungen", jPanel2);
 
         jLabel3.setFont(jLabel3.getFont());
         jLabel3.setText("Hauptforderungen:");
@@ -1524,7 +1587,6 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 .addContainerGap())
         );
 
-        jTabbedPane1.addTab("Summen", jPanel5);
 
         cmdExportSummary.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/calc.png"))); // NOI18N
         cmdExportSummary.addActionListener(new java.awt.event.ActionListener() {
@@ -1580,7 +1642,6 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 .addContainerGap(9, Short.MAX_VALUE))
         );
 
-        jTabbedPane1.addTab("Aufstellung", jPanel7);
 
         tblBaseInterest.setFont(tblBaseInterest.getFont());
         tblBaseInterest.setModel(new javax.swing.table.DefaultTableModel(
@@ -1633,7 +1694,28 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 .addContainerGap())
         );
 
+        jTabbedPane1.addTab("Stammdaten", pnlParties);
+
+        jTabbedPane1.addTab("Positionen", jPanel1);
+
+        jTabbedPane1.addTab("Buchungen", jPanel2);
+
+        jTabbedPane1.addTab("Summen", jPanel5);
+
+        jTabbedPane1.addTab("Aufstellung", jPanel7);
+
+        jTabbedPane1.addTab("Mahnungen", pnlDunning);
+
+        jTabbedPane1.addTab("Mahnverfahren", pnlCourtDunning);
+
+        jTabbedPane1.addTab("Titel", pnlTitles);
+
+        jTabbedPane1.addTab("Zwangsvollstreckung", pnlEnforcement);
+
+        jTabbedPane1.addTab("Fristen & Dokumente", pnlDeadlines);
+
         jTabbedPane1.addTab("Basiszinsen", jPanel6);
+
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -1672,6 +1754,10 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
     }//GEN-LAST:event_formComponentResized
 
     private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
+        if (!this.pnlCourtDunning.confirmPendingChanges(this)) {
+            this.jTabbedPane1.setSelectedComponent(this.pnlCourtDunning);
+            return;
+        }
         this.cancelled = true;
         this.setVisible(false);
         this.dispose();
@@ -1735,6 +1821,14 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
     }
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
+
+        // Dieser Knopf speichert das Forderungskonto und schließt den Dialog. Die Mahnsache im
+        // Reiter "Mahnverfahren" ist ein eigener Datensatz mit eigenem Knopf - ohne diese Frage
+        // ginge, was dort getippt wurde, beim Schließen verloren.
+        if (!this.pnlCourtDunning.confirmPendingChanges(this)) {
+            this.jTabbedPane1.setSelectedComponent(this.pnlCourtDunning);
+            return;
+        }
 
         this.save();
         this.cancelled = false;
@@ -1866,7 +1960,12 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
                 locator.lookupArchiveFileServiceRemote().removeClaimComponent(cmp.getId());
-                ((ComponentTableModel) this.tblComponents.getModel()).removeComponentAt(this.tblComponents.convertRowIndexToModel(this.tblComponents.getSelectedRow()));
+                // Die Zeile, die gerade bearbeitet wird - nicht die erste ausgewaehlte. Bei
+                // mehreren markierten Positionen loeschte die Tabelle zweimal dieselbe Zeile und
+                // liess die andere stehen, obwohl der Server sie entfernt hatte. Der naechste
+                // Loeschversuch traf dann eine Position, die es nicht mehr gab.
+                ((ComponentTableModel) this.tblComponents.getModel())
+                        .removeComponentAt(this.tblComponents.convertRowIndexToModel(tableIndex));
                 ((LedgerTableModel) this.tblLedger.getModel()).removeEntriesByComponentId(cmp.getId());
             } catch (Exception ex) {
                 log.error("error deleting claim component", ex);
@@ -2311,7 +2410,14 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JTabbedPane jTabbedPane1;
+    private com.jdimension.jlawyer.client.editors.files.ClaimLedgerPartiesPanel pnlParties;
+    private com.jdimension.jlawyer.client.editors.files.ClaimLedgerCourtDunningPanel pnlCourtDunning;
+    private com.jdimension.jlawyer.client.editors.files.ClaimLedgerDeadlinesPanel pnlDeadlines;
+    private com.jdimension.jlawyer.client.editors.files.ClaimLedgerEnforcementPanel pnlEnforcement;
+    private com.jdimension.jlawyer.client.editors.files.ClaimLedgerDunningPanel pnlDunning;
+    private com.jdimension.jlawyer.client.editors.files.ClaimLedgerTitlesPanel pnlTitles;
     private javax.swing.JPanel lblHeader;
+    private com.jdimension.jlawyer.client.editors.files.ClaimProcessTimelinePanel pnlTimeline;
     private javax.swing.JLabel lblOpenValue;
     private javax.swing.JLabel lblSumCost;
     private javax.swing.JLabel lblSumInterest;
@@ -2437,7 +2543,10 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
     class LedgerTableModel extends AbstractTableModel {
 
-        private final String[] columns = {"Datum", "Typ", "Betrag", "Komponente", "Bezeichnung", "Kommentar"};
+        // Der Schuldner gehoert sichtbar dazu: eine Buchung, die nur einer schuldet, sah in der
+        // Tabelle genauso aus wie eine, die alle gesamtschuldnerisch tragen.
+        private final String[] columns = {"Datum", "Typ", "Betrag", "Komponente", "Schuldner",
+            "Bezeichnung", "Kommentar"};
         private final List<ClaimLedgerEntry> data;
         private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
 
@@ -2497,8 +2606,11 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 case 3:
                     return (e.getComponent() != null) ? e.getComponent().toString() : "–";
                 case 4:
-                    return e.getDescription() != null ? e.getDescription() : "";
+                    return e.getDebtorParty() == null
+                            ? "alle" : e.getDebtorParty().getEffectiveDesignation();
                 case 5:
+                    return e.getDescription() != null ? e.getDescription() : "";
+                case 6:
                     return e.getComment() != null ? e.getComment() : "";
                 default:
                     return "";

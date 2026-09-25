@@ -262,10 +262,17 @@
             <groupId>com.github.bbottema</groupId>
             <artifactId>rtf-to-html</artifactId>
         </dependency>
+        <!-- SEPA credit transfer files (pain.001.001.09). 3.x is the last line on javax.xml.bind
+             (JAXB 2.3, like the rest of the client); switch to 4.x once the project moves to jakarta.* -->
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
-            <artifactId>java-sepa-xml</artifactId>
-            <version>1.0.1</version>
+            <groupId>com.github.hbci4j</groupId>
+            <artifactId>hbci4j-core</artifactId>
+            <version>3.1.88</version>
+        </dependency>
+        <dependency>
+            <groupId>org.iban4j</groupId>
+            <artifactId>iban4j</artifactId>
+            <version>3.2.14-RELEASE</version>
         </dependency>
         <dependency>
             <groupId>jlawyer.thirdparty</groupId>

@@ -707,6 +707,35 @@ public interface CalendarServiceRemote {
 
     Collection<ArchiveFileReviewsBean> getAllOpenReviews();
 
+    /**
+     * Returns the calendar entries visible to the calling user, projected to the columns the
+     * cross-case calendar views display - the entry itself plus the identifying fields of its
+     * case and of its calendar. Neither the case nor the calendar setup is returned as an entity,
+     * so no owner group, no folder tree and no calendar credentials travel with the result.
+     *
+     * The call is conditional on a version, so that a view refreshing itself periodically costs
+     * almost nothing while nothing changes. Pass the version received with the previous result;
+     * if the calendar has not changed since, the response has unchanged set, carries no entries,
+     * and no query is executed - the caller keeps displaying the entries it already holds. Pass
+     * -1 to force a fetch. See SingletonServiceRemote#getCalendarVersion() for what the version
+     * can and cannot observe.
+     *
+     * Entries are ordered by begin date ascending. If the limit cuts the result, the response has
+     * truncated set and the entries left out are those furthest in the future, never overdue ones.
+     *
+     * The date arguments are not modified.
+     *
+     * @param fromDate start of the window, or null for no lower bound; an entry starting before
+     * the window but reaching into it is included
+     * @param toDate end of the window, or null for no upper bound
+     * @param openOnly whether to return only entries that have not been marked as done
+     * @param limit maximum number of entries to return, or 0 for no limit
+     * @param knownVersion the version the caller last received, or -1 to force a fetch
+     * @return the entries with the version they reflect, or an unchanged response carrying only
+     * the version
+     */
+    CalendarEntriesResponse getCalendarEntries(Date fromDate, Date toDate, boolean openOnly, int limit, long knownVersion);
+
     void removeReview(String reviewId) throws Exception;
 
     Collection<ArchiveFileReviewsBean> searchReviews(int status, int type, Date fromDate, Date toDate);

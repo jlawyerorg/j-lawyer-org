@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.persistence.DocumentNameTemplate;
 import com.jdimension.jlawyer.persistence.DocumentTagRule;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.MappingTable;
+import com.jdimension.jlawyer.persistence.ContactRelationType;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
@@ -750,6 +751,16 @@ public interface SystemManagementLocal {
     PartyTypeBean updatePartyType(PartyTypeBean partyType) throws Exception;
 
     void removePartyType(PartyTypeBean partyType) throws Exception;
+
+    List<ContactRelationType> getContactRelationTypes();
+
+    List<ContactRelationType> getActiveContactRelationTypes();
+
+    ContactRelationType addContactRelationType(ContactRelationType relationType) throws Exception;
+
+    ContactRelationType updateContactRelationType(ContactRelationType relationType) throws Exception;
+
+    void removeContactRelationType(ContactRelationType relationType) throws Exception;
 
     AppUserBean getUser(String principalId);
     AppUserBean getUserUnrestricted(String principalId);

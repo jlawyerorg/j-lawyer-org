@@ -827,20 +827,38 @@ public class ArchiveFileReviewsBean implements Serializable, EventTypes {
     }
     
     public String toString(SimpleDateFormat dateTimeFormat, SimpleDateFormat dateFormat, SimpleDateFormat timeFormat) {
+        return formatCaption(this.eventType, this.beginDate, this.endDate, dateTimeFormat, dateFormat, timeFormat);
+    }
+
+    /**
+     * Renders the date caption of a calendar entry from its type and its two dates. Callers that
+     * hold the columns instead of the entity - projection queries, for instance - use this to
+     * produce a caption identical to the one toString() produces for the same entry. The
+     * chronological overview sorts that caption as a string, so the two must not drift apart.
+     *
+     * @param eventType one of the EventTypes constants
+     * @param beginDate start of the entry, may be null
+     * @param endDate end of the entry, may be null and only relevant for appointments
+     * @param dateTimeFormat format for a date including the time of day
+     * @param dateFormat format for a date without a time of day
+     * @param timeFormat format for a time of day alone
+     * @return the caption, or "undefiniert" if the entry lacks the dates its type requires
+     */
+    public static String formatCaption(int eventType, Date beginDate, Date endDate, SimpleDateFormat dateTimeFormat, SimpleDateFormat dateFormat, SimpleDateFormat timeFormat) {
         String undefined="undefiniert";
-        if (this.hasEndDateAndTime()) {
+        if (hasEndDateAndTime(eventType)) {
             
             StringBuilder sb=new StringBuilder();
-            if (this.beginDate != null) {
-                sb.append(dateTimeFormat.format(this.beginDate));
-                if(this.endDate!=null) {
+            if (beginDate != null) {
+                sb.append(dateTimeFormat.format(beginDate));
+                if(endDate!=null) {
                     sb.append(" - ");
-                    if(this.beginDate.getDate()==this.endDate.getDate() && this.beginDate.getMonth()==this.endDate.getMonth() && this.beginDate.getYear()==this.endDate.getYear()) {
+                    if(beginDate.getDate()==endDate.getDate() && beginDate.getMonth()==endDate.getMonth() && beginDate.getYear()==endDate.getYear()) {
                         // same day
-                        sb.append(timeFormat.format(this.endDate));
+                        sb.append(timeFormat.format(endDate));
                     } else {
                         // spans multiple days
-                        sb.append(dateTimeFormat.format(this.endDate));
+                        sb.append(dateTimeFormat.format(endDate));
                     }
                     return sb.toString();
                 } else {
@@ -850,9 +868,9 @@ public class ArchiveFileReviewsBean implements Serializable, EventTypes {
                 return undefined;
             }
         } else {
-            if (this.beginDate != null) {
+            if (beginDate != null) {
                 
-                return dateFormat.format(this.beginDate);
+                return dateFormat.format(beginDate);
             } else {
                 return undefined;
             }
@@ -896,11 +914,33 @@ public class ArchiveFileReviewsBean implements Serializable, EventTypes {
     }
 
     public boolean hasEndDateAndTime() {
-        return (this.eventType == EVENTTYPE_EVENT);
+        return hasEndDateAndTime(this.eventType);
+    }
+
+    /**
+     * Tells whether entries of the given type carry an end date and a time of day. Only
+     * appointments do; follow-ups and respites are plain dates.
+     *
+     * @param eventType one of the EventTypes constants
+     * @return true if entries of that type have an end date and a time of day
+     */
+    public static boolean hasEndDateAndTime(int eventType) {
+        return (eventType == EVENTTYPE_EVENT);
     }
 
     public String getEventTypeName() {
-        switch (this.getEventType()) {
+        return eventTypeName(this.getEventType());
+    }
+
+    /**
+     * Returns the display name of the given entry type. Callers that hold the type as a column
+     * instead of the entity use this to label an entry exactly as getEventTypeName() would.
+     *
+     * @param eventType one of the EventTypes constants
+     * @return the German display name, defaulting to the follow-up name for unknown types
+     */
+    public static String eventTypeName(int eventType) {
+        switch (eventType) {
             case EVENTTYPE_FOLLOWUP:
                 return "Wiedervorlage";
             case EVENTTYPE_RESPITE:

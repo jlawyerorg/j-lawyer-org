@@ -678,6 +678,9 @@ import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.CalendarEntriesResponse;
+import com.jdimension.jlawyer.services.CalendarEntryDTO;
 import com.jdimension.jlawyer.server.constants.ArchiveFileConstants;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -746,7 +749,7 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
 
     private JToggleButton cmdToggleDone;
     private boolean showDone = false;
-    private Collection<ArchiveFileReviewsBean> doneEvents = new ArrayList<>();
+    private Collection<CalendarEntryDTO> doneEvents = new ArrayList<>();
 
     private JPopupMenu popup;
 
@@ -756,7 +759,7 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
 
     protected int eventAlpha = 255;
 
-    private Collection<ArchiveFileReviewsBean> cachedEvents = null;
+    private Collection<CalendarEntryDTO> cachedEvents = null;
 
     /**
      * Creates new form CalendarPanel
@@ -835,7 +838,7 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
                 UserSettings.getInstance().setSettingArray(UserSettings.CONF_CALENDAR_LASTFILTERUSERS, al.toArray(new String[al.size()]));
                 selectedUsers = al;
 
-                Collection<ArchiveFileReviewsBean> cacheClone = new ArrayList<>();
+                Collection<CalendarEntryDTO> cacheClone = new ArrayList<>();
                 cacheClone.addAll(cachedEvents);
                 setData(cacheClone);
             });
@@ -930,7 +933,7 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
                     if (editor instanceof PopulateOptionsEditor) {
                         ((PopulateOptionsEditor) editor).populateOptions();
                     }
-                    ((ArchiveFilePanel) editor).setArchiveFileDTO(ce.getCaseDto());
+                    ((ArchiveFilePanel) editor).setArchiveFileDTO(resolveCase(ce));
                     ((ArchiveFilePanel) editor).setOpenedFromEditorClass(this.parentClass);
                     EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
                     ((ArchiveFilePanel) editor).selectEvent(null);
@@ -967,7 +970,7 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
                             EditOrDuplicateEventDialog.MODE_EDIT,
                             EditorsRegistry.getInstance().getMainWindow(),
                             true,
-                            ce.getCaseDto(),
+                            resolveCase(ce),
                             review,
                             null // no reviews table in Calendar view
                     );
@@ -975,12 +978,12 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
 
                     // After dialog closes, reload the edited review and update UI
                     try {
-                        ArchiveFileReviewsBean updated = calService.getReview(ce.getEventId());
+                        CalendarEntryDTO updated = CalendarEntryDTO.fromEntity(calService.getReview(ce.getEventId()));
 
                         // keep cache current
                         if (cachedEvents != null) {
-                            ArchiveFileReviewsBean toRemove = null;
-                            for (ArchiveFileReviewsBean r : cachedEvents) {
+                            CalendarEntryDTO toRemove = null;
+                            for (CalendarEntryDTO r : cachedEvents) {
                                 if (updated != null && updated.getId() != null && updated.getId().equals(r.getId())) {
                                     toRemove = r;
                                     break;
@@ -1049,7 +1052,7 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
                         removeById(this.cachedEvents, ce.getEventId());
                         if (this.showDone && updatedEvent != null) {
                             // immediately show it in the done ("erledigt") styling
-                            this.doneEvents.add(updatedEvent);
+                            this.doneEvents.add(CalendarEntryDTO.fromEntity(updatedEvent));
                             this.renderEvents();
                         }
                     } catch (Exception ex) {
@@ -1078,14 +1081,14 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
                     return;
                 }
 
-                ArchiveFileReviewsBean reviewToDelete = findById(this.cachedEvents, ce.getEventId());
+                CalendarEntryDTO reviewToDelete = findById(this.cachedEvents, ce.getEventId());
                 if (reviewToDelete == null) {
                     reviewToDelete = findById(this.doneEvents, ce.getEventId());
                 }
                 if (reviewToDelete == null) {
                     try {
                         JLawyerServiceLocator deleteLocator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
-                        reviewToDelete = deleteLocator.lookupCalendarServiceRemote().getReview(ce.getEventId());
+                        reviewToDelete = CalendarEntryDTO.fromEntity(deleteLocator.lookupCalendarServiceRemote().getReview(ce.getEventId()));
                     } catch (Exception ex) {
                         log.error("Unable to load event " + ce.getEventId() + " for delete confirmation", ex);
                     }
@@ -1204,12 +1207,28 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
 //        calendarEvent = new CalendarEvent("Overlapping 2", start, end);
 //        jCalendar.addCalendarEvent(calendarEvent);
 //    }
-    public void setData(Collection<ArchiveFileReviewsBean> dtos) {
+    public void setData(Collection<CalendarEntryDTO> dtos) {
 
         this.cachedEvents = dtos;
 
         this.renderEvents();
 
+    }
+
+    /**
+     * Renders entries a caller still holds as entities - conflicting events, for instance. The
+     * panel itself works on projections; this converts and delegates.
+     *
+     * @param reviews the entries to render
+     */
+    public void setReviewData(Collection<ArchiveFileReviewsBean> reviews) {
+        Collection<CalendarEntryDTO> dtos = new ArrayList<>();
+        if (reviews != null) {
+            for (ArchiveFileReviewsBean rev : reviews) {
+                dtos.add(CalendarEntryDTO.fromEntity(rev));
+            }
+        }
+        this.setData(dtos);
     }
 
     /**
@@ -1223,13 +1242,13 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
         }
 
         if (this.cachedEvents != null) {
-            for (ArchiveFileReviewsBean rev : this.cachedEvents) {
+            for (CalendarEntryDTO rev : new ArrayList<>(this.cachedEvents)) {
                 this.addCalendarEvent(rev);
             }
         }
 
         if (this.showDone) {
-            for (ArchiveFileReviewsBean rev : this.doneEvents) {
+            for (CalendarEntryDTO rev : new ArrayList<>(this.doneEvents)) {
                 this.addCalendarEvent(rev);
             }
         }
@@ -1259,15 +1278,21 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
      */
     private void reloadDoneEvents(final Date from, final Date to) {
         new Thread(() -> {
-            Collection<ArchiveFileReviewsBean> done;
+            CalendarEntriesResponse response;
             try {
                 ClientSettings settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
-                done = calService.searchReviews(ArchiveFileConstants.REVIEWSTATUS_DONE, ArchiveFileConstants.REVIEWTYPE_ANY, from, to);
+                response = calService.getCalendarEntries(padBefore(from), padAfter(to), false, 0, -1);
             } catch (Exception ex) {
                 log.error("Error loading done calendar entries", ex);
                 return;
+            }
+            Collection<CalendarEntryDTO> done = new ArrayList<>();
+            for (CalendarEntryDTO entry : response.getEntries()) {
+                if (entry.isDone()) {
+                    done.add(entry);
+                }
             }
             SwingUtilities.invokeLater(() -> {
                 this.doneEvents = done;
@@ -1277,15 +1302,129 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
     }
 
     /**
+     * Reloads the entries of the interval the sheet currently displays. Used when the view is
+     * opened and on an automatic refresh - the sheet only ever shows one interval, so reloading
+     * that interval is both cheap and all it needs.
+     */
+    public void reloadVisibleInterval() {
+        Calendar from = this.jCalendar.getConfig().getIntervalStart();
+        Calendar to = this.jCalendar.getConfig().getIntervalEnd();
+        if (from == null || to == null) {
+            return;
+        }
+        this.reloadEventsForInterval(from.getTime(), to.getTime());
+    }
+
+    /**
+     * Fetches the entries of the given interval from the server in a background thread and
+     * re-renders once they are available. Unlike the list, the calendar sheet can only show the
+     * interval it displays, so it loads that interval instead of every open entry there is.
+     *
+     * Both open and done entries come back in one call and are split here; the done ones are kept
+     * only while the "erledigt" toggle is on.
+     *
+     * @param from start of the visible interval
+     * @param to end of the visible interval
+     */
+    public void reloadEventsForInterval(final Date from, final Date to) {
+        final boolean loadDone = this.showDone;
+        new Thread(() -> {
+            CalendarEntriesResponse response;
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
+                response = calService.getCalendarEntries(padBefore(from), padAfter(to), !loadDone, 0, -1);
+            } catch (Exception ex) {
+                log.error("Error loading calendar entries for the visible interval", ex);
+                return;
+            }
+            Collection<CalendarEntryDTO> open = new ArrayList<>();
+            Collection<CalendarEntryDTO> done = new ArrayList<>();
+            for (CalendarEntryDTO entry : response.getEntries()) {
+                if (entry.isDone()) {
+                    done.add(entry);
+                } else {
+                    open.add(entry);
+                }
+            }
+            SwingUtilities.invokeLater(() -> {
+                this.cachedEvents = open;
+                this.doneEvents = done;
+                this.renderEvents();
+            });
+        }).start();
+    }
+
+    /**
+     * Returns the full case of the given event, loading it from the server if the event only
+     * carries the case columns. Events rendered from a projection do: a case eagerly drags its
+     * owner group and its whole folder tree along, which is not worth shipping per calendar entry
+     * when only a navigation actually needs it - and a navigation loads the case anyway.
+     *
+     * @param ce the event whose case is wanted
+     * @return the case, or null if the event has none or it could not be loaded
+     */
+    private static ArchiveFileBean resolveCase(CalendarEvent ce) {
+        if (ce == null) {
+            return null;
+        }
+        if (ce.getCaseDto() != null) {
+            return ce.getCaseDto();
+        }
+        String caseId = ce.getCaseId();
+        if (caseId == null || caseId.length() == 0) {
+            return null;
+        }
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote caseService = locator.lookupArchiveFileServiceRemote();
+            return caseService.getArchiveFile(caseId);
+        } catch (Exception ex) {
+            log.error("Unable to load case " + caseId + " for calendar entry " + ce.getEventId(), ex);
+            return null;
+        }
+    }
+
+    /**
+     * Widens an interval start by a month, so that an entry reaching into the interval from
+     * before it is loaded too, and so that paging one step does not immediately need another
+     * round trip.
+     */
+    private static Date padBefore(Date from) {
+        if (from == null) {
+            return null;
+        }
+        Calendar c = Calendar.getInstance();
+        c.setTime(from);
+        c.add(Calendar.MONTH, -1);
+        return c.getTime();
+    }
+
+    /**
+     * Widens an interval end by a month, see padBefore.
+     */
+    private static Date padAfter(Date to) {
+        if (to == null) {
+            return null;
+        }
+        Calendar c = Calendar.getInstance();
+        c.setTime(to);
+        c.add(Calendar.MONTH, 1);
+        return c.getTime();
+    }
+
+    /**
      * Removes the review with the given id from the given cache collection (if
      * present), matching by review id.
      */
-    private static void removeById(Collection<ArchiveFileReviewsBean> coll, String eventId) {
+    private static void removeById(Collection<CalendarEntryDTO> coll, String eventId) {
         if (eventId == null || coll == null) {
             return;
         }
-        ArchiveFileReviewsBean toRemove = null;
-        for (ArchiveFileReviewsBean r : coll) {
+        CalendarEntryDTO toRemove = null;
+        for (CalendarEntryDTO r : coll) {
             if (eventId.equals(r.getId())) {
                 toRemove = r;
                 break;
@@ -1300,11 +1439,11 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
      * Returns the review with the given id from the given cache collection,
      * or null if the collection does not contain it.
      */
-    private static ArchiveFileReviewsBean findById(Collection<ArchiveFileReviewsBean> coll, String eventId) {
+    private static CalendarEntryDTO findById(Collection<CalendarEntryDTO> coll, String eventId) {
         if (eventId == null || coll == null) {
             return null;
         }
-        for (ArchiveFileReviewsBean r : coll) {
+        for (CalendarEntryDTO r : coll) {
             if (eventId.equals(r.getId())) {
                 return r;
             }
@@ -1320,40 +1459,58 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
         this.jCalendar.setDisplayStrategy(DisplayStrategy.Type.DAY, selDate);
     }
 
+    /**
+     * Renders an entry a caller still holds as an entity. The panel itself works on projections;
+     * this converts and delegates.
+     *
+     * @param rev the entry to render
+     */
     public void addCalendarEvent(ArchiveFileReviewsBean rev) {
+        if (rev == null) {
+            return;
+        }
+        this.addCalendarEvent(CalendarEntryDTO.fromEntity(rev));
+    }
 
-        if (rev.getBeginDate() == null) {
+    public void addCalendarEvent(CalendarEntryDTO rev) {
+
+        if (rev == null || rev.getBeginDate() == null) {
             return;
         }
 
-        if (!rev.isDone() && !this.cachedEvents.contains(rev)) {
-            this.cachedEvents.add(rev);
+        if (!rev.isDone()) {
+            if (this.cachedEvents == null) {
+                this.cachedEvents = new ArrayList<>();
+            }
+            if (!this.cachedEvents.contains(rev)) {
+                this.cachedEvents.add(rev);
+            }
         }
 
-        if (rev.getCalendarSetup() != null) {
-            if (!this.allCalTypes.containsKey(rev.getCalendarSetup().getId())) {
+        if (rev.getCalendarId() != null) {
+            if (!this.allCalTypes.containsKey(rev.getCalendarId())) {
                 EventType t = new EventType();
-                Color opaque = new Color(rev.getCalendarSetup().getBackground());
+                Color opaque = new Color(rev.getCalendarColor());
                 Color backColor = new Color(opaque.getRed(), opaque.getGreen(), opaque.getBlue(), this.eventAlpha);
                 t.setBackgroundColor(backColor);
                 t.setForegroundColor(Color.WHITE);
-                t.setName(rev.getCalendarSetup().getDisplayName() + " (" + rev.getEventTypeName() + ")");
+                t.setName(rev.getCalendarName() + " (" + rev.getEventTypeName() + ")");
                 t.setUniqueKey(rev.getEventTypeName());
-                this.allCalTypes.put(rev.getCalendarSetup().getId(), t);
-                this.selectedCalTypes.add(rev.getCalendarSetup().getId());
+                this.allCalTypes.put(rev.getCalendarId(), t);
+                this.selectedCalTypes.add(rev.getCalendarId());
 
                 // dimmed variant used to render done ("erledigt") entries
                 EventType tDone = new EventType();
                 Color dimColor = new Color(opaque.getRed(), opaque.getGreen(), opaque.getBlue(), 120);
                 tDone.setBackgroundColor(dimColor);
                 tDone.setForegroundColor(Color.WHITE);
-                tDone.setName(rev.getCalendarSetup().getDisplayName() + " (" + rev.getEventTypeName() + ")");
+                tDone.setName(rev.getCalendarName() + " (" + rev.getEventTypeName() + ")");
                 tDone.setUniqueKey(rev.getEventTypeName());
-                this.allDoneCalTypes.put(rev.getCalendarSetup().getId(), tDone);
+                this.allDoneCalTypes.put(rev.getCalendarId(), tDone);
 
                 JToggleButton tog = new JToggleButton();
-                tog.setText(" " + rev.getCalendarSetup().getDisplayName() + " ");
-                tog.setToolTipText(rev.getCalendarSetup().getDisplayName() + " (" + rev.getEventTypeName() + ")");
+                tog.setText(" " + rev.getCalendarName() + " ");
+                tog.setToolTipText(rev.getCalendarName() + " (" + rev.getEventTypeName() + ")");
                 tog.setBackground(backColor);
                 tog.setOpaque(true);
                 tog.setForeground(Color.WHITE);
@@ -1364,13 +1521,13 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
                     // CAUTION: the selection state is reversed
                     if (tog.isSelected()) {
                         tog.setForeground(Color.GRAY);
-                        selectedCalTypes.remove(rev.getCalendarSetup().getId());
+                        selectedCalTypes.remove(rev.getCalendarId());
                     } else {
                         tog.setForeground(Color.WHITE);
-                        selectedCalTypes.add(rev.getCalendarSetup().getId());
+                        selectedCalTypes.add(rev.getCalendarId());
                     }
 
-                    Collection<ArchiveFileReviewsBean> cacheClone = new ArrayList<>();
+                    Collection<CalendarEntryDTO> cacheClone = new ArrayList<>();
                     cacheClone.addAll(cachedEvents);
                     setData(cacheClone);
 
@@ -1383,7 +1540,10 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
             }
         }
 
-        if (this.selectedCalTypes.contains(rev.getCalendarSetup().getId()) && (this.selectedUsers.contains(rev.getAssignee()) || StringUtils.isEmpty(rev.getAssignee()))) {
+        // an entry without a calendar passes the calendar filter rather than being dropped: this
+        // is a deadline view, and silently hiding an entry is worse than showing it unstyled
+        boolean calendarSelected = rev.getCalendarId() == null || this.selectedCalTypes.contains(rev.getCalendarId());
+        if (calendarSelected && (this.selectedUsers.contains(rev.getAssignee()) || StringUtils.isEmpty(rev.getAssignee()))) {
             int hour = rev.getBeginDate().getHours();
             final int min = rev.getBeginDate().getMinutes();
             final int day = rev.getBeginDate().getDate();
@@ -1477,31 +1637,35 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
         }
     }
 
-    private void addToRenderedCalendar(ArchiveFileReviewsBean rev, Date start, Date end, boolean allDay) {
+    private void addToRenderedCalendar(CalendarEntryDTO rev, Date start, Date end, boolean allDay) {
 
         // NOTE: the month view needs a glyph-capable font for the check mark - see DayContentPanel.
         String donePrefix = rev.isDone() ? "✓ " : "";
         CalendarEvent calendarEvent = null;
-        if (rev.getArchiveFileKey() != null) {
-            calendarEvent = new CalendarEvent(donePrefix + rev.getSummary() + " (" + rev.getArchiveFileKey().getFileNumber() + " " + rev.getArchiveFileKey().getName() + ")", start, end);
+        if (rev.getCaseId() != null) {
+            calendarEvent = new CalendarEvent(donePrefix + rev.getSummary() + " (" + rev.getCaseFileNumber() + " " + rev.getCaseName() + ")", start, end);
         } else {
             calendarEvent = new CalendarEvent(donePrefix + rev.getSummary(), start, end);
         }
         calendarEvent.setDescription(rev.getDescription());
         calendarEvent.setLocation(rev.getLocation());
 
-        if (rev.getCalendarSetup() != null) {
+        if (rev.getCalendarId() != null) {
             if (rev.isDone()) {
-                calendarEvent.setType(this.allDoneCalTypes.get(rev.getCalendarSetup().getId()));
+                calendarEvent.setType(this.allDoneCalTypes.get(rev.getCalendarId()));
             } else {
-                calendarEvent.setType(this.allCalTypes.get(rev.getCalendarSetup().getId()));
+                calendarEvent.setType(this.allCalTypes.get(rev.getCalendarId()));
             }
         }
 
         calendarEvent.setEventId(rev.getId());
-        if (rev.getArchiveFileKey() != null) {
-            calendarEvent.setCaseDto(rev.getArchiveFileKey());
-        }
+        // the case itself is not carried by a projection; these are the columns the views show,
+        // and the full case is fetched on demand when the user opens it
+        calendarEvent.setCaseId(rev.getCaseId());
+        calendarEvent.setCaseNumber(rev.getCaseFileNumber());
+        calendarEvent.setCaseName(rev.getCaseName());
+        calendarEvent.setCaseReason(rev.getCaseReason());
+        calendarEvent.setCaseLawyer(rev.getCaseLawyer());
 
         calendarEvent.setAssignee(rev.getAssignee());
 
@@ -1574,10 +1738,9 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
 
         //jCalendar.a
         jCalendar.addIntervalChangedListener((final IntervalChangedEvent event) -> {
-            // when done entries are shown, reload them for the newly visible interval
-            if (this.showDone) {
-                this.reloadDoneEvents(event.getIntervalStart(), event.getIntervalEnd());
-            }
+            // the sheet only shows the interval it displays, so load that interval - open entries
+            // as well as, when the toggle is on, the done ones
+            this.reloadEventsForInterval(event.getIntervalStart(), event.getIntervalEnd());
         });
 
         jCalendar.addIntervalSelectionListener((IntervalSelectionEvent event) -> {

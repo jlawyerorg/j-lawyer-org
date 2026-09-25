@@ -696,6 +696,8 @@ public interface InvoiceFacadeLocal {
 
     Invoice findByInvoiceNumber(String invoiceNumber);
 
+    List<Invoice> searchByNumberOrName(String term, int maxResults);
+
     List<InvoiceStatusSummary> findSummaryByStatus(int... status);
 
 }

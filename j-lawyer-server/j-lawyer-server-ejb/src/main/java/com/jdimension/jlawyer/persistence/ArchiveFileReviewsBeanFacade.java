@@ -663,10 +663,17 @@
  */
 package com.jdimension.jlawyer.persistence;
 
+import com.jdimension.jlawyer.services.CalendarEntryDTO;
+import com.jdimension.jlawyer.services.SingletonServiceLocal;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.TypedQuery;
 
 /**
  *
@@ -675,8 +682,46 @@ import javax.persistence.PersistenceContext;
 @Stateless
 public class ArchiveFileReviewsBeanFacade extends AbstractFacade<ArchiveFileReviewsBean> implements ArchiveFileReviewsBeanFacadeLocal {
 
+    /**
+     * Projects a calendar entry together with the identifying columns of its case and of its
+     * calendar. Only scalars are selected, so neither an ArchiveFileBean - and therefore no owner
+     * group and no folder tree - nor a CalendarSetup with its cloud credentials is instantiated.
+     *
+     * The case is joined inner, because an entry whose case reference is missing has never been
+     * shown by the cross-case views and must not start appearing now. The calendar is joined
+     * outer, because an entry need not belong to one. The owner group is joined outer as well and
+     * bound to an alias rather than reached through a path expression, so that cases without an
+     * owner group survive the visibility check instead of being dropped by an implicit inner join.
+     */
+    private static final String DTO_SELECT = "SELECT NEW com.jdimension.jlawyer.services.CalendarEntryDTO("
+            + "e.id, e.eventType, e.summary, e.description, e.location, e.beginDate, e.endDate, e.done, e.assignee, "
+            + "c.id, c.fileNumberMain, c.fileNumberExtension, c.name, c.reason, c.lawyer, "
+            + "cal.id, cal.displayName, cal.background) "
+            + "FROM ArchiveFileReviewsBean e "
+            + "JOIN e.archiveFileKey c "
+            + "LEFT JOIN c.group grp "
+            + "LEFT JOIN e.calendarSetup cal ";
+
+    /**
+     * The case visibility rule, as SecurityUtils.getAllowedCasesForUser applies it, expressed as a
+     * predicate instead of as a list of every case the user may see: the case is unprotected, or
+     * the user owns it through its owner group, or the user is in one of its allowed groups, or it
+     * restricts nothing although it has an owner.
+     *
+     * Note the last branch is written as NOT EXISTS where the original uses NOT IN. The two agree
+     * except when a case_groups row has no case, where NOT IN would collapse the whole branch to
+     * empty; NOT EXISTS expresses the intent.
+     */
+    private static final String VISIBILITY = "WHERE (grp IS NULL "
+            + "OR grp.id IN :groupIds "
+            + "OR EXISTS (SELECT g.id FROM ArchiveFileGroupsBean g WHERE g.archiveFileKey = c AND g.allowedGroup.id IN :groupIds) "
+            + "OR NOT EXISTS (SELECT g2.id FROM ArchiveFileGroupsBean g2 WHERE g2.archiveFileKey = c)) ";
+
     @PersistenceContext(unitName = "j-lawyer-server-ejbPU")
     private EntityManager em;
+
+    @EJB
+    private SingletonServiceLocal singletonService;
 
     @Override
     protected EntityManager getEntityManager() {
@@ -685,6 +730,41 @@ public class ArchiveFileReviewsBeanFacade extends AbstractFacade<ArchiveFileRevi
 
     public ArchiveFileReviewsBeanFacade() {
         super(ArchiveFileReviewsBean.class);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * Also records that the calendar changed. Every service that writes calendar entries goes
+     * through this facade, so bumping here covers them all - CalendarService as well as the
+     * dunning, claim ledger and case services.
+     */
+    @Override
+    public void create(ArchiveFileReviewsBean archiveFileReviewsBean) {
+        super.create(archiveFileReviewsBean);
+        this.singletonService.bumpCalendarVersion();
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * Also records that the calendar changed.
+     */
+    @Override
+    public void edit(ArchiveFileReviewsBean archiveFileReviewsBean) {
+        super.edit(archiveFileReviewsBean);
+        this.singletonService.bumpCalendarVersion();
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * Also records that the calendar changed.
+     */
+    @Override
+    public void remove(ArchiveFileReviewsBean archiveFileReviewsBean) {
+        super.remove(archiveFileReviewsBean);
+        this.singletonService.bumpCalendarVersion();
     }
 
     @Override
@@ -707,6 +787,46 @@ public class ArchiveFileReviewsBeanFacade extends AbstractFacade<ArchiveFileRevi
     @Override
     public List<ArchiveFileReviewsBean> findByDone(boolean done) {
         return (List<ArchiveFileReviewsBean>) em.createNamedQuery("ArchiveFileReviewsBean.findByDone").setParameter("done", done).getResultList();
+    }
+
+    @Override
+    public List<CalendarEntryDTO> findCalendarEntries(List<String> groupIds, boolean openOnly, Date fromDate, Date toDate, int limit) {
+
+        StringBuilder ql = new StringBuilder(DTO_SELECT).append(VISIBILITY);
+        if (openOnly) {
+            ql.append("AND e.done = false ");
+        }
+        if (fromDate != null) {
+            // an entry that starts before the window but reaches into it belongs to the window,
+            // so the end date decides - falling back to the begin date for entries without one
+            ql.append("AND COALESCE(e.endDate, e.beginDate) >= :fromDate ");
+        }
+        if (toDate != null) {
+            ql.append("AND e.beginDate <= :toDate ");
+        }
+        ql.append("ORDER BY e.beginDate ASC");
+
+        TypedQuery<CalendarEntryDTO> query = em.createQuery(ql.toString(), CalendarEntryDTO.class);
+
+        // an empty list would render as IN (), which is a syntax error; the original SQL guards
+        // this the same way, with a group id that cannot occur
+        List<String> effectiveGroupIds = (groupIds == null || groupIds.isEmpty())
+                ? Collections.singletonList("dummy")
+                : groupIds;
+        query.setParameter("groupIds", effectiveGroupIds);
+
+        if (fromDate != null) {
+            query.setParameter("fromDate", fromDate);
+        }
+        if (toDate != null) {
+            query.setParameter("toDate", toDate);
+        }
+        if (limit > 0) {
+            query.setMaxResults(limit);
+        }
+
+        List<CalendarEntryDTO> result = query.getResultList();
+        return result == null ? new ArrayList<>() : result;
     }
 
 }

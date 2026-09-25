@@ -295,6 +295,16 @@
             // When pasting, keep a broad tag whitelist rather than collapsing to text.
             pasteTagsWhitelist: 'p|div|span|font|br|a|ul|ol|li|table|tr|td|th|thead|tbody|tfoot|h[1-6]|blockquote|pre|strong|em|b|i|u|s|mark|img|hr',
 
+            // Do not re-order the DOM when content is loaded. SunEditor's consistency
+            // check hoists format elements (P, DIV, H1-6, LI) out of parents that are
+            // not range format elements (BLOCKQUOTE, UL, OL, TABLE, ...). In a quoted
+            // reply that pulls every <p> out of the mail's wrapper <div>s while the
+            // <ul>/<ol> lists stay behind, so all lists end up at the bottom of the
+            // quote. Everything else the sanitizer does (removing disallowed and empty
+            // nodes, wrapping stray list children in <li>, repairing table cells)
+            // stays active. See issue #3584.
+            strictHTMLValidation: false,
+
             // Default style for editor content
             defaultStyle: "DEFAULT_FONT_STYLE"
         });
@@ -620,10 +630,9 @@
         function handlePaste(e) {
             log('=== PASTE EVENT TRIGGERED ===');
 
-            // CRITICAL: Stop SunEditor from processing this event
-            e.preventDefault();
-            e.stopPropagation();
-            e.stopImmediatePropagation();
+            // NOTE: The event is NOT suppressed here. preventDefault() is called further
+            // down, once we know we actually have content to insert. Otherwise a failed
+            // clipboard lookup would swallow the paste and nothing at all would happen.
 
             // CRITICAL FIX: JavaFX WebView cannot access HTML clipboard data
             // Use Java's AWT Clipboard API instead via javaConnector
@@ -678,15 +687,27 @@
                     .replace(/\n\n+/g, '</p><p>')
                     .replace(/\n/g, '<br>') + '</p>';
             } else {
-                log('ERROR: No content to paste');
-                return false;
+                // Nothing from the Java bridge and nothing in the DataTransfer:
+                // do NOT swallow the event - let WebKit/SunEditor perform the native
+                // paste instead of silently doing nothing.
+                log('No content from clipboard bridge - falling back to native paste');
+                return;
             }
+
+            // We have content - only now take the event away from SunEditor
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
 
             // Insert using native browser API instead of SunEditor
             try {
                 const selection = window.getSelection();
                 if (!selection.rangeCount) {
-                    log('ERROR: No selection range');
+                    // No caret/range available (e.g. the drag-crash workaround cleared
+                    // the selection on mousedown). Let SunEditor place the content
+                    // itself instead of dropping the paste.
+                    log('No selection range - using SunEditor insertHTML');
+                    editor.insertHTML(contentToInsert);
                     return false;
                 }
 

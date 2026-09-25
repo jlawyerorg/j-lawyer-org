@@ -680,6 +680,7 @@ import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
+import com.jdimension.jlawyer.services.CaseLinkDTO;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.folders.CaseFolderPanel;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
@@ -815,7 +816,9 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
         
         // Create thread pool for parallel execution
-        ExecutorService executor = Executors.newFixedThreadPool(8);
+        // one thread per independent server call: these are I/O bound, so a pool smaller than
+        // the number of calls would serialise them into several waves
+        ExecutorService executor = Executors.newFixedThreadPool(17);
 
         try {
             this.progress("Lade Akte: Starte parallele Abfragen...");
@@ -885,6 +888,10 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
                 fileService.getCaseSyncs(archiveFileKey)
             );
 
+            Future<List<CaseLinkDTO>> futureCaseLinks = executor.submit(() ->
+                fileService.getCaseLinks(archiveFileKey)
+            );
+
             // Wait for and retrieve all results
             this.progress("Lade Akte: Empfange Daten...");
             
@@ -904,9 +911,13 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             tags = futureTags.get();
             allPartyTypes = futurePartyTypes.get();
             syncSettings = futureSyncSettings.get();
+            List<CaseLinkDTO> caseLinks = futureCaseLinks.get();
             
             // Shutdown executor
             executor.shutdown();
+
+            // the links row of the case header (Aktenverknüpfung)
+            this.owner.setLinkedCases(caseLinks);
 
             this.progress("Lade Akte: Verarbeite Sofortnachrichten...");
             log.info("[AKTE-LOAD] execute: Beginne GUI-Aktualisierung - Sofortnachrichten");

@@ -666,19 +666,30 @@ package com.jdimension.jlawyer.client.editors.files;
 import com.jdimension.jlawyer.client.configuration.UserTableCellRenderer;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
-import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.services.CalendarEntriesResponse;
+import com.jdimension.jlawyer.services.CalendarEntryDTO;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import de.costache.calendar.CalendarPanel;
 import java.awt.Component;
-import java.util.Collection;
+import java.awt.Point;
+import java.util.function.Consumer;
+import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JViewport;
+import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import org.apache.log4j.Logger;
 
 /**
+ * Loads the entries of the chronological calendar list.
+ *
+ * The list keeps showing every open entry, however far in the past or the future it lies - an
+ * overdue Frist is exactly the row a user must not stop seeing. Only a safety limit bounds it,
+ * and because entries come back ordered by date, hitting that limit drops the far future rather
+ * than anything overdue; the caller is told so it can say as much.
  *
  * @author jens
  */
@@ -686,9 +697,19 @@ public class ArchiveFileReviewsSearchThread implements Runnable {
 
     private static final Logger log = Logger.getLogger(ArchiveFileReviewsSearchThread.class.getName());
 
+    /**
+     * Upper bound on the entries loaded into the list. Not a window - see the class comment.
+     */
+    public static final int MAX_ENTRIES = 5000;
+
+    private static final String[] COL_NAMES = new String[]{"Datum / Zeit", "Typ", "Aktenzeichen", "Kurzrubrum", "Grund", "Beschreibung", "Anwalt", "verantwortlich", "Kalender"};
+
     private Component owner;
     private JTable target;
     private CalendarPanel calendarTarget;
+    private long knownVersion = -1;
+    private boolean silent = false;
+    private Consumer<CalendarEntriesResponse> resultCallback = null;
 
     /**
      * Creates a new instance of ArchiveFileReviewsSearchThread
@@ -705,60 +726,165 @@ public class ArchiveFileReviewsSearchThread implements Runnable {
         this.calendarTarget = calendar;
     }
 
+    /**
+     * @param owner component to show a wait cursor and errors on
+     * @param target the table to fill
+     * @param calendar a calendar sheet to feed with the same entries, or null. The chronological
+     * overview passes null: its sheet shows a single interval and loads that interval itself,
+     * whereas this loads every open entry for the list.
+     * @param knownVersion the calendar version the caller last saw, or -1 to force a load
+     * @param silent true for an automatic refresh, which must not interrupt the user with an
+     * error dialog when the server is briefly unreachable
+     * @param resultCallback receives the response, or null if the call failed
+     */
+    public ArchiveFileReviewsSearchThread(Component owner, JTable target, CalendarPanel calendar,
+            long knownVersion, boolean silent, Consumer<CalendarEntriesResponse> resultCallback) {
+        this(owner, target, calendar);
+        this.knownVersion = knownVersion;
+        this.silent = silent;
+        this.resultCallback = resultCallback;
+    }
+
+    @Override
     public void run() {
-        Collection<ArchiveFileReviewsBean> dtos = null;
+
+        CalendarEntriesResponse response;
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
             CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
-            dtos = calService.getAllOpenReviews();
+            response = calService.getCalendarEntries(null, null, true, MAX_ENTRIES, this.knownVersion);
 
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+            if (!this.silent) {
+                ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+            }
+            ThreadUtils.setDefaultCursor(this.owner);
+            notifyResult(null);
             return;
         }
 
-        String[] colNames = new String[]{"Datum / Zeit", "Typ", "Aktenzeichen", "Kurzrubrum", "Grund", "Beschreibung", "Anwalt", "verantwortlich", "Kalender"};
-        DefaultTableModel model = new DefaultTableModel(colNames, 0) {
+        if (response.isUnchanged()) {
+            // nothing changed since the caller's version; leave the table and the sheet alone
+            ThreadUtils.setDefaultCursor(this.owner);
+            notifyResult(response);
+            return;
+        }
+
+        DefaultTableModel model = new DefaultTableModel(COL_NAMES, 0) {
 
             @Override
             public boolean isCellEditable(int i, int i0) {
                 return false;
             }
         };
-        ThreadUtils.setTableModel(this.target, model);
-        try {
-            Thread.sleep(750);
-        } catch (Throwable t) {
-            log.error(t);
-        }
 
-        this.target.getColumnModel().getColumn(6).setCellRenderer(new UserTableCellRenderer());
-        this.target.getColumnModel().getColumn(7).setCellRenderer(new UserTableCellRenderer());
-        for (ArchiveFileReviewsBean b : dtos) {
+        for (CalendarEntryDTO b : response.getEntries()) {
             try {
-                String reviewDateString = b.toString();
-                String calendar = "";
-                if (b.getCalendarSetup() != null) {
-                    calendar = b.getCalendarSetup().getDisplayName();
-                }
-                Object[] row = new Object[]{new ArchiveFileReviewsRowIdentifier(b.getArchiveFileKey(), b, reviewDateString), b.getEventTypeName(), b.getArchiveFileKey().getFileNumber(), b.getArchiveFileKey().getName(), b.getSummary(), b.getDescription(), b.getArchiveFileKey().getLawyer(), b.getAssignee(), calendar};
+                Object[] row = new Object[]{
+                    new CalendarEntryRowIdentifier(b.getCaseId(), b.getId(), b.getCaption()),
+                    b.getEventTypeName(),
+                    b.getCaseFileNumber(),
+                    b.getCaseName(),
+                    b.getSummary(),
+                    b.getDescription(),
+                    b.getCaseLawyer(),
+                    b.getAssignee(),
+                    b.getCalendarName() == null ? "" : b.getCalendarName()};
                 model.addRow(row);
             } catch (Throwable t) {
                 log.error(t);
             }
         }
+
         TableRowSorter<TableModel> sorter = new TableRowSorter<>(model);
         sorter.setComparator(2, new FileNumberComparatorString());
         sorter.setComparator(0, new DateStringComparator());
-        ThreadUtils.setTableModel(this.target, model, sorter);
+
+        // the model is built completely before it is installed: an automatic refresh must not
+        // blank the table in between, and what the user is looking at must survive the swap
+        SwingUtilities.invokeLater(() -> {
+            String selectedEntryId = selectedEntryId();
+            Point viewPosition = viewPosition();
+
+            this.target.setModel(model);
+            this.target.setRowSorter(sorter);
+            this.target.getColumnModel().getColumn(6).setCellRenderer(new UserTableCellRenderer());
+            this.target.getColumnModel().getColumn(7).setCellRenderer(new UserTableCellRenderer());
+
+            restoreSelection(selectedEntryId);
+            restoreViewPosition(viewPosition);
+        });
+
         if (this.calendarTarget != null) {
-            ThreadUtils.setCalendarItems(this.calendarTarget, dtos);
+            ThreadUtils.setCalendarEntries(this.calendarTarget, response.getEntries());
         }
         ThreadUtils.setDefaultCursor(this.owner);
+        notifyResult(response);
+    }
 
+    private void notifyResult(CalendarEntriesResponse response) {
+        if (this.resultCallback != null) {
+            SwingUtilities.invokeLater(() -> this.resultCallback.accept(response));
+        }
+    }
+
+    /**
+     * @return the id of the entry in the selected row, or null if nothing is selected
+     */
+    private String selectedEntryId() {
+        int row = this.target.getSelectedRow();
+        if (row < 0) {
+            return null;
+        }
+        Object value = this.target.getValueAt(row, 0);
+        if (value instanceof CalendarEntryRowIdentifier) {
+            return ((CalendarEntryRowIdentifier) value).getEntryId();
+        }
+        return null;
+    }
+
+    /**
+     * Selects the row holding the given entry again. Matched by entry id rather than by row
+     * index, because rows appear and disappear between refreshes.
+     */
+    private void restoreSelection(String entryId) {
+        if (entryId == null) {
+            return;
+        }
+        for (int row = 0; row < this.target.getRowCount(); row++) {
+            Object value = this.target.getValueAt(row, 0);
+            if (value instanceof CalendarEntryRowIdentifier
+                    && entryId.equals(((CalendarEntryRowIdentifier) value).getEntryId())) {
+                this.target.setRowSelectionInterval(row, row);
+                return;
+            }
+        }
+    }
+
+    private Point viewPosition() {
+        JViewport viewport = enclosingViewport();
+        return viewport == null ? null : viewport.getViewPosition();
+    }
+
+    private void restoreViewPosition(Point position) {
+        JViewport viewport = enclosingViewport();
+        if (viewport != null && position != null) {
+            viewport.setViewPosition(position);
+        }
+    }
+
+    private JViewport enclosingViewport() {
+        Component parent = this.target.getParent();
+        if (parent instanceof JViewport) {
+            return (JViewport) parent;
+        }
+        if (parent != null && parent.getParent() instanceof JScrollPane) {
+            return ((JScrollPane) parent.getParent()).getViewport();
+        }
+        return null;
     }
 
 }

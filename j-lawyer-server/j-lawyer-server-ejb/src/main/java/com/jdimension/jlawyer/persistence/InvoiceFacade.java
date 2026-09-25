@@ -783,5 +783,10 @@ public class InvoiceFacade extends AbstractFacade<Invoice> implements InvoiceFac
             return null;
         }
     }
+
+    @Override
+    public List<Invoice> searchByNumberOrName(String term, int maxResults) {
+        return em.createNamedQuery("Invoice.searchByNumberOrName").setParameter("term", term).setMaxResults(maxResults).getResultList();
+    }
     
 }

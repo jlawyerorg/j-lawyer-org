@@ -695,7 +695,7 @@ public class ConflictingEventsDialog extends javax.swing.JDialog {
     public void setCalendarEntries(Collection<ArchiveFileReviewsBean> dtos, ArchiveFileReviewsBean newOrChangedEvent, Date scrollTo) {
         // make existing events semi-transparent for better focus on the event to be added
         this.calendarPanel.setEventAlpha(127);
-        this.calendarPanel.setData(dtos);
+        this.calendarPanel.setReviewData(dtos);
         // new entry is fully opaque
         this.calendarPanel.setEventAlpha(255);
         CalendarSetup newOrChangedEventSetup=(CalendarSetup)newOrChangedEvent.getCalendarSetup().getClone();

@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<Form version="1.3" maxVersion="1.3" type="org.netbeans.modules.form.forminfo.JDialogFormInfo">
+  <Properties>
+    <Property name="defaultCloseOperation" type="int" value="2"/>
+    <Property name="title" type="java.lang.String" value="Vollstreckungsmaßnahme"/>
+  </Properties>
+  <SyntheticProperties>
+    <SyntheticProperty name="formSizePolicy" type="int" value="1"/>
+    <SyntheticProperty name="generateCenter" type="boolean" value="false"/>
+  </SyntheticProperties>
+  <AuxValues>
+    <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>
+    <AuxValue name="FormSettings_autoSetComponentName" type="java.lang.Boolean" value="false"/>
+    <AuxValue name="FormSettings_generateFQN" type="java.lang.Boolean" value="true"/>
+    <AuxValue name="FormSettings_generateMnemonicsCode" type="java.lang.Boolean" value="false"/>
+    <AuxValue name="FormSettings_i18nAutoMode" type="java.lang.Boolean" value="false"/>
+    <AuxValue name="FormSettings_layoutCodeTarget" type="java.lang.Integer" value="2"/>
+    <AuxValue name="FormSettings_listenerGenerationStyle" type="java.lang.Integer" value="0"/>
+    <AuxValue name="FormSettings_variablesLocal" type="java.lang.Boolean" value="false"/>
+    <AuxValue name="FormSettings_variablesModifier" type="java.lang.Integer" value="2"/>
+  </AuxValues>
+
+  <Layout>
+    <DimensionLayout dim="0">
+      <Group type="103" groupAlignment="0" attributes="0">
+          <Group type="102" attributes="0">
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Group type="102" alignment="0" attributes="0">
+                      <Group type="103" groupAlignment="1" max="-2" attributes="0">
+                          <Component id="lblTitle" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblMeasureType" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblOrderedDate" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblDispatchedDate" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblAddressee" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblNotes" alignment="0" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="cmbTitle" alignment="0" pref="460" max="32767" attributes="0"/>
+                          <Component id="cmbMeasureType" alignment="0" pref="460" max="32767" attributes="0"/>
+                          <Component id="txtOrderedDate" alignment="0" min="-2" pref="120" max="-2" attributes="0"/>
+                          <Group type="102" alignment="0" attributes="0">
+                              <Component id="txtDispatchedDate" min="-2" pref="120" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="lblDispatchHint" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <Component id="txtAddresseeDesignation" alignment="0" pref="460" max="32767" attributes="0"/>
+                          <Component id="scrlAddresseeAddress" alignment="0" pref="460" max="32767" attributes="0"/>
+                          <Component id="scrlNotes" alignment="0" pref="460" max="32767" attributes="0"/>
+                      </Group>
+                  </Group>
+                  <Component id="scrlHint" alignment="0" pref="540" max="32767" attributes="0"/>
+                  <Group type="102" alignment="1" attributes="0">
+                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                      <Component id="cmdSave" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="cmdCancel" min="-2" max="-2" attributes="0"/>
+                  </Group>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+          </Group>
+      </Group>
+    </DimensionLayout>
+    <DimensionLayout dim="1">
+      <Group type="103" groupAlignment="0" attributes="0">
+          <Group type="102" alignment="0" attributes="0">
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="lblTitle" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmbTitle" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="lblMeasureType" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmbMeasureType" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="scrlHint" min="-2" pref="56" max="-2" attributes="0"/>
+              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="lblOrderedDate" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="txtOrderedDate" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="lblDispatchedDate" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="txtDispatchedDate" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="lblDispatchHint" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="lblAddressee" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="txtAddresseeDesignation" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="scrlAddresseeAddress" min="-2" pref="60" max="-2" attributes="0"/>
+              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="lblNotes" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="scrlNotes" alignment="0" min="-2" pref="60" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="cmdSave" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmdCancel" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+          </Group>
+      </Group>
+    </DimensionLayout>
+  </Layout>
+  <SubComponents>
+    <Component class="javax.swing.JLabel" name="lblTitle">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Titel:"/>
+        <Property name="toolTipText" type="java.lang.String" value="Der Titel, auf dem vollstreckt wird (§ 750 Abs. 1 ZPO)"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JComboBox" name="cmbTitle">
+      <Properties>
+        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+          <StringArray count="0"/>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmbTitleActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblMeasureType">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Maßnahme:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JComboBox" name="cmbMeasureType">
+      <Properties>
+        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+          <StringArray count="0"/>
+        </Property>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblOrderedDate">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Datum:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JTextField" name="txtOrderedDate">
+      <Properties>
+        <Property name="text" type="java.lang.String" value=""/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblDispatchedDate">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Absendung:"/>
+        <Property name="toolTipText" type="java.lang.String" value="Tag, an dem die Ma&#223;nahme hinausgegangen ist - ab ihm l&#228;uft die Wiedervorlage zum Sachstand"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JTextField" name="txtDispatchedDate">
+      <Properties>
+        <Property name="text" type="java.lang.String" value=""/>
+        <Property name="toolTipText" type="java.lang.String" value="TT.MM.JJJJ - leer, solange die Ma&#223;nahme nicht hinausgegangen ist"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblDispatchHint">
+      <Properties>
+        <Property name="text" type="java.lang.String" value=""/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblAddressee">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Empfänger:"/>
+        <Property name="toolTipText" type="java.lang.String" value="Gerichtsvollzieher, Vollstreckungsgericht, Drittschuldner - Bezeichnung und Anschrift, wie sie auf das Formular gehen"/>
+        <Property name="verticalAlignment" type="int" value="1"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JTextField" name="txtAddresseeDesignation">
+      <Properties>
+        <Property name="text" type="java.lang.String" value=""/>
+      </Properties>
+    </Component>
+    <Container class="javax.swing.JScrollPane" name="scrlAddresseeAddress">
+
+      <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
+      <SubComponents>
+        <Component class="javax.swing.JTextArea" name="txtAddresseeAddress">
+          <Properties>
+            <Property name="columns" type="int" value="20"/>
+            <Property name="rows" type="int" value="3"/>
+          </Properties>
+        </Component>
+      </SubComponents>
+    </Container>
+    <Component class="javax.swing.JLabel" name="lblNotes">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Notizen:"/>
+        <Property name="verticalAlignment" type="int" value="1"/>
+      </Properties>
+    </Component>
+    <Container class="javax.swing.JScrollPane" name="scrlNotes">
+
+      <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
+      <SubComponents>
+        <Component class="javax.swing.JTextArea" name="txtNotes">
+          <Properties>
+            <Property name="columns" type="int" value="20"/>
+            <Property name="rows" type="int" value="3"/>
+          </Properties>
+        </Component>
+      </SubComponents>
+    </Container>
+    <Container class="javax.swing.JScrollPane" name="scrlHint">
+
+      <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
+      <SubComponents>
+        <Component class="javax.swing.JTextArea" name="txtHint">
+          <Properties>
+            <Property name="editable" type="boolean" value="false"/>
+            <Property name="columns" type="int" value="20"/>
+            <Property name="lineWrap" type="boolean" value="true"/>
+            <Property name="rows" type="int" value="3"/>
+            <Property name="wrapStyleWord" type="boolean" value="true"/>
+            <Property name="focusable" type="boolean" value="false"/>
+          </Properties>
+        </Component>
+      </SubComponents>
+    </Container>
+    <Component class="javax.swing.JButton" name="cmdSave">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons/agt_action_success.png"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="Anlegen"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdSaveActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdCancel">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons/cancel.png"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="Abbrechen"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdCancelActionPerformed"/>
+      </Events>
+    </Component>
+  </SubComponents>
+</Form>

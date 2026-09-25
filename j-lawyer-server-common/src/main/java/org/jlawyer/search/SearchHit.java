@@ -671,7 +671,11 @@ import java.io.Serializable;
  */
 public class SearchHit implements Serializable {
 
-    protected static long serialVersionUID = 1L;
+    // NOTE: this used to be declared as "protected static long", which is not a valid
+    // serialVersionUID declaration (it must be private static final long). The JVM therefore
+    // ignored it and computed the UID from the class structure, so adding any field would have
+    // broken EJB remoting between client and server. Declared properly now.
+    private static final long serialVersionUID = 1L;
 
     private String id=null;
     private String fileName=null;
@@ -680,6 +684,7 @@ public class SearchHit implements Serializable {
     private String archiveFileNumber=null;
     private String text=null;
     private float score=0;
+    private boolean relevanceRanked=true;
 
     public SearchHit() {
     }
@@ -752,6 +757,25 @@ public class SearchHit implements Serializable {
      */
     public void setScore(float score) {
         this.score = score;
+    }
+
+    /**
+     * Indicates whether {@link #getScore()} carries meaningful relevance information. A
+     * metadata field search (e.g. {@code dateiname:*vertrag*}) matches on a non-analyzed
+     * keyword field and is constant-scoring: every hit scores exactly the same, so the score
+     * must not be presented to the user as a degree of match.
+     *
+     * @return true for a content search with relevance ranking, false for a metadata field match
+     */
+    public boolean isRelevanceRanked() {
+        return relevanceRanked;
+    }
+
+    /**
+     * @param relevanceRanked whether the score carries relevance information
+     */
+    public void setRelevanceRanked(boolean relevanceRanked) {
+        this.relevanceRanked = relevanceRanked;
     }
 
     /**

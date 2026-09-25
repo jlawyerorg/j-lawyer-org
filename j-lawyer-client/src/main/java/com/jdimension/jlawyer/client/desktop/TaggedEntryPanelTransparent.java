@@ -689,7 +689,7 @@ import themes.colors.DefaultColorTheme;
  *
  * @author jens
  */
-public class TaggedEntryPanelTransparent extends javax.swing.JPanel {
+public class TaggedEntryPanelTransparent extends javax.swing.JPanel implements CaseDropTarget {
 
     private static final Logger log = Logger.getLogger(TaggedEntryPanelTransparent.class.getName());
     private TaggedEntry e = null;
@@ -729,7 +729,31 @@ public class TaggedEntryPanelTransparent extends javax.swing.JPanel {
         } catch (Throwable t) {
             log.error("Could not set font size", t);
         }
-        
+
+        this.lblDropIndicator.setIcon(new DropPlusIcon(20));
+        this.lblDropIndicator.setVisible(false);
+        CaseEntryDropHandler.install(this);
+
+    }
+
+    @Override
+    public String getDropCaseId() {
+        if (this.e == null) {
+            return null;
+        }
+        return this.e.getCaseId();
+    }
+
+    @Override
+    public boolean isDropAllowed() {
+        return this.e != null && !this.e.isArchived();
+    }
+
+    @Override
+    public void setDropIndicatorVisible(boolean visible) {
+        this.lblDropIndicator.setVisible(visible);
+        this.highlight(visible);
+        this.jPanel1.revalidate();
     }
     
     public void setEntry(TaggedEntry entry) {
@@ -820,6 +844,7 @@ public class TaggedEntryPanelTransparent extends javax.swing.JPanel {
         jLabel1 = new javax.swing.JLabel();
         lblDocument = new javax.swing.JLabel();
         lblAssistant = new javax.swing.JLabel();
+        lblDropIndicator = new javax.swing.JLabel();
 
         setOpaque(false);
         addMouseListener(new java.awt.event.MouseAdapter() {
@@ -883,6 +908,8 @@ public class TaggedEntryPanelTransparent extends javax.swing.JPanel {
         lblAssistant.setText("assistant");
         lblAssistant.setToolTipText("Sachbearbeiter");
 
+        lblDropIndicator.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 6));
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -891,6 +918,7 @@ public class TaggedEntryPanelTransparent extends javax.swing.JPanel {
                 .addContainerGap()
                 .addComponent(jLabel1)
                 .addGap(5, 5, 5)
+                .addComponent(lblDropIndicator)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(lblDescription)
@@ -910,6 +938,7 @@ public class TaggedEntryPanelTransparent extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jLabel1)
+                    .addComponent(lblDropIndicator, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(lblLawyer)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1039,6 +1068,7 @@ public class TaggedEntryPanelTransparent extends javax.swing.JPanel {
     private javax.swing.JLabel lblAssistant;
     private javax.swing.JLabel lblDescription;
     private javax.swing.JLabel lblDocument;
+    private javax.swing.JLabel lblDropIndicator;
     private javax.swing.JLabel lblLawyer;
     private javax.swing.JLabel lblTags;
     // End of variables declaration//GEN-END:variables

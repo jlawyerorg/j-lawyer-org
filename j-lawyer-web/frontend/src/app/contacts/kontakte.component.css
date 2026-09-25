@@ -205,6 +205,35 @@
 .case-row .cmeta { font-size: .78rem; color: var(--jl-ink-soft); word-break: break-word; }
 .case-row .cdate { flex: none; font-size: .76rem; color: var(--jl-ink-faint); font-variant-numeric: tabular-nums; }
 
+/* ---------- Relationships tab ---------- */
+.rel-card .card-h { display: flex; align-items: center; gap: 8px; }
+.rel-card .add-btn {
+  margin-left: auto; display: inline-flex; align-items: center; gap: 5px; font: inherit; font-size: .78rem;
+  font-weight: 600; cursor: pointer; color: var(--jl-blue); background: var(--jl-surface);
+  border: 1px solid var(--jl-line-strong); border-radius: 7px; padding: 4px 10px;
+}
+.rel-card .add-btn:hover { border-color: var(--jl-blue); }
+.rel { display: flex; align-items: stretch; gap: 11px; padding: 9px 0; }
+.rel + .rel { border-top: 1px solid var(--jl-line); }
+.rel-bar { flex: none; width: 4px; border-radius: 2px; background: var(--jl-line-strong); }
+.rel-main {
+  flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px;
+  font: inherit; text-align: left; background: none; border: 0; padding: 0; color: inherit; cursor: pointer;
+}
+.rel-main .rl { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--jl-ink-faint); }
+.rel-main .rn { font-weight: 600; font-size: .89rem; color: var(--jl-blue); word-break: break-word; }
+.rel-main:hover .rn { text-decoration: underline; }
+.rel-main .rmeta { font-size: .78rem; color: var(--jl-ink-soft); word-break: break-word; }
+.rel-main .rnote { font-size: .8rem; color: var(--jl-ink); word-break: break-word; }
+.rel-actions { display: flex; align-items: center; gap: 6px; flex: none; }
+.rel-btn {
+  display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; cursor: pointer;
+  color: var(--jl-ink-soft); background: var(--jl-surface); border: 1px solid var(--jl-line-strong); border-radius: 7px;
+}
+.rel-btn:hover:not(:disabled) { border-color: var(--jl-blue); color: var(--jl-blue); }
+.rel-btn.danger:hover:not(:disabled) { border-color: var(--jl-red); color: var(--jl-red); }
+.rel-btn:disabled { opacity: .5; cursor: default; }
+
 /* Role (party type) badge in the cases list — coloured with the party type's colour. */
 .case-row .role-badge {
   flex: none; font-size: .68rem; font-weight: 700; padding: 2px 8px; border-radius: 10px;

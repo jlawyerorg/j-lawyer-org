@@ -26,17 +26,27 @@ charge into the ledger as a pre-court cost.
 ### Requirement: Default Interest and Late Payment Charges
 
 For a claim in default the system SHALL propose default interest under § 288 BGB, using the base
-rate stored in `interest_base` plus 5 percentage points for consumer transactions and plus 9
-percentage points where no consumer is involved, with the debtor category taken from the ledger
-and freely overridable. Where the creditor is entitled to it, the system SHALL offer the lump sum
-of § 288 Abs. 5 BGB as a pre-court cost position, SHALL NOT propose it when the debtor is a
-consumer, and SHALL note that the lump sum is set off against costs of legal prosecution.
+rate stored in `interest_base`: plus 5 percentage points as the general rule of § 288 Abs. 1 BGB,
+and plus 9 percentage points under § 288 Abs. 2 BGB only where the claim is a payment claim
+(Entgeltforderung) and no consumer is party to the transaction. Both the claim category and the
+debtor category SHALL be taken from the ledger and SHALL be freely overridable. Where the creditor
+is entitled to it, the system SHALL offer the lump sum of § 288 Abs. 5 BGB as a pre-court cost
+position, SHALL NOT propose it when the debtor is a consumer, and SHALL note that the lump sum is
+set off against costs of legal prosecution.
 
-#### Scenario: B2B default interest proposed
+#### Scenario: B2B default interest on a payment claim
 
-- **WHEN** an interest rule is created for a main claim of a ledger whose debtor is not a consumer
+- **WHEN** an interest rule is created for a main claim marked as a payment claim on a ledger to
+  which no consumer is party
 - **THEN** the proposed rule is "base rate + 9 percentage points" from the date of default
 - **AND** the user can change type, margin and start date before saving
+
+#### Scenario: Non-payment claim falls under the general rule
+
+- **WHEN** an interest rule is created for a main claim that is not a payment claim, although no
+  consumer is involved
+- **THEN** the proposed rule is "base rate + 5 percentage points" under § 288 Abs. 1 BGB
+- **AND** the reason for the lower margin is shown to the user
 
 #### Scenario: Lump sum not offered against consumers
 
@@ -47,10 +57,12 @@ consumer, and SHALL note that the lump sum is set off against costs of legal pro
 ### Requirement: Court Dunning Case Record
 
 The system SHALL record a court dunning procedure (gerichtliches Mahnverfahren) as an object
-attached to a claim ledger, holding: the competent dunning court, the court's file number
-(Geschäftsnummer), the applicant's identification number (Kennziffer) used for the application,
-the applicant and defendant derived from the ledger parties, the amounts applied for as a snapshot
-at application time, and a status with its date. The status SHALL be one of: prepared,
+attached to a claim ledger, holding: the competent dunning court, the participant's own reference
+(Teilnehmergeschäftszeichen) sent with the application and echoed in every court message, the
+court's file number (Gerichtsnummer) once the court has assigned it, the applicant's
+identification number (Kennziffer) used for the application, the applicant and defendant derived
+from the ledger parties, the amounts applied for as a snapshot at application time, and a status
+with its date. The status SHALL be one of: prepared,
 Mahnbescheid applied for, Mahnbescheid issued, Mahnbescheid served, Widerspruch filed (full or
 partial), Vollstreckungsbescheid applied for, Vollstreckungsbescheid issued,
 Vollstreckungsbescheid served, Einspruch filed, referred to the litigation court (Abgabe),
@@ -161,9 +173,10 @@ fee tables SHALL be maintainable as data rather than hard-coded.
 ### Requirement: Hand-Off of the Application Data to the EDA Export
 
 The dunning case SHALL assemble the complete application data set — parties and their
-representatives, Kennziffer, court, main claims with their designation, interest rules including
-"ab Zustellung", other ancillary claims from the pre-court costs, and the requested costs — and
-SHALL hand it to the XJustiz/EDA export capability instead of requiring re-entry. Before hand-off
+representatives, Kennziffer, court, main claims with their catalogue number or free-text
+designation, interest rules including interest from service, the ancillary claims in the
+categories the EDA format distinguishes, and the requested costs — and SHALL hand it to the EDA
+exchange capability instead of requiring re-entry. Before hand-off
 the system SHALL validate the data set and report every missing or inconsistent element in one
 list. The resulting export file SHALL be stored in the case, linked to the dunning case, and made
 available to the existing dispatch channels (beA, E-Post, print); this change SHALL NOT implement
@@ -184,23 +197,25 @@ a transmission path of its own.
 ### Requirement: Import of Court Response Messages
 
 The system SHALL import the electronic response messages of the dunning court (Nachrichten über
-Antragserledigungen: costs, service or non-service, objection, response to an objection, referral)
-from a file supplied by the user or received through the existing message channels. An imported
-message SHALL be matched to its dunning case by court file number and Kennziffer, SHALL update the
-status and the relevant dates, SHALL trigger the resulting deadlines, and SHALL book the service
-date into the ledger where interest starts on service. Messages that cannot be matched SHALL be
+Antragserledigungen: costs and issue, service or non-service, monition, objection, referral,
+receipt confirmation) from a file supplied by the user or received through the existing message
+channels. An imported message SHALL be matched to its dunning case primarily by the participant's
+own reference (Teilnehmergeschäftszeichen) that the court echoes back from the application and
+secondarily by the court's Gerichtsnummer, SHALL update the status and the relevant dates, SHALL
+trigger the resulting deadlines, and SHALL book the service date into the ledger where interest
+starts on service. Messages that cannot be matched SHALL be
 listed for manual assignment and SHALL never be silently discarded.
 
 #### Scenario: Service message processed
 
-- **WHEN** a service message for a known court file number is imported
+- **WHEN** a service message echoing a known own reference is imported
 - **THEN** the dunning case status becomes "Mahnbescheid served" with the date from the message
 - **AND** the objection deadline and the follow-ups are created
 - **AND** the ledger records the service booking for components with interest "ab Zustellung"
 
 #### Scenario: Unmatched message
 
-- **WHEN** a message references a file number that no dunning case carries
+- **WHEN** a message echoes an own reference that no dunning case carries
 - **THEN** the message is stored in an inbox list with its content readable
 - **AND** the user can assign it to a dunning case manually
 

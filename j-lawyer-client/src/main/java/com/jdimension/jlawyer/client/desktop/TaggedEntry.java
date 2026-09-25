@@ -683,6 +683,7 @@ public class TaggedEntry {
     private ArrayList<String> tags=null;
     private HashMap<String,Date> tagDates=null;
     private String documentName=null;
+    private boolean archived=false;
     
     
     public TaggedEntry() {
@@ -822,6 +823,20 @@ public class TaggedEntry {
      */
     public HashMap<String,Date> getTagDates() {
         return tagDates;
+    }
+
+    /**
+     * @return true if the case is archived
+     */
+    public boolean isArchived() {
+        return archived;
+    }
+
+    /**
+     * @param archived the archived flag to set
+     */
+    public void setArchived(boolean archived) {
+        this.archived = archived;
     }
     
 }

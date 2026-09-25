@@ -693,10 +693,15 @@ public class PdfFormsAccess {
             // Create tempFile in the same directory as inputFile
             File tempFile = new File(inputFile.getParentFile(), System.currentTimeMillis() + ".pdf");
             
-            PDDocument document = PDDocument.load(inputFile);
-            replacePlaceHolders(document, values);
-            document.save(tempFile);
-            document.close();
+            try (PDDocument document = PDDocument.load(inputFile)) {
+                replacePlaceHolders(document, values);
+                // official forms are often encrypted with an empty user password and an unknown owner password
+                // PDFBox refuses to save those unless the security handler is removed
+                if (document.isEncrypted()) {
+                    document.setAllSecurityToBeRemoved(true);
+                }
+                document.save(tempFile);
+            }
             
             // Replace the original file with the modified one
             Files.move(tempFile.toPath(), inputFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
@@ -751,18 +756,21 @@ public class PdfFormsAccess {
             }
 
             // placeholders may be VALUES of a form field or may be the NAME of a form field
+            // PDFBox throws unchecked exceptions as well, e.g. IllegalArgumentException for characters not available in the field font
             if (field.getValueAsString() != null && field.getValueAsString().contains(key)) {
                 try {
                     field.setValue(field.getValueAsString().replace(key, values.get(key).toString()));
-                } catch (IOException ex) {
+                } catch (Exception ex) {
                     log.error("Error setting placeholder " + key + " in PDF form", ex);
                 }
             } else {
                 if (field.getCOSObject().containsKey("TU")) {
-                    try {
-                        field.setValue(values.get(key).toString());
-                    } catch (IOException ex) {
-                        log.error("Error setting placeholder " + key + " in PDF form", ex);
+                    if (field.getCOSObject().getString("TU").equals(key.replace("{{", "").replace("}}", ""))) {
+                        try {
+                            field.setValue(values.get(key).toString());
+                        } catch (Exception ex) {
+                            log.error("Error setting placeholder " + key + " in PDF form", ex);
+                        }
                     }
                 }
             }
@@ -821,38 +829,7 @@ public class PdfFormsAccess {
         List<PDField> fields = form.getFields();
 
         for (PDField field : fields) {
-            for (String key : values.keySet()) {
-                if (values.get(key) == null) {
-                    values.put(key, "");
-                }
-
-                // placeholders may be VALUES of a form field or may be the NAME of a form field
-                if (field.getValueAsString() != null && field.getValueAsString().contains(key)) {
-                    try {
-                        field.setValue(field.getValueAsString().replace(key, values.get(key).toString()));
-                    } catch (IOException ex) {
-                        log.error("Error setting placeholder " + key + " in PDF form", ex);
-                    }
-                } else {
-                    if (field.getCOSObject().containsKey("TU")) {
-                        if (field.getCOSObject().getString("TU").equals(key.replace("{{", "").replace("}}", ""))) {
-                            try {
-                                field.setValue(values.get(key).toString());
-                            } catch (IOException ex) {
-                                log.error("Error setting placeholder " + key + " in PDF form", ex);
-                            }
-                        }
-                    }
-                }
-
-            }
-
-            if (field instanceof PDNonTerminalField) {
-                PDNonTerminalField nonTerminalField = (PDNonTerminalField) field;
-                for (PDField child : nonTerminalField.getChildren()) {
-                    replace(child, values);
-                }
-            }
+            replace(field, values);
         }
 
         return document;

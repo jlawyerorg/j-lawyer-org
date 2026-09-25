@@ -86,6 +86,7 @@
       "financeSettings": "Finance settings",
       "bankStatementConfigs": "Bank statement import",
       "partyTypes": "Party types",
+      "contactRelationTypes": "Relationship types",
       "caseNumbering": "Case numbering",
       "customFields": "Custom fields",
       "nameTemplates": "Naming schemes",
@@ -261,6 +262,25 @@
       "name": "Name",
       "placeHolder": "Placeholder",
       "color": "Color",
+      "dragHint": "Drag to reorder"
+    },
+    "relationType": {
+      "create": "New relationship type",
+      "edit": "Edit relationship type",
+      "name": "Name",
+      "labelFrom": "Label (direction 1)",
+      "labelTo": "Opposite label (direction 2)",
+      "symmetric": "symmetric (same label in both directions)",
+      "symmetricHint": "Symmetric types read the same in both directions (e.g. “is spouse of”); the second label is taken over.",
+      "symmetricWarning": "Relationships already recorded with this type keep their stored direction and may now contain mirrored duplicates.",
+      "category": "Category",
+      "color": "Color",
+      "active": "Active",
+      "activeHint": "Inactive types are no longer offered for new relationships; existing relationships stay untouched.",
+      "inactive": "inactive",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "deleteConfirm": "Really delete relationship type “{{name}}”?",
       "dragHint": "Drag to reorder"
     },
     "folderTpl": {
@@ -1060,7 +1080,11 @@
       "custom1": "Custom field 1",
       "custom2": "Custom field 2",
       "custom3": "Custom field 3",
-      "toContact": "Go to contact"
+      "toContact": "Go to contact",
+      "related": "Related contacts of the parties",
+      "relatedVia": "via {{name}}",
+      "relatedAlready": "already a party",
+      "relatedNone": "The parties of this case have no related contacts."
     },
     "due": {
       "add": "Add",
@@ -1071,6 +1095,28 @@
     "tag": {
       "add": "Label",
       "remove": "Remove label"
+    },
+    "links": {
+      "title": "Linked cases",
+      "none": "No linked cases.",
+      "add": "Link case",
+      "addTitle": "Link a case",
+      "editTitle": "Edit link",
+      "case": "Case",
+      "searchPlaceholder": "Search case …",
+      "typeToSearch": "Type to search (min. 2 characters)",
+      "noResults": "No matches.",
+      "description": "Description",
+      "descriptionHint": "e.g. counter case, follow-up to 12/24",
+      "archived": "(archived)",
+      "open": "Open case",
+      "edit": "Edit description",
+      "remove": "Remove link",
+      "removeConfirm": "Remove the link to \"{{name}}\"?",
+      "addBtn": "Link",
+      "saveBtn": "Save",
+      "selfError": "A case cannot be linked to itself.",
+      "writeError": "The link could not be saved."
     },
     "perm": {
       "add": "Group",
@@ -1191,6 +1237,32 @@
       "title": "Cases",
       "empty": "Not linked to any case."
     },
+    "relations": {
+      "title": "Relationships",
+      "none": "No relationships to other contacts.",
+      "add": "Add relationship",
+      "addTitle": "Add relationship",
+      "editTitle": "Edit relationship note",
+      "label": "Relationship",
+      "labelPlaceholder": "— select a relationship —",
+      "noCategory": "Other",
+      "noTypes": "No relationship types are configured.",
+      "contact": "Contact",
+      "searchPlaceholder": "Search contact …",
+      "typeToSearch": "Type to search (min. 2 characters)",
+      "noResults": "No matches.",
+      "clear": "Clear selection",
+      "note": "Note",
+      "noteHint": "e.g. since 2019, reachable by phone only",
+      "open": "Open contact",
+      "edit": "Edit note",
+      "remove": "Remove relationship",
+      "removeConfirm": "Remove the relationship \"{{name}}\"?",
+      "addBtn": "Add",
+      "saveBtn": "Save",
+      "writeError": "The relationship could not be saved.",
+      "deleteConfirm": "Contact “{{name}}” has {{count}} relationships that will be deleted with it. Really delete?"
+    },
     "docs": {
       "searchPlaceholder": "Search documents …",
       "sortBy": "Sort:",
@@ -1223,6 +1295,7 @@
     "tabs": {
       "overview": "Overview",
       "cases": "Cases",
+      "relations": "Relationships",
       "documents": "Documents",
       "history": "History"
     },

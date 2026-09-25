@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
 import { DocumentPreviewComponent } from '../shared/document-preview.component';
@@ -11,10 +12,14 @@ import { firstValueFrom } from 'rxjs';
 import { PinsService } from '../shell/pins.service';
 import { ContactsService } from './contacts.service';
 import { ContactEditorComponent } from './contact-editor.component';
-import { ContactCase, ContactData, ContactDetail, ContactDocSortKey, ContactDocument, ContactFilter } from './contact.models';
+import { ContactRelationEditorComponent } from './contact-relation-editor.component';
+import {
+  ContactCase, ContactData, ContactDetail, ContactDocSortKey, ContactDocument, ContactFilter,
+  ContactRelation, ContactRelationWrite,
+} from './contact.models';
 import { CustomField, CustomFieldsService } from '../settings/custom-fields.service';
 
-type ContactTab = 'overview' | 'cases' | 'documents';
+type ContactTab = 'overview' | 'cases' | 'relations' | 'documents';
 
 /**
  * Kontakte (Adressen) module — responsive master-detail mirroring the Akten module: a
@@ -26,7 +31,8 @@ type ContactTab = 'overview' | 'cases' | 'documents';
   selector: 'jl-kontakte',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslocoModule, IconComponent, DatePipe, RouterLink, DocumentPreviewComponent, ContactEditorComponent],
+  imports: [TranslocoModule, IconComponent, DatePipe, RouterLink, DocumentPreviewComponent, ContactEditorComponent,
+    ContactRelationEditorComponent],
   template: `
     <div class="master-detail" [class.show-detail]="selectedId()">
       <!-- Kontaktliste -->
@@ -236,6 +242,51 @@ type ContactTab = 'overview' | 'cases' | 'documents';
                   }
                 </div>
               </div>
+            } @else if (activeTab() === 'relations') {
+              <div class="card full rel-card">
+                <div class="card-h">
+                  <h3>{{ 'kontakte.relations.title' | transloco }}</h3>
+                  @if (contactRelations()?.length) { <span class="card-count">{{ contactRelations()!.length }}</span> }
+                  <button type="button" class="add-btn" (click)="openAddRelation()">
+                    <jl-icon name="plus" [size]="14" /> {{ 'kontakte.relations.add' | transloco }}
+                  </button>
+                </div>
+                <div class="card-b">
+                  @if (relationsLoading()) {
+                    <p class="muted">{{ 'kontakte.loading' | transloco }}</p>
+                  } @else if (relationsError()) {
+                    <p class="muted">
+                      {{ 'kontakte.error' | transloco }}
+                      <button type="button" class="btn-retry" (click)="loadRelations()">{{ 'kontakte.retry' | transloco }}</button>
+                    </p>
+                  } @else {
+                    @if (relationOpError()) { <p class="up-error">{{ relationOpError() }}</p> }
+                    @for (r of contactRelations()!; track r.id) {
+                      <div class="rel">
+                        <span class="rel-bar" [style.background]="r.color || null"></span>
+                        <button type="button" class="rel-main" (click)="openRelated(r)" [title]="'kontakte.relations.open' | transloco">
+                          <span class="rl">{{ r.label }}</span>
+                          <span class="rn">{{ r.otherContactName || '—' }}</span>
+                          @if (relationMeta(r)) { <span class="rmeta">{{ relationMeta(r) }}</span> }
+                          @if (r.note) { <span class="rnote">{{ r.note }}</span> }
+                        </button>
+                        <span class="rel-actions">
+                          <button type="button" class="rel-btn" (click)="openEditRelation(r)"
+                                  [title]="'kontakte.relations.edit' | transloco">
+                            <jl-icon name="edit" [size]="14" />
+                          </button>
+                          <button type="button" class="rel-btn danger" [disabled]="relationRemoving() === r.id"
+                                  (click)="confirmRemoveRelation(r)" [title]="'kontakte.relations.remove' | transloco">
+                            <jl-icon name="trash" [size]="14" />
+                          </button>
+                        </span>
+                      </div>
+                    } @empty {
+                      <p class="muted">{{ 'kontakte.relations.none' | transloco }}</p>
+                    }
+                  }
+                </div>
+              </div>
             } @else if (activeTab() === 'documents') {
               <div class="card full docs-card">
                 <div class="card-h">
@@ -323,7 +374,12 @@ type ContactTab = 'overview' | 'cases' | 'documents';
 
     @if (editing(); as ed) {
       <jl-contact-editor [contact]="ed.contact"
-                         (save)="onSave($event)" (remove)="onDelete($event)" (close)="closeEditor()" />
+                         (save)="onSave($event)" (remove)="onEditorDelete($event)" (close)="closeEditor()" />
+    }
+
+    @if (relationDialog(); as rd) {
+      <jl-contact-relation-editor [relation]="rd.relation" [saving]="relationSaving()" [error]="relationError()"
+                                  (save)="saveRelation($event)" (close)="relationDialog.set(null)" />
     }
   `,
   styleUrl: './kontakte.component.css',
@@ -340,9 +396,10 @@ export class KontakteComponent {
   protected readonly pins = inject(PinsService);
   private readonly content = inject(DocumentContentService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly transloco = inject(TranslocoService);
 
-  protected readonly tabs: ContactTab[] = ['overview', 'cases', 'documents'];
+  protected readonly tabs: ContactTab[] = ['overview', 'cases', 'relations', 'documents'];
   protected readonly filters: ContactFilter[] = ['all', 'people', 'companies'];
 
   protected readonly filter = signal<ContactFilter>('all');
@@ -356,6 +413,20 @@ export class KontakteComponent {
   protected readonly contactCases = signal<ContactCase[] | null>(null);
   protected readonly casesLoading = signal(false);
   protected readonly casesError = signal(false);
+
+  // Relationships tab (lazy-loaded per contact): the contact's relationships + dialog state.
+  protected readonly contactRelations = signal<ContactRelation[] | null>(null);
+  protected readonly relationsLoading = signal(false);
+  protected readonly relationsError = signal(false);
+  /** Dialog state: null = closed; `relation` is the relationship whose note is edited (null = add). */
+  protected readonly relationDialog = signal<{ relation: ContactRelation | null } | null>(null);
+  protected readonly relationSaving = signal(false);
+  /** The server's rejection message for a relationship write, shown in the dialog. */
+  protected readonly relationError = signal<string | null>(null);
+  /** The server's rejection message for a removal, shown in the section. */
+  protected readonly relationOpError = signal<string | null>(null);
+  /** Id of the relationship currently being removed (disables its row button), or null. */
+  protected readonly relationRemoving = signal<string | null>(null);
 
   // Documents tab (lazy-loaded per contact): the contact's own attached documents + view state.
   protected readonly contactDocs = signal<ContactDocument[] | null>(null);
@@ -373,6 +444,8 @@ export class KontakteComponent {
 
   private autoSelected = false;
   private searchDebounce: ReturnType<typeof setTimeout> | null = null;
+  /** Tab to open with the next selection (set when walking the relationship network). */
+  private pendingTab: ContactTab | null = null;
 
   constructor() {
     this.cases.reload();
@@ -437,13 +510,30 @@ export class KontakteComponent {
 
   /** Confirms and deletes the current contact directly from the detail header. */
   protected confirmDelete(c: ContactDetail): void {
-    if (confirm(this.deletePrompt(c.displayName))) {
-      this.onDelete(c.id);
-    }
+    this.confirmDeleteById(c.id, c.displayName);
   }
 
-  private deletePrompt(name: string): string {
-    return this.transloco.translate('kontakte.deleteConfirm', { name });
+  /** Delete from the editor's delete button — asks the same question as the header action. */
+  protected onEditorDelete(id: string): void {
+    const c = this.selected();
+    this.confirmDeleteById(id, c?.id === id ? c.displayName : '');
+  }
+
+  /**
+   * Asks before deleting, naming the relationships that go with the contact. The count comes from
+   * the server (the relationship read), so this client asks the same question as the desktop;
+   * relationships do not block the deletion, they are removed with the contact. The reasons that do
+   * block it (case party, invoice recipient, payment counterparty) stay with the server.
+   */
+  private confirmDeleteById(id: string, name: string): void {
+    this.cases.relationCount(id).subscribe((count) => {
+      const question = count > 0
+        ? this.transloco.translate('kontakte.relations.deleteConfirm', { name, count })
+        : this.transloco.translate('kontakte.deleteConfirm', { name });
+      if (confirm(question)) {
+        this.onDelete(id);
+      }
+    });
   }
 
   protected onDelete(id: string): void {
@@ -485,16 +575,25 @@ export class KontakteComponent {
   }
 
   protected select(id: string): void {
+    const tab = this.pendingTab ?? 'overview';
+    this.pendingTab = null;
     this.selectedId.set(id);
     this.activeTab.set('overview');
     this.detailLoading.set(true);
     this.selected.set(null);
     this.contactCases.set(null);
     this.casesError.set(false);
+    this.contactRelations.set(null);
+    this.relationsError.set(false);
+    this.relationOpError.set(null);
+    this.relationDialog.set(null);
     this.contactDocs.set(null);
     this.docsError.set(false);
     this.docSearch.set('');
     this.previewDoc.set(null);
+    if (tab !== 'overview') {
+      this.selectTab(tab);
+    }
     this.cases.loadDetail(id).subscribe((detail) => {
       // ignore a stale response if the user already picked another contact
       if (this.selectedId() === id) {
@@ -509,9 +608,118 @@ export class KontakteComponent {
     this.activeTab.set(tab);
     if (tab === 'cases' && this.contactCases() === null && !this.casesLoading()) {
       this.loadCases();
+    } else if (tab === 'relations' && this.contactRelations() === null && !this.relationsLoading()) {
+      this.loadRelations();
     } else if (tab === 'documents' && this.contactDocs() === null && !this.docsLoading()) {
       this.loadDocuments();
     }
+  }
+
+  /** Loads the contact's relationships (GET /v8/contacts/{id}/relations). */
+  protected loadRelations(): void {
+    const id = this.selectedId();
+    if (!id) { return; }
+    this.relationsLoading.set(true);
+    this.relationsError.set(false);
+    this.cases.relations(id).subscribe({
+      next: (rows) => { if (this.selectedId() === id) { this.contactRelations.set(rows); this.relationsLoading.set(false); } },
+      error: () => { if (this.selectedId() === id) { this.relationsError.set(true); this.relationsLoading.set(false); } },
+    });
+  }
+
+  /** Company/city of the other contact, where that adds something to its display name. */
+  protected relationMeta(r: ContactRelation): string {
+    const company = r.otherContactCompany && r.otherContactCompany !== r.otherContactName ? r.otherContactCompany : '';
+    return [company, r.otherContactCity].filter(Boolean).join(' · ');
+  }
+
+  /**
+   * Opens the other contact via the /contacts/:id deep link — the same navigation the list rows and
+   * the pinned shortcuts use — keeping this section open, so the network can be walked (the other
+   * contact lists the relationship back).
+   */
+  protected openRelated(r: ContactRelation): void {
+    if (!r.otherContactId) { return; }
+    this.pendingTab = 'relations';
+    this.router.navigate(['/contacts', r.otherContactId]);
+  }
+
+  protected openAddRelation(): void {
+    this.relationError.set(null);
+    this.relationOpError.set(null);
+    this.relationDialog.set({ relation: null });
+  }
+
+  protected openEditRelation(r: ContactRelation): void {
+    this.relationError.set(null);
+    this.relationOpError.set(null);
+    this.relationDialog.set({ relation: r });
+  }
+
+  /**
+   * Records a new relationship or writes the changed note. A label picked from the type's reverse
+   * side (`labelTo`) means the other contact is the `from` side, so the two contacts are swapped
+   * before the write. Rejections (already recorded, self-relation, unknown type) are shown with the
+   * server's own message.
+   */
+  protected saveRelation(w: ContactRelationWrite): void {
+    const id = this.selectedId();
+    const dlg = this.relationDialog();
+    if (!id || !dlg || this.relationSaving()) {
+      return;
+    }
+    const done = () => {
+      this.relationSaving.set(false);
+      this.relationDialog.set(null);
+      this.loadRelations();
+    };
+    const failed = (e: HttpErrorResponse) => {
+      this.relationSaving.set(false);
+      this.relationError.set(this.relationErrorMsg(e));
+    };
+    this.relationSaving.set(true);
+    if (dlg.relation) {
+      this.cases.updateRelationNote(id, dlg.relation.id, w.note).subscribe({ next: done, error: failed });
+      return;
+    }
+    const fromId = w.reverse ? w.otherContactId : id;
+    const otherId = w.reverse ? id : w.otherContactId;
+    this.cases.addRelation(fromId, otherId, w.typeId, w.note).subscribe({ next: done, error: failed });
+  }
+
+  /** Removes a relationship after a confirmation, then refreshes the section. */
+  protected confirmRemoveRelation(r: ContactRelation): void {
+    const id = this.selectedId();
+    if (!id || this.relationRemoving()) {
+      return;
+    }
+    const name = [r.label, r.otherContactName].filter(Boolean).join(' ');
+    if (!confirm(this.transloco.translate('kontakte.relations.removeConfirm', { name }))) {
+      return;
+    }
+    this.relationOpError.set(null);
+    this.relationRemoving.set(r.id);
+    this.cases.removeRelation(id, r.id).subscribe({
+      next: () => { this.relationRemoving.set(null); if (this.selectedId() === id) { this.loadRelations(); } },
+      error: (e: HttpErrorResponse) => { this.relationRemoving.set(null); this.relationOpError.set(this.relationErrorMsg(e)); },
+    });
+  }
+
+  /**
+   * The server's message for a rejected relationship write, shown instead of a generic failure. The
+   * v8 error envelope is {status, error, message} with the message prefixed by the exception type,
+   * which is dropped for display; falls back to a generic text.
+   */
+  private relationErrorMsg(e: HttpErrorResponse): string {
+    const body = e?.error;
+    let raw = '';
+    if (body && typeof body === 'object' && typeof body.message === 'string') {
+      raw = body.message;
+    } else if (typeof body === 'string') {
+      raw = body;
+    }
+    const msg = raw.replace(/^\w*(?:Exception|Error):\s*/, '').trim();
+    return msg || this.transloco.translate('kontakte.relations.writeError');
   }
 
   /** Loads the cases the contact is involved in (GET /v5/contacts/{id}/cases). */

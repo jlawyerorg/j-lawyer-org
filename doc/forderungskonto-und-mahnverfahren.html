@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forderungskonto und Mahnverfahren – j-lawyer.org</title>
+<style>
+  :root {
+    --ink: #1b1f24;
+    --muted: #5b6570;
+    --rule: #dfe3e8;
+    --accent: #0e72b5;
+    --accent-soft: #eaf3fa;
+    --warn-soft: #fdf6e3;
+    --warn-rule: #e0c97f;
+    --code-bg: #f5f6f8;
+    --page: 46rem;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: #fff;
+    color: var(--ink);
+    font: 16px/1.65 "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  }
+  .wrap { max-width: var(--page); margin: 0 auto; padding: 3.5rem 1.5rem 6rem; }
+
+  header.doc { border-bottom: 3px solid var(--accent); padding-bottom: 1.5rem; margin-bottom: 2.5rem; }
+  header.doc .eyebrow { color: var(--accent); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; font-size: .74rem; }
+  header.doc h1 { font-size: 2rem; line-height: 1.2; margin: .5rem 0 .6rem; font-weight: 600; }
+  header.doc p.lead { color: var(--muted); margin: 0; font-size: 1.02rem; }
+  header.doc dl.meta { display: grid; grid-template-columns: max-content 1fr; gap: .2rem 1rem; margin: 1.4rem 0 0; font-size: .86rem; }
+  header.doc dl.meta dt { color: var(--muted); }
+  header.doc dl.meta dd { margin: 0; }
+
+  h2 { font-size: 1.35rem; margin: 3rem 0 .3rem; padding-top: .6rem; border-top: 1px solid var(--rule); font-weight: 600; }
+  h2 .num { color: var(--accent); font-variant-numeric: tabular-nums; margin-right: .5rem; }
+  h3 { font-size: 1.06rem; margin: 2rem 0 .3rem; font-weight: 600; }
+  h4 { font-size: .95rem; margin: 1.4rem 0 .2rem; font-weight: 600; color: var(--muted); }
+  p { margin: .7rem 0; }
+  ul, ol { margin: .7rem 0; padding-left: 1.3rem; }
+  li { margin: .3rem 0; }
+  a { color: var(--accent); }
+  code { background: var(--code-bg); padding: .1em .35em; border-radius: 3px; font-family: "Cascadia Mono", Consolas, "DejaVu Sans Mono", monospace; font-size: .88em; }
+
+  nav.toc { background: var(--accent-soft); border-radius: 6px; padding: 1.2rem 1.5rem; margin-bottom: 1rem; }
+  nav.toc h2 { border: 0; margin: 0 0 .5rem; padding: 0; font-size: .95rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  nav.toc ol { margin: 0; padding-left: 1.4rem; }
+  nav.toc li { margin: .18rem 0; }
+  nav.toc a { text-decoration: none; }
+  nav.toc a:hover { text-decoration: underline; }
+
+  .tablewrap { overflow-x: auto; margin: 1rem 0; }
+  table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+  th, td { text-align: left; vertical-align: top; padding: .45rem .6rem; border-bottom: 1px solid var(--rule); }
+  thead th { border-bottom: 2px solid var(--rule); color: var(--muted); font-weight: 600; white-space: nowrap; }
+  td.law { white-space: nowrap; color: var(--muted); }
+
+  .note, .warn {
+    border-left: 3px solid var(--accent);
+    background: var(--accent-soft);
+    padding: .8rem 1rem;
+    margin: 1.2rem 0;
+    border-radius: 0 4px 4px 0;
+    font-size: .93rem;
+  }
+  .warn { border-left-color: var(--warn-rule); background: var(--warn-soft); }
+  .note p, .warn p { margin: .35rem 0; }
+  .note strong, .warn strong { display: block; margin-bottom: .1rem; }
+
+  .path { font-size: .86rem; color: var(--muted); margin: .2rem 0 .9rem; }
+  .path code { background: transparent; padding: 0; color: var(--ink); font-weight: 600; }
+
+  .steps { counter-reset: step; list-style: none; padding-left: 0; }
+  .steps > li { counter-increment: step; position: relative; padding-left: 2.2rem; margin: .8rem 0; }
+  .steps > li::before {
+    content: counter(step);
+    position: absolute; left: 0; top: .1rem;
+    width: 1.55rem; height: 1.55rem; border-radius: 50%;
+    background: var(--accent); color: #fff;
+    font-size: .8rem; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  footer.doc { margin-top: 4rem; padding-top: 1.2rem; border-top: 1px solid var(--rule); color: var(--muted); font-size: .84rem; }
+
+  @media print {
+    body { font-size: 10.5pt; }
+    .wrap { max-width: none; padding: 0; }
+    nav.toc { background: #fff; border: 1px solid var(--rule); }
+    h2 { page-break-after: avoid; }
+    h3, h4 { page-break-after: avoid; }
+    table, .note, .warn, .steps > li { page-break-inside: avoid; }
+    a { color: var(--ink); text-decoration: none; }
+    a[href^="http"]::after { content: " (" attr(href) ")"; font-size: .8em; color: #666; }
+    nav.toc a[href^="#"]::after { content: ""; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="doc">
+  <div class="eyebrow">j-lawyer.org &middot; Funktionsbeschreibung</div>
+  <h1>Forderungskonto und Mahnverfahren</h1>
+  <p class="lead">Vom Forderungskonto über die vorgerichtliche Mahnung bis zum Mahnbescheidsantrag
+  im elektronischen Datenaustausch mit den Mahngerichten.</p>
+  <dl class="meta">
+    <dt>Stand</dt><dd>3. September 2026</dd>
+    <dt>Umfang</dt><dd>Forderungskonto, vorgerichtliches Mahnwesen, gerichtliches Mahnverfahren (EDA)</dd>
+    <dt>Datenbank</dt><dd>ab Schemaversion 3.6.0.24</dd>
+    <dt>Nicht enthalten</dt><dd>Zwangsvollstreckung, Ratenpläne, aktenübergreifende Arbeitslisten &ndash; siehe <a href="#offen">Abschnitt 8</a></dd>
+  </dl>
+</header>
+
+<nav class="toc">
+  <h2>Inhalt</h2>
+  <ol>
+    <li><a href="#ueberblick">Überblick</a></li>
+    <li><a href="#forderungskonto">Das Forderungskonto</a></li>
+    <li><a href="#titel">Titel</a></li>
+    <li><a href="#mahnungen">Vorgerichtliches Mahnwesen</a></li>
+    <li><a href="#mahnverfahren">Gerichtliches Mahnverfahren</a></li>
+    <li><a href="#eda-viewer">EDA-Dateien ansehen</a></li>
+    <li><a href="#administration">Administration</a></li>
+    <li><a href="#offen">Was noch nicht enthalten ist</a></li>
+    <li><a href="#rechtsgrundlagen">Rechtsgrundlagen im Überblick</a></li>
+  </ol>
+</nav>
+
+<h2 id="ueberblick"><span class="num">1</span>Überblick</h2>
+
+<p>Das Forderungskonto führt eine Geldforderung über ihre ganze Lebensdauer: aus welchen
+Positionen sie besteht, wie sie sich verzinst, was darauf gezahlt wurde und was offen ist. Darauf
+setzen zwei Verfahren auf, die auseinanderzuhalten sind, weil sie verschiedenen Regeln folgen:</p>
+
+<ul>
+  <li>Das <strong>vorgerichtliche Mahnwesen</strong> &ndash; Briefe, die die Kanzlei selbst
+  schreibt, in konfigurierbaren Stufen, mit Zahlungsfrist und Mahngebühr. Tab
+  <em>Mahnungen</em>.</li>
+  <li>Das <strong>gerichtliche Mahnverfahren</strong> &ndash; der Antrag auf Erlass eines
+  Mahnbescheids, elektronisch im EDA-Format der Mahngerichte, mit Verfahrensdaten, aus denen
+  gesetzliche Fristen laufen. Tab <em>Mahnverfahren</em>.</li>
+</ul>
+
+<p class="path">Erreichbar über <code>Akte → Reiter Forderungskonto → Öffnen</code>. Das
+Forderungskonto ist ein modaler Dialog mit den Reitern <em>Stammdaten</em>, <em>Titel</em>,
+<em>Mahnungen</em>, <em>Mahnverfahren</em>, <em>Positionen</em>, <em>Buchungen</em>,
+<em>Summen</em>, <em>Aufstellung</em> und <em>Basiszinsen</em>. Die Forderungsaufstellung als
+Dokument liegt eine Ebene darüber, am Konto im Reiter <em>Forderungskonto</em> der Akte.</p>
+
+<div class="note">
+  <strong>Ein Grundsatz, der sich durch alles zieht</strong>
+  <p>Erfasst wird immer das <em>Verfahrensdatum</em> &ndash; der Tag der Zustellung, des Erlasses,
+  des Versands &ndash; und nicht der Tag der Eingabe. Alle Fristen rechnen daraus. Ein Eingabedatum
+  an seiner Stelle verschiebt die Widerspruchsfrist und die Sechsmonatsfrist mit.</p>
+</div>
+
+<h2 id="forderungskonto"><span class="num">2</span>Das Forderungskonto</h2>
+
+<h3>Aufbau und Unterkonten</h3>
+<p>Je Akte können mehrere Forderungskonten bestehen. Ein Konto kann einem anderen als
+<strong>Unterkonto</strong> zugeordnet werden; die Forderungsaufstellung kann Unterkonten
+einbeziehen oder auslassen.</p>
+
+<h3>Stammdaten: Beteiligte</h3>
+<p>Gläubiger und Schuldner werden als Kontaktdatensätze der Akte zugeordnet, mit Reihenfolge und
+optional einem gesetzlichen Vertreter. Zwei Besonderheiten:</p>
+<ul>
+  <li><strong>Bezeichnungs-Schnappschuss.</strong> Sobald eine Bezeichnung erstmals gegenüber
+  einem Gericht verwendet wird, wird sie festgeschrieben. Ändert sich später der Kontakt, bleibt
+  im Verfahren die Bezeichnung stehen, unter der das Gericht die Partei kennt.</li>
+  <li><strong>Effektive Gläubigerzahl.</strong> Sie steuert die Erhöhung nach Nr. 1008 VV RVG und
+  ist getrennt erfassbar, weil sie nicht immer der Zahl der eingetragenen Gläubiger entspricht.</li>
+</ul>
+
+<h3>Positionen</h3>
+<p>Eine Forderung besteht aus Positionen. Ihr Typ entscheidet, wie sie verzinst wird, ob sie im
+Mahnbescheidsantrag als Haupt- oder Nebenforderung erscheint und in welchem Satzbereich des
+EDA-Formats sie landet.</p>
+
+<div class="tablewrap">
+<table>
+<thead><tr><th>Positionsart</th><th>Bedeutung</th></tr></thead>
+<tbody>
+<tr><td>Hauptforderung</td><td>der eigentliche Anspruch</td></tr>
+<tr><td>laufende monatliche Hauptforderung</td><td>wiederkehrende Forderung, etwa Miete, mit Anfangs- und Endmonat</td></tr>
+<tr><td>Kosten (verzinslich)</td><td>Kosten, die mitverzinst werden</td></tr>
+<tr><td>Kosten (unverzinslich)</td><td>Kosten ohne Zinsen</td></tr>
+<tr><td>festgesetzte Kosten</td><td>durch Beschluss festgesetzt</td></tr>
+<tr><td>Zinsrückstand</td><td>bereits aufgelaufene, bezifferte Zinsen</td></tr>
+<tr><td>Auslagen des Gläubigers</td><td>Nebenforderung</td></tr>
+<tr><td>Mahnkosten</td><td>Nebenforderung, wird von den Mahnstufen gebucht</td></tr>
+<tr><td>Auskunftskosten</td><td>Nebenforderung</td></tr>
+<tr><td>Bankrücklastkosten</td><td>Nebenforderung</td></tr>
+<tr><td>Inkassokosten</td><td>Nebenforderung</td></tr>
+<tr><td>vorgerichtliche Anwaltsvergütung</td><td>Nr. 2300 VV RVG; ist im Antrag zugleich für die Anrechnung erheblich</td></tr>
+<tr><td>andere Nebenforderung</td><td>Sammelposition</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Eine Hauptforderung kann über eine <strong>Katalognummer</strong> der Mahngerichte
+klassifiziert werden statt als Freitext begründet zu werden. Manche Katalognummern verlangen eine
+zusätzliche Angabe &ndash; die Anschrift der Wohnung bei Wohnraummiete, die Vertragsart bei
+Schadensersatz aus Vertrag (Katalog Nr. 28). Fehlt sie, beanstandet das Gericht den Antrag.</p>
+
+<h3>Zinsen</h3>
+<p>Je Position können mehrere Zinsregeln hinterlegt werden, jede mit einem Geltungsbeginn. Damit
+lässt sich eine Zinsstaffel abbilden.</p>
+<ul>
+  <li><strong>fester Zinssatz</strong> &ndash; ein Prozentsatz.</li>
+  <li><strong>Basiszins + Aufschlag</strong> &ndash; rechnet gegen den jeweils gültigen
+  Basiszinssatz nach § 247 BGB. Die Sätze stehen im Reiter <em>Basiszinsen</em> mit Geltungsbeginn
+  und Quelle.</li>
+</ul>
+<p>Der <strong>Zinsbeginn</strong> ist entweder ein festes Datum oder <em>ab Zustellung</em>. Der
+zweite Fall betrifft Zinsen, die das Gericht ab Zustellung des Mahnbescheids zuspricht: am Tag des
+Antrags existiert dieses Datum noch nicht. Bis dahin läuft auf einer solchen Regel kein Zins; wird
+die Zustellung erfasst, setzt das Programm den Zinsbeginn selbst.</p>
+
+<div class="note">
+  <strong>Korrektur wirkt durch</strong>
+  <p>Wird ein falsch erfasstes Zustellungsdatum berichtigt, zieht der Zinsbeginn mit. Ein von Hand
+  eingetragener Zinsbeginn bleibt dagegen unangetastet.</p>
+</div>
+
+<h3>Buchungen und Zahlungsverrechnung</h3>
+<p>Der Reiter <em>Buchungen</em> führt Hauptforderungen, Zinsen, Kosten, Zahlungen und
+Korrekturbuchungen. Wie eine Zahlung verteilt wird, entscheidet der Verrechnungsmodus des
+Kontos:</p>
+
+<div class="tablewrap">
+<table>
+<thead><tr><th>Modus</th><th>Verteilung</th><th class="law">Grundlage</th></tr></thead>
+<tbody>
+<tr><td>gesetzlich</td><td>Kosten, dann Zinsen, dann Hauptforderung</td><td class="law">§§ 366, 367 BGB</td></tr>
+<tr><td>Verbraucherdarlehen</td><td>abweichende Reihenfolge zugunsten des Verbrauchers</td><td class="law">§ 497 Abs. 3 BGB</td></tr>
+<tr><td>gezielte Tilgung</td><td>auf eine bestimmte Position</td><td class="law">Tilgungsbestimmung</td></tr>
+<tr><td>auf einen Schuldner</td><td>bei mehreren Schuldnern nur auf dessen Anteil</td><td class="law">&ndash;</td></tr>
+<tr><td>manuell</td><td>Verteilung wird erfasst</td><td class="law">&ndash;</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Bleibt nach der Tilgung einer Position ein Überschuss, wird er entweder weiterverteilt oder auf
+die nächste Position vorgetragen &ndash; ebenfalls eine Einstellung des Kontos.</p>
+
+<h3>Summen und Aufstellung im Konto</h3>
+<p>Der Reiter <em>Summen</em> zeigt Hauptforderungen, Nebenforderungen, Zinsen, bereits Gezahltes
+und den offenen Betrag.</p>
+<p>Der Reiter <em>Aufstellung</em> zeigt dieselben Zahlen aufgeschlüsselt als Tabelle. Zwei
+Schaltflächen darunter exportieren <em>die Tabelle</em> als CSV oder kopieren sie in die
+Zwischenablage &ndash; gedacht für den schnellen Blick und die Weiterverarbeitung in einer
+Tabellenkalkulation. Ebenso lässt sich der Reiter <em>Buchungen</em> exportieren.</p>
+
+<h3>Die Forderungsaufstellung als Dokument</h3>
+<p class="path">Akte → Reiter <code>Forderungskonto</code> → am Konto die Schaltfläche mit dem
+Kurzhinweis <code>Forderungsaufstellung</code></p>
+<p>Die eigentliche <strong>Forderungsaufstellung</strong> ist ein eigener Dialog und wird
+<em>nicht</em> aus dem Konto-Dialog heraus geöffnet, sondern eine Ebene darüber: im Reiter
+<em>Forderungskonto</em> der Akte trägt jedes Konto neben <em>Öffnen</em> und <em>Löschen</em> eine
+dritte Schaltfläche. Sie ist nur mit einem Symbol beschriftet; der Kurzhinweis beim Überfahren
+lautet <em>Forderungsaufstellung</em>.</p>
+<p>Dort wird ein <strong>Stichtag</strong> gewählt und entschieden, ob Unterkonten einbezogen
+werden. Die Aufstellung lässt sich dann</p>
+<ul>
+  <li>als <strong>PDF in der Akte ablegen</strong> &ndash; das Dokument erscheint sofort im Reiter
+  Dokumente, oder</li>
+  <li>als <strong>CSV exportieren</strong>.</li>
+</ul>
+<p>Das Konto merkt sich, wann, zu welchem Stichtag und von wem zuletzt eine Aufstellung herausging,
+damit nachvollziehbar bleibt, welche Zahlen mitgeteilt wurden.</p>
+
+<h2 id="titel"><span class="num">3</span>Titel</h2>
+
+<p>Der Reiter <em>Titel</em> erfasst die Vollstreckungstitel, auf denen das Konto ruht:
+Vollstreckungsbescheid, Urteil, Kostenfestsetzungsbeschluss, Prozessvergleich, notarielle Urkunde,
+Anerkenntnis oder ein sonstiger Titel.</p>
+
+<p>Zu jedem Titel werden drei Voraussetzungen getrennt geführt, weil die Zwangsvollstreckung alle
+drei braucht: <strong>Titel</strong>, <strong>Klausel</strong> und <strong>Zustellung</strong>.
+Die Tabelle zeigt deshalb nicht nur die Daten, sondern auch, was fehlt &ndash; ein unvollständiger
+Titel ist sichtbar, bevor daraus vollstreckt wird.</p>
+
+<p>Die <strong>Verjährung</strong> eines titulierten Anspruchs beträgt 30 Jahre (§ 197 Abs. 1
+Nr. 3 BGB). Sie wird aus dem Erlassdatum berechnet und mit einer Wiedervorlage vor Ablauf
+gesichert.</p>
+
+<h2 id="mahnungen"><span class="num">4</span>Vorgerichtliches Mahnwesen</h2>
+
+<p class="path">Reiter <code>Mahnungen</code> &middot; Konfiguration unter <code>Finanzen → Mahnstufen</code></p>
+
+<h3>Mahnstufen einrichten</h3>
+<p>Eine Mahnstufe beschreibt eine Eskalationsstufe und trägt:</p>
+<ul>
+  <li><strong>Reihenfolge</strong> &ndash; die Stufen werden in dieser Folge vorgeschlagen.</li>
+  <li><strong>Vorlage</strong> &ndash; Ordner und Name der Dokumentvorlage. Ohne Vorlage entsteht
+  kein Schreiben; die Stufe wird dann nur vermerkt.</li>
+  <li><strong>Zahlungsfrist</strong> in Tagen &ndash; daraus entsteht die Wiedervorlage.</li>
+  <li><strong>Mahngebühr</strong> &ndash; wird als Position <em>Mahnkosten</em> gebucht. Sie darf
+  nur die tatsächlich entstehenden Kosten abdecken; die mitgelieferten Stufen sind deshalb
+  bewusst knapp bemessen und sollten geprüft werden.</li>
+  <li><strong>löst Verzug aus</strong> &ndash; siehe unten.</li>
+</ul>
+<p>Ausgeliefert wird ein brauchbarer Standardzyklus: Zahlungserinnerung, 1. Mahnung, 2. Mahnung
+und eine letzte Mahnung vor gerichtlichen Schritten. Er ist vollständig anpassbar.</p>
+
+<h3>Eine Mahnung erzeugen</h3>
+<ol class="steps">
+  <li>Im Reiter <em>Mahnungen</em> zeigt die Tabelle, welche Stufen bereits versandt wurden und
+  welche als nächste ansteht.</li>
+  <li>Nächste Stufe und Versanddatum wählen.</li>
+  <li><em>Mahnung erzeugen</em>. Das Programm erstellt das Schreiben aus der Vorlage, legt es in
+  der Akte ab, bucht die Mahngebühr, trägt die Wiedervorlage zum Ende der Zahlungsfrist ein und
+  bestätigt anschließend, was davon tatsächlich geschehen ist.</li>
+</ol>
+
+<div class="note">
+  <strong>Verzug</strong>
+  <p>Das Merkmal <em>löst Verzug aus</em> markiert die Mahnung, die den Schuldner nach § 286
+  Abs. 1 BGB in Verzug setzt &ndash; ab dann laufen Verzugszinsen. Es sitzt sinnvollerweise auf der
+  ersten echten Mahnung, nicht auf der Zahlungserinnerung.</p>
+  <p>Verzug kann auch anders eintreten: durch einen Kalendertag oder eine vertraglich bestimmte
+  Frist (§ 286 Abs. 2 BGB) oder 30 Tage nach Rechnung (§ 286 Abs. 3 BGB, gegenüber einem
+  Verbraucher nur bei Hinweis). Diese Fälle werden an der Forderung selbst erfasst, nicht über die
+  Mahnstufen.</p>
+</div>
+
+<h2 id="mahnverfahren"><span class="num">5</span>Gerichtliches Mahnverfahren</h2>
+
+<p class="path">Reiter <code>Mahnverfahren</code></p>
+
+<p>Eine <strong>Mahnsache</strong> bildet ein gerichtliches Mahnverfahren ab &ndash; vom Antrag
+über den Mahnbescheid bis zum Vollstreckungsbescheid. Je Forderungskonto können mehrere bestehen.
+Der Reiter zeigt die gewählte Mahnsache mit Gericht, Zeichen und ihrem Verlauf.</p>
+
+<h3>Mahnsache anlegen und wieder entfernen</h3>
+<p><em>Neue Mahnsache</em> legt sofort an und übernimmt das Aktenzeichen als eigenes Zeichen sowie
+die Kennziffer des anlegenden Anwalts, sofern er eine hat.</p>
+<p><em>Entfernen</em> löscht eine Mahnsache mit ihrem Verlauf, ihren Fristen und den daraus
+entstandenen Wiedervorlagen &ndash; aber nur, solange sie die Kanzlei nicht verlassen hat: kein
+gerichtliches Aktenzeichen, kein Verfahrensdatum, Stand noch <em>in Vorbereitung</em>.</p>
+
+<div class="warn">
+  <strong>Danach wird nicht gelöscht, sondern beendet</strong>
+  <p>Sobald ein Antrag heraus ist, ist die Mahnsache das Protokoll eines Gerichtsverfahrens:
+  Verlauf mit Datum, Benutzer und Quelle, die Fristen, der Zustellungstag, aus dem der Zinsbeginn
+  abgeleitet wurde. Löschen macht das Verfahren beim Gericht nicht ungeschehen, es beseitigt nur
+  das, was die Kanzlei darüber weiß. Ein erledigtes Verfahren wird über den Status
+  <em>zurückgenommen</em> oder <em>abgeschlossen</em> beendet.</p>
+</div>
+
+<h3>Mahngericht ermitteln</h3>
+<p>Zuständig ist das Mahngericht am allgemeinen Gerichtsstand des <strong>Antragstellers</strong>
+(§ 689 Abs. 2 ZPO) &ndash; nicht des Schuldners. <em>Gericht ermitteln</em> liest deshalb die
+Anschrift des ersten Gläubigers.</p>
+<ul>
+  <li>Ist das Ergebnis eindeutig, wird es mit Begründung vorgeschlagen.</li>
+  <li>Ist ein Bundesland auf mehrere Mahngerichte aufgeteilt, richtet sich die Aufteilung nach dem
+  OLG-Bezirk und lässt sich aus Bundesland und Postleitzahl allein nicht bestimmen. Dann wird
+  gewählt, nicht geraten.</li>
+  <li>Lässt sich nichts bestimmen &ndash; meist, weil das Bundesland in der Anschrift fehlt &ndash;
+  werden alle hinterlegten Mahngerichte zur Auswahl angeboten, mit dem Grund darüber.</li>
+  <li>Hat der Antragsteller keinen allgemeinen Gerichtsstand im Inland, greift das dafür bestimmte
+  Mahngericht (§ 689 Abs. 2 S. 2 ZPO).</li>
+</ul>
+<p>Die Zuordnung wird mit <em>Speichern</em> übernommen.</p>
+
+<h3>Kennziffer</h3>
+<p>Die Kennziffer identifiziert den einreichenden Anwalt gegenüber dem Mahngericht. Sie gehört zur
+Person, nicht zur Kanzlei: sie wird beim Gericht beantragt und vergeben, und in einer Kanzlei mit
+mehreren Berufsträgern hat jeder eine eigene.</p>
+<p>Sie wird deshalb <strong>ausgewählt, nicht eingegeben</strong>: die Liste zeigt die Anwälte, bei
+denen eine Kennziffer hinterlegt ist, und übernimmt sie von dort. Gepflegt werden sie in der
+Benutzerverwaltung. Eine gespeicherte Kennziffer ohne passenden Benutzer &ndash; ein
+ausgeschiedener Anwalt &ndash; bleibt sichtbar erhalten, statt stillschweigend zu verschwinden.</p>
+
+<h3>Antrag erzeugen</h3>
+<p><em>Antrag erzeugen</em> öffnet einen Bestätigungsschritt. Das ist Absicht: der Export ist nicht
+rückgängig zu machen. Er legt die Datei in der Akte ab, setzt den Vorgang auf <em>Mahnbescheid
+beantragt</em>, legt die Fristen an &ndash; und danach ist die Mahnsache nur noch über den Status
+beendbar.</p>
+
+<p>Der Dialog fragt drei Dinge ab, die das Forderungskonto nicht weiß:</p>
+<ul>
+  <li><strong>Welche Positionen</strong> in den Antrag gehen. Ein Forderungskonto ist kein Antrag:
+  eine Position kann bestritten, bezahlt oder bewusst ausgenommen sein. Jede steht einzeln in der
+  Tabelle, mit Betrag, Rechnungsnummer und Zinsendatum; der Streitwert folgt der Auswahl.</li>
+  <li><strong>Das Beauftragungsdatum</strong> &ndash; der Tag der Erteilung eines unbedingten
+  Mandats. Nach § 60 Abs. 1 S. 1 RVG entscheidet er, welche Fassung des RVG das Gericht auf die
+  festzusetzenden Gebühren anwendet.</li>
+  <li><strong>Die Anrechnung</strong> nach Vorbem. 3 Abs. 4 VV RVG, wenn eine vorgerichtliche
+  Geschäftsgebühr nach Nr. 2300/2302 VV RVG entstanden ist &ndash; einzutragen ist nur der auf die
+  Verfahrensgebühr Nr. 3305 VV RVG anzurechnende Teil, nicht die ganze vorgerichtliche Vergütung.
+  Dazu die Versicherung besonderen Umfangs oder besonderer Schwierigkeit.</li>
+</ul>
+
+<p>Außerdem ein <strong>Dateiname</strong> aus sechs Zeichen. Er ist mehr als eine Formalie: die
+Quittung, die das Gericht über die Übermittlung zurücksendet, nennt genau diesen Namen und
+keinerlei Verfahrensreferenz. Er ist damit der einzige Faden von einer Quittung zu dem, was
+gesendet wurde &ndash; und das Dokument in der Akte trägt ihn deshalb im Namen.</p>
+
+<p><em>Antrag prüfen</em> prüft vorab und trennt blockierende Beanstandungen von Hinweisen.
+Geprüft wird ohnehin auch beim Erzeugen: ein unvollständiger Antrag wird nicht erzeugt, und die
+fertige Datei wird nach dem Bauen noch einmal strukturell gegen die Satzbeschreibungen geprüft,
+bevor sie gespeichert wird.</p>
+
+<h3>Übermittlung</h3>
+<p>Die erzeugte <code>.eda</code>-Datei liegt als Dokument in der Akte und geht über das
+<strong>beA</strong> an das Mahngericht. Der elektronische Datenaustausch läuft ausschließlich über
+Datenfernübertragung; für Anwälte ist das Web-DFÜ-beA.</p>
+
+<h3>Status erfassen</h3>
+<p><em>Status erfassen</em> hält fest, dass der Vorgang einen neuen Stand erreicht hat. Der Dialog
+sagt zu jedem Status, was das Datum bedeutet, und verweigert eine Erfassung ohne gültiges Datum
+&ndash; ein Status ohne sein Datum trägt keine Frist.</p>
+
+<div class="tablewrap">
+<table>
+<thead><tr><th>Status</th><th>Das Datum ist</th></tr></thead>
+<tbody>
+<tr><td>in Vorbereitung</td><td>&ndash;</td></tr>
+<tr><td>Mahnbescheid beantragt</td><td>Tag der Einreichung bei Gericht</td></tr>
+<tr><td>Mahnbescheid erlassen</td><td>Tag des Erlasses laut Mahnbescheid</td></tr>
+<tr><td>Mahnbescheid zugestellt</td><td>Tag der Zustellung &ndash; Beginn der Widerspruchsfrist und der Sechsmonatsfrist</td></tr>
+<tr><td>Widerspruch eingelegt</td><td>Tag des Eingangs bei Gericht</td></tr>
+<tr><td>Vollstreckungsbescheid beantragt</td><td>Tag der Einreichung</td></tr>
+<tr><td>Vollstreckungsbescheid erlassen</td><td>Tag des Erlasses</td></tr>
+<tr><td>Vollstreckungsbescheid zugestellt</td><td>Tag der Zustellung &ndash; Beginn der Einspruchsfrist</td></tr>
+<tr><td>Einspruch eingelegt</td><td>Tag des Eingangs</td></tr>
+<tr><td>an das Streitgericht abgegeben</td><td>Tag der Abgabe</td></tr>
+<tr><td>zurückgenommen / abgeschlossen</td><td>Tag, an dem der Vorgang diesen Stand erreicht hat</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Jeder Schritt behält sein eigenes Datum, denn die Fristen laufen aus dem Schritt und nicht aus
+dem aktuellen Stand: die Widerspruchsfrist rechnet ab Zustellung, auch wenn das Verfahren
+inzwischen beim Vollstreckungsbescheid steht.</p>
+
+<h3>Der Verlauf</h3>
+<p>Der Verlauf ist eine Tabelle und kein Statusfeld: was zählt, ist die Folge datierter Ereignisse.
+Jede Zeile nennt Datum, den Stand davor und danach, wann sie erfasst wurde und von wem &ndash; und
+vor allem die <strong>Quelle</strong>: hat ein Mensch das eingetragen oder hat eine
+Gerichtsnachricht es gemeldet. Das ist das Erste, was man wissen will, wenn sich ein Vorgang als
+falsch erfasst herausstellt.</p>
+
+<h3>Fristen</h3>
+<p>Aus den Verfahrensdaten entstehen Fristen mit Wiedervorlage:</p>
+
+<div class="tablewrap">
+<table>
+<thead><tr><th>Frist</th><th>Läuft ab</th><th class="law">Grundlage</th></tr></thead>
+<tbody>
+<tr><td>Ende der Widerspruchsfrist</td><td>Zustellung des Mahnbescheids</td><td class="law">§ 692 Abs. 1 Nr. 3 ZPO</td></tr>
+<tr><td>Vollstreckungsbescheid beantragen</td><td>Ablauf der Widerspruchsfrist</td><td class="law">§ 699 Abs. 1 ZPO</td></tr>
+<tr><td>Mahnbescheid wird wirkungslos</td><td>Zustellung, sechs Monate</td><td class="law">§ 701 ZPO</td></tr>
+<tr><td>Ende der Einspruchsfrist</td><td>Zustellung des Vollstreckungsbescheids</td><td class="law">§§ 700 Abs. 1, 339 Abs. 1 ZPO</td></tr>
+<tr><td>Anspruchsbegründung bzw. Abgabe</td><td>Widerspruch</td><td class="law">§ 696 Abs. 1 ZPO</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Fällt das rechnerische Fristende auf einen Samstag, Sonntag oder Feiertag, endet die Frist am
+nächsten Werktag (§ 222 Abs. 2 ZPO); die Wiedervorlage sagt das dann auch. Entfällt eine Frist,
+wird die zugehörige Wiedervorlage als erledigt markiert und mit dem Grund versehen &ndash; nicht
+gelöscht, denn sie gehört zu dem, was in der Akte passiert ist.</p>
+
+<h3>Gerichtsnachricht einlesen</h3>
+<p>Das Gericht antwortet mit EDA-Nachrichten. Sie kommen über das beA, und das beA-Postfach kann
+Nachricht und Anlagen schon in die Akte speichern. Von dort geht es weiter &ndash; es gibt keinen
+gesonderten Eingangskorb, der mit der Akte Schritt halten müsste.</p>
+
+<ol class="steps">
+  <li><em>Gerichtsnachricht einlesen</em> zeigt die Dokumente der Akte, das Neueste zuerst.</li>
+  <li>Die erhaltene EDA-Datei wählen und <em>Datei analysieren</em>.</li>
+  <li>Jede gemeldete Position steht einzeln in der Tabelle, mit dem, was sie meldet, den echoten
+  Zeichen und einem Zuordnungsvorschlag.</li>
+  <li>Zuordnungen prüfen und <em>übernehmen</em>. Das Ergebnis wird je Position berichtet.</li>
+</ol>
+
+<p>Zwei Eigenschaften des Formats bestimmen den Ablauf:</p>
+<ul>
+  <li>Eine Nachrichtendatei ist eine <strong>Sammeldatei</strong> &ndash; sie kann Nachrichten zu
+  mehreren Verfahren in mehreren Akten enthalten. Deshalb wird jede Position einzeln zugeordnet,
+  und die Suche nach dem Verfahren läuft über alle Vorgänge, nicht nur über die Akte, in der die
+  Datei liegt.</li>
+  <li>Das Gericht nennt nicht die Akte, sondern <strong>wiederholt das mitgesandte
+  Aktenzeichen</strong>. Der Vorschlag beruht darauf &ndash; und wird deshalb vorgeschlagen, nicht
+  gesetzt.</li>
+</ul>
+
+<div class="note">
+  <strong>Was eine Nachricht bewegt und was nicht</strong>
+  <p>Eine Monierung bewegt das Verfahren nicht: der Antrag wurde nicht so angenommen, wie er
+  war, und ist zu beantworten. Eine Nichtzustellung setzt den Vorgang ebenfalls nicht auf
+  „zugestellt“ &ndash; es beginnt keine Frist, die Anschrift ist zu prüfen. Eine Quittung betrifft
+  die Übermittlung, nicht ein Verfahren; sie trägt gar keine Verfahrensreferenz und wird deshalb nur
+  berichtet.</p>
+  <p>Und: Steht der Vorgang schon weiter, als die Nachricht meldet, wird sie nicht angewendet.
+  Das erneute Einlesen einer Datei ist der Normalfall &ndash; ohne diese Sperre würde die zweite
+  Lesung einer älteren Nachricht den Stand zurücksetzen.</p>
+</div>
+
+<h3>Nach einer Monierung: erneut einreichen</h3>
+<p>Ein Wiederholungsexport ist vorgesehen, solange das Gericht noch nicht entschieden hat. Dabei
+gilt:</p>
+<ul>
+  <li>Der Tag, an dem der Antrag <strong>erstmals</strong> herausging, bleibt stehen. Ein
+  korrigierter Antrag beginnt das Verfahren nicht neu, und § 167 ZPO knüpft die Rückwirkung der
+  Zustellung an den Tag der Beantragung.</li>
+  <li>Der Wiederholungsexport erhält einen <strong>eigenen Dateinamen</strong>, damit beide
+  Dokumente unterscheidbar sind und eine Quittung dem richtigen zugeordnet werden kann. Im Kopf des
+  Exportdialogs steht, unter welcher Datei zuletzt übermittelt wurde.</li>
+  <li>Der Verlauf vermerkt, welcher Export eine Wiederholung war.</li>
+</ul>
+<p>Hat das Gericht erlassen, zugestellt oder anders entschieden, wird der Export verweigert:
+danach ist ein weiterer Antrag eine neue Mahnsache.</p>
+
+<h3>Gebühren</h3>
+<p>Zum Antrag lassen sich die Gebühren vorschlagen und buchen: die Verfahrensgebühr Nr. 3305 VV RVG
+(bzw. Nr. 3308 für den Vollstreckungsbescheid), die Erhöhung nach Nr. 1008 VV RVG bei mehreren
+Auftraggebern, die Auslagenpauschale Nr. 7002 VV RVG, die Umsatzsteuer, die Anrechnung einer
+vorgerichtlichen Geschäftsgebühr sowie die Gerichtskosten nach Nr. 1100 KV GKG &ndash; dort mit
+dem Mindestbetrag von 38,00 €. Die Wertgebühren stammen aus den hinterlegten Gebührentabellen
+(RVG Anlage 2 und GKG Anlage 2 in der Fassung des KostBRÄG 2025).</p>
+
+<h2 id="eda-viewer"><span class="num">6</span>EDA-Dateien ansehen</h2>
+
+<p>Eine <code>.eda</code>-Datei öffnet sich in der Dokumentvorschau der Akte wie jedes andere
+Dokument &ndash; ein Klick genügt. Der Viewer hat zwei Ansichten:</p>
+<ul>
+  <li><strong>Aufbereitet</strong> &ndash; ein Baum: Satz für Satz mit Bereichskennung,
+  Bezeichnung aus der Satzbeschreibung und darunter die Felder mit Langnamen, Kurznamen, Länge und
+  Wert. Etwa <code>Anspruchsbetrag [ASPBET]: 500000</code>. Ohne das hieße Lesen: Spalten zählen,
+  denn die Sätze sind 128 Byte ohne Trennzeichen.</li>
+  <li><strong>Sätze</strong> &ndash; die Datei genau wie sie ist, zeilennummeriert. Wenn ein
+  Gericht eine Datei beanstandet, ist die Frage, was Byte für Byte darin steht.</li>
+</ul>
+<p>Die Kopfzeile beantwortet zuerst die Richtung &ndash; ausgehender Antrag oder eingehende
+Nachricht des Gerichts &ndash; und leitet sie aus der Satzart im Dateivorsatz ab, nicht daraus, wo
+das Dokument in der Akte liegt. Ein Satz, den keine Satzbeschreibung abdeckt, wird trotzdem mit
+seiner Rohzeile gezeigt: eine Datei aus einer neueren Formatversion bleibt so teilweise lesbar
+statt leer zu wirken.</p>
+
+<h2 id="administration"><span class="num">7</span>Administration</h2>
+
+<h3>Finanzen → Mahnstufen</h3>
+<p>Die Stufen des vorgerichtlichen Mahnwesens: Reihenfolge, Vorlage, Zahlungsfrist, Mahngebühr,
+Verzugsmerkmal, aktiv/inaktiv. Siehe <a href="#mahnungen">Abschnitt 4</a>.</p>
+
+<h3>Finanzen → Gerichte</h3>
+<p>Zentrale Stammdaten der Gerichte mit Name, Anschriften, XJustiz-Kennung, Bankverbindung für
+Gerichtskosten und akzeptierten Übermittlungswegen. Die Gerichte lassen sich aus dem
+<strong>beA-Verzeichnis importieren</strong>, statt sie einzeln zu erfassen.</p>
+
+<h3>Finanzen → Mahngerichts-Zuordnung</h3>
+<p>Welches Mahngericht für welchen Antragsteller zuständig ist: je Bundesland ein Eintrag, bei
+geteilten Ländern mit Einschränkung (OLG-Bezirk) und gegebenenfalls einem Postleitzahlbereich,
+dazu der Eintrag für Antragsteller im Ausland. Ausgeliefert werden die zwölf zentralen
+Mahngerichte mit ihren Zuständigkeiten.</p>
+
+<h3>Benutzerverwaltung</h3>
+<p>Je Benutzer die Kennzeichnung als <strong>Anwalt</strong> und dessen
+<strong>Kennziffer</strong>. Nur Anwälte mit hinterlegter Kennziffer erscheinen in der Auswahl der
+Mahnsache. Aus dem Benutzerprofil kommt außerdem die Bankverbindung, die dem Schuldner im
+Mahnbescheid als Zahlungskonto genannt wird.</p>
+
+<h3>Gebührentabellen</h3>
+<p>RVG Anlage 2 und die Tabelle zu § 34 GKG sind in der Fassung des KostBRÄG 2025 mitgeliefert
+(gültig ab 1. Juni 2025). Sie werden über Datenbankmigrationen gepflegt; eine Oberfläche dafür gibt
+es derzeit nicht.</p>
+
+<h3>Schnittstelle</h3>
+<p>Über REST stehen die Prüfung eines Antrags und der Nachrichtenimport bereit:
+<code>GET /j-lawyer-io/rest/v7/dunning/{id}/validate</code> sowie
+<code>GET</code> und <code>POST /j-lawyer-io/rest/v7/dunning/messages/{documentId}</code>.</p>
+
+<h2 id="offen"><span class="num">8</span>Was noch nicht enthalten ist</h2>
+
+<p>Damit keine Erwartung entsteht, die das Programm heute nicht erfüllt:</p>
+<ul>
+  <li><strong>Zwangsvollstreckung.</strong> Vollstreckungsmaßnahmen, ZVFV-Formulare,
+  Drittschuldner und Vollstreckungskosten sind vorbereitet, aber nicht umgesetzt. Der Reiter
+  <em>Titel</em> erfasst bereits die Grundlage dafür.</li>
+  <li><strong>Aktenübergreifende Arbeitsliste.</strong> Die Auswertung, welche Verfahren eine
+  abgelaufene Widerspruchsfrist ohne beantragten Vollstreckungsbescheid haben, ist serverseitig
+  vorhanden, einschließlich CSV-Ausgabe. Eine Ansicht dafür &ndash; neben Saldenliste und
+  Titelbestand &ndash; fehlt noch; heute ist das Mahnverfahren nur je Akte sichtbar.</li>
+  <li><strong>Ratenpläne und Zahlungsvereinbarungen</strong> (§ 802b ZPO) einschließlich Stundung
+  und Wiederaufnahme bei Verstoß.</li>
+  <li><strong>REST für das Forderungskonto</strong> (Summen, Zahlungsbuchung, Aufstellung).</li>
+  <li><strong>EDA-Teilnahme.</strong> Eine eigene Kennziffer und ein mit dem Mahngericht
+  abgestimmter Test müssen organisatorisch beantragt werden, bevor produktiv eingereicht wird.
+  Verbindlich sind die <em>EDA-Konditionen Format 4.X</em> des OLG Stuttgart &ndash;
+  IuK-Fachzentrum Justiz; der Test ist dort empfohlen, insbesondere bei eigener
+  Schnittstellensoftware. Welche Gerichtsnachrichten überhaupt als Datensätze zurückkommen, ist
+  ein Parameter der Kennziffer (Ausbaugrad), nicht der Software.</li>
+</ul>
+
+<h2 id="rechtsgrundlagen"><span class="num">9</span>Rechtsgrundlagen im Überblick</h2>
+
+<div class="tablewrap">
+<table>
+<thead><tr><th class="law">Vorschrift</th><th>Woran sie im Programm hängt</th></tr></thead>
+<tbody>
+<tr><td class="law">§§ 187, 188 BGB</td><td>Fristberechnung</td></tr>
+<tr><td class="law">§ 197 Abs. 1 Nr. 3 BGB</td><td>30-jährige Verjährung titulierter Ansprüche</td></tr>
+<tr><td class="law">§ 247 BGB</td><td>Basiszinssatz für zinsvariable Regeln</td></tr>
+<tr><td class="law">§ 286 BGB</td><td>Verzug; Merkmal der Mahnstufe</td></tr>
+<tr><td class="law">§ 288 BGB</td><td>Verzugszinsen</td></tr>
+<tr><td class="law">§§ 366, 367 BGB</td><td>gesetzliche Verrechnungsreihenfolge</td></tr>
+<tr><td class="law">§ 497 Abs. 3 BGB</td><td>Verrechnung beim Verbraucherdarlehen</td></tr>
+<tr><td class="law">§ 167 ZPO</td><td>Rückwirkung der Zustellung; Antragsdatum beim Wiederholungsexport</td></tr>
+<tr><td class="law">§ 222 Abs. 2 ZPO</td><td>Fristende am nächsten Werktag</td></tr>
+<tr><td class="law">§ 689 Abs. 2 ZPO</td><td>zuständiges Mahngericht nach dem Antragsteller</td></tr>
+<tr><td class="law">§ 692 Abs. 1 Nr. 3 ZPO</td><td>Widerspruchsfrist</td></tr>
+<tr><td class="law">§ 696 Abs. 1 ZPO</td><td>Anspruchsbegründung bzw. Abgabe</td></tr>
+<tr><td class="law">§ 699 Abs. 1 ZPO</td><td>Antrag auf Vollstreckungsbescheid</td></tr>
+<tr><td class="law">§§ 700 Abs. 1, 339 Abs. 1 ZPO</td><td>Einspruchsfrist</td></tr>
+<tr><td class="law">§ 701 ZPO</td><td>Wirkungslosigkeit des Mahnbescheids nach sechs Monaten</td></tr>
+<tr><td class="law">§ 703 ZPO</td><td>Versicherung ordnungsgemäßer Bevollmächtigung</td></tr>
+<tr><td class="law">§ 60 Abs. 1 S. 1 RVG</td><td>anzuwendende RVG-Fassung nach dem Beauftragungsdatum</td></tr>
+<tr><td class="law">Nr. 1008 VV RVG</td><td>Erhöhung bei mehreren Auftraggebern</td></tr>
+<tr><td class="law">Nr. 2300/2302 VV RVG</td><td>vorgerichtliche Geschäftsgebühr</td></tr>
+<tr><td class="law">Vorbem. 3 Abs. 4 VV RVG</td><td>Anrechnung auf die Verfahrensgebühr</td></tr>
+<tr><td class="law">Nr. 3305, 3308 VV RVG</td><td>Verfahrensgebühr Mahnbescheid bzw. Vollstreckungsbescheid</td></tr>
+<tr><td class="law">Nr. 7002 VV RVG</td><td>Auslagenpauschale</td></tr>
+<tr><td class="law">§ 34 GKG, Anlage 2</td><td>Wertgebühren der Gerichtskosten</td></tr>
+<tr><td class="law">Nr. 1100 KV GKG</td><td>Gerichtsgebühr des Mahnverfahrens, mindestens 38,00 €</td></tr>
+<tr><td class="law">§ 13b Abs. 1 RDG</td><td>erstattungsfähige Inkassovergütung</td></tr>
+</tbody>
+</table>
+</div>
+
+<footer class="doc">
+  <p>j-lawyer.org &middot; Funktionsbeschreibung Forderungskonto und Mahnverfahren &middot; Stand
+  3. September 2026. Beschrieben ist der Stand des Zweigs
+  <code>feature/add-dunning-and-enforcement</code> nach Abschluss der Phase 3.</p>
+  <p>Die Satzbeschreibungen und die EDA-Konditionen des elektronischen Datenaustauschs sind beim
+  Oberlandesgericht Stuttgart &ndash; IuK-Fachzentrum Justiz veröffentlicht und unter
+  <a href="https://www.mahngerichte.de/publikationen/eda-konditionen/">mahngerichte.de</a> frei
+  abrufbar.</p>
+</footer>
+
+</div>
+</body>
+</html>

@@ -75,6 +75,31 @@
     <class>com.jdimension.jlawyer.persistence.ClaimComponent</class>
     <class>com.jdimension.jlawyer.persistence.InterestRule</class>
     <class>com.jdimension.jlawyer.persistence.BaseInterest</class>
+    <class>com.jdimension.jlawyer.persistence.ClaimLedgerParty</class>
+    <class>com.jdimension.jlawyer.persistence.ClaimLedgerPartyRepresentative</class>
+    <class>com.jdimension.jlawyer.persistence.EnforcementTitle</class>
+    <class>com.jdimension.jlawyer.persistence.EnforcementMeasure</class>
+    <class>com.jdimension.jlawyer.persistence.EnforcementMeasureType</class>
+    <class>com.jdimension.jlawyer.persistence.EnforcementMeasureTypeForm</class>
+    <class>com.jdimension.jlawyer.persistence.EnforcementFormTemplate</class>
+    <class>com.jdimension.jlawyer.persistence.EnforcementFormFieldMapping</class>
+    <class>com.jdimension.jlawyer.persistence.EnforcementThirdPartyDebtor</class>
+    <class>com.jdimension.jlawyer.persistence.EnforcementMeasureDeadline</class>
+    <class>com.jdimension.jlawyer.persistence.EnforcementMeasureDocument</class>
+    <class>com.jdimension.jlawyer.persistence.DunningStage</class>
+    <class>com.jdimension.jlawyer.persistence.DunningStageEvent</class>
+    <class>com.jdimension.jlawyer.persistence.DunningCase</class>
+    <class>com.jdimension.jlawyer.persistence.DunningCaseEvent</class>
+    <class>com.jdimension.jlawyer.persistence.Court</class>
+    <class>com.jdimension.jlawyer.persistence.CourtScope</class>
+    <class>com.jdimension.jlawyer.persistence.DunningCourtRule</class>
+    <class>com.jdimension.jlawyer.persistence.DunningCaseDeadline</class>
+    <class>com.jdimension.jlawyer.persistence.FeeScale</class>
+    <class>com.jdimension.jlawyer.persistence.FeeScaleBracket</class>
+    <class>com.jdimension.jlawyer.persistence.FeeItem</class>
+    <class>com.jdimension.jlawyer.persistence.CaseLink</class>
+    <class>com.jdimension.jlawyer.persistence.ContactRelationType</class>
+    <class>com.jdimension.jlawyer.persistence.ContactRelation</class>
     <exclude-unlisted-classes>true</exclude-unlisted-classes>
     <properties>
       <!-- changed from update to validate to avoid deployment during an update installer run to create columns that will be added by a sql script later in the process -->

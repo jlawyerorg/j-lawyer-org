@@ -16,9 +16,11 @@ import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
+import com.jdimension.jlawyer.services.InvoiceServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.*;
 import java.awt.event.*;
@@ -33,7 +35,7 @@ import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
 /**
- * Modal dialog for global search across cases, addresses and calendar entries.
+ * Modal dialog for global search across cases, addresses, calendar entries and invoices.
  */
 public class GlobalSearchDialog extends JDialog {
 
@@ -45,6 +47,7 @@ public class GlobalSearchDialog extends JDialog {
     private static final String SETTING_FILTER_CALENDAR = "globalsearch.filter.calendar";
     private static final String SETTING_FILTER_ADDRESSES = "globalsearch.filter.addresses";
     private static final String SETTING_FILTER_ARCHIVED = "globalsearch.filter.archived";
+    private static final String SETTING_FILTER_INVOICES = "globalsearch.filter.invoices";
 
     private final JFrame parentFrame;
     private GlassPane glass;
@@ -54,6 +57,7 @@ public class GlobalSearchDialog extends JDialog {
     private JToggleButton btnCalendar;
     private JToggleButton btnAddresses;
     private JToggleButton btnArchivedCases;
+    private JToggleButton btnInvoices;
     private JList<GlobalSearchResultItem> resultList;
     private DefaultListModel<GlobalSearchResultItem> listModel;
     private JLabel lblStatus;
@@ -65,6 +69,7 @@ public class GlobalSearchDialog extends JDialog {
     private List<GlobalSearchResultItem> archivedCaseResults = new ArrayList<>();
     private List<GlobalSearchResultItem> calendarResults = new ArrayList<>();
     private List<GlobalSearchResultItem> addressResults = new ArrayList<>();
+    private List<GlobalSearchResultItem> invoiceResults = new ArrayList<>();
 
     public GlobalSearchDialog(JFrame parent, boolean modal) {
         super(parent, modal);
@@ -109,13 +114,16 @@ public class GlobalSearchDialog extends JDialog {
         btnCalendar = createFilterButton("Kalender", userSettings.getSettingAsBoolean(SETTING_FILTER_CALENDAR, true));
         btnAddresses = createFilterButton("Adressen", userSettings.getSettingAsBoolean(SETTING_FILTER_ADDRESSES, true));
         btnArchivedCases = createFilterButton("Archiviert", userSettings.getSettingAsBoolean(SETTING_FILTER_ARCHIVED, true));
+        btnInvoices = createFilterButton("Belege", userSettings.getSettingAsBoolean(SETTING_FILTER_INVOICES, false));
 
         btnCases.addActionListener(e -> { saveFilterState(SETTING_FILTER_CASES, btnCases.isSelected()); applyFilter(); });
         btnCalendar.addActionListener(e -> { saveFilterState(SETTING_FILTER_CALENDAR, btnCalendar.isSelected()); applyFilter(); });
         btnAddresses.addActionListener(e -> { saveFilterState(SETTING_FILTER_ADDRESSES, btnAddresses.isSelected()); applyFilter(); });
         btnArchivedCases.addActionListener(e -> { saveFilterState(SETTING_FILTER_ARCHIVED, btnArchivedCases.isSelected()); applyFilter(); });
+        btnInvoices.addActionListener(e -> { saveFilterState(SETTING_FILTER_INVOICES, btnInvoices.isSelected()); applyFilter(); });
 
         filterPanel.add(btnCases);
+        filterPanel.add(btnInvoices);
         filterPanel.add(btnCalendar);
         filterPanel.add(btnAddresses);
         filterPanel.add(btnArchivedCases);
@@ -260,6 +268,7 @@ public class GlobalSearchDialog extends JDialog {
         final boolean searchArchived = btnArchivedCases.isSelected();
         final boolean searchAddresses = btnAddresses.isSelected();
         final boolean searchCalendar = btnCalendar.isSelected();
+        final boolean searchInvoices = btnInvoices.isSelected();
 
         SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
             @Override
@@ -272,6 +281,7 @@ public class GlobalSearchDialog extends JDialog {
                     List<GlobalSearchResultItem> archivedCases = new ArrayList<>();
                     List<GlobalSearchResultItem> addresses = new ArrayList<>();
                     List<GlobalSearchResultItem> calendar = new ArrayList<>();
+                    List<GlobalSearchResultItem> invoices = new ArrayList<>();
 
                     String lowerQuery = query.toLowerCase();
                     List<CompletableFuture<Void>> futures = new ArrayList<>();
@@ -357,6 +367,26 @@ public class GlobalSearchDialog extends JDialog {
                         futures.add(calendarFuture);
                     }
 
+                    // Only search invoices if invoice filter is enabled
+                    if (searchInvoices) {
+                        CompletableFuture<Void> invoiceFuture = CompletableFuture.runAsync(() -> {
+                            try {
+                                InvoiceServiceRemote invService = locator.lookupInvoiceServiceRemote();
+                                List<Invoice> result = invService.searchInvoices(query);
+                                if (result != null) {
+                                    for (Invoice inv : result) {
+                                        if (inv.getArchiveFileKey() != null) {
+                                            invoices.add(new GlobalSearchResultItem(inv));
+                                        }
+                                    }
+                                }
+                            } catch (Exception ex) {
+                                log.error("Error searching invoices", ex);
+                            }
+                        });
+                        futures.add(invoiceFuture);
+                    }
+
                     // Wait for all active searches to complete
                     if (!futures.isEmpty()) {
                         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
@@ -383,10 +413,16 @@ public class GlobalSearchDialog extends JDialog {
                             GlobalSearchResultItem::getDisplayText,
                             String.CASE_INSENSITIVE_ORDER));
 
+                    // Invoices: by creation date descending
+                    invoices.sort(Comparator.comparing(
+                            GlobalSearchResultItem::getCreationDate,
+                            Comparator.nullsLast(Comparator.reverseOrder())));
+
                     activeCaseResults = activeCases;
                     archivedCaseResults = archivedCases;
                     calendarResults = calendar;
                     addressResults = addresses;
+                    invoiceResults = invoices;
 
                 } catch (Exception ex) {
                     log.error("Error performing global search", ex);
@@ -409,6 +445,7 @@ public class GlobalSearchDialog extends JDialog {
         archivedCaseResults.clear();
         calendarResults.clear();
         addressResults.clear();
+        invoiceResults.clear();
         listModel.clear();
         lblStatus.setText(" ");
     }
@@ -416,10 +453,16 @@ public class GlobalSearchDialog extends JDialog {
     private void applyFilter() {
         listModel.clear();
 
-        // Add results in order: active cases, calendar, addresses, archived cases
+        // Add results in order: active cases, invoices, calendar, addresses, archived cases
         // Only add if the corresponding filter button is selected
         if (btnCases.isSelected()) {
             for (GlobalSearchResultItem item : activeCaseResults) {
+                listModel.addElement(item);
+            }
+        }
+
+        if (btnInvoices.isSelected()) {
+            for (GlobalSearchResultItem item : invoiceResults) {
                 listModel.addElement(item);
             }
         }
@@ -444,8 +487,8 @@ public class GlobalSearchDialog extends JDialog {
     }
 
     private void updateStatus() {
-        lblStatus.setText(String.format("%d Akten, %d Kalendereinträge, %d Adressen, %d archivierte Akten",
-                activeCaseResults.size(), calendarResults.size(), addressResults.size(), archivedCaseResults.size()));
+        lblStatus.setText(String.format("%d Akten, %d Belege, %d Kalendereinträge, %d Adressen, %d archivierte Akten",
+                activeCaseResults.size(), invoiceResults.size(), calendarResults.size(), addressResults.size(), archivedCaseResults.size()));
     }
 
     /**
@@ -503,6 +546,12 @@ public class GlobalSearchDialog extends JDialog {
                 case CALENDAR:
                     navigateToCase(locator, selected.getId(), bgi);
                     break;
+                case INVOICE:
+                    Object caseEditor = navigateToCase(locator, selected.getId(), bgi);
+                    if (caseEditor instanceof ArchiveFilePanel) {
+                        ((ArchiveFilePanel) caseEditor).selectFinance();
+                    }
+                    break;
                 case ADDRESS:
                     navigateToAddress(locator, selected.getId(), bgi);
                     break;
@@ -515,7 +564,12 @@ public class GlobalSearchDialog extends JDialog {
         }
     }
 
-    private void navigateToCase(JLawyerServiceLocator locator, String caseId, Image bgi) throws Exception {
+    /**
+     * Opens the given case in the main editor pane.
+     *
+     * @return the case editor that was opened, so callers can select a specific tab afterwards
+     */
+    private Object navigateToCase(JLawyerServiceLocator locator, String caseId, Image bgi) throws Exception {
         Object editor;
         if (UserSettings.getInstance().isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
             editor = EditorsRegistry.getInstance().getEditor(EditArchiveFileDetailsPanel.class.getName());
@@ -537,6 +591,8 @@ public class GlobalSearchDialog extends JDialog {
         ((ArchiveFilePanel) editor).setArchiveFileDTO(fullCase);
         ((ArchiveFilePanel) editor).setOpenedFromEditorClass(DesktopPanel.class.getName());
         EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
+
+        return editor;
     }
 
     private void navigateToAddress(JLawyerServiceLocator locator, String addressId, Image bgi) throws Exception {

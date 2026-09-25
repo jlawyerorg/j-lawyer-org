@@ -806,6 +806,15 @@ public class DocumentViewerFactory {
             hp.setPreferredSize(new Dimension(width, height));
             hp.showContent(id, content);
             return hp;
+        } else if (lFileName.endsWith(".eda")) {
+            // the exchange files of the dunning courts: fixed 128-byte records with nothing between
+            // the fields, so a plain text view leaves the reader counting columns
+            EdaPanel edap = new EdaPanel(id, fileName);
+            edap.setSize(new Dimension(width, height));
+            edap.setMaximumSize(new Dimension(width, height));
+            edap.setPreferredSize(new Dimension(width, height));
+            edap.showContent(id, content);
+            return edap;
         } else if (lFileName.endsWith(".xml") && (lFileName.contains("xjustiz"))) {
             XjustizPanel xjp = new XjustizPanel(id, fileName);
             xjp.setSize(new Dimension(width, height));

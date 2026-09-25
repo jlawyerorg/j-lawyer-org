@@ -1,0 +1,363 @@
+# Feldverzeichnis von 20240901_Vollstreckungsauftrag-Gerichtsvollzieher.pdf
+# 350 Felder auf 7 Seiten
+#
+# Spalten: Seite <TAB> Name <TAB> Art <TAB> Werte <TAB> Bezeichnung
+#
+# Die technischen Namen sind nichtssagend - "Textfeld 353". Was ein Feld
+# bedeutet, steht in seinem Tooltip, und der ist hier die letzte Spalte.
+# Ohne ihn waere die Zuordnung reine Sucharbeit am gedruckten Formular.
+#
+# Bei Ankreuzfeldern ist "Werte" der On-State - der Wert, der "angekreuzt"
+# bedeutet. Er steht nirgends ausser in der Datei und laesst sich nicht
+# raten; ein falscher erzeugt ein Formular, das gedruckt richtig aussieht
+# und maschinell leer ist.
+1	Textfeld 1	Text		Name Gerichtsvollzieher oder Bezeichnung Verteilungsstelle des Amtsgerichts
+1	Textfeld 2	Text		ggfls. Fortsetzung Gerichtsvollzieher oder Bezeichnung Verteilungsstelle des Amtsgerichts
+1	Textfeld 3	Text		Postfach oder Straße und Hausnummer
+1	Textfeld 4	Text		Postleitzahl und Ort
+1	Kontrollkästchen 1	Ankreuzfeld	Ja	Herr
+1	Kontrollkästchen 2	Ankreuzfeld	Ja	Frau
+1	Kontrollkästchen 3	Ankreuzfeld	Ja	Unternehmen
+1	Kontrollkästchen 4	Ankreuzfeld	Ja	Sonstige
+1	Kontrollkästchen 5	Ankreuzfeld	Ja	Gläubiger
+1	Kontrollkästchen 6	Ankreuzfeld	Ja	gesetzlicher Vertreter
+1	Kontrollkästchen 7	Ankreuzfeld	Ja	Bevollmächtigter
+1	Kontrollkästchen 157	Ankreuzfeld	Ja	SEPA-Lastschriftmandat
+1	Kontrollkästchen 158	Ankreuzfeld	Ja	Befreiung von Gerichtsvollzieherkosten gemäß
+1	Kontrollkästchen 162	Ankreuzfeld	Ja	Bankverbindung zur Weiterleitung der vom Gerichtsvollzieher vereinnahmten Gelder
+1	Kontrollkästchen 8	Ankreuzfeld	Ja	Gläubiger
+1	Kontrollkästchen 9	Ankreuzfeld	Ja	gesetzlicher Vertreter
+1	Kontrollkästchen 10	Ankreuzfeld	Ja	Bevollmächtigter
+1	Kontrollkästchen 11	Ankreuzfeld	Ja	abweichender Kontoinhaber
+1	Textfeld 7	Text		Sonstige
+1	Textfeld 192	Text		Name/Firma
+1	Textfeld 193	Text		ggf. Vorname(n)
+1	Textfeld 194	Text		Straße
+1	Textfeld 195	Text		Hausnummer
+1	Textfeld 196	Text		Postleitzahl
+1	Textfeld 197	Text		Ort
+1	Textfeld 198	Text		Land (wenn nicht Deutschland)
+1	Textfeld 203	Text		Name/Firma
+1	Textfeld 202	Text		ggf. Vorname(n)
+1	Textfeld 19	Text		Telefon
+1	Textfeld 20	Text		E-Mail
+1	Textfeld 21	Text		Fax
+1	Textfeld 208	Text		SAFE-ID
+1	Textfeld 204	Text		Geschäftszeichen
+1	Textfeld 210	Text		Befreiung von Gerichtsvollzieherkosten gemäß
+1	Textfeld 205	Text		Name
+1	Textfeld 206	Text		IBAN
+1	Textfeld 207	Text		BIC
+1	Textfeld 209	Text		Verwendungszweck
+1	Textfeld 5	Text		Ort
+1	Textfeld 6	Text		Datum
+2	Kontrollkästchen 166	Ankreuzfeld	Ja	Herr
+2	Kontrollkästchen 165	Ankreuzfeld	Ja	Frau
+2	Kontrollkästchen 164	Ankreuzfeld	Ja	Unternehmen
+2	Kontrollkästchen 163	Ankreuzfeld	Ja	Sonstige
+2	Kontrollkästchen 522	Ankreuzfeld	Ja	nicht vorsteuerabzugsberechtigt
+2	Kontrollkästchen 521	Ankreuzfeld	Ja	Gläubiger gemäß Anlage
+2	Textfeld 1169	Text		Ziffer
+2	Textfeld 221	Text		Sonstige
+2	Textfeld 220	Text		Name/Firma
+2	Textfeld 219	Text		ggf. Vorname(n)
+2	Textfeld 218	Text		Straße
+2	Textfeld 217	Text		Hausnummer
+2	Textfeld 216	Text		Postleitzahl
+2	Textfeld 215	Text		Ort
+2	Textfeld 222	Text		Land (wenn nicht Deutschland)
+2	Textfeld 226	Text		Geschäftszeichen
+2	Textfeld 223	Text		Registergericht
+2	Textfeld 227	Text		Registernummer
+2	Kontrollkästchen 2a 4	Ankreuzfeld	Ja	gesetzlicher Vertreter
+2	Kontrollkästchen 3a 4	Ankreuzfeld	Ja	Herr
+2	Kontrollkästchen 4a 4	Ankreuzfeld	Ja	Frau
+2	Kontrollkästchen 5a 4	Ankreuzfeld	Ja	Sonstige
+2	Kontrollkästchen 6a 4	Ankreuzfeld	Ja	gesetzlicher Vertreter
+2	Kontrollkästchen 3a 5	Ankreuzfeld	Ja	Herr
+2	Kontrollkästchen 4a 5	Ankreuzfeld	Ja	Frau
+2	Kontrollkästchen 5a 5	Ankreuzfeld	Ja	Sonstige
+2	Kontrollkästchen 10b 4	Ankreuzfeld	Ja	Betreuer
+2	Kontrollkästchen 11b 4	Ankreuzfeld	Ja	Ausschließlichkeitserklärung
+2	Kontrollkästchen 12b 4	Ankreuzfeld	Ja	Herr
+2	Kontrollkästchen 13b 4	Ankreuzfeld	Ja	Frau
+2	Kontrollkästchen 14b 4	Ankreuzfeld	Ja	Sonstige
+2	Kontrollkästchen 15c 6	Ankreuzfeld	Ja	Firma oder Funktion
+2	Textfeld 28c 6	Text		Firma/Funktion
+2	Kontrollkästchen 16c 6	Ankreuzfeld	Ja	vertreten durch
+2	Textfeld 1a 5	Text		Ziffer
+2	Textfeld 3a 4	Text		Sonstige
+2	Textfeld 4a 4	Text		Name
+2	Textfeld 5a 4	Text		Vorname(n)
+2	Textfeld 6a 4	Text		Straße
+2	Textfeld 7a 4	Text		Hausnummer
+2	Textfeld 8a 4	Text		Postleitzahl
+2	Textfeld 9a 4	Text		Ort
+2	Textfeld 10a 4	Text		Land (wenn nicht Deutschland)
+2	Textfeld 3a 5	Text		Sonstige
+2	Textfeld 4a 5	Text		Name
+2	Textfeld 5a 5	Text		Vorname(n)
+2	Textfeld 15a 4	Text		Straße
+2	Textfeld 16a 5	Text		Hausnummer
+2	Textfeld 17a 5	Text		Postleitzahl
+2	Textfeld 18a 6	Text		Ort
+2	Textfeld 10a 5	Text		Land (wenn nicht Deutschland)
+2	Textfeld 20b 4	Text		Sonstige
+2	Textfeld 21b 4	Text		Firma/Name
+2	Textfeld 22b 4	Text		ggf. Vorname(n)
+2	Textfeld 23b 4	Text		Straße
+2	Textfeld 24b 4	Text		Hausnummer
+2	Textfeld 25b 4	Text		Postleitzahl
+2	Textfeld 26b 4	Text		Ort
+2	Textfeld 27b 4	Text		Land (wenn nicht Deutschland)
+2	Textfeld 29c 6	Text		Funktion
+2	Textfeld 30c 6	Text		Name
+2	Textfeld 31c 6	Text		ggf. Vorname(n)
+3	Kontrollkästchen 170	Ankreuzfeld	Ja	Herr
+3	Kontrollkästchen 169	Ankreuzfeld	Ja	Frau
+3	Kontrollkästchen 168	Ankreuzfeld	Ja	Unternehmen
+3	Kontrollkästchen 167	Ankreuzfeld	Ja	Sonstige
+3	Textfeld 1a 4	Text		Ziffer
+3	Textfeld 230	Text		Sonstige
+3	Textfeld 229	Text		Name/Firma
+3	Textfeld 228	Text		ggf. Vorname(n)
+3	Textfeld 1103	Text		Straße
+3	Textfeld 11016	Text		Hausnummer
+3	Textfeld 1107	Text		Postleitzahl
+3	Textfeld 11017	Text		Ort
+3	Textfeld 1096	Text		Land (wenn nicht Deutschland)
+3	Textfeld 1097	Text		Geschäftszeichen
+3	Kontrollkästchen 174	Ankreuzfeld	Ja	Herr
+3	Kontrollkästchen 173	Ankreuzfeld	Ja	Frau
+3	Kontrollkästchen 172	Ankreuzfeld	Ja	Unternehmen
+3	Kontrollkästchen 171	Ankreuzfeld	Ja	Sonstige
+3	Kontrollkästchen 531	Ankreuzfeld	Ja	Schuldner gemäß Anlage
+3	Textfeld 242	Text		Ziffer
+3	Textfeld 241	Text		Sonstige
+3	Textfeld 240	Text		Name/Firma
+3	Textfeld 239	Text		ggf. Vorname(n)
+3	Textfeld 238	Text		Straße
+3	Textfeld 237	Text		Hausnummer
+3	Textfeld 236	Text		Postleitzahl
+3	Textfeld 244	Text		Ort
+3	Textfeld 260	Text		Land (wenn nicht Deutschland)
+3	Textfeld 246	Text		Geschäftszeichen
+3	Textfeld 247	Text		Geburtsdatum
+3	Textfeld 248	Text		Geburtsort
+3	Textfeld 232	Text		Registergericht
+3	Textfeld 231	Text		Registernummer
+3	Kontrollkästchen 2a 5	Ankreuzfeld	Ja	gesetzlicher Vertreter
+3	Kontrollkästchen 3a 7	Ankreuzfeld	Ja	Herr
+3	Kontrollkästchen 4a 7	Ankreuzfeld	Ja	Frau
+3	Kontrollkästchen 5a 7	Ankreuzfeld	Ja	Sonstige
+3	Kontrollkästchen 6a 5	Ankreuzfeld	Ja	gesetzlicher Vertreter
+3	Kontrollkästchen 3a 6	Ankreuzfeld	Ja	Herr
+3	Kontrollkästchen 4a 6	Ankreuzfeld	Ja	Frau
+3	Kontrollkästchen 5a 6	Ankreuzfeld	Ja	Sonstige
+3	Kontrollkästchen 10b 5	Ankreuzfeld	Ja	Betreuer
+3	Kontrollkästchen 11b 5	Ankreuzfeld	Ja	Ausschließlichkeitserklärung
+3	Kontrollkästchen 12b 5	Ankreuzfeld	Ja	Herr
+3	Kontrollkästchen 13b 5	Ankreuzfeld	Ja	Frau
+3	Kontrollkästchen 14b 5	Ankreuzfeld	Ja	Sonstige
+3	Kontrollkästchen 16c 5	Ankreuzfeld	Ja	vertreten durch
+3	Textfeld 1a 6	Text		Ziffer
+3	Kontrollkästchen 15c 7	Ankreuzfeld	Ja	Firma oder Funktion
+3	Textfeld 28c 5	Text		Firma/Funktion
+3	Textfeld 3a 7	Text		Sonstige
+3	Textfeld 4a 7	Text		Name
+3	Textfeld 5a 7	Text		Vorname(n)
+3	Textfeld 6a 5	Text		Straße
+3	Textfeld 7a 5	Text		Hausnummer
+3	Textfeld 8a 5	Text		Postleitzahl
+3	Textfeld 9a 5	Text		Ort
+3	Textfeld 10a 7	Text		Land (wenn nicht Deutschland)
+3	Textfeld 3a 6	Text		Sonstige
+3	Textfeld 4a 6	Text		Name
+3	Textfeld 5a 6	Text		Vorname(n)
+3	Textfeld 15a 5	Text		Straße
+3	Textfeld 16a 6	Text		Hausnummer
+3	Textfeld 17a 6	Text		Postleitzahl
+3	Textfeld 18a 7	Text		Ort
+3	Textfeld 10a 6	Text		Land (wenn nicht Deutschland)
+3	Textfeld 20b 5	Text		Sonstige
+3	Textfeld 21b 5	Text		Firma/Name
+3	Textfeld 22b 5	Text		ggf. Vorname(n)
+3	Textfeld 23b 5	Text		Straße
+3	Textfeld 24b 5	Text		Hausnummer
+3	Textfeld 25b 5	Text		Postleitzahl
+3	Textfeld 26b 5	Text		Ort
+3	Textfeld 27b 5	Text		Land (wenn nicht Deutschland)
+3	Textfeld 29c 5	Text		Funktion
+3	Textfeld 30c 5	Text		Name
+3	Textfeld 31c 5	Text		ggf. Vorname(n)
+4	Kontrollkästchen 1058	Ankreuzfeld	Ja	Vollstreckungstitel gemäß Anlage
+4	Kontrollkästchen 519	Ankreuzfeld	Ja	Versand Vollstreckungstitel erst nach Mitteilung des Aktenzeichens
+4	Kontrollkästchen 518	Ankreuzfeld	Ja	Versand gleichzeitig mit Vollstreckungstitel
+4	Kontrollkästchen 187	Ankreuzfeld	Ja	Versand als elektronisches Dokument
+4	Textfeld 265	Text		Ziffer
+4	Kontrollkästchen 1063	Ankreuzfeld	Ja	Beschluss
+4	Kontrollkästchen 1064	Ankreuzfeld	Ja	Vollmacht
+4	Kontrollkästchen 1065	Ankreuzfeld	Ja	Geldempfangsvollmacht
+4	Kontrollkästchen 1066	Ankreuzfeld	Ja	Vorpfändungsbenachrichtigung
+4	Kontrollkästchen 1067	Ankreuzfeld	Ja	Aufstellung geleisteter Zahlungen
+4	Kontrollkästchen 1068	Ankreuzfeld	Ja	Aufstellung Inkassokosten
+4	Kontrollkästchen 1069	Ankreuzfeld	Ja	Aufstellung bisherige Vollstreckungskosten
+4	Kontrollkästchen 1070	Ankreuzfeld	Ja	Bescheid nach § 9 Abs. 2 UhVorschG
+4	Kontrollkästchen 1071	Ankreuzfeld	Ja	Negativauskunft des Einwohnermeldeamtes
+4	Kontrollkästchen 1046	Ankreuzfeld	Ja	weitere Anlage
+4	Kontrollkästchen 1047	Ankreuzfeld	Ja	weitere Anlage
+4	Kontrollkästchen 1048	Ankreuzfeld	Ja	weitere Anlage
+4	Textfeld 5013	Text		Bezeichnung der weiteren Anlage
+4	Textfeld 5014	Text		Bezeichnung der weiteren Anlage
+4	Textfeld 5015	Text		Bezeichnung der weiteren Anlage
+4	Kontrollkästchen 430	Ankreuzfeld	Ja	Versicherung gem. § 753a S. 1 ZPO
+4	Kontrollkästchen 429	Ankreuzfeld	Ja	Versicherung gem. § 754a Abs. 1 S. 1 Nr. 4 ZPO
+4	Kontrollkästchen 428	Ankreuzfeld	Ja	Weitere Versicherung
+4	Textfeld 1029	Text		Weitere Versicherung
+4	Kontrollkästchen 186	Ankreuzfeld	Ja	Herr
+4	Kontrollkästchen 185	Ankreuzfeld	Ja	Frau
+4	Kontrollkästchen 184	Ankreuzfeld	Ja	Unternehmen
+4	Kontrollkästchen 183	Ankreuzfeld	Ja	Sonstige
+4	Textfeld 1a 7	Text		Ziffer
+4	Textfeld 259	Text		Sonstige
+4	Textfeld 258	Text		Name/Firma
+4	Textfeld 257	Text		ggf. Vorname(n)
+4	Textfeld 1105	Text		Straße
+4	Textfeld 11015	Text		Hausnummer
+4	Textfeld 1104	Text		Postleitzahl
+4	Textfeld 11014	Text		Ort
+4	Textfeld 1099	Text		Land (wenn nicht Deutschland)
+4	Textfeld 1098	Text		Geschäftszeichen
+4	Kontrollkästchen 1062	Ankreuzfeld	Ja	Zustellungsnachweis
+4	Textfeld 263	Text		Ziffer
+4	Textfeld 5035	Text		Art
+4	Textfeld 5016	Text		Gericht/Notar/Behörde
+4	Textfeld 5030	Text		Datum
+4	Textfeld 5012	Text		Geschäftszeichen
+4	Kontrollkästchen 1072	Ankreuzfeld	Ja	Zustellungsnachweis
+4	Textfeld 264	Text		Ziffer
+4	Textfeld 5039	Text		Art
+4	Textfeld 5017	Text		Gericht/Notar/Behörde
+4	Textfeld 5038	Text		Datum
+4	Textfeld 5010	Text		Geschäftszeichen
+5	Kontrollkästchen 435	Ankreuzfeld	Ja	gütliche Erledigung
+5	Kontrollkästchen 436	Ankreuzfeld	Ja	Zahlungsvereinbarung
+5	Kontrollkästchen 437	Ankreuzfeld	Ja	kein Einverständnis
+5	Kontrollkästchen 439	Ankreuzfeld	Ja	Einverständnis wie folgt
+5	Kontrollkästchen 440	Ankreuzfeld	Ja	Zahlungsfrist
+5	Kontrollkästchen 441	Ankreuzfeld	Ja	Teilbeträge
+5	Kontrollkästchen 442	Ankreuzfeld	Ja	Ratenhöhe
+5	Kontrollkästchen 443	Ankreuzfeld	Ja	monatlicher Turnus
+5	Kontrollkästchen 445	Ankreuzfeld	Ja	sonstiger Turnus
+5	Kontrollkästchen 444	Ankreuzfeld	Ja	nach Ermessen des Gerichtsvollziehers
+5	Kontrollkästchen 446	Ankreuzfeld	Ja	sonstige Weisungen
+5	Textfeld 1131	Text		Zahlungsfrist
+5	Textfeld 11a 4a	Text		Betrag
+5	Textfeld 1132	Text		Turnus
+5	Textfeld 1130	Text		sonstige Weisungen
+5	Kontrollkästchen 447	Ankreuzfeld	Ja	Vermögensauskunft nach § 802c ZPO
+5	Kontrollkästchen 448	Ankreuzfeld	Ja	Weitere Vermögensauskunft nach § 802d ZPO
+5	Kontrollkästchen 453	Ankreuzfeld	Ja	ohne vorherigen Pfändungsversuch
+5	Kontrollkästchen 449	Ankreuzfeld	Ja	nach vorherigen Pfändungsversuch
+5	Kontrollkästchen 450	Ankreuzfeld	Ja	Schuldner wiederholt nicht angetroffen
+5	Kontrollkästchen 451	Ankreuzfeld	Ja	Vermögensauskunft
+5	Kontrollkästchen 454	Ankreuzfeld	Ja	Sonstiges
+5	Kontrollkästchen 452	Ankreuzfeld	Ja	Rücksendung der Vollstreckungsunterlagen
+5	Kontrollkästchen 456	Ankreuzfeld	Ja	auf Mitteilung der Terminsbestimmung wird verzichtet
+5	Kontrollkästchen 457	Ankreuzfeld	Ja	Teilnahme am Termin der Vermögensauskunft
+5	Kontrollkästchen 455	Ankreuzfeld	Ja	Sonstiges
+5	Textfeld 11a 5	Text		Ziffer
+5	Textfeld 1134	Text		Gründe
+5	Textfeld 1135	Text		Glaubhaftmachung
+5	Textfeld 1139	Text		Sonstiges
+5	Textfeld 1137	Text		Sonstiges
+5	Kontrollkästchen 188	Ankreuzfeld	Ja	Antrag auf Erlass eines Haftbefehls
+5	Kontrollkästchen 458	Ankreuzfeld	Ja	den Gläubiger
+5	Kontrollkästchen 189	Ankreuzfeld	Ja	den Bevollmächtigten
+5	Kontrollkästchen 459	Ankreuzfeld	Ja	den zuständigen Gerichtsvollzieher
+5	Textfeld 11a 6	Text		Ziffer
+5	Kontrollkästchen 434	Ankreuzfeld	Ja	sämtlicher beigefügter Vollstreckungstitel
+5	Kontrollkästchen 520	Ankreuzfeld	Ja	bestimmte Vollstreckungstitel
+5	Kontrollkästchen 432	Ankreuzfeld	Ja	der beigefügten Vorpfändungsbenachrichtigung nach § 845 ZPO
+5	Kontrollkästchen 431	Ankreuzfeld	Ja	Sonstiges
+5	Textfeld 11a 3	Text		Ziffer
+5	Textfeld 1030	Text		Sonstiges
+6	Kontrollkästchen 466	Ankreuzfeld	Ja	Sachpfändung
+6	Kontrollkästchen 467	Ankreuzfeld	Ja	einschließlich
+6	Kontrollkästchen 468	Ankreuzfeld	Ja	beschränkt
+6	Kontrollkästchen 469	Ankreuzfeld	Ja	Taschenpfändungen
+6	Kontrollkästchen 470	Ankreuzfeld	Ja	Kassenpfändungen
+6	Kontrollkästchen 477	Ankreuzfeld	Ja	sonstige Pfändungen
+6	Kontrollkästchen 472	Ankreuzfeld	Ja	Pfändung von Wertpapieren
+6	Kontrollkästchen 473	Ankreuzfeld	Ja	keine Fruchtlosigkeitsbescheinigung
+6	Kontrollkästchen 474	Ankreuzfeld	Ja	Vermögensverzeichnis
+6	Kontrollkästchen 476	Ankreuzfeld	Ja	Sonstiges
+6	Textfeld 1033	Text		sonstige Pfändungen
+6	Textfeld 1032	Text		Sonstiges
+6	Kontrollkästchen 479	Ankreuzfeld	Ja	keine zustellungsfähige Anschrift
+6	Kontrollkästchen 480	Ankreuzfeld	Ja	Ermittlung nach § 755 Abs. 1 ZPO
+6	Kontrollkästchen 481	Ankreuzfeld	Ja	Nachfrage bei der Meldebehörde
+6	Kontrollkästchen 482	Ankreuzfeld	Ja	Einsichten in Register
+6	Kontrollkästchen 483	Ankreuzfeld	Ja	Auskunft durch zuständige Behörden
+6	Kontrollkästchen 484	Ankreuzfeld	Ja	Ermittlung nach § 755 Abs. 2 ZPO
+6	Kontrollkästchen 485	Ankreuzfeld	Ja	Ausländerzentralregister
+6	Kontrollkästchen 486	Ankreuzfeld	Ja	Rentenversicherung
+6	Kontrollkästchen 487	Ankreuzfeld	Ja	Rentenversicherung
+6	Kontrollkästchen 488	Ankreuzfeld	Ja	berufsständische Versorgungseinrichtung
+6	Kontrollkästchen 489	Ankreuzfeld	Ja	Kraftfahrt-Bundesamt
+6	Kontrollkästchen 478	Ankreuzfeld	Ja	Sonstiges
+6	Textfeld 11a 8	Text		Ziffer
+6	Textfeld 5021	Text		Bezeichnung
+6	Textfeld 5033A	Text		Postfach
+6	Textfeld 5022	Text		Straße
+6	Textfeld 5025	Text		Hausnummer
+6	Textfeld 5033	Text		Postleitzahl
+6	Textfeld 5034	Text		Ort
+6	Textfeld 1047	Text		Anhaltspunkte
+6	Textfeld 1034	Text		Sonstiges
+6	Textfeld 11a 7	Text		Ziffer
+6	Textfeld 5020	Text		Bezeichnung des Amtsgerichts
+6	Textfeld 5031	Text		Datum des Haftbefehls
+6	Textfeld 5032	Text		Geschäftszeichen des Haftbefehls
+6	Kontrollkästchen 460	Ankreuzfeld	Ja	pfändbare Forderungen
+6	Kontrollkästchen 461	Ankreuzfeld	Ja	mit Ausnahme
+6	Kontrollkästchen 462	Ankreuzfeld	Ja	folgende Forderungen
+6	Textfeld 1142	Text		Beschreibung
+6	Textfeld 1143	Text		Beschreibung
+7	Kontrollkästchen 499	Ankreuzfeld	Ja	weitere Aufträge
+7	Kontrollkästchen 500	Ankreuzfeld	Ja	weitere Aufträge
+7	Textfeld 1038	Text		weitere Aufträge
+7	Textfeld 1039	Text		weitere Aufträge
+7	Kontrollkästchen 501	Ankreuzfeld	Ja	weitere Reihenfolge
+7	Textfeld 1042	Text		Modulbuchstabe
+7	Textfeld 1049	Text		Modulbuchstabe
+7	Textfeld 1050	Text		Modulbuchstabe
+7	Textfeld 1040	Text		weitere Reihenfolge
+7	Kontrollkästchen 502	Ankreuzfeld	Ja	Es wird um Übersendung gebeten
+7	Kontrollkästchen 503	Ankreuzfeld	Ja	des Protokolls
+7	Kontrollkästchen 504	Ankreuzfeld	Ja	des Gesamtprotokolls
+7	Kontrollkästchen 505	Ankreuzfeld	Ja	Weiterleitung
+7	Kontrollkästchen 506	Ankreuzfeld	Ja	Rücksendung
+7	Kontrollkästchen 508	Ankreuzfeld	Ja	weitere Hinweise/Vorgaben
+7	Kontrollkästchen 509	Ankreuzfeld	Ja	weitere Hinweise/Vorgaben
+7	Textfeld 1041	Text		Beschreibung
+7	Textfeld 1045	Text		weitere Hinweise/Vorgaben
+7	Textfeld 1046	Text		weitere Hinweise/Vorgaben
+7	Textfeld 10121	Text		Namen
+7	Kontrollkästchen 490	Ankreuzfeld	Ja	Erhebung bei Rentenversicherung
+7	Kontrollkästchen 491	Ankreuzfeld	Ja	bei Trägern der gesetzlichen Rentenversicherung
+7	Kontrollkästchen 492	Ankreuzfeld	Ja	der nachfolgenden berufsständischen Versorgungseirichtung
+7	Kontrollkästchen 493	Ankreuzfeld	Ja	Ersuchen beim Bundeszentralamt für Steuern
+7	Kontrollkästchen 494	Ankreuzfeld	Ja	Erhebung beim Kraftfahrt-Bundesamt
+7	Kontrollkästchen 496	Ankreuzfeld	Ja	Antrag auf aktuelle Einholung von Auskünften
+7	Kontrollkästchen 498	Ankreuzfeld	Ja	Sonstiges
+7	Textfeld 11a 9	Text		Ziffer
+7	Textfeld 5024	Text		Bezeichnung
+7	Textfeld 5033A 2	Text		Postfach
+7	Textfeld 5023	Text		Straße
+7	Textfeld 5026	Text		Hausnummer
+7	Textfeld 5037	Text		Postleitzahl
+7	Textfeld 5036	Text		Ort
+7	Textfeld 1048	Text		Anhaltspunkte
+7	Textfeld 1036	Text		Antrag auf aktuelle Einholung von Auskünften
+7	Textfeld 1037	Text		Sonstiges

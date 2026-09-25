@@ -1,0 +1,424 @@
+# Feldverzeichnis von 20240901_Entwurf_Pfaendungsbeschluss.pdf
+# 411 Felder auf 9 Seiten
+#
+# Spalten: Seite <TAB> Name <TAB> Art <TAB> Werte <TAB> Bezeichnung
+#
+# Die technischen Namen sind nichtssagend - "Textfeld 353". Was ein Feld
+# bedeutet, steht in seinem Tooltip, und der ist hier die letzte Spalte.
+# Ohne ihn waere die Zuordnung reine Sucharbeit am gedruckten Formular.
+#
+# Bei Ankreuzfeldern ist "Werte" der On-State - der Wert, der "angekreuzt"
+# bedeutet. Er steht nirgends ausser in der Datei und laesst sich nicht
+# raten; ein falscher erzeugt ein Formular, das gedruckt richtig aussieht
+# und maschinell leer ist.
+1	Textfeld 268	Text		Bezeichnung des Amtsgerichts
+1	Textfeld 269	Text		Geschäftszeichen
+1	Kontrollkästchen 144	Ankreuzfeld	Ja	Herr
+1	Kontrollkästchen 143	Ankreuzfeld	Ja	Frau
+1	Kontrollkästchen 142	Ankreuzfeld	Ja	Unternehmen
+1	Kontrollkästchen 141	Ankreuzfeld	Ja	Sonstige
+1	Textfeld 279	Text		Name/Firma
+1	Textfeld 278	Text		ggf. Vorname(n)
+1	Textfeld 277	Text		Straße
+1	Textfeld 276	Text		Hausnummer
+1	Textfeld 275	Text		Postleitzahl
+1	Textfeld 274	Text		Ort
+1	Textfeld 273	Text		Land (wenn nicht Deutschland)
+1	Textfeld 272	Text		Geschäftszeichen
+1	Textfeld 271	Text		Registergericht
+1	Textfeld 270	Text		Registernummer
+1	Kontrollkästchen 140	Ankreuzfeld	Ja	nicht vorsteuerabzugsberechtigt
+1	Kontrollkästchen 139	Ankreuzfeld	Ja	Gläubiger gemäß Anlage
+1	Textfeld 281	Text		Ziffer
+1	Textfeld 280	Text		Sonstige
+1	Kontrollkästchen 2a 9	Ankreuzfeld	Ja	gesetzlicher Vertreter
+1	Kontrollkästchen 10b 7	Ankreuzfeld	Ja	Betreuer
+1	Kontrollkästchen 16c 6	Ankreuzfeld	Ja	vertreten durch
+1	Kontrollkästchen 3a 9	Ankreuzfeld	Ja	Herr
+1	Kontrollkästchen 4a 9	Ankreuzfeld	Ja	Frau
+1	Kontrollkästchen 5a 9	Ankreuzfeld	Ja	Sonstige
+1	Kontrollkästchen 11b 7	Ankreuzfeld	Ja	Ausschließlichkeitserklärung
+1	Kontrollkästchen 12b 8	Ankreuzfeld	Ja	Herr
+1	Kontrollkästchen 13b 8	Ankreuzfeld	Ja	Frau
+1	Kontrollkästchen 14b 8	Ankreuzfeld	Ja	Sonstige
+1	Textfeld 4a 9	Text		Name
+1	Textfeld 5a 9	Text		Vorname(n)
+1	Textfeld 6a 8	Text		Straße
+1	Textfeld 7a 8	Text		Hausnummer
+1	Textfeld 8a 8	Text		Postleitzahl
+1	Textfeld 9a 8	Text		Ort
+1	Textfeld 10a 9	Text		Land (wenn nicht Deutschland)
+1	Textfeld 21b 7	Text		Firma/Name
+1	Textfeld 22b 7	Text		ggf. Vorname(n)
+1	Textfeld 23b 7	Text		Straße
+1	Textfeld 24b 7	Text		Hausnummer
+1	Textfeld 25b 7	Text		Postleitzahl
+1	Textfeld 26b 7	Text		Ort
+1	Textfeld 27b 7	Text		Land (wenn nicht Deutschland)
+1	Kontrollkästchen 6a 6	Ankreuzfeld	Ja	gesetzlicher Vertreter
+1	Kontrollkästchen 7a 6	Ankreuzfeld	Ja	Herr
+1	Kontrollkästchen 8a 6	Ankreuzfeld	Ja	Frau
+1	Kontrollkästchen 9a 6	Ankreuzfeld	Ja	Sonstige
+1	Textfeld 13a 6	Text		Name
+1	Textfeld 14a 6	Text		Vorname(n)
+1	Textfeld 15a 7	Text		Straße
+1	Textfeld 17a 8	Text		Postleitzahl
+1	Textfeld 19a 5	Text		Land (wenn nicht Deutschland)
+1	Textfeld 1a 13	Text		Ziffer
+1	Kontrollkästchen 15c 8	Ankreuzfeld	Ja	Firma oder Funktion
+1	Textfeld 28c 6	Text		Firma/Funktion
+1	Textfeld 29c 6	Text		Funktion
+1	Textfeld 30c 6	Text		Name
+1	Textfeld 31c 6	Text		ggf. Vorname(n)
+1	Textfeld 3a 9	Text		Sonstige
+1	Textfeld 20b 8	Text		Sonstige
+1	Textfeld 12a 6	Text		Sonstige
+1	Textfeld 16a 8	Text		Hausnummer
+1	Textfeld 18a 9	Text		Ort
+2	Kontrollkästchen 427	Ankreuzfeld	Ja	Gläubiger
+2	Kontrollkästchen 426	Ankreuzfeld	Ja	gesetzlicher Vertreter
+2	Kontrollkästchen 425	Ankreuzfeld	Ja	Bevollmächtigter
+2	Kontrollkästchen 424	Ankreuzfeld	Ja	abweichender Kontoinhaber
+2	Textfeld 1113	Text		Name
+2	Textfeld 1110	Text		Verwendungszweck
+2	Textfeld 1112	Text		IBAN
+2	Textfeld 1111	Text		BIC
+2	Kontrollkästchen 148	Ankreuzfeld	Ja	Herr
+2	Kontrollkästchen 147	Ankreuzfeld	Ja	Frau
+2	Kontrollkästchen 146	Ankreuzfeld	Ja	Unternehmen
+2	Kontrollkästchen 145	Ankreuzfeld	Ja	Sonstige
+2	Textfeld 11019	Text		Name/Firma
+2	Textfeld 11018	Text		ggf. Vorname(n)
+2	Textfeld 11017	Text		Straße
+2	Textfeld 10104	Text		Land (wenn nicht Deutschland)
+2	Textfeld 10102	Text		Geschäftszeichen
+2	Textfeld 1a 6	Text		Ziffer
+2	Textfeld 11020	Text		Sonstige
+2	Textfeld 11013	Text		Hausnummer
+2	Textfeld 17a 12	Text		Postleitzahl
+2	Textfeld 18a 14	Text		Ort
+2	Kontrollkästchen 166	Ankreuzfeld	Ja	Herr
+2	Kontrollkästchen 165	Ankreuzfeld	Ja	Frau
+2	Kontrollkästchen 164	Ankreuzfeld	Ja	Unternehmen
+2	Kontrollkästchen 163	Ankreuzfeld	Ja	Sonstige
+2	Kontrollkästchen 154	Ankreuzfeld	Ja	Schuldner gemäß Anlage
+2	Textfeld 307	Text		Ziffer
+2	Textfeld 324	Text		Sonstige
+2	Textfeld 323	Text		Name/Firma
+2	Textfeld 322	Text		ggf. Vorname(n)
+2	Textfeld 321	Text		Straße
+2	Textfeld 320	Text		Hausnummer
+2	Textfeld 319	Text		Postleitzahl
+2	Textfeld 318	Text		Ort
+2	Textfeld 317	Text		Land (wenn nicht Deutschland)
+2	Textfeld 316	Text		Geschäftszeichen
+2	Textfeld 315	Text		Geburtsdatum
+2	Textfeld 314	Text		Geburtsort
+2	Textfeld 313	Text		Registergericht
+2	Textfeld 312	Text		Registernummer
+2	Kontrollkästchen 2a 11	Ankreuzfeld	Ja	gesetzlicher Vertreter
+2	Kontrollkästchen 10b 9	Ankreuzfeld	Ja	Betreuer
+2	Kontrollkästchen 16c 7	Ankreuzfeld	Ja	vertreten durch
+2	Kontrollkästchen 3a 11	Ankreuzfeld	Ja	Herr
+2	Kontrollkästchen 4a 11	Ankreuzfeld	Ja	Frau
+2	Kontrollkästchen 5a 11	Ankreuzfeld	Ja	Sonstige
+2	Kontrollkästchen 11b 9	Ankreuzfeld	Ja	Ausschließlichkeitserklärung
+2	Kontrollkästchen 12b 10	Ankreuzfeld	Ja	Herr
+2	Kontrollkästchen 13b 10	Ankreuzfeld	Ja	Frau
+2	Kontrollkästchen 14b 10	Ankreuzfeld	Ja	Sonstige
+2	Textfeld 4a 11	Text		Name
+2	Textfeld 5a 11	Text		Vorname(n)
+2	Textfeld 6a 10	Text		Straße
+2	Textfeld 7a 10	Text		Hausnummer
+2	Textfeld 8a 10	Text		Postleitzahl
+2	Textfeld 9a 10	Text		Ort
+2	Textfeld 10a 11	Text		Land (wenn nicht Deutschland)
+2	Textfeld 21b 9	Text		Firma/Name
+2	Textfeld 22b 9	Text		ggf. Vorname(n)
+2	Textfeld 23b 9	Text		Straße
+2	Textfeld 24b 9	Text		Hausnummer
+2	Textfeld 25b 9	Text		Postleitzahl
+2	Textfeld 26b 9	Text		Ort
+2	Textfeld 27b 9	Text		Land (wenn nicht Deutschland)
+2	Textfeld 1a 19	Text		Ziffer
+2	Kontrollkästchen 15c 9	Ankreuzfeld	Ja	Firma oder Funktion
+2	Textfeld 28c 7	Text		Firma/Funktion
+2	Textfeld 29c 7	Text		Funktion
+2	Textfeld 30c 7	Text		Name
+2	Textfeld 31c 7	Text		ggf. Vorname(n)
+2	Textfeld 3a 11	Text		Sonstige
+2	Textfeld 20b 10	Text		Sonstige
+3	Kontrollkästchen 6a 8	Ankreuzfeld	Ja	gesetzlicher Vertreter
+3	Kontrollkästchen 7a 8	Ankreuzfeld	Ja	Herr
+3	Kontrollkästchen 8a 8	Ankreuzfeld	Ja	Frau
+3	Kontrollkästchen 9a 8	Ankreuzfeld	Ja	Sonstige
+3	Textfeld 13a 8	Text		Name
+3	Textfeld 14a 8	Text		Vorname(n)
+3	Textfeld 15a 9	Text		Straße
+3	Textfeld 17a 10	Text		Postleitzahl
+3	Textfeld 19a 10	Text		Land (wenn nicht Deutschland)
+3	Textfeld 12a 8	Text		Sonstige
+3	Textfeld 16a 10	Text		Hausnummer
+3	Textfeld 18a 11	Text		Ort
+3	Kontrollkästchen 1034	Ankreuzfeld	Ja	Durchsuchungsbeschluss
+3	Kontrollkästchen 1035	Ankreuzfeld	Ja	und
+3	Kontrollkästchen 1063	Ankreuzfeld	Ja	Kosten für die Zustellung
+3	Kontrollkästchen 162	Ankreuzfeld	Ja	Herr
+3	Kontrollkästchen 161	Ankreuzfeld	Ja	Frau
+3	Kontrollkästchen 160	Ankreuzfeld	Ja	Unternehmen
+3	Kontrollkästchen 159	Ankreuzfeld	Ja	Sonstige
+3	Textfeld 11024	Text		Name/Firma
+3	Textfeld 11023	Text		ggf. Vorname(n)
+3	Textfeld 11022	Text		Straße
+3	Textfeld 10105	Text		Land (wenn nicht Deutschland)
+3	Textfeld 10103	Text		Geschäftszeichen
+3	Textfeld 1a 20	Text		Ziffer
+3	Textfeld 11025	Text		Sonstige
+3	Textfeld 11021	Text		Hausnummer
+3	Textfeld 17a 13	Text		Postleitzahl
+3	Textfeld 18a 15	Text		Ort
+3	Textfeld 5013	Text		Art
+3	Textfeld 5012	Text		Gericht/Notar/Behörde
+3	Textfeld 5011	Text		Datum
+3	Textfeld 5010	Text		Geschäftszeichen
+3	Textfeld 326	Text		Ziffer
+3	Textfeld 5023	Text		Art
+3	Textfeld 5020	Text		Gericht/Notar/Behörde
+3	Textfeld 5019	Text		Datum
+3	Textfeld 5018	Text		Geschäftszeichen
+3	Textfeld 325	Text		Ziffer
+3	Kontrollkästchen 1060	Ankreuzfeld	Ja	Vollstreckungstitel gemäß Anlage
+4	Kontrollkästchen 366	Ankreuzfeld	Ja	Herr
+4	Kontrollkästchen 365	Ankreuzfeld	Ja	Frau
+4	Kontrollkästchen 364	Ankreuzfeld	Ja	Unternehmen
+4	Kontrollkästchen 363	Ankreuzfeld	Ja	Sonstige
+4	Textfeld 948	Text		Name/Firma
+4	Textfeld 947	Text		ggf. Vorname(n)
+4	Textfeld 946	Text		Straße
+4	Textfeld 945	Text		Hausnummer
+4	Textfeld 944	Text		Postleitzahl
+4	Textfeld 943	Text		Ort
+4	Textfeld 942	Text		Land (wenn nicht Deutschland)
+4	Textfeld 941	Text		Registergericht
+4	Textfeld 940	Text		Registernummer
+4	Textfeld 939	Text		Geschäftszeichen
+4	Textfeld 1139	Text		elektronische Zustelladresse/SAFE-ID
+4	Textfeld 950	Text		Ziffer
+4	Textfeld 949	Text		Sonstige
+4	Textfeld 953	Text		Ziffer
+4	Textfeld 1051	Text		Modulbuchstaben
+4	Kontrollkästchen 1084	Ankreuzfeld	Ja	weitere Drittschuldner
+4	Kontrollkästchen 450	Ankreuzfeld	Ja	Herr
+4	Kontrollkästchen 449	Ankreuzfeld	Ja	Frau
+4	Kontrollkästchen 448	Ankreuzfeld	Ja	Unternehmen
+4	Kontrollkästchen 447	Ankreuzfeld	Ja	Sonstige
+4	Textfeld 1151	Text		Name/Firma
+4	Textfeld 1150	Text		ggf. Vorname(n)
+4	Textfeld 1149	Text		Straße
+4	Textfeld 1148	Text		Hausnummer
+4	Textfeld 1147	Text		Postleitzahl
+4	Textfeld 1146	Text		Ort
+4	Textfeld 1145	Text		Land (wenn nicht Deutschland)
+4	Textfeld 1144	Text		Registergericht
+4	Textfeld 1143	Text		Registernummer
+4	Textfeld 1142	Text		Geschäftszeichen
+4	Textfeld 1141	Text		elektronische Zustelladresse/SAFE-ID
+4	Textfeld 1153	Text		Ziffer
+4	Textfeld 1152	Text		Sonstige
+4	Textfeld 1140	Text		Ziffer
+4	Textfeld 1052	Text		Modulbuchstaben
+4	Kontrollkästchen 454	Ankreuzfeld	Ja	Herr
+4	Kontrollkästchen 453	Ankreuzfeld	Ja	Frau
+4	Kontrollkästchen 452	Ankreuzfeld	Ja	Unternehmen
+4	Kontrollkästchen 451	Ankreuzfeld	Ja	Sonstige
+4	Textfeld 1165	Text		Name/Firma
+4	Textfeld 1164	Text		ggf. Vorname(n)
+4	Textfeld 1163	Text		Straße
+4	Textfeld 1162	Text		Hausnummer
+4	Textfeld 1161	Text		Postleitzahl
+4	Textfeld 1160	Text		Ort
+4	Textfeld 1159	Text		Land (wenn nicht Deutschland)
+4	Textfeld 1158	Text		Registergericht
+4	Textfeld 1157	Text		Registernummer
+4	Textfeld 1156	Text		Geschäftszeichen
+4	Textfeld 1155	Text		elektronische Zustelladresse/SAFE-ID
+4	Textfeld 1167	Text		Ziffer
+4	Textfeld 1166	Text		Sonstige
+4	Textfeld 1154	Text		Ziffer
+4	Textfeld 1053	Text		Modulbuchstaben
+5	Kontrollkästchen 1047	Ankreuzfeld	Ja	weitere Forderungen
+5	Textfeld 1006	Text		Jahr
+5	Textfeld 5014	Text		weitere Forderungen
+5	Kontrollkästchen 1075	Ankreuzfeld	Ja	Agentur für Arbeit
+5	Kontrollkästchen 1076	Ankreuzfeld	Ja	Versicherungsträger
+5	Kontrollkästchen 1077	Ankreuzfeld	Ja	Versorgungseinrichtung
+5	Kontrollkästchen 1048	Ankreuzfeld	Ja	Weitere Forderungen
+5	Textfeld 1008	Text		Bezeichnung der Geldleistung
+5	Textfeld 1007	Text		Nummer
+5	Textfeld 5015	Text		Weitere Forderungen
+5	Kontrollkästchen 1078	Ankreuzfeld	Ja	frühere Kalenderjahre
+5	Kontrollkästchen 383	Ankreuzfeld	Ja	Weitere Forderungen
+5	Textfeld 1009	Text		Jahr
+5	Textfeld 1030	Text		Weitere Forderungen
+5	Kontrollkästchen 1079	Ankreuzfeld	Ja	Anspruch auf Zugang
+5	Kontrollkästchen 1080	Ankreuzfeld	Ja	Anspruch auf Herausgabe
+5	Kontrollkästchen 384	Ankreuzfeld	Ja	Weitere Forderungen
+5	Textfeld 1031	Text		Weitere Forderungen
+5	Kontrollkästchen 385	Ankreuzfeld	Ja	Weitere Forderungen
+5	Textfeld 1010	Text		Betrag
+5	Textfeld 1201	Text		Vertragsnummer
+5	Textfeld 1032	Text		Weitere Forderungen
+6	Kontrollkästchen 386	Ankreuzfeld	Ja	Weitere Forderungen
+6	Textfeld 1048	Text		Weitere Forderungen
+6	Kontrollkästchen 174	Ankreuzfeld	Ja	Lohn- und Gehaltsabrechnungen
+6	Kontrollkästchen 173	Ankreuzfeld	Ja	Sparbücher
+6	Kontrollkästchen 172	Ankreuzfeld	Ja	Kontoauszüge
+6	Kontrollkästchen 171	Ankreuzfeld	Ja	Zugang zum Schließfach
+6	Kontrollkästchen 170	Ankreuzfeld	Ja	Wertpapiere
+6	Kontrollkästchen 169	Ankreuzfeld	Ja	Versicherungspolicen
+6	Kontrollkästchen 168	Ankreuzfeld	Ja	Bescheinigung nach § 903 Abs. 1 S. 2 ZPO
+6	Kontrollkästchen 388	Ankreuzfeld	Ja	Weitere Anordnungen
+6	Kontrollkästchen 387	Ankreuzfeld	Ja	Weitere Anordnungen
+6	Textfeld 1a 8	Text		Ziffer
+6	Textfeld 1a 9	Text		Ziffer
+6	Textfeld 1a 10	Text		Ziffer
+6	Textfeld 1a 11	Text		Ziffer
+6	Textfeld 1a 12	Text		Ziffer
+6	Textfeld 1a 14	Text		Ziffer
+6	Textfeld 1a 15	Text		Ziffer
+6	Textfeld 1a 21	Text		Ziffer
+6	Textfeld 1a 16	Text		Ziffer
+6	Textfeld 1a 17	Text		Ziffer
+6	Textfeld 1a 18	Text		Ziffer
+6	Textfeld 1055	Text		Weitere Anordnung
+6	Textfeld 1054	Text		Weitere Anordnung
+6	Textfeld 1056	Text		Weitere Forderungen
+6	Kontrollkästchen 396	Ankreuzfeld	Ja	Überweisung zur Einziehung
+6	Kontrollkästchen 395	Ankreuzfeld	Ja	Überweisung an Zahlugs statt
+7	Textfeld 1071	Text		Name
+7	Textfeld 1070	Text		Vorname(n)
+7	Textfeld 1069	Text		Geburtsdatum
+7	Textfeld 1068	Text		Verwandschaftsverhältnis
+7	Kontrollkästchen 418	Ankreuzfeld	Ja	vollständig
+7	Kontrollkästchen 417	Ankreuzfeld	Ja	teilweise
+7	Kontrollkästchen 416	Ankreuzfeld	Ja	nicht
+7	Textfeld 1067	Text		Name
+7	Textfeld 1066	Text		Vorname(n)
+7	Textfeld 1065	Text		Geburtsdatum
+7	Textfeld 1064	Text		Verwandschaftsverhältnis
+7	Kontrollkästchen 415	Ankreuzfeld	Ja	vollständig
+7	Kontrollkästchen 414	Ankreuzfeld	Ja	teilweise
+7	Kontrollkästchen 413	Ankreuzfeld	Ja	nicht
+7	Textfeld 1063	Text		Name
+7	Textfeld 1062	Text		Vorname(n)
+7	Textfeld 1061	Text		Geburtsdatum
+7	Textfeld 1060	Text		Verwandschaftsverhältnis
+7	Kontrollkästchen 412	Ankreuzfeld	Ja	vollständig
+7	Kontrollkästchen 411	Ankreuzfeld	Ja	teilweise
+7	Kontrollkästchen 410	Ankreuzfeld	Ja	nicht
+7	Textfeld 1059	Text		Angaben zu Unterhaltspflichten
+7	Textfeld 1041	Text		sonstige Angaben
+7	Kontrollkästchen 409	Ankreuzfeld	Ja	erwerbstätig
+7	Kontrollkästchen 408	Ankreuzfeld	Ja	nicht erwerbstätig
+7	Kontrollkästchen 4011	Ankreuzfeld	Ja	ledig
+7	Kontrollkästchen 407	Ankreuzfeld	Ja	mit dem Gläubiger verheiratet
+7	Kontrollkästchen 406	Ankreuzfeld	Ja	mit einem Dritten verheiratet
+7	Kontrollkästchen 405	Ankreuzfeld	Ja	geschieden
+7	Textfeld 1072	Text		Ziffer
+7	Kontrollkästchen 4010	Ankreuzfeld	Ja	Zahlungspflicht nicht absichtlich entzogen
+7	Kontrollkästchen 398	Ankreuzfeld	Ja	Arbeitseinkommen
+7	Textfeld 1034	Text		Betrag
+7	Textfeld 1039	Text		Betrag
+7	Kontrollkästchen 399	Ankreuzfeld	Ja	Geldleistung
+7	Textfeld 1043	Text		Bezeichnung der Geldleistung
+7	Kontrollkästchen 403	Ankreuzfeld	Ja	Arbeitseinkommen Drittschuldner
+7	Kontrollkästchen 404	Ankreuzfeld	Ja	Geldleistung Sozialgesetzbuch
+7	Kontrollkästchen 402	Ankreuzfeld	Ja	Geldleistung
+7	Textfeld 1045	Text		Bezeichnung der Geldleistung
+7	Textfeld 1036	Text		Betrag
+7	Textfeld 1057	Text		Bezeichnung der Geldleistung
+7	Textfeld 1040	Text		Betrag
+7	Textfeld 1037	Text		Ziffer
+7	Textfeld 1038	Text		Ziffer
+7	Textfeld 1049	Text		Ziffer
+7	Textfeld 1047	Text		Ziffer
+7	Textfeld 1042	Text		Ziffer
+7	Textfeld 1046	Text		Ziffer
+7	Textfeld 1044	Text		Ziffer
+7	Textfeld 1050	Text		Ziffer
+7	Textfeld 1058	Text		Ziffer
+8	Kontrollkästchen 1082	Ankreuzfeld	Ja	Rückstände werden fällig
+8	Textfeld 1090	Text		Datum
+8	Textfeld 1305	Text		Betrag
+8	Kontrollkästchen 1083	Ankreuzfeld	Ja	Monatlich belassener Betrag
+8	Textfeld 1306	Text		Betrag
+8	Kontrollkästchen 1086	Ankreuzfeld	Ja	gleichrangige Unterhaltsansprüche
+8	Textfeld 1301	Text		Zahl
+8	Textfeld 1089	Text		Zahl
+8	Kontrollkästchen 1085	Ankreuzfeld	Ja	Arbeitseinkommen
+8	Textfeld 1088	Text		sonstige Anordnungen
+8	Textfeld 1073	Text		Gründe
+8	Kontrollkästchen 1081	Ankreuzfeld	Ja	Pfändbarkeit wird angeordnet
+8	Textfeld 309	Text		Ziffer
+8	Textfeld 1087	Text		Ziffer
+8	Textfeld 1086	Text		Name
+8	Textfeld 1085	Text		Vorname(n)
+8	Textfeld 1077f	Text		Art und Höhe des Einkommens
+8	Textfeld 1084	Text		Name
+8	Textfeld 1083	Text		Vorname(n)
+8	Textfeld 1082	Text		Geburtsdatum
+8	Textfeld 1076a	Text		Art und Höhe des Einkommens
+8	Textfeld 1081	Text		Name
+8	Textfeld 1080	Text		Vorname(n)
+8	Textfeld 1079	Text		Geburtsdatum
+8	Textfeld 1077v	Text		Art und Höhe des Einkommens
+8	Textfeld 1078	Text		Name
+8	Textfeld 1077s	Text		Vorname(n)
+8	Textfeld 1076o	Text		Geburtsdatum
+8	Textfeld 1078h	Text		Art und Höhe des Einkommens
+8	Kontrollkästchen 420	Ankreuzfeld	Ja	Weitere Angaben
+8	Textfeld 1074	Text		Weitere Angaben
+9	Kontrollkästchen 1092	Ankreuzfeld	Ja	Arbeitseinkommen
+9	Kontrollkästchen 1090	Ankreuzfeld	Ja	Guthaben auf P-Konto
+9	Textfeld 13017	Text		Betrag
+9	Kontrollkästchen 1089	Ankreuzfeld	Ja	Unterhaltspflichten
+9	Textfeld 13018	Text		Betrag
+9	Textfeld 10100	Text		Beschreibung
+9	Kontrollkästchen 1093	Ankreuzfeld	Ja	Pfändbarkeit wird angeordnet
+9	Textfeld 3011	Text		Ziffer
+9	Textfeld 10101	Text		Beschreibung
+9	Kontrollkästchen 1094	Ankreuzfeld	Ja	ausgefertigt
+9	Kontrollkästchen 1095	Ankreuzfeld	Ja	beglaubigt
+9	Textfeld 5021	Text		Datum
+9	Textfeld 5016	Text		Name Rechtspflegerin/Rechtspfleger
+9	Textfeld 5022	Text		Datum
+9	Textfeld 5020a 2	Text		Name Urkundsbeamtin/Urkundsbeamter
+9	Kontrollkästchen 1088	Ankreuzfeld	Ja	(teilweise) Nichtberücksichtigung
+9	Textfeld 3010	Text		Ziffer
+9	Kontrollkästchen 423	Ankreuzfeld	Ja	Arbeitseinkommen
+9	Kontrollkästchen 422	Ankreuzfeld	Ja	Guthaben auf P-Konto
+9	Textfeld 1100	Text		Name
+9	Textfeld 1099	Text		Vorname(n)
+9	Textfeld 13015	Text		Geburtsdatum
+9	Kontrollkästchen 421	Ankreuzfeld	Ja	ganz
+9	Kontrollkästchen 601	Ankreuzfeld	Ja	in Höhe von Euro
+9	Textfeld 13014	Text		Betrag
+9	Kontrollkästchen 602	Ankreuzfeld	Ja	in Höhe von Prozent
+9	Textfeld 13011	Text		Name
+9	Textfeld 13010	Text		Vorname(n)
+9	Textfeld 1309	Text		Geburtsdatum
+9	Kontrollkästchen 603	Ankreuzfeld	Ja	ganz
+9	Kontrollkästchen 604	Ankreuzfeld	Ja	in Höhe von Euro
+9	Textfeld 13012	Text		Betrag
+9	Kontrollkästchen 605	Ankreuzfeld	Ja	in Höhe von Prozent
+9	Textfeld 1308	Text		Name
+9	Textfeld 1307	Text		Vorname(n)
+9	Textfeld 1304	Text		Geburtsdatum
+9	Kontrollkästchen 606	Ankreuzfeld	Ja	ganz
+9	Kontrollkästchen 607	Ankreuzfeld	Ja	in Höhe von Euro
+9	Textfeld 13013	Text		Betrag
+9	Kontrollkästchen 608	Ankreuzfeld	Ja	in Höhe von Prozent
+9	Textfeld 1091	Text		Gründe
+9	Textfeld 1094	Text		Zahl
+9	Textfeld 1093	Text		Zahl
+9	Textfeld 1092	Text		Zahl

@@ -1,0 +1,97 @@
+# Feldverzeichnis von 20240901_Antrag_Pfaendungsbeschluss.pdf
+# 84 Felder auf 2 Seiten
+#
+# Spalten: Seite <TAB> Name <TAB> Art <TAB> Werte <TAB> Bezeichnung
+#
+# Die technischen Namen sind nichtssagend - "Textfeld 353". Was ein Feld
+# bedeutet, steht in seinem Tooltip, und der ist hier die letzte Spalte.
+# Ohne ihn waere die Zuordnung reine Sucharbeit am gedruckten Formular.
+#
+# Bei Ankreuzfeldern ist "Werte" der On-State - der Wert, der "angekreuzt"
+# bedeutet. Er steht nirgends ausser in der Datei und laesst sich nicht
+# raten; ein falscher erzeugt ein Formular, das gedruckt richtig aussieht
+# und maschinell leer ist.
+1	Textfeld 353	Text		Bezeichnung des Amtsgerichts
+1	Textfeld 354	Text		Straße und Hausnummer oder gegebenenfalls Postfach
+1	Textfeld 518	Text		Postleitzahl Ort
+1	Kontrollkästchen 3036	Ankreuzfeld	Ja	elektronische Kostenmarke
+1	Kontrollkästchen 3050	Ankreuzfeld	Ja	SEPA-Lastschriftmandat
+1	Kontrollkästchen 3051	Ankreuzfeld	Ja	Rechtsgrundlage für Gerichtskostenbefreiung
+1	Textfeld 836	Text		Nummer
+1	Textfeld 837	Text		Wert
+1	Textfeld 838	Text		Datum
+1	Textfeld 42	Text		Rechtsgrundlage für Gerichtskostenbefreiung
+1	Textfeld 355	Text		Ort
+1	Textfeld 356	Text		Datum
+1	Kontrollkästchen 367	Ankreuzfeld	Ja	Herr
+1	Kontrollkästchen 366	Ankreuzfeld	Ja	Frau
+1	Kontrollkästchen 365	Ankreuzfeld	Ja	Unternehmen
+1	Kontrollkästchen 364	Ankreuzfeld	Ja	Sonstige
+1	Textfeld 352	Text		Name/Firma
+1	Textfeld 351	Text		ggf. Vorname(n)
+1	Textfeld 350	Text		Straße
+1	Textfeld 349	Text		Hausnummer
+1	Textfeld 348	Text		Postleitzahl
+1	Textfeld 347	Text		Ort
+1	Textfeld 346	Text		Land (wenn nicht Deutschland)
+1	Kontrollkästchen 3035	Ankreuzfeld	Ja	Vorpfändung
+1	Kontrollkästchen 333	Ankreuzfeld	Ja	Gläubiger
+1	Kontrollkästchen 332	Ankreuzfeld	Ja	gesetzlicher Vertreter
+1	Kontrollkästchen 331	Ankreuzfeld	Ja	Bevollmächtigter
+1	Textfeld 846	Text		Name/Firma
+1	Textfeld 845	Text		ggf. Vorname(n)
+1	Textfeld 839	Text		Geschäftszeichen
+1	Kontrollkästchen 3040	Ankreuzfeld	Ja	Ausfertigung des Beschlusses
+1	Kontrollkästchen 3041	Ankreuzfeld	Ja	Vermittlung der Zustellung
+1	Kontrollkästchen 3042	Ankreuzfeld	Ja	Drittschuldnererklärung
+1	Kontrollkästchen 3043	Ankreuzfeld	Ja	Prozesskostenhilfe
+1	Textfeld 854	Text		Sonstige
+1	Textfeld 842	Text		Telefon
+1	Textfeld 841	Text		E-Mail
+1	Textfeld 840	Text		Fax
+1	Textfeld 209	Text		SAFE-ID
+1	Textfeld 1a 2	Text		Ziffer
+2	Kontrollkästchen 3044	Ankreuzfeld	Ja	Beiordnung Rechtsanwalt
+2	Kontrollkästchen 3045	Ankreuzfeld	Ja	Schuldnerseite wird rechtsanwaltlich vertreten
+2	Kontrollkästchen 3046	Ankreuzfeld	Ja	Vertretung durch Rechtsanwalt erforderlich
+2	Kontrollkästchen 3047	Ankreuzfeld	Ja	folgender Rechtsanwalt wird gewählt
+2	Kontrollkästchen 3038	Ankreuzfeld	Ja	Herr
+2	Kontrollkästchen 3037	Ankreuzfeld	Ja	Frau
+2	Kontrollkästchen 3039	Ankreuzfeld	Ja	Unternehmen
+2	Kontrollkästchen 368	Ankreuzfeld	Ja	Sonstige
+2	Textfeld 5024	Text		Name/Firma
+2	Textfeld 5025	Text		ggf. Vorname(n)
+2	Textfeld 5023	Text		Straße
+2	Textfeld 5024a	Text		Hausnummer
+2	Textfeld 5026	Text		Postleitzahl
+2	Textfeld 5027	Text		Ort
+2	Kontrollkästchen 334	Ankreuzfeld	Ja	Weiterer Antrag
+2	Textfeld 853	Text		Anzahl
+2	Kontrollkästchen 46	Ankreuzfeld	Ja	Versand Vollstreckungstitel erst nach Mitteilung des Aktenzeichens
+2	Kontrollkästchen 45	Ankreuzfeld	Ja	Versand gleichzeitig mit Vollstreckungstitel
+2	Kontrollkästchen 44	Ankreuzfeld	Ja	Versand als elektronisches Dokument
+2	Kontrollkästchen 1075	Ankreuzfeld	Ja	Gerichtskostenstemper
+2	Kontrollkästchen 1078	Ankreuzfeld	Ja	elektronische Kostenmarke
+2	Kontrollkästchen 1079	Ankreuzfeld	Ja	Prozesskostenhilfebeschluss
+2	Kontrollkästchen 1080	Ankreuzfeld	Ja	Erklärung über die persönlichen und wirtschaftlichen Verhältnisse
+2	Kontrollkästchen 1065	Ankreuzfeld	Ja	Vollmacht
+2	Kontrollkästchen 1076	Ankreuzfeld	Ja	Geldempfangsvollmacht
+2	Kontrollkästchen 1072	Ankreuzfeld	Ja	Belege über persönliche und wirtschaftliche Verhältnisse
+2	Kontrollkästchen 1074	Ankreuzfeld	Ja	Aufstellung geleisteter Zahlungen
+2	Kontrollkästchen 1073	Ankreuzfeld	Ja	Aufstellung Inkassokosten
+2	Kontrollkästchen 1070	Ankreuzfeld	Ja	Aufstellung bisherige Vollstreckungskosten
+2	Kontrollkästchen 1071	Ankreuzfeld	Ja	Bescheid nach § 9 Abs. 2 UhVorschG
+2	Kontrollkästchen 1047	Ankreuzfeld	Ja	weitere Anlage
+2	Kontrollkästchen 1048	Ankreuzfeld	Ja	weitere Anlage
+2	Kontrollkästchen 1058	Ankreuzfeld	Ja	weitere Anlage
+2	Kontrollkästchen 363	Ankreuzfeld	Ja	Versicherung gem. § 753a S. 1 ZPO
+2	Kontrollkästchen 362	Ankreuzfeld	Ja	Versicherung gem. § 829a Abs. 1 S. 1 Nr. 4 ZPO
+2	Kontrollkästchen 361	Ankreuzfeld	Ja	Weitere Versicherung
+2	Textfeld 1036	Text		Gründe für die Beiordnung
+2	Textfeld 855	Text		Sonstige
+2	Textfeld 1035	Text		Weiterer Antrag
+2	Textfeld 5021	Text		Bezeichnung der weiteren Anlage
+2	Textfeld 5020	Text		Bezeichnung der weiteren Anlage
+2	Textfeld 5019	Text		Bezeichnung der weiteren Anlage
+2	Textfeld 1030	Text		Weitere Versicherung
+2	Textfeld 364	Text		Namen

@@ -739,4 +739,14 @@ public interface AddressServiceLocal {
 
     void runFullAddressBookSync();
 
+    List<ContactRelationDTO> getRelations(String contactId) throws Exception;
+
+    ContactRelationDTO addRelation(String fromContactId, String toContactId, String typeId, String note) throws Exception;
+
+    void updateRelationNote(String relationId, String note) throws Exception;
+
+    void removeRelation(String relationId) throws Exception;
+
+    Map<String, Integer> getRelationCounts(List<String> contactIds);
+
 }
