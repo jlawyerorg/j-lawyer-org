@@ -790,7 +790,7 @@ public class DocumentViewerFactory {
                 spp.showStatus("FEHLER: " + ex.getMessage());
             }
             return spp;
-        } else if (lFileName.endsWith(".mp3") || lFileName.endsWith(".ogg")) {
+        } else if (lFileName.endsWith(".mp3") || lFileName.endsWith(".ogg") || lFileName.endsWith(".aac") || lFileName.endsWith(".m4a")) {
             ReadOnlySoundplayerPanel rsp = new ReadOnlySoundplayerPanel(id, fileName, caseDto);
             rsp.setSize(new Dimension(width, height));
             rsp.setMaximumSize(new Dimension(width, height));

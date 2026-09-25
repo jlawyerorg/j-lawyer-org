@@ -557,6 +557,14 @@
             <artifactId>tritonus-all</artifactId>
             <version>0.3.7.2</version>
         </dependency>
+        <!-- AAC-Decoder (pure Java, LC-AAC in .aac/ADTS und im MP4-Container .m4a).
+             Registriert einen javax.sound.sampled AudioFileReader-SPI, sodass
+             AudioSystem.getAudioInputStream(...) AAC transparent liefert. -->
+        <dependency>
+            <groupId>de.sfuhrm</groupId>
+            <artifactId>jaad</artifactId>
+            <version>0.8.7</version>
+        </dependency>
     </dependencies>
 
     <build>
