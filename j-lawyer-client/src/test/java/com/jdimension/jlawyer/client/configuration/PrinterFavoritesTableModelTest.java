@@ -661,399 +661,141 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.launcher;
+package com.jdimension.jlawyer.client.configuration;
 
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.print.PrinterServiceRegistry;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.utils.FileUtils;
-import com.jdimension.jlawyer.client.utils.SystemUtils;
-import com.jdimension.jlawyer.documents.FileTypes;
-import java.awt.Window;
-import java.awt.print.PrinterJob;
-import java.io.File;
-import java.util.ArrayList;
+import com.jdimension.jlawyer.client.print.PrinterFavorite;
+import com.jdimension.jlawyer.client.print.PrinterSnapshot;
 import java.util.Arrays;
-import java.util.List;
-import javax.print.PrintService;
-import javax.print.PrintServiceLookup;
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
-import org.apache.log4j.Logger;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.printing.PDFPageable;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
-/**
- *
- * @author jens
- */
-public class LauncherFactory implements FileTypes {
+public class PrinterFavoritesTableModelTest {
 
-    private static final Logger log = Logger.getLogger(LauncherFactory.class.getName());
+    @Test
+    public void testUnavailableFavoriteCanOnlyBeRemoved() {
+        PrinterFavoritesTableModel model = new PrinterFavoritesTableModel(
+                snapshot("Office"), Arrays.asList(new PrinterFavorite("Missing", "Unterwegs")));
+        int missingRow = findRow(model, "Missing");
 
-    public static Launcher getMicrosoftOfficeLauncher(String fileName, byte[] content, ObservedDocumentStore store) throws Exception {
-        String url = createTempFile(fileName, content, store.isReadOnly());
+        assertFalse(model.isAvailable(missingRow));
+        assertTrue(model.isCellEditable(missingRow, 0));
+        assertFalse(model.isCellEditable(missingRow, 2));
 
-        if (SystemUtils.isWindows()) {
-            log.debug(new java.util.Date().toString() + " launching Microsoft Office on Windows");
-            WindowsMicrosoftOfficeLauncher wl = new WindowsMicrosoftOfficeLauncher(url, store);
-            return wl;
-        } else if (SystemUtils.isMacOs()) {
-            log.debug(new java.util.Date().toString() + " launching Microsoft Office on macOS");
-            MacMicrosoftOfficeLauncher ml = new MacMicrosoftOfficeLauncher(url, store);
-            return ml;
-        } else {
-            throw new Exception("Microsoft Office Launcher ist nur auf Microsoft Windows verfügbar!");
-        }
-
+        model.setValueAt(false, missingRow, 0);
+        assertTrue(model.getSelectedFavorites().isEmpty());
+        assertTrue(model.isCellEditable(missingRow, 0));
     }
 
-    public static Launcher getLibreOfficeLauncher(String fileName, byte[] content, ObservedDocumentStore store) throws Exception {
-        String url = createTempFile(fileName, content, store.isReadOnly());
+    @Test
+    public void testRefreshPreservesUnsavedSelectionAndLabel() {
+        PrinterFavoritesTableModel model = new PrinterFavoritesTableModel(
+                snapshot("Office"), Collections.emptyList());
+        int officeRow = findRow(model, "Office");
+        model.setValueAt(true, officeRow, 0);
+        model.setValueAt("Büro", officeRow, 2);
 
-        if (SystemUtils.isWindows()) {
-            log.debug(new java.util.Date().toString() + " launching LO on Windows");
-            WindowsOfficeLauncher wl = new WindowsOfficeLauncher(url, store);
-            return wl;
-        } else if (SystemUtils.isLinux()) {
-            log.debug(new java.util.Date().toString() + " launching LO on Linux");
-            LinuxOfficeLauncher ll = new LinuxOfficeLauncher(url, store);
-            return ll;
-        } else if (SystemUtils.isMacOs()) {
-            log.debug(new java.util.Date().toString() + " launching LO on Mac");
-            MacOfficeLauncher ml = new MacOfficeLauncher(url, store);
-            return ml;
-        } else {
-            throw new Exception("Libre Office Launcher ist auf diesem System nicht verfügbar");
-        }
+        model.updateSnapshot(snapshot("Office", "Fax"));
 
+        assertEquals(1, model.getSelectedFavorites().size());
+        assertEquals("Office", model.getSelectedFavorites().get(0).getPrinterName());
+        assertEquals("Büro", model.getSelectedFavorites().get(0).getDisplayLabel());
     }
 
-    public static Launcher getLauncher(String fileName, byte[] content, ObservedDocumentStore store, Window parent) throws Exception {
-        return getLauncher(fileName, content, store, null, parent);
+    @Test
+    public void testRefreshKeepsDraftLabelWhenPrinterIsDeselected() {
+        PrinterFavoritesTableModel model = new PrinterFavoritesTableModel(
+                snapshot("Office"), Collections.emptyList());
+        int officeRow = findRow(model, "Office");
+        model.setValueAt(true, officeRow, 0);
+        model.setValueAt("Büro", officeRow, 2);
+        model.setValueAt(false, officeRow, 0);
+
+        model.updateSnapshot(snapshot("Office", "Fax"));
+
+        officeRow = findRow(model, "Office");
+        assertFalse((Boolean) model.getValueAt(officeRow, 0));
+        assertEquals("Büro", model.getValueAt(officeRow, 2));
+        assertTrue(model.getSelectedFavorites().isEmpty());
+
+        model.setValueAt(true, officeRow, 0);
+        assertEquals("Büro", model.getSelectedFavorites().get(0).getDisplayLabel());
     }
 
-    public static Launcher getLauncher(String fileName, byte[] content, ObservedDocumentStore store, String customLauncherName, Window parent) throws Exception {
-        String url = createTempFile(fileName, content, store.isReadOnly());
+    @Test
+    public void testUnselectedLabelSurvivesSavingAndReopeningDialog() {
+        PrinterFavoritesTableModel first = new PrinterFavoritesTableModel(
+                snapshot("Office"), Collections.emptyList());
+        int officeRow = findRow(first, "Office");
+        first.setValueAt(true, officeRow, 0);
+        first.setValueAt("Büro", officeRow, 2);
+        first.setValueAt(false, officeRow, 0);
 
-        ClientSettings set = ClientSettings.getInstance();
-        String wordProcessor = set.getConfiguration(ClientSettings.CONF_APPS_WORDPROCESSOR_KEY, ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_LO);
-        boolean wordProcessorMicrosoft = ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_MSO.equalsIgnoreCase(wordProcessor);
+        assertTrue(first.getSelectedFavorites().isEmpty());
+        Map<String, String> labels = first.getUnselectedLabels();
+        assertEquals("Büro", labels.get("Office"));
 
-        // first check for internal launchers
-        String lowerFileName = fileName.toLowerCase();
+        PrinterFavoritesTableModel reopened = new PrinterFavoritesTableModel(
+                snapshot("Office"), Collections.emptyList(), labels);
+        officeRow = findRow(reopened, "Office");
+        assertFalse((Boolean) reopened.getValueAt(officeRow, 0));
+        assertEquals("Büro", reopened.getValueAt(officeRow, 2));
 
-        if (lowerFileName.endsWith("xjustiz_nachricht.xml")) {
-            XjustizLauncher xjl = new XjustizLauncher(url, store, parent);
-            xjl.setContent(new String(content));
-            return xjl;
-        }
-
-        if (lowerFileName.endsWith(".eml") && !(store.getDocumentIdentifier().startsWith("externalmaillaunch-"))) {
-
-            String extension = FileUtils.getExtension(lowerFileName);
-            if (CustomLauncher.hasDefaultCustomLauncher(extension)) {
-                return new CustomLauncher(url, store);
-            }
-
-            return new EMLInternalLauncher(url, store, parent);
-        }
-
-        if (lowerFileName.endsWith(".msg") && !(store.getDocumentIdentifier().startsWith("externalmaillaunch-"))) {
-
-            String extension = FileUtils.getExtension(lowerFileName);
-            if (CustomLauncher.hasDefaultCustomLauncher(extension)) {
-                return new CustomLauncher(url, store);
-            }
-
-            return new OutlookMsgInternalLauncher(url, store, parent);
-        }
-
-        if (lowerFileName.endsWith(".bea")) {
-            return new BEAInternalLauncher(url, store, parent);
-        }
-
-        // then for forced custom launchers
-        if (customLauncherName != null) {
-            return new CustomLauncher(url, store, customLauncherName);
-        }
-
-        // then for custom launchers marked as default
-        String extension = FileUtils.getExtension(lowerFileName);
-        if (CustomLauncher.hasDefaultCustomLauncher(extension)) {
-            return new CustomLauncher(url, store);
-        }
-
-        // first check if MS Office is requested
-        if (wordProcessorMicrosoft && supportedByMicrosoftOffice(url) && (SystemUtils.isWindows() || SystemUtils.isMacOs())) {
-            if (SystemUtils.isWindows()) {
-                log.debug(new java.util.Date().toString() + " launching Microsoft Office on Windows");
-                WindowsMicrosoftOfficeLauncher wl = new WindowsMicrosoftOfficeLauncher(url, store);
-                return wl;
-            } else if (SystemUtils.isMacOs()) {
-                log.debug(new java.util.Date().toString() + " launching Microsoft Office on macOS");
-                MacMicrosoftOfficeLauncher ml = new MacMicrosoftOfficeLauncher(url, store);
-                return ml;
-            }
-        }
-
-        // then use LibreOffice launcher
-        if (supportedByLibreOffice(url)) {
-
-            if (SystemUtils.isWindows()) {
-                log.debug(new java.util.Date().toString() + " launching LO on Windows");
-                WindowsOfficeLauncher wl = new WindowsOfficeLauncher(url, store);
-                return wl;
-            } else if (SystemUtils.isLinux()) {
-                log.debug(new java.util.Date().toString() + " launching LO on Linux");
-                LinuxOfficeLauncher ll = new LinuxOfficeLauncher(url, store);
-                return ll;
-            } else if (SystemUtils.isMacOs()) {
-                log.debug(new java.util.Date().toString() + " launching LO on Mac");
-                MacOfficeLauncher ml = new MacOfficeLauncher(url, store);
-                return ml;
-            }
-
-        }
-
-        // if all fails, use Desktop API
-        if (SystemUtils.isWindows()) {
-            return new WindowsNativeLauncher(url, store);
-        } else if (SystemUtils.isLinux()) {
-            return new LinuxNativeLauncher(url, store);
-        } else if (SystemUtils.isMacOs()) {
-            return new MacNativeLauncher(url, store);
-        } else {
-            return new NativeLauncher(url, store);
-        }
-
+        reopened.setValueAt(true, officeRow, 0);
+        assertEquals("Büro", reopened.getSelectedFavorites().get(0).getDisplayLabel());
+        assertFalse(reopened.getUnselectedLabels().containsKey("Office"));
     }
 
-    public static void cleanupTempDocuments() {
-        FileUtils.cleanupTempFilesWithRetentionTime();
+    @Test
+    public void testUnselectedLabelSurvivesTemporaryPrinterAbsence() {
+        Map<String, String> labels = new LinkedHashMap<>();
+        labels.put("Office", "Büro");
+        PrinterFavoritesTableModel model = new PrinterFavoritesTableModel(
+                snapshot(), Collections.emptyList(), labels);
+
+        model.updateSnapshot(snapshot("Office"));
+
+        int officeRow = findRow(model, "Office");
+        assertFalse((Boolean) model.getValueAt(officeRow, 0));
+        assertEquals("Büro", model.getValueAt(officeRow, 2));
+        assertEquals("Büro", model.getUnselectedLabels().get("Office"));
     }
 
-    private static String createTempFile(String fileName, byte[] content, boolean readOnly) throws Exception {
-        return FileUtils.createTempFile(fileName, content, readOnly, false, 7l);
+    @Test
+    public void testSelectOnlyKeepsClickedFavoriteAndClearsAllOthers() {
+        PrinterFavoritesTableModel model = new PrinterFavoritesTableModel(
+                snapshot("Office", "Fax", "Archive"), Collections.emptyList());
+        int officeRow = findRow(model, "Office");
+        int faxRow = findRow(model, "Fax");
+        int archiveRow = findRow(model, "Archive");
+        model.setValueAt(true, officeRow, 0);
+        model.setValueAt(true, faxRow, 0);
+        model.setValueAt(true, archiveRow, 0);
+
+        model.selectOnly(faxRow);
+
+        assertFalse((Boolean) model.getValueAt(officeRow, 0));
+        assertTrue((Boolean) model.getValueAt(faxRow, 0));
+        assertFalse((Boolean) model.getValueAt(archiveRow, 0));
+        assertEquals(1, model.getSelectedFavorites().size());
+        assertEquals("Fax", model.getSelectedFavorites().get(0).getPrinterName());
     }
 
-    public static boolean isMicrosoftOfficeSupported() {
-        if (SystemUtils.isWindows() || SystemUtils.isMacOs()) {
-            return true;
-        }
-        return false;
-    }
-
-    public static boolean supportedByLibreOffice(String url) {
-        String lcaseUrl = url.toLowerCase();
-        for (String ext : LO_OFFICEFILETYPES) {
-            if (lcaseUrl.endsWith(ext)) {
-                return true;
+    private static int findRow(PrinterFavoritesTableModel model, String printerName) {
+        for (int row = 0; row < model.getRowCount(); row++) {
+            if (printerName.equals(model.getValueAt(row, 1))) {
+                return row;
             }
         }
-        return false;
+        throw new AssertionError("Printer row not found: " + printerName);
     }
 
-    public static boolean supportedByMicrosoftOffice(String url) {
-        return (supportedByMicrosoftOfficeWord(url) || supportedByMicrosoftOfficeExcel(url) || supportedByMicrosoftOfficePowerPoint(url));
+    private static PrinterSnapshot snapshot(String... printerNames) {
+        return new PrinterSnapshot(Arrays.asList(printerNames),
+                printerNames.length == 0 ? null : printerNames[0], 1L);
     }
-
-    public static boolean supportedByMicrosoftOfficeWord(String url) {
-        String lcaseUrl = url.toLowerCase();
-        for (String ext : MS_OFFICEFILETYPES_WORD) {
-            if (lcaseUrl.endsWith(ext)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public static boolean supportedByMicrosoftOfficePowerPoint(String url) {
-        String lcaseUrl = url.toLowerCase();
-        for (String ext : MS_OFFICEFILETYPES_POWERPOINT) {
-            if (lcaseUrl.endsWith(ext)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public static boolean supportedByMicrosoftOfficeExcel(String url) {
-        String lcaseUrl = url.toLowerCase();
-        for (String ext : MS_OFFICEFILETYPES_EXCEL) {
-            if (lcaseUrl.endsWith(ext)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public static boolean printSupportedByLibreOffice(String url) {
-
-        String lcaseUrl = url.toLowerCase();
-        if (supportedByLibreOffice(url)) {
-            return true;
-        } else {
-            for (String ext : OFFICE_ADDITIONALPRINTTYPES) {
-                if (lcaseUrl.endsWith(ext)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-    }
-
-    public static void cleanupTempFile(String url) throws Exception {
-        FileUtils.cleanupTempFile(url);
-    }
-
-    public static void directPrint(List<String> urls) throws Exception {
-
-        directPrint(urls, null);
-    }
-
-    public static void directPrint(List<String> urls, String printerName) throws Exception {
-
-        if (urls == null || urls.isEmpty()) {
-            return;
-        }
-
-        ArrayList<String> libreOfficeUrls = new ArrayList<>();
-        ArrayList<String> pdfUrls = new ArrayList<>();
-
-        for (String u : urls) {
-            if (u.toLowerCase().endsWith(".pdf")) {
-                pdfUrls.add(u);
-            } else {
-                libreOfficeUrls.add(u);
-            }
-        }
-
-        Thread printThread = new Thread(() -> {
-
-            PrintService namedService = null;
-            if (printerName != null) {
-                try {
-                    namedService = PrinterServiceRegistry.resolveCurrentPrinter(printerName);
-                } catch (Throwable t) {
-                    showPrintError("Der Drucker '" + printerName + "' konnte nicht ermittelt werden: "
-                            + t.getMessage());
-                    return;
-                }
-                if (namedService == null) {
-                    showPrintError("Der Drucker '" + printerName
-                            + "' ist derzeit nicht verfügbar. Es wurde nichts gedruckt.");
-                    return;
-                }
-            }
-
-            if (!pdfUrls.isEmpty()) {
-                try {
-
-                    PrintService service = namedService != null
-                            ? namedService : PrintServiceLookup.lookupDefaultPrintService();
-
-                    if (service == null) {
-                        showPrintError("Kein Standarddrucker für PDF-Dateien gefunden");
-                    } else {
-
-                        Thread.sleep(100);
-                        for (String u : pdfUrls) {
-                            File toBePrinted = new File(u);
-                            PDDocument document = PDDocument.load(toBePrinted);
-
-                            PrinterJob job = PrinterJob.getPrinterJob();
-                            job.setJobName(toBePrinted.getName());
-                            
-                            PDFPageable pageable = new PDFPageable(document);
-                            job.setPageable(pageable);
-                            job.setPrintService(service);
-                            job.print();
-                        }
-                    }
-
-                } catch (final Throwable t) {
-                    showPrintError(printErrorMessage("Fehler beim Drucken des PDF-Dokuments",
-                            printerName, t));
-                }
-            }
-
-            if (!libreOfficeUrls.isEmpty()) {
-                try {
-                    Thread.sleep(100);
-                    executeLibreOfficePrint(libreOfficeUrls, printerName);
-                } catch (final Throwable t) {
-                    showPrintError(printErrorMessage("Fehler beim Drucken des Dokuments",
-                            printerName, t));
-                }
-            }
-
-        }, "Direct-Print");
-        printThread.start();
-
-    }
-
-    private static void executeLibreOfficePrint(List<String> urls, String printerName) throws Exception {
-        boolean macOs = SystemUtils.isMacOs();
-        String[] executables = macOs
-                ? new String[]{"/Applications/LibreOffice.app/Contents/MacOS/libreoffice",
-                    "/Applications/LibreOffice.app/Contents/MacOS/soffice"}
-                : new String[]{"libreoffice", "soffice"};
-        Throwable lastFailure = null;
-
-        for (String executable : executables) {
-            List<String> command = buildLibreOfficePrintCommand(executable, urls, printerName, macOs);
-            try {
-                log.info("direct printing through " + executable + " (target="
-                        + (printerName == null ? "default" : "named") + ", documents="
-                        + urls.size() + ")");
-                ProcessBuilder builder = new ProcessBuilder(command);
-                builder.redirectErrorStream(true);
-                builder.redirectOutput(ProcessBuilder.Redirect.DISCARD);
-                Process process = builder.start();
-                int exit = process.waitFor();
-                log.info("  direct printing exit code via " + executable + ": " + exit);
-                if (exit == 0) {
-                    return;
-                }
-                lastFailure = new Exception(executable + " returned exit code " + exit);
-            } catch (Throwable ex) {
-                lastFailure = ex;
-                log.error("error starting " + executable + ": " + ex.getMessage(), ex);
-            }
-        }
-
-        String detail = lastFailure == null ? "unbekannter Fehler" : lastFailure.getMessage();
-        throw new Exception("LibreOffice / OpenOffice nicht installiert oder PATH nicht gesetzt: "
-                + detail, lastFailure);
-    }
-
-    static List<String> buildLibreOfficePrintCommand(String executable, List<String> urls,
-            String printerName, boolean macOs) {
-        List<String> command = new ArrayList<>();
-        command.add(executable);
-        if (printerName == null) {
-            command.add("-p");
-        } else {
-            command.add("--pt");
-            command.add(printerName);
-        }
-        command.add(macOs ? "--nologo" : "-nologo");
-        command.addAll(urls);
-        return command;
-    }
-
-    private static String printErrorMessage(String prefix, String printerName, Throwable failure) {
-        String target = printerName == null ? "" : " an Drucker '" + printerName + "'";
-        return prefix + target + ": " + failure.getMessage();
-    }
-
-    private static void showPrintError(String message) {
-        SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(
-                EditorsRegistry.getInstance().getMainWindow(), message,
-                com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR,
-                JOptionPane.ERROR_MESSAGE));
-    }
-
 }

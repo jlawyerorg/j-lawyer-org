@@ -499,17 +499,24 @@
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuSendDocumentFaxActionPerformed"/>
           </Events>
         </MenuItem>
-        <MenuItem class="javax.swing.JMenuItem" name="mnuDirectPrint">
+        <Menu class="javax.swing.JMenu" name="mnuPrint">
           <Properties>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
               <Image iconType="3" name="/icons/printer.png"/>
             </Property>
-            <Property name="text" type="java.lang.String" value="drucken (Standarddrucker)"/>
+            <Property name="text" type="java.lang.String" value="Drucken"/>
           </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuDirectPrintActionPerformed"/>
-          </Events>
-        </MenuItem>
+          <SubComponents>
+            <MenuItem class="javax.swing.JMenuItem" name="mnuDirectPrint">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Standarddrucker"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuDirectPrintActionPerformed"/>
+              </Events>
+            </MenuItem>
+          </SubComponents>
+        </Menu>
         <Component class="javax.swing.JPopupMenu$Separator" name="jSeparator4">
         </Component>
         <Menu class="javax.swing.JMenu" name="mnuAssistant">

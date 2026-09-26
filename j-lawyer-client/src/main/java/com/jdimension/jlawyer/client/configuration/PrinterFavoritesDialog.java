@@ -661,399 +661,255 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.launcher;
+package com.jdimension.jlawyer.client.configuration;
 
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.print.PrinterFavorites;
 import com.jdimension.jlawyer.client.print.PrinterServiceRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.utils.FileUtils;
-import com.jdimension.jlawyer.client.utils.SystemUtils;
-import com.jdimension.jlawyer.documents.FileTypes;
-import java.awt.Window;
-import java.awt.print.PrinterJob;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import javax.print.PrintService;
-import javax.print.PrintServiceLookup;
+import com.jdimension.jlawyer.client.utils.DesktopUtils;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import javax.swing.JOptionPane;
+import javax.swing.JTable;
 import javax.swing.SwingUtilities;
-import org.apache.log4j.Logger;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.printing.PDFPageable;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellEditor;
 
 /**
- *
- * @author jens
+ * Manages printer favourites for this client installation.
  */
-public class LauncherFactory implements FileTypes {
+public class PrinterFavoritesDialog extends javax.swing.JDialog {
 
-    private static final Logger log = Logger.getLogger(LauncherFactory.class.getName());
+    private final PrinterServiceRegistry printerRegistry = PrinterServiceRegistry.getInstance();
+    private final PrinterFavoritesTableModel tableModel;
 
-    public static Launcher getMicrosoftOfficeLauncher(String fileName, byte[] content, ObservedDocumentStore store) throws Exception {
-        String url = createTempFile(fileName, content, store.isReadOnly());
+    public PrinterFavoritesDialog(java.awt.Frame parent, boolean modal) {
+        super(parent, modal);
+        initComponents();
 
-        if (SystemUtils.isWindows()) {
-            log.debug(new java.util.Date().toString() + " launching Microsoft Office on Windows");
-            WindowsMicrosoftOfficeLauncher wl = new WindowsMicrosoftOfficeLauncher(url, store);
-            return wl;
-        } else if (SystemUtils.isMacOs()) {
-            log.debug(new java.util.Date().toString() + " launching Microsoft Office on macOS");
-            MacMicrosoftOfficeLauncher ml = new MacMicrosoftOfficeLauncher(url, store);
-            return ml;
-        } else {
-            throw new Exception("Microsoft Office Launcher ist nur auf Microsoft Windows verfügbar!");
-        }
-
-    }
-
-    public static Launcher getLibreOfficeLauncher(String fileName, byte[] content, ObservedDocumentStore store) throws Exception {
-        String url = createTempFile(fileName, content, store.isReadOnly());
-
-        if (SystemUtils.isWindows()) {
-            log.debug(new java.util.Date().toString() + " launching LO on Windows");
-            WindowsOfficeLauncher wl = new WindowsOfficeLauncher(url, store);
-            return wl;
-        } else if (SystemUtils.isLinux()) {
-            log.debug(new java.util.Date().toString() + " launching LO on Linux");
-            LinuxOfficeLauncher ll = new LinuxOfficeLauncher(url, store);
-            return ll;
-        } else if (SystemUtils.isMacOs()) {
-            log.debug(new java.util.Date().toString() + " launching LO on Mac");
-            MacOfficeLauncher ml = new MacOfficeLauncher(url, store);
-            return ml;
-        } else {
-            throw new Exception("Libre Office Launcher ist auf diesem System nicht verfügbar");
-        }
-
-    }
-
-    public static Launcher getLauncher(String fileName, byte[] content, ObservedDocumentStore store, Window parent) throws Exception {
-        return getLauncher(fileName, content, store, null, parent);
-    }
-
-    public static Launcher getLauncher(String fileName, byte[] content, ObservedDocumentStore store, String customLauncherName, Window parent) throws Exception {
-        String url = createTempFile(fileName, content, store.isReadOnly());
-
-        ClientSettings set = ClientSettings.getInstance();
-        String wordProcessor = set.getConfiguration(ClientSettings.CONF_APPS_WORDPROCESSOR_KEY, ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_LO);
-        boolean wordProcessorMicrosoft = ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_MSO.equalsIgnoreCase(wordProcessor);
-
-        // first check for internal launchers
-        String lowerFileName = fileName.toLowerCase();
-
-        if (lowerFileName.endsWith("xjustiz_nachricht.xml")) {
-            XjustizLauncher xjl = new XjustizLauncher(url, store, parent);
-            xjl.setContent(new String(content));
-            return xjl;
-        }
-
-        if (lowerFileName.endsWith(".eml") && !(store.getDocumentIdentifier().startsWith("externalmaillaunch-"))) {
-
-            String extension = FileUtils.getExtension(lowerFileName);
-            if (CustomLauncher.hasDefaultCustomLauncher(extension)) {
-                return new CustomLauncher(url, store);
-            }
-
-            return new EMLInternalLauncher(url, store, parent);
-        }
-
-        if (lowerFileName.endsWith(".msg") && !(store.getDocumentIdentifier().startsWith("externalmaillaunch-"))) {
-
-            String extension = FileUtils.getExtension(lowerFileName);
-            if (CustomLauncher.hasDefaultCustomLauncher(extension)) {
-                return new CustomLauncher(url, store);
-            }
-
-            return new OutlookMsgInternalLauncher(url, store, parent);
-        }
-
-        if (lowerFileName.endsWith(".bea")) {
-            return new BEAInternalLauncher(url, store, parent);
-        }
-
-        // then for forced custom launchers
-        if (customLauncherName != null) {
-            return new CustomLauncher(url, store, customLauncherName);
-        }
-
-        // then for custom launchers marked as default
-        String extension = FileUtils.getExtension(lowerFileName);
-        if (CustomLauncher.hasDefaultCustomLauncher(extension)) {
-            return new CustomLauncher(url, store);
-        }
-
-        // first check if MS Office is requested
-        if (wordProcessorMicrosoft && supportedByMicrosoftOffice(url) && (SystemUtils.isWindows() || SystemUtils.isMacOs())) {
-            if (SystemUtils.isWindows()) {
-                log.debug(new java.util.Date().toString() + " launching Microsoft Office on Windows");
-                WindowsMicrosoftOfficeLauncher wl = new WindowsMicrosoftOfficeLauncher(url, store);
-                return wl;
-            } else if (SystemUtils.isMacOs()) {
-                log.debug(new java.util.Date().toString() + " launching Microsoft Office on macOS");
-                MacMicrosoftOfficeLauncher ml = new MacMicrosoftOfficeLauncher(url, store);
-                return ml;
-            }
-        }
-
-        // then use LibreOffice launcher
-        if (supportedByLibreOffice(url)) {
-
-            if (SystemUtils.isWindows()) {
-                log.debug(new java.util.Date().toString() + " launching LO on Windows");
-                WindowsOfficeLauncher wl = new WindowsOfficeLauncher(url, store);
-                return wl;
-            } else if (SystemUtils.isLinux()) {
-                log.debug(new java.util.Date().toString() + " launching LO on Linux");
-                LinuxOfficeLauncher ll = new LinuxOfficeLauncher(url, store);
-                return ll;
-            } else if (SystemUtils.isMacOs()) {
-                log.debug(new java.util.Date().toString() + " launching LO on Mac");
-                MacOfficeLauncher ml = new MacOfficeLauncher(url, store);
-                return ml;
-            }
-
-        }
-
-        // if all fails, use Desktop API
-        if (SystemUtils.isWindows()) {
-            return new WindowsNativeLauncher(url, store);
-        } else if (SystemUtils.isLinux()) {
-            return new LinuxNativeLauncher(url, store);
-        } else if (SystemUtils.isMacOs()) {
-            return new MacNativeLauncher(url, store);
-        } else {
-            return new NativeLauncher(url, store);
-        }
-
-    }
-
-    public static void cleanupTempDocuments() {
-        FileUtils.cleanupTempFilesWithRetentionTime();
-    }
-
-    private static String createTempFile(String fileName, byte[] content, boolean readOnly) throws Exception {
-        return FileUtils.createTempFile(fileName, content, readOnly, false, 7l);
-    }
-
-    public static boolean isMicrosoftOfficeSupported() {
-        if (SystemUtils.isWindows() || SystemUtils.isMacOs()) {
-            return true;
-        }
-        return false;
-    }
-
-    public static boolean supportedByLibreOffice(String url) {
-        String lcaseUrl = url.toLowerCase();
-        for (String ext : LO_OFFICEFILETYPES) {
-            if (lcaseUrl.endsWith(ext)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public static boolean supportedByMicrosoftOffice(String url) {
-        return (supportedByMicrosoftOfficeWord(url) || supportedByMicrosoftOfficeExcel(url) || supportedByMicrosoftOfficePowerPoint(url));
-    }
-
-    public static boolean supportedByMicrosoftOfficeWord(String url) {
-        String lcaseUrl = url.toLowerCase();
-        for (String ext : MS_OFFICEFILETYPES_WORD) {
-            if (lcaseUrl.endsWith(ext)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public static boolean supportedByMicrosoftOfficePowerPoint(String url) {
-        String lcaseUrl = url.toLowerCase();
-        for (String ext : MS_OFFICEFILETYPES_POWERPOINT) {
-            if (lcaseUrl.endsWith(ext)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public static boolean supportedByMicrosoftOfficeExcel(String url) {
-        String lcaseUrl = url.toLowerCase();
-        for (String ext : MS_OFFICEFILETYPES_EXCEL) {
-            if (lcaseUrl.endsWith(ext)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public static boolean printSupportedByLibreOffice(String url) {
-
-        String lcaseUrl = url.toLowerCase();
-        if (supportedByLibreOffice(url)) {
-            return true;
-        } else {
-            for (String ext : OFFICE_ADDITIONALPRINTTYPES) {
-                if (lcaseUrl.endsWith(ext)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-    }
-
-    public static void cleanupTempFile(String url) throws Exception {
-        FileUtils.cleanupTempFile(url);
-    }
-
-    public static void directPrint(List<String> urls) throws Exception {
-
-        directPrint(urls, null);
-    }
-
-    public static void directPrint(List<String> urls, String printerName) throws Exception {
-
-        if (urls == null || urls.isEmpty()) {
-            return;
-        }
-
-        ArrayList<String> libreOfficeUrls = new ArrayList<>();
-        ArrayList<String> pdfUrls = new ArrayList<>();
-
-        for (String u : urls) {
-            if (u.toLowerCase().endsWith(".pdf")) {
-                pdfUrls.add(u);
-            } else {
-                libreOfficeUrls.add(u);
-            }
-        }
-
-        Thread printThread = new Thread(() -> {
-
-            PrintService namedService = null;
-            if (printerName != null) {
-                try {
-                    namedService = PrinterServiceRegistry.resolveCurrentPrinter(printerName);
-                } catch (Throwable t) {
-                    showPrintError("Der Drucker '" + printerName + "' konnte nicht ermittelt werden: "
-                            + t.getMessage());
+        ClientSettings settings = ClientSettings.getInstance();
+        tableModel = new PrinterFavoritesTableModel(printerRegistry.getSnapshot(),
+                PrinterFavorites.load(settings), PrinterFavorites.loadUnselectedLabels(settings));
+        tblPrinters.setModel(tableModel);
+        tblPrinters.getColumnModel().getColumn(0).setPreferredWidth(60);
+        tblPrinters.getColumnModel().getColumn(0).setMaxWidth(80);
+        tblPrinters.getColumnModel().getColumn(1).setPreferredWidth(260);
+        tblPrinters.getColumnModel().getColumn(2).setPreferredWidth(180);
+        tblPrinters.getColumnModel().getColumn(3).setPreferredWidth(170);
+        DefaultTableCellRenderer availabilityRenderer = new AvailabilityRenderer();
+        tblPrinters.setDefaultRenderer(String.class, availabilityRenderer);
+        tblPrinters.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent event) {
+                int viewRow = tblPrinters.rowAtPoint(event.getPoint());
+                int viewColumn = tblPrinters.columnAtPoint(event.getPoint());
+                if (viewRow < 0 || viewColumn < 0
+                        || tblPrinters.convertColumnIndexToModel(viewColumn) == 0) {
                     return;
                 }
-                if (namedService == null) {
-                    showPrintError("Der Drucker '" + printerName
-                            + "' ist derzeit nicht verfügbar. Es wurde nichts gedruckt.");
-                    return;
-                }
+                stopCellEditing();
+                tableModel.selectOnly(tblPrinters.convertRowIndexToModel(viewRow));
             }
 
-            if (!pdfUrls.isEmpty()) {
-                try {
-
-                    PrintService service = namedService != null
-                            ? namedService : PrintServiceLookup.lookupDefaultPrintService();
-
-                    if (service == null) {
-                        showPrintError("Kein Standarddrucker für PDF-Dateien gefunden");
-                    } else {
-
-                        Thread.sleep(100);
-                        for (String u : pdfUrls) {
-                            File toBePrinted = new File(u);
-                            PDDocument document = PDDocument.load(toBePrinted);
-
-                            PrinterJob job = PrinterJob.getPrinterJob();
-                            job.setJobName(toBePrinted.getName());
-                            
-                            PDFPageable pageable = new PDFPageable(document);
-                            job.setPageable(pageable);
-                            job.setPrintService(service);
-                            job.print();
+            @Override
+            public void mouseClicked(MouseEvent event) {
+                int viewRow = tblPrinters.rowAtPoint(event.getPoint());
+                int viewColumn = tblPrinters.columnAtPoint(event.getPoint());
+                if (event.getClickCount() == 2 && viewRow >= 0 && viewColumn >= 0
+                        && tblPrinters.convertColumnIndexToModel(viewColumn) == 2) {
+                    int modelRow = tblPrinters.convertRowIndexToModel(viewRow);
+                    if (tableModel.isCellEditable(modelRow, 2)
+                            && tblPrinters.editCellAt(viewRow, viewColumn)) {
+                        Component editor = tblPrinters.getEditorComponent();
+                        if (editor != null) {
+                            editor.requestFocusInWindow();
                         }
                     }
-
-                } catch (final Throwable t) {
-                    showPrintError(printErrorMessage("Fehler beim Drucken des PDF-Dokuments",
-                            printerName, t));
                 }
             }
-
-            if (!libreOfficeUrls.isEmpty()) {
-                try {
-                    Thread.sleep(100);
-                    executeLibreOfficePrint(libreOfficeUrls, printerName);
-                } catch (final Throwable t) {
-                    showPrintError(printErrorMessage("Fehler beim Drucken des Dokuments",
-                            printerName, t));
-                }
-            }
-
-        }, "Direct-Print");
-        printThread.start();
-
+        });
+        refreshPrinters();
     }
 
-    private static void executeLibreOfficePrint(List<String> urls, String printerName) throws Exception {
-        boolean macOs = SystemUtils.isMacOs();
-        String[] executables = macOs
-                ? new String[]{"/Applications/LibreOffice.app/Contents/MacOS/libreoffice",
-                    "/Applications/LibreOffice.app/Contents/MacOS/soffice"}
-                : new String[]{"libreoffice", "soffice"};
-        Throwable lastFailure = null;
-
-        for (String executable : executables) {
-            List<String> command = buildLibreOfficePrintCommand(executable, urls, printerName, macOs);
-            try {
-                log.info("direct printing through " + executable + " (target="
-                        + (printerName == null ? "default" : "named") + ", documents="
-                        + urls.size() + ")");
-                ProcessBuilder builder = new ProcessBuilder(command);
-                builder.redirectErrorStream(true);
-                builder.redirectOutput(ProcessBuilder.Redirect.DISCARD);
-                Process process = builder.start();
-                int exit = process.waitFor();
-                log.info("  direct printing exit code via " + executable + ": " + exit);
-                if (exit == 0) {
-                    return;
-                }
-                lastFailure = new Exception(executable + " returned exit code " + exit);
-            } catch (Throwable ex) {
-                lastFailure = ex;
-                log.error("error starting " + executable + ": " + ex.getMessage(), ex);
+    private void refreshPrinters() {
+        cmdRefresh.setEnabled(false);
+        lblRefreshStatus.setText("Druckerliste wird aktualisiert...");
+        printerRegistry.refreshAsync(snapshot -> SwingUtilities.invokeLater(() -> {
+            if (!isDisplayable()) {
+                return;
             }
+            stopCellEditing();
+            tableModel.updateSnapshot(snapshot);
+            lblRefreshStatus.setText(snapshot.getPrinterNames().size() + " Drucker verfügbar");
+            cmdRefresh.setEnabled(true);
+        }));
+    }
+
+    private void stopCellEditing() {
+        TableCellEditor editor = tblPrinters.getCellEditor();
+        if (editor != null) {
+            editor.stopCellEditing();
         }
-
-        String detail = lastFailure == null ? "unbekannter Fehler" : lastFailure.getMessage();
-        throw new Exception("LibreOffice / OpenOffice nicht installiert oder PATH nicht gesetzt: "
-                + detail, lastFailure);
     }
 
-    static List<String> buildLibreOfficePrintCommand(String executable, List<String> urls,
-            String printerName, boolean macOs) {
-        List<String> command = new ArrayList<>();
-        command.add(executable);
-        if (printerName == null) {
-            command.add("-p");
-        } else {
-            command.add("--pt");
-            command.add(printerName);
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        lblDescription = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tblPrinters = new javax.swing.JTable();
+        lblRefreshStatus = new javax.swing.JLabel();
+        cmdRefresh = new javax.swing.JButton();
+        cmdSave = new javax.swing.JButton();
+        cmdClose = new javax.swing.JButton();
+
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Druckerfavoriten");
+        setMinimumSize(new java.awt.Dimension(720, 360));
+
+        lblDescription.setText("<html>Nur ausgewählte und aktuell verfügbare Drucker erscheinen zusätzlich im Dokumentmenü.<br>"
+            + "Anzeigename ändern: Drucker markieren, dann unter „Anzeigename“ doppelt anklicken.</html>");
+
+        tblPrinters.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "Favorit", "Drucker", "Anzeigename", "Status"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.Boolean.class, java.lang.String.class, java.lang.String.class, java.lang.String.class
+            };
+            boolean[] canEdit = new boolean [] {
+                true, false, true, false
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        tblPrinters.setFillsViewportHeight(true);
+        tblPrinters.getTableHeader().setReorderingAllowed(false);
+        jScrollPane1.setViewportView(tblPrinters);
+
+        lblRefreshStatus.setText(" ");
+
+        cmdRefresh.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/reload.png"))); // NOI18N
+        cmdRefresh.setText("Aktualisieren");
+        cmdRefresh.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRefreshActionPerformed(evt);
+            }
+        });
+
+        cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdSave.setText("Übernehmen");
+        cmdSave.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSaveActionPerformed(evt);
+            }
+        });
+
+        cmdClose.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        cmdClose.setText("Schließen");
+        cmdClose.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCloseActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblDescription, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 696, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(lblRefreshStatus, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdRefresh)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdSave)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdClose)))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(lblDescription)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 286, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblRefreshStatus)
+                    .addComponent(cmdRefresh)
+                    .addComponent(cmdSave)
+                    .addComponent(cmdClose))
+                .addContainerGap())
+        );
+
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
+        stopCellEditing();
+        refreshPrinters();
+    }//GEN-LAST:event_cmdRefreshActionPerformed
+
+    private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
+        stopCellEditing();
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            PrinterFavorites.save(settings, tableModel.getSelectedFavorites(),
+                    tableModel.getUnselectedLabels());
+            settings.saveConfiguration();
+            dispose();
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Druckerfavoriten konnten nicht gespeichert werden: "
+                    + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
-        command.add(macOs ? "--nologo" : "-nologo");
-        command.addAll(urls);
-        return command;
-    }
+    }//GEN-LAST:event_cmdSaveActionPerformed
 
-    private static String printErrorMessage(String prefix, String printerName, Throwable failure) {
-        String target = printerName == null ? "" : " an Drucker '" + printerName + "'";
-        return prefix + target + ": " + failure.getMessage();
-    }
+    private void cmdCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCloseActionPerformed
+        dispose();
+    }//GEN-LAST:event_cmdCloseActionPerformed
 
-    private static void showPrintError(String message) {
-        SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(
-                EditorsRegistry.getInstance().getMainWindow(), message,
-                com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR,
-                JOptionPane.ERROR_MESSAGE));
-    }
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdClose;
+    private javax.swing.JButton cmdRefresh;
+    private javax.swing.JButton cmdSave;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JLabel lblDescription;
+    private javax.swing.JLabel lblRefreshStatus;
+    private javax.swing.JTable tblPrinters;
+    // End of variables declaration//GEN-END:variables
 
+    private final class AvailabilityRenderer extends DefaultTableCellRenderer {
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value,
+                boolean selected, boolean focused, int row, int column) {
+            Component component = super.getTableCellRendererComponent(
+                    table, value, selected, focused, row, column);
+            boolean available = tableModel.isAvailable(table.convertRowIndexToModel(row));
+            component.setEnabled(available);
+            if (!selected) {
+                component.setForeground(available ? table.getForeground() : Color.GRAY);
+            }
+            return component;
+        }
+    }
 }
