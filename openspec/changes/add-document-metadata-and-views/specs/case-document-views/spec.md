@@ -65,7 +65,9 @@ contained in a stored configuration SHALL be shown with their default settings. 
 header SHALL sort by that column. Title and keywords SHALL be editable inline with write
 permission. Double-clicking a row SHALL open the document as in the list view. Clicking the
 message indicator SHALL show the linked messages in a popup. The preview area SHALL be
-hidden in the table view and restored when switching back.
+hidden in the table view and restored when switching back. A preview column next to the file type SHALL
+open the internal document viewer in a modal dialog, so users can choose between the internal
+viewer and the external application (double click).
 
 #### Scenario: Sort by received date
 - **WHEN** a user clicks the column header "Eingang"
@@ -78,6 +80,10 @@ hidden in the table view and restored when switching back.
 #### Scenario: Column configuration follows the user
 - **WHEN** a user moves the column "Von/An" to the first position on one workstation and later opens a case on another workstation
 - **THEN** the column "Von/An" is the first column there as well
+
+#### Scenario: Internal preview from the table
+- **WHEN** a user clicks the preview icon of a row in the table view
+- **THEN** the document is shown with the same viewer as in the preview area of the list view, in a modal dialog
 
 #### Scenario: Inline edit of keywords
 - **WHEN** a user edits the keywords cell of a row and confirms
@@ -148,6 +154,9 @@ to the keyword input after the user accepts them, and SHALL NOT be saved without
 explicit save by the user. For several documents the prompt SHALL be run per document and
 accepted suggestions SHALL be added per document. If no assistant or no prompt of these
 types is configured, the AI button SHALL be disabled with an explanatory tooltip.
+The desktop client SHALL also provide such an AI button next to the title of a single
+document; it SHALL offer the same prompts and propose one title taken from the answer, which
+is only put into the title input after the user accepts it.
 
 #### Scenario: Prompts offered
 - **WHEN** the prompts "Schlagworte vorschlagen" (extract) and "Rechtsgebiet bestimmen" (chat) and a summarize prompt are configured and a user clicks the AI button next to the keywords
@@ -164,6 +173,10 @@ types is configured, the AI button SHALL be disabled with an explanatory tooltip
 #### Scenario: No assistant configured
 - **WHEN** no assistant prompt of type chat or extract is configured
 - **THEN** the AI button is disabled and its tooltip explains why
+
+#### Scenario: Title suggested
+- **WHEN** a user clicks the AI button next to the title in the "Details" tab and picks a prompt
+- **THEN** the first line of the answer is offered as title for review and, when accepted, put into the title input without saving it
 
 ### Requirement: Active Tags Shown on Documents
 The separate "Dokument-Etiketten" panel below the document list SHALL be removed. The
@@ -190,3 +203,23 @@ list SHALL be loaded in one request per case.
 #### Scenario: More vertical space
 - **WHEN** a user opens the documents of a case
 - **THEN** no separate tag panel is shown below the document list
+
+### Requirement: Attaching Documents by Drag and Drop
+Both views SHALL allow dragging one or several documents onto another document of the same
+case; the dragged documents SHALL then become attachments (children) of the document they are
+dropped on. The document under the cursor SHALL be highlighted while dragging. Drops that would
+create a cycle or come from another case SHALL be refused with a hint. Dragging documents onto
+folders, dragging them out of the client and dropping files from outside the client SHALL keep
+working unchanged; files dropped on a document SHALL be uploaded as before.
+
+#### Scenario: Attach two documents
+- **WHEN** a user selects two documents and drops them on the e-mail document "AW: Vergleichsangebot"
+- **THEN** both documents are shown as attachments below the e-mail document
+
+#### Scenario: Cycle refused
+- **WHEN** a user drops an e-mail document on one of its own attachments
+- **THEN** nothing is changed and a hint explains why
+
+#### Scenario: Other drop targets unchanged
+- **WHEN** a user drops documents on a folder, drags them into a file manager or drops a file from the desktop on a document
+- **THEN** the documents are moved to the folder, exported as files or the file is uploaded, as before

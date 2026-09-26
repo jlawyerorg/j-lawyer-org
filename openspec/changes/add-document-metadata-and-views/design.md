@@ -83,6 +83,9 @@ beim Öffnen (Klick auf Von/An) nachgeladen.
   Bezeichnung = Betreff, und die mitversendeten Aktendokumente werden **nicht** umgehängt
   (sie existieren bereits in der Akte). Bei mehreren Empfängern enthält
   `correspondent_name` den ersten Empfänger plus „ +N“.
+- Auch Dokumente **ausgehender** Nachrichten (gesendete E-Mail/beA aus eigenem Postfach, beim
+  Versand abgelegte Nachricht, ePost) erhalten das Datum der Nachricht als Eingangs-/Datums-
+  feld, damit jede Nachricht zeitlich eingeordnet ist.
 - Manuelles Setzen überschreibt immer.
 
 ### D5 – Metadatenänderungen, Versionierung, Historie
@@ -201,7 +204,8 @@ Inline-Editor der Tabelle, Eigenschaften-Dialog einzeln und im Stapel), gibt es 
   Konfiguration). Sind keine Assistenten/Prompts konfiguriert, ist der Button deaktiviert
   (Tooltip mit Hinweis).
 - Eingabe: der extrahierte Text des Dokuments (bestehende Textextraktion wie bei Ingo
-  „Dokument als Kontext“) plus Bezeichnung und vorhandene Schlagworte; der Prompt-Text
+  „Dokument als Kontext“), begrenzt auf die ersten **1.500 Wörter** (etwa drei A4-Seiten),
+  plus Dateiname, Bezeichnung und vorhandene Schlagworte; der Prompt-Text
   kommt aus der Prompt-Konfiguration. Die Anfrage läuft asynchron mit Fortschritts-
   anzeige und ist abbrechbar.
 - Ausgabe: der Antworttext wird an Kommas, Semikolons und Zeilenumbrüchen zerlegt,
@@ -209,6 +213,12 @@ Inline-Editor der Tabelle, Eigenschaften-Dialog einzeln und im Stapel), gibt es 
   liste mit Checkboxen** angezeigt (vorhandene Schlagworte ausgegraut). Übernommene
   Vorschläge werden dem Eingabefeld **hinzugefügt**, nicht gespeichert – Speichern bleibt
   eine explizite Nutzeraktion.
+- **Bezeichnung:** Derselbe Button steht hinter dem Feld „Bezeichnung“ (Reiter *Details*,
+  Eigenschaften-Dialog für ein Dokument). Gleiche Prompts, gleicher Kontext, der Dokumenttext
+  aber nur bis 500 Wörter (etwa eine A4-Seite); aus der Antwort
+  wird die erste nicht-leere Zeile ohne Aufzählungszeichen, Anführungszeichen, Markdown und
+  ein vorangestelltes „Bezeichnung:“ genommen, zur Prüfung angeboten und nur ins Feld
+  übernommen (`MetadataSuggester.suggestTitle`, `TitleEditor`).
 - Stapelbearbeitung: der Prompt wird je ausgewähltem Dokument ausgeführt (sequenziell,
   Fortschritt „3/7“); die Vorschläge erscheinen je Dokument und werden beim Speichern je
   Dokument hinzugefügt.
@@ -279,6 +289,57 @@ Das bisherige Panel „Dokument-Etiketten“ unterhalb der Dokumentenliste (`jPa
   `getDocumentTagsForCase`), nicht je Dokument.
 - `splitDocuments` wird aufgelöst bzw. enthält nur noch das `CaseFolderPanel`; der
   Etiketten-Filter-Button (`cmdDocumentTagFilter`) bleibt unverändert.
+
+### D14 – Umsetzungsentscheidungen Desktop (nachgetragen)
+- **Gemeinsames Modell in `CaseFolderPanel`** statt eigener Klasse `CaseDocumentsViewModel`:
+  `CaseFolderPanel` hält Dokumente, Filter, Sortierschlüssel, Zusatzdaten (Nachrichten-
+  zähler, Etiketten) und baut die Zeilen (`DocumentRow`, `getVisibleRows()`). Liste und
+  Tabelle sind Darstellungen davon; `getSelectedDocuments()` liefert die Auswahl der aktiven
+  Ansicht, dadurch arbeiten Kontextmenü, Aktionen und Drag & Drop in beiden Ansichten
+  unverändert.
+- **Tabelle als `JTable`** (`CaseDocumentsTable`) statt `JXTreeTable`: Die Zeilen kommen
+  bereits in Hierarchie-Reihenfolge aus dem gemeinsamen Modell; Einrückung und Auf-/Zuklappen
+  zeichnet der Bezeichnungs-Renderer. Sortierung über Spaltenköpfe setzt den gemeinsamen
+  Sortierschlüssel (`CaseFolderPanel.setSort`), damit bleibt die Hierarchie erhalten.
+- Inline-Bearbeitung startet nur mit F2 (Doppelklick öffnet das Dokument wie in der Liste).
+- Spalte „Vorschau“ (Augen-Symbol) hinter dem Dateityp: öffnet `DocumentPreviewDialog`, der
+  `LoadDocumentPreviewThread` und damit dieselben Viewer (`DocumentViewerFactory`) wie der
+  Vorschaubereich der Liste verwendet - interner Viewer per Klick, externe Anwendung per
+  Doppelklick auf die Zeile.
+- Die Sperranzeige wird wie in der bestehenden Liste bewusst **nicht** dargestellt (dort
+  auskommentiert, weil ein nicht als gesperrt angezeigtes Dokument inzwischen gesperrt sein
+  kann).
+- Im Tabellenmodus wird der Reiter-Bereich (*Vorschau/Details/Nachrichten*) unsichtbar
+  geschaltet; die gespeicherte Teilerposition bleibt dadurch unverändert. Die
+  Sortierknöpfe der Liste werden im Tabellenmodus ausgeblendet.
+- Neue Komponenten ohne `.form` (handgeschrieben): `DocumentDetailsPanel`,
+  `DocumentMessagesPanel`, `KeywordsEditor`, `CorrespondentEditor`,
+  `KeywordSuggestionsDialog`, `DocumentPropertiesDialog`, `CaseDocumentsTable`. Die
+  bestehenden Form-Klassen (`ArchiveFilePanel`, `CaseFolderPanel`, `DocumentEntryPanel`)
+  sind mit ihren `.form`-Dateien synchron.
+
+### D15 – Metadaten und KI-Vorschläge im Speicherdialog (`BulkSaveDialog`)
+- Je Eintrag eine Metadatenzeile (`BulkSaveMetadataPanel`, in `BulkSaveEntry.form`):
+  Bezeichnung und Schlagworte (je mit KI-Button), Eingang, Von/An, bei Anlagen „als Anlage zu
+  … speichern“ (abwählbar). Vorbelegt aus `DocumentOrigin`; Von/An wird beim Speichern aus dem
+  Ursprung auf den Kontakt aufgelöst, solange der Anwender es nicht ändert.
+- Zeile „für alle“ (`BulkSaveMetadataAllPanel`, in `BulkSaveDialog.form`): Schlagworte
+  hinzufügen, Von/An setzen, „Schlagworte eintragen“ und „Bezeichnungen vorschlagen“. Die beiden
+  KI-Aktionen laufen Datei für Datei und tragen die Ergebnisse **ohne Rückfrage** direkt ein
+  (Schlagworte werden ergänzt, die Bezeichnung ersetzt) - bei vielen Dateien wären Einzeldialoge
+  zu viele; alles bleibt vor dem Speichern änderbar. Fortschritt und übersprungene Dateien
+  (mit Grund im Tooltip) stehen im Statustext neben den Knöpfen.
+- Text für Vorschläge vor dem Speichern (`PreSaveTextSource`, einmal je Eintrag):
+  1. Nachricht selbst: Betreff und Text aus dem Client (`DocumentOrigin.messageText`),
+  2. PDF: lokal per PDFBox (erste 15 Seiten), kein Upload,
+  3. TXT/CSV/MD/XML/JSON/HTML: lokal,
+  4. andere Formate: `IntegrationService.extractText` (Tika, nicht persistiert, max. 30.000
+     Zeichen) nur bis zur Server-Einstellung `jlawyer.server.assistant.presave.maxmb`
+     (Standard 3 MB, einstellbar im Assistenten-Setup),
+  5. kein Text (gescanntes PDF) oder zu groß: kein Upload, Hinweis auf Vorschläge nach dem
+     Speichern.
+- `MetadataSuggester` arbeitet dafür mit einer Textquelle (`TextSource`) statt fest mit einem
+  Akten-Dokument; Akten-Dokumente nutzen weiter die Text-Vorschau des Servers.
 
 ## Risks / Trade-offs
 - **Umfang der Client-Änderung** (`CaseFolderPanel` ≈ 2100 Zeilen, `ArchiveFilePanel`

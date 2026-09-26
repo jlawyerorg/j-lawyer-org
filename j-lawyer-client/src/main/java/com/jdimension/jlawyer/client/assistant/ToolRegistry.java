@@ -1513,27 +1513,14 @@ public class ToolRegistry {
 
         String fileName = (newFileName != null && !newFileName.trim().isEmpty()) ? newFileName.trim() : doc.getName();
 
-        byte[] content = svc.getDocumentContent(documentId.trim());
-        if (content == null) {
-            return ToolJsonUtils.error("Dokumentinhalt konnte nicht gelesen werden: " + documentId);
-        }
-
-        ArchiveFileDocumentsBean newDoc = svc.addDocument(targetCaseId.trim(), fileName, content, doc.getDictateSign(), null);
-
-        if (targetFolderId != null && !targetFolderId.trim().isEmpty()) {
-            ArrayList<String> docList = new ArrayList<>();
-            docList.add(newDoc.getId());
-            svc.moveDocumentsToFolder(docList, targetFolderId.trim());
-        }
-
-        Collection<DocumentTagsBean> docTags = svc.getDocumentTags(documentId.trim());
-        if (docTags != null) {
-            for (DocumentTagsBean dtb : docTags) {
-                svc.setDocumentTag(newDoc.getId(), dtb, true);
-            }
-        }
-
-        svc.removeDocument(documentId.trim());
+        // one server call: content, tags and metadata are copied, the source goes to the recycle bin
+        ArrayList<String> ids = new ArrayList<>();
+        ids.add(documentId.trim());
+        HashMap<String, String> names = new HashMap<>();
+        names.put(documentId.trim(), fileName);
+        String folderId = (targetFolderId != null && !targetFolderId.trim().isEmpty()) ? targetFolderId.trim() : null;
+        HashMap<String, ArchiveFileDocumentsBean> moved = svc.moveDocumentsToCase(ids, targetCaseId.trim(), folderId, names);
+        ArchiveFileDocumentsBean newDoc = moved.get(documentId.trim());
 
         EventBroker.getInstance().publishEvent(new DocumentRemovedEvent(doc));
         ArchiveFileDocumentsBean updatedNewDoc = svc.getDocument(newDoc.getId());

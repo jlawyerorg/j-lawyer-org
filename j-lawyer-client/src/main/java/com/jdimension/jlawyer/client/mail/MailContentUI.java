@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.mail;
 
+import com.jdimension.jlawyer.client.editors.files.DocumentOrigin;
 import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
 import com.jdimension.jlawyer.ai.InputData;
@@ -1574,6 +1575,21 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         return true;
     }
 
+    /**
+     * @return the origin (subject, date, sender or recipient) of the displayed e-mail, or null
+     * for Outlook messages and if nothing is displayed
+     */
+    private DocumentOrigin currentOrigin() {
+        if (this.emlMsgContainer == null) {
+            return null;
+        }
+        if (this.emlMsgContainer.isServerBased()) {
+            com.jdimension.jlawyer.services.MailMessageDTO dto = this.emlMsgContainer.getMessageDTO();
+            return MailDocumentOrigins.fromMessage(dto.getSubject(), dto.getDate(), dto.getFrom(), dto.getTo());
+        }
+        return MailDocumentOrigins.fromMessage(this.emlMsgContainer.getMessage());
+    }
+
     public static void setOutlookMessageImpl(MailContentUI contentUI, OutlookMessage msg, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblCC, JLabel lblBCC, JLabel lblFrom, JList lstAttachments) throws Exception {
 
         CidCache cids = CidCache.getInstance();
@@ -2254,7 +2270,8 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                         return;
                     }
 
-                    ArchiveFileDocumentsBean newDoc = afs.addDocument(sel.getId(), newName, data, "", null);
+                    DocumentOrigin origin = this.currentOrigin();
+                    ArchiveFileDocumentsBean newDoc = afs.addDocument(sel.getId(), newName, data, "", null, origin == null ? null : origin.withoutTitle().toMetadata(afs, sel.getId(), null));
 
                     if (folder != null) {
                         ArrayList<String> docList = new ArrayList<>();
@@ -2395,12 +2412,14 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                     }
 
                     // Füge die E-Mail als neues Dokument zur Akte hinzu
+                    DocumentOrigin origin = this.currentOrigin();
                     ArchiveFileDocumentsBean newDoc = remote.addDocument(
                             caseContext.getId(),
                             uniqueFilename,
                             modifiedContent,
                             null,
-                            null
+                            null,
+                            origin == null ? null : origin.toMetadata(remote, caseContext.getId(), null)
                     );
 
                     // Benachrichtige das System über das neue Dokument

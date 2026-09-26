@@ -703,6 +703,18 @@ public interface ArchiveFileServiceLocal {
 
     public ArchiveFileDocumentsBean addDocument(String archiveFileId, String fileName, byte[] data, String dictateSign, String externalId) throws Exception;
     public ArchiveFileDocumentsBean addDocumentUnrestricted(String archiveFileId, String fileName, byte[] data, String dictateSign, String externalId) throws Exception;
+    public ArchiveFileDocumentsBean addDocument(String archiveFileId, String fileName, byte[] data, String dictateSign, String externalId, DocumentMetadata metadata) throws Exception;
+    public ArchiveFileDocumentsBean addDocumentUnrestricted(String archiveFileId, String fileName, byte[] data, String dictateSign, String externalId, DocumentMetadata metadata) throws Exception;
+    public DocumentMetadata resolveCorrespondent(String caseId, int keyType, String key, String displayName, int direction) throws Exception;
+    public DocumentMetadata resolveCorrespondentUnrestricted(String caseId, int keyType, String key, String displayName, int direction) throws Exception;
+    public void markDocumentsSent(List<String> documentIds, int keyType, String key, String displayName, int additionalRecipients) throws Exception;
+    public void markDocumentsSentUnrestricted(List<String> documentIds, int keyType, String key, String displayName, int additionalRecipients) throws Exception;
+    public ArchiveFileDocumentsBean updateDocumentMetadata(String documentId, DocumentMetadata metadata) throws Exception;
+    public List<ArchiveFileDocumentsBean> updateDocumentsMetadata(List<String> documentIds, DocumentMetadataPatch patch) throws Exception;
+    public ArchiveFileDocumentsBean setDocumentParent(String documentId, String parentId) throws Exception;
+    public List<String> getDocumentKeywordsForCase(String caseId) throws Exception;
+    public HashMap<String, ArchiveFileDocumentsBean> copyDocumentsToCase(List<String> documentIds, String targetCaseId, String targetFolderId, HashMap<String, String> newFileNames) throws Exception;
+    public HashMap<String, ArchiveFileDocumentsBean> moveDocumentsToCase(List<String> documentIds, String targetCaseId, String targetFolderId, HashMap<String, String> newFileNames) throws Exception;
     public ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, String letterHead, String templateFolder, String templateName, HashMap<String,Object> placeHolderValues, String dictateSign, String externalId) throws Exception;
     
     public ArchiveFileBean createArchiveFile(ArchiveFileBean dto) throws Exception;

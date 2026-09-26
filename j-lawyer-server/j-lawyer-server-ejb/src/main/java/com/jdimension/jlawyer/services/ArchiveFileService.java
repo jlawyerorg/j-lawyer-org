@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.services;
 
 import com.google.i18n.phonenumbers.PhoneNumberMatch;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
+import com.jdimension.jlawyer.documents.DocumentKeywords;
 import com.jdimension.jlawyer.documents.DocumentPreview;
 import com.jdimension.jlawyer.documents.LibreOfficeAccess;
 import com.jdimension.jlawyer.documents.PreviewGenerator;
@@ -1772,16 +1773,27 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     public ArchiveFileDocumentsBean addDocumentUnrestricted(String archiveFileId, String fileName, byte[] data, String dictateSign, String externalId) throws Exception {
-        return this.addDocumentImpl(archiveFileId, fileName, data, dictateSign, externalId, false);
+        return this.addDocumentImpl(archiveFileId, fileName, data, dictateSign, externalId, false, null);
+    }
+
+    @Override
+    public ArchiveFileDocumentsBean addDocumentUnrestricted(String archiveFileId, String fileName, byte[] data, String dictateSign, String externalId, DocumentMetadata metadata) throws Exception {
+        return this.addDocumentImpl(archiveFileId, fileName, data, dictateSign, externalId, false, metadata);
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public ArchiveFileDocumentsBean addDocument(String archiveFileId, String fileName, byte[] data, String dictateSign, String externalId, DocumentMetadata metadata) throws Exception {
+        return this.addDocumentImpl(archiveFileId, fileName, data, dictateSign, externalId, true, metadata);
     }
 
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public ArchiveFileDocumentsBean addDocument(String archiveFileId, String fileName, byte[] data, String dictateSign, String externalId) throws Exception {
-        return this.addDocumentImpl(archiveFileId, fileName, data, dictateSign, externalId, true);
+        return this.addDocumentImpl(archiveFileId, fileName, data, dictateSign, externalId, true, null);
     }
 
-    private ArchiveFileDocumentsBean addDocumentImpl(String archiveFileId, String fileName, byte[] data, String dictateSign, String externalId, boolean roleCheck) throws Exception {
+    private ArchiveFileDocumentsBean addDocumentImpl(String archiveFileId, String fileName, byte[] data, String dictateSign, String externalId, boolean roleCheck, DocumentMetadata metadata) throws Exception {
 
         if (fileName == null || "".equals(fileName)) {
             throw new Exception("Dokumentname darf nicht leer sein!");
@@ -1842,6 +1854,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         db.setDeleted(false);
         db.setDeletedBy(null);
         db.setDeletionDate(null);
+        if (metadata != null) {
+            metadata.applyTo(db);
+            db.setParentId(this.validateDocumentParent(null, aFile, metadata.getParentId()));
+        }
         this.archiveFileDocumentsFacade.create(db);
 
         this.addCaseHistory(idGen.getID().toString(), aFile, "Dokument hinzugefügt: " + fileName);
@@ -1888,6 +1904,433 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         this.newDocumentEvent.fireAsync(evt);
 
         return this.archiveFileDocumentsFacade.find(docId);
+    }
+
+    /**
+     * Validates the parent of a document and returns the id to store.
+     *
+     * @param documentId the document the parent is set for, null for a new document
+     * @param aFile the case of the document
+     * @param parentId the requested parent, null or empty to remove the parent
+     * @return the parent id to store, or null
+     * @throws Exception if the parent does not exist, is deleted, belongs to another case or the
+     * relation would create a cycle
+     */
+    private String validateDocumentParent(String documentId, ArchiveFileBean aFile, String parentId) throws Exception {
+        if (ServerStringUtils.isEmpty(parentId)) {
+            return null;
+        }
+        if (parentId.equals(documentId)) {
+            throw new Exception("Ein Dokument kann nicht sein eigenes übergeordnetes Dokument sein!");
+        }
+        ArchiveFileDocumentsBean parent = this.archiveFileDocumentsFacade.find(parentId);
+        if (parent == null || parent.isDeleted()) {
+            throw new Exception("Übergeordnetes Dokument existiert nicht!");
+        }
+        if (!parent.getArchiveFileKey().getId().equals(aFile.getId())) {
+            throw new Exception("Das übergeordnete Dokument muss zur selben Akte gehören!");
+        }
+        if (documentId != null) {
+            // walk up from the new parent - reaching the document itself means a cycle
+            String current = parent.getParentId();
+            int depth = 0;
+            while (current != null && depth < 1000) {
+                if (current.equals(documentId)) {
+                    throw new Exception("Das Dokument " + parent.getName() + " ist diesem Dokument bereits untergeordnet!");
+                }
+                ArchiveFileDocumentsBean ancestor = this.archiveFileDocumentsFacade.find(current);
+                current = ancestor == null ? null : ancestor.getParentId();
+                depth++;
+            }
+        }
+        return parentId;
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public DocumentMetadata resolveCorrespondent(String caseId, int keyType, String key, String displayName, int direction) throws Exception {
+        return this.resolveCorrespondentImpl(caseId, keyType, key, displayName, direction, true);
+    }
+
+    @Override
+    public DocumentMetadata resolveCorrespondentUnrestricted(String caseId, int keyType, String key, String displayName, int direction) throws Exception {
+        return this.resolveCorrespondentImpl(caseId, keyType, key, displayName, direction, false);
+    }
+
+    private DocumentMetadata resolveCorrespondentImpl(String caseId, int keyType, String key, String displayName, int direction, boolean roleCheck) throws Exception {
+        DocumentMetadata md = new DocumentMetadata();
+        md.setCorrespondentDirection(direction);
+        String normalizedKey = normalizeCorrespondentKey(keyType, key);
+
+        AddressBean match = null;
+        if (normalizedKey != null && !ServerStringUtils.isEmpty(caseId)) {
+            ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
+            if (aFile != null) {
+                if (roleCheck) {
+                    SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
+                }
+                // parties of the case first: the same address may belong to several contacts
+                for (ArchiveFileAddressesBean party : this.archiveFileAddressesFacade.findByArchiveFileKey(aFile)) {
+                    AddressBean a = party.getAddressKey();
+                    if (a != null && normalizedKey.equals(normalizeCorrespondentKey(keyType, correspondentKeyOf(keyType, a)))) {
+                        match = a;
+                        break;
+                    }
+                }
+            }
+        }
+        if (match == null && normalizedKey != null) {
+            match = this.findContactByCorrespondentKey(keyType, normalizedKey);
+        }
+
+        if (match != null) {
+            md.setCorrespondentId(match.getId());
+            md.setCorrespondentName(match.toDisplayName());
+        } else if (!ServerStringUtils.isEmpty(displayName)) {
+            md.setCorrespondentName(displayName.trim());
+        } else if (!ServerStringUtils.isEmpty(key)) {
+            md.setCorrespondentName(key.trim());
+        } else {
+            md.setCorrespondentDirection(ArchiveFileDocumentsBean.CORRESPONDENT_NONE);
+        }
+        return md;
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void markDocumentsSent(List<String> documentIds, int keyType, String key, String displayName, int additionalRecipients) throws Exception {
+        this.markDocumentsSentImpl(documentIds, keyType, key, displayName, additionalRecipients, true);
+    }
+
+    @Override
+    public void markDocumentsSentUnrestricted(List<String> documentIds, int keyType, String key, String displayName, int additionalRecipients) throws Exception {
+        this.markDocumentsSentImpl(documentIds, keyType, key, displayName, additionalRecipients, false);
+    }
+
+    private void markDocumentsSentImpl(List<String> documentIds, int keyType, String key, String displayName, int additionalRecipients, boolean roleCheck) throws Exception {
+        if (documentIds == null) {
+            return;
+        }
+        HashMap<String, DocumentMetadata> resolvedPerCase = new HashMap<>();
+        for (String docId : new LinkedHashSet<>(documentIds)) {
+            ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(docId);
+            if (db == null || db.isDeleted() || db.hasCorrespondent()) {
+                continue;
+            }
+            String caseId = db.getArchiveFileKey().getId();
+            DocumentMetadata recipient = resolvedPerCase.get(caseId);
+            if (recipient == null) {
+                // checks the access to the case
+                recipient = this.resolveCorrespondentImpl(caseId, keyType, key, displayName, ArchiveFileDocumentsBean.CORRESPONDENT_OUT, roleCheck);
+                recipient.addAdditionalRecipients(additionalRecipients);
+                resolvedPerCase.put(caseId, recipient);
+            }
+            if (recipient.getCorrespondentDirection() == ArchiveFileDocumentsBean.CORRESPONDENT_NONE) {
+                continue;
+            }
+            db.setCorrespondentId(recipient.getCorrespondentId());
+            db.setCorrespondentName(recipient.getCorrespondentName());
+            db.setCorrespondentDirection(ArchiveFileDocumentsBean.CORRESPONDENT_OUT);
+            this.archiveFileDocumentsFacade.edit(db);
+            this.publishMetadataIndexUpdate(db);
+        }
+    }
+
+    private static String correspondentKeyOf(int keyType, AddressBean a) {
+        switch (keyType) {
+            case DocumentMetadata.KEY_EMAIL:
+                return a.getEmail();
+            case DocumentMetadata.KEY_BEA_SAFEID:
+                return a.getBeaSafeId();
+            case DocumentMetadata.KEY_FAX:
+                return a.getFax();
+            default:
+                return null;
+        }
+    }
+
+    private static String normalizeCorrespondentKey(int keyType, String key) {
+        if (key == null || key.isBlank()) {
+            return null;
+        }
+        String k = key.trim();
+        if (keyType == DocumentMetadata.KEY_EMAIL) {
+            // "Name <mail@host>" -> mail@host
+            if (k.contains("<") && k.contains(">") && k.indexOf('<') < k.indexOf('>')) {
+                k = k.substring(k.indexOf('<') + 1, k.indexOf('>')).trim();
+            }
+            return k.toLowerCase();
+        } else if (keyType == DocumentMetadata.KEY_FAX) {
+            String digits = k.replaceAll("[^0-9+]", "");
+            if (digits.startsWith("+49")) {
+                digits = "0" + digits.substring(3);
+            } else if (digits.startsWith("0049")) {
+                digits = "0" + digits.substring(4);
+            }
+            return digits.isEmpty() ? null : digits;
+        } else if (keyType == DocumentMetadata.KEY_BEA_SAFEID) {
+            return k;
+        }
+        return null;
+    }
+
+    private AddressBean findContactByCorrespondentKey(int keyType, String normalizedKey) {
+        String sql;
+        if (keyType == DocumentMetadata.KEY_EMAIL) {
+            sql = "select id from contacts where lower(email)=? limit 1";
+        } else if (keyType == DocumentMetadata.KEY_BEA_SAFEID) {
+            sql = "select id from contacts where beaSafeId=? limit 1";
+        } else {
+            // fax numbers are stored in any format: compare the normalized digits in Java, but
+            // only for contacts whose number ends with the same last digits (few enough that a
+            // separator inside them is unlikely)
+            String tail = normalizedKey.length() > 4 ? normalizedKey.substring(normalizedKey.length() - 4) : normalizedKey;
+            JDBCUtils utils = new JDBCUtils();
+            try (Connection con = utils.getConnection(); PreparedStatement st = con.prepareStatement("select id, fax from contacts where fax like ?")) {
+                st.setString(1, "%" + tail);
+                try (ResultSet rs = st.executeQuery()) {
+                    while (rs.next()) {
+                        if (normalizedKey.equals(normalizeCorrespondentKey(DocumentMetadata.KEY_FAX, rs.getString(2)))) {
+                            return this.addressFacade.find(rs.getString(1));
+                        }
+                    }
+                }
+            } catch (SQLException sqle) {
+                log.error("Error resolving fax number to contact", sqle);
+            }
+            return null;
+        }
+        JDBCUtils utils = new JDBCUtils();
+        try (Connection con = utils.getConnection(); PreparedStatement st = con.prepareStatement(sql)) {
+            st.setString(1, normalizedKey);
+            try (ResultSet rs = st.executeQuery()) {
+                if (rs.next()) {
+                    return this.addressFacade.find(rs.getString(1));
+                }
+            }
+        } catch (SQLException sqle) {
+            log.error("Error resolving correspondent to contact", sqle);
+        }
+        return null;
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public ArchiveFileDocumentsBean updateDocumentMetadata(String documentId, DocumentMetadata metadata) throws Exception {
+        if (metadata == null) {
+            throw new Exception("Keine Metadaten angegeben!");
+        }
+        ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(documentId);
+        if (db == null) {
+            throw new Exception("Dokument existiert nicht!");
+        }
+        ArchiveFileBean aFile = db.getArchiveFileKey();
+        SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
+
+        String parentId = this.validateDocumentParent(db.getId(), aFile, metadata.getParentId());
+        metadata.applyTo(db);
+        db.setParentId(parentId);
+        // metadata do not touch the content: no new version, no change date
+        this.archiveFileDocumentsFacade.edit(db);
+
+        StringGenerator idGen = new StringGenerator();
+        this.addCaseHistory(idGen.getID().toString(), aFile, "Metadaten geändert: " + db.getName());
+        this.publishMetadataIndexUpdate(db);
+
+        return db;
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public List<ArchiveFileDocumentsBean> updateDocumentsMetadata(List<String> documentIds, DocumentMetadataPatch patch) throws Exception {
+        ArrayList<ArchiveFileDocumentsBean> result = new ArrayList<>();
+        if (documentIds == null || documentIds.isEmpty() || patch == null || patch.isEmpty()) {
+            return result;
+        }
+
+        // check permissions for all documents before changing anything
+        ArrayList<ArchiveFileDocumentsBean> documents = new ArrayList<>();
+        HashSet<String> allowedCases = new HashSet<>();
+        for (String docId : documentIds) {
+            ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(docId);
+            if (db == null) {
+                throw new Exception("Dokument existiert nicht!");
+            }
+            if (!allowedCases.contains(db.getArchiveFileKey().getId())) {
+                SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), db.getArchiveFileKey(), this.securityFacade, this.getAllowedGroups(db.getArchiveFileKey()));
+                allowedCases.add(db.getArchiveFileKey().getId());
+            }
+            documents.add(db);
+        }
+
+        LinkedHashMap<String, Integer> changedPerCase = new LinkedHashMap<>();
+        HashMap<String, ArchiveFileBean> cases = new HashMap<>();
+        for (ArchiveFileDocumentsBean db : documents) {
+            if (patch.applyTo(db)) {
+                this.archiveFileDocumentsFacade.edit(db);
+                this.publishMetadataIndexUpdate(db);
+                changedPerCase.merge(db.getArchiveFileKey().getId(), 1, Integer::sum);
+                cases.put(db.getArchiveFileKey().getId(), db.getArchiveFileKey());
+            }
+            result.add(db);
+        }
+
+        StringGenerator idGen = new StringGenerator();
+        for (Map.Entry<String, Integer> e : changedPerCase.entrySet()) {
+            this.addCaseHistory(idGen.getID().toString(), cases.get(e.getKey()), "Metadaten von " + e.getValue() + " Dokument(en) geändert");
+        }
+        return result;
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public ArchiveFileDocumentsBean setDocumentParent(String documentId, String parentId) throws Exception {
+        ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(documentId);
+        if (db == null) {
+            throw new Exception("Dokument existiert nicht!");
+        }
+        ArchiveFileBean aFile = db.getArchiveFileKey();
+        SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
+
+        db.setParentId(this.validateDocumentParent(db.getId(), aFile, parentId));
+        this.archiveFileDocumentsFacade.edit(db);
+
+        StringGenerator idGen = new StringGenerator();
+        if (db.getParentId() == null) {
+            this.addCaseHistory(idGen.getID().toString(), aFile, "Zuordnung zu übergeordnetem Dokument entfernt: " + db.getName());
+        } else {
+            ArchiveFileDocumentsBean parent = this.archiveFileDocumentsFacade.find(db.getParentId());
+            this.addCaseHistory(idGen.getID().toString(), aFile, "Dokument " + db.getName() + " untergeordnet zu " + parent.getName());
+        }
+        return db;
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<String> getDocumentKeywordsForCase(String caseId) throws Exception {
+        ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
+        if (aFile == null) {
+            throw new Exception("Akte existiert nicht!");
+        }
+        SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.getAllowedGroups(aFile));
+
+        TreeMap<String, String> unique = new TreeMap<>();
+        for (ArchiveFileDocumentsBean db : this.archiveFileDocumentsFacade.findByArchiveFileKey(aFile, false)) {
+            for (String k : DocumentKeywords.split(db.getKeywords())) {
+                unique.putIfAbsent(k.toLowerCase(), k);
+            }
+        }
+        return new ArrayList<>(unique.values());
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public HashMap<String, ArchiveFileDocumentsBean> copyDocumentsToCase(List<String> documentIds, String targetCaseId, String targetFolderId, HashMap<String, String> newFileNames) throws Exception {
+        return this.copyDocumentsToCaseImpl(documentIds, targetCaseId, targetFolderId, newFileNames);
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public HashMap<String, ArchiveFileDocumentsBean> moveDocumentsToCase(List<String> documentIds, String targetCaseId, String targetFolderId, HashMap<String, String> newFileNames) throws Exception {
+        if (documentIds == null || documentIds.isEmpty()) {
+            return new HashMap<>();
+        }
+        // fail before copying anything: locked documents and moves within the same case
+        for (String docId : documentIds) {
+            ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(docId);
+            if (db == null) {
+                throw new Exception("Dokument existiert nicht!");
+            }
+            if (db.getArchiveFileKey().getId().equals(targetCaseId)) {
+                throw new Exception("Dokument " + db.getName() + " befindet sich bereits in der Zielakte!");
+            }
+            if (db.isLocked() && !context.getCallerPrincipal().getName().equals(db.getLockedBy())) {
+                throw new Exception(db.getName() + " ist gesperrt für Nutzer '" + db.getLockedBy() + "'");
+            }
+        }
+
+        HashMap<String, ArchiveFileDocumentsBean> copies = this.copyDocumentsToCaseImpl(documentIds, targetCaseId, targetFolderId, newFileNames);
+        for (String docId : documentIds) {
+            this.removeDocument(docId);
+        }
+        return copies;
+    }
+
+    private HashMap<String, ArchiveFileDocumentsBean> copyDocumentsToCaseImpl(List<String> documentIds, String targetCaseId, String targetFolderId, HashMap<String, String> newFileNames) throws Exception {
+        HashMap<String, ArchiveFileDocumentsBean> copies = new HashMap<>();
+        if (documentIds == null || documentIds.isEmpty()) {
+            return copies;
+        }
+
+        ArchiveFileBean target = this.archiveFileFacade.find(targetCaseId);
+        if (target == null) {
+            throw new Exception("Zielakte existiert nicht!");
+        }
+        CaseFolder targetFolder = null;
+        if (!ServerStringUtils.isEmpty(targetFolderId)) {
+            targetFolder = this.caseFolderFacade.find(targetFolderId);
+            if (targetFolder == null || target.getRootFolder() == null || !containsFolder(target.getRootFolder(), targetFolderId)) {
+                throw new Exception("Akte " + target.getFileNumber() + " enthält keinen Ordner mit ID " + targetFolderId);
+            }
+        }
+
+        String principal = context.getCallerPrincipal().getName();
+        ArrayList<ArchiveFileDocumentsBean> sources = new ArrayList<>();
+        for (String docId : documentIds) {
+            ArchiveFileDocumentsBean src = this.archiveFileDocumentsFacade.find(docId);
+            if (src == null) {
+                throw new Exception("Dokument existiert nicht!");
+            }
+            sources.add(src);
+        }
+
+        for (ArchiveFileDocumentsBean src : sources) {
+            // checks the read permission on the source case
+            byte[] content = this.getDocumentContentImpl(src.getId(), principal);
+            String fileName = src.getName();
+            if (newFileNames != null && !ServerStringUtils.isEmpty(newFileNames.get(src.getId()))) {
+                fileName = newFileNames.get(src.getId());
+            }
+
+            DocumentMetadata md = DocumentMetadata.fromDocument(src);
+            // relations are rebuilt below, only within the copied set
+            md.setParentId(null);
+            ArchiveFileDocumentsBean copy = this.addDocumentImpl(target.getId(), fileName, content, src.getDictateSign(), null, true, md);
+
+            copy.setFavorite(src.isFavorite());
+            copy.setHighlight1(src.getHighlight1());
+            copy.setHighlight2(src.getHighlight2());
+            copy.setDocumentType(src.getDocumentType());
+            if (targetFolder != null) {
+                copy.setFolder(targetFolder);
+            }
+            this.archiveFileDocumentsFacade.edit(copy);
+
+            List<DocumentTagsBean> tags = this.documentTagsFacade.findByDocumentKey(src);
+            if (tags != null) {
+                for (DocumentTagsBean t : tags) {
+                    DocumentTagsBean tagCopy = new DocumentTagsBean();
+                    tagCopy.setTagName(t.getTagName());
+                    tagCopy.setTagValue(t.getTagValue());
+                    tagCopy.setDateSet(t.getDateSet());
+                    ArrayList<String> copyIds = new ArrayList<>();
+                    copyIds.add(copy.getId());
+                    this.setDocumentTagImpl(copyIds, tagCopy, true, false);
+                }
+            }
+            copies.put(src.getId(), copy);
+        }
+
+        // preserve parent-child relations between documents of the copied set
+        for (ArchiveFileDocumentsBean src : sources) {
+            if (src.getParentId() != null && copies.containsKey(src.getParentId())) {
+                ArchiveFileDocumentsBean copy = copies.get(src.getId());
+                copy.setParentId(copies.get(src.getParentId()).getId());
+                this.archiveFileDocumentsFacade.edit(copy);
+            }
+        }
+
+        return copies;
     }
 
     private void applyAutomatedDocumentTags(ArchiveFileDocumentsBean doc) {
@@ -1993,6 +2436,16 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             lastSearchIndexSkipCheck = System.currentTimeMillis();
         }
         return skipSearchIndex;
+    }
+
+    private void publishMetadataIndexUpdate(ArchiveFileDocumentsBean db) {
+        try {
+            SearchIndexRequest req = new SearchIndexRequest(SearchIndexRequest.ACTION_UPDATE_METADATA);
+            req.setId(db.getId());
+            this.publishSearchIndexRequest(req);
+        } catch (Throwable t) {
+            log.error("Error publishing search index request UPDATE_METADATA", t);
+        }
     }
 
     private void publishSearchIndexRequest(SearchIndexRequest req) {

@@ -663,6 +663,8 @@
  */
 package com.jdimension.jlawyer.client.bea;
 
+import com.jdimension.jlawyer.services.DocumentMetadata;
+import com.jdimension.jlawyer.client.editors.files.DocumentOrigin;
 import com.jdimension.jlawyer.client.components.GenericTextViewer;
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.mail.*;
@@ -1660,7 +1662,11 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                         return;
                     }
 
-                    ArchiveFileDocumentsBean newDoc = afs.addDocument(sel.getId(), newName, data, "", null);
+                    DocumentMetadata attachmentMetadata = null;
+                    if (this.msgContainer != null) {
+                        attachmentMetadata = DocumentOrigin.incoming(null, this.msgContainer.getReceptionTime(), DocumentMetadata.KEY_BEA_SAFEID, this.msgContainer.getSenderSafeId(), this.msgContainer.getSenderName()).toMetadata(afs, sel.getId(), null);
+                    }
+                    ArchiveFileDocumentsBean newDoc = afs.addDocument(sel.getId(), newName, data, "", null, attachmentMetadata);
 
                     if (folder != null) {
                         ArrayList<String> docList = new ArrayList<>();

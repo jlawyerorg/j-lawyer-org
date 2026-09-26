@@ -751,6 +751,10 @@ public class UserSettingsKeys {
     public static final String CONF_BEA_POSTBOXORDER = "user.bea.postboxorder";
     
     public static final String CONF_DOCUMENTS_LASTSORTMODE="client.documents.lastsortmode";
+    // view of the case documents: "list" (list with preview) or "table"
+    public static final String CONF_DOCUMENTS_VIEWMODE="client.documents.viewmode";
+    // columns of the case documents table: "id:visible:width" per column, in display order
+    public static final String CONF_DOCUMENTS_TABLE_COLUMNS="client.documents.table.columns";
 
     public static final String CONF_CASE_LASTPARTYTYPE = "user.case.lastpartytype";
     public static final String CONF_CASE_LASTPARTYTYPE_NEWCASEASSISTANT = "user.case.lastpartytype.newcase";

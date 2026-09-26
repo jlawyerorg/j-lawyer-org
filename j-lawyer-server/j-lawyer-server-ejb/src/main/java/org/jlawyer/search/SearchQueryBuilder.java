@@ -671,6 +671,8 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.WildcardQuery;
@@ -711,6 +713,9 @@ public class SearchQueryBuilder {
         FIELD_SEARCH_MAP.put(SearchAPI.FIELD_FILENAME, SearchAPI.FIELD_FILENAME_KEYWORD);
         FIELD_SEARCH_MAP.put(SearchAPI.FIELD_ARCHIVEFILENAME, SearchAPI.FIELD_ARCHIVEFILENAME_KEYWORD);
         FIELD_SEARCH_MAP.put(SearchAPI.FIELD_ARCHIVEFILENUMBER, SearchAPI.FIELD_ARCHIVEFILENUMBER_KEYWORD);
+        FIELD_SEARCH_MAP.put(SearchAPI.FIELD_TITLE, SearchAPI.FIELD_TITLE_KEYWORD);
+        FIELD_SEARCH_MAP.put(SearchAPI.FIELD_KEYWORDS, SearchAPI.FIELD_KEYWORDS_KEYWORD);
+        FIELD_SEARCH_MAP.put(SearchAPI.FIELD_CORRESPONDENT, SearchAPI.FIELD_CORRESPONDENT_KEYWORD);
     }
 
     // Matches a leading "field:value" prefix; DOTALL so multi-word/odd values are captured.
@@ -804,7 +809,11 @@ public class SearchQueryBuilder {
                 }
             }
         }
-        return new Parsed(parseDefaultTextQuery(trimmed, analyzer), false);
+        // a plain query searches the content and, in addition, title and keywords
+        BooleanQuery.Builder combined = new BooleanQuery.Builder();
+        combined.add(parseDefaultTextQuery(trimmed, analyzer), BooleanClause.Occur.SHOULD);
+        combined.add(parseTextQuery(SearchAPI.FIELD_META, trimmed, analyzer), BooleanClause.Occur.SHOULD);
+        return new Parsed(combined.build(), false);
     }
 
     /**
@@ -824,7 +833,11 @@ public class SearchQueryBuilder {
      * metadata field search only, not of the content search.
      */
     private static Query parseDefaultTextQuery(String text, Analyzer analyzer) throws ParseException {
-        QueryParser parser = new QueryParser(SearchAPI.FIELD_DEFAULT, analyzer);
+        return parseTextQuery(SearchAPI.FIELD_DEFAULT, text, analyzer);
+    }
+
+    private static Query parseTextQuery(String field, String text, Analyzer analyzer) throws ParseException {
+        QueryParser parser = new QueryParser(field, analyzer);
         return parser.parse(QueryParser.escape(text));
     }
 }

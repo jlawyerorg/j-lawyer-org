@@ -61,6 +61,7 @@
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="lblSelectedTags" max="32767" attributes="0"/>
                                   <Component id="lblFolder" pref="401" max="32767" attributes="0"/>
+                                  <Component id="pnlMetadata" max="32767" attributes="0"/>
                                   <Group type="102" alignment="0" attributes="0">
                                       <Component id="txtFileNameNew" max="32767" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
@@ -106,6 +107,8 @@
                   <Component id="lblFolder" min="-2" pref="30" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
+              <Component id="pnlMetadata" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Component id="sepBottom" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="32767" attributes="0"/>
           </Group>
@@ -113,6 +116,8 @@
     </DimensionLayout>
   </Layout>
   <SubComponents>
+    <Component class="com.jdimension.jlawyer.client.editors.files.BulkSaveMetadataPanel" name="pnlMetadata">
+    </Component>
     <Component class="javax.swing.JToggleButton" name="togSave">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">

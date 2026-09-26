@@ -727,6 +727,13 @@ public class BulkSaveEntry extends javax.swing.JPanel {
     protected boolean favorite=false;
 
     private boolean hasDuplicateConflict=false;
+    
+    // where the document comes from (message subject, received date, sender / recipient) and
+    // the entry of the message it is an attachment of
+    private DocumentOrigin origin=null;
+    private BulkSaveEntry parentEntry=null;
+    private String savedDocumentId=null;
+    private PreSaveTextSource textSource=null;
 
     // caching for data that is required to build the file name if it contains place holders
     private List<PartyTypeBean> allPartyTypes=null;
@@ -791,6 +798,7 @@ public class BulkSaveEntry extends javax.swing.JPanel {
         cmdFolder = new javax.swing.JButton();
         lblDownloaded = new javax.swing.JLabel();
         cmdNameTemplate = new javax.swing.JButton();
+        pnlMetadata = new com.jdimension.jlawyer.client.editors.files.BulkSaveMetadataPanel();
 
         togSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_file_download_off_black_48dp.png"))); // NOI18N
         togSave.setSelected(true);
@@ -889,6 +897,7 @@ public class BulkSaveEntry extends javax.swing.JPanel {
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(lblSelectedTags, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                     .addComponent(lblFolder, javax.swing.GroupLayout.DEFAULT_SIZE, 401, Short.MAX_VALUE)
+                                    .addComponent(pnlMetadata, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                     .addGroup(layout.createSequentialGroup()
                                         .addComponent(txtFileNameNew)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -920,6 +929,8 @@ public class BulkSaveEntry extends javax.swing.JPanel {
                     .addComponent(cmdFolder)
                     .addComponent(lblFolder, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(pnlMetadata, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(sepBottom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -933,6 +944,7 @@ public class BulkSaveEntry extends javax.swing.JPanel {
         this.cmdFolder.setEnabled(togSave.isSelected());
         this.txtFileNameNew.setEnabled(togSave.isSelected());
         this.togFavorite.setEnabled(togSave.isSelected());
+        this.pnlMetadata.setEnabled(togSave.isSelected());
         
         Color labelColor=Color.BLACK;
         if(!this.togSave.isSelected()) {
@@ -1157,11 +1169,124 @@ public class BulkSaveEntry extends javax.swing.JPanel {
     private javax.swing.JPopupMenu popDocTags;
     private javax.swing.JPopupMenu popFolder;
     private javax.swing.JPopupMenu popNameTemplates;
+    private com.jdimension.jlawyer.client.editors.files.BulkSaveMetadataPanel pnlMetadata;
     private javax.swing.JSeparator sepBottom;
     private javax.swing.JToggleButton togFavorite;
     private javax.swing.JToggleButton togSave;
     private javax.swing.JTextField txtFileNameNew;
     // End of variables declaration//GEN-END:variables
+
+    public DocumentOrigin getOrigin() {
+        return origin;
+    }
+
+    public void setOrigin(DocumentOrigin origin) {
+        this.origin = origin;
+        this.pnlMetadata.setOrigin(origin);
+        this.updateTextSource();
+    }
+
+    public BulkSaveEntry getParentEntry() {
+        return parentEntry;
+    }
+
+    /**
+     * @param parentEntry the entry of the message this entry is an attachment of; the saved
+     * document becomes a child of the message document if both are saved
+     */
+    public void setParentEntry(BulkSaveEntry parentEntry) {
+        this.parentEntry = parentEntry;
+        this.pnlMetadata.setParentName(parentEntry == null ? null : parentEntry.getDocumentFilename());
+    }
+
+    // assistant suggestions work on the document as it is about to be saved
+    private void updateTextSource() {
+        this.textSource = new PreSaveTextSource(this, this.pnlMetadata::getTitle, this.pnlMetadata::getKeywords);
+        this.pnlMetadata.setTextSource(this.textSource, this.getDocumentFilename());
+    }
+
+    /**
+     * @return the text of this document for assistant suggestions; extracted once and shared
+     * by all suggestions for this entry
+     */
+    public PreSaveTextSource getTextSource() {
+        if (this.textSource == null) {
+            this.updateTextSource();
+        }
+        return this.textSource;
+    }
+
+    /**
+     * @return the metadata input of this entry
+     */
+    public BulkSaveMetadataPanel getMetadataPanel() {
+        return this.pnlMetadata;
+    }
+
+    /**
+     * @param parties the parties of the target case
+     * @param caseKeywords the keywords used in the target case
+     */
+    public void setCaseContext(java.util.List<com.jdimension.jlawyer.persistence.AddressBean> parties, java.util.List<String> caseKeywords) {
+        this.pnlMetadata.setCaseContext(parties, caseKeywords);
+    }
+
+    /**
+     * @return true if the document is saved as attachment of the document of its parent entry
+     */
+    public boolean isSaveAsAttachment() {
+        return this.parentEntry != null && this.pnlMetadata.isSaveAsAttachment();
+    }
+
+    /**
+     * @return an error message if the entered metadata are invalid, else null
+     */
+    public String validateMetadata() {
+        try {
+            this.pnlMetadata.getReceivedDate();
+            return null;
+        } catch (java.text.ParseException pe) {
+            return this.getDocumentFilename() + ": ungültiges Eingangsdatum - erwartet wird TT.MM.JJJJ oder TT.MM.JJJJ SS:MM";
+        }
+    }
+
+    /**
+     * Builds the metadata the document is saved with: title, keywords and received date as
+     * entered; the sender / recipient as entered, or - if not changed - resolved from the origin
+     * of the document, so it refers to the matching contact.
+     *
+     * @param afs the case service
+     * @param caseId the target case
+     * @param cache resolved correspondents of this save operation
+     * @return the metadata, without parent
+     * @throws Exception if the correspondent cannot be resolved or the date is invalid
+     */
+    public com.jdimension.jlawyer.services.DocumentMetadata buildMetadata(com.jdimension.jlawyer.services.ArchiveFileServiceRemote afs, String caseId, java.util.Map<String, com.jdimension.jlawyer.services.DocumentMetadata> cache) throws Exception {
+        com.jdimension.jlawyer.services.DocumentMetadata md;
+        if (this.origin != null && !this.pnlMetadata.isCorrespondentEdited()) {
+            md = this.origin.toMetadata(afs, caseId, cache);
+        } else {
+            md = new com.jdimension.jlawyer.services.DocumentMetadata();
+            md.setCorrespondentId(this.pnlMetadata.getCorrespondentId());
+            md.setCorrespondentName(this.pnlMetadata.getCorrespondentName());
+            md.setCorrespondentDirection(this.pnlMetadata.getCorrespondentDirection());
+        }
+        md.setTitle(this.pnlMetadata.getTitle());
+        md.setKeywords(this.pnlMetadata.getKeywords());
+        md.setReceivedDate(this.pnlMetadata.getReceivedDate());
+        return md;
+    }
+
+    /**
+     * @return the id of the document this entry was saved as, or null if not saved yet
+     */
+    public String getSavedDocumentId() {
+        return savedDocumentId;
+    }
+
+    public void setSavedDocumentId(String savedDocumentId) {
+        this.savedDocumentId = savedDocumentId;
+    }
 
     /**
      * @return the documentDate
@@ -1211,6 +1336,7 @@ public class BulkSaveEntry extends javax.swing.JPanel {
         FileUtils fu = FileUtils.getInstance();
         Icon icon = fu.getFileTypeIcon32(documentFilename);
         this.lblFileNameOrg.setIcon(icon);
+        this.updateTextSource();
     }
 
     /**

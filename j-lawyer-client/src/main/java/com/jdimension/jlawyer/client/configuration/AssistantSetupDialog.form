@@ -29,8 +29,11 @@
               <Component id="jPanel1" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" alignment="1" attributes="0">
-                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                  <Group type="102" alignment="0" attributes="0">
+                      <Component id="lblPreSaveLimit" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="spnPreSaveLimit" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
                       <Component id="cmdClose" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <Group type="102" alignment="0" attributes="0">
@@ -157,7 +160,11 @@
                       <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Component id="cmdSave" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="32767" attributes="0"/>
-                      <Component id="cmdClose" min="-2" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="lblPreSaveLimit" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="spnPreSaveLimit" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="cmdClose" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -371,6 +378,22 @@
           <SpinnerModel initial="3" maximum="10" minimum="1" numberType="java.lang.Integer" stepSize="1" type="number"/>
         </Property>
       </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblPreSaveLimit">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="KI-Vorschl&#xe4;ge vor dem Speichern bis max. Dateigr&#xf6;&#xdf;e (MB):"/>
+        <Property name="toolTipText" type="java.lang.String" value="Dokumente, die noch nicht in einer Akte liegen, werden zur Textextraktion an den Server geschickt - nur bis zu dieser Gr&#xf6;&#xdf;e (PDFs werden lokal gelesen)"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JSpinner" name="spnPreSaveLimit">
+      <Properties>
+        <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+          <SpinnerModel initial="3" maximum="50" minimum="1" numberType="java.lang.Integer" stepSize="1" type="number"/>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="spnPreSaveLimitStateChanged"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JSpinner" name="spnReadTimeout">
       <Properties>

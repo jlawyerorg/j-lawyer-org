@@ -22,6 +22,9 @@ import javax.ejb.Local;
 import javax.ws.rs.core.Response;
 import org.jlawyer.io.rest.v8.pojo.RestfulCaseLinkRequestV8;
 import org.jlawyer.io.rest.v8.pojo.RestfulDocumentContentUpdateV8;
+import org.jlawyer.io.rest.v8.pojo.RestfulDocumentMetadataPatchV8;
+import org.jlawyer.io.rest.v8.pojo.RestfulDocumentMetadataV8;
+import org.jlawyer.io.rest.v8.pojo.RestfulDocumentParentV8;
 
 /**
  * Local business interface of the v8 cases list endpoint (richer overview than v1).
@@ -58,5 +61,19 @@ public interface CasesEndpointLocalV8 {
     Response getDocumentEmlPreview(String id);
 
     Response getDocumentBeaPreview(String id);
+
+    Response getCaseDocuments(String id);
+
+    Response getDocumentWithMetadata(String id);
+
+    Response updateDocumentMetadata(String id, RestfulDocumentMetadataV8 body);
+
+    Response updateDocumentsMetadata(RestfulDocumentMetadataPatchV8 body);
+
+    Response setDocumentParent(String id, RestfulDocumentParentV8 body);
+
+    Response getDocumentKeywordsForCase(String id);
+
+    Response getDocumentMessages(String id);
 
 }

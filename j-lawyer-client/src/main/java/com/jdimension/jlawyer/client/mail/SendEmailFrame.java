@@ -780,6 +780,8 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
     private AppUserBean cu = null;
     private Collection<MailboxSetup> mailboxes = new ArrayList<>();
     private HashMap<String, String> attachments = new HashMap<>();
+    // temp url of an attachment -> id of the case document it was created from
+    private HashMap<String, String> attachmentDocumentIds = new HashMap<>();
 
     private ArchiveFileBean contextArchiveFile = null;
     private CaseFolder contextArchiveFileFolder = null;
@@ -1569,6 +1571,31 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                 this.hp.setCaretPosition(0);
             }
         }
+    }
+
+    /**
+     * Remembers that an attachment is a document of a case, so the document gets the recipient
+     * as "An" once the e-mail has been sent.
+     *
+     * @param tempUrl the attachment as passed to addAttachment
+     * @param documentId the id of the case document
+     */
+    @Override
+    public void linkAttachmentToDocument(String tempUrl, String documentId) {
+        if (tempUrl != null && documentId != null) {
+            this.attachmentDocumentIds.put(tempUrl, documentId);
+        }
+    }
+
+    private List<String> getSentDocumentIds() {
+        ArrayList<String> ids = new ArrayList<>();
+        for (String url : this.attachments.values()) {
+            String docId = this.attachmentDocumentIds.get(url);
+            if (docId != null && !ids.contains(docId)) {
+                ids.add(docId);
+            }
+        }
+        return ids;
     }
 
     @Override
@@ -3031,6 +3058,12 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         }
         this.currentDraftDocumentId = null;
 
+        if (a instanceof SendAction) {
+            ((SendAction) a).setSentDocumentIds(this.getSentDocumentIds());
+        } else if (a instanceof SendEncryptedAction) {
+            ((SendEncryptedAction) a).setSentDocumentIds(this.getSentDocumentIds());
+        }
+
         a.start();
 
         UserSettings uset = UserSettings.getInstance();
@@ -3058,10 +3091,15 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
             if (files == null) {
                 return;
             }
-            for (File f : files) {
+            ArchiveFileDocumentsBean[] docs = sad.getSelectedDocuments();
+            for (int i = 0; i < files.length; i++) {
+                File f = files[i];
                 byte[] data = FileUtils.readFile(f);
                 String tmpUrl = FileUtils.createTempFile(FileUtils.sanitizeAttachmentName(f.getName()), data);
                 this.addAttachment(tmpUrl, null);
+                if (docs != null && docs.length == files.length) {
+                    this.linkAttachmentToDocument(tmpUrl, docs[i].getId());
+                }
             }
 
         } catch (Exception ioe) {

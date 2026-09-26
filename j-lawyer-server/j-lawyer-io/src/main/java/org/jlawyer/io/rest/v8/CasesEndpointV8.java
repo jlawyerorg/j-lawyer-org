@@ -35,6 +35,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.jlawyer.io.rest.v8.pojo.RestfulDocumentContentUpdateV8;
+import org.jlawyer.io.rest.v8.pojo.RestfulDocumentMetadataPatchV8;
+import org.jlawyer.io.rest.v8.pojo.RestfulDocumentMetadataV8;
+import org.jlawyer.io.rest.v8.pojo.RestfulDocumentParentV8;
+import org.jlawyer.io.rest.v8.pojo.RestfulDocumentTagV8;
+import org.jlawyer.io.rest.v8.pojo.RestfulDocumentV8;
+import org.jlawyer.io.rest.v7.pojo.RestfulInstantMessageV7;
+import com.jdimension.jlawyer.persistence.InstantMessage;
+import com.jdimension.jlawyer.services.MessagingServiceLocal;
 import org.jlawyer.io.rest.v8.pojo.RestfulTaggedDocumentV8;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
@@ -855,4 +863,282 @@ public class CasesEndpointV8 implements CasesEndpointLocalV8 {
             return RestErrorResponses.serverError(ex);
         }
     }
+    private static final String LOOKUP_MESSAGING = "java:global/j-lawyer-server/j-lawyer-server-ejb/MessagingService!com.jdimension.jlawyer.services.MessagingServiceLocal";
+
+    /**
+     * Returns the documents of a case with all of their metadata, tags and the number of linked
+     * instant messages.
+     *
+     * @param id case ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Case not found / not accessible
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/{id}/documents")
+    @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns the documents of a case with metadata, tags and message counts", response = RestfulDocumentV8.class, responseContainer = "List")
+    public Response getCaseDocuments(@PathParam("id") String id) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            MessagingServiceLocal messaging = (MessagingServiceLocal) ic.lookup(LOOKUP_MESSAGING);
+            try {
+                if (cases.getArchiveFile(id) == null) {
+                    return Response.status(Response.Status.NOT_FOUND).build();
+                }
+            } catch (Exception notFoundOrForbidden) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            ArrayList<RestfulDocumentV8> result = new ArrayList<>();
+            ArrayList<String> ids = new ArrayList<>();
+            for (ArchiveFileDocumentsBean doc : cases.getDocuments(id)) {
+                result.add(RestfulDocumentV8.fromDocumentsBean(doc));
+                ids.add(doc.getId());
+            }
+            Map<String, Integer> messageCounts = messaging.getMessageCountsForDocuments(id);
+            HashMap<String, ArrayList<DocumentTagsBean>> tagMap = ids.isEmpty() ? new HashMap<>() : cases.getDocumentTags(ids);
+            for (RestfulDocumentV8 d : result) {
+                d.setMessageCount(messageCounts.getOrDefault(d.getId(), 0));
+                d.setTags(toRestTags(tagMap == null ? null : tagMap.get(d.getId())));
+            }
+            return Response.ok(result).build();
+        } catch (Exception ex) {
+            log.error("Can not get documents of case " + id, ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    private static List<RestfulDocumentTagV8> toRestTags(List<DocumentTagsBean> tags) {
+        ArrayList<RestfulDocumentTagV8> result = new ArrayList<>();
+        if (tags != null) {
+            for (DocumentTagsBean t : tags) {
+                if (t != null && t.getTagName() != null) {
+                    result.add(new RestfulDocumentTagV8(t.getTagName(), t.getTagValue()));
+                }
+            }
+        }
+        return result;
+    }
+
+    private RestfulDocumentV8 toRestDocument(ArchiveFileServiceLocal cases, MessagingServiceLocal messaging, ArchiveFileDocumentsBean doc) throws Exception {
+        RestfulDocumentV8 d = RestfulDocumentV8.fromDocumentsBean(doc);
+        d.setMessageCount(messaging.getMessagesForDocument(doc.getId()).size());
+        ArrayList<DocumentTagsBean> tags = new ArrayList<>(cases.getDocumentTags(doc.getId()));
+        d.setTags(toRestTags(tags));
+        return d;
+    }
+
+    /**
+     * Returns a single case document with all of its metadata.
+     *
+     * @param id document ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Document not found / not accessible
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/documents/{id}")
+    @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns a case document with all of its metadata", response = RestfulDocumentV8.class)
+    public Response getDocumentWithMetadata(@PathParam("id") String id) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            MessagingServiceLocal messaging = (MessagingServiceLocal) ic.lookup(LOOKUP_MESSAGING);
+            ArchiveFileDocumentsBean doc;
+            try {
+                doc = cases.getDocument(id);
+            } catch (Exception notFoundOrForbidden) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            if (doc == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            return Response.ok(toRestDocument(cases, messaging, doc)).build();
+        } catch (Exception ex) {
+            log.error("Can not get document " + id, ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * Replaces the metadata of a case document (title, keywords, received date, correspondent,
+     * parent). The document content, version and change date stay unchanged.
+     *
+     * @param id document ID
+     * @param body the new metadata
+     * @response 400 Missing body
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Document not found / not accessible
+     * @response 500 Invalid parent (other case, cycle)
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/documents/{id}/metadata")
+    @RolesAllowed({"writeArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value = "Replaces the metadata of a case document", response = RestfulDocumentV8.class)
+    public Response updateDocumentMetadata(@PathParam("id") String id, RestfulDocumentMetadataV8 body) {
+        try {
+            if (body == null) {
+                return Response.status(Response.Status.BAD_REQUEST).build();
+            }
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            MessagingServiceLocal messaging = (MessagingServiceLocal) ic.lookup(LOOKUP_MESSAGING);
+            try {
+                cases.getDocument(id);
+            } catch (Exception notFoundOrForbidden) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            ArchiveFileDocumentsBean doc = cases.updateDocumentMetadata(id, body.toDocumentMetadata());
+            return Response.ok(toRestDocument(cases, messaging, doc)).build();
+        } catch (Exception ex) {
+            log.error("Can not update metadata of document " + id, ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * Changes the metadata of several documents at once. Only the activated fields are changed.
+     *
+     * @param body the documents and the change
+     * @response 400 Missing body or unknown keyword operation
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/documents/metadata")
+    @RolesAllowed({"writeArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value = "Changes the metadata of several case documents", response = RestfulDocumentV8.class, responseContainer = "List")
+    public Response updateDocumentsMetadata(RestfulDocumentMetadataPatchV8 body) {
+        try {
+            if (body == null || body.getDocumentIds() == null) {
+                return Response.status(Response.Status.BAD_REQUEST).build();
+            }
+            com.jdimension.jlawyer.services.DocumentMetadataPatch patch;
+            try {
+                patch = body.toPatch();
+            } catch (IllegalArgumentException iae) {
+                return Response.status(Response.Status.BAD_REQUEST).build();
+            }
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            ArrayList<RestfulDocumentV8> result = new ArrayList<>();
+            for (ArchiveFileDocumentsBean doc : cases.updateDocumentsMetadata(body.getDocumentIds(), patch)) {
+                result.add(RestfulDocumentV8.fromDocumentsBean(doc));
+            }
+            return Response.ok(result).build();
+        } catch (Exception ex) {
+            log.error("Can not update metadata of documents", ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * Sets or removes the parent of a case document.
+     *
+     * @param id document ID
+     * @param body the parent id, null to remove the parent
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Document not found / not accessible
+     * @response 500 Invalid parent (other case, deleted, cycle)
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/documents/{id}/parent")
+    @RolesAllowed({"writeArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value = "Sets or removes the parent of a case document", response = RestfulDocumentV8.class)
+    public Response setDocumentParent(@PathParam("id") String id, RestfulDocumentParentV8 body) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            try {
+                cases.getDocument(id);
+            } catch (Exception notFoundOrForbidden) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            ArchiveFileDocumentsBean doc = cases.setDocumentParent(id, body == null ? null : body.getParentId());
+            return Response.ok(RestfulDocumentV8.fromDocumentsBean(doc)).build();
+        } catch (Exception ex) {
+            log.error("Can not set parent of document " + id, ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * Returns all keywords used by the documents of a case, for auto completion.
+     *
+     * @param id case ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Case not found / not accessible
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/{id}/documents/keywords")
+    @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns the keywords used by the documents of a case", response = String.class, responseContainer = "List")
+    public Response getDocumentKeywordsForCase(@PathParam("id") String id) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            try {
+                return Response.ok(cases.getDocumentKeywordsForCase(id)).build();
+            } catch (Exception notFoundOrForbidden) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+        } catch (Exception ex) {
+            log.error("Can not get document keywords of case " + id, ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * Returns the instant messages linked to a case document, oldest first.
+     *
+     * @param id document ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Document not found / not accessible
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/documents/{id}/messages")
+    @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value = "Returns the instant messages linked to a case document", response = RestfulInstantMessageV7.class, responseContainer = "List")
+    public Response getDocumentMessages(@PathParam("id") String id) {
+        try {
+            InitialContext ic = new InitialContext();
+            MessagingServiceLocal messaging = (MessagingServiceLocal) ic.lookup(LOOKUP_MESSAGING);
+            List<InstantMessage> messages;
+            try {
+                messages = messaging.getMessagesForDocument(id);
+            } catch (Exception notFoundOrForbidden) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            ArrayList<RestfulInstantMessageV7> result = new ArrayList<>();
+            for (InstantMessage im : messages) {
+                result.add(RestfulInstantMessageV7.fromInstantMessage(im));
+            }
+            return Response.ok(result).build();
+        } catch (Exception ex) {
+            log.error("Can not get messages of document " + id, ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
 }

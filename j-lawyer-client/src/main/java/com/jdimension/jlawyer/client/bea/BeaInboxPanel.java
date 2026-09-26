@@ -663,6 +663,8 @@
  */
 package com.jdimension.jlawyer.client.bea;
 
+import com.jdimension.jlawyer.services.DocumentMetadata;
+import com.jdimension.jlawyer.client.editors.files.DocumentOrigin;
 import com.jdimension.jlawyer.client.mail.*;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ResetOnDisplayEditor;
@@ -3052,12 +3054,24 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 bulkSaveDlg.setCaseFolder(rootFolder, targetFolder);
                 bulkSaveDlg.setSelectedCase(targetCase);
 
+                // a message sent from this postbox is outgoing, anything else was received
+                DocumentOrigin origin;
+                if (safeId.equals(m.getSenderSafeId()) && m.getRecipients() != null && !m.getRecipients().isEmpty() && m.getRecipients().get(0) != null) {
+                    BeaRecipient firstRecipient = m.getRecipients().get(0);
+                    origin = DocumentOrigin.outgoing(m.getSubject(), DocumentMetadata.KEY_BEA_SAFEID, firstRecipient.getSafeId(), firstRecipient.getName(), m.getRecipients().size() - 1).withDate(m.getReceptionTime());
+                } else {
+                    origin = DocumentOrigin.incoming(m.getSubject(), m.getReceptionTime(), DocumentMetadata.KEY_BEA_SAFEID, m.getSenderSafeId(), m.getSenderName());
+                }
+                origin.withMessageText((m.getSubject() == null ? "" : m.getSubject()) + System.lineSeparator() + System.lineSeparator() + (m.getBody() == null ? "" : m.getBody()));
+                BulkSaveEntry messageEntry = null;
+
                 if (attachmentsOnly) {
 
                     for (BeaAttachment att : m.getAttachments()) {
 
                         BulkSaveEntry bulkEntry = new BulkSaveEntry();
                         bulkEntry.setDocumentDate(m.getReceptionTime());
+                        bulkEntry.setOrigin(origin.withoutTitle());
 
                         String attachmentName = att.getName();
                         byte[] attachmentData = att.getContent();
@@ -3086,6 +3100,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     for (BeaAttachment att : m.getVhnAttachments()) {
                         BulkSaveEntry bulkEntry = new BulkSaveEntry();
                         bulkEntry.setDocumentDate(m.getReceptionTime());
+                        bulkEntry.setOrigin(origin.withoutTitle());
 
                         String attachmentName = att.getName();
                         byte[] attachmentData = att.getContent();
@@ -3130,6 +3145,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
                     BulkSaveEntry bulkEntry = new BulkSaveEntry();
                     bulkEntry.setDocumentDate(m.getReceptionTime());
+                    bulkEntry.setOrigin(origin);
+                    messageEntry = bulkEntry;
                     bulkEntry.setDocumentBytes(data);
                     bulkEntry.setDocumentFilename(m.getId() + "_" + newName);
                     bulkSaveDlg.addEntry(bulkEntry);
@@ -3157,6 +3174,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
                         BulkSaveEntry bulkEntry = new BulkSaveEntry();
                         bulkEntry.setDocumentDate(m.getReceptionTime());
+                        bulkEntry.setOrigin(origin.withoutTitle());
+                        bulkEntry.setParentEntry(messageEntry);
                         bulkEntry.setDocumentBytes(attachmentData);
                         bulkEntry.setDocumentFilename(newName);
                         bulkSaveDlg.addEntry(bulkEntry);
@@ -3166,6 +3185,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     for (BeaAttachment att : m.getVhnAttachments()) {
                         BulkSaveEntry bulkEntry = new BulkSaveEntry();
                         bulkEntry.setDocumentDate(m.getReceptionTime());
+                        bulkEntry.setOrigin(origin.withoutTitle());
+                        bulkEntry.setParentEntry(messageEntry);
 
                         String attachmentName = att.getName();
                         byte[] attachmentData = att.getContent();

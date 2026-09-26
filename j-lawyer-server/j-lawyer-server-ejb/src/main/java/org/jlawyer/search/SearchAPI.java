@@ -674,9 +674,11 @@ import java.util.concurrent.TimeUnit;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.de.GermanAnalyzer;
+import com.jdimension.jlawyer.documents.DocumentKeywords;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
+import org.apache.lucene.document.StoredField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.*;
@@ -702,6 +704,12 @@ public class SearchAPI {
     private static final String FIELD_ARCHIVEFILEID = "archivefileid";
     static final String FIELD_ARCHIVEFILENAME = "akte";
     static final String FIELD_ARCHIVEFILENUMBER = "az";
+    static final String FIELD_TITLE = "bezeichnung";
+    static final String FIELD_KEYWORDS = "schlagwort";
+    static final String FIELD_CORRESPONDENT = "von";
+    // analyzed, not stored: title and keywords, searched together with the content by a
+    // plain query
+    static final String FIELD_META = "meta";
     static final String FIELD_DEFAULT = FIELD_TEXT;
 
     // Field type for the stored, tokenized document content. Postings carry offsets so the
@@ -722,6 +730,10 @@ public class SearchAPI {
     static final String FIELD_FILENAME_KEYWORD = "dateiname-kw";
     static final String FIELD_ARCHIVEFILENAME_KEYWORD = "akte-kw";
     static final String FIELD_ARCHIVEFILENUMBER_KEYWORD = "az-kw";
+    static final String FIELD_TITLE_KEYWORD = "bezeichnung-kw";
+    // one term per keyword of the document
+    static final String FIELD_KEYWORDS_KEYWORD = "schlagwort-kw";
+    static final String FIELD_CORRESPONDENT_KEYWORD = "von-kw";
 
     private static final Logger log = Logger.getLogger(SearchAPI.class.getName());
     private static final int SEARCHER_REFRESH_INTERVAL_SECONDS = 10;
@@ -904,9 +916,24 @@ public class SearchAPI {
         }
     }
 
-    public void addToIndex(String docId, String fileName, String text, String archiveFileId, String archiveFileName, String archiveFileNumber) throws SearchException {
+    public void addToIndex(String docId, String fileName, String text, String archiveFileId, String archiveFileName, String archiveFileNumber, String title, String keywords, String correspondent) throws SearchException {
         ensureInitialized();
 
+        Document doc = buildDocument(docId, fileName, text, archiveFileId, archiveFileName, archiveFileNumber, title, keywords, correspondent);
+
+        try {
+            // upsert: index requests are processed concurrently, so a metadata update may be
+            // processed before the add of the same document - adding must not duplicate it
+            this.writer.updateDocument(new Term(SearchAPI.FIELD_ID, docId), doc);
+        } catch (IOException ex) {
+            log.error("Error adding document to index", ex);
+            throw new SearchException(ex.getMessage());
+        }
+
+    }
+
+    // package visible for tests: they index exactly what the server indexes
+    static Document buildDocument(String docId, String fileName, String text, String archiveFileId, String archiveFileName, String archiveFileNumber, String title, String keywords, String correspondent) {
         Document doc = new Document();
         doc.add(new Field(SearchAPI.FIELD_ID, docId, TextField.TYPE_STORED));
         doc.add(new Field(SearchAPI.FIELD_FILENAME, fileName, TextField.TYPE_STORED));
@@ -919,15 +946,29 @@ public class SearchAPI {
         doc.add(new StringField(SearchAPI.FIELD_ARCHIVEFILENAME_KEYWORD, SearchQueryBuilder.toKeyword(archiveFileName), Field.Store.NO));
         doc.add(new StringField(SearchAPI.FIELD_ARCHIVEFILENUMBER_KEYWORD, SearchQueryBuilder.toKeyword(archiveFileNumber), Field.Store.NO));
 
-        doc.add(new Field(SearchAPI.FIELD_TEXT, text, TEXT_FIELD_TYPE));
-
-        try {
-            this.writer.addDocument(doc);
-        } catch (IOException ex) {
-            log.error("Error adding document to index", ex);
-            throw new SearchException(ex.getMessage());
+        // document metadata: stored for display, keyword companions for fielded search and an
+        // analyzed field so a plain search also finds title and keywords
+        if (title != null && !title.isBlank()) {
+            doc.add(new StoredField(SearchAPI.FIELD_TITLE, title));
+            doc.add(new StringField(SearchAPI.FIELD_TITLE_KEYWORD, SearchQueryBuilder.toKeyword(title), Field.Store.NO));
+        }
+        if (keywords != null && !keywords.isBlank()) {
+            doc.add(new StoredField(SearchAPI.FIELD_KEYWORDS, keywords));
+            for (String k : DocumentKeywords.split(keywords)) {
+                doc.add(new StringField(SearchAPI.FIELD_KEYWORDS_KEYWORD, SearchQueryBuilder.toKeyword(k), Field.Store.NO));
+            }
+        }
+        if (correspondent != null && !correspondent.isBlank()) {
+            doc.add(new StoredField(SearchAPI.FIELD_CORRESPONDENT, correspondent));
+            doc.add(new StringField(SearchAPI.FIELD_CORRESPONDENT_KEYWORD, SearchQueryBuilder.toKeyword(correspondent), Field.Store.NO));
+        }
+        String meta = ((title == null ? "" : title) + " " + (keywords == null ? "" : keywords)).trim();
+        if (!meta.isEmpty()) {
+            doc.add(new TextField(SearchAPI.FIELD_META, meta, Field.Store.NO));
         }
 
+        doc.add(new Field(SearchAPI.FIELD_TEXT, text, TEXT_FIELD_TYPE));
+        return doc;
     }
 
     public void close() {
@@ -961,22 +1002,10 @@ public class SearchAPI {
         }
     }
 
-    public void updateInIndex(String docId, String fileName, String text, String archiveFileId, String archiveFileName, String archiveFileNumber) throws SearchException {
+    public void updateInIndex(String docId, String fileName, String text, String archiveFileId, String archiveFileName, String archiveFileNumber, String title, String keywords, String correspondent) throws SearchException {
         ensureInitialized();
 
-        Document doc = new Document();
-        doc.add(new Field(SearchAPI.FIELD_ID, docId, TextField.TYPE_STORED));
-        doc.add(new Field(SearchAPI.FIELD_FILENAME, fileName, TextField.TYPE_STORED));
-        doc.add(new Field(SearchAPI.FIELD_ARCHIVEFILEID, archiveFileId, TextField.TYPE_STORED));
-        doc.add(new Field(SearchAPI.FIELD_ARCHIVEFILENAME, archiveFileName, TextField.TYPE_STORED));
-        doc.add(new Field(SearchAPI.FIELD_ARCHIVEFILENUMBER, archiveFileNumber, TextField.TYPE_STORED));
-
-        // Non-analyzed, lowercased keyword companions for exact / wildcard fielded search.
-        doc.add(new StringField(SearchAPI.FIELD_FILENAME_KEYWORD, SearchQueryBuilder.toKeyword(fileName), Field.Store.NO));
-        doc.add(new StringField(SearchAPI.FIELD_ARCHIVEFILENAME_KEYWORD, SearchQueryBuilder.toKeyword(archiveFileName), Field.Store.NO));
-        doc.add(new StringField(SearchAPI.FIELD_ARCHIVEFILENUMBER_KEYWORD, SearchQueryBuilder.toKeyword(archiveFileNumber), Field.Store.NO));
-
-        doc.add(new Field(SearchAPI.FIELD_TEXT, text, TEXT_FIELD_TYPE));
+        Document doc = buildDocument(docId, fileName, text, archiveFileId, archiveFileName, archiveFileNumber, title, keywords, correspondent);
 
         try {
             this.writer.updateDocument(new Term(SearchAPI.FIELD_ID, docId), doc);

@@ -667,13 +667,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.de.GermanAnalyzer;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.FieldType;
-import org.apache.lucene.document.StringField;
-import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.search.IndexSearcher;
@@ -745,6 +739,15 @@ public class SearchQueryBuilderTest {
     }
 
     @Test
+    public void documentMetadataIsSearchableByField() throws Exception {
+        assertEquals("bezeichnung-kw:*klageerwiderung*", queryString("bezeichnung:Klageerwiderung"));
+        assertEquals("bezeichnung-kw:klageerwiderung beklagter", queryString("bezeichnung:\"Klageerwiderung Beklagter\""));
+        assertEquals("schlagwort-kw:*frist*", queryString("schlagwort:Frist"));
+        assertEquals("von-kw:*müller*", queryString("von:Müller"));
+        assertTrue(build("schlagwort:Frist").isMetadataMatch());
+    }
+
+    @Test
     public void whitespaceAroundTheColonIsTolerated() throws Exception {
         assertEquals("dateiname-kw:*quittung*", queryString("dateiname : Quittung"));
     }
@@ -757,9 +760,9 @@ public class SearchQueryBuilderTest {
     // --- full-text fallback ---------------------------------------------------------------
 
     @Test
-    public void plainTextSearchesTheDocumentContent() throws Exception {
+    public void plainTextSearchesTheDocumentContentAndTitleAndKeywords() throws Exception {
         SearchQueryBuilder.Parsed parsed = build("Vertrag");
-        assertEquals("text:vertrag", parsed.getQuery().toString());
+        assertEquals("text:vertrag meta:vertrag", parsed.getQuery().toString());
         assertFalse(parsed.isMetadataMatch());
     }
 
@@ -828,6 +831,37 @@ public class SearchQueryBuilderTest {
         }
     }
 
+    @Test
+    public void documentMetadataIsFound() throws Exception {
+        try (Directory dir = new ByteBuffersDirectory();
+                IndexWriter writer = new IndexWriter(dir, new IndexWriterConfig(ANALYZER))) {
+
+            index(writer, "scan_0042.pdf", "Sehr geehrte Damen und Herren", "Klageerwiderung Beklagter", "Frist, Kostenfestsetzung", "RA Müller");
+            index(writer, "scan_0043.pdf", "Klageerwiderung im Text", null, "Vergleich", "Mandant Meier");
+            index(writer, "scan_0044.pdf", "Anlage", null, null, null);
+            writer.commit();
+
+            try (DirectoryReader reader = DirectoryReader.open(writer)) {
+                IndexSearcher searcher = new IndexSearcher(reader);
+
+                assertEquals(List.of("scan_0042.pdf"), search(searcher, "bezeichnung:\"Klageerwiderung Beklagter\""));
+                assertEquals(List.of("scan_0042.pdf"), search(searcher, "schlagwort:kosten"));
+                // each keyword is its own term: an exact search matches one keyword, not the list
+                assertEquals(List.of("scan_0042.pdf"), search(searcher, "schlagwort:\"frist\""));
+                assertEquals(List.of("scan_0043.pdf"), search(searcher, "von:meier"));
+
+                // a plain search finds the title as well as the content
+                List<String> plain = search(searcher, "Klageerwiderung");
+                assertEquals(2, plain.size());
+                assertTrue(plain.contains("scan_0042.pdf"));
+                assertTrue(plain.contains("scan_0043.pdf"));
+
+                // and the keywords
+                assertEquals(List.of("scan_0043.pdf"), search(searcher, "Vergleich"));
+            }
+        }
+    }
+
     private static List<String> search(IndexSearcher searcher, String query) throws Exception {
         TopDocs hits = searcher.search(SearchQueryBuilder.build(query, ANALYZER).getQuery(), 100);
         List<String> fileNames = new ArrayList<>();
@@ -838,21 +872,14 @@ public class SearchQueryBuilderTest {
     }
 
     /**
-     * Indexes a document the way {@code SearchAPI.addToIndex} does - the keyword companions
-     * are what the metadata field search relies on.
+     * Indexes a document exactly the way {@code SearchAPI.addToIndex} does - the keyword
+     * companions are what the metadata field search relies on.
      */
     private static void index(IndexWriter writer, String fileName, String text) throws Exception {
-        FieldType contentType = new FieldType();
-        contentType.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
-        contentType.setStored(true);
-        contentType.setTokenized(true);
-        contentType.freeze();
+        index(writer, fileName, text, null, null, null);
+    }
 
-        Document doc = new Document();
-        doc.add(new Field(SearchAPI.FIELD_FILENAME, fileName, TextField.TYPE_STORED));
-        doc.add(new StringField(SearchAPI.FIELD_FILENAME_KEYWORD,
-                SearchQueryBuilder.toKeyword(fileName), Field.Store.NO));
-        doc.add(new Field(SearchAPI.FIELD_TEXT, text, contentType));
-        writer.addDocument(doc);
+    private static void index(IndexWriter writer, String fileName, String text, String title, String keywords, String correspondent) throws Exception {
+        writer.addDocument(SearchAPI.buildDocument(fileName, fileName, text, "case", "Akte", "26/0001", title, keywords, correspondent));
     }
 }

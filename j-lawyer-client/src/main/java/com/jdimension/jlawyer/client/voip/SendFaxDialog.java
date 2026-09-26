@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.voip;
 
+import com.jdimension.jlawyer.services.DocumentMetadata;
 import com.jdimension.jlawyer.client.editors.files.AddressBeanListCellRenderer;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
@@ -693,6 +694,8 @@ public class SendFaxDialog extends javax.swing.JDialog {
     private static final Logger log = Logger.getLogger(SendFaxDialog.class.getName());
     private File file = null;
     private String archiveFileId=null;
+    // the case document the fax file was created from
+    private String documentId=null;
 
     public SendFaxDialog(java.awt.Frame parent, boolean modal, ArrayList<AddressBean> abList, AddressBean selected, String archiveFileId) {
         this(parent, modal, abList, selected, null, archiveFileId);
@@ -774,6 +777,14 @@ public class SendFaxDialog extends javax.swing.JDialog {
             }
         }).start();
 
+    }
+
+    /**
+     * @param documentId the case document the fax file was created from - it gets the fax
+     * recipient as "An" once the fax has been queued, unless it already has a correspondent
+     */
+    public void setDocumentId(String documentId) {
+        this.documentId = documentId;
     }
 
     /**
@@ -1070,6 +1081,15 @@ public class SendFaxDialog extends javax.swing.JDialog {
             this.progress.setValue(4);
             this.progress.setString("Erstelle Faxauftrag...");
             locator.lookupVoipServiceRemote().initiateFax(localUri.getUri(), remoteUri, this.lblTo.getText(), pdfName, pdfData, this.archiveFileId);
+            if (this.documentId != null) {
+                try {
+                    ArrayList<String> sentDocs = new ArrayList<>();
+                    sentDocs.add(this.documentId);
+                    locator.lookupArchiveFileServiceRemote().markDocumentsSent(sentDocs, DocumentMetadata.KEY_FAX, remoteUri, this.lblTo.getText(), 0);
+                } catch (Exception ex) {
+                    log.error("Unable to record the recipient on the faxed document", ex);
+                }
+            }
             settings.setConfiguration(ClientSettings.CONF_VOIP_LASTSIPFAX, localUri.getUri());
             this.progress.setValue(5);
             this.progress.setString("fertig.");
@@ -1124,6 +1144,7 @@ public class SendFaxDialog extends javax.swing.JDialog {
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             FileChooserUtils.rememberDirectory(chooser);
             this.file=chooser.getSelectedFile();
+            this.documentId=null;
             this.txtFile.setText(this.file.toString());
 
         }

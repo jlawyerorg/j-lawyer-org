@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.persistence;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import javax.ejb.Local;
 
 /**
@@ -693,5 +694,7 @@ public interface InstantMessageFacadeLocal {
     List<InstantMessage> findByDocumentContext(ArchiveFileDocumentsBean documentContext);
     
     List<InstantMessage> findSince(Date since);
+    
+    Map<String, Integer> countByDocumentForCase(ArchiveFileBean caseContext);
     
 }

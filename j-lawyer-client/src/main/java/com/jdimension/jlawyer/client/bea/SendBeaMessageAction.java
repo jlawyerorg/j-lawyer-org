@@ -690,6 +690,8 @@ import org.apache.log4j.Logger;
 import com.jdimension.jlawyer.services.bea.rest.BeaAttachment;
 import com.jdimension.jlawyer.services.bea.rest.BeaIdentity;
 import com.jdimension.jlawyer.services.bea.rest.BeaListItem;
+import com.jdimension.jlawyer.services.DocumentMetadata;
+import com.jdimension.jlawyer.client.editors.files.DocumentOrigin;
 import com.jdimension.jlawyer.services.bea.rest.BeaMessage;
 import com.jdimension.jlawyer.services.bea.rest.BeaMessageExport;
 import com.jdimension.jlawyer.services.bea.rest.BeaProcessCard;
@@ -716,6 +718,7 @@ public class SendBeaMessageAction extends ProgressableAction {
 
     private String azSender = null;
     private String azRecipient = null;
+    private List<String> sentDocumentIds = null;
 
     private String msgType = BeaMessage.MESSAGETYPE_ALLGEMEINE_NACHRICHT;
 
@@ -778,6 +781,31 @@ public class SendBeaMessageAction extends ProgressableAction {
         return 0;
     }
 
+    /**
+     * @param sentDocumentIds the case documents that are attached - they get the first
+     * recipient as "An" unless they already have a correspondent
+     */
+    public void setSentDocumentIds(List<String> sentDocumentIds) {
+        this.sentDocumentIds = sentDocumentIds;
+    }
+
+    // once the message went out to the first recipient: record it on the attached documents
+    private void markDocumentsSent() {
+        if (this.sentDocumentIds == null || this.sentDocumentIds.isEmpty() || this.recipients == null || this.recipients.isEmpty() || this.recipients.get(0) == null) {
+            return;
+        }
+        List<String> ids = this.sentDocumentIds;
+        this.sentDocumentIds = null;
+        try {
+            BeaIdentity first = this.recipients.get(0);
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            locator.lookupArchiveFileServiceRemote().markDocumentsSent(ids, DocumentMetadata.KEY_BEA_SAFEID, first.getSafeId(), first.toString(), this.recipients.size() - 1);
+        } catch (Exception ex) {
+            log.error("Unable to record the recipient on sent documents", ex);
+        }
+    }
+
     @Override
     public boolean execute() throws Exception {
 
@@ -836,6 +864,8 @@ public class SendBeaMessageAction extends ProgressableAction {
                 JOptionPane.showMessageDialog(this.indicator, "Nachricht kann nicht gesendet werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 throw ex;
             }
+
+            this.markDocumentsSent();
 
             BeaProcessCard p = null;
             boolean isEgvpRecipient = BeaAccess.isEgvpPostBoxBySafeId(to.getSafeId());
@@ -913,7 +943,8 @@ public class SendBeaMessageAction extends ProgressableAction {
 
                         if (newName != null) {
 
-                            ArchiveFileDocumentsBean newDoc = afs.addDocument(this.archiveFile.getId(), newName, mex.getContent(), "", null);
+                            DocumentMetadata sentMetadata = DocumentOrigin.outgoing(this.subject, DocumentMetadata.KEY_BEA_SAFEID, to.getSafeId(), to.toString(), 0).withDate(sentMessage.getReceptionTime() != null ? sentMessage.getReceptionTime() : new Date()).toMetadata(afs, this.archiveFile.getId(), null);
+                            ArchiveFileDocumentsBean newDoc = afs.addDocument(this.archiveFile.getId(), newName, mex.getContent(), "", null, sentMetadata);
 
                             if (this.documentTag != null && !("".equals(this.documentTag))) {
                                 afs.setDocumentTag(newDoc.getId(), new DocumentTagsBean(newDoc.getId(), this.documentTag), true);

@@ -709,6 +709,133 @@ public interface ArchiveFileServiceRemote {
 
     ArchiveFileDocumentsBean addDocument(String archiveFileId, String fileName, byte[] data, String dictateSign, String externalId) throws Exception;
 
+    /**
+     * Adds a document to a case together with its metadata in one transaction. The document is
+     * indexed for full-text search once, including its metadata.
+     *
+     * @param archiveFileId the id of the case
+     * @param fileName the file name, must be unique within the case
+     * @param data the content
+     * @param dictateSign the dictation sign, may be null
+     * @param externalId an external id, may be null
+     * @param metadata title, keywords, received date, correspondent and parent; may be null. A
+     * parent must be a document of the same case.
+     * @return the new document
+     * @throws Exception if the caller has no access to the case, the file name already exists
+     * or the parent is invalid
+     */
+    ArchiveFileDocumentsBean addDocument(String archiveFileId, String fileName, byte[] data, String dictateSign, String externalId, DocumentMetadata metadata) throws Exception;
+
+    /**
+     * Resolves a correspondent (sender or recipient) to a contact. The parties of the case are
+     * searched first, then all contacts. If no contact matches, the display name (or the key)
+     * is returned as free text without a contact reference.
+     *
+     * @param caseId the id of the case the document belongs to, may be null to search all
+     * contacts only
+     * @param keyType one of the KEY_* constants of {@link DocumentMetadata}
+     * @param key the e-mail address, beA SafeId or fax number
+     * @param displayName the name as given by the message, may be null
+     * @param direction one of the CORRESPONDENT_* constants of ArchiveFileDocumentsBean
+     * @return metadata with only the correspondent fields set
+     * @throws Exception if the caller has no access to the case
+     */
+    DocumentMetadata resolveCorrespondent(String caseId, int keyType, String key, String displayName, int direction) throws Exception;
+
+    /**
+     * Records that documents have been sent: each document that has no correspondent yet gets
+     * the (first) recipient as outgoing correspondent. Documents that already have a
+     * correspondent - e.g. a received document that is forwarded - keep it.
+     *
+     * @param documentIds the ids of the sent documents
+     * @param keyType one of the KEY_* constants of {@link DocumentMetadata}
+     * @param key the first recipient's e-mail address, beA SafeId or fax number
+     * @param displayName the first recipient's display name, may be null
+     * @param additionalRecipients the number of further recipients, shown as " +N"
+     * @throws Exception if the caller has no access to one of the cases
+     */
+    void markDocumentsSent(List<String> documentIds, int keyType, String key, String displayName, int additionalRecipients) throws Exception;
+
+    /**
+     * Replaces the metadata of a document (title, keywords, received date, correspondent and
+     * parent). Title and keywords are normalized. The document version and change date are not
+     * changed; a case history entry is written.
+     *
+     * @param documentId the id of the document
+     * @param metadata the new metadata
+     * @return the updated document
+     * @throws Exception if the caller has no access to the case or the parent is invalid (other
+     * case, cycle)
+     */
+    ArchiveFileDocumentsBean updateDocumentMetadata(String documentId, DocumentMetadata metadata) throws Exception;
+
+    /**
+     * Changes the metadata of several documents at once. Only the fields activated in the patch
+     * are changed, all other fields keep their value per document. One case history entry is
+     * written per affected case.
+     *
+     * @param documentIds the ids of the documents
+     * @param patch the change to apply
+     * @return the updated documents
+     * @throws Exception if the caller has no access to one of the cases
+     */
+    List<ArchiveFileDocumentsBean> updateDocumentsMetadata(List<String> documentIds, DocumentMetadataPatch patch) throws Exception;
+
+    /**
+     * Sets or removes the parent of a document.
+     *
+     * @param documentId the id of the document
+     * @param parentId the id of the new parent document of the same case, or null to remove the
+     * parent
+     * @return the updated document
+     * @throws Exception if the parent belongs to another case, is deleted or the change would
+     * create a cycle
+     */
+    ArchiveFileDocumentsBean setDocumentParent(String documentId, String parentId) throws Exception;
+
+    /**
+     * Returns all keywords used by the (not deleted) documents of a case, without duplicates
+     * and sorted alphabetically. Used for auto completion.
+     *
+     * @param caseId the id of the case
+     * @return the keywords, never null
+     * @throws Exception if the caller has no access to the case
+     */
+    List<String> getDocumentKeywordsForCase(String caseId) throws Exception;
+
+    /**
+     * Copies documents into a case in one operation. Content, file name, dictation sign, tags,
+     * favorite, highlights, document type and all metadata are copied. Parent-child relations
+     * between documents of the given set are preserved in the copies (referring to the new
+     * documents); relations to documents outside the set are not copied.
+     *
+     * @param documentIds the ids of the documents to copy
+     * @param targetCaseId the id of the target case, may be the case of the documents
+     * @param targetFolderId the id of a folder of the target case, or null for its root folder
+     * @param newFileNames optional file names per source document id; documents without an
+     * entry keep their file name. May be null.
+     * @return a map from source document id to the new document
+     * @throws Exception if the caller has no access to a case, a file name already exists in the
+     * target case or the folder does not belong to the target case
+     */
+    HashMap<String, ArchiveFileDocumentsBean> copyDocumentsToCase(List<String> documentIds, String targetCaseId, String targetFolderId, HashMap<String, String> newFileNames) throws Exception;
+
+    /**
+     * Moves documents into another case in one operation: the documents are copied as in
+     * {@link #copyDocumentsToCase(List, String, String, HashMap)} and the source documents are
+     * put into the recycle bin of their case. Children left in the source case become
+     * independent documents.
+     *
+     * @param documentIds the ids of the documents to move
+     * @param targetCaseId the id of the target case, must differ from the source case
+     * @param targetFolderId the id of a folder of the target case, or null for its root folder
+     * @param newFileNames optional file names per source document id; may be null
+     * @return a map from source document id to the new document
+     * @throws Exception if the caller has no access to a case, a document is locked by another
+     * user or a file name already exists in the target case
+     */
+    HashMap<String, ArchiveFileDocumentsBean> moveDocumentsToCase(List<String> documentIds, String targetCaseId, String targetFolderId, HashMap<String, String> newFileNames) throws Exception;
+
     int getArchiveFileArchivedCount();
 
     int getDocumentCount();

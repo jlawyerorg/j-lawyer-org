@@ -241,3 +241,51 @@ and the instant messages linked to a document. Access SHALL be checked against t
 #### Scenario: Update without permission
 - **WHEN** a user without write access to the case calls `PUT /v8/cases/documents/{id}/metadata`
 - **THEN** the request is rejected and no data is changed
+
+### Requirement: Metadata in the Save-to-Case Dialog
+The dialog that saves e-mails, beA messages, their attachments and scans to a case SHALL show,
+per file, the title, keywords, received date and sender / recipient the document will be saved
+with, prefilled from where the document comes from, and SHALL allow changing them. An
+attachment of a message SHALL show that it is saved as attachment of the message and SHALL
+allow saving it as an independent document instead. A sender / recipient that is not changed
+SHALL be resolved to a contact as described in Automatic Metadata on Receipt. The dialog
+SHALL offer to add keywords to all files and to set the sender / recipient of all files at once.
+
+#### Scenario: Prefilled from the e-mail
+- **WHEN** a user saves an e-mail with subject "Klageerwiderung" and two attachments, as message plus separate attachments
+- **THEN** the message file shows the title "Klageerwiderung", the received date and the sender, and both attachments show that they are saved as attachments of the message
+
+#### Scenario: Attachment saved independently
+- **WHEN** the user unticks "als Anlage speichern" for one attachment
+- **THEN** that attachment is saved without parent
+
+#### Scenario: Keywords for all files
+- **WHEN** the user adds the keyword "Beweis" for all files
+- **THEN** every file that is saved gets the keyword "Beweis" in addition to its own keywords
+
+### Requirement: Assistant Suggestions Before Saving
+The AI buttons for title and keywords SHALL also be available in the save-to-case dialog,
+per file and as actions for all files; the actions for all files SHALL enter the suggested
+keywords and titles directly, without asking per file. The text of a file that is not saved yet
+SHALL be obtained without uploading it where possible: the subject and body of the message
+itself, the text of a PDF read locally, and plain text formats read locally. Other formats
+SHALL be sent to the server for text extraction without being saved, only up to a maximum file
+size stored as a server setting and configurable in the assistant settings (default 3 MB).
+The text SHALL be obtained at most once per file. Files without recognizable text or above the
+size limit SHALL get no suggestions, with a hint that suggestions are possible after saving.
+
+#### Scenario: Suggestions for a PDF attachment
+- **WHEN** a user asks for keyword suggestions for a 20 MB PDF attachment with a text layer in the save dialog
+- **THEN** the text is read locally, nothing is uploaded and the suggestions are shown
+
+#### Scenario: Office document above the limit
+- **WHEN** the size limit is 3 MB and a user asks for suggestions for a 5 MB DOCX file in the save dialog
+- **THEN** no suggestions are made and a hint explains that they are possible after saving
+
+#### Scenario: Keywords for many files without dialogs
+- **WHEN** a user runs "Schlagworte eintragen" for 12 files in the save dialog
+- **THEN** the suggested keywords are added to each file without a dialog per file, and skipped files are listed with their reason
+
+#### Scenario: Scanned PDF
+- **WHEN** a user asks for suggestions for a PDF without text layer in the save dialog
+- **THEN** nothing is uploaded and a hint explains that suggestions are possible after saving and text recognition

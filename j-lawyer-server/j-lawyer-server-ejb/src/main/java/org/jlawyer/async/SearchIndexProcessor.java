@@ -729,11 +729,22 @@ public class SearchIndexProcessor implements MessageListener {
                     SearchIndexRequest req = (SearchIndexRequest) o;
                     SearchAPI api = SearchAPI.getInstance();
                     if (req.getAction() == SearchIndexRequest.ACTION_ADD) {
-                        api.addToIndex(req.getId(), req.getFileName(), req.getText(), req.getArchiveFileId(), req.getArchiveFileName(), req.getArchiveFileNumber());
+                        // the metadata are read from the document, so no publisher has to carry them
+                        ArchiveFileDocumentsBean md = this.archiveFileDocumentsFacade.find(req.getId());
+                        api.addToIndex(req.getId(), req.getFileName(), req.getText(), req.getArchiveFileId(), req.getArchiveFileName(), req.getArchiveFileNumber(), title(md), keywords(md), correspondent(md));
                     } else if (req.getAction() == SearchIndexRequest.ACTION_DELETE) {
                         api.removeFromIndex(req.getId());
                     } else if (req.getAction() == SearchIndexRequest.ACTION_UPDATE) {
-                        api.updateInIndex(req.getId(), req.getFileName(), req.getText(), req.getArchiveFileId(), req.getArchiveFileName(), req.getArchiveFileNumber());
+                        ArchiveFileDocumentsBean md = this.archiveFileDocumentsFacade.find(req.getId());
+                        api.updateInIndex(req.getId(), req.getFileName(), req.getText(), req.getArchiveFileId(), req.getArchiveFileName(), req.getArchiveFileNumber(), title(md), keywords(md), correspondent(md));
+                    } else if (req.getAction() == SearchIndexRequest.ACTION_UPDATE_METADATA) {
+                        // metadata changed, content did not: reuse the stored text preview instead
+                        // of extracting the text again
+                        ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(req.getId());
+                        if (db != null && !db.isDeleted()) {
+                            PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade, null);
+                            api.updateInIndex(db.getId(), db.getName(), pg.getDocumentPreview(db.getId(), DocumentPreview.TYPE_TEXT).getText(), db.getArchiveFileKey().getId(), db.getArchiveFileKey().getName(), db.getArchiveFileKey().getFileNumber(), title(db), keywords(db), correspondent(db));
+                        }
                     } else if (req.getAction() == SearchIndexRequest.ACTION_DELETEALL) {
                         api.deleteAll();
                     } else if (req.getAction() == SearchIndexRequest.ACTION_REINDEXALL) {
@@ -861,8 +872,20 @@ public class SearchIndexProcessor implements MessageListener {
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     private void doAddToIndex(ArchiveFileDocumentsBean db, PreviewGenerator pg, SearchAPI api) throws Exception {
         log.info("indexing document " + db.getName());
-        api.addToIndex(db.getId(), db.getName(), pg.getDocumentPreview(db.getId(), DocumentPreview.TYPE_TEXT).getText(), db.getArchiveFileKey().getId(), db.getArchiveFileKey().getName(), db.getArchiveFileKey().getFileNumber());
+        api.addToIndex(db.getId(), db.getName(), pg.getDocumentPreview(db.getId(), DocumentPreview.TYPE_TEXT).getText(), db.getArchiveFileKey().getId(), db.getArchiveFileKey().getName(), db.getArchiveFileKey().getFileNumber(), title(db), keywords(db), correspondent(db));
 
+    }
+
+    private static String title(ArchiveFileDocumentsBean db) {
+        return db == null ? null : db.getTitle();
+    }
+
+    private static String keywords(ArchiveFileDocumentsBean db) {
+        return db == null ? null : db.getKeywords();
+    }
+
+    private static String correspondent(ArchiveFileDocumentsBean db) {
+        return db == null ? null : db.getCorrespondentName();
     }
 
 }
