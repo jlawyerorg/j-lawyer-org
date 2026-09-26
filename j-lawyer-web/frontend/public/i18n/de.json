@@ -829,7 +829,8 @@
         "size": "Größe",
         "type": "Typ",
         "favorite": "Favorit",
-        "folder": "Ordner"
+        "folder": "Ordner",
+        "received": "Eingang"
       },
       "dateChange": "Änderungsdatum",
       "dateCreation": "Erstelldatum",
@@ -923,7 +924,37 @@
         }
       },
       "noDictionary": "Keine Etiketten konfiguriert.",
-      "listLabels": "Listenetiketten"
+      "listLabels": "Listenetiketten",
+      "meta": {
+        "menu": "Eigenschaften…",
+        "title": "Eigenschaften",
+        "titleBulk": "Eigenschaften von {{n}} Dokumenten",
+        "docTitle": "Bezeichnung",
+        "keywords": "Schlagworte",
+        "keywordPlaceholder": "Schlagwort eingeben, Enter oder Komma",
+        "removeKeyword": "Schlagwort entfernen",
+        "kwAdd": "hinzufügen",
+        "kwRemove": "entfernen",
+        "kwSet": "ersetzen",
+        "received": "Eingang",
+        "receivedShort": "Eingang",
+        "correspondent": "Von / An",
+        "dirIn": "Von",
+        "dirOut": "An",
+        "correspondentPlaceholder": "Beteiligte wählen oder Name eingeben",
+        "linkedContact": "mit Kontakt verknüpft",
+        "freeText": "Freitext, ohne Kontakt",
+        "parent": "Anlage zu",
+        "noParent": "— keine (eigenständiges Dokument) —",
+        "attachments": "{{n}} Anlage(n) ein-/ausblenden",
+        "attachmentOf": "Anlage zu {{name}}"
+      },
+      "msgs": {
+        "menu": "Nachrichten",
+        "title": "Nachrichten zu {{name}}",
+        "none": "Keine Nachrichten zu diesem Dokument.",
+        "count": "{{n}} Nachricht(en)"
+      }
     },
     "docLoading": "Dokument wird geladen …",
     "docError": "Dokument konnte nicht geladen werden.",

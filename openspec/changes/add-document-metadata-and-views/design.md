@@ -186,7 +186,7 @@ Etiketten als Chips in der zweiten Zeile (D13).
   `with-tags` + `title`, `keywords[]`, `receivedDate`, `correspondentId`,
   `correspondentName`, `correspondentDirection`, `parentId`, `messageCount`).
 - `PUT /v8/cases/documents/{id}/metadata` (einzeln), `PUT /v8/cases/documents/metadata`
-  (Stapel mit Patch-Semantik wie D5), `GET /v8/cases/{id}/documents/keywords`,
+  (Stapel mit Patch-Semantik wie D5), `GET /v8/cases/{id}/documents/keywords`, `GET /v8/cases/{id}/documents/correspondent` (Kontaktauflösung für Web-Speicherwege),
   `GET /v8/cases/documents/{id}/messages`, `GET /v8/cases/documents/{id}` (Einzeldokument
   mit Metadaten), `PUT /v8/cases/documents/{id}/parent`. Rollen: lesen `readArchiveFileRole`, schreiben
   `writeArchiveFileRole`, jeweils mit Akten-ACL-Prüfung.

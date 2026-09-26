@@ -440,6 +440,26 @@
 .dfolder { display: inline-flex; align-items: center; gap: 3px; }
 .dfolder jl-icon { color: var(--jl-ink-faint); vertical-align: -1px; }
 .dtags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
+/* Keywords ("Schlagworte"): neutral pills after the labels. */
+.dkw {
+  font-size: .64rem; font-weight: 600; line-height: 1.4; padding: 1px 7px; border-radius: 999px; white-space: nowrap;
+  color: var(--jl-ink-soft); background: var(--jl-surface-alt); border: 1px solid var(--jl-line-strong);
+}
+.docs .dmeta .dfile { color: var(--jl-ink-soft); }
+.docs .dmeta-corr { color: var(--jl-ink-soft); }
+.docs .dcorr { font-weight: 600; }
+.docs .dparent { font-style: italic; }
+/* Attachment rows: a subtle guide line on the left marks the hierarchy. */
+.docs .doc-row.child::before { content: ''; position: absolute; top: 0; bottom: 0; left: 22px; border-left: 1px dashed var(--jl-line-strong); }
+/* Attachment count (toggles the attachments) and linked-message count, next to the title. */
+.docs .kids, .docs .msgs {
+  display: inline-flex; align-items: center; gap: 2px; padding: 1px 6px; border-radius: 999px; font: inherit; font-size: .7rem; font-weight: 700;
+  line-height: 1.4; cursor: pointer; border: 1px solid transparent;
+}
+.docs .kids { color: #fff; background: #2f855a; }
+.docs .kids:disabled { cursor: default; opacity: .75; }
+.docs .msgs { color: var(--jl-blue); background: color-mix(in srgb, var(--jl-blue) 12%, transparent); border-color: color-mix(in srgb, var(--jl-blue) 26%, transparent); }
+.docs .msgs:hover { border-color: var(--jl-blue); }
 /* Active document labels, shown as small pills right on the row. */
 .dtag {
   font-size: .64rem; font-weight: 700; line-height: 1.4; padding: 1px 7px; border-radius: 999px; white-space: nowrap;

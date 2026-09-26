@@ -29,6 +29,8 @@ import { OfficeEditorComponent } from './office-editor.component';
 import { OFFICE_EDITABLE_EXT } from './document-actions.util';
 import { OfficeConfigService } from '../settings/office-config.service';
 import { DocumentBulkBarComponent } from './document-bulk-bar.component';
+import { DocumentMetadataDialogComponent } from './document-metadata-dialog.component';
+import { DocumentMessagesDialogComponent } from './document-messages-dialog.component';
 import { CaseTimelineComponent } from './case-timeline.component';
 import {
   formatDurationMs, positionMillis, runningElapsed as elapsedOf, sumDuration, sumInvoiceable, sumNet, toServerDateTime,
@@ -39,9 +41,23 @@ import { CalendarEvent, CalendarEventType, CaseRef, EventDraft } from '../calend
 import { AuthService } from '../core/auth/auth.service';
 import {
   AccountEntry, AccountEntryWrite, CaseDetail, CaseDocument, CaseGroup, CaseHistoryEntry, CaseInvoice, CaseLink, CaseMessage,
-  CaseOverview, CasePayment, CaseTag, CaseTimesheet, CaseWrite, DocFolder, DocSortKey, DueDate, InvoicePool, InvoiceType, InvoiceWrite,
+  CaseOverview, CasePayment, CaseTag, CaseTimesheet, CaseWrite, CORRESPONDENT_IN, CORRESPONDENT_OUT, docDisplayTitle, DocFolder, DocSortKey, DueDate, InvoicePool, InvoiceType, InvoiceWrite,
   MultiValueTagDef, Party, PartyUpdate, PaymentWrite, PositionWrite, TimesheetPosition, TimesheetWrite,
 } from './case.models';
+
+/** A document list row with its position in the parent/attachment hierarchy. */
+interface DocRow {
+  doc: CaseDocument;
+  /** Indentation level (0 = top level). */
+  depth: number;
+  /** Number of attachments (children) in the whole case. */
+  childCount: number;
+  /** Whether at least one attachment is visible under the current folder/search selection. */
+  hasVisibleChildren: boolean;
+  expanded: boolean;
+  /** Title of the parent when the document is an attachment whose parent is not visible; '' otherwise. */
+  parentHint: string;
+}
 
 /** A row in the document folder tree, flattened for display with indentation + a doc count. */
 interface DocFolderRow {
@@ -77,7 +93,7 @@ interface TimesheetView extends CaseTimesheet {
     CaseEditorComponent, PartyAddComponent, PartyEditorComponent, EventEditorComponent,
     TimesheetEditorComponent, TimesheetDetailComponent, PositionEditorComponent, AccountEntryEditorComponent,
     InvoiceEditorComponent, InvoicePositionsComponent, PaymentEditorComponent, DocumentActionsComponent, OfficeEditorComponent,
-    DocumentBulkBarComponent, CaseTimelineComponent],
+    DocumentBulkBarComponent, CaseTimelineComponent, DocumentMetadataDialogComponent, DocumentMessagesDialogComponent],
   template: `
     <div class="master-detail" [class.show-detail]="selectedId()">
       <!-- Aktenliste -->
@@ -392,7 +408,7 @@ interface TimesheetView extends CaseTimesheet {
                           <span class="ext-lbl">{{ doc.ext || '—' }}</span>
                         </span>
                         <span>
-                          <span class="dn">{{ doc.name }}</span>
+                          <span class="dn" [title]="doc.name">{{ displayTitle(doc) }}</span>
                           <span class="dmeta">{{ doc.date | date: 'dd.MM.yyyy' }}</span>
                         </span>
                         <span class="dsz">{{ doc.size }}</span>
@@ -508,10 +524,13 @@ interface TimesheetView extends CaseTimesheet {
                     @if (docUploadError()) { <p class="up-error">{{ 'akten.docs.uploadError' | transloco }}</p> }
                     @if (selectedDocs().length) {
                       <jl-document-bulk-bar [docs]="selectedDocs()" [caseId]="selectedId() ?? ''" [folders]="docFolderOptions()"
-                                            (changed)="onBulkChanged()" (clear)="clearDocSel()" (download)="downloadSelected()" />
+                                            (changed)="onBulkChanged()" (clear)="clearDocSel()" (download)="downloadSelected()"
+                                            (properties)="openDocProperties(selectedDocs())" />
                     }
-                    @for (doc of visibleDocs(); track doc.id) {
-                      <div class="doc doc-row" [class.previewable]="canPreview(doc)" [class.sel]="isDocSelected(doc.id)"
+                    @for (row of docRows(); track row.doc.id) {
+                      @let doc = row.doc;
+                      <div class="doc doc-row" [class.previewable]="canPreview(doc)" [class.sel]="isDocSelected(doc.id)" [class.child]="row.depth > 0"
+                           [style.padding-left.px]="row.depth ? 14 + row.depth * 28 : null"
                            (click)="canPreview(doc) ? preview(doc) : download(doc)">
                         <button type="button" class="doc-cbx" [class.on]="isDocSelected(doc.id)"
                                 (click)="toggleDocSel(doc.id, $event)" [attr.aria-label]="'akten.docs.bulk.select' | transloco">
@@ -527,15 +546,43 @@ interface TimesheetView extends CaseTimesheet {
                         </span>
                         <span class="doc-main">
                           <span class="dn">
+                            @if (row.childCount > 0) {
+                              <button type="button" class="kids" [class.open]="row.expanded" [disabled]="!row.hasVisibleChildren"
+                                      (click)="toggleDocExpanded(doc.id, $event)"
+                                      [title]="'akten.docs.meta.attachments' | transloco: { n: row.childCount }">
+                                <jl-icon [name]="row.expanded ? 'chevron-down' : 'chevron-right'" [size]="12" />
+                                <jl-icon name="paperclip" [size]="12" />{{ row.childCount }}
+                              </button>
+                            }
                             @if (doc.favorite) { <jl-icon class="fav" name="star" [size]="13" /> }
-                            <span class="dn-name">{{ doc.name }}</span>
+                            <span class="dn-name" [title]="doc.name">{{ displayTitle(doc) }}</span>
+                            @if (doc.messageCount > 0) {
+                              <button type="button" class="msgs" (click)="openDocMessages(doc, $event)"
+                                      [title]="'akten.docs.msgs.count' | transloco: { n: doc.messageCount }">
+                                <jl-icon name="message" [size]="12" />{{ doc.messageCount }}
+                              </button>
+                            }
                           </span>
+                          @if (doc.correspondentName || doc.receivedDate || row.parentHint) {
+                            <span class="dmeta dmeta-corr">
+                              @if (doc.correspondentName) {
+                                <span class="dcorr" [title]="corrTitle(doc)">{{ corrArrow(doc) }} {{ doc.correspondentName }}</span>
+                              }
+                              @if (doc.receivedDate) {
+                                @if (doc.correspondentName) { · }{{ 'akten.docs.meta.receivedShort' | transloco }} {{ doc.receivedDate | date: 'dd.MM.yyyy' }}
+                              }
+                              @if (row.parentHint) {
+                                @if (doc.correspondentName || doc.receivedDate) { · }<span class="dparent">{{ 'akten.docs.meta.attachmentOf' | transloco: { name: row.parentHint } }}</span>
+                              }
+                            </span>
+                          }
                           <span class="dmeta">
-                            {{ (cases.docDateMode() === 'change' ? doc.changeDate : doc.date) | date: 'dd.MM.yyyy' }} · {{ doc.size }}@if (doc.version > 1) { · v{{ doc.version }} }@if (showFolderColumn() && docFolderLabel(doc)) { · <span class="dfolder"><jl-icon name="folder" [size]="11" /> {{ docFolderLabel(doc) }}</span> }
+                            @if (doc.title) { <span class="dfile">{{ doc.name }}</span> · }{{ (cases.docDateMode() === 'change' ? doc.changeDate : doc.date) | date: 'dd.MM.yyyy' }} · {{ doc.size }}@if (doc.version > 1) { · v{{ doc.version }} }@if (showFolderColumn() && docFolderLabel(doc)) { · <span class="dfolder"><jl-icon name="folder" [size]="11" /> {{ docFolderLabel(doc) }}</span> }
                           </span>
-                          @if (doc.tags.length) {
+                          @if (doc.tags.length || doc.keywords.length) {
                             <span class="dtags">
-                              @for (t of doc.tags; track t) { <span class="dtag">{{ t }}</span> }
+                              @for (t of doc.tags; track t) { <span class="dtag">{{ doc.tagValues[t] ? t + ': ' + doc.tagValues[t] : t }}</span> }
+                              @for (k of doc.keywords; track k) { <span class="dkw">{{ k }}</span> }
                             </span>
                           }
                         </span>
@@ -555,7 +602,8 @@ interface TimesheetView extends CaseTimesheet {
                           </button>
                           <jl-document-actions (click)="$event.stopPropagation()" [doc]="doc" [caseId]="selectedId() ?? ''"
                                                [folders]="docFolderOptions()" (changed)="reloadDetail()"
-                                               (preview)="preview(doc)" (download)="download(doc)" (remove)="confirmDeleteDoc(doc)" />
+                                               (preview)="preview(doc)" (download)="download(doc)" (remove)="confirmDeleteDoc(doc)"
+                                               (properties)="openDocProperties([doc])" (messages)="openDocMessages(doc)" />
                         </span>
                       </div>
                     } @empty {
@@ -563,6 +611,13 @@ interface TimesheetView extends CaseTimesheet {
                     }
                   </div>
                 </section>
+                @if (metaDialogDocs(); as md) {
+                  <jl-document-metadata-dialog [docs]="md" [allDocs]="c.documents" [caseId]="c.id" [parties]="c.parties"
+                                               (saved)="onDocPropertiesSaved()" (closed)="metaDialogDocs.set(null)" />
+                }
+                @if (msgDialogDoc(); as mdoc) {
+                  <jl-document-messages-dialog [doc]="mdoc" [caseId]="c.id" (sent)="reloadDetail()" (closed)="msgDialogDoc.set(null)" />
+                }
                 @if (docWide()) {
                   <aside class="doc-preview">
                     @if (previewDoc()) {
@@ -1284,7 +1339,13 @@ export class AktenComponent {
   /** Ids of documents ticked for bulk actions (multi-select), independent of folder/search filtering. */
   protected readonly docSel = signal<Set<string>>(new Set());
   protected readonly docMobilePane = signal<'folders' | 'list'>('folders');
-  protected readonly sortKeys: DocSortKey[] = ['name', 'date', 'size', 'type', 'favorite', 'folder'];
+  protected readonly sortKeys: DocSortKey[] = ['name', 'date', 'received', 'size', 'type', 'favorite', 'folder'];
+  /** Ids of parent documents whose attachments are collapsed (parents are expanded by default). */
+  protected readonly docCollapsed = signal<Set<string>>(new Set());
+  /** Documents edited in the "Eigenschaften" dialog (one = single, several = bulk); null = closed. */
+  protected readonly metaDialogDocs = signal<CaseDocument[] | null>(null);
+  /** Document whose linked instant messages are shown; null = closed. */
+  protected readonly msgDialogDoc = signal<CaseDocument | null>(null);
   /** Free-text filter over the case's documents (by name/tag). When set it searches case-wide. */
   protected readonly docSearch = signal('');
 
@@ -1567,9 +1628,110 @@ export class AktenComponent {
     return this.folderNameMap().get(this.effectiveFolderId(doc)) ?? '';
   }
 
-  /** Matches a document against a lower-cased search term (file name or any tag). */
+  /** Matches a document against a lower-cased search term (file name, title, keywords, correspondent or any tag). */
   private matchesSearch(doc: CaseDocument, term: string): boolean {
-    return doc.name.toLowerCase().includes(term) || doc.tags.some((t) => t.toLowerCase().includes(term));
+    return doc.name.toLowerCase().includes(term)
+      || doc.title.toLowerCase().includes(term)
+      || doc.correspondentName.toLowerCase().includes(term)
+      || doc.keywords.some((k) => k.toLowerCase().includes(term))
+      || doc.tags.some((t) => t.toLowerCase().includes(term));
+  }
+
+  /** The title shown for a document ("Bezeichnung", else the file name). */
+  protected displayTitle(doc: CaseDocument): string {
+    return docDisplayTitle(doc);
+  }
+
+  /** ↘ for incoming, ↗ for outgoing correspondents. */
+  protected corrArrow(doc: CaseDocument): string {
+    return doc.correspondentDirection === CORRESPONDENT_OUT ? '↗' : doc.correspondentDirection === CORRESPONDENT_IN ? '↘' : '';
+  }
+
+  protected corrTitle(doc: CaseDocument): string {
+    const key = doc.correspondentDirection === CORRESPONDENT_OUT ? 'akten.docs.meta.dirOut' : 'akten.docs.meta.dirIn';
+    return `${this.transloco.translate(key)}: ${doc.correspondentName}`;
+  }
+
+  /**
+   * The visible documents as display rows with their hierarchy: attachments are listed indented
+   * below their parent (in the active sort order) unless the parent is collapsed. An attachment
+   * whose parent is not visible (other folder, filtered out) is shown at top level with a hint
+   * naming its parent.
+   */
+  protected docRows(): DocRow[] {
+    const vis = this.visibleDocs();
+    const all = this.selected()?.documents ?? [];
+    const byId = new Map(all.map((d) => [d.id, d] as const));
+    const visIds = new Set(vis.map((d) => d.id));
+    const childCount = new Map<string, number>();
+    for (const d of all) {
+      if (d.parentId && byId.has(d.parentId)) { childCount.set(d.parentId, (childCount.get(d.parentId) ?? 0) + 1); }
+    }
+    const visChildren = new Map<string, CaseDocument[]>();
+    for (const d of vis) {
+      if (d.parentId && visIds.has(d.parentId) && d.parentId !== d.id) {
+        const list = visChildren.get(d.parentId) ?? [];
+        list.push(d);
+        visChildren.set(d.parentId, list);
+      }
+    }
+    const collapsed = this.docCollapsed();
+    const rows: DocRow[] = [];
+    const placed = new Set<string>();
+    const walk = (d: CaseDocument, depth: number, parentHint: string) => {
+      if (placed.has(d.id)) { return; }
+      placed.add(d.id);
+      const kids = visChildren.get(d.id) ?? [];
+      const expanded = !collapsed.has(d.id);
+      rows.push({ doc: d, depth, childCount: childCount.get(d.id) ?? 0, hasVisibleChildren: kids.length > 0, expanded, parentHint });
+      if (expanded) { kids.forEach((k) => walk(k, depth + 1, '')); }
+    };
+    for (const d of vis) {
+      if (d.parentId && visIds.has(d.parentId)) { continue; }
+      const parent = d.parentId ? byId.get(d.parentId) : undefined;
+      walk(d, 0, parent ? docDisplayTitle(parent) : '');
+    }
+    // Safety net for broken relations (cycles): anything not placed yet is shown at top level.
+    for (const d of vis) {
+      if (!placed.has(d.id) && !this.isHiddenByCollapse(d, byId, collapsed, visIds)) { walk(d, 0, ''); }
+    }
+    return rows;
+  }
+
+  /** True when one of the document's visible ancestors is collapsed. */
+  private isHiddenByCollapse(d: CaseDocument, byId: Map<string, CaseDocument>, collapsed: Set<string>, visIds: Set<string>): boolean {
+    const seen = new Set<string>();
+    let p = d.parentId;
+    while (p && visIds.has(p) && !seen.has(p)) {
+      if (collapsed.has(p)) { return true; }
+      seen.add(p);
+      p = byId.get(p)?.parentId ?? '';
+    }
+    return false;
+  }
+
+  protected toggleDocExpanded(id: string, ev: Event): void {
+    ev.stopPropagation();
+    const next = new Set(this.docCollapsed());
+    if (next.has(id)) { next.delete(id); } else { next.add(id); }
+    this.docCollapsed.set(next);
+  }
+
+  /** Opens the "Eigenschaften" dialog for one or several documents. */
+  protected openDocProperties(docs: CaseDocument[]): void {
+    if (docs.length) { this.metaDialogDocs.set(docs); }
+  }
+
+  protected onDocPropertiesSaved(): void {
+    const bulk = (this.metaDialogDocs()?.length ?? 0) > 1;
+    this.metaDialogDocs.set(null);
+    if (bulk) { this.onBulkChanged(); } else { this.reloadDetail(); }
+  }
+
+  /** Shows the instant messages linked to a document. */
+  protected openDocMessages(doc: CaseDocument, ev?: Event): void {
+    ev?.stopPropagation();
+    this.msgDialogDoc.set(doc);
   }
 
   protected clearDocSearch(): void {
@@ -3067,7 +3229,12 @@ function collectFolderIds(detail: CaseDetail | null): string[] {
 function comparePrimary(a: CaseDocument, b: CaseDocument, key: DocSortKey, mode: 'change' | 'creation'): number {
   switch (key) {
     case 'name':
-      return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+      return docDisplayTitle(a).localeCompare(docDisplayTitle(b), undefined, { sensitivity: 'base' });
+    case 'received': {
+      // Documents without a received date sort after dated ones (ascending).
+      if (!a.receivedDate || !b.receivedDate) { return a.receivedDate ? -1 : b.receivedDate ? 1 : 0; }
+      return a.receivedDate < b.receivedDate ? -1 : a.receivedDate > b.receivedDate ? 1 : 0;
+    }
     case 'date': {
       const av = mode === 'change' ? a.changeDate : a.date;
       const bv = mode === 'change' ? b.changeDate : b.date;

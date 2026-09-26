@@ -2,7 +2,7 @@ import {
   ChangeDetectionStrategy, Component, computed, inject, input, OnInit, output, signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { defer, forkJoin, from, Observable, of, Subject, throwError } from 'rxjs';
+import { concat, defer, forkJoin, from, Observable, of, Subject, throwError } from 'rxjs';
 import { catchError, debounceTime, map, mergeMap, switchMap } from 'rxjs/operators';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
@@ -15,6 +15,7 @@ import {
 import { EventEditorComponent } from '../calendar/event-editor.component';
 import { CalendarService } from '../calendar/calendar.service';
 import { CaseRef, EventDraft } from '../calendar/calendar.models';
+import { emailOrigin, originWriter } from '../akten/document-origin.util';
 import { EmailService } from './email.service';
 import { CaseSuggestions, MailMessage } from './email.models';
 
@@ -565,12 +566,27 @@ export class EmailBulkSaveComponent implements OnInit {
     this.saving.set(true);
     this.entries.update((es) => es.map((e) => e.include ? { ...e, status: 'saving' } : e));
 
+    // Title, received date and "Von/An" come from the message; attachments become children of
+    // the .eml document, so the .eml is saved first.
+    const msg = this.message();
+    const own = (this.api.mailboxes() ?? []).map((m) => m.emailAddress);
+    const writeMeta = originWriter(this.cases, t.id, emailOrigin(msg.subject, msg.date, msg.from, msg.to ?? [], own));
+    type SaveResult = { key: string; ok: boolean; id: string };
+    const runOne = (entry: SaveEntry, parentId: string | null): Observable<SaveResult> => defer(() => this.saveEntry(t.id, entry, writeMeta, parentId)).pipe(
+      map((id) => ({ key: entry.key, ok: true, id })),
+      catchError(() => of({ key: entry.key, ok: false, id: '' })),
+    );
+    const emlEntry = included.find((e) => e.kind === 'eml');
+    const others = included.filter((e) => e !== emlEntry);
+
     let failures = 0;
-    from(included).pipe(
-      mergeMap((entry) => defer(() => this.saveEntry(t.id, entry)).pipe(
-        map(() => ({ key: entry.key, ok: true })),
-        catchError(() => of({ key: entry.key, ok: false })),
-      ), CONCURRENCY),
+    const first$: Observable<SaveResult | null> = emlEntry ? runOne(emlEntry, null) : of(null);
+    first$.pipe(
+      switchMap((first) => {
+        const parentId = first?.ok ? first.id : null;
+        const rest$ = from(others).pipe(mergeMap((entry) => runOne(entry, parentId), CONCURRENCY));
+        return first ? concat(of(first), rest$) : rest$;
+      }),
     ).subscribe({
       next: (r) => {
         if (!r.ok) { failures++; }
@@ -587,8 +603,11 @@ export class EmailBulkSaveComponent implements OnInit {
     });
   }
 
-  /** Downloads the bytes, creates the document, then applies date/favorite metadata and labels. */
-  private saveEntry(caseId: string, entry: SaveEntry): Observable<unknown> {
+  /**
+   * Downloads the bytes, creates the document, then applies date/favorite metadata, labels and the
+   * extended metadata from the message origin. Emits the id of the created document.
+   */
+  private saveEntry(caseId: string, entry: SaveEntry, writeMeta: ReturnType<typeof originWriter>, parentId: string | null): Observable<string> {
     const mid = this.mailboxId();
     const ref = this.message().messageRef;
     const bytes$: Observable<string> = entry.kind === 'eml'
@@ -610,7 +629,13 @@ export class EmailBulkSaveComponent implements OnInit {
           }));
         }
         for (const tag of entry.tags) { ops.push(this.cases.addDocumentTag(created.id, tag.name, tag.value || undefined)); }
-        return ops.length ? forkJoin(ops) : of(null);
+        // The extended metadata is written after the v1 metadata update, which rewrites the
+        // whole document entity and must not race with it.
+        const prior$: Observable<unknown> = ops.length ? forkJoin(ops) : of(null);
+        return prior$.pipe(
+          switchMap(() => writeMeta(created.id, { withTitle: entry.kind === 'eml', parentId })),
+          map(() => created.id),
+        );
       }),
     );
   }

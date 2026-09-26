@@ -76,4 +76,6 @@ public interface CasesEndpointLocalV8 {
 
     Response getDocumentMessages(String id);
 
+    Response resolveDocumentCorrespondent(String id, String keyType, String key, String name, int direction);
+
 }

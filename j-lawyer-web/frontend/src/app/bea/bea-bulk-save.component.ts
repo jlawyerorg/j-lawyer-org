@@ -2,7 +2,7 @@ import {
   ChangeDetectionStrategy, Component, computed, inject, input, OnInit, output, signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { defer, forkJoin, from, Observable, of, Subject, throwError } from 'rxjs';
+import { concat, defer, forkJoin, from, Observable, of, Subject, throwError } from 'rxjs';
 import { catchError, debounceTime, map, mergeMap, switchMap } from 'rxjs/operators';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
@@ -16,6 +16,7 @@ import { EventEditorComponent } from '../calendar/event-editor.component';
 import { CalendarService } from '../calendar/calendar.service';
 import { CaseRef, EventDraft } from '../calendar/calendar.models';
 import { CaseSuggestions } from '../communication/email.models';
+import { beaOrigin, originWriter } from '../akten/document-origin.util';
 import { BeaService } from './bea.service';
 import { BeaMessage } from './bea.models';
 
@@ -523,12 +524,27 @@ export class BeaBulkSaveComponent implements OnInit {
     this.saving.set(true);
     this.entries.update((es) => es.map((e) => e.include ? { ...e, status: 'saving' } : e));
 
+    // Title, received date and "Von/An" come from the message; attachments become children of
+    // the .bea document, so the .bea is saved first.
+    const msg = this.message();
+    const writeMeta = originWriter(this.cases, t.id,
+      beaOrigin(msg.subject, msg.receptionTime, msg.senderSafeId, msg.senderName, msg.recipients ?? [], this.safeId()));
+    type SaveResult = { key: string; ok: boolean; id: string };
+    const runOne = (entry: SaveEntry, parentId: string | null): Observable<SaveResult> => defer(() => this.saveEntry(t.id, entry, writeMeta, parentId)).pipe(
+      map((id) => ({ key: entry.key, ok: true, id })),
+      catchError(() => of({ key: entry.key, ok: false, id: '' })),
+    );
+    const beaEntry = included.find((e) => e.kind === 'bea');
+    const others = included.filter((e) => e !== beaEntry);
+
     let failures = 0;
-    from(included).pipe(
-      mergeMap((entry) => defer(() => this.saveEntry(t.id, entry)).pipe(
-        map(() => ({ key: entry.key, ok: true })),
-        catchError(() => of({ key: entry.key, ok: false })),
-      ), CONCURRENCY),
+    const first$: Observable<SaveResult | null> = beaEntry ? runOne(beaEntry, null) : of(null);
+    first$.pipe(
+      switchMap((first) => {
+        const parentId = first?.ok ? first.id : null;
+        const rest$ = from(others).pipe(mergeMap((entry) => runOne(entry, parentId), CONCURRENCY));
+        return first ? concat(of(first), rest$) : rest$;
+      }),
     ).subscribe({
       next: (r) => { if (!r.ok) { failures++; } this.patch(r.key, { status: r.ok ? 'done' : 'error' }); },
       complete: () => {
@@ -539,7 +555,11 @@ export class BeaBulkSaveComponent implements OnInit {
     });
   }
 
-  private saveEntry(caseId: string, entry: SaveEntry): Observable<unknown> {
+  /**
+   * Fetches the bytes, creates the document, then applies date/favorite metadata, labels and the
+   * extended metadata from the message origin. Emits the id of the created document.
+   */
+  private saveEntry(caseId: string, entry: SaveEntry, writeMeta: ReturnType<typeof originWriter>, parentId: string | null): Observable<string> {
     const sid = this.safeId();
     const msgId = this.message().id;
     const bytes$: Observable<string> = entry.kind === 'bea'
@@ -563,7 +583,13 @@ export class BeaBulkSaveComponent implements OnInit {
           }));
         }
         for (const tag of entry.tags) { ops.push(this.cases.addDocumentTag(created.id, tag.name, tag.value || undefined)); }
-        return ops.length ? forkJoin(ops) : of(null);
+        // The extended metadata is written after the v1 metadata update, which rewrites the
+        // whole document entity and must not race with it.
+        const prior$: Observable<unknown> = ops.length ? forkJoin(ops) : of(null);
+        return prior$.pipe(
+          switchMap(() => writeMeta(created.id, { withTitle: entry.kind === 'bea', parentId })),
+          map(() => created.id),
+        );
       }),
     );
   }

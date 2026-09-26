@@ -35,6 +35,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.jlawyer.io.rest.v8.pojo.RestfulDocumentContentUpdateV8;
+import com.jdimension.jlawyer.services.DocumentMetadata;
 import org.jlawyer.io.rest.v8.pojo.RestfulDocumentMetadataPatchV8;
 import org.jlawyer.io.rest.v8.pojo.RestfulDocumentMetadataV8;
 import org.jlawyer.io.rest.v8.pojo.RestfulDocumentParentV8;
@@ -1137,6 +1138,67 @@ public class CasesEndpointV8 implements CasesEndpointLocalV8 {
             return Response.ok(result).build();
         } catch (Exception ex) {
             log.error("Can not get messages of document " + id, ex);
+            return RestErrorResponses.serverError(ex);
+        }
+    }
+
+    /**
+     * Resolves the correspondent ("Von/An") of a document from a message address, the same way
+     * the desktop client does when saving a message to a case: the parties of the case are
+     * searched first, then all contacts. If no contact matches, the display name (or the key) is
+     * returned as free text without a contact reference. Nothing is stored.
+     *
+     * @param id case ID
+     * @param keyType the kind of the key: "email", "safeid" or "fax"
+     * @param key the e-mail address, beA SafeId or fax number
+     * @param name the display name given by the message, optional
+     * @param direction 1 (incoming) or 2 (outgoing)
+     * @response 400 Unknown key type
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     * @response 404 Case not found / not accessible
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Path("/{id}/documents/correspondent")
+    @RolesAllowed({"readArchiveFileRole"})
+    @io.swagger.annotations.ApiOperation(value = "Resolves the correspondent of a document from a message address", response = RestfulDocumentMetadataV8.class)
+    public Response resolveDocumentCorrespondent(@PathParam("id") String id, @QueryParam("keyType") @DefaultValue("email") String keyType,
+            @QueryParam("key") @DefaultValue("") String key, @QueryParam("name") @DefaultValue("") String name,
+            @QueryParam("direction") @DefaultValue("1") int direction) {
+        try {
+            int type;
+            switch (keyType == null ? "" : keyType.toLowerCase()) {
+                case "email":
+                    type = DocumentMetadata.KEY_EMAIL;
+                    break;
+                case "safeid":
+                    type = DocumentMetadata.KEY_BEA_SAFEID;
+                    break;
+                case "fax":
+                    type = DocumentMetadata.KEY_FAX;
+                    break;
+                default:
+                    return Response.status(Response.Status.BAD_REQUEST).build();
+            }
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            DocumentMetadata md;
+            try {
+                md = cases.resolveCorrespondent(id, type, key, name, direction);
+            } catch (Exception notFoundOrForbidden) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            RestfulDocumentMetadataV8 result = new RestfulDocumentMetadataV8();
+            if (md != null) {
+                result.setCorrespondentId(md.getCorrespondentId());
+                result.setCorrespondentName(md.getCorrespondentName());
+                result.setCorrespondentDirection(md.getCorrespondentDirection());
+            }
+            return Response.ok(result).build();
+        } catch (Exception ex) {
+            log.error("Can not resolve correspondent for case " + id, ex);
             return RestErrorResponses.serverError(ex);
         }
     }

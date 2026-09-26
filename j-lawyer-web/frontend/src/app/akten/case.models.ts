@@ -171,6 +171,89 @@ export interface CaseDocument {
   externalId: string;
   /** Tag/label names attached to the document. */
   tags: string[];
+  /** Label name -> value for multi-value labels ('' for simple labels); drives "name: value" chips. */
+  tagValues: Record<string, string>;
+  /** Display title ("Bezeichnung"); '' when unset (the file name is shown instead). */
+  title: string;
+  /** Keywords ("Schlagworte"), normalized by the server. */
+  keywords: string[];
+  /** Received date ("Eingang"), ISO; '' when unset. */
+  receivedDate: string;
+  /** Contact id of the correspondent ("Von/An"); '' for free text or none. */
+  correspondentId: string;
+  /** Display name of the correspondent; '' when none. */
+  correspondentName: string;
+  /** {@link CORRESPONDENT_NONE}, {@link CORRESPONDENT_IN} or {@link CORRESPONDENT_OUT}. */
+  correspondentDirection: number;
+  /** Id of the parent document (e.g. the e-mail an attachment belongs to); '' when top level. */
+  parentId: string;
+  /** Number of instant messages linked to the document. */
+  messageCount: number;
+  /** Dictation sign ("Diktatzeichen"); '' when unset. */
+  dictateSign: string;
+}
+
+/** Correspondent direction: none. */
+export const CORRESPONDENT_NONE = 0;
+/** Correspondent direction: incoming ("Von"). */
+export const CORRESPONDENT_IN = 1;
+/** Correspondent direction: outgoing ("An"). */
+export const CORRESPONDENT_OUT = 2;
+
+/** The title shown for a document: its "Bezeichnung", or the file name when none is set. */
+export function docDisplayTitle(doc: CaseDocument): string {
+  return doc.title?.trim() ? doc.title : doc.name;
+}
+
+/**
+ * The complete extended metadata of one document (PUT /v8/cases/documents/{id}/metadata). All
+ * fields are replaced; an empty field is cleared. `receivedDate` is epoch ms or null.
+ */
+export interface DocMetadataWrite {
+  title: string | null;
+  keywords: string[];
+  receivedDate: number | null;
+  correspondentId: string | null;
+  correspondentName: string | null;
+  correspondentDirection: number;
+  parentId: string | null;
+}
+
+/** Keyword change mode of a bulk metadata update. */
+export type KeywordOperation = 'UNCHANGED' | 'SET' | 'ADD' | 'REMOVE';
+
+/**
+ * A metadata change for several documents (PUT /v8/cases/documents/metadata): only fields whose
+ * `change*` flag is set (or whose keyword operation is not UNCHANGED) are changed.
+ */
+export interface DocMetadataPatch {
+  documentIds: string[];
+  changeTitle: boolean;
+  title?: string | null;
+  keywordOperation: KeywordOperation;
+  keywords: string[];
+  changeReceivedDate: boolean;
+  receivedDate?: number | null;
+  changeCorrespondent: boolean;
+  correspondentId?: string | null;
+  correspondentName?: string | null;
+  correspondentDirection?: number;
+}
+
+/** A resolved correspondent (GET /v8/cases/{id}/documents/correspondent). */
+export interface DocCorrespondent {
+  correspondentId: string;
+  correspondentName: string;
+  correspondentDirection: number;
+}
+
+/** An instant message linked to a document (GET /v8/cases/documents/{id}/messages). */
+export interface DocMessage {
+  id: string;
+  /** ISO timestamp. */
+  sent: string;
+  sender: string;
+  content: string;
 }
 
 /** Sentinel highlight value meaning "no colour" (Java Integer.MIN_VALUE). */
@@ -227,7 +310,7 @@ export interface DocFolder {
 }
 
 /** Document sort criteria offered in the documents tab (mirrors the desktop sort toggles). */
-export type DocSortKey = 'name' | 'date' | 'size' | 'type' | 'favorite' | 'folder';
+export type DocSortKey = 'name' | 'date' | 'received' | 'size' | 'type' | 'favorite' | 'folder';
 export type SortDir = 'asc' | 'desc';
 /** Which date the documents view shows/sorts by (mirrors the desktop DATE_DISPLAY_MODE). */
 export type DocDateMode = 'change' | 'creation';

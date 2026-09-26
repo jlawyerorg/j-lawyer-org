@@ -19,12 +19,12 @@ type DialogKind = 'rename' | 'date' | 'move' | 'tags' | 'replace';
 
 /**
  * Per-document overflow ("⋯") menu mirroring the desktop document context menu — but only the
- * actions implementable against the existing REST API: preview, download, rename, set creation
- * date, toggle favorite, highlight (two colour slots), move to folder, edit labels, convert to
- * PDF, OCR and delete. Metadata writes go through {@link CasesService.updateDocumentMetadata},
+ * actions implementable against the existing REST API: preview, download, linked messages,
+ * properties (extended metadata), rename, set creation date, toggle favorite, highlight (two
+ * colour slots), move to folder, edit labels, convert to PDF, OCR and delete. Metadata writes go through {@link CasesService.updateDocumentMetadata},
  * which overwrites all fields, so every write resends the full current metadata and changes one
  * thing. Emits `changed` after any successful write so the parent reloads the document list;
- * preview/download/delete are delegated to the parent's existing handlers.
+ * preview/download/delete, properties and messages are delegated to the parent.
  */
 @Component({
   selector: 'jl-document-actions',
@@ -48,8 +48,15 @@ type DialogKind = 'rename' | 'date' | 'move' | 'tags' | 'replace';
           <jl-icon name="download" [size]="15" /> {{ 'akten.docs.download' | transloco }}
         </button>
 
+        <button type="button" role="menuitem" (click)="emitAnd(messages)">
+          <jl-icon name="message" [size]="15" /> {{ 'akten.docs.msgs.menu' | transloco }}@if (doc().messageCount) { ({{ doc().messageCount }}) }
+        </button>
+
         <div class="sep"></div>
         <div class="grp">{{ 'akten.docs.grpEdit' | transloco }}</div>
+        <button type="button" role="menuitem" (click)="emitAnd(properties)">
+          <jl-icon name="file-text" [size]="15" /> {{ 'akten.docs.meta.menu' | transloco }}
+        </button>
         <button type="button" role="menuitem" (click)="openDialog('rename')">
           <jl-icon name="edit" [size]="15" /> {{ 'akten.docs.rename' | transloco }}
         </button>
@@ -302,6 +309,10 @@ export class DocumentActionsComponent {
   readonly preview = output<void>();
   readonly download = output<void>();
   readonly remove = output<void>();
+  /** Opens the "Eigenschaften" dialog (title, keywords, received date, correspondent, parent). */
+  readonly properties = output<void>();
+  /** Shows the instant messages linked to the document. */
+  readonly messages = output<void>();
 
   private readonly cases = inject(CasesService);
   private readonly transloco = inject(TranslocoService);

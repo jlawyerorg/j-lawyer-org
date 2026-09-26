@@ -829,7 +829,8 @@
         "size": "Size",
         "type": "Type",
         "favorite": "Favourite",
-        "folder": "Folder"
+        "folder": "Folder",
+        "received": "Received"
       },
       "dateChange": "Modified date",
       "dateCreation": "Created date",
@@ -923,7 +924,37 @@
         }
       },
       "noDictionary": "No labels configured.",
-      "listLabels": "List labels"
+      "listLabels": "List labels",
+      "meta": {
+        "menu": "Properties…",
+        "title": "Properties",
+        "titleBulk": "Properties of {{n}} documents",
+        "docTitle": "Title",
+        "keywords": "Keywords",
+        "keywordPlaceholder": "Type a keyword, Enter or comma",
+        "removeKeyword": "Remove keyword",
+        "kwAdd": "add",
+        "kwRemove": "remove",
+        "kwSet": "replace",
+        "received": "Received",
+        "receivedShort": "Received",
+        "correspondent": "From / To",
+        "dirIn": "From",
+        "dirOut": "To",
+        "correspondentPlaceholder": "Pick a party or type a name",
+        "linkedContact": "linked to contact",
+        "freeText": "free text, no contact",
+        "parent": "Attachment of",
+        "noParent": "— none (standalone document) —",
+        "attachments": "Show/hide {{n}} attachment(s)",
+        "attachmentOf": "Attachment of {{name}}"
+      },
+      "msgs": {
+        "menu": "Messages",
+        "title": "Messages on {{name}}",
+        "none": "No messages on this document.",
+        "count": "{{n}} message(s)"
+      }
     },
     "docLoading": "Loading document …",
     "docError": "Could not load document.",

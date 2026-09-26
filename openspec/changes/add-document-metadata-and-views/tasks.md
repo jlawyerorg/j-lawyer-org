@@ -23,7 +23,7 @@
 - [x] 4.2 Serverseitig automatisiertes Speichern von E-Mails (Mailbox-Automatik, `IntegrationService`) analog 4.1 — *entfällt: es gibt keinen serverseitig automatisierten Speicherweg für E-Mails/beA; gespeichert wird über den Desktop-Client (4.1/4.3) oder per REST-Upload aus dem Web-Client (4.5). Der Faxbericht (`VoipService.saveFaxReport`) erhält „An“ serverseitig.*
 - [x] 4.3 beA speichern (`bea/SaveBeaMessageAction`, `BeaMessageContentUI`, beA-REST v8 Speichern-Pfade): Von per SafeId, Eingangsdatum, Bezeichnung, Hierarchie
 - [x] 4.4 Versand E-Mail (`SendAction`, `SendEncryptedAction`, `SendEmailFrame`), beA (`SendBeaMessageAction`), Fax (`VoipService`), ePost (`EpostLetterSendStatus`): An setzen falls leer; abgelegte gesendete Nachricht mit An/Bezeichnung; „ +N“ bei mehreren Empfängern
-- [ ] 4.5 REST v7 E-Mail-Senden / v1-Upload-Pfade des Web-Clients prüfen und dieselbe Befüllung anwenden, wo Dokumente entstehen — *wird mit dem Web-Client (10.x) umgesetzt: der Web-Client setzt nach dem Upload die Metadaten über `PUT /v8/cases/documents/{id}/metadata`*
+- [x] 4.5 REST v7 E-Mail-Senden / v1-Upload-Pfade des Web-Clients prüfen und dieselbe Befüllung anwenden, wo Dokumente entstehen — *E-Mail- und beA-Speichern im Web-Client (`email-bulk-save`, `bea-bulk-save`) setzen nach dem Upload Bezeichnung (Nachricht), Eingang, Von/An (Richtung wie Desktop über eigene Adresse/SafeId) und Parent (Anlagen → Nachricht) über `PUT /v8/cases/documents/{id}/metadata`; der Kontakt wird serverseitig über `GET /v8/cases/{id}/documents/correspondent` aufgelöst (wie `resolveCorrespondent`). Die Metadaten werden nach dem v1-`update-metadata` geschrieben, da dieses die ganze Entität merged. Einfache Uploads (Drag & Drop, Kamera, Scans) haben keine Herkunft und bleiben ohne Befüllung.*
 
 - [x] 4.6 Speicherdialog: Metadatenzeile je Eintrag (`BulkSaveMetadataPanel` in `BulkSaveEntry` + `.form`), „für alle“-Zeile (`BulkSaveMetadataAllPanel` in `BulkSaveDialog` + `.form`), Speichern mit den eingegebenen Werten, Anlagen abwählbar
 - [x] 4.7 KI-Vorschläge vor dem Speichern: `PreSaveTextSource` (Nachrichtentext, PDF lokal, Textformate lokal, sonst `extractText` bis Größengrenze), `MetadataSuggester.TextSource`, Server-Einstellung `jlawyer.server.assistant.presave.maxmb` im `AssistantSetupDialog` (+ `.form`)
@@ -31,7 +31,7 @@
 ## 5. REST
 - [x] 5.0 Bestehende Endpunkte v1–v8 prüfen, die Dokumente anlegen/ändern (u. a. `CasesEndpointV1`…`V8`, `DocumentsBinEndpointV8`, Office/WOPI `setDocumentContent`): Pfade und Formate bleiben unverändert, neue Metadaten dürfen nicht zurückgesetzt werden (Merge statt Neuaufbau des Beans)
 - [x] 5.1 POJOs `RestfulDocumentV8`, `RestfulDocumentMetadataV8`, `RestfulDocumentMetadataPatchV8`
-- [x] 5.2 `CasesEndpointV8`/`CasesEndpointLocalV8`: `GET /v8/cases/{id}/documents`, `PUT /v8/cases/documents/{id}/metadata`, `PUT /v8/cases/documents/metadata`, `GET /v8/cases/{id}/documents/keywords`, `GET /v8/cases/documents/{id}/messages`, `GET /v8/cases/documents/{id}`, `PUT /v8/cases/documents/{id}/parent` (Rollen + ACL, swagger-Annotationen)
+- [x] 5.2 `CasesEndpointV8`/`CasesEndpointLocalV8`: `GET /v8/cases/{id}/documents`, `PUT /v8/cases/documents/{id}/metadata`, `PUT /v8/cases/documents/metadata`, `GET /v8/cases/{id}/documents/keywords`, `GET /v8/cases/documents/{id}/messages`, `GET /v8/cases/documents/{id}`, `PUT /v8/cases/documents/{id}/parent`, `GET /v8/cases/{id}/documents/correspondent` (Rollen + ACL, swagger-Annotationen)
 
 ## 6. Desktop-Client: Grundlage
 - [x] 6.1 `CaseDocumentsViewModel` (Dokumente, Filter, Sortierung inkl. neuer Sortierschlüssel, Auswahl, Hierarchie, Nachrichtenzähler, Rechnungen); `CaseFolderPanel` auf das Modell umstellen, ohne sichtbare Änderung (Regressionstest manuell: DnD, Kontextmenü, Auswahl, Suche)
@@ -61,9 +61,9 @@
 - [x] 9.2 `DocumentPropertiesDialog` (+ `.form`): Einzel- und Stapelbearbeitung (Feld-Aktivierung, Schlagworte setzen/hinzufügen/entfernen, Etiketten setzen/entfernen, KI-Button; im Stapel Ausführung je Dokument mit Fortschritt und Vorschlägen je Dokument), Eintrag „Eigenschaften…“ im Kontextmenü
 
 ## 10. Web-Client
-- [ ] 10.1 `cases.service.ts`: Dokumentliste über `GET /v8/cases/{id}/documents`, Metadaten-Update einzeln/Stapel, Schlagwort-Vorschläge, Nachrichten je Dokument; Modelle in `case.models.ts`
-- [ ] 10.2 Dokumente-Reiter (`akten.component.ts`): Bezeichnung mit Dateinamen-Fallback, Von/An, Eingang, Schlagwort-Chips, 💬/📎-Indikatoren, aufklappbare Hierarchie
-- [ ] 10.3 `document-actions` / `document-bulk-bar`: Metadaten bearbeiten (einzeln/Stapel), Nachrichten anzeigen; i18n DE/EN
+- [x] 10.1 `cases.service.ts`: Dokumentliste über `GET /v8/cases/{id}/documents` (Fallback auf v1 `/documents/with-tags` bei älteren Servern), Metadaten-Update einzeln/Stapel, Schlagwort-Vorschläge, Nachrichten je Dokument (lesen + senden mit `documentContext`), Korrespondent-Auflösung; Modelle in `case.models.ts`
+- [x] 10.2 Dokumente-Reiter (`akten.component.ts`): Bezeichnung mit Dateinamen-Fallback, Von/An, Eingang, Etiketten (mit Listenwert) vor Schlagwort-Chips, 💬/📎-Indikatoren, aufklappbare Hierarchie mit „Anlage zu …“-Hinweis, Schnellfilter über Bezeichnung/Schlagworte/Von-An, Sortierung „Eingang“
+- [x] 10.3 `document-actions` / `document-bulk-bar`: Metadaten bearbeiten (einzeln/Stapel, `document-metadata-dialog`), Nachrichten anzeigen und senden (`document-messages-dialog`); i18n DE/EN
 
 ## 11. Verifikation
 - [ ] 11.1 `openspec validate add-document-metadata-and-views --strict`
