@@ -667,6 +667,8 @@ import com.jdimension.jlawyer.client.print.PrinterFavorite;
 import com.jdimension.jlawyer.client.print.PrinterSnapshot;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -702,6 +704,65 @@ public class PrinterFavoritesTableModelTest {
         assertEquals(1, model.getSelectedFavorites().size());
         assertEquals("Office", model.getSelectedFavorites().get(0).getPrinterName());
         assertEquals("Büro", model.getSelectedFavorites().get(0).getDisplayLabel());
+    }
+
+    @Test
+    public void testRefreshKeepsDraftLabelWhenPrinterIsDeselected() {
+        PrinterFavoritesTableModel model = new PrinterFavoritesTableModel(
+                snapshot("Office"), Collections.emptyList());
+        int officeRow = findRow(model, "Office");
+        model.setValueAt(true, officeRow, 0);
+        model.setValueAt("Büro", officeRow, 2);
+        model.setValueAt(false, officeRow, 0);
+
+        model.updateSnapshot(snapshot("Office", "Fax"));
+
+        officeRow = findRow(model, "Office");
+        assertFalse((Boolean) model.getValueAt(officeRow, 0));
+        assertEquals("Büro", model.getValueAt(officeRow, 2));
+        assertTrue(model.getSelectedFavorites().isEmpty());
+
+        model.setValueAt(true, officeRow, 0);
+        assertEquals("Büro", model.getSelectedFavorites().get(0).getDisplayLabel());
+    }
+
+    @Test
+    public void testUnselectedLabelSurvivesSavingAndReopeningDialog() {
+        PrinterFavoritesTableModel first = new PrinterFavoritesTableModel(
+                snapshot("Office"), Collections.emptyList());
+        int officeRow = findRow(first, "Office");
+        first.setValueAt(true, officeRow, 0);
+        first.setValueAt("Büro", officeRow, 2);
+        first.setValueAt(false, officeRow, 0);
+
+        assertTrue(first.getSelectedFavorites().isEmpty());
+        Map<String, String> labels = first.getUnselectedLabels();
+        assertEquals("Büro", labels.get("Office"));
+
+        PrinterFavoritesTableModel reopened = new PrinterFavoritesTableModel(
+                snapshot("Office"), Collections.emptyList(), labels);
+        officeRow = findRow(reopened, "Office");
+        assertFalse((Boolean) reopened.getValueAt(officeRow, 0));
+        assertEquals("Büro", reopened.getValueAt(officeRow, 2));
+
+        reopened.setValueAt(true, officeRow, 0);
+        assertEquals("Büro", reopened.getSelectedFavorites().get(0).getDisplayLabel());
+        assertFalse(reopened.getUnselectedLabels().containsKey("Office"));
+    }
+
+    @Test
+    public void testUnselectedLabelSurvivesTemporaryPrinterAbsence() {
+        Map<String, String> labels = new LinkedHashMap<>();
+        labels.put("Office", "Büro");
+        PrinterFavoritesTableModel model = new PrinterFavoritesTableModel(
+                snapshot(), Collections.emptyList(), labels);
+
+        model.updateSnapshot(snapshot("Office"));
+
+        int officeRow = findRow(model, "Office");
+        assertFalse((Boolean) model.getValueAt(officeRow, 0));
+        assertEquals("Büro", model.getValueAt(officeRow, 2));
+        assertEquals("Büro", model.getUnselectedLabels().get("Office"));
     }
 
     @Test

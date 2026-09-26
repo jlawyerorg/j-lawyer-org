@@ -663,8 +663,6 @@
  */
 package com.jdimension.jlawyer.client.print;
 
-import java.util.Objects;
-
 /**
  * A device-local favourite identified by the exact operating-system printer name.
  */
@@ -702,11 +700,11 @@ public final class PrinterFavorite {
             return false;
         }
         PrinterFavorite that = (PrinterFavorite) other;
-        return printerName.equals(that.printerName) && displayLabel.equals(that.displayLabel);
+        return printerName.equals(that.printerName);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(printerName, displayLabel);
+        return printerName.hashCode();
     }
 }

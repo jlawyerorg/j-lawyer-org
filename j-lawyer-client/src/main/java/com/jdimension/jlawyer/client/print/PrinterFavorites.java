@@ -678,6 +678,7 @@ import java.util.Map;
 public final class PrinterFavorites {
 
     private static final String FIELD_SEPARATOR = ":";
+    private static final String UNSELECTED_LABEL = "label";
 
     private PrinterFavorites() {
     }
@@ -693,6 +694,18 @@ public final class PrinterFavorites {
                 encode(favorites));
     }
 
+    public static Map<String, String> loadUnselectedLabels(ClientSettings settings) {
+        String[] entries = settings.getConfigurationArray(
+                ClientSettings.CONF_DOCUMENTS_PRINTER_FAVORITES, new String[0]);
+        return decodeUnselectedLabels(entries);
+    }
+
+    public static void save(ClientSettings settings, List<PrinterFavorite> favorites,
+            Map<String, String> unselectedLabels) {
+        settings.setConfigurationArray(ClientSettings.CONF_DOCUMENTS_PRINTER_FAVORITES,
+                encodeWithUnselectedLabels(favorites, unselectedLabels));
+    }
+
     static String[] encode(List<PrinterFavorite> favorites) {
         List<String> entries = new ArrayList<>();
         for (PrinterFavorite favorite : uniqueByPrinterName(favorites).values()) {
@@ -700,6 +713,53 @@ public final class PrinterFavorites {
                     + encodeField(favorite.getDisplayLabel()));
         }
         return entries.toArray(new String[0]);
+    }
+
+    static String[] encodeWithUnselectedLabels(List<PrinterFavorite> favorites,
+            Map<String, String> unselectedLabels) {
+        List<String> entries = new ArrayList<>();
+        for (String favorite : encode(favorites)) {
+            entries.add(favorite);
+        }
+        if (unselectedLabels != null) {
+            Map<String, PrinterFavorite> selected = uniqueByPrinterName(favorites);
+            for (Map.Entry<String, String> label : unselectedLabels.entrySet()) {
+                String name = label.getKey();
+                String text = label.getValue();
+                if (name != null && !name.trim().isEmpty() && text != null
+                        && !text.trim().isEmpty() && !selected.containsKey(name)) {
+                    entries.add(UNSELECTED_LABEL + FIELD_SEPARATOR + encodeField(name)
+                            + FIELD_SEPARATOR + encodeField(text.trim()));
+                }
+            }
+        }
+        return entries.toArray(new String[0]);
+    }
+
+    static Map<String, String> decodeUnselectedLabels(String[] entries) {
+        Map<String, String> labels = new LinkedHashMap<>();
+        if (entries == null) {
+            return labels;
+        }
+        for (String entry : entries) {
+            if (entry == null) {
+                continue;
+            }
+            String[] fields = entry.split(FIELD_SEPARATOR, -1);
+            if (fields.length != 3 || !UNSELECTED_LABEL.equals(fields[0])) {
+                continue;
+            }
+            try {
+                String name = decodeField(fields[1]);
+                String text = decodeField(fields[2]);
+                if (!name.trim().isEmpty() && !text.trim().isEmpty()) {
+                    labels.putIfAbsent(name, text);
+                }
+            } catch (IllegalArgumentException ex) {
+                // Ignore malformed local preference entries.
+            }
+        }
+        return labels;
     }
 
     static List<PrinterFavorite> decode(String[] entries) {

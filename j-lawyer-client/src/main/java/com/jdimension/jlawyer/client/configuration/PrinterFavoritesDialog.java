@@ -691,7 +691,7 @@ public class PrinterFavoritesDialog extends javax.swing.JDialog {
 
         ClientSettings settings = ClientSettings.getInstance();
         tableModel = new PrinterFavoritesTableModel(printerRegistry.getSnapshot(),
-                PrinterFavorites.load(settings));
+                PrinterFavorites.load(settings), PrinterFavorites.loadUnselectedLabels(settings));
         tblPrinters.setModel(tableModel);
         tblPrinters.getColumnModel().getColumn(0).setPreferredWidth(60);
         tblPrinters.getColumnModel().getColumn(0).setMaxWidth(80);
@@ -873,7 +873,8 @@ public class PrinterFavoritesDialog extends javax.swing.JDialog {
         stopCellEditing();
         try {
             ClientSettings settings = ClientSettings.getInstance();
-            PrinterFavorites.save(settings, tableModel.getSelectedFavorites());
+            PrinterFavorites.save(settings, tableModel.getSelectedFavorites(),
+                    tableModel.getUnselectedLabels());
             settings.saveConfiguration();
             dispose();
         } catch (Exception ex) {

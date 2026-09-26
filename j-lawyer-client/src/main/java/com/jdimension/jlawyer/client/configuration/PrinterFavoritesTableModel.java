@@ -679,17 +679,31 @@ public final class PrinterFavoritesTableModel extends AbstractTableModel {
 
     private static final String[] COLUMNS = {"Favorit", "Drucker", "Anzeigename", "Status"};
     private final List<Row> rows = new ArrayList<>();
+    private final Map<String, String> rememberedLabels = new LinkedHashMap<>();
     private PrinterSnapshot snapshot;
 
     public PrinterFavoritesTableModel(PrinterSnapshot snapshot, List<PrinterFavorite> savedFavorites) {
-        rebuild(snapshot, savedFavorites);
+        this(snapshot, savedFavorites, new LinkedHashMap<>());
+    }
+
+    public PrinterFavoritesTableModel(PrinterSnapshot snapshot, List<PrinterFavorite> savedFavorites,
+            Map<String, String> unselectedLabels) {
+        if (unselectedLabels != null) {
+            rememberedLabels.putAll(unselectedLabels);
+        }
+        rebuild(snapshot, savedFavorites, rememberedLabels);
     }
 
     public void updateSnapshot(PrinterSnapshot updatedSnapshot) {
-        rebuild(updatedSnapshot, getSelectedFavorites());
+        List<PrinterFavorite> selected = getSelectedFavorites();
+        Map<String, String> draftLabels = getUnselectedLabels();
+        rememberedLabels.clear();
+        rememberedLabels.putAll(draftLabels);
+        rebuild(updatedSnapshot, selected, draftLabels);
     }
 
-    private void rebuild(PrinterSnapshot updatedSnapshot, List<PrinterFavorite> favorites) {
+    private void rebuild(PrinterSnapshot updatedSnapshot, List<PrinterFavorite> favorites,
+            Map<String, String> draftLabels) {
         this.snapshot = updatedSnapshot == null ? PrinterSnapshot.empty() : updatedSnapshot;
         Map<String, PrinterFavorite> favoriteByName = new LinkedHashMap<>();
         if (favorites != null) {
@@ -704,7 +718,7 @@ public final class PrinterFavoritesTableModel extends AbstractTableModel {
         for (String printerName : this.snapshot.getPrinterNames()) {
             PrinterFavorite favorite = favoriteByName.get(printerName);
             rowByName.put(printerName, new Row(printerName, true, true, favorite != null,
-                    favorite == null ? "" : favorite.getDisplayLabel()));
+                    favorite == null ? draftLabels.getOrDefault(printerName, "") : favorite.getDisplayLabel()));
         }
         for (PrinterFavorite favorite : favoriteByName.values()) {
             rowByName.putIfAbsent(favorite.getPrinterName(), new Row(favorite.getPrinterName(),
@@ -726,6 +740,18 @@ public final class PrinterFavoritesTableModel extends AbstractTableModel {
             }
         }
         return favorites;
+    }
+
+    public Map<String, String> getUnselectedLabels() {
+        Map<String, String> labels = new LinkedHashMap<>(rememberedLabels);
+        for (Row row : rows) {
+            if (row.selected || row.displayLabel == null || row.displayLabel.isEmpty()) {
+                labels.remove(row.printerName);
+            } else {
+                labels.put(row.printerName, row.displayLabel);
+            }
+        }
+        return labels;
     }
 
     public boolean isAvailable(int modelRow) {

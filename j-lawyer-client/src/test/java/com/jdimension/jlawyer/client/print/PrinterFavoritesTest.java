@@ -665,12 +665,16 @@ package com.jdimension.jlawyer.client.print;
 
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import javax.print.PrintService;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 public class PrinterFavoritesTest {
@@ -683,7 +687,43 @@ public class PrinterFavoritesTest {
 
         List<PrinterFavorite> decoded = PrinterFavorites.decode(PrinterFavorites.encode(input));
 
-        assertEquals(input, decoded);
+        assertEquals(input.size(), decoded.size());
+        for (int index = 0; index < input.size(); index++) {
+            assertEquals(input.get(index).getPrinterName(), decoded.get(index).getPrinterName());
+            assertEquals(input.get(index).getDisplayLabel(), decoded.get(index).getDisplayLabel());
+        }
+    }
+
+    @Test
+    public void testUnselectedLabelsSurviveWithoutBecomingActiveFavorites() {
+        List<PrinterFavorite> active = Arrays.asList(new PrinterFavorite("Office", "Büro"));
+        Map<String, String> labels = new LinkedHashMap<>();
+        labels.put("Fax", "Telefax");
+        labels.put("Office", "veralteter Name");
+
+        String[] entries = PrinterFavorites.encodeWithUnselectedLabels(active, labels);
+
+        assertEquals(2, entries.length);
+        assertEquals("Office", PrinterFavorites.decode(entries).get(0).getPrinterName());
+        assertEquals("Büro", PrinterFavorites.decode(entries).get(0).getDisplayLabel());
+        assertEquals(1, PrinterFavorites.decode(entries).size());
+        assertEquals("Telefax", PrinterFavorites.decodeUnselectedLabels(entries).get("Fax"));
+        assertFalse(PrinterFavorites.decodeUnselectedLabels(entries).containsKey("Office"));
+        assertEquals(1, PrinterFavorites.decode(PrinterFavorites.encode(active)).size());
+        assertTrue(PrinterFavorites.decodeUnselectedLabels(PrinterFavorites.encode(active)).isEmpty());
+    }
+
+    @Test
+    public void testFavoriteIdentityUsesPrinterNameNotDisplayLabel() {
+        PrinterFavorite first = new PrinterFavorite("Office", "Büro");
+        PrinterFavorite renamed = new PrinterFavorite("Office", "Empfang");
+        PrinterFavorite anotherPrinter = new PrinterFavorite("Fax", "Büro");
+
+        assertEquals(first, renamed);
+        assertEquals(first.hashCode(), renamed.hashCode());
+        assertFalse(first.equals(anotherPrinter));
+        assertEquals("Büro", first.getDisplayLabel());
+        assertEquals("Empfang", renamed.getDisplayLabel());
     }
 
     @Test
