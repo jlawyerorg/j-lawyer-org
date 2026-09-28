@@ -669,4 +669,13 @@ package com.jdimension.jlawyer.client.mail;
  */
 public interface SendCommunicationDialog {
     public void addAttachment(String tempUrl, String dictateSign);
+
+    /**
+     * Remembers that an attachment was created from a case document, so the document gets the
+     * recipient as "An" once the message has been sent.
+     *
+     * @param tempUrl the attachment as passed to addAttachment
+     * @param documentId the id of the case document
+     */
+    public void linkAttachmentToDocument(String tempUrl, String documentId);
 }

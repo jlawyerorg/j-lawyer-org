@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.services;
 import com.jdimension.jlawyer.persistence.InstantMessage;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import javax.ejb.Local;
 
 /**
@@ -680,6 +681,10 @@ public interface MessagingServiceLocal {
     boolean deleteMessage(String messageId) throws Exception;
     
     List<InstantMessage> getMessagesForCase(String caseId) throws Exception;
+    
+    Map<String, Integer> getMessageCountsForDocuments(String caseId) throws Exception;
+    
+    List<InstantMessage> getMessagesForDocument(String documentId) throws Exception;
     
     List<InstantMessage> getMessagesSince(Date since, int maxNumberOfMessages) throws Exception;
     

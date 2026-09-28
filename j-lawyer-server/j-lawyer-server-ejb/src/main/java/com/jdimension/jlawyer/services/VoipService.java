@@ -1110,8 +1110,11 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
         
         try {
             byte[] reportData=sip.getFaxReport(sessionId);
-            if(reportData!=null)
-                this.fileSvc.addDocument(afb.getId(), fileName, reportData, "", null);
+            if(reportData!=null) {
+                // the report documents a fax sent to the remote party
+                DocumentMetadata md = this.fileSvc.resolveCorrespondentUnrestricted(afb.getId(), DocumentMetadata.KEY_FAX, fb.getRemoteUri(), fb.getRemoteName(), ArchiveFileDocumentsBean.CORRESPONDENT_OUT);
+                this.fileSvc.addDocument(afb.getId(), fileName, reportData, "", null, md);
+            }
         } catch (Exception ex) {
             throw new SipgateException(ex);
         }

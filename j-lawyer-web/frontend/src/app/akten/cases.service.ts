@@ -5,7 +5,7 @@ import { API_ROOT } from '../core/api';
 import {
   AccountEntry, AccountEntryWrite, CaseDetail, CaseDocument, CaseGroup, CaseHistoryEntry, CaseInvoice, CaseLink, CaseMessage, CaseOverview,
   CasePayment, CaseStatus, CaseTag, CaseTimesheet, CaseUserRef, CaseWrite, ContactRef, DocDateMode, DocFolder,
-  DocMetaWrite, DocSortKey, DocTag, DocumentNameTemplate, DueDate, HIGHLIGHT_NONE, InvoicePool, InvoicePositionItem, InvoicePositionWrite, InvoiceType, InvoiceWrite,
+  DocCorrespondent, DocMessage, DocMetadataPatch, DocMetadataWrite, DocMetaWrite, DocSortKey, DocTag, DocumentNameTemplate, DueDate, HIGHLIGHT_NONE, InvoicePool, InvoicePositionItem, InvoicePositionWrite, InvoiceType, InvoiceWrite,
   MultiValueTagDef, Party, PartyTypeOption, PartyUpdate, PartyWrite, PaymentWrite, PositionTemplate,
   PositionWrite, RunningPosition, SortDir, TimesheetPosition, TimesheetWrite,
 } from './case.models';
@@ -66,11 +66,18 @@ interface DueDateDto {
 interface CalendarDto { id: string; displayName?: string; background?: number; }
 // GET /v1/cases/party/types — configured party types; `color` is a packed-RGB int colour.
 interface PartyTypeDto { id: string; name?: string; color?: number; }
+// GET /v1/cases/{id}/documents/with-tags (dates as ISO strings, tags by name) or
+// GET /v8/cases/{id}/documents (dates as epoch ms, tags with values, extended metadata).
 interface DocDto {
-  id: string; name: string; size: number; creationDate: string; changeDate?: string;
+  id: string; name: string; size: number; creationDate: string | number; changeDate?: string | number;
   favorite?: boolean; folderId?: string; version?: number; highlight1?: number; highlight2?: number;
-  externalId?: string; tags?: { name?: string }[];
+  externalId?: string; tags?: { name?: string; value?: string }[];
+  title?: string; keywords?: string[]; receivedDate?: number | null; correspondentId?: string;
+  correspondentName?: string; correspondentDirection?: number; parentId?: string; messageCount?: number;
+  dictateSign?: string;
 }
+// GET /v8/cases/documents/{id}/messages
+interface DocMessageDto { id: string; sent?: number | string; sender?: string; content?: string; }
 interface DocTagDto { id: string; name?: string; tagValue?: string; }
 // GET /v3/cases/{id}/folders — the nested root folder node (children hold sub-folders).
 interface FolderDto { id: string; name: string; parentId?: string; children?: FolderDto[]; }
@@ -692,8 +699,9 @@ export class CasesService {
       dueDates: this.http.get<DueDateDto[]>(`${CASES_V4}/${id}/duedates`).pipe(
         catchError(() => this.http.get<DueDateDto[]>(`${CASES_BASE}/${id}/duedates`).pipe(catchError(() => of([])))),
       ),
-      // /documents/with-tags (not /documents) so each document carries its labels for the row chips.
-      documents: this.http.get<DocDto[]>(`${CASES_BASE}/${id}/documents/with-tags`).pipe(catchError(() => of([]))),
+      // v8 carries the extended metadata, labels and message counts; v1 /documents/with-tags is
+      // the fallback for servers without the v8 document endpoints.
+      documents: this.caseDocumentDtos(id),
       // The document folder tree; 204 (no root folder) yields null.
       rootFolder: this.http.get<FolderDto | null>(`${CASES_V3}/${id}/folders`).pipe(catchError(() => of(null))),
       // Colour lookups (calendar-id -> colour, party-type-name -> colour); cached app-wide.
@@ -869,6 +877,88 @@ export class CasesService {
    */
   applyFolderTemplate(caseId: string, templateId: string): Observable<unknown> {
     return this.write(this.http.put(`${CASES_V3}/${encodeURIComponent(caseId)}/foldertemplates/${encodeURIComponent(templateId)}/apply`, {}));
+  }
+
+  /**
+   * The documents of a case with metadata (GET /v8/cases/{id}/documents), falling back to
+   * GET /v1/cases/{id}/documents/with-tags on servers without the v8 endpoint; [] on error.
+   */
+  private caseDocumentDtos(caseId: string): Observable<DocDto[]> {
+    const id = encodeURIComponent(caseId);
+    return this.http.get<DocDto[]>(`${CASES_V8}/${id}/documents`).pipe(
+      catchError(() => this.http.get<DocDto[]>(`${CASES_BASE}/${id}/documents/with-tags`)),
+      catchError(() => of([])),
+    );
+  }
+
+  /** Reloads only the documents of a case (with metadata); [] on error. */
+  caseDocuments(caseId: string): Observable<CaseDocument[]> {
+    return this.caseDocumentDtos(caseId).pipe(map((rows) => (rows ?? []).map(toDocument)));
+  }
+
+  /**
+   * Replaces the extended metadata of a document — title, keywords, received date, correspondent
+   * and parent (PUT /v8/cases/documents/{id}/metadata). Every field is replaced, so callers pass
+   * the complete metadata (see {@link docMetadataOf}).
+   */
+  updateDocumentMetadataV8(documentId: string, data: DocMetadataWrite): Observable<unknown> {
+    return this.write(this.http.put(`${CASES_V8}/documents/${encodeURIComponent(documentId)}/metadata`, data));
+  }
+
+  /** Changes the extended metadata of several documents; only activated fields change (PUT /v8/cases/documents/metadata). */
+  patchDocumentsMetadata(patch: DocMetadataPatch): Observable<unknown> {
+    return this.write(this.http.put(`${CASES_V8}/documents/metadata`, patch));
+  }
+
+  /** Sets (or with null removes) the parent of a document (PUT /v8/cases/documents/{id}/parent). */
+  setDocumentParent(documentId: string, parentId: string | null): Observable<unknown> {
+    return this.write(this.http.put(`${CASES_V8}/documents/${encodeURIComponent(documentId)}/parent`, { parentId }));
+  }
+
+  /** All keywords used by the documents of a case, for auto completion (GET /v8/cases/{id}/documents/keywords); [] on error. */
+  caseDocumentKeywords(caseId: string): Observable<string[]> {
+    return this.http.get<string[]>(`${CASES_V8}/${encodeURIComponent(caseId)}/documents/keywords`).pipe(
+      map((rows) => rows ?? []),
+      catchError(() => of([])),
+    );
+  }
+
+  /** The instant messages linked to a document, newest first (GET /v8/cases/documents/{id}/messages); [] on error. */
+  documentMessages(documentId: string): Observable<DocMessage[]> {
+    return this.http.get<DocMessageDto[]>(`${CASES_V8}/documents/${encodeURIComponent(documentId)}/messages`).pipe(
+      map((rows) => (rows ?? [])
+        .map((m) => ({
+          id: m.id,
+          sent: typeof m.sent === 'number' ? new Date(m.sent).toISOString() : isoDate(m.sent),
+          sender: m.sender ?? '',
+          content: m.content ?? '',
+        }))
+        .sort((a, b) => (b.sent > a.sent ? 1 : b.sent < a.sent ? -1 : 0))),
+      catchError(() => of([])),
+    );
+  }
+
+  /** Posts an instant message linked to a case and one of its documents (PUT /v7/messages/submit). */
+  sendDocumentMessage(caseId: string, documentId: string, sender: string, content: string): Observable<unknown> {
+    return this.write(this.http.put(`${MESSAGES_V7}/submit`, { sender, content, caseContext: caseId, documentContext: documentId }));
+  }
+
+  /**
+   * Resolves the correspondent ("Von/An") for a message address the way the desktop client does:
+   * case parties first, then all contacts, else the name as free text
+   * (GET /v8/cases/{id}/documents/correspondent). Falls back to the plain name on error.
+   */
+  resolveCorrespondent(caseId: string, keyType: 'email' | 'safeid' | 'fax', key: string, name: string, direction: number): Observable<DocCorrespondent> {
+    const params = new HttpParams().set('keyType', keyType).set('key', key ?? '').set('name', name ?? '').set('direction', String(direction));
+    const fallback: DocCorrespondent = { correspondentId: '', correspondentName: (name || key || '').trim(), correspondentDirection: direction };
+    return this.http.get<Partial<DocCorrespondent>>(`${CASES_V8}/${encodeURIComponent(caseId)}/documents/correspondent`, { params }).pipe(
+      map((r) => ({
+        correspondentId: r?.correspondentId ?? '',
+        correspondentName: r?.correspondentName ?? fallback.correspondentName,
+        correspondentDirection: r?.correspondentDirection || direction,
+      })),
+      catchError(() => of(fallback)),
+    );
   }
 
   /** Existing (active) document names of a case (GET /v1/cases/{id}/documents/with-tags); [] on error. */
@@ -1057,11 +1147,12 @@ function rgbHex(value: number | undefined | null): string {
 }
 
 function toDocument(dto: DocDto): CaseDocument {
+  const tags = (dto.tags ?? []).filter((t) => !!t.name);
   return {
     id: dto.id,
     name: dto.name,
-    date: isoDate(dto.creationDate),
-    changeDate: isoDate(dto.changeDate),
+    date: anyDate(dto.creationDate),
+    changeDate: anyDate(dto.changeDate),
     size: formatBytes(dto.size),
     sizeBytes: dto.size ?? 0,
     ext: extensionOf(dto.name),
@@ -1073,8 +1164,24 @@ function toDocument(dto: DocDto): CaseDocument {
     highlight1Value: dto.highlight1 ?? HIGHLIGHT_NONE,
     highlight2Value: dto.highlight2 ?? HIGHLIGHT_NONE,
     externalId: dto.externalId ?? '',
-    tags: (dto.tags ?? []).map((t) => t.name ?? '').filter(Boolean),
+    tags: tags.map((t) => t.name!),
+    tagValues: Object.fromEntries(tags.map((t) => [t.name!, t.value ?? ''])),
+    title: dto.title ?? '',
+    keywords: dto.keywords ?? [],
+    receivedDate: anyDate(dto.receivedDate),
+    correspondentId: dto.correspondentId ?? '',
+    correspondentName: dto.correspondentName ?? '',
+    correspondentDirection: dto.correspondentDirection ?? 0,
+    parentId: dto.parentId ?? '',
+    messageCount: dto.messageCount ?? 0,
+    dictateSign: dto.dictateSign ?? '',
   };
+}
+
+/** An ISO string (v1) or epoch ms (v8) date to a sanitized ISO string; '' when unset. */
+function anyDate(value: string | number | null | undefined): string {
+  if (typeof value === 'number') { return new Date(value).toISOString(); }
+  return isoDate(value);
 }
 
 /**

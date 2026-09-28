@@ -663,6 +663,9 @@
  */
 package com.jdimension.jlawyer.client.bea;
 
+import com.jdimension.jlawyer.services.bea.rest.BeaRecipient;
+import com.jdimension.jlawyer.services.DocumentMetadata;
+import com.jdimension.jlawyer.client.editors.files.DocumentOrigin;
 import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
@@ -861,7 +864,12 @@ public class SaveBeaMessageAction extends ProgressableAction {
                     newName = newName + ".bea";
                 }
 
-                ArchiveFileDocumentsBean newDoc = afs.addDocument(this.archiveFile.getId(), newName, mex.getContent(), "", null);
+                DocumentMetadata sentMetadata = null;
+                if (msgEx.getRecipients() != null && !msgEx.getRecipients().isEmpty() && msgEx.getRecipients().get(0) != null) {
+                    BeaRecipient firstRecipient = msgEx.getRecipients().get(0);
+                    sentMetadata = DocumentOrigin.outgoing(msgEx.getSubject(), DocumentMetadata.KEY_BEA_SAFEID, firstRecipient.getSafeId(), firstRecipient.getName(), msgEx.getRecipients().size() - 1).toMetadata(afs, this.archiveFile.getId(), null);
+                }
+                ArchiveFileDocumentsBean newDoc = afs.addDocument(this.archiveFile.getId(), newName, mex.getContent(), "", null, sentMetadata);
 
                 if (this.documentTag != null && !("".equals(this.documentTag))) {
                     afs.setDocumentTag(newDoc.getId(), new DocumentTagsBean(newDoc.getId(), this.documentTag), true);

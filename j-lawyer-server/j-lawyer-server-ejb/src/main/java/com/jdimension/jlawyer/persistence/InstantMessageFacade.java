@@ -664,7 +664,9 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.persistence;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -706,6 +708,18 @@ public class InstantMessageFacade extends AbstractFacade<InstantMessage> impleme
     public List<InstantMessage> findSince(Date since) {
         
         return (List<InstantMessage>) em.createNamedQuery("InstantMessage.findSince").setParameter("since", since).getResultList();
+        
+    }
+    
+    @Override
+    public Map<String, Integer> countByDocumentForCase(ArchiveFileBean caseContext) {
+        
+        HashMap<String, Integer> counts = new HashMap<>();
+        List<Object[]> rows = em.createNamedQuery("InstantMessage.countByDocumentForCase").setParameter("caseContext", caseContext).getResultList();
+        for (Object[] row : rows) {
+            counts.put((String) row[0], ((Number) row[1]).intValue());
+        }
+        return counts;
         
     }
     

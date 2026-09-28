@@ -38,6 +38,10 @@ import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.pojo.PartiesTriplet;
 import com.jdimension.jlawyer.server.constants.OptionConstants;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
+import com.jdimension.jlawyer.services.DocumentMetadata;
+import com.jdimension.jlawyer.services.DocumentMetadataPatch;
+import com.jdimension.jlawyer.client.editors.files.DocumentOrigin;
+import com.jdimension.jlawyer.client.mail.MailDocumentOrigins;
 import com.jdimension.jlawyer.services.FormsServiceRemote;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
@@ -141,28 +145,53 @@ public class ToolRegistry {
         TOOLS.add(new ToolDefinition("search_contacts", "Sucht nach Kontakten/Adressen anhand eines Suchbegriffs.",
                 Arrays.asList(new ToolParameter("query", "string", "Suchbegriff für die Kontaktsuche", true))));
 
-        TOOLS.add(new ToolDefinition("list_case_documents", "Listet Dokumente einer Akte seitenweise auf (20 pro Seite). Gibt totalDocuments, page, totalPages und hasMore zurück.",
+        TOOLS.add(new ToolDefinition("list_case_documents", "Listet Dokumente einer Akte seitenweise auf (20 pro Seite). Je Dokument, soweit gesetzt: Bezeichnung (title), Schlagworte, Eingang (receivedDate), Von/An (correspondent mit direction in/out und contactId), Eltern-Dokument (parentId, parentTitle) und Anzahl Anlagen. Etiketten und Nachrichten liefert get_document_details. Gibt totalDocuments, page, totalPages und hasMore zurück.",
                 Arrays.asList(
                         new ToolParameter("fileNumber", "string", "Aktenzeichen der Akte", true),
                         new ToolParameter("page", "integer", "Seitennummer (1-basiert, Standard: 1)", false))));
 
         TOOLS.add(new ToolDefinition("list_case_documents_by_date",
-                "Listet Dokumente einer Akte, die innerhalb eines Zeitraums erstellt wurden. Gibt die Dokumente sortiert nach Erstellungsdatum (neueste zuerst) zurück.",
+                "Listet Dokumente einer Akte, deren Erstelldatum (Standard) oder Eingangsdatum innerhalb eines Zeitraums liegt, neueste zuerst. Je Dokument dieselben Metadaten wie list_case_documents.",
                 Arrays.asList(
                         new ToolParameter("fileNumber", "string", "Aktenzeichen der Akte", true),
                         new ToolParameter("fromDate", "string", "Startdatum im Format yyyy-MM-dd", true),
-                        new ToolParameter("toDate", "string", "Enddatum im Format yyyy-MM-dd", true))));
+                        new ToolParameter("toDate", "string", "Enddatum im Format yyyy-MM-dd", true),
+                        new ToolParameter("dateField", "string", "created (Erstelldatum, Standard) oder received (Eingangsdatum, z. B. für eingegangene Post)", false))));
 
-        TOOLS.add(new ToolDefinition("search_case_documents", "Durchsucht Dokumente einer Akte anhand des Dateinamens (case-insensitive, Teilübereinstimmung). Ergebnisse sind seitenweise (20 pro Seite).",
+        TOOLS.add(new ToolDefinition("search_case_documents", "Durchsucht Dokumente einer Akte in Dateiname, Bezeichnung, Schlagworten und Von/An (case-insensitive, Teilübereinstimmung). Ergebnisse sind seitenweise (20 pro Seite), je Dokument mit denselben Metadaten wie list_case_documents.",
                 Arrays.asList(
                         new ToolParameter("fileNumber", "string", "Aktenzeichen der Akte", true),
-                        new ToolParameter("query", "string", "Suchbegriff für den Dateinamen", true),
+                        new ToolParameter("query", "string", "Suchbegriff für Dateiname, Bezeichnung, Schlagworte oder Von/An", true),
                         new ToolParameter("page", "integer", "Seitennummer (1-basiert, Standard: 1)", false))));
 
         TOOLS.add(new ToolDefinition("get_document_text", "Extrahiert den Textinhalt eines Dokuments (PDF oder Textdatei).",
                 Arrays.asList(
                         new ToolParameter("documentId", "string", "ID des Dokuments. Es darf kein Dokumentname als Parameter übergeben werden.", true),
                         new ToolParameter("maxChars", "integer", "Optional: maximale Anzahl der vom Dokumentanfang zurückzugebenden Zeichen. Nützlich, wenn nur der Anfang benötigt wird (z. B. Kontaktdaten von Seite 1). Standard und Obergrenze: 30000.", false))));
+
+        TOOLS.add(new ToolDefinition("get_document_details",
+                "Gibt alle Metadaten eines Dokuments zurück: Bezeichnung, Schlagworte, Eingang, Von/An, Etiketten mit Werten, Eltern-Dokument, Anlagen (Kind-Dokumente) und die mit dem Dokument verknüpften Sofortnachrichten.",
+                Arrays.asList(new ToolParameter("documentId", "string", "ID des Dokuments", true))));
+
+        TOOLS.add(new ToolDefinition("update_document_metadata",
+                "Ändert Metadaten eines oder mehrerer Dokumente: Bezeichnung, Schlagworte, Eingangsdatum und Von/An. Nur die übergebenen Felder werden geändert. Die Bezeichnung ist der angezeigte Titel und unabhängig vom Dateinamen (dafür rename_document).",
+                Arrays.asList(
+                        new ToolParameter("documentIds", "string", "Kommagetrennte IDs der Dokumente (eine oder mehrere)", true),
+                        new ToolParameter("title", "string", "Neue Bezeichnung (optional; leerer Text entfernt die Bezeichnung)", false),
+                        new ToolParameter("keywords", "string", "Kommagetrennte Schlagworte (optional)", false),
+                        new ToolParameter("keywordOperation", "string", "add (Standard: ergänzen), remove (entfernen) oder set (ersetzen)", false),
+                        new ToolParameter("receivedDate", "string", "Eingangsdatum yyyy-MM-dd oder yyyy-MM-dd HH:mm (optional; leerer Text entfernt es)", false),
+                        new ToolParameter("correspondentContactId", "string", "ID eines Kontakts als Von/An (optional, aus search_contacts oder get_parties_for_case)", false),
+                        new ToolParameter("correspondentName", "string", "Von/An als Freitext bzw. abweichender Anzeigename (optional)", false),
+                        new ToolParameter("correspondentDirection", "string", "in (Von, Standard), out (An) oder none (Von/An entfernen)", false)),
+                ToolDefinition.RISK_MEDIUM));
+
+        TOOLS.add(new ToolDefinition("set_document_parent",
+                "Ordnet ein Dokument als Anlage einem anderen Dokument derselben Akte zu (z. B. Anhang einer E-Mail) oder hebt die Zuordnung auf.",
+                Arrays.asList(
+                        new ToolParameter("documentId", "string", "ID des Dokuments, das Anlage werden soll", true),
+                        new ToolParameter("parentId", "string", "ID des übergeordneten Dokuments; leer lassen, um die Zuordnung aufzuheben", false)),
+                ToolDefinition.RISK_MEDIUM));
 
         // New read-only tools
         TOOLS.add(new ToolDefinition("get_case_by_id", "Ruft Details einer Akte anhand der internen ID ab.",
@@ -224,7 +253,7 @@ public class ToolRegistry {
                 Arrays.asList(new ToolParameter("documentId", "string", "ID des Dokuments", true))));
 
         TOOLS.add(new ToolDefinition("rename_document",
-                "Benennt ein Dokument in einer Akte um.",
+                "Ändert den Dateinamen eines Dokuments in einer Akte. Für die angezeigte Bezeichnung (Titel) stattdessen update_document_metadata verwenden.",
                 Arrays.asList(
                         new ToolParameter("documentId", "string", "ID des Dokuments", true),
                         new ToolParameter("newName", "string", "Neuer Dateiname des Dokuments", true)),
@@ -270,7 +299,9 @@ public class ToolRegistry {
         TOOLS.add(new ToolDefinition("create_note", "Erstellt eine Aktennotiz als HTML-Dokument in einer Akte.",
                 Arrays.asList(
                         new ToolParameter("caseId", "string", "Interne ID der Akte", true),
-                        new ToolParameter("content", "string", "Inhalt der Notiz (HTML erlaubt: b, i, br, ul, li)", true)),
+                        new ToolParameter("content", "string", "Inhalt der Notiz (HTML erlaubt: b, i, br, ul, li)", true),
+                        new ToolParameter("title", "string", "Bezeichnung des Notiz-Dokuments (optional)", false),
+                        new ToolParameter("keywords", "string", "Kommagetrennte Schlagworte (optional)", false)),
                 ToolDefinition.RISK_MEDIUM));
 
         TOOLS.add(new ToolDefinition("create_or_get_contact", "Erstellt einen neuen Kontakt oder gibt einen bestehenden ähnlichen Kontakt zurück.",
@@ -323,7 +354,8 @@ public class ToolRegistry {
                 Arrays.asList(
                         new ToolParameter("caseId", "string", "Interne ID der Akte", true),
                         new ToolParameter("content", "string", "Inhalt der Nachricht", true),
-                        new ToolParameter("recipient", "string", "Benutzername des Empfängers (optional, wird als @Erwähnung hinzugefügt)", false)),
+                        new ToolParameter("recipient", "string", "Benutzername des Empfängers (optional, wird als @Erwähnung hinzugefügt)", false),
+                        new ToolParameter("documentId", "string", "ID eines Dokuments der Akte, auf das sich die Nachricht bezieht (optional)", false)),
                 ToolDefinition.RISK_MEDIUM));
 
         TOOLS.add(new ToolDefinition("create_case", "Erstellt eine neue Akte. Das Aktenzeichen wird automatisch vom Server vergeben.",
@@ -442,9 +474,10 @@ public class ToolRegistry {
                 ToolDefinition.RISK_MEDIUM));
 
         TOOLS.add(new ToolDefinition("move_document_to_case",
-                "Verschiebt ein Dokument in eine andere Akte. Das Dokument wird mit allen Etiketten in die Zielakte kopiert und aus der Quellakte gelöscht. Optional kann ein Zielordner und ein neuer Dateiname angegeben werden.",
+                "Verschiebt ein oder mehrere Dokumente in eine andere Akte. Die Dokumente werden mit Etiketten und allen Metadaten (Bezeichnung, Schlagworte, Eingang, Von/An) in die Zielakte kopiert und in der Quellakte in den Papierkorb gelegt. Werden ein Dokument und seine Anlagen gemeinsam verschoben, bleibt die Zuordnung erhalten. Optional kann ein Zielordner und - bei einem einzelnen Dokument - ein neuer Dateiname angegeben werden.",
                 Arrays.asList(
-                        new ToolParameter("documentId", "string", "ID des Dokuments", true),
+                        new ToolParameter("documentId", "string", "ID des Dokuments (oder documentIds verwenden)", false),
+                        new ToolParameter("documentIds", "string", "Kommagetrennte IDs mehrerer Dokumente, z. B. eine E-Mail mit ihren Anlagen (optional statt documentId)", false),
                         new ToolParameter("targetCaseId", "string", "ID der Zielakte", true),
                         new ToolParameter("targetFolderId", "string", "ID des Zielordners in der Zielakte (optional)", false),
                         new ToolParameter("newFileName", "string", "Neuer Dateiname (optional, ohne Angabe wird der bisherige Name verwendet)", false)),
@@ -520,7 +553,9 @@ public class ToolRegistry {
                         new ToolParameter("templateName", "string", "Dateiname der Vorlage (z.B. Vollmacht.odt)", true),
                         new ToolParameter("fileName", "string", "Dateiname des neuen Dokuments ohne Erweiterung (z.B. Vollmacht Mueller)", true),
                         new ToolParameter("generatedText", "string", "Vom Assistenten generierter Text, der als Platzhalter {{INGO_TEXT}} in die Vorlage eingefügt wird (optional)", false),
-                        new ToolParameter("letterHead", "string", "Name des Briefkopfs (optional). Verwende list_letter_heads um verfügbare Briefköpfe zu sehen.", false)),
+                        new ToolParameter("letterHead", "string", "Name des Briefkopfs (optional). Verwende list_letter_heads um verfügbare Briefköpfe zu sehen.", false),
+                        new ToolParameter("title", "string", "Bezeichnung des neuen Dokuments (optional)", false),
+                        new ToolParameter("keywords", "string", "Kommagetrennte Schlagworte (optional)", false)),
                 ToolDefinition.RISK_MEDIUM));
 
 
@@ -534,9 +569,10 @@ public class ToolRegistry {
                 Arrays.asList(new ToolParameter("url", "string", "Die URL der Webseite", true))));
 
         TOOLS.add(new ToolDefinition("search_instant_messages",
-                "Sucht Sofortnachrichten/Verfügungen. Mindestens caseId oder fromDate muss angegeben werden. Ergebnisse auf 100 begrenzt.",
+                "Sucht Sofortnachrichten/Verfügungen. Mindestens caseId, documentId oder fromDate muss angegeben werden. Nachrichten mit Dokumentbezug enthalten documentId und documentName. Ergebnisse auf 100 begrenzt.",
                 Arrays.asList(
                         new ToolParameter("caseId", "string", "Interne ID der Akte (optional)", false),
+                        new ToolParameter("documentId", "string", "Nur Nachrichten zu diesem Dokument (optional)", false),
                         new ToolParameter("sender", "string", "Benutzername des Absenders (optional)", false),
                         new ToolParameter("fromDate", "string", "Startdatum im ISO-Format yyyy-MM-dd (optional)", false),
                         new ToolParameter("toDate", "string", "Enddatum im ISO-Format yyyy-MM-dd (optional)", false)
@@ -579,14 +615,16 @@ public class ToolRegistry {
                         new ToolParameter("maxChars", "integer", "Optional: maximale Zeichenzahl des Nachrichtentexts. Standard und Obergrenze: 30000", false))));
 
         TOOLS.add(new ToolDefinition("save_email_to_case",
-                "Speichert eine E-Mail als .eml-Datei in einer Akte. mailboxId und messageRef stammen aus search_emails oder aus den Kopfdaten einer im Kontext übergebenen E-Mail, die caseId aus search_cases. Der Dateiname wird aus dem Betreff nach der konfigurierten Dateinamensvorschrift der Kanzlei gebildet; existiert der Name bereits, wird automatisch eine Nummer angehängt. Anhänge bleiben in der .eml enthalten, werden aber nicht als separate Dokumente abgelegt.",
+                "Speichert eine E-Mail als .eml-Datei in einer Akte. mailboxId und messageRef stammen aus search_emails oder aus den Kopfdaten einer im Kontext übergebenen E-Mail, die caseId aus search_cases. Der Dateiname wird aus dem Betreff nach der konfigurierten Dateinamensvorschrift der Kanzlei gebildet; existiert der Name bereits, wird automatisch eine Nummer angehängt. Wie beim Speichern im Client erhält das Dokument den Betreff als Bezeichnung, das Datum der E-Mail als Eingang und Absender bzw. Empfänger als Von/An (einem Kontakt zugeordnet, soweit vorhanden). Anhänge bleiben in der .eml enthalten; mit saveAttachments=true werden sie zusätzlich als Anlagen der E-Mail abgelegt.",
                 Arrays.asList(
                         new ToolParameter("mailboxId", "string", "ID des Postfachs", true),
                         new ToolParameter("messageRef", "string", "Referenz der Nachricht aus search_emails oder aus dem Kontext (messageRef)", true),
                         new ToolParameter("caseId", "string", "Interne ID der Akte", true),
                         new ToolParameter("fileName", "string", "Dateiname übersteuern (optional). Die Endung .eml wird immer erzwungen, die Dateinamensvorschrift wird trotzdem angewendet.", false),
                         new ToolParameter("folderId", "string", "ID des Zielordners in der Akte (optional, aus list_case_folders). Ohne Angabe landet die Datei im Wurzelordner der Akte.", false),
-                        new ToolParameter("tags", "string", "Kommagetrennte Dokument-Etiketten (optional, aus list_document_tags). Nur einfache Etiketten ohne Wert; Mehrwert-Etiketten über set_document_tag setzen.", false)),
+                        new ToolParameter("tags", "string", "Kommagetrennte Dokument-Etiketten für die E-Mail (optional, aus list_document_tags). Nur einfache Etiketten ohne Wert; Mehrwert-Etiketten über set_document_tag setzen.", false),
+                        new ToolParameter("keywords", "string", "Kommagetrennte Schlagworte für die E-Mail (optional)", false),
+                        new ToolParameter("saveAttachments", "string", "true, um die Anhänge (ohne eingebettete Bilder) zusätzlich als eigene Dokumente abzulegen, die der E-Mail als Anlagen zugeordnet sind (Standard: false)", false)),
                 ToolDefinition.RISK_MEDIUM));
     }
 
@@ -638,6 +676,12 @@ public class ToolRegistry {
                     return executeSearchCaseDocuments(args);
                 case "get_document_text":
                     return executeGetDocumentText(args);
+                case "get_document_details":
+                    return executeGetDocumentDetails(args);
+                case "update_document_metadata":
+                    return executeUpdateDocumentMetadata(args);
+                case "set_document_parent":
+                    return executeSetDocumentParent(args);
                 case "get_case_by_id":
                     return executeGetCaseById(args);
                 case "get_current_date_time":
@@ -849,6 +893,16 @@ public class ToolRegistry {
                     return "Dokumentensuche: '" + args.getOrDefault("query", "") + "' in " + args.getOrDefault("fileNumber", "") + " (Seite " + args.getOrDefault("page", "1") + ")";
                 case "get_document_text":
                     return "Dokumenttext: " + args.getOrDefault("documentId", "");
+                case "get_document_details":
+                    return "Dokumentdetails: " + args.getOrDefault("documentId", "");
+                case "update_document_metadata":
+                    return "Dokument-Metadaten ändern: " + DocumentToolSupport.splitIds((String) args.get("documentIds")).size() + " Dokument(e)" + describeMetadataChange(args);
+                case "set_document_parent": {
+                    Object parent = args.get("parentId");
+                    return (parent == null || parent.toString().isBlank())
+                            ? "Anlagen-Zuordnung aufheben: " + args.getOrDefault("documentId", "")
+                            : "Dokument als Anlage zuordnen: " + args.getOrDefault("documentId", "") + " zu " + parent;
+                }
                 case "get_case_by_id":
                     return "Aktendetails (ID): " + args.getOrDefault("caseId", "");
                 case "get_current_date_time":
@@ -925,9 +979,11 @@ public class ToolRegistry {
                     return "Ordner erstellen: " + args.getOrDefault("name", "");
                 case "move_document_to_folder":
                     return "Dokument in Ordner verschieben: " + args.getOrDefault("documentId", "");
-                case "move_document_to_case":
-                    return "Dokument in andere Akte verschieben: " + args.getOrDefault("documentId", "")
-                            + " nach Akte " + args.getOrDefault("targetCaseId", "");
+                case "move_document_to_case": {
+                    List<String> moveIds = DocumentToolSupport.splitIds((String) args.get("documentIds"));
+                    String what = moveIds.size() > 1 ? moveIds.size() + " Dokumente" : "Dokument " + args.getOrDefault("documentId", moveIds.isEmpty() ? "" : moveIds.get(0));
+                    return what + " in andere Akte verschieben nach Akte " + args.getOrDefault("targetCaseId", "");
+                }
                 case "list_folder_templates":
                     return "Verfügbare Ordnervorlagen auflisten";
                 case "apply_folder_template":
@@ -984,11 +1040,13 @@ public class ToolRegistry {
         String fromDateStr = (String) args.get("fromDate");
         String toDateStr = (String) args.get("toDate");
 
+        String documentId = (String) args.get("documentId");
+        boolean hasDocumentId = documentId != null && !documentId.trim().isEmpty();
         boolean hasCaseId = caseId != null && !caseId.trim().isEmpty();
         boolean hasFromDate = fromDateStr != null && !fromDateStr.trim().isEmpty();
 
-        if (!hasCaseId && !hasFromDate) {
-            return ToolJsonUtils.error("Mindestens caseId oder fromDate muss angegeben werden");
+        if (!hasCaseId && !hasFromDate && !hasDocumentId) {
+            return ToolJsonUtils.error("Mindestens caseId, documentId oder fromDate muss angegeben werden");
         }
 
         Date fromDate = hasFromDate ? ToolJsonUtils.parseIsoDate(fromDateStr) : null;
@@ -1010,7 +1068,17 @@ public class ToolRegistry {
         MessagingServiceRemote msgSvc = locator.lookupMessagingServiceRemote();
 
         List<InstantMessage> messages;
-        if (hasCaseId) {
+        if (hasDocumentId) {
+            messages = msgSvc.getMessagesForDocument(documentId.trim());
+            if (messages == null) {
+                messages = new ArrayList<>();
+            }
+            if (fromDate != null || toDate != null) {
+                Date fDate = fromDate;
+                Date tDate = toDate;
+                messages.removeIf(m -> m.getSent() == null || (fDate != null && m.getSent().before(fDate)) || (tDate != null && m.getSent().after(tDate)));
+            }
+        } else if (hasCaseId) {
             messages = msgSvc.getMessagesForCase(caseId.trim());
             if (messages == null) {
                 messages = new ArrayList<>();
@@ -1058,6 +1126,10 @@ public class ToolRegistry {
             if (m.getCaseContext() != null) {
                 sb.append(", \"caseId\": \"").append(ToolJsonUtils.escapeJson(m.getCaseContext().getId())).append("\"");
                 sb.append(", \"caseFileNumber\": \"").append(ToolJsonUtils.escapeJson(m.getCaseContext().getFileNumber())).append("\"");
+            }
+            if (m.getDocumentContext() != null) {
+                sb.append(", \"documentId\": \"").append(ToolJsonUtils.escapeJson(m.getDocumentContext().getId())).append("\"");
+                sb.append(", \"documentName\": \"").append(ToolJsonUtils.escapeJson(m.getDocumentContext().getDisplayTitle())).append("\"");
             }
             sb.append("}");
         }
@@ -1479,70 +1551,89 @@ public class ToolRegistry {
     }
 
     private String executeMoveDocumentToCase(JsonObject args) throws Exception {
+        List<String> documentIds = DocumentToolSupport.splitIds((String) args.get("documentIds"));
         String documentId = (String) args.get("documentId");
+        if (documentId != null && !documentId.trim().isEmpty() && !documentIds.contains(documentId.trim())) {
+            documentIds.add(0, documentId.trim());
+        }
         String targetCaseId = (String) args.get("targetCaseId");
         String targetFolderId = (String) args.get("targetFolderId");
         String newFileName = (String) args.get("newFileName");
 
-        if (documentId == null || documentId.trim().isEmpty()) {
-            return ToolJsonUtils.error("Dokument-ID (documentId) fehlt");
+        if (documentIds.isEmpty()) {
+            return ToolJsonUtils.error("Dokument-ID (documentId oder documentIds) fehlt");
         }
         if (targetCaseId == null || targetCaseId.trim().isEmpty()) {
             return ToolJsonUtils.error("Zielakten-ID (targetCaseId) fehlt");
         }
+        boolean rename = newFileName != null && !newFileName.trim().isEmpty();
+        if (rename && documentIds.size() > 1) {
+            return ToolJsonUtils.error("newFileName ist nur beim Verschieben eines einzelnen Dokuments möglich");
+        }
 
         ArchiveFileServiceRemote svc = ToolJsonUtils.getLocator().lookupArchiveFileServiceRemote();
-
-        ArchiveFileDocumentsBean doc = svc.getDocument(documentId.trim());
-        if (doc == null) {
-            return ToolJsonUtils.error("Dokument nicht gefunden: " + documentId);
-        }
 
         ArchiveFileBean targetCase = svc.getArchiveFile(targetCaseId.trim());
         if (targetCase == null) {
             return ToolJsonUtils.error("Zielakte nicht gefunden: " + targetCaseId);
         }
-
         if (targetCase.isArchived()) {
             return ToolJsonUtils.error("Zielakte ist archiviert (abgelegt). Bitte die Akte zuerst reaktivieren.");
         }
 
-        if (doc.getArchiveFileKey() != null && targetCaseId.trim().equals(doc.getArchiveFileKey().getId())) {
-            return ToolJsonUtils.error("Das Dokument befindet sich bereits in der Zielakte. Verwende move_document_to_folder um es innerhalb der Akte zu verschieben.");
-        }
-
-        String fileName = (newFileName != null && !newFileName.trim().isEmpty()) ? newFileName.trim() : doc.getName();
-
-        byte[] content = svc.getDocumentContent(documentId.trim());
-        if (content == null) {
-            return ToolJsonUtils.error("Dokumentinhalt konnte nicht gelesen werden: " + documentId);
-        }
-
-        ArchiveFileDocumentsBean newDoc = svc.addDocument(targetCaseId.trim(), fileName, content, doc.getDictateSign(), null);
-
-        if (targetFolderId != null && !targetFolderId.trim().isEmpty()) {
-            ArrayList<String> docList = new ArrayList<>();
-            docList.add(newDoc.getId());
-            svc.moveDocumentsToFolder(docList, targetFolderId.trim());
-        }
-
-        Collection<DocumentTagsBean> docTags = svc.getDocumentTags(documentId.trim());
-        if (docTags != null) {
-            for (DocumentTagsBean dtb : docTags) {
-                svc.setDocumentTag(newDoc.getId(), dtb, true);
+        List<ArchiveFileDocumentsBean> sources = new ArrayList<>();
+        for (String id : documentIds) {
+            ArchiveFileDocumentsBean doc = svc.getDocument(id);
+            if (doc == null) {
+                return ToolJsonUtils.error("Dokument nicht gefunden: " + id);
             }
+            if (doc.getArchiveFileKey() != null && targetCaseId.trim().equals(doc.getArchiveFileKey().getId())) {
+                return ToolJsonUtils.error("Das Dokument " + doc.getName() + " befindet sich bereits in der Zielakte. Verwende move_document_to_folder um es innerhalb der Akte zu verschieben.");
+            }
+            sources.add(doc);
         }
 
-        svc.removeDocument(documentId.trim());
+        // one server call: content, tags, metadata and relations within the set are copied,
+        // the sources go to the recycle bin
+        HashMap<String, String> names = new HashMap<>();
+        for (ArchiveFileDocumentsBean doc : sources) {
+            names.put(doc.getId(), rename ? newFileName.trim() : doc.getName());
+        }
+        String folderId = (targetFolderId != null && !targetFolderId.trim().isEmpty()) ? targetFolderId.trim() : null;
+        HashMap<String, ArchiveFileDocumentsBean> moved = svc.moveDocumentsToCase(new ArrayList<>(documentIds), targetCaseId.trim(), folderId, names);
 
-        EventBroker.getInstance().publishEvent(new DocumentRemovedEvent(doc));
-        ArchiveFileDocumentsBean updatedNewDoc = svc.getDocument(newDoc.getId());
-        EventBroker.getInstance().publishEvent(new DocumentAddedEvent(updatedNewDoc != null ? updatedNewDoc : newDoc));
+        StringBuilder docs = new StringBuilder();
+        for (ArchiveFileDocumentsBean doc : sources) {
+            ArchiveFileDocumentsBean newDoc = moved.get(doc.getId());
+            if (newDoc == null) {
+                continue;
+            }
+            EventBroker.getInstance().publishEvent(new DocumentRemovedEvent(doc));
+            ArchiveFileDocumentsBean updatedNewDoc = svc.getDocument(newDoc.getId());
+            EventBroker.getInstance().publishEvent(new DocumentAddedEvent(updatedNewDoc != null ? updatedNewDoc : newDoc));
+            if (docs.length() > 0) {
+                docs.append(", ");
+            }
+            docs.append("{\"oldDocumentId\": \"").append(ToolJsonUtils.escapeJson(doc.getId()))
+                    .append("\", \"newDocumentId\": \"").append(ToolJsonUtils.escapeJson(newDoc.getId()))
+                    .append("\", \"fileName\": \"").append(ToolJsonUtils.escapeJson(newDoc.getName())).append("\"");
+            if (newDoc.getParentId() != null) {
+                docs.append(", \"parentId\": \"").append(ToolJsonUtils.escapeJson(newDoc.getParentId())).append("\"");
+            }
+            docs.append("}");
+        }
 
-        return "{\"success\": true, \"oldDocumentId\": \"" + ToolJsonUtils.escapeJson(documentId.trim())
-                + "\", \"newDocumentId\": \"" + ToolJsonUtils.escapeJson(newDoc.getId())
-                + "\", \"targetCaseId\": \"" + ToolJsonUtils.escapeJson(targetCaseId.trim())
-                + "\", \"fileName\": \"" + ToolJsonUtils.escapeJson(fileName) + "\"}";
+        StringBuilder sb = new StringBuilder("{\"success\": true");
+        sb.append(", \"targetCaseId\": \"").append(ToolJsonUtils.escapeJson(targetCaseId.trim())).append("\"");
+        if (sources.size() == 1 && moved.get(sources.get(0).getId()) != null) {
+            // kept for single documents, as before
+            ArchiveFileDocumentsBean newDoc = moved.get(sources.get(0).getId());
+            sb.append(", \"oldDocumentId\": \"").append(ToolJsonUtils.escapeJson(sources.get(0).getId())).append("\"");
+            sb.append(", \"newDocumentId\": \"").append(ToolJsonUtils.escapeJson(newDoc.getId())).append("\"");
+            sb.append(", \"fileName\": \"").append(ToolJsonUtils.escapeJson(newDoc.getName())).append("\"");
+        }
+        sb.append(", \"documents\": [").append(docs).append("]}");
+        return sb.toString();
     }
 
     private String executeListFolderTemplates(JsonObject args) throws Exception {
@@ -1871,6 +1962,8 @@ public class ToolRegistry {
         }
 
         Collection<ArchiveFileDocumentsBean> allDocs = svc.getDocuments(caseBean.getId());
+        Map<String, ArchiveFileDocumentsBean> byId = DocumentToolSupport.byId(allDocs);
+        Map<String, Integer> attachmentCounts = DocumentToolSupport.countAttachments(allDocs);
 
         // Filter deleted documents and sort by creation date descending
         List<ArchiveFileDocumentsBean> filteredDocs = new ArrayList<>();
@@ -1899,8 +1992,6 @@ public class ToolRegistry {
         int toIndex = Math.min(fromIndex + PAGE_SIZE, totalDocuments);
         List<ArchiveFileDocumentsBean> pageDocs = filteredDocs.subList(fromIndex, toIndex);
 
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-
         StringBuilder sb = new StringBuilder();
         sb.append("{\"fileNumber\": \"").append(ToolJsonUtils.escapeJson(fileNumber)).append("\"");
         sb.append(", \"documents\": [");
@@ -1909,16 +2000,7 @@ public class ToolRegistry {
             if (count > 0) {
                 sb.append(",");
             }
-            sb.append("{\"id\": \"").append(ToolJsonUtils.escapeJson(doc.getId())).append("\"");
-            sb.append(", \"name\": \"").append(ToolJsonUtils.escapeJson(doc.getName())).append("\"");
-            sb.append(", \"size\": ").append(doc.getSize());
-            if (doc.getCreationDate() != null) {
-                sb.append(", \"creationDate\": \"").append(sdf.format(doc.getCreationDate())).append("\"");
-            }
-            if (doc.getFolder() != null) {
-                sb.append(", \"folder\": \"").append(ToolJsonUtils.escapeJson(doc.getFolder().getName())).append("\"");
-            }
-            sb.append("}");
+            sb.append(DocumentToolSupport.documentJson(doc, byId.get(doc.getParentId()), attachmentCounts.getOrDefault(doc.getId(), 0)));
             count++;
         }
         sb.append("], \"totalDocuments\": ").append(totalDocuments);
@@ -1961,6 +2043,12 @@ public class ToolRegistry {
         // Set toDate to end of day (23:59:59.999)
         toDate = new Date(toDate.getTime() + 24L * 60 * 60 * 1000 - 1);
 
+        String dateField = (String) args.get("dateField");
+        boolean byReceived = dateField != null && "received".equalsIgnoreCase(dateField.trim());
+        if (dateField != null && !dateField.trim().isEmpty() && !byReceived && !"created".equalsIgnoreCase(dateField.trim())) {
+            return ToolJsonUtils.error("Ungültiges dateField (erlaubt: created, received): " + dateField);
+        }
+
         JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
         ArchiveFileServiceRemote svc = locator.lookupArchiveFileServiceRemote();
 
@@ -1977,34 +2065,33 @@ public class ToolRegistry {
         }
 
         Collection<ArchiveFileDocumentsBean> allDocs = svc.getDocuments(caseBean.getId());
+        Map<String, ArchiveFileDocumentsBean> byId = DocumentToolSupport.byId(allDocs);
+        Map<String, Integer> attachmentCounts = DocumentToolSupport.countAttachments(allDocs);
 
-        // Filter: not deleted, creationDate within range
+        // Filter: not deleted, creation or received date within range
+        java.util.function.Function<ArchiveFileDocumentsBean, Date> dateOf = byReceived ? ArchiveFileDocumentsBean::getReceivedDate : ArchiveFileDocumentsBean::getCreationDate;
         List<ArchiveFileDocumentsBean> filteredDocs = new ArrayList<>();
         for (ArchiveFileDocumentsBean doc : allDocs) {
             if (doc.isDeleted()) {
                 continue;
             }
-            Date created = doc.getCreationDate();
-            if (created == null) {
+            Date d = dateOf.apply(doc);
+            if (d == null) {
                 continue;
             }
-            if (!created.before(fromDate) && !created.after(toDate)) {
+            if (!d.before(fromDate) && !d.after(toDate)) {
                 filteredDocs.add(doc);
             }
         }
 
-        // Sort by creation date descending
-        filteredDocs.sort((a, b) -> {
-            if (a.getCreationDate() == null && b.getCreationDate() == null) return 0;
-            if (a.getCreationDate() == null) return 1;
-            if (b.getCreationDate() == null) return -1;
-            return b.getCreationDate().compareTo(a.getCreationDate());
-        });
+        // Sort by the filtered date descending
+        filteredDocs.sort((a, b) -> dateOf.apply(b).compareTo(dateOf.apply(a)));
 
         StringBuilder sb = new StringBuilder();
         sb.append("{\"fileNumber\": \"").append(ToolJsonUtils.escapeJson(fileNumber)).append("\"");
         sb.append(", \"fromDate\": \"").append(ToolJsonUtils.escapeJson(fromDateStr.trim())).append("\"");
         sb.append(", \"toDate\": \"").append(ToolJsonUtils.escapeJson(toDateStr.trim())).append("\"");
+        sb.append(", \"dateField\": \"").append(byReceived ? "received" : "created").append("\"");
         sb.append(", \"totalDocuments\": ").append(filteredDocs.size());
         sb.append(", \"documents\": [");
         int count = 0;
@@ -2012,16 +2099,7 @@ public class ToolRegistry {
             if (count > 0) {
                 sb.append(",");
             }
-            sb.append("{\"id\": \"").append(ToolJsonUtils.escapeJson(doc.getId())).append("\"");
-            sb.append(", \"name\": \"").append(ToolJsonUtils.escapeJson(doc.getName())).append("\"");
-            sb.append(", \"size\": ").append(doc.getSize());
-            if (doc.getCreationDate() != null) {
-                sb.append(", \"creationDate\": \"").append(sdf.format(doc.getCreationDate())).append("\"");
-            }
-            if (doc.getFolder() != null) {
-                sb.append(", \"folder\": \"").append(ToolJsonUtils.escapeJson(doc.getFolder().getName())).append("\"");
-            }
-            sb.append("}");
+            sb.append(DocumentToolSupport.documentJson(doc, byId.get(doc.getParentId()), attachmentCounts.getOrDefault(doc.getId(), 0)));
             count++;
         }
         sb.append("]}");
@@ -2038,8 +2116,6 @@ public class ToolRegistry {
         if (query == null || query.trim().isEmpty()) {
             return ToolJsonUtils.error("Suchbegriff fehlt");
         }
-        String queryLower = query.toLowerCase();
-
         int page = 1;
         Object pageObj = args.get("page");
         if (pageObj != null) {
@@ -2066,11 +2142,13 @@ public class ToolRegistry {
         }
 
         Collection<ArchiveFileDocumentsBean> allDocs = svc.getDocuments(caseBean.getId());
+        Map<String, ArchiveFileDocumentsBean> byId = DocumentToolSupport.byId(allDocs);
+        Map<String, Integer> attachmentCounts = DocumentToolSupport.countAttachments(allDocs);
 
-        // Filter deleted documents, match by filename, sort by creation date descending
+        // Filter deleted documents, match by file name, title, keywords and correspondent, sort by creation date descending
         List<ArchiveFileDocumentsBean> filteredDocs = new ArrayList<>();
         for (ArchiveFileDocumentsBean doc : allDocs) {
-            if (!doc.isDeleted() && doc.getName() != null && doc.getName().toLowerCase().contains(queryLower)) {
+            if (!doc.isDeleted() && DocumentToolSupport.matches(doc, query)) {
                 filteredDocs.add(doc);
             }
         }
@@ -2094,8 +2172,6 @@ public class ToolRegistry {
         int toIndex = Math.min(fromIndex + PAGE_SIZE, totalDocuments);
         List<ArchiveFileDocumentsBean> pageDocs = filteredDocs.subList(fromIndex, toIndex);
 
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-
         StringBuilder sb = new StringBuilder();
         sb.append("{\"fileNumber\": \"").append(ToolJsonUtils.escapeJson(fileNumber)).append("\"");
         sb.append(", \"query\": \"").append(ToolJsonUtils.escapeJson(query)).append("\"");
@@ -2105,16 +2181,7 @@ public class ToolRegistry {
             if (count > 0) {
                 sb.append(",");
             }
-            sb.append("{\"id\": \"").append(ToolJsonUtils.escapeJson(doc.getId())).append("\"");
-            sb.append(", \"name\": \"").append(ToolJsonUtils.escapeJson(doc.getName())).append("\"");
-            sb.append(", \"size\": ").append(doc.getSize());
-            if (doc.getCreationDate() != null) {
-                sb.append(", \"creationDate\": \"").append(sdf.format(doc.getCreationDate())).append("\"");
-            }
-            if (doc.getFolder() != null) {
-                sb.append(", \"folder\": \"").append(ToolJsonUtils.escapeJson(doc.getFolder().getName())).append("\"");
-            }
-            sb.append("}");
+            sb.append(DocumentToolSupport.documentJson(doc, byId.get(doc.getParentId()), attachmentCounts.getOrDefault(doc.getId(), 0)));
             count++;
         }
         sb.append("], \"totalDocuments\": ").append(totalDocuments);
@@ -2123,6 +2190,240 @@ public class ToolRegistry {
         sb.append(", \"hasMore\": ").append(page < totalPages);
         sb.append("}");
         return sb.toString();
+    }
+
+    /**
+     * Describes the fields an update_document_metadata call changes, for the approval prompt.
+     */
+    private static String describeMetadataChange(JsonObject args) {
+        List<String> parts = new ArrayList<>();
+        if (args.containsKey("title")) {
+            Object t = args.get("title");
+            parts.add(t == null || t.toString().isBlank() ? "Bezeichnung entfernen" : "Bezeichnung '" + t + "'");
+        }
+        if (args.containsKey("keywords")) {
+            String op = args.get("keywordOperation") == null ? "add" : args.get("keywordOperation").toString();
+            parts.add("Schlagworte " + op + " '" + args.get("keywords") + "'");
+        }
+        if (args.containsKey("receivedDate")) {
+            parts.add("Eingang '" + args.get("receivedDate") + "'");
+        }
+        if (args.containsKey("correspondentContactId") || args.containsKey("correspondentName") || args.containsKey("correspondentDirection")) {
+            parts.add("Von/An");
+        }
+        return parts.isEmpty() ? "" : " (" + String.join(", ", parts) + ")";
+    }
+
+    private String executeGetDocumentDetails(JsonObject args) throws Exception {
+        String documentId = (String) args.get("documentId");
+        if (documentId == null || documentId.trim().isEmpty()) {
+            return ToolJsonUtils.error("Dokument-ID fehlt");
+        }
+        JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
+        ArchiveFileServiceRemote svc = locator.lookupArchiveFileServiceRemote();
+        ArchiveFileDocumentsBean doc = svc.getDocument(documentId.trim());
+        if (doc == null) {
+            return ToolJsonUtils.error("Dokument nicht gefunden: " + documentId);
+        }
+
+        Map<String, ArchiveFileDocumentsBean> byId = new HashMap<>();
+        List<ArchiveFileDocumentsBean> attachments = new ArrayList<>();
+        ArchiveFileBean caseBean = doc.getArchiveFileKey();
+        if (caseBean != null) {
+            Collection<ArchiveFileDocumentsBean> caseDocs = svc.getDocuments(caseBean.getId());
+            byId = DocumentToolSupport.byId(caseDocs);
+            for (ArchiveFileDocumentsBean d : byId.values()) {
+                if (doc.getId().equals(d.getParentId())) {
+                    attachments.add(d);
+                }
+            }
+            attachments.sort((a, b) -> a.getDisplayTitle().compareToIgnoreCase(b.getDisplayTitle()));
+        }
+        ArchiveFileDocumentsBean parent = doc.getParentId() == null ? null : byId.get(doc.getParentId());
+
+        StringBuilder sb = new StringBuilder("{");
+        sb.append("\"id\": \"").append(ToolJsonUtils.escapeJson(doc.getId())).append("\"");
+        // "name" next to "id" lets the chat panel offer to open the document
+        sb.append(", \"name\": \"").append(ToolJsonUtils.escapeJson(doc.getName())).append("\"");
+        if (caseBean != null) {
+            sb.append(", \"caseId\": \"").append(ToolJsonUtils.escapeJson(caseBean.getId())).append("\"");
+            sb.append(", \"caseFileNumber\": \"").append(ToolJsonUtils.escapeJson(caseBean.getFileNumber())).append("\"");
+        }
+        sb.append(", \"size\": ").append(doc.getSize());
+        if (doc.getCreationDate() != null) {
+            sb.append(", \"creationDate\": \"").append(ToolJsonUtils.formatDate(doc.getCreationDate())).append("\"");
+        }
+        if (doc.getChangeDate() != null) {
+            sb.append(", \"changeDate\": \"").append(ToolJsonUtils.formatDate(doc.getChangeDate())).append("\"");
+        }
+        if (doc.getFolder() != null) {
+            sb.append(", \"folder\": \"").append(ToolJsonUtils.escapeJson(doc.getFolder().getName())).append("\"");
+        }
+        if (doc.isFavorite()) {
+            sb.append(", \"favorite\": true");
+        }
+        if (doc.getDictateSign() != null && !doc.getDictateSign().isBlank()) {
+            sb.append(", \"dictateSign\": \"").append(ToolJsonUtils.escapeJson(doc.getDictateSign())).append("\"");
+        }
+        if (doc.isDeleted()) {
+            sb.append(", \"deleted\": true");
+        }
+        DocumentToolSupport.appendMetadata(sb, doc, parent, attachments.size());
+
+        sb.append(", \"tags\": [");
+        Collection<DocumentTagsBean> tags = svc.getDocumentTags(doc.getId());
+        int i = 0;
+        if (tags != null) {
+            for (DocumentTagsBean t : tags) {
+                if (i++ > 0) {
+                    sb.append(", ");
+                }
+                sb.append("{\"name\": \"").append(ToolJsonUtils.escapeJson(t.getTagName())).append("\"");
+                if (t.getTagValue() != null && !t.getTagValue().isBlank()) {
+                    sb.append(", \"value\": \"").append(ToolJsonUtils.escapeJson(t.getTagValue())).append("\"");
+                }
+                sb.append("}");
+            }
+        }
+        sb.append("]");
+
+        sb.append(", \"attachments\": [");
+        for (int a = 0; a < attachments.size(); a++) {
+            ArchiveFileDocumentsBean d = attachments.get(a);
+            if (a > 0) {
+                sb.append(", ");
+            }
+            sb.append("{\"id\": \"").append(ToolJsonUtils.escapeJson(d.getId())).append("\"");
+            sb.append(", \"name\": \"").append(ToolJsonUtils.escapeJson(d.getName())).append("\"");
+            if (d.getTitle() != null && !d.getTitle().isBlank()) {
+                sb.append(", \"title\": \"").append(ToolJsonUtils.escapeJson(d.getTitle())).append("\"");
+            }
+            sb.append("}");
+        }
+        sb.append("]");
+
+        sb.append(", \"messages\": [");
+        List<InstantMessage> messages = locator.lookupMessagingServiceRemote().getMessagesForDocument(doc.getId());
+        int m = 0;
+        if (messages != null) {
+            for (InstantMessage im : messages) {
+                if (m++ > 0) {
+                    sb.append(", ");
+                }
+                sb.append("{\"id\": \"").append(ToolJsonUtils.escapeJson(im.getId())).append("\"");
+                sb.append(", \"sender\": \"").append(ToolJsonUtils.escapeJson(im.getSender())).append("\"");
+                if (im.getSent() != null) {
+                    sb.append(", \"sent\": \"").append(ToolJsonUtils.formatDate(im.getSent())).append("\"");
+                }
+                sb.append(", \"content\": \"").append(ToolJsonUtils.escapeJson(im.getContent())).append("\"}");
+            }
+        }
+        sb.append("]}");
+        return sb.toString();
+    }
+
+    private String executeUpdateDocumentMetadata(JsonObject args) throws Exception {
+        List<String> ids = DocumentToolSupport.splitIds((String) args.get("documentIds"));
+        if (ids.isEmpty()) {
+            return ToolJsonUtils.error("Dokument-IDs (documentIds) fehlen");
+        }
+        JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
+        ArchiveFileServiceRemote svc = locator.lookupArchiveFileServiceRemote();
+
+        DocumentMetadataPatch patch = new DocumentMetadataPatch();
+        try {
+            if (args.containsKey("title")) {
+                Object title = args.get("title");
+                patch.setTitle(title == null ? null : title.toString());
+            }
+            if (args.containsKey("keywords")) {
+                Object keywords = args.get("keywords");
+                patch.setKeywords(DocumentToolSupport.parseKeywordOperation((String) args.get("keywordOperation")), keywords == null ? "" : keywords.toString());
+            }
+            if (args.containsKey("receivedDate")) {
+                Object received = args.get("receivedDate");
+                patch.setReceivedDate(DocumentToolSupport.parseDateTime(received == null ? null : received.toString()));
+            }
+            boolean hasContact = args.get("correspondentContactId") != null && !args.get("correspondentContactId").toString().isBlank();
+            boolean hasName = args.get("correspondentName") != null && !args.get("correspondentName").toString().isBlank();
+            if (hasContact || hasName || args.containsKey("correspondentDirection")) {
+                int direction = DocumentToolSupport.parseDirection((String) args.get("correspondentDirection"));
+                if (direction == ArchiveFileDocumentsBean.CORRESPONDENT_NONE) {
+                    patch.setCorrespondent(null, null, ArchiveFileDocumentsBean.CORRESPONDENT_NONE);
+                } else {
+                    String contactId = hasContact ? args.get("correspondentContactId").toString().trim() : null;
+                    String name = hasName ? args.get("correspondentName").toString().trim() : null;
+                    if (contactId != null) {
+                        AddressBean contact = locator.lookupAddressServiceRemote().getAddress(contactId);
+                        if (contact == null) {
+                            return ToolJsonUtils.error("Kontakt nicht gefunden: " + contactId);
+                        }
+                        if (name == null) {
+                            name = contact.toDisplayName();
+                        }
+                    }
+                    if (name == null) {
+                        return ToolJsonUtils.error("Für Von/An ist correspondentContactId oder correspondentName nötig");
+                    }
+                    patch.setCorrespondent(contactId, name, direction);
+                }
+            }
+        } catch (IllegalArgumentException iae) {
+            return ToolJsonUtils.error(iae.getMessage());
+        }
+        if (patch.isEmpty()) {
+            return ToolJsonUtils.error("Keine Änderung angegeben (title, keywords, receivedDate oder Von/An)");
+        }
+
+        List<ArchiveFileDocumentsBean> updated = svc.updateDocumentsMetadata(ids, patch);
+        for (ArchiveFileDocumentsBean d : updated) {
+            publishDocumentChanged(d);
+        }
+
+        StringBuilder sb = new StringBuilder("{\"success\": true, \"updatedDocuments\": ").append(updated.size());
+        sb.append(", \"documents\": [");
+        for (int i = 0; i < updated.size(); i++) {
+            if (i > 0) {
+                sb.append(", ");
+            }
+            sb.append(DocumentToolSupport.documentJson(updated.get(i), null, 0));
+        }
+        sb.append("]}");
+        return sb.toString();
+    }
+
+    private String executeSetDocumentParent(JsonObject args) throws Exception {
+        String documentId = (String) args.get("documentId");
+        if (documentId == null || documentId.trim().isEmpty()) {
+            return ToolJsonUtils.error("Dokument-ID fehlt");
+        }
+        String parentId = (String) args.get("parentId");
+        if (parentId != null && parentId.trim().isEmpty()) {
+            parentId = null;
+        }
+        ArchiveFileServiceRemote svc = ToolJsonUtils.getLocator().lookupArchiveFileServiceRemote();
+        ArchiveFileDocumentsBean updated;
+        try {
+            // the server refuses cycles, deleted parents and parents of other cases
+            updated = svc.setDocumentParent(documentId.trim(), parentId == null ? null : parentId.trim());
+        } catch (Exception ex) {
+            return ToolJsonUtils.error("Zuordnung nicht möglich: " + ex.getMessage());
+        }
+        publishDocumentChanged(updated);
+        StringBuilder sb = new StringBuilder("{\"success\": true, \"document\": ");
+        sb.append(DocumentToolSupport.documentJson(updated, parentId == null ? null : svc.getDocument(parentId.trim()), 0));
+        return sb.append("}").toString();
+    }
+
+    /**
+     * Lets open case views show the changed document, the same way rename_document does.
+     */
+    private void publishDocumentChanged(ArchiveFileDocumentsBean doc) {
+        if (doc == null) {
+            return;
+        }
+        EventBroker.getInstance().publishEvent(new DocumentRemovedEvent(doc));
+        EventBroker.getInstance().publishEvent(new DocumentAddedEvent(doc));
     }
 
     private String executeGetDocumentText(JsonObject args) throws Exception {
@@ -3039,7 +3340,10 @@ public class ToolRegistry {
                 + content
                 + "</body></html>";
 
-        ArchiveFileDocumentsBean doc = svc.addDocument(caseId, fileName, html.getBytes("UTF-8"), null, null);
+        DocumentMetadata metadata = new DocumentMetadata();
+        metadata.setTitle((String) args.get("title"));
+        metadata.setKeywords((String) args.get("keywords"));
+        ArchiveFileDocumentsBean doc = svc.addDocument(caseId, fileName, html.getBytes("UTF-8"), null, null, metadata);
         EventBroker.getInstance().publishEvent(new DocumentAddedEvent(doc));
 
         StringBuilder sb = new StringBuilder();
@@ -3047,6 +3351,7 @@ public class ToolRegistry {
         sb.append(", \"documentId\": \"").append(ToolJsonUtils.escapeJson(doc.getId())).append("\"");
         sb.append(", \"fileName\": \"").append(ToolJsonUtils.escapeJson(doc.getName())).append("\"");
         sb.append(", \"caseFileNumber\": \"").append(ToolJsonUtils.escapeJson(caseBean.getFileNumber())).append("\"");
+        DocumentToolSupport.appendMetadata(sb, doc, null, 0);
         sb.append("}");
         return sb.toString();
     }
@@ -3415,10 +3720,25 @@ public class ToolRegistry {
             messageContent = "@" + recipient + " " + messageContent;
         }
 
+        ArchiveFileDocumentsBean documentContext = null;
+        String documentId = (String) args.get("documentId");
+        if (documentId != null && !documentId.trim().isEmpty()) {
+            documentContext = svc.getDocument(documentId.trim());
+            if (documentContext == null || documentContext.isDeleted()) {
+                return ToolJsonUtils.error("Dokument nicht gefunden: " + documentId);
+            }
+            if (documentContext.getArchiveFileKey() == null || !caseBean.getId().equals(documentContext.getArchiveFileKey().getId())) {
+                return ToolJsonUtils.error("Das Dokument " + documentContext.getName() + " gehört nicht zur Akte " + caseBean.getFileNumber());
+            }
+        }
+
         String currentUser = UserSettings.getInstance().getCurrentUser().getPrincipalId();
 
         InstantMessage msg = new InstantMessage();
         msg.setCaseContext(caseBean);
+        if (documentContext != null) {
+            msg.setDocumentContext(documentContext);
+        }
         msg.setContent(messageContent);
         msg.setSender(currentUser);
         msg.setSent(new Date());
@@ -3434,6 +3754,10 @@ public class ToolRegistry {
         sb.append(", \"caseFileNumber\": \"").append(ToolJsonUtils.escapeJson(caseBean.getFileNumber())).append("\"");
         if (recipient != null && !recipient.trim().isEmpty()) {
             sb.append(", \"recipient\": \"").append(ToolJsonUtils.escapeJson(recipient)).append("\"");
+        }
+        if (documentContext != null) {
+            sb.append(", \"documentId\": \"").append(ToolJsonUtils.escapeJson(documentContext.getId())).append("\"");
+            sb.append(", \"documentName\": \"").append(ToolJsonUtils.escapeJson(documentContext.getName())).append("\"");
         }
         sb.append("}");
         return sb.toString();
@@ -4113,6 +4437,26 @@ public class ToolRegistry {
         ArchiveFileDocumentsBean newDoc = archiveSvc.addDocumentFromTemplate(
                 caseId.trim(), fileName.trim(), letterHead, folderNode, templateName.trim(), phMap, "", null);
 
+        // title and keywords are set in a second step - documents from templates have no
+        // variant with metadata
+        String title = (String) args.get("title");
+        String keywords = (String) args.get("keywords");
+        boolean hasTitle = title != null && !title.trim().isEmpty();
+        boolean hasKeywords = keywords != null && !keywords.trim().isEmpty();
+        if (hasTitle || hasKeywords) {
+            DocumentMetadataPatch patch = new DocumentMetadataPatch();
+            if (hasTitle) {
+                patch.setTitle(title.trim());
+            }
+            if (hasKeywords) {
+                patch.setKeywords(DocumentMetadataPatch.KeywordOperation.SET, keywords);
+            }
+            List<ArchiveFileDocumentsBean> updated = archiveSvc.updateDocumentsMetadata(Arrays.asList(newDoc.getId()), patch);
+            if (updated != null && !updated.isEmpty()) {
+                newDoc = updated.get(0);
+            }
+        }
+
         EventBroker.getInstance().publishEvent(new DocumentAddedEvent(newDoc));
 
         // Build response
@@ -4122,6 +4466,7 @@ public class ToolRegistry {
         sb.append(", \"fileName\": \"").append(ToolJsonUtils.escapeJson(newDoc.getName())).append("\"");
         sb.append(", \"caseId\": \"").append(ToolJsonUtils.escapeJson(caseId.trim())).append("\"");
         sb.append(", \"caseFileNumber\": \"").append(ToolJsonUtils.escapeJson(caseBean.getFileNumber())).append("\"");
+        DocumentToolSupport.appendMetadata(sb, newDoc, null, 0);
         sb.append("}");
         return sb.toString();
     }
@@ -5294,9 +5639,18 @@ public class ToolRegistry {
                     + " in der Akte " + caseBean.getFileNumber() + " - bitte einen abweichenden fileName angeben.");
         }
 
+        // title, received date and sender / recipient like saving from the client
+        DocumentOrigin origin = MailDocumentOrigins.fromMessage(message.getSubject(), message.getDate(), message.getFrom(), message.getTo());
+        Map<String, DocumentMetadata> correspondentCache = DocumentOrigin.newCache();
+        DocumentMetadata metadata = origin.toMetadata(archiveSvc, caseId, correspondentCache);
+        String keywordsArg = (String) args.get("keywords");
+        if (keywordsArg != null && !keywordsArg.trim().isEmpty()) {
+            metadata.setKeywords(keywordsArg);
+        }
+
         ArchiveFileDocumentsBean doc;
         try {
-            doc = archiveSvc.addDocument(caseId, uniqueName, eml, "", null);
+            doc = archiveSvc.addDocument(caseId, uniqueName, eml, "", null, metadata);
         } catch (Exception ex) {
             // doesDocumentExist ignores the recycle bin while the server side check
             // of addDocument does not, so a clash can still surface here
@@ -5321,6 +5675,49 @@ public class ToolRegistry {
         ArchiveFileDocumentsBean storedDoc = archiveSvc.getDocument(doc.getId());
         EventBroker.getInstance().publishEvent(new DocumentAddedEvent(storedDoc != null ? storedDoc : doc));
 
+        // attachments as documents of their own, linked to the e-mail document
+        List<ArchiveFileDocumentsBean> savedAttachments = new ArrayList<>();
+        List<String> failedAttachments = new ArrayList<>();
+        if ("true".equalsIgnoreCase(String.valueOf(args.get("saveAttachments")).trim())) {
+            MailMessageDTO withAttachments = emailSvc.getMessage(mailboxId, messageRef, true);
+            List<MailAttachmentDTO> attachments = withAttachments == null ? null : withAttachments.getAttachments();
+            if (attachments != null) {
+                DocumentMetadata attachmentMetadata = origin.withoutTitle().toMetadata(archiveSvc, caseId, correspondentCache);
+                attachmentMetadata.setParentId(doc.getId());
+                for (MailAttachmentDTO a : attachments) {
+                    // only embedded images (inline with a Content-ID) are skipped - an inline
+                    // disposition alone does not make a part part of the body
+                    if (a.isInline() && a.getContentId() != null && !a.getContentId().trim().isEmpty()) {
+                        continue;
+                    }
+                    String attachmentName = FileUtils.sanitizeFileName(a.getName() == null || a.getName().isBlank() ? "Anhang" : a.getName());
+                    try {
+                        MailAttachmentDTO full = emailSvc.getAttachmentContent(mailboxId, messageRef, a.getAttachmentId());
+                        if (full == null || full.getContent() == null) {
+                            failedAttachments.add(attachmentName);
+                            continue;
+                        }
+                        String uniqueAttachmentName = limitDocumentNameLength(attachmentName);
+                        int attachmentIndex = 2;
+                        while (archiveSvc.doesDocumentExist(caseId, uniqueAttachmentName) && attachmentIndex <= MAX_NAME_CLASH_RETRIES) {
+                            uniqueAttachmentName = appendNameIndex(limitDocumentNameLength(attachmentName), attachmentIndex);
+                            attachmentIndex++;
+                        }
+                        ArchiveFileDocumentsBean attachmentDoc = archiveSvc.addDocument(caseId, uniqueAttachmentName, full.getContent(), "", null, attachmentMetadata);
+                        if (hasFolder) {
+                            archiveSvc.moveDocumentsToFolder(Arrays.asList(attachmentDoc.getId()), folderId.trim());
+                        }
+                        ArchiveFileDocumentsBean storedAttachment = archiveSvc.getDocument(attachmentDoc.getId());
+                        savedAttachments.add(storedAttachment != null ? storedAttachment : attachmentDoc);
+                        EventBroker.getInstance().publishEvent(new DocumentAddedEvent(storedAttachment != null ? storedAttachment : attachmentDoc));
+                    } catch (Exception ex) {
+                        log.warn("Unable to store attachment " + attachmentName + " of email " + messageRef + " in case " + caseId, ex);
+                        failedAttachments.add(attachmentName);
+                    }
+                }
+            }
+        }
+
         StringBuilder sb = new StringBuilder();
         sb.append("{\"success\": true");
         sb.append(", \"documentId\": \"").append(ToolJsonUtils.escapeJson(doc.getId())).append("\"");
@@ -5342,6 +5739,21 @@ public class ToolRegistry {
                 sb.append("\"").append(ToolJsonUtils.escapeJson(tagNames.get(i))).append("\"");
             }
             sb.append("]");
+        }
+        DocumentToolSupport.appendMetadata(sb, storedDoc != null ? storedDoc : doc, null, savedAttachments.size());
+        if (!savedAttachments.isEmpty()) {
+            sb.append(", \"attachments\": [");
+            for (int i = 0; i < savedAttachments.size(); i++) {
+                if (i > 0) {
+                    sb.append(", ");
+                }
+                sb.append("{\"documentId\": \"").append(ToolJsonUtils.escapeJson(savedAttachments.get(i).getId())).append("\"");
+                sb.append(", \"fileName\": \"").append(ToolJsonUtils.escapeJson(savedAttachments.get(i).getName())).append("\"}");
+            }
+            sb.append("]");
+        }
+        if (!failedAttachments.isEmpty()) {
+            sb.append(", \"failedAttachments\": ").append(DocumentToolSupport.stringArray(failedAttachments));
         }
         sb.append("}");
         return sb.toString();

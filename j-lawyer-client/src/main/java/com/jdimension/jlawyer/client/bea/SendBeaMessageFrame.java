@@ -718,6 +718,7 @@ import java.awt.event.MouseMotionAdapter;
 import java.io.File;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -764,6 +765,8 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
 
     private AppUserBean cu = null;
     private Hashtable<String, String> attachments = new Hashtable<>();
+    // temp url of an attachment -> id of the case document it was created from
+    private HashMap<String, String> attachmentDocumentIds = new HashMap<>();
     private ArchiveFileBean contextArchiveFile = null;
     private CaseFolder contextFolder = null;
     private String contextDictateSign = null;
@@ -1246,6 +1249,24 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
     @Override
     public void addAttachment(String tempUrl, String dictateSign) {
         this.addAttachment(tempUrl, dictateSign, new File(tempUrl).getName());
+    }
+
+    @Override
+    public void linkAttachmentToDocument(String tempUrl, String documentId) {
+        if (tempUrl != null && documentId != null) {
+            this.attachmentDocumentIds.put(tempUrl, documentId);
+        }
+    }
+
+    private List<String> getSentDocumentIds() {
+        ArrayList<String> ids = new ArrayList<>();
+        for (String url : this.attachments.values()) {
+            String docId = this.attachmentDocumentIds.get(url);
+            if (docId != null && !ids.contains(docId)) {
+                ids.add(docId);
+            }
+        }
+        return ids;
     }
     
     private ArrayList<BeaAttachmentMetadata> getAttachmentMetdata() {
@@ -2308,6 +2329,7 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
                 }
             });
         }
+        a.setSentDocumentIds(this.getSentDocumentIds());
         a.start();
 
         UserSettings uset = UserSettings.getInstance();
@@ -2336,10 +2358,15 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
             if (files == null) {
                 return;
             }
-            for (File f : files) {
+            ArchiveFileDocumentsBean[] docs = sad.getSelectedDocuments();
+            for (int i = 0; i < files.length; i++) {
+                File f = files[i];
                 byte[] data = FileUtils.readFile(f);
                 String tmpUrl = FileUtils.createTempFile(f.getName(), data);
                 this.addAttachment(tmpUrl, null);
+                if (docs != null && docs.length == files.length) {
+                    this.linkAttachmentToDocument(tmpUrl, docs[i].getId());
+                }
             }
 
         } catch (Exception ioe) {

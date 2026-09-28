@@ -663,6 +663,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import java.util.Map;
+import com.jdimension.jlawyer.services.DocumentMetadata;
 import com.formdev.flatlaf.FlatClientProperties;
 import java.util.concurrent.CompletableFuture;
 import com.formdev.flatlaf.FlatIntelliJLaf;
@@ -735,6 +737,8 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
     protected BulkSaveEntryProcessor entryProcessor = null;
 
     protected ArchiveFileBean selectedCase = null;
+    // senders / recipients resolved for the preview in the entries, per target case
+    private java.util.Map<String, com.jdimension.jlawyer.services.DocumentMetadata> correspondentPreviewCache = DocumentOrigin.newCache();
     protected CaseFolder caseFolder = null;
     protected CaseFolder rootFolder = null;
 
@@ -745,6 +749,9 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
     protected List<DocumentNameTemplate> allNameTemplates=new ArrayList<>();
 
     private ArrayList<BulkSaveEntry> entryList = new ArrayList<>();
+    // parties and document keywords of the target case, for the metadata of the entries
+    private List<com.jdimension.jlawyer.persistence.AddressBean> caseParties = new ArrayList<>();
+    private List<String> caseKeywords = new ArrayList<>();
 
     private ArrayList<String> existingFileNames = new ArrayList<>();
 
@@ -773,6 +780,7 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
         this.sourceType = type;
 
         initComponents();
+        this.pnlMetadataAll.setDialog(this);
 
         this.lblByFileTypes.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
         this.lblCalendarEntries.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
@@ -1031,6 +1039,7 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
         cmdNameTemplateAll = new javax.swing.JButton();
         cmdAddCalendarEntry = new javax.swing.JButton();
         lblCalendarEntries = new javax.swing.JLabel();
+        pnlMetadataAll = new com.jdimension.jlawyer.client.editors.files.BulkSaveMetadataAllPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Dateien zur Akte speichern");
@@ -1209,6 +1218,7 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
                         .addComponent(lblCommonNameTemplate, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdNameTemplateAll))
+                    .addComponent(pnlMetadataAll, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(lblByFileTypes, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jScrollPane2)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
@@ -1262,6 +1272,8 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
                     .addComponent(cmdNameTemplateAll)
                     .addComponent(lblCommonNameTemplate, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(pnlMetadataAll, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblByFileTypes)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -1284,6 +1296,16 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
+
+        for (BulkSaveEntry e : this.entryList) {
+            if (e.isSelected()) {
+                String error = e.validateMetadata();
+                if (error != null) {
+                    javax.swing.JOptionPane.showMessageDialog(this, error, com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, javax.swing.JOptionPane.INFORMATION_MESSAGE);
+                    return;
+                }
+            }
+        }
 
         try {
             if (selectedCase != null) {
@@ -1316,6 +1338,7 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
                 }
 
                 int fails = 0;
+                Map<String, DocumentMetadata> correspondentCache = DocumentOrigin.newCache();
                 for (BulkSaveEntry e : entryList) {
                     if (e.isSelected()) {
                         try {
@@ -1328,13 +1351,26 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
                                 getEntryProcessor().preSave(e, entryList);
                             }
 
+                            // subject, received date, sender / recipient and the message document an
+                            // attachment belongs to - the message is saved before its attachments
+                            // title, keywords, received date and sender / recipient as entered in
+                            // the entry; attachments of a message are saved after it
+                            DocumentMetadata metadata = e.buildMetadata(afs, selectedCase.getId(), correspondentCache);
+                            if (e.isSaveAsAttachment()) {
+                                metadata.setParentId(e.getParentEntry().getSavedDocumentId());
+                            }
+
                             String newDocId = null;
                             if (getEntryProcessor() != null && getEntryProcessor().isSaveProcessor()) {
                                 newDocId = getEntryProcessor().save(e, selectedCase);
+                                if (metadata != null && newDocId != null) {
+                                    afs.updateDocumentMetadata(newDocId, metadata);
+                                }
                             } else {
-                                ArchiveFileDocumentsBean newlyAddedDocument = afs.addDocument(selectedCase.getId(), e.getDocumentFilenameNew(), e.getDocumentBytes(), "", null);
+                                ArchiveFileDocumentsBean newlyAddedDocument = afs.addDocument(selectedCase.getId(), e.getDocumentFilenameNew(), e.getDocumentBytes(), "", null, metadata);
                                 newDocId = newlyAddedDocument.getId();
                             }
+                            e.setSavedDocumentId(newDocId);
 
                             if (getEntryProcessor() != null && getEntryProcessor().isPostSaveProcessor()) {
                                 getEntryProcessor().postSave(e);
@@ -1510,6 +1546,19 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
         }
     }
 
+    /**
+     * @return the entries that are going to be saved
+     */
+    List<BulkSaveEntry> getSelectedEntries() {
+        ArrayList<BulkSaveEntry> selected = new ArrayList<>();
+        for (BulkSaveEntry e : this.entryList) {
+            if (e.isSelected()) {
+                selected.add(e);
+            }
+        }
+        return selected;
+    }
+
     public void addEntry(BulkSaveEntry e) {
         e.setSaveDialog(this);
         
@@ -1521,6 +1570,16 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
         e.setCaseFolder(this.rootFolder, caseFolder);
         e.setAllNameTemplates(allNameTemplates);
         e.setNameTemplate(this.nameTemplate);
+        e.setCaseContext(this.caseParties, this.caseKeywords);
+        if (this.selectedCase != null) {
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                e.previewCorrespondent(locator.lookupArchiveFileServiceRemote(), this.selectedCase.getId(), this.correspondentPreviewCache);
+            } catch (Exception ex) {
+                log.warn("Unable to resolve the correspondent of " + e.getDocumentFilename(), ex);
+            }
+        }
 
         this.updateTotals();
         this.rebuildExtensionsPanel();
@@ -1629,6 +1688,7 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
     private javax.swing.JLabel lblFileCount;
     private javax.swing.JLabel lblTotalSize;
     private javax.swing.JPanel pnlEntries;
+    private com.jdimension.jlawyer.client.editors.files.BulkSaveMetadataAllPanel pnlMetadataAll;
     private javax.swing.JPopupMenu popCaseTags;
     private javax.swing.JPopupMenu popCommonDocumentTags;
     private javax.swing.JPopupMenu popCommonFolder;
@@ -1681,12 +1741,28 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
                 
                 try {
                     List<ArchiveFileAddressesBean> involved = locator.lookupArchiveFileServiceRemote().getInvolvementDetailsForCase(this.selectedCase.getId(), false);
+                    this.caseParties = new ArrayList<>();
                     for (ArchiveFileAddressesBean aab : involved) {
                         parties.add(new PartiesTriplet(aab.getAddressKey(), aab.getReferenceType(), aab));
+                        if (aab.getAddressKey() != null) {
+                            this.caseParties.add(aab.getAddressKey());
+                        }
                     }
                 } catch (Exception ex) {
                     log.error("Could not load involvements for case " + this.selectedCase.getId(), ex);
                 }
+                try {
+                    this.caseKeywords = locator.lookupArchiveFileServiceRemote().getDocumentKeywordsForCase(this.selectedCase.getId());
+                } catch (Exception ex) {
+                    log.error("Could not load document keywords for case " + this.selectedCase.getId(), ex);
+                }
+                // show senders / recipients as contact references already before saving
+                this.correspondentPreviewCache = DocumentOrigin.newCache();
+                for (BulkSaveEntry e : this.entryList) {
+                    e.setCaseContext(this.caseParties, this.caseKeywords);
+                    e.previewCorrespondent(locator.lookupArchiveFileServiceRemote(), this.selectedCase.getId(), this.correspondentPreviewCache);
+                }
+                this.pnlMetadataAll.setCaseParties(this.caseParties);
             }
 
         } catch (Exception ex) {

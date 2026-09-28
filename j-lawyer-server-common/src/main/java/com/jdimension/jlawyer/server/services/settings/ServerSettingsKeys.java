@@ -693,6 +693,10 @@ public class ServerSettingsKeys {
     public static final String PROFILE_COMPANYBANKCODE_AK="profile.company.ak.bankcode";
     public static final String PROFILE_COMPANYACCOUNTNO_AK="profile.company.ak.accountno";
     
+    // largest file (MB) that is uploaded for text extraction when an assistant suggests metadata
+    // for a document that is not saved yet (e.g. in the save-to-case dialog)
+    public static final String SERVERCONF_ASSISTANT_PRESAVE_MAXMB="jlawyer.server.assistant.presave.maxmb";
+
     public static final String SERVERCONF_BEAMODE="jlawyer.server.bea.beamode";
     public static final String SERVERCONF_BEAENDPOINT="jlawyer.server.bea.beaendpoint";
     public static final String SERVERCONF_BEAENABLEDVERSIONS="jlawyer.global.bea.enabledversions";

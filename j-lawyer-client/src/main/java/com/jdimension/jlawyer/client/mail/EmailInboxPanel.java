@@ -759,6 +759,7 @@ import javax.swing.table.TableRowSorter;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
+import com.jdimension.jlawyer.client.editors.files.DocumentOrigin;
 import org.apache.log4j.Logger;
 import org.jlawyer.themes.ServerColorTheme;
 
@@ -4061,11 +4062,14 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                             data = stripAttachmentsFromEml(data);
                         }
                         Date sentDate = fullMsg.getDate();
+                        DocumentOrigin origin = MailDocumentOrigins.fromMessage(fullMsg.getSubject(), fullMsg.getDate(), fullMsg.getFrom(), fullMsg.getTo());
+                        origin.withMessageText(MailDocumentOrigins.messageText(fullMsg.getSubject(), fullMsg.getBody(), fullMsg.getBodyContentType()));
 
                         if (attachmentsOnly && atts != null) {
                             for (com.jdimension.jlawyer.services.MailAttachmentDTO att : atts) {
                                 if (!att.isInline() && att.getContent() != null) {
                                     BulkSaveEntry bulkEntry = new BulkSaveEntry();
+                                    bulkEntry.setOrigin(origin.withoutTitle());
                                     bulkEntry.setDocumentDate(sentDate);
                                     bulkEntry.setDocumentBytes(att.getContent());
                                     bulkEntry.setDocumentFilename(FileUtils.sanitizeFileName(att.getName()));
@@ -4075,6 +4079,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                         }
                         if (!attachmentsOnly) {
                             BulkSaveEntry bulkEntry = new BulkSaveEntry();
+                            bulkEntry.setOrigin(origin);
                             bulkEntry.setDocumentDate(sentDate);
                             String docName = fullMsg.getSubject() != null ? fullMsg.getSubject() : "Email";
                             docName = FileUtils.sanitizeFileName(docName);
@@ -4087,6 +4092,8 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                                 for (com.jdimension.jlawyer.services.MailAttachmentDTO att : atts) {
                                     if (!att.isInline() && att.getContent() != null) {
                                         BulkSaveEntry attEntry = new BulkSaveEntry();
+                                        attEntry.setOrigin(origin.withoutTitle());
+                                        attEntry.setParentEntry(bulkEntry);
                                         attEntry.setDocumentDate(sentDate);
                                         attEntry.setDocumentBytes(att.getContent());
                                         attEntry.setDocumentFilename(FileUtils.sanitizeFileName(att.getName()));
@@ -4125,6 +4132,9 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 }
 
                 Date sentDate = m.getSentDate();
+                DocumentOrigin origin = MailDocumentOrigins.fromMessage(m);
+                DocumentOrigin attachmentOrigin = origin == null ? null : origin.withoutTitle();
+                BulkSaveEntry messageEntry = null;
 
                 f = m.getFolder();
                 if (f != null) {
@@ -4149,6 +4159,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     for (String attachmentName : attachmentNames) {
 
                         BulkSaveEntry bulkEntry = new BulkSaveEntry();
+                        bulkEntry.setOrigin(attachmentOrigin);
                         bulkEntry.setDocumentDate(sentDate);
 
                         byte[] attachmentData = EmailUtils.getAttachmentBytes(attachmentName, msgC);
@@ -4175,10 +4186,12 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     newName = FileUtils.sanitizeFileName(newName);
 
                     BulkSaveEntry bulkEntry = new BulkSaveEntry();
+                    bulkEntry.setOrigin(origin);
                     bulkEntry.setDocumentDate(sentDate);
                     bulkEntry.setDocumentBytes(data);
                     bulkEntry.setDocumentFilename(newName);
                     bulkSaveDlg.addEntry(bulkEntry);
+                    messageEntry = bulkEntry;
 
                 }
 
@@ -4187,6 +4200,8 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     for (String attachmentName : attachmentNames) {
 
                         BulkSaveEntry bulkEntry = new BulkSaveEntry();
+                        bulkEntry.setOrigin(attachmentOrigin);
+                        bulkEntry.setParentEntry(messageEntry);
                         bulkEntry.setDocumentDate(sentDate);
 
                         byte[] attachmentData = EmailUtils.getAttachmentBytes(attachmentName, msgC);

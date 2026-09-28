@@ -979,6 +979,46 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
 
     @Override
     @RolesAllowed({"loginRole"})
+    public Map<String, Integer> getMessageCountsForDocuments(String caseId) throws Exception {
+        ArchiveFileBean caseContext = this.caseFacade.find(caseId);
+        if (caseContext == null) {
+            log.error("message counts requested for an invalid case id: " + caseId);
+            throw new Exception("Akte mit ID " + caseId + " kann nicht gefunden werden!");
+        }
+
+        SecurityUtils.checkGroupsForCase(
+            context.getCallerPrincipal().getName(),
+            caseContext,
+            this.securityFacade,
+            this.caseGroupsFacade.findByCase(caseContext)
+        );
+
+        return new HashMap<>(this.messageFacade.countByDocumentForCase(caseContext));
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<InstantMessage> getMessagesForDocument(String documentId) throws Exception {
+        ArchiveFileDocumentsBean doc = this.docFacade.find(documentId);
+        if (doc == null) {
+            log.error("messages requested for an invalid document id: " + documentId);
+            throw new Exception("Dokument mit ID " + documentId + " kann nicht gefunden werden!");
+        }
+
+        SecurityUtils.checkGroupsForCase(
+            context.getCallerPrincipal().getName(),
+            doc.getArchiveFileKey(),
+            this.securityFacade,
+            this.caseGroupsFacade.findByCase(doc.getArchiveFileKey())
+        );
+
+        ArrayList<InstantMessage> messages = new ArrayList<>(this.messageFacade.findByDocumentContext(doc));
+        messages.sort(Comparator.comparing(InstantMessage::getSent, Comparator.nullsFirst(Comparator.naturalOrder())));
+        return messages;
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
     public List<InstantMessage> getMessagesForCase(String caseId, boolean withOpenMentionsOnly) throws Exception {
         ArchiveFileBean caseContext = this.caseFacade.find(caseId);
         if (caseContext == null) {

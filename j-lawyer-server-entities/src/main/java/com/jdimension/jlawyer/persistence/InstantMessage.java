@@ -693,6 +693,7 @@ import javax.xml.bind.annotation.XmlRootElement;
     @NamedQuery(name = "InstantMessage.findSince", query = "SELECT a FROM InstantMessage a WHERE a.sent > :since order by a.sent asc"),
     @NamedQuery(name = "InstantMessage.findByCaseContext", query = "SELECT a FROM InstantMessage a WHERE a.caseContext = :caseContext order by a.sent asc"),
     @NamedQuery(name = "InstantMessage.findByDocumentContext", query = "SELECT a FROM InstantMessage a WHERE a.documentContext = :documentContext"),
+    @NamedQuery(name = "InstantMessage.countByDocumentForCase", query = "SELECT a.documentContext.id, COUNT(a) FROM InstantMessage a WHERE a.caseContext = :caseContext AND a.documentContext IS NOT NULL GROUP BY a.documentContext.id"),
     @NamedQuery(name = "InstantMessage.findById", query = "SELECT p FROM InstantMessage p WHERE p.id = :id")})
 public class InstantMessage implements Serializable {
 

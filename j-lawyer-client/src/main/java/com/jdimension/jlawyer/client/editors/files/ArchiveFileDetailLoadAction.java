@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import java.util.Hashtable;
 import com.jdimension.jlawyer.client.calendar.CalendarColorTableCellRenderer;
 import com.jdimension.jlawyer.client.configuration.GroupMembershipsTableModel;
 import com.jdimension.jlawyer.comparator.ReviewsComparator;
@@ -892,6 +893,10 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
                 fileService.getCaseLinks(archiveFileKey)
             );
 
+            Future<Hashtable<String, ArrayList<String>>> futureDocumentTags = executor.submit(() ->
+                fileService.getDocumentTagsForCase(archiveFileKey)
+            );
+
             // Wait for and retrieve all results
             this.progress("Lade Akte: Empfange Daten...");
             
@@ -912,6 +917,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             allPartyTypes = futurePartyTypes.get();
             syncSettings = futureSyncSettings.get();
             List<CaseLinkDTO> caseLinks = futureCaseLinks.get();
+            Hashtable<String, ArrayList<String>> documentTagsForCase = futureDocumentTags.get();
             
             // Shutdown executor
             executor.shutdown();
@@ -922,6 +928,8 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             this.progress("Lade Akte: Verarbeite Sofortnachrichten...");
             log.info("[AKTE-LOAD] execute: Beginne GUI-Aktualisierung - Sofortnachrichten");
             this.pnlMessages.removeAll();
+            // the messages are counted per document as they are added to the view
+            this.caseFolders.resetMessageCounts();
             SwingUtilities.invokeLater(() -> {
                 for(InstantMessage im: instantMessages) {
                     this.owner.addMessageToView(im);
@@ -1017,6 +1025,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             caseFolders.setRootFolder(this.caseDto.getRootFolder(), folderSettings);
             caseFolders.setCase(this.caseDto);
 
+            caseFolders.setAllDocumentTags(documentTagsForCase);
             caseFolders.setDocuments(new ArrayList<>(documents), docToInvoice);
             caseFolders.sort();
 

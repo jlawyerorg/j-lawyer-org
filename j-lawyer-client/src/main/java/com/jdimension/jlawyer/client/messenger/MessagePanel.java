@@ -753,6 +753,14 @@ public class MessagePanel extends javax.swing.JPanel implements CaseDropTarget {
         this.displayDocumentContext();
     }
 
+    /**
+     * @param replyHandler receives the prepared reply text and caret position instead of the
+     * reply dialog; null to reply in a dialog
+     */
+    public void setReplyHandler(java.util.function.BiConsumer<String, Integer> replyHandler) {
+        this.calloutPanelComponent1.setReplyHandler(replyHandler);
+    }
+
     private void displayDocumentContext() {
         if (im.getDocumentContext() != null) {
 

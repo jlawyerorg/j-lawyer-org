@@ -707,6 +707,7 @@ public class SendAction extends ProgressableAction {
     private CaseFolder caseFolder = null;
     private String documentTag = null;
     private String draftDocumentId = null;
+    private List<String> sentDocumentIds = null;
     private String priority = null;
 
     public SendAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, boolean deliveryReceipt, String to, String cc, String bcc, String subject, String body, String contentType, String documentTag, String priority) {
@@ -772,6 +773,14 @@ public class SendAction extends ProgressableAction {
      */
     public void setDraftDocumentId(String draftDocumentId) {
         this.draftDocumentId = draftDocumentId;
+    }
+
+    /**
+     * @param sentDocumentIds the case documents that are attached - they get the first
+     * recipient as "An" unless they already have a correspondent
+     */
+    public void setSentDocumentIds(List<String> sentDocumentIds) {
+        this.sentDocumentIds = sentDocumentIds;
     }
 
     @Override
@@ -1234,6 +1243,8 @@ public class SendAction extends ProgressableAction {
                 ms.getId(), this.to, this.cc, this.bcc, this.subject, this.body,
                 this.contentType, attDTOs, this.priority, this.readReceipt, this.deliveryReceipt, null, null);
 
+            MailDocumentOrigins.markDocumentsSent(this.sentDocumentIds, this.to);
+
             this.progress("Speichere in Akte...");
 
             // Store sent email as document in case (same logic as legacy path)
@@ -1266,7 +1277,7 @@ public class SendAction extends ProgressableAction {
                     if (docName != null && !docName.isEmpty()) {
                         byte[] emlContent = EmailUtils.buildEmlBytes(ms.getEmailAddress(), ms.getEmailSenderName(), this.to, this.cc, this.bcc, this.subject, this.body, this.contentType, attDTOs);
                         if (emlContent != null && emlContent.length > 0) {
-                            ArchiveFileDocumentsBean newDoc = caseSvc.addDocument(this.archiveFile.getId(), docName, emlContent, "", null);
+                            ArchiveFileDocumentsBean newDoc = caseSvc.addDocument(this.archiveFile.getId(), docName, emlContent, "", null, MailDocumentOrigins.outgoing(this.subject, this.to).toMetadata(caseSvc, this.archiveFile.getId(), null));
                             if (this.documentTag != null && !this.documentTag.isEmpty() && newDoc != null) {
                                 caseSvc.setDocumentTag(newDoc.getId(), new DocumentTagsBean(newDoc.getId(), this.documentTag), true);
                             }

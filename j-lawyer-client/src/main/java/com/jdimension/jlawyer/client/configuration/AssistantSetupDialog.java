@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.ai.AiRequestLog;
 import com.jdimension.jlawyer.client.assistant.AssistantAccess;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.CaseInsensitiveStringComparator;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
@@ -695,9 +696,21 @@ public class AssistantSetupDialog extends javax.swing.JDialog {
      * @param parent
      * @param modal
      */
+    private boolean loadingPreSaveLimit = false;
+
     public AssistantSetupDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
+
+        this.loadingPreSaveLimit = true;
+        try {
+            int mb = Integer.parseInt(ServerSettings.getInstance().getSetting(ServerSettings.SERVERCONF_ASSISTANT_PRESAVE_MAXMB, "3"));
+            this.spnPreSaveLimit.setValue(Math.max(1, Math.min(50, mb)));
+        } catch (Throwable t) {
+            log.warn("invalid size limit for assistant suggestions", t);
+        } finally {
+            this.loadingPreSaveLimit = false;
+        }
 
         this.resetDetails();
 
@@ -769,6 +782,8 @@ public class AssistantSetupDialog extends javax.swing.JDialog {
         jLabel9 = new javax.swing.JLabel();
         spnConnectTimeout = new javax.swing.JSpinner();
         spnReadTimeout = new javax.swing.JSpinner();
+        lblPreSaveLimit = new javax.swing.JLabel();
+        spnPreSaveLimit = new javax.swing.JSpinner();
         jLabel10 = new javax.swing.JLabel();
         jLabel11 = new javax.swing.JLabel();
         jLabel12 = new javax.swing.JLabel();
@@ -893,6 +908,16 @@ public class AssistantSetupDialog extends javax.swing.JDialog {
 
         spnReadTimeout.setModel(new javax.swing.SpinnerNumberModel(120, 1, 300, 1));
 
+        lblPreSaveLimit.setText("KI-Vorschläge vor dem Speichern bis max. Dateigröße (MB):");
+        lblPreSaveLimit.setToolTipText("Dokumente, die noch nicht in einer Akte liegen, werden zur Textextraktion an den Server geschickt - nur bis zu dieser Größe (PDFs werden lokal gelesen)");
+
+        spnPreSaveLimit.setModel(new javax.swing.SpinnerNumberModel(3, 1, 50, 1));
+        spnPreSaveLimit.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                spnPreSaveLimitStateChanged(evt);
+            }
+        });
+
         jLabel10.setText("lesen");
 
         jLabel11.setText("Timeouts:");
@@ -920,8 +945,11 @@ public class AssistantSetupDialog extends javax.swing.JDialog {
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(lblPreSaveLimit)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(spnPreSaveLimit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(cmdClose))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1020,12 +1048,26 @@ public class AssistantSetupDialog extends javax.swing.JDialog {
                         .addGap(18, 18, 18)
                         .addComponent(cmdSave)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(cmdClose)))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(lblPreSaveLimit)
+                            .addComponent(spnPreSaveLimit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(cmdClose))))
                 .addContainerGap())
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void spnPreSaveLimitStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_spnPreSaveLimitStateChanged
+        if (this.loadingPreSaveLimit) {
+            return;
+        }
+        try {
+            ServerSettings.getInstance().setSetting(ServerSettings.SERVERCONF_ASSISTANT_PRESAVE_MAXMB, "" + this.spnPreSaveLimit.getValue());
+        } catch (Throwable t) {
+            log.error("Unable to store the size limit for assistant suggestions", t);
+        }
+    }//GEN-LAST:event_spnPreSaveLimitStateChanged
 
     private void cmdCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCloseActionPerformed
         this.setVisible(false);
@@ -1268,6 +1310,8 @@ public class AssistantSetupDialog extends javax.swing.JDialog {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSpinner spnConnectTimeout;
+    private javax.swing.JLabel lblPreSaveLimit;
+    private javax.swing.JSpinner spnPreSaveLimit;
     private javax.swing.JSpinner spnReadTimeout;
     private javax.swing.JTable tblAssistants;
     private javax.swing.JTextField txtConfigurations;

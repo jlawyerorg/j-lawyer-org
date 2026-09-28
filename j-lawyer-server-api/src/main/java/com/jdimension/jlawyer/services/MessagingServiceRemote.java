@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.persistence.InstantMessage;
 import com.jdimension.jlawyer.persistence.InstantMessageMention;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import javax.ejb.Remote;
 
 /**
@@ -686,6 +687,26 @@ public interface MessagingServiceRemote {
 
     List<InstantMessage> getMessagesForCase(String caseId) throws Exception;
     List<InstantMessage> getMessagesForCase(String caseId, boolean withOpenMentionsOnly) throws Exception;
+
+    /**
+     * Returns the number of instant messages linked to each document of a case, determined in
+     * a single query.
+     *
+     * @param caseId the id of the case
+     * @return a map from document id to the number of linked messages; documents without
+     * messages are not contained
+     * @throws Exception if the case does not exist or the caller has no access to it
+     */
+    Map<String, Integer> getMessageCountsForDocuments(String caseId) throws Exception;
+
+    /**
+     * Returns the instant messages linked to a document, oldest first.
+     *
+     * @param documentId the id of the case document
+     * @return the linked messages, never null
+     * @throws Exception if the document does not exist or the caller has no access to its case
+     */
+    List<InstantMessage> getMessagesForDocument(String documentId) throws Exception;
 
     boolean markMentionDone(String mentionId, boolean done) throws Exception;
     boolean markMentionDone(String mentionId, boolean done, boolean skipNotification) throws Exception;

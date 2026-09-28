@@ -674,6 +674,8 @@ public class SearchIndexRequest extends SearchHit {
     public static final int ACTION_UPDATE=30;
     public static final int ACTION_DELETEALL=40;
     public static final int ACTION_REINDEXALL=50;
+    // metadata of a document changed, its content did not
+    public static final int ACTION_UPDATE_METADATA=60;
     
     private int action=ACTION_ADD;
     

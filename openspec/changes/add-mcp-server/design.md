@@ -168,6 +168,13 @@ services, so the actual business logic is shared where it matters.
 cycles, forces a lowest-common-denominator tool model); having the MCP server call the client
 (nonsensical).
 
+*Superseded by a standalone WAR:* the MCP server has been built as a separate WAR deployed next
+to `j-lawyer-server.ear` in its own repository, `jlawyerorg/j-lawyer-mcpserver`, with its own
+OpenSpec (specs `assistant-tools`, `backend-access`, `connector-auth`, `mcp-endpoint`,
+`war-packaging`). Parity with `ToolRegistry`, including the document metadata tools of
+`add-document-metadata-and-views` (D16), is maintained there - change
+`add-document-metadata-tools`, checked by `tools/check-tool-parity.py`.
+
 ### Decision 3a -- `web_search` and `fetch_url` are not exposed over MCP
 
 The MCP catalogue is the 60 tools that read or write j-lawyer data. The two web tools stay

@@ -724,6 +724,7 @@ public class SendPDFAction extends ProgressableAction {
                 String tmpUrl = FileUtils.createTempFile(FileUtils.sanitizeAttachmentName(doc.getName()), content);
                 if (doc.getName().toLowerCase().endsWith(".pdf") || !(conv.supportsInputFormat(doc.getName().toLowerCase()))) {
                     dlg.addAttachment(tmpUrl, doc.getDictateSign());
+                    dlg.linkAttachmentToDocument(tmpUrl, doc.getId());
                 } else {
                     String pdfUrl = conv.convertToPDF(tmpUrl, doc);
                     try {
@@ -733,6 +734,7 @@ public class SendPDFAction extends ProgressableAction {
                         log.error(t);
                     }
                     dlg.addAttachment(pdfUrl, doc.getDictateSign());
+                    dlg.linkAttachmentToDocument(pdfUrl, doc.getId());
                     new File(tmpUrl).deleteOnExit();
                 }
 

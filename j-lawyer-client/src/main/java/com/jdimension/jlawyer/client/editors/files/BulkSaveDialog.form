@@ -85,6 +85,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="cmdNameTemplateAll" min="-2" max="-2" attributes="0"/>
                   </Group>
+                  <Component id="pnlMetadataAll" max="32767" attributes="0"/>
                   <Component id="lblByFileTypes" max="32767" attributes="0"/>
                   <Component id="jScrollPane2" max="32767" attributes="0"/>
                   <Group type="102" alignment="1" attributes="0">
@@ -152,6 +153,8 @@
                   <Component id="lblCommonNameTemplate" alignment="0" min="-2" pref="28" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
+              <Component id="pnlMetadataAll" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Component id="lblByFileTypes" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jScrollPane2" min="-2" pref="79" max="-2" attributes="0"/>
@@ -175,6 +178,8 @@
     </DimensionLayout>
   </Layout>
   <SubComponents>
+    <Component class="com.jdimension.jlawyer.client.editors.files.BulkSaveMetadataAllPanel" name="pnlMetadataAll">
+    </Component>
     <Component class="javax.swing.JLabel" name="lblTotalSize">
       <Properties>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">

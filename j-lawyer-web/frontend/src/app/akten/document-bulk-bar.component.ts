@@ -37,6 +37,7 @@ type BulkDialog = 'date' | 'move' | 'label';
         @if (menu()) {
           <div class="menu-backdrop" (click)="menu.set(false)"></div>
           <div class="menu" role="menu">
+            <button type="button" role="menuitem" (click)="menu.set(false); properties.emit()"><jl-icon name="file-text" [size]="15" /> {{ 'akten.docs.meta.menu' | transloco }}</button>
             <button type="button" role="menuitem" (click)="setFavorite(true)"><jl-icon name="star" [size]="15" /> {{ 'akten.docs.favorite' | transloco }}</button>
             <button type="button" role="menuitem" (click)="setFavorite(false)"><jl-icon name="star" [size]="15" /> {{ 'akten.docs.unfavorite' | transloco }}</button>
             <div class="hl">
@@ -171,6 +172,8 @@ export class DocumentBulkBarComponent {
   readonly changed = output<void>();
   readonly clear = output<void>();
   readonly download = output<void>();
+  /** Opens the bulk "Eigenschaften" dialog (title, keywords, received date, correspondent). */
+  readonly properties = output<void>();
 
   private readonly cases = inject(CasesService);
   private readonly transloco = inject(TranslocoService);

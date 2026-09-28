@@ -688,9 +688,12 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
@@ -710,20 +713,22 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
 
     private static final Logger log = Logger.getLogger(CaseFolderPanel.class.getName());
 
-    private static final String LASTSORT_CREATIONDATE_ASC = "creationdate.asc";
     private static final String LASTSORT_CREATIONDATE_DESC = "creationdate.desc";
-    private static final String LASTSORT_CHANGEDATE_ASC = "changedate.asc";
-    private static final String LASTSORT_CHANGEDATE_DESC = "changedate.desc";
-    private static final String LASTSORT_SIZE_ASC = "size.asc";
-    private static final String LASTSORT_SIZE_DESC = "size.desc";
-    private static final String LASTSORT_NAME_ASC = "name.asc";
-    private static final String LASTSORT_NAME_DESC = "name.desc";
-    private static final String LASTSORT_FAVORITE_ASC = "fav.asc";
-    private static final String LASTSORT_FAVORITE_DESC = "fav.desc";
-    private static final String LASTSORT_FILETYPE_ASC = "type.asc";
-    private static final String LASTSORT_FILETYPE_DESC = "type.desc";
-    private static final String LASTSORT_FOLDER_ASC = "folder.asc";
-    private static final String LASTSORT_FOLDER_DESC = "folder.desc";
+
+    public static final String SORTKEY_CHANGEDATE = "changedate";
+    public static final String SORTKEY_CREATIONDATE = "creationdate";
+    public static final String SORTKEY_SIZE = "size";
+    public static final String SORTKEY_NAME = "name";
+    public static final String SORTKEY_FAVORITE = "fav";
+    public static final String SORTKEY_FILETYPE = "type";
+    public static final String SORTKEY_FOLDER = "folder";
+    public static final String SORTKEY_TITLE = "title";
+    public static final String SORTKEY_RECEIVED = "received";
+    public static final String SORTKEY_CORRESPONDENT = "correspondent";
+    public static final String SORTKEY_KEYWORDS = "keywords";
+    public static final String SORTKEY_DICTATESIGN = "dictatesign";
+    public static final String SORTKEY_MESSAGES = "messages";
+    public static final String SORTKEY_TAGS = "tags";
 
     private boolean readonly = false;
     // all documents within this view
@@ -735,6 +740,21 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
     private ArchiveFilePanel caseContainer = null;
     private JPopupMenu documentsPopup = null;
     private ArchiveFileBean selectedCase = null;
+
+    // sort order shared by the sort buttons of the list view and the column headers of the table
+    // view; the buttons win when one of them is active
+    private String sortKey = SORTKEY_CREATIONDATE;
+    private boolean sortAscending = false;
+
+    // number of instant messages and active tags ("name" or "name: value") per document id
+    private Map<String, Integer> messageCounts = new HashMap<>();
+    private Map<String, List<String>> documentTags = new HashMap<>();
+    // parents whose attachments are collapsed
+    private final Set<String> collapsedParents = new HashSet<>();
+    // the documents as currently shown: filtered by folder and search, sorted, in hierarchy order
+    private List<DocumentRow> visibleRows = new ArrayList<>();
+    // true: table view, false: list view with preview
+    private boolean tableMode = false;
 
     /**
      * Creates new form CaseFolderPanel
@@ -773,6 +793,8 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
 
         EventBroker b = EventBroker.getInstance();
         b.subscribeConsumer(this, Event.TYPE_DOCUMENTLOCK);
+
+        this.restoreViewMode();
 
     }
 
@@ -824,6 +846,8 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
 
         EventBroker b = EventBroker.getInstance();
         b.subscribeConsumer(this, Event.TYPE_DOCUMENTLOCK);
+
+        this.restoreViewMode();
     }
 
     public void setRootFolder(CaseFolder rootFolder, ArrayList<String> unselectedFolderIds) {
@@ -918,197 +942,261 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
     }
 
     public void sort() {
-
-        Collections.sort(documents, (Object t1, Object t2) -> {
-            if (!(t1 instanceof ArchiveFileDocumentsBean)) {
-                return -1;
-            }
-            if (!(t2 instanceof ArchiveFileDocumentsBean)) {
-                return 1;
-            }
-
-            ArchiveFileDocumentsBean d1 = (ArchiveFileDocumentsBean) t1;
-            ArchiveFileDocumentsBean d2 = (ArchiveFileDocumentsBean) t2;
-
-            if (sortChangeDate.getSortState() == SortButton.SORT_ASC) {
-                Date date1 = d1.getChangeDate();
-                Date date2 = d2.getChangeDate();
-                return date1.compareTo(date2);
-            } else if (sortChangeDate.getSortState() == SortButton.SORT_DESC) {
-                Date date1 = d1.getChangeDate();
-                Date date2 = d2.getChangeDate();
-                return date2.compareTo(date1);
-            } else if (sortCreationDate.getSortState() == SortButton.SORT_ASC) {
-                Date date1 = d1.getCreationDate();
-                Date date2 = d2.getCreationDate();
-                return date1.compareTo(date2);
-            } else if (sortCreationDate.getSortState() == SortButton.SORT_DESC) {
-                Date date1 = d1.getCreationDate();
-                Date date2 = d2.getCreationDate();
-                return date2.compareTo(date1);
-            } else if (sortSize.getSortState() == SortButton.SORT_ASC) {
-                long l1 = d1.getSize();
-                long l2 = d2.getSize();
-                return Long.valueOf(l1).compareTo(l2);
-            } else if (sortSize.getSortState() == SortButton.SORT_DESC) {
-                long l1 = d1.getSize();
-                long l2 = d2.getSize();
-                return Long.valueOf(l2).compareTo(l1);
-            } else if (sortName.getSortState() == SortButton.SORT_ASC) {
-                String s1 = d1.getName();
-                String s2 = d2.getName();
-                if (s1 == null) {
-                    s1 = "";
-                }
-                if (s2 == null) {
-                    s2 = "";
-                }
-                return s1.toLowerCase().compareTo(s2.toLowerCase());
-            } else if (sortName.getSortState() == SortButton.SORT_DESC) {
-                String s1 = d1.getName();
-                String s2 = d2.getName();
-                if (s1 == null) {
-                    s1 = "";
-                }
-                if (s2 == null) {
-                    s2 = "";
-                }
-                return s2.toLowerCase().compareTo(s1.toLowerCase());
-            } else if (sortFavorite.getSortState() == SortButton.SORT_ASC) {
-                Boolean b1 = d1.isFavorite();
-                Boolean b2 = d2.isFavorite();
-                return b2.compareTo(b1);
-            } else if (sortFavorite.getSortState() == SortButton.SORT_DESC) {
-                Boolean b1 = d1.isFavorite();
-                Boolean b2 = d2.isFavorite();
-                return b1.compareTo(b2);
-            } else if (sortFolder.getSortState() == SortButton.SORT_ASC) {
-                CaseFolder f1 = d1.getFolder();
-                CaseFolder f2 = d2.getFolder();
-
-                String s1 = "";
-                if (f1 != null) {
-                    s1 = this.getFolderPath(f1.getId());
-                }
-                String s2 = "";
-                if (f2 != null) {
-                    s2 = this.getFolderPath(f2.getId());
-                }
-                if (s1 == null) {
-                    s1 = "";
-                }
-                if (s2 == null) {
-                    s2 = "";
-                }
-                return s1.toLowerCase().compareTo(s2.toLowerCase());
-            } else if (sortFolder.getSortState() == SortButton.SORT_DESC) {
-                CaseFolder f1 = d1.getFolder();
-                CaseFolder f2 = d2.getFolder();
-
-                String s1 = "";
-                if (f1 != null) {
-                    s1 = this.getFolderPath(f1.getId());
-                }
-                String s2 = "";
-                if (f2 != null) {
-                    s2 = this.getFolderPath(f2.getId());
-                }
-                if (s1 == null) {
-                    s1 = "";
-                }
-                if (s2 == null) {
-                    s2 = "";
-                }
-                return s2.toLowerCase().compareTo(s1.toLowerCase());
-            } else if (sortFileType.getSortState() == SortButton.SORT_ASC) {
-                String s1 = FileUtils.getExtension(d1.getName());
-                String s2 = FileUtils.getExtension(d2.getName());
-                return s1.toLowerCase().compareTo(s2.toLowerCase());
-            } else if (sortFileType.getSortState() == SortButton.SORT_DESC) {
-                String s1 = FileUtils.getExtension(d1.getName());
-                String s2 = FileUtils.getExtension(d2.getName());
-                return s2.toLowerCase().compareTo(s1.toLowerCase());
-            }
-
-            return -1;
-        });
-
+        this.resolveSortFromButtons();
+        Collections.sort(documents, this.comparatorFor(this.sortKey, this.sortAscending));
         this.setDocuments(documents, linkedInvoices);
     }
 
-    private void saveSortState() {
-        if (sortChangeDate.getSortState() == SortButton.SORT_ASC) {
-            UserSettings.getInstance().setSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, LASTSORT_CHANGEDATE_ASC);
-        } else if (sortChangeDate.getSortState() == SortButton.SORT_DESC) {
-            UserSettings.getInstance().setSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, LASTSORT_CHANGEDATE_DESC);
-        } else if (sortCreationDate.getSortState() == SortButton.SORT_ASC) {
-            UserSettings.getInstance().setSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, LASTSORT_CREATIONDATE_ASC);
-        } else if (sortCreationDate.getSortState() == SortButton.SORT_DESC) {
-            UserSettings.getInstance().setSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, LASTSORT_CREATIONDATE_DESC);
-        } else if (sortSize.getSortState() == SortButton.SORT_ASC) {
-            UserSettings.getInstance().setSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, LASTSORT_SIZE_ASC);
-        } else if (sortSize.getSortState() == SortButton.SORT_DESC) {
-            UserSettings.getInstance().setSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, LASTSORT_SIZE_DESC);
-        } else if (sortName.getSortState() == SortButton.SORT_ASC) {
-            UserSettings.getInstance().setSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, LASTSORT_NAME_ASC);
-        } else if (sortName.getSortState() == SortButton.SORT_DESC) {
-            UserSettings.getInstance().setSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, LASTSORT_NAME_DESC);
-        } else if (sortFavorite.getSortState() == SortButton.SORT_ASC) {
-            UserSettings.getInstance().setSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, LASTSORT_FAVORITE_ASC);
-        } else if (sortFavorite.getSortState() == SortButton.SORT_DESC) {
-            UserSettings.getInstance().setSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, LASTSORT_FAVORITE_DESC);
-        } else if (sortFolder.getSortState() == SortButton.SORT_ASC) {
-            UserSettings.getInstance().setSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, LASTSORT_FOLDER_ASC);
-        } else if (sortFolder.getSortState() == SortButton.SORT_DESC) {
-            UserSettings.getInstance().setSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, LASTSORT_FOLDER_DESC);
-        } else if (sortFileType.getSortState() == SortButton.SORT_ASC) {
-            UserSettings.getInstance().setSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, LASTSORT_FILETYPE_ASC);
-        } else if (sortFileType.getSortState() == SortButton.SORT_DESC) {
-            UserSettings.getInstance().setSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, LASTSORT_FILETYPE_DESC);
+    // the sort buttons of the list view win over a sort chosen via the table header
+    private void resolveSortFromButtons() {
+        SortButton[] buttons = new SortButton[]{sortChangeDate, sortCreationDate, sortSize, sortName, sortFavorite, sortFolder, sortFileType};
+        String[] keys = new String[]{SORTKEY_CHANGEDATE, SORTKEY_CREATIONDATE, SORTKEY_SIZE, SORTKEY_NAME, SORTKEY_FAVORITE, SORTKEY_FOLDER, SORTKEY_FILETYPE};
+        for (int i = 0; i < buttons.length; i++) {
+            if (buttons[i].getSortState() == SortButton.SORT_ASC) {
+                this.sortKey = keys[i];
+                this.sortAscending = true;
+                return;
+            } else if (buttons[i].getSortState() == SortButton.SORT_DESC) {
+                this.sortKey = keys[i];
+                this.sortAscending = false;
+                return;
+            }
         }
+    }
+
+    private SortButton sortButtonFor(String key) {
+        switch (key) {
+            case SORTKEY_CHANGEDATE:
+                return sortChangeDate;
+            case SORTKEY_CREATIONDATE:
+                return sortCreationDate;
+            case SORTKEY_SIZE:
+                return sortSize;
+            case SORTKEY_NAME:
+                return sortName;
+            case SORTKEY_FAVORITE:
+                return sortFavorite;
+            case SORTKEY_FOLDER:
+                return sortFolder;
+            case SORTKEY_FILETYPE:
+                return sortFileType;
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Sorts the documents, e.g. when a column header of the table view is clicked. Keys that
+     * have a sort button in the list view are reflected there.
+     *
+     * @param key one of the SORTKEY_* constants
+     * @param ascending the direction
+     */
+    public void setSort(String key, boolean ascending) {
+        for (SortButton b : new SortButton[]{sortChangeDate, sortCreationDate, sortSize, sortName, sortFavorite, sortFolder, sortFileType}) {
+            b.setSortState(SortButton.SORT_NONE);
+        }
+        SortButton b = this.sortButtonFor(key);
+        if (b != null) {
+            b.setSortState(ascending ? SortButton.SORT_ASC : SortButton.SORT_DESC);
+        }
+        this.sortKey = key;
+        this.sortAscending = ascending;
+        this.saveSortState();
+        this.sort();
+    }
+
+    public String getSortKey() {
+        return this.sortKey;
+    }
+
+    public boolean isSortAscending() {
+        return this.sortAscending;
+    }
+
+    private Comparator<ArchiveFileDocumentsBean> comparatorFor(String key, boolean ascending) {
+        Comparator<ArchiveFileDocumentsBean> c;
+        switch (key) {
+            case SORTKEY_CHANGEDATE:
+                c = Comparator.comparing(ArchiveFileDocumentsBean::getChangeDate, Comparator.nullsFirst(Comparator.naturalOrder()));
+                break;
+            case SORTKEY_SIZE:
+                c = Comparator.comparingLong(ArchiveFileDocumentsBean::getSize);
+                break;
+            case SORTKEY_NAME:
+                c = Comparator.comparing(d -> lower(d.getName()));
+                break;
+            case SORTKEY_TITLE:
+                c = Comparator.comparing(d -> lower(d.getDisplayTitle()));
+                break;
+            case SORTKEY_FAVORITE:
+                // historically "ascending" lists the favorites first
+                c = Comparator.comparing((ArchiveFileDocumentsBean d) -> !d.isFavorite());
+                break;
+            case SORTKEY_FOLDER:
+                c = Comparator.comparing(d -> d.getFolder() == null ? "" : lower(this.getFolderPath(d.getFolder().getId())));
+                break;
+            case SORTKEY_FILETYPE:
+                c = Comparator.comparing(d -> lower(FileUtils.getExtension(d.getName())));
+                break;
+            case SORTKEY_RECEIVED:
+                c = Comparator.comparing(ArchiveFileDocumentsBean::getReceivedDate, Comparator.nullsFirst(Comparator.naturalOrder()));
+                break;
+            case SORTKEY_CORRESPONDENT:
+                c = Comparator.comparing(d -> lower(d.getCorrespondentName()));
+                break;
+            case SORTKEY_KEYWORDS:
+                c = Comparator.comparing(d -> lower(d.getKeywords()));
+                break;
+            case SORTKEY_DICTATESIGN:
+                c = Comparator.comparing(d -> lower(d.getDictateSign()));
+                break;
+            case SORTKEY_MESSAGES:
+                c = Comparator.comparingInt(d -> this.messageCounts.getOrDefault(d.getId(), 0));
+                break;
+            case SORTKEY_TAGS:
+                c = Comparator.comparing(d -> lower(String.join(",", this.documentTags.getOrDefault(d.getId(), new ArrayList<>()))));
+                break;
+            case SORTKEY_CREATIONDATE:
+            default:
+                c = Comparator.comparing(ArchiveFileDocumentsBean::getCreationDate, Comparator.nullsFirst(Comparator.naturalOrder()));
+                break;
+        }
+        return ascending ? c : c.reversed();
+    }
+
+    private static String lower(String s) {
+        return s == null ? "" : s.toLowerCase();
+    }
+
+    private void saveSortState() {
+        this.resolveSortFromButtons();
+        UserSettings.getInstance().setSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, this.sortKey + (this.sortAscending ? ".asc" : ".desc"));
     }
 
     private void restoreSortState() {
         try {
             String lastSort = UserSettings.getInstance().getSetting(UserSettings.CONF_DOCUMENTS_LASTSORTMODE, LASTSORT_CREATIONDATE_DESC);
-            if (LASTSORT_CHANGEDATE_ASC.equals(lastSort)) {
-                sortChangeDate.setSortState(SortButton.SORT_ASC);
-            } else if (LASTSORT_CHANGEDATE_DESC.equals(lastSort)) {
-                sortChangeDate.setSortState(SortButton.SORT_DESC);
-            } else if (LASTSORT_CREATIONDATE_ASC.equals(lastSort)) {
-                sortCreationDate.setSortState(SortButton.SORT_ASC);
-            } else if (LASTSORT_CREATIONDATE_DESC.equals(lastSort)) {
-                sortCreationDate.setSortState(SortButton.SORT_DESC);
-            } else if (LASTSORT_SIZE_ASC.equals(lastSort)) {
-                sortSize.setSortState(SortButton.SORT_ASC);
-            } else if (LASTSORT_SIZE_DESC.equals(lastSort)) {
-                sortSize.setSortState(SortButton.SORT_DESC);
-            } else if (LASTSORT_NAME_ASC.equals(lastSort)) {
-                sortName.setSortState(SortButton.SORT_ASC);
-            } else if (LASTSORT_NAME_DESC.equals(lastSort)) {
-                sortName.setSortState(SortButton.SORT_DESC);
-            } else if (LASTSORT_FAVORITE_ASC.equals(lastSort)) {
-                sortFavorite.setSortState(SortButton.SORT_ASC);
-            } else if (LASTSORT_FAVORITE_DESC.equals(lastSort)) {
-                sortFavorite.setSortState(SortButton.SORT_DESC);
-            } else if (LASTSORT_FOLDER_ASC.equals(lastSort)) {
-                sortFolder.setSortState(SortButton.SORT_ASC);
-            } else if (LASTSORT_FOLDER_DESC.equals(lastSort)) {
-                sortFolder.setSortState(SortButton.SORT_DESC);
-            } else if (LASTSORT_FILETYPE_ASC.equals(lastSort)) {
-                sortFileType.setSortState(SortButton.SORT_ASC);
-            } else if (LASTSORT_FILETYPE_DESC.equals(lastSort)) {
-                sortFileType.setSortState(SortButton.SORT_DESC);
-            } else {
-                sortCreationDate.setSortState(SortButton.SORT_DESC);
+            int dot = lastSort.lastIndexOf('.');
+            String key = SORTKEY_CREATIONDATE;
+            boolean ascending = false;
+            if (dot > 0) {
+                key = lastSort.substring(0, dot);
+                ascending = lastSort.endsWith(".asc");
+            }
+            this.sortKey = key;
+            this.sortAscending = ascending;
+            SortButton b = this.sortButtonFor(key);
+            if (b != null) {
+                b.setSortState(ascending ? SortButton.SORT_ASC : SortButton.SORT_DESC);
             }
         } catch (Throwable t) {
             log.error("Unable to restore sort state", t);
+            this.sortKey = SORTKEY_CREATIONDATE;
+            this.sortAscending = false;
+            sortCreationDate.setSortState(SortButton.SORT_DESC);
         }
     }
 
     public void setCaseContainer(ArchiveFilePanel p) {
         this.caseContainer = p;
+        this.documentsTable.setCaseContainer(p);
+        if (p != null) {
+            p.documentViewModeChanged(this.tableMode);
+        }
+    }
+
+    private void restoreViewMode() {
+        boolean table = false;
+        try {
+            table = "table".equals(UserSettings.getInstance().getSetting(UserSettings.CONF_DOCUMENTS_VIEWMODE, "list"));
+        } catch (Throwable t) {
+            log.error("Unable to restore the documents view mode", t);
+        }
+        this.applyViewMode(table);
+    }
+
+    /**
+     * @return true if the documents are shown as a table, false for the list with preview
+     */
+    public boolean isTableMode() {
+        return this.tableMode;
+    }
+
+    /**
+     * Switches between the list with preview and the table. Folder selection, document
+     * selection, sort order and search filter are kept; the choice is stored as a user setting.
+     *
+     * @param table true for the table view
+     */
+    public void setViewMode(boolean table) {
+        if (table == this.tableMode) {
+            return;
+        }
+        HashSet<String> selectedIds = new HashSet<>();
+        for (ArchiveFileDocumentsBean d : this.getSelectedDocuments()) {
+            selectedIds.add(d.getId());
+        }
+        this.applyViewMode(table);
+        if (table) {
+            this.documentsTable.setRows(this.visibleRows);
+            this.documentsTable.selectDocumentIds(selectedIds);
+            this.documentsTable.getTable().requestFocusInWindow();
+        } else {
+            for (Component c : this.pnlDocumentEntries.getComponents()) {
+                if (c instanceof DocumentEntryPanel) {
+                    DocumentEntryPanel p = (DocumentEntryPanel) c;
+                    p.setSelected(selectedIds.contains(p.getDocument().getId()));
+                }
+            }
+        }
+        try {
+            UserSettings.getInstance().setSetting(UserSettings.CONF_DOCUMENTS_VIEWMODE, table ? "table" : "list");
+        } catch (Throwable t) {
+            log.error("Unable to store the documents view mode", t);
+        }
+        if (this.caseContainer != null) {
+            this.caseContainer.documentViewModeChanged(table);
+            this.caseContainer.documentSelectionChanged();
+        }
+    }
+
+    private void applyViewMode(boolean table) {
+        this.tableMode = table;
+        ((java.awt.CardLayout) this.pnlViews.getLayout()).show(this.pnlViews, table ? "table" : "list");
+        this.togViewTable.setSelected(table);
+        this.togViewList.setSelected(!table);
+        // in the table, the column headers sort
+        for (SortButton b : new SortButton[]{sortChangeDate, sortCreationDate, sortSize, sortName, sortFavorite, sortFolder, sortFileType}) {
+            b.setVisible(!table);
+        }
+    }
+
+    /**
+     * @param documentId a document
+     * @return the invoice linked to the document, or null
+     */
+    public Invoice getLinkedInvoice(String documentId) {
+        return this.linkedInvoices == null ? null : this.linkedInvoices.get(documentId);
+    }
+
+    /**
+     * @return the keywords used by the documents of the case, sorted, without duplicates
+     */
+    public List<String> getCaseKeywords() {
+        java.util.TreeMap<String, String> unique = new java.util.TreeMap<>();
+        for (ArchiveFileDocumentsBean d : this.documents) {
+            for (String k : com.jdimension.jlawyer.documents.DocumentKeywords.split(d.getKeywords())) {
+                unique.putIfAbsent(k.toLowerCase(), k);
+            }
+        }
+        return new ArrayList<>(unique.values());
+    }
+
+    // keeps the table in line with the list after documents were added, hidden or changed
+    private void refreshTableRows() {
+        this.visibleRows = this.buildRows();
+        this.documentsTable.setRows(this.visibleRows);
     }
 
     public void setDocumentsPopup(JPopupMenu menu) {
@@ -1118,6 +1206,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
     public void setReadOnly(boolean readOnly) {
         this.readonly = readOnly;
         this.foldersListPanel.setReadOnly(readOnly);
+        this.documentsTable.setReadOnly(readOnly);
     }
 
     public boolean getReadOnly() {
@@ -1135,6 +1224,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
 
         popMoveToFolder = new javax.swing.JPopupMenu();
         popFolderTemplates = new javax.swing.JPopupMenu();
+        grpViewMode = new javax.swing.ButtonGroup();
         jPanel1 = new javax.swing.JPanel();
         cmdOptions = new javax.swing.JButton();
         cmdSelectAll = new javax.swing.JButton();
@@ -1155,10 +1245,14 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         sortCreationDate = new com.jdimension.jlawyer.ui.folders.SortButton();
         cmdExportSelectedAsPdf = new javax.swing.JButton();
         lblDocumentCount = new javax.swing.JLabel();
+        togViewList = new javax.swing.JToggleButton();
+        togViewTable = new javax.swing.JToggleButton();
+        pnlViews = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
         pnlDocumentEntries = new javax.swing.JPanel();
         documentEntryPanel1 = new com.jdimension.jlawyer.ui.folders.DocumentEntryPanel();
         documentEntryPanel2 = new com.jdimension.jlawyer.ui.folders.DocumentEntryPanel();
+        documentsTable = new com.jdimension.jlawyer.ui.folders.CaseDocumentsTable(this);
         jScrollPane1 = new javax.swing.JScrollPane();
         foldersListPanel = new com.jdimension.jlawyer.ui.folders.FoldersListPanel();
 
@@ -1348,6 +1442,25 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         lblDocumentCount.setFont(lblDocumentCount.getFont());
         lblDocumentCount.setText("0");
 
+        grpViewMode.add(togViewList);
+        togViewList.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/preview_24dp_0E72B5.png"))); // NOI18N
+        togViewList.setSelected(true);
+        togViewList.setToolTipText("Liste mit Vorschau");
+        togViewList.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                togViewListActionPerformed(evt);
+            }
+        });
+
+        grpViewMode.add(togViewTable);
+        togViewTable.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/grid_on_20dp_0E72B5.png"))); // NOI18N
+        togViewTable.setToolTipText("Tabelle");
+        togViewTable.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                togViewTableActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -1356,6 +1469,8 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
                 .addComponent(cmdActions)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmdMoveToFolder)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdExportSelectedAsPdf)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmdSelectAll1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1377,7 +1492,9 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblDocumentCount)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(cmdExportSelectedAsPdf)
+                .addComponent(togViewList)
+                .addGap(0, 0, 0)
+                .addComponent(togViewTable)
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
@@ -1398,9 +1515,13 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
                     .addComponent(sortFileType, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(sortCreationDate, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(cmdExportSelectedAsPdf, javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(togViewList, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(togViewTable, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(lblDocumentCount, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
+
+        pnlViews.setLayout(new java.awt.CardLayout());
 
         jScrollPane2.setBorder(null);
 
@@ -1409,6 +1530,9 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         pnlDocumentEntries.add(documentEntryPanel2);
 
         jScrollPane2.setViewportView(pnlDocumentEntries);
+
+        pnlViews.add(jScrollPane2, "list");
+        pnlViews.add(documentsTable, "table");
 
         jScrollPane1.setBorder(null);
         jScrollPane1.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -1424,7 +1548,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane2)
+                    .addComponent(pnlViews, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
         layout.setVerticalGroup(
@@ -1436,7 +1560,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(10, 10, 10)
-                        .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 128, Short.MAX_VALUE))
+                        .addComponent(pnlViews, javax.swing.GroupLayout.DEFAULT_SIZE, 128, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jScrollPane1))))
@@ -1444,6 +1568,11 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
     }// </editor-fold>//GEN-END:initComponents
 
     public void selectAllDocuments(boolean selected) {
+        if (this.tableMode) {
+            // the table notifies the case panel itself
+            this.documentsTable.selectAll(selected);
+            return;
+        }
         for (Component c : this.pnlDocumentEntries.getComponents()) {
             if (c instanceof DocumentEntryPanel) {
                 ((DocumentEntryPanel) c).setSelected(selected);
@@ -1672,6 +1801,14 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         }
     }//GEN-LAST:event_cmdExportSelectedAsPdfActionPerformed
 
+    private void togViewListActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_togViewListActionPerformed
+        this.setViewMode(false);
+    }//GEN-LAST:event_togViewListActionPerformed
+
+    private void togViewTableActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_togViewTableActionPerformed
+        this.setViewMode(true);
+    }//GEN-LAST:event_togViewTableActionPerformed
+
     public void setFolderTemplateNames(ArrayList<String> templateNames) {
         this.popFolderTemplates.removeAll();
         StringUtils.sortIgnoreCase(templateNames);
@@ -1700,13 +1837,16 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
     private javax.swing.JButton cmdSelectNone1;
     private com.jdimension.jlawyer.ui.folders.DocumentEntryPanel documentEntryPanel1;
     private com.jdimension.jlawyer.ui.folders.DocumentEntryPanel documentEntryPanel2;
+    private com.jdimension.jlawyer.ui.folders.CaseDocumentsTable documentsTable;
     private com.jdimension.jlawyer.ui.folders.FoldersListPanel foldersListPanel;
+    private javax.swing.ButtonGroup grpViewMode;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JLabel lblDocumentCount;
     private javax.swing.JPanel pnlDocumentEntries;
+    private javax.swing.JPanel pnlViews;
     private javax.swing.JPopupMenu popFolderTemplates;
     private javax.swing.JPopupMenu popMoveToFolder;
     private com.jdimension.jlawyer.ui.folders.SortButton sortChangeDate;
@@ -1716,6 +1856,8 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
     private com.jdimension.jlawyer.ui.folders.SortButton sortFolder;
     private com.jdimension.jlawyer.ui.folders.SortButton sortName;
     private com.jdimension.jlawyer.ui.folders.SortButton sortSize;
+    private javax.swing.JToggleButton togViewList;
+    private javax.swing.JToggleButton togViewTable;
     // End of variables declaration//GEN-END:variables
 
     /**
@@ -1726,6 +1868,9 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
     }
 
     public ArrayList<ArchiveFileDocumentsBean> getSelectedDocuments() {
+        if (this.tableMode) {
+            return this.documentsTable.getSelectedDocuments();
+        }
         ArrayList<ArchiveFileDocumentsBean> selectedDocs = new ArrayList<>();
         for (Component c : this.pnlDocumentEntries.getComponents()) {
             if (c instanceof DocumentEntryPanel) {
@@ -1784,21 +1929,25 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         // auto-folder unhide
 
         int count = 0;
+        HashSet<String> ids = new HashSet<>();
         for (Component c : this.pnlDocumentEntries.getComponents()) {
             if (c instanceof DocumentEntryPanel) {
 
                 if (((DocumentEntryPanel) c).getDocument().getName().equals(fileName)) {
                     ((DocumentEntryPanel) c).setSelected(true);
                     this.jScrollPane2.getVerticalScrollBar().setValue(c.getY());
+                    ids.add(((DocumentEntryPanel) c).getDocument().getId());
                 }
                 count = count + 1;
             }
         }
+        if (this.tableMode) {
+            this.documentsTable.selectDocumentIds(ids);
+        }
     }
     
     private void updateDocumentCount() {
-        int count=this.pnlDocumentEntries.getComponentCount();
-        count=Math.max(0, count-1);
+        int count=this.tableMode ? this.visibleRows.size() : Math.max(0, this.pnlDocumentEntries.getComponentCount()-1);
         
         if(count==0) {
             this.lblDocumentCount.setText("");
@@ -1828,41 +1977,22 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
 
         ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.getSelectedDocuments();
 
-        ArrayList<CaseFolder> selectedFolders = this.foldersListPanel.getSelectedFolders();
-        ArrayList<String> selectedFolderIds = new ArrayList<>();
-        boolean rootSelected = false;
-        for (CaseFolder cf : selectedFolders) {
-            selectedFolderIds.add(cf.getId());
-            if (cf.getParentId() == null) {
-                rootSelected = true;
-            }
-        }
-
-        ArrayList<ArchiveFileDocumentsBean> docsInSelectedFolders = new ArrayList<>();
-        for (int i = 0; i < this.documents.size(); i++) {
-            ArchiveFileDocumentsBean d = this.documents.get(i);
-            if (nonMatchingdocuments.contains(d)) {
-                continue;
-            }
-
-            if (d.getFolder() != null && selectedFolderIds.contains(d.getFolder().getId())) {
-                docsInSelectedFolders.add(d);
-            } else if (rootSelected && d.getFolder() == null) {
-                docsInSelectedFolders.add(d);
-            }
-        }
+        this.visibleRows = this.buildRows();
 
         this.pnlDocumentEntries.removeAll();
         BoxLayout boxLayout = new BoxLayout(this.pnlDocumentEntries, BoxLayout.Y_AXIS);
         this.pnlDocumentEntries.setLayout(boxLayout);
-        for (int i = 0; i < docsInSelectedFolders.size(); i++) {
-            ArchiveFileDocumentsBean d = docsInSelectedFolders.get(i);
+        for (int i = 0; i < this.visibleRows.size(); i++) {
+            DocumentRow row = this.visibleRows.get(i);
+            ArchiveFileDocumentsBean d = row.getDocument();
             DocumentEntryPanel p = new DocumentEntryPanel(this.caseContainer, this, d, this.linkedInvoices.get(d.getId()), this.readonly, dateDisplayMode);
             if (i % 2 == 0) {
                 p.setBackground(javax.swing.UIManager.getDefaults().getColor("Panel.background"));
             } else {
                 p.setBackground(DefaultColorTheme.COLOR_LIGHT_GREY);
             }
+            p.setHierarchy(row.getDepth(), row.getChildCount(), row.isExpanded(), row.getParentHint());
+            p.setExtras(this.messageCounts.getOrDefault(d.getId(), 0), this.documentTags.get(d.getId()));
             if (selectedDocs.contains(d)) {
                 p.setSelected(true);
             }
@@ -1882,8 +2012,297 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         this.jScrollPane2.repaint();
         this.jScrollPane2.revalidate();
 
+        this.documentsTable.setRows(this.visibleRows);
+
         this.foldersListPanel.renderEmptyFullState();
         this.updateDocumentCount();
+    }
+
+    /**
+     * Builds the rows to show: the documents in the selected folders that match the search,
+     * in their sort order, each parent followed by its attachments (which are sorted the same
+     * way). An attachment whose parent is not shown becomes a top-level row with a hint.
+     */
+    private List<DocumentRow> buildRows() {
+        ArrayList<CaseFolder> selectedFolders = this.foldersListPanel.getSelectedFolders();
+        ArrayList<String> selectedFolderIds = new ArrayList<>();
+        boolean rootSelected = false;
+        for (CaseFolder cf : selectedFolders) {
+            selectedFolderIds.add(cf.getId());
+            if (cf.getParentId() == null) {
+                rootSelected = true;
+            }
+        }
+
+        ArrayList<ArchiveFileDocumentsBean> docsInSelectedFolders = new ArrayList<>();
+        for (ArchiveFileDocumentsBean d : this.documents) {
+            if (nonMatchingdocuments.contains(d)) {
+                continue;
+            }
+            if (d.getFolder() != null && selectedFolderIds.contains(d.getFolder().getId())) {
+                docsInSelectedFolders.add(d);
+            } else if (rootSelected && d.getFolder() == null) {
+                docsInSelectedFolders.add(d);
+            }
+        }
+
+        HashMap<String, ArchiveFileDocumentsBean> allById = new HashMap<>();
+        for (ArchiveFileDocumentsBean d : this.documents) {
+            allById.put(d.getId(), d);
+        }
+        HashSet<String> shownIds = new HashSet<>();
+        for (ArchiveFileDocumentsBean d : docsInSelectedFolders) {
+            shownIds.add(d.getId());
+        }
+
+        // children per parent, in sort order
+        LinkedHashMap<String, List<ArchiveFileDocumentsBean>> children = new LinkedHashMap<>();
+        ArrayList<ArchiveFileDocumentsBean> roots = new ArrayList<>();
+        for (ArchiveFileDocumentsBean d : docsInSelectedFolders) {
+            String parentId = d.getParentId();
+            if (parentId != null && shownIds.contains(parentId) && !parentId.equals(d.getId())) {
+                children.computeIfAbsent(parentId, k -> new ArrayList<>()).add(d);
+            } else {
+                roots.add(d);
+            }
+        }
+
+        ArrayList<DocumentRow> rows = new ArrayList<>();
+        HashSet<String> added = new HashSet<>();
+        for (ArchiveFileDocumentsBean root : roots) {
+            String parentHint = null;
+            if (root.getParentId() != null && allById.containsKey(root.getParentId())) {
+                parentHint = allById.get(root.getParentId()).getDisplayTitle();
+            }
+            this.addRows(rows, added, root, 0, parentHint, children);
+        }
+        // documents in a parent cycle were never reached from a root: show them anyway
+        for (ArchiveFileDocumentsBean d : docsInSelectedFolders) {
+            if (!added.contains(d.getId())) {
+                this.addRows(rows, added, d, 0, null, children);
+            }
+        }
+        return rows;
+    }
+
+    private void addRows(List<DocumentRow> rows, Set<String> added, ArchiveFileDocumentsBean doc, int depth, String parentHint, Map<String, List<ArchiveFileDocumentsBean>> children) {
+        if (!added.add(doc.getId())) {
+            return;
+        }
+        List<ArchiveFileDocumentsBean> kids = children.getOrDefault(doc.getId(), new ArrayList<>());
+        boolean expanded = !this.collapsedParents.contains(doc.getId());
+        rows.add(new DocumentRow(doc, depth, kids.size(), expanded, parentHint));
+        if (expanded) {
+            for (ArchiveFileDocumentsBean kid : kids) {
+                this.addRows(rows, added, kid, depth + 1, null, children);
+            }
+        } else {
+            // mark collapsed descendants as handled so they are not shown as roots
+            this.markAdded(added, kids, children);
+        }
+    }
+
+    private void markAdded(Set<String> added, List<ArchiveFileDocumentsBean> docs, Map<String, List<ArchiveFileDocumentsBean>> children) {
+        for (ArchiveFileDocumentsBean d : docs) {
+            if (added.add(d.getId())) {
+                this.markAdded(added, children.getOrDefault(d.getId(), new ArrayList<>()), children);
+            }
+        }
+    }
+
+    /**
+     * @return the documents as currently shown, in hierarchy order
+     */
+    public List<DocumentRow> getVisibleRows() {
+        return this.visibleRows;
+    }
+
+    /**
+     * Shows or hides the attachments of a document.
+     *
+     * @param documentId the parent document
+     */
+    public void toggleExpanded(String documentId) {
+        if (!this.collapsedParents.remove(documentId)) {
+            this.collapsedParents.add(documentId);
+        }
+        this.setDocuments(this.documents, this.linkedInvoices);
+    }
+
+    /**
+     * Sets the indicators shown with the documents.
+     *
+     * @param messageCounts number of instant messages per document id
+     * @param tags active tags per document id, multi-value tags as "name: value"
+     */
+    public void setDocumentExtras(Map<String, Integer> messageCounts, Map<String, ? extends List<String>> tags) {
+        this.messageCounts = messageCounts == null ? new HashMap<>() : new HashMap<>(messageCounts);
+        this.documentTags = new HashMap<>();
+        if (tags != null) {
+            for (Map.Entry<String, ? extends List<String>> e : tags.entrySet()) {
+                this.documentTags.put(e.getKey(), new ArrayList<>(e.getValue()));
+            }
+        }
+        for (Component c : this.pnlDocumentEntries.getComponents()) {
+            if (c instanceof DocumentEntryPanel) {
+                String id = ((DocumentEntryPanel) c).getDocument().getId();
+                ((DocumentEntryPanel) c).setExtras(this.messageCounts.getOrDefault(id, 0), this.documentTags.get(id));
+            }
+        }
+        this.documentsTable.refresh();
+    }
+
+    /**
+     * Replaces the active tags of all documents.
+     *
+     * @param tags active tags per document id, multi-value tags as "name: value"
+     */
+    public void setAllDocumentTags(Map<String, ? extends List<String>> tags) {
+        this.documentTags = new HashMap<>();
+        if (tags != null) {
+            for (Map.Entry<String, ? extends List<String>> e : tags.entrySet()) {
+                this.documentTags.put(e.getKey(), new ArrayList<>(e.getValue()));
+            }
+        }
+        for (Component c : this.pnlDocumentEntries.getComponents()) {
+            if (c instanceof DocumentEntryPanel) {
+                String id = ((DocumentEntryPanel) c).getDocument().getId();
+                ((DocumentEntryPanel) c).setExtras(this.messageCounts.getOrDefault(id, 0), this.documentTags.get(id));
+            }
+        }
+        this.documentsTable.refresh();
+    }
+
+    /**
+     * Forgets all message counts, e.g. before the messages of the case are loaded again.
+     */
+    public void resetMessageCounts() {
+        this.messageCounts = new HashMap<>();
+        for (Component c : this.pnlDocumentEntries.getComponents()) {
+            if (c instanceof DocumentEntryPanel) {
+                String id = ((DocumentEntryPanel) c).getDocument().getId();
+                ((DocumentEntryPanel) c).setExtras(0, this.documentTags.get(id));
+            }
+        }
+        this.documentsTable.refresh();
+    }
+
+    /**
+     * Rebuilds the shown documents (e.g. after the hierarchy changed) without scrolling back
+     * to the top.
+     */
+    public void refreshKeepingScrollPosition() {
+        int scroll = this.jScrollPane2.getVerticalScrollBar().getValue();
+        this.setDocuments(this.documents, this.linkedInvoices);
+        javax.swing.SwingUtilities.invokeLater(() -> this.jScrollPane2.getVerticalScrollBar().setValue(scroll));
+    }
+
+    /**
+     * Updates the active tags of one document.
+     *
+     * @param documentId the document
+     * @param tags its active tags, multi-value tags as "name: value"
+     */
+    public void setDocumentTags(String documentId, List<String> tags) {
+        this.documentTags.put(documentId, tags == null ? new ArrayList<>() : new ArrayList<>(tags));
+        for (Component c : this.pnlDocumentEntries.getComponents()) {
+            if (c instanceof DocumentEntryPanel && ((DocumentEntryPanel) c).getDocument().getId().equals(documentId)) {
+                ((DocumentEntryPanel) c).setExtras(this.messageCounts.getOrDefault(documentId, 0), this.documentTags.get(documentId));
+            }
+        }
+        this.documentsTable.refresh();
+    }
+
+    /**
+     * Counts a new instant message for a document.
+     *
+     * @param documentId the document
+     */
+    public void addMessageCount(String documentId) {
+        this.messageCounts.merge(documentId, 1, Integer::sum);
+        for (Component c : this.pnlDocumentEntries.getComponents()) {
+            if (c instanceof DocumentEntryPanel && ((DocumentEntryPanel) c).getDocument().getId().equals(documentId)) {
+                ((DocumentEntryPanel) c).setExtras(this.messageCounts.get(documentId), this.documentTags.get(documentId));
+            }
+        }
+        this.documentsTable.refresh();
+    }
+
+    /**
+     * Makes documents attachments (children) of another document, e.g. after they were dropped
+     * on it.
+     *
+     * @param dragged the documents to attach
+     * @param target the new parent
+     * @return true if the documents have been attached
+     */
+    public boolean attachDocuments(List<ArchiveFileDocumentsBean> dragged, ArchiveFileDocumentsBean target) {
+        if (dragged == null || target == null || this.readonly) {
+            return false;
+        }
+        HashMap<String, ArchiveFileDocumentsBean> byId = new HashMap<>();
+        for (ArchiveFileDocumentsBean d : this.documents) {
+            byId.put(d.getId(), d);
+        }
+        if (!byId.containsKey(target.getId())) {
+            return false;
+        }
+        ArrayList<ArchiveFileDocumentsBean> toAttach = new ArrayList<>();
+        for (ArchiveFileDocumentsBean d : dragged) {
+            if (!byId.containsKey(d.getId())) {
+                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Nur Dokumente derselben Akte können als Anlagen zugeordnet werden.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, JOptionPane.INFORMATION_MESSAGE);
+                return false;
+            }
+            if (d.getId().equals(target.getId()) || target.getId().equals(d.getParentId())) {
+                continue;
+            }
+            // the target must not be an attachment of a dragged document - that would be a cycle
+            String current = target.getParentId();
+            int guard = 0;
+            while (current != null && guard++ < 1000) {
+                if (current.equals(d.getId())) {
+                    JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "\"" + target.getDisplayTitle() + "\" ist bereits eine Anlage von \"" + d.getDisplayTitle() + "\".", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, JOptionPane.INFORMATION_MESSAGE);
+                    return false;
+                }
+                ArchiveFileDocumentsBean ancestor = byId.get(current);
+                current = ancestor == null ? null : ancestor.getParentId();
+            }
+            toAttach.add(d);
+        }
+        if (toAttach.isEmpty()) {
+            return false;
+        }
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArrayList<ArchiveFileDocumentsBean> updated = new ArrayList<>();
+            for (ArchiveFileDocumentsBean d : toAttach) {
+                updated.add(locator.lookupArchiveFileServiceRemote().setDocumentParent(d.getId(), target.getId()));
+            }
+            // show the new attachments right away
+            this.collapsedParents.remove(target.getId());
+            if (this.caseContainer != null) {
+                this.caseContainer.documentsMetadataChanged(updated);
+            } else {
+                for (ArchiveFileDocumentsBean d : updated) {
+                    this.updateDocument(d);
+                }
+                this.refreshKeepingScrollPosition();
+            }
+            return true;
+        } catch (Exception ex) {
+            log.error("Error attaching documents", ex);
+            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Zuordnen der Anlagen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+    }
+
+    public int getMessageCount(String documentId) {
+        return this.messageCounts.getOrDefault(documentId, 0);
+    }
+
+    public List<String> getDocumentTags(String documentId) {
+        return this.documentTags.getOrDefault(documentId, new ArrayList<>());
     }
 
     public void addDocument(ArchiveFileDocumentsBean newDoc, Invoice invoice) {
@@ -1938,6 +2357,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
 
         this.pnlDocumentEntries.repaint();
         this.pnlDocumentEntries.revalidate();
+        this.refreshTableRows();
         this.updateDocumentCount();
     }
 
@@ -1960,9 +2380,18 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
                 db.setChangeDate(doc.getChangeDate());
                 db.setSize(doc.getSize());
                 db.setVersion(doc.getVersion());
+                db.setName(doc.getName());
+                db.setTitle(doc.getTitle());
+                db.setKeywords(doc.getKeywords());
+                db.setReceivedDate(doc.getReceivedDate());
+                db.setCorrespondentId(doc.getCorrespondentId());
+                db.setCorrespondentName(doc.getCorrespondentName());
+                db.setCorrespondentDirection(doc.getCorrespondentDirection());
+                db.setParentId(doc.getParentId());
             }
         }
 
+        this.documentsTable.refresh();
         this.foldersListPanel.renderEmptyFullState();
     }
 
@@ -1982,7 +2411,11 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
 
                 boolean match = false;
                 if (text != null && !("".equals(text))) {
-                    if (dMatchTest.getName().toLowerCase().contains(text.toLowerCase())) {
+                    String lowerText = text.toLowerCase();
+                    if (lower(dMatchTest.getName()).contains(lowerText)
+                            || lower(dMatchTest.getTitle()).contains(lowerText)
+                            || lower(dMatchTest.getKeywords()).contains(lowerText)
+                            || lower(dMatchTest.getCorrespondentName()).contains(lowerText)) {
                         match = true;
                     }
                 }
@@ -2050,6 +2483,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
 
         this.pnlDocumentEntries.repaint();
         this.pnlDocumentEntries.revalidate();
+        this.refreshTableRows();
 
         this.foldersListPanel.renderEmptyFullState();
         this.updateDocumentCount();

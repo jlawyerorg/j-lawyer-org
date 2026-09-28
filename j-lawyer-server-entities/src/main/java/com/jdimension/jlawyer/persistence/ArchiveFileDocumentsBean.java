@@ -693,6 +693,11 @@ public class ArchiveFileDocumentsBean implements Serializable {
     // invoices etc.
     public static final int TYPE_RECEIPT=20;
     
+    // direction of the correspondent: none, incoming (sender, "Von") or outgoing (recipient, "An")
+    public static final int CORRESPONDENT_NONE=0;
+    public static final int CORRESPONDENT_IN=1;
+    public static final int CORRESPONDENT_OUT=2;
+    
     @Id
     @Basic(optional = false)
     @Column(name = "id")
@@ -748,6 +753,30 @@ public class ArchiveFileDocumentsBean implements Serializable {
     
     @Column(name = "locked_by")
     private String lockedBy;
+    
+    @Column(name = "title")
+    private String title;
+    
+    @Column(name = "keywords")
+    private String keywords;
+    
+    @Column(name = "received_date")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date receivedDate;
+    
+    // plain ids instead of relations: document lists are serialized in bulk to the client and
+    // must not drag contacts or parent documents along
+    @Column(name = "correspondent_id")
+    private String correspondentId;
+    
+    @Column(name = "correspondent_name")
+    private String correspondentName;
+    
+    @Column(name = "correspondent_direction", columnDefinition = "INTEGER DEFAULT 0")
+    private int correspondentDirection=CORRESPONDENT_NONE;
+    
+    @Column(name = "parent_id")
+    private String parentId;
 
     public ArchiveFileDocumentsBean() {
     }
@@ -1045,6 +1074,119 @@ public class ArchiveFileDocumentsBean implements Serializable {
      */
     public void setLockedBy(String lockedBy) {
         this.lockedBy = lockedBy;
+    }
+    
+
+    /**
+     * @return the title, or the file name if no title is set
+     */
+    public String getDisplayTitle() {
+        if (this.title != null && !this.title.isBlank()) {
+            return this.title;
+        }
+        return this.name;
+    }
+
+    /**
+     * @return the title
+     */
+    public String getTitle() {
+        return title;
+    }
+
+    /**
+     * @param title the title to set
+     */
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    /**
+     * @return the keywords, comma separated
+     */
+    public String getKeywords() {
+        return keywords;
+    }
+
+    /**
+     * @param keywords the keywords to set, comma separated
+     */
+    public void setKeywords(String keywords) {
+        this.keywords = keywords;
+    }
+
+    /**
+     * @return the receivedDate
+     */
+    public Date getReceivedDate() {
+        return receivedDate;
+    }
+
+    /**
+     * @param receivedDate the receivedDate to set
+     */
+    public void setReceivedDate(Date receivedDate) {
+        this.receivedDate = receivedDate;
+    }
+
+    /**
+     * @return the id of the contact the document was received from or sent to
+     */
+    public String getCorrespondentId() {
+        return correspondentId;
+    }
+
+    /**
+     * @param correspondentId the correspondentId to set
+     */
+    public void setCorrespondentId(String correspondentId) {
+        this.correspondentId = correspondentId;
+    }
+
+    /**
+     * @return the display name of the correspondent
+     */
+    public String getCorrespondentName() {
+        return correspondentName;
+    }
+
+    /**
+     * @param correspondentName the correspondentName to set
+     */
+    public void setCorrespondentName(String correspondentName) {
+        this.correspondentName = correspondentName;
+    }
+
+    /**
+     * @return one of CORRESPONDENT_NONE, CORRESPONDENT_IN, CORRESPONDENT_OUT
+     */
+    public int getCorrespondentDirection() {
+        return correspondentDirection;
+    }
+
+    /**
+     * @param correspondentDirection the correspondentDirection to set
+     */
+    public void setCorrespondentDirection(int correspondentDirection) {
+        this.correspondentDirection = correspondentDirection;
+    }
+    
+    public boolean hasCorrespondent() {
+        return (this.correspondentName != null && !this.correspondentName.isBlank()) || this.correspondentId != null;
+    }
+
+    /**
+     * @return the id of the parent document, or null
+     */
+    public String getParentId() {
+        return parentId;
+    }
+
+    /**
+     * @param parentId the parentId to set
+     */
+    public void setParentId(String parentId) {
+        this.parentId = parentId;
     }
     
 }

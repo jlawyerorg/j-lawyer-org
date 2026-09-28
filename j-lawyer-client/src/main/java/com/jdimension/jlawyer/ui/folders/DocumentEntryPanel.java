@@ -723,6 +723,19 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
 
     private DragSource dragSource = null;
 
+    private static final javax.swing.border.Border NO_DROP_BORDER = javax.swing.BorderFactory.createEmptyBorder(2, 2, 2, 2);
+    private static final javax.swing.border.Border DROP_BORDER = javax.swing.BorderFactory.createLineBorder(DefaultColorTheme.COLOR_LOGO_BLUE, 2);
+
+    // position in the document hierarchy and indicators, set by the documents container
+    private int depth = 0;
+    private int childCount = 0;
+    private boolean expanded = true;
+    private String parentHint = null;
+    private int messageCount = 0;
+    private List<String> tags = new ArrayList<>();
+    private Icon baseFileIcon = null;
+    private final SimpleDateFormat dfShortDate = new SimpleDateFormat("dd.MM.yy");
+
     /**
      * Creates new form DocumentEntryPanel
      */
@@ -745,6 +758,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         dragSource.createDefaultDragGestureRecognizer(this.lblFileSize, DnDConstants.ACTION_COPY, this);
         dragSource.createDefaultDragGestureRecognizer(this.lblDictateSign, DnDConstants.ACTION_COPY, this);
         dragSource.createDefaultDragGestureRecognizer(this.lblFolder, DnDConstants.ACTION_COPY, this);
+        dragSource.createDefaultDragGestureRecognizer(this.lblMetadata, DnDConstants.ACTION_COPY, this);
 
         this.lblDisplayedDate.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
         this.lblDictateSign.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
@@ -766,6 +780,12 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
 
         this.setDocument(doc, invoice);
 
+        // documents dropped on this one become its attachments, files from outside are uploaded
+        this.setBorder(NO_DROP_BORDER);
+        if (documentsContainer != null) {
+            new java.awt.dnd.DropTarget(this, DnDConstants.ACTION_COPY, new DocumentDropHandler(documentsContainer, p -> this.document, target -> this.setBorder(target != null ? DROP_BORDER : NO_DROP_BORDER), caseContainer == null ? null : caseContainer.getFileDropHandler()), true);
+        }
+
         this.dragSource = new DragSource();
         // Register drag gesture for multiple components to make the entire panel draggable.
         // ACTION_COPY is used so the documents can be dragged out as files into external
@@ -778,6 +798,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         dragSource.createDefaultDragGestureRecognizer(this.lblFileSize, DnDConstants.ACTION_COPY, this);
         dragSource.createDefaultDragGestureRecognizer(this.lblDictateSign, DnDConstants.ACTION_COPY, this);
         dragSource.createDefaultDragGestureRecognizer(this.lblFolder, DnDConstants.ACTION_COPY, this);
+        dragSource.createDefaultDragGestureRecognizer(this.lblMetadata, DnDConstants.ACTION_COPY, this);
 
         this.lblDisplayedDate.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
         this.lblDictateSign.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
@@ -894,6 +915,9 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         lblInvoice = new javax.swing.JLabel();
         lblLockIcon = new javax.swing.JLabel();
         lblSearchMatch = new javax.swing.JLabel();
+        lblExpand = new javax.swing.JLabel();
+        lblMetadata = new javax.swing.JLabel();
+        lblMessages = new javax.swing.JLabel();
 
         lblFileIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/fileicons/file_type_odt.png"))); // NOI18N
         lblFileIcon.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -1008,6 +1032,31 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         lblSearchMatch.setFont(lblSearchMatch.getFont().deriveFont(lblSearchMatch.getFont().getSize()-2f));
         lblSearchMatch.setText("jLabel1");
 
+        lblExpand.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/ui/folders/node-leaf.png"))); // NOI18N
+        lblExpand.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblExpandMouseClicked(evt);
+            }
+        });
+
+        lblMetadata.setFont(lblMetadata.getFont().deriveFont(lblMetadata.getFont().getSize()-2f));
+        lblMetadata.setText(" ");
+        lblMetadata.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblMetadataMouseClicked(evt);
+            }
+        });
+
+        lblMessages.setFont(lblMessages.getFont().deriveFont(lblMessages.getFont().getStyle() | java.awt.Font.BOLD, lblMessages.getFont().getSize()-2));
+        lblMessages.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/chat.png"))); // NOI18N
+        lblMessages.setText("0");
+        lblMessages.setToolTipText("Nachrichten zu diesem Dokument");
+        lblMessages.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblMessagesMouseClicked(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -1021,6 +1070,8 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
                 .addGap(2, 2, 2)
                 .addComponent(lblFavorite)
                 .addGap(10, 10, 10)
+                .addComponent(lblExpand)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblFileIcon)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1031,11 +1082,14 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
                         .addGap(18, 18, 18)
                         .addComponent(lblDictateSign)
                         .addGap(18, 18, 18)
+                        .addComponent(lblMessages)
+                        .addGap(18, 18, 18)
                         .addComponent(lblFolder, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lblLockIcon)
                         .addGap(0, 0, 0)
                         .addComponent(lblFileName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(lblMetadata, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lblInvoice)
                         .addContainerGap())
@@ -1047,6 +1101,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
                 .addGap(4, 4, 4)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(lblFileIcon, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lblExpand, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(lblFileName)
@@ -1056,7 +1111,10 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
                             .addComponent(lblDisplayedDate)
                             .addComponent(lblDictateSign)
                             .addComponent(lblFileSize)
+                            .addComponent(lblMessages)
                             .addComponent(lblFolder))
+                        .addGap(2, 2, 2)
+                        .addComponent(lblMetadata)
                         .addGap(3, 3, 3)
                         .addComponent(lblInvoice)
                         .addGap(3, 3, 3)
@@ -1085,6 +1143,13 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
     }//GEN-LAST:event_lblFileIconMouseExited
 
     private void lblFileNameMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFileNameMouseClicked
+        // a click on the attachments badge in front of the title expands / collapses them
+        if (evt.getSource() == this.lblFileName && this.childCount > 0 && this.lblFileName.getIcon() != null
+                && evt.getClickCount() == 1 && javax.swing.SwingUtilities.isLeftMouseButton(evt)
+                && evt.getX() <= this.lblFileName.getInsets().left + this.lblFileName.getIcon().getIconWidth()) {
+            this.lblExpandMouseClicked(evt);
+            return;
+        }
         if ((evt.getModifiers() & InputEvent.BUTTON2_MASK) == MouseEvent.BUTTON2_MASK || (evt.getModifiers() & InputEvent.BUTTON2_DOWN_MASK) == MouseEvent.BUTTON2_DOWN_MASK || (evt.getModifiers() & InputEvent.BUTTON3_MASK) == MouseEvent.BUTTON3_MASK || (evt.getModifiers() & InputEvent.BUTTON3_DOWN_MASK) == MouseEvent.BUTTON3_DOWN_MASK) {
             if ((evt.getModifiers() & InputEvent.SHIFT_MASK) == InputEvent.SHIFT_MASK || (evt.getModifiers() & InputEvent.CTRL_MASK) == InputEvent.CTRL_MASK) {
                 this.documentClicked(evt, false);
@@ -1248,6 +1313,138 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         }
     }//GEN-LAST:event_lblDisplayedDateMouseExited
 
+    private void lblExpandMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblExpandMouseClicked
+        if (this.childCount > 0 && this.documentsContainer != null && this.document != null) {
+            this.documentsContainer.toggleExpanded(this.document.getId());
+        }
+    }//GEN-LAST:event_lblExpandMouseClicked
+
+    private void lblMetadataMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblMetadataMouseClicked
+        this.lblFileNameMouseClicked(evt);
+    }//GEN-LAST:event_lblMetadataMouseClicked
+
+    private void lblMessagesMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblMessagesMouseClicked
+        if (this.caseContainer != null) {
+            this.documentClicked(evt, true);
+            this.caseContainer.showDocumentMessages();
+        }
+    }//GEN-LAST:event_lblMessagesMouseClicked
+
+    /**
+     * Sets the position of the document in the hierarchy.
+     *
+     * @param depth 0 for a top-level document
+     * @param childCount the number of attachments (children) of the document
+     * @param expanded whether the attachments are shown
+     * @param parentHint for an attachment whose parent is not shown: the parent's title, else
+     * null
+     */
+    public void setHierarchy(int depth, int childCount, boolean expanded, String parentHint) {
+        this.depth = depth;
+        this.childCount = childCount;
+        this.expanded = expanded;
+        this.parentHint = parentHint;
+        // an attachment starts where the text of its parent starts: one file icon plus the gap
+        // between icon and text further to the right per level
+        this.lblExpand.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, depth * this.getIndentPerLevel(), 0, 0));
+        if (childCount > 0) {
+            this.lblExpand.setIcon(new javax.swing.ImageIcon(getClass().getResource(expanded ? "/com/jdimension/jlawyer/ui/folders/node-expanded.png" : "/com/jdimension/jlawyer/ui/folders/node-collapsed.png")));
+            this.lblExpand.setToolTipText(expanded ? "Anlagen einklappen" : "Anlagen ausklappen");
+            this.lblExpand.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+        } else {
+            this.lblExpand.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/ui/folders/node-leaf.png")));
+            this.lblExpand.setToolTipText(null);
+            this.lblExpand.setCursor(java.awt.Cursor.getDefaultCursor());
+        }
+        this.updateFileIcon();
+        this.updateMetadata();
+    }
+
+    // file icon width plus the gap between icon and title
+    private int getIndentPerLevel() {
+        int iconWidth = this.baseFileIcon != null ? this.baseFileIcon.getIconWidth() : 32;
+        int gap = javax.swing.LayoutStyle.getInstance().getPreferredGap(this.lblFileIcon, this.lblFileName, javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.SwingConstants.EAST, this);
+        return iconWidth + gap;
+    }
+
+    // a parent document shows the number of its attachments as a badge in front of its title
+    private void updateFileIcon() {
+        if (this.baseFileIcon == null) {
+            return;
+        }
+        this.lblFileIcon.setIcon(this.baseFileIcon);
+        if (this.childCount > 0) {
+            this.lblFileName.setIcon(new BadgeIcon(null, this.childCount));
+            this.lblFileName.setIconTextGap(6);
+            this.lblFileName.setToolTipText("<html>" + DocumentDisplayUtils.escapeHtml(this.document.getName()) + "<br/>" + this.childCount + " Anlage(n) - Klick auf die Zahl klappt sie " + (this.expanded ? "ein" : "aus") + "</html>");
+        } else {
+            this.lblFileName.setIcon(null);
+            this.lblFileName.setToolTipText(this.document.getName());
+        }
+    }
+
+    /**
+     * Sets the indicators that are not part of the document itself.
+     *
+     * @param messageCount the number of instant messages linked to the document
+     * @param tags the active tags of the document, multi-value tags as "name: value"
+     */
+    public void setExtras(int messageCount, List<String> tags) {
+        this.messageCount = messageCount;
+        this.tags = tags == null ? new ArrayList<>() : new ArrayList<>(tags);
+        java.util.Collections.sort(this.tags, String.CASE_INSENSITIVE_ORDER);
+        this.lblMessages.setText("" + messageCount);
+        this.lblMessages.setToolTipText(messageCount + " Nachricht(en) zu diesem Dokument - klicken zum Anzeigen");
+        this.lblMessages.setVisible(messageCount > 0);
+        this.lblMessages.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+        this.updateMetadata();
+    }
+
+    // second line: sender / recipient, received date, keywords, tags and - if a title is shown
+    // instead - the file name
+    private void updateMetadata() {
+        if (this.document == null) {
+            this.lblMetadata.setText(" ");
+            return;
+        }
+        ArrayList<String> parts = new ArrayList<>();
+        if (this.parentHint != null) {
+            parts.add("<i>Anlage zu " + escape(this.parentHint) + "</i>");
+        }
+        String correspondent = DocumentDisplayUtils.getCorrespondentLabel(this.document);
+        if (correspondent != null) {
+            parts.add(escape(correspondent));
+        }
+        if (this.document.getReceivedDate() != null) {
+            parts.add("Eing. " + dfShortDate.format(this.document.getReceivedDate()));
+        }
+        if (this.document.getTitle() != null && !this.document.getTitle().isBlank()) {
+            parts.add(escape(this.document.getName()));
+        }
+        // tags first, then keywords
+        StringBuilder chips = new StringBuilder();
+        for (String t : this.tags) {
+            chips.append(DocumentDisplayUtils.tagChipHtml(t)).append(" ");
+        }
+        for (String k : com.jdimension.jlawyer.documents.DocumentKeywords.split(this.document.getKeywords())) {
+            chips.append(DocumentDisplayUtils.keywordChipHtml(k)).append(" ");
+        }
+        if (chips.length() > 0) {
+            parts.add(chips.toString().trim());
+        }
+        if (parts.isEmpty()) {
+            this.lblMetadata.setText("");
+            this.lblMetadata.setVisible(false);
+        } else {
+            this.lblMetadata.setText("<html>" + String.join(" &middot; ", parts) + "</html>");
+            this.lblMetadata.setVisible(true);
+        }
+    }
+
+    private static String escape(String s) {
+        return DocumentDisplayUtils.escapeHtml(s);
+    }
+
     private void documentUnClicked() {
         this.caseContainer.documentSelectionChanged();
     }
@@ -1315,6 +1512,9 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
     private javax.swing.JLabel lblFolder;
     private javax.swing.JLabel lblInvoice;
     private javax.swing.JLabel lblLockIcon;
+    private javax.swing.JLabel lblExpand;
+    private javax.swing.JLabel lblMessages;
+    private javax.swing.JLabel lblMetadata;
     private javax.swing.JLabel lblSearchMatch;
     // End of variables declaration//GEN-END:variables
 
@@ -1327,7 +1527,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
 
     void setDocument(ArchiveFileDocumentsBean doc, Invoice linkedInvoice) {
         this.document = doc;
-        this.lblFileName.setText(doc.getName());
+        this.lblFileName.setText(doc.getDisplayTitle());
         this.lblFileName.setToolTipText(doc.getName());
         this.lblFileIcon.setToolTipText(doc.getName());
 
@@ -1350,8 +1550,8 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         this.setFavorite(this.document.isFavorite());
 
         FileUtils fu = FileUtils.getInstance();
-        Icon icon = fu.getFileTypeIcon32(doc.getName());
-        this.lblFileIcon.setIcon(icon);
+        this.baseFileIcon = fu.getFileTypeIcon32(doc.getName());
+        this.updateFileIcon();
 
         this.lblFileSize.setText(FileUtils.getFileSizeHumanReadable(doc.getSize()));
 
@@ -1361,6 +1561,9 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         lblLockIcon.setIcon(null);
         lblLockIcon.setText("");
         this.updateLock(doc.isLocked(), doc.getLockedBy(), doc.getLockedDate());
+
+        this.lblMessages.setVisible(this.messageCount > 0);
+        this.updateMetadata();
 
     }
 

@@ -663,6 +663,8 @@
  */
 package com.jdimension.jlawyer.client.voip;
 
+import com.jdimension.jlawyer.services.DocumentMetadata;
+import com.jdimension.jlawyer.client.editors.files.DocumentOrigin;
 import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
@@ -880,6 +882,23 @@ public class EpostLetterSendStatus extends javax.swing.JPanel implements WizardS
                     
                 }
 
+                // the letter went out: record the recipient on the documents it was made of
+                String recipientName = this.data.get("txtAdressLine1") == null ? null : this.data.get("txtAdressLine1").toString().trim();
+                Object letterDocuments = this.data.get("epost.letter.documents");
+                if (recipientName != null && !recipientName.isEmpty() && letterDocuments instanceof List) {
+                    try {
+                        ArrayList<String> sentDocIds = new ArrayList<>();
+                        for (Object o : (List) letterDocuments) {
+                            if (o instanceof ArchiveFileDocumentsBean) {
+                                sentDocIds.add(((ArchiveFileDocumentsBean) o).getId());
+                            }
+                        }
+                        locator.lookupArchiveFileServiceRemote().markDocumentsSent(sentDocIds, DocumentMetadata.KEY_NONE, null, recipientName, 0);
+                    } catch (Exception ex) {
+                        log.error("Unable to record the recipient on documents sent by E-POST", ex);
+                    }
+                }
+
                 try {
                     SwingUtilities.invokeAndWait(() -> {
 
@@ -917,7 +936,11 @@ public class EpostLetterSendStatus extends javax.swing.JPanel implements WizardS
 
                             if (newName != null) {
                                 
-                                ArchiveFileDocumentsBean newDoc = afs.addDocument(this.data.get("epost.letter.caseid").toString(), newName, (byte[]) this.data.get("pdf.bytes"), "", null);
+                                DocumentMetadata letterMetadata = null;
+                                if (recipientName != null && !recipientName.isEmpty()) {
+                                    letterMetadata = DocumentOrigin.outgoing(null, DocumentMetadata.KEY_NONE, null, recipientName, 0).withDate(new Date()).toMetadata(afs, this.data.get("epost.letter.caseid").toString(), null);
+                                }
+                                ArchiveFileDocumentsBean newDoc = afs.addDocument(this.data.get("epost.letter.caseid").toString(), newName, (byte[]) this.data.get("pdf.bytes"), "", null, letterMetadata);
 
                                 CaseFolder targetFolder = (CaseFolder) this.data.get("epost.letter.folder");
                                 if (targetFolder != null && targetFolder.getId() != null) {

@@ -696,6 +696,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.function.BiConsumer;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
@@ -730,6 +731,7 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
     private int markReadX=1000;
     private int markReadY=10;
     private int replyX=1000;
+    private BiConsumer<String, Integer> replyHandler = null;
     private int replyY=10;
     private Font defaultFont = null;
     private Font defaultFontBold = null;
@@ -1282,6 +1284,14 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
     /**
      * Opens a send dialog prefilled to reply to the current message.
      */
+    /**
+     * @param replyHandler receives the prepared reply text and caret position instead of the
+     * reply dialog; null to reply in a dialog
+     */
+    public void setReplyHandler(BiConsumer<String, Integer> replyHandler) {
+        this.replyHandler = replyHandler;
+    }
+
     private void openReplyDialog() {
         // derive parent frame
         Frame parent = EditorsRegistry.getInstance().getMainWindow();
@@ -1327,6 +1337,12 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
         String initialContent=initial.toString();
         // need to replace the mentioning of the replying user - otherwise he is expected to confirm his own message
         initialContent=initialContent.replace("@" + UserSettings.getInstance().getCurrentUser().getPrincipalId(), "@ " + UserSettings.getInstance().getCurrentUser().getPrincipalId());
+
+        // a view with its own message input takes the reply there instead of in a dialog
+        if (this.replyHandler != null) {
+            this.replyHandler.accept(initialContent, caretPosition);
+            return;
+        }
 
         dlg.setInitialMessageText(initialContent, caretPosition);
         try {

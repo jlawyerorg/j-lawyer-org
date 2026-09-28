@@ -717,6 +717,7 @@ public class SendEncryptedAction extends ProgressableAction {
     private java.util.Map<String, String> mailToRecipientMap = null;
     private String documentTag = null;
     private String draftDocumentId = null;
+    private List<String> sentDocumentIds = null;
     private String priority = null;
 
     public SendEncryptedAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, MailboxSetup ms, boolean readReceipt, boolean deliveryReceipt, String to, String cc, String bcc, String subject, String body, String contentType, String documentTag, String priority) {
@@ -800,6 +801,14 @@ public class SendEncryptedAction extends ProgressableAction {
      */
     public void setDraftDocumentId(String draftDocumentId) {
         this.draftDocumentId = draftDocumentId;
+    }
+
+    /**
+     * @param sentDocumentIds the case documents that are attached - they get the first
+     * recipient as "An" unless they already have a correspondent
+     */
+    public void setSentDocumentIds(List<String> sentDocumentIds) {
+        this.sentDocumentIds = sentDocumentIds;
     }
 
     @Override
@@ -912,7 +921,7 @@ public class SendEncryptedAction extends ProgressableAction {
 
                         if (newName != null) {
 
-                            ArchiveFileDocumentsBean newDoc = afs.addDocument(this.archiveFile.getId(), newName, data, "", null);
+                            ArchiveFileDocumentsBean newDoc = afs.addDocument(this.archiveFile.getId(), newName, data, "", null, MailDocumentOrigins.outgoing(this.subject, currentRecipientMail).toMetadata(afs, this.archiveFile.getId(), null));
 
                             if (this.documentTag != null && !("".equals(this.documentTag))) {
                                 afs.setDocumentTag(newDoc.getId(), new DocumentTagsBean(newDoc.getId(), this.documentTag), true);
@@ -959,6 +968,8 @@ public class SendEncryptedAction extends ProgressableAction {
                     LauncherFactory.cleanupTempFile(url);
                 }
             }
+
+            MailDocumentOrigins.markDocumentsSent(this.sentDocumentIds, this.to);
 
             // Delete draft document after all emails have been sent successfully -
             // independent of whether the sent mail is stored as a document in the
