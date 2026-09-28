@@ -5685,7 +5685,9 @@ public class ToolRegistry {
                 DocumentMetadata attachmentMetadata = origin.withoutTitle().toMetadata(archiveSvc, caseId, correspondentCache);
                 attachmentMetadata.setParentId(doc.getId());
                 for (MailAttachmentDTO a : attachments) {
-                    if (a.isInline()) {
+                    // only embedded images (inline with a Content-ID) are skipped - an inline
+                    // disposition alone does not make a part part of the body
+                    if (a.isInline() && a.getContentId() != null && !a.getContentId().trim().isEmpty()) {
                         continue;
                     }
                     String attachmentName = FileUtils.sanitizeFileName(a.getName() == null || a.getName().isBlank() ? "Anhang" : a.getName());
