@@ -765,6 +765,27 @@ public class CaseDocumentsTable extends JPanel {
         {"status", "Status", "1", "80", CaseFolderPanel.SORTKEY_MESSAGES}
     };
 
+    // size of the expand / collapse icon in the title column (node-expanded.png)
+    private static final int EXPANDER_SIZE = 20;
+    // gap between the expander slot and the title (JLabel default icon text gap)
+    private static final int EXPANDER_GAP = 4;
+    // reserves the expander slot for documents without attachments
+    private static final Icon NO_EXPANDER = new Icon() {
+        @Override
+        public void paintIcon(Component c, java.awt.Graphics g, int x, int y) {
+        }
+
+        @Override
+        public int getIconWidth() {
+            return EXPANDER_SIZE;
+        }
+
+        @Override
+        public int getIconHeight() {
+            return EXPANDER_SIZE;
+        }
+    };
+
     private final CaseFolderPanel documentsContainer;
     private ArchiveFilePanel caseContainer = null;
     private final DocumentsTableModel model = new DocumentsTableModel();
@@ -908,8 +929,8 @@ public class CaseDocumentsTable extends JPanel {
                 } else if (e.getClickCount() == 1) {
                     if ("title".equals(col) && row.getChildCount() > 0) {
                         int x = e.getX() - table.getCellRect(r, c, false).x;
-                        int expanderStart = 4 + row.getDepth() * 18;
-                        if (x >= expanderStart && x <= expanderStart + 18) {
+                        int expanderStart = titleIndent(row.getDepth());
+                        if (x >= expanderStart && x <= expanderStart + EXPANDER_SIZE) {
                             documentsContainer.toggleExpanded(row.getDocument().getId());
                         }
                     } else if ("status".equals(col) && documentsContainer.getMessageCount(row.getDocument().getId()) > 0) {
@@ -943,6 +964,11 @@ public class CaseDocumentsTable extends JPanel {
         this.table.getActionMap().put("openDocuments", new AbstractAction() {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
+                // while a cell is edited, Enter confirms the edit instead of opening the document
+                if (table.isEditing()) {
+                    table.getCellEditor().stopCellEditing();
+                    return;
+                }
                 if (caseContainer == null) {
                     return;
                 }
@@ -952,6 +978,16 @@ public class CaseDocumentsTable extends JPanel {
                         caseContainer.openSelectedDocument(d);
                     }
                 }
+            }
+        });
+
+        // F2 edits the keywords if their cell has the focus, otherwise always the title - the
+        // focused cell is framed, so it is visible what F2 will edit
+        this.table.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), "editMetadata");
+        this.table.getActionMap().put("editMetadata", new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                startEditing();
             }
         });
 
@@ -1084,6 +1120,53 @@ public class CaseDocumentsTable extends JPanel {
             this.table.selectAll();
         } else {
             this.table.clearSelection();
+        }
+    }
+
+    /**
+     * Left inset of the title cell: one level indents by the expander slot plus its gap, so the
+     * expander of a child starts where the title of its parent starts.
+     *
+     * @param depth the level in the hierarchy, 0 for top level documents
+     * @return the inset in pixels
+     */
+    private static int titleIndent(int depth) {
+        return 4 + depth * (EXPANDER_SIZE + EXPANDER_GAP);
+    }
+
+    /**
+     * Starts editing the lead row: the keywords if the keywords cell has the focus, otherwise
+     * the title.
+     */
+    private void startEditing() {
+        if (this.readOnly || this.table.isEditing()) {
+            return;
+        }
+        int r = this.table.getSelectionModel().getLeadSelectionIndex();
+        if (r < 0 || r >= this.model.getRowCount()) {
+            return;
+        }
+        int focusedColumn = this.table.getColumnModel().getSelectionModel().getLeadSelectionIndex();
+        String target = "title";
+        if (focusedColumn >= 0 && focusedColumn < this.table.getColumnCount()
+                && "keywords".equals(this.table.getColumnModel().getColumn(focusedColumn).getIdentifier())) {
+            target = "keywords";
+        }
+        int c = -1;
+        for (int i = 0; i < this.table.getColumnCount(); i++) {
+            if (target.equals(this.table.getColumnModel().getColumn(i).getIdentifier())) {
+                c = i;
+            }
+        }
+        if (c < 0) {
+            return;
+        }
+        this.table.getColumnModel().getSelectionModel().setLeadSelectionIndex(c);
+        if (this.table.editCellAt(r, c)) {
+            Component editor = this.table.getEditorComponent();
+            if (editor != null) {
+                editor.requestFocusInWindow();
+            }
         }
     }
 
@@ -1512,9 +1595,13 @@ public class CaseDocumentsTable extends JPanel {
                     break;
                 case "title":
                     this.setFont(t.getFont().deriveFont(Font.BOLD));
-                    this.setBorder(BorderFactory.createEmptyBorder(0, 4 + row.getDepth() * 18, 0, 4));
+                    // every row reserves the expander slot, so titles of one level are aligned and
+                    // children start exactly below the title of their parent
+                    this.setBorder(BorderFactory.createEmptyBorder(0, titleIndent(row.getDepth()), 0, 4));
                     if (row.getChildCount() > 0) {
                         this.setIcon(row.isExpanded() ? expandedIcon : collapsedIcon);
+                    } else {
+                        this.setIcon(NO_EXPANDER);
                     }
                     String title = d.getDisplayTitle();
                     if (row.getParentHint() != null) {
@@ -1569,6 +1656,10 @@ public class CaseDocumentsTable extends JPanel {
                         this.setForeground("folder".equals(col) ? DefaultColorTheme.COLOR_LOGO_BLUE : DefaultColorTheme.COLOR_DARK_GREY);
                     }
                     break;
+            }
+            // frame the focused cell, so it is visible what F2 edits
+            if (hasFocus && t.isFocusOwner()) {
+                this.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(DefaultColorTheme.COLOR_LOGO_BLUE, 1), this.getBorder()));
             }
             return this;
         }
@@ -1675,6 +1766,12 @@ public class CaseDocumentsTable extends JPanel {
     private class TitleEditor extends AbstractCellEditor implements TableCellEditor {
 
         private final JTextField field = new JTextField();
+
+        TitleEditor() {
+            // Enter confirms the new title - without a listener the key would reach the table
+            // and open the document
+            this.field.addActionListener(e -> this.stopCellEditing());
+        }
 
         @Override
         public boolean isCellEditable(EventObject e) {

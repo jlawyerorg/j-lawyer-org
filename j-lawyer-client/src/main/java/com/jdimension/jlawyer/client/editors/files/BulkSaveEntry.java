@@ -1232,6 +1232,29 @@ public class BulkSaveEntry extends javax.swing.JPanel {
     }
 
     /**
+     * Resolves the sender / recipient of the origin against the contacts of the target case and
+     * shows the result, so a matching contact is visible as reference before saving. Does nothing
+     * if the user already changed the sender / recipient.
+     *
+     * @param afs the case service
+     * @param caseId the target case
+     * @param cache resolved correspondents, shared by all entries of the dialog
+     */
+    public void previewCorrespondent(com.jdimension.jlawyer.services.ArchiveFileServiceRemote afs, String caseId, java.util.Map<String, com.jdimension.jlawyer.services.DocumentMetadata> cache) {
+        if (this.origin == null || this.pnlMetadata.isCorrespondentEdited()
+                || this.origin.getCorrespondentDirection() == com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean.CORRESPONDENT_NONE) {
+            return;
+        }
+        try {
+            com.jdimension.jlawyer.services.DocumentMetadata md = this.origin.toMetadata(afs, caseId, cache);
+            this.pnlMetadata.showResolvedCorrespondent(md.getCorrespondentId(), md.getCorrespondentName(), md.getCorrespondentDirection());
+        } catch (Exception ex) {
+            // the preview is optional - the origin is resolved again when saving
+            org.apache.log4j.Logger.getLogger(BulkSaveEntry.class.getName()).warn("Unable to resolve the correspondent for " + this.getDocumentFilename(), ex);
+        }
+    }
+
+    /**
      * @return true if the document is saved as attachment of the document of its parent entry
      */
     public boolean isSaveAsAttachment() {
@@ -1318,6 +1341,22 @@ public class BulkSaveEntry extends javax.swing.JPanel {
             this.lblFileSize.setText(FileUtils.getFileSizeHumanReadable(documentBytes.length));
         else
             this.lblFileSize.setText("? MB");
+    }
+
+    /**
+     * Returns the content of the document for reading only: the bytes of the entry, or - for
+     * entries whose content stays on the server until saving, e.g. scans - the bytes fetched
+     * through the entry processor. Fetched bytes are not kept in the entry, so saving works as
+     * before.
+     *
+     * @return the content, or null if it is not available
+     * @throws Exception if the content cannot be fetched
+     */
+    public byte[] readDocumentBytes() throws Exception {
+        if (this.documentBytes == null && this.saveDialog != null && this.saveDialog.getEntryProcessor() != null && this.saveDialog.getEntryProcessor().isBytesProvider()) {
+            return this.saveDialog.getEntryProcessor().getBytes(this);
+        }
+        return this.documentBytes;
     }
 
     /**

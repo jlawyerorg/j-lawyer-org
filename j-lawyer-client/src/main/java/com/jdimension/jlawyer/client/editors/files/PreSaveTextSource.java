@@ -749,7 +749,8 @@ public class PreSaveTextSource implements MetadataSuggester.TextSource {
             return origin.getMessageText();
         }
 
-        byte[] data = this.entry.getDocumentBytes();
+        // scans stay on the server until saving - they are fetched through the entry processor
+        byte[] data = this.entry.readDocumentBytes();
         if (data == null || data.length == 0) {
             throw new Exception(NO_TEXT);
         }

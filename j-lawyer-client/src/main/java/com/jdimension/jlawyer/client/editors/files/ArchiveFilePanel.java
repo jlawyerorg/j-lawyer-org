@@ -1758,7 +1758,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     public void sendMessageForDocument(ArchiveFileDocumentsBean doc) {
         ArrayList<ArchiveFileDocumentsBean> docs = new ArrayList<>();
         docs.add(doc);
-        SendInstantMessageDialog dlg = new SendInstantMessageDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, docs, this);
+        SendInstantMessageDialog[] dialog = new SendInstantMessageDialog[1];
+        // link the message to the document, then show it in the case view (counters, messages tab)
+        SendInstantMessageDialog dlg = new SendInstantMessageDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, docs, msg -> {
+            msg.setDocumentContext(doc);
+            this.newMessageForSubmission(msg);
+            if (dialog[0] != null) {
+                dialog[0].setVisible(false);
+                dialog[0].dispose();
+            }
+        });
+        dialog[0] = dlg;
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
     }

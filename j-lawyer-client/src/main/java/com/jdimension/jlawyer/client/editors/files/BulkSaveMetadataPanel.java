@@ -783,6 +783,23 @@ public class BulkSaveMetadataPanel extends JPanel {
     }
 
     /**
+     * Shows the sender / recipient of the origin as resolved against the contacts of the target
+     * case, so a matching contact is shown as reference before saving. Does not count as a user
+     * change - when saving, the origin is resolved the same way.
+     *
+     * @param id the contact id, null if no contact matched
+     * @param name the display name
+     * @param direction the direction
+     */
+    public void showResolvedCorrespondent(String id, String name, int direction) {
+        if (this.correspondentEdited) {
+            return;
+        }
+        this.correspondent.setCorrespondent(id, name, direction);
+        this.correspondentEdited = false;
+    }
+
+    /**
      * @param parentName the file name of the message this document is an attachment of; null if
      * it is none
      */

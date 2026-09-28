@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.editors.files;
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.documents.DocumentKeywords;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
@@ -764,7 +765,17 @@ public class DocumentPropertiesDialog extends JDialog {
             this.getContentPane().add(this.buildBulkPanel(readOnly), BorderLayout.CENTER);
         }
         this.setSize(640, 560);
+        ComponentUtils.restoreDialogSize(this);
         this.setLocationRelativeTo(owner);
+    }
+
+    @Override
+    public void setVisible(boolean b) {
+        if (!b && this.isVisible()) {
+            // closing by button, save callback or window decoration all end up here
+            ComponentUtils.storeDialogSize(this);
+        }
+        super.setVisible(b);
     }
 
     private JPanel buildBulkPanel(boolean readOnly) {

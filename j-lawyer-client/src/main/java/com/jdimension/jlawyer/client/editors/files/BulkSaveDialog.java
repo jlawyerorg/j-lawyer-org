@@ -737,6 +737,8 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
     protected BulkSaveEntryProcessor entryProcessor = null;
 
     protected ArchiveFileBean selectedCase = null;
+    // senders / recipients resolved for the preview in the entries, per target case
+    private java.util.Map<String, com.jdimension.jlawyer.services.DocumentMetadata> correspondentPreviewCache = DocumentOrigin.newCache();
     protected CaseFolder caseFolder = null;
     protected CaseFolder rootFolder = null;
 
@@ -1569,6 +1571,15 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
         e.setAllNameTemplates(allNameTemplates);
         e.setNameTemplate(this.nameTemplate);
         e.setCaseContext(this.caseParties, this.caseKeywords);
+        if (this.selectedCase != null) {
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                e.previewCorrespondent(locator.lookupArchiveFileServiceRemote(), this.selectedCase.getId(), this.correspondentPreviewCache);
+            } catch (Exception ex) {
+                log.warn("Unable to resolve the correspondent of " + e.getDocumentFilename(), ex);
+            }
+        }
 
         this.updateTotals();
         this.rebuildExtensionsPanel();
@@ -1745,8 +1756,11 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
                 } catch (Exception ex) {
                     log.error("Could not load document keywords for case " + this.selectedCase.getId(), ex);
                 }
+                // show senders / recipients as contact references already before saving
+                this.correspondentPreviewCache = DocumentOrigin.newCache();
                 for (BulkSaveEntry e : this.entryList) {
                     e.setCaseContext(this.caseParties, this.caseKeywords);
+                    e.previewCorrespondent(locator.lookupArchiveFileServiceRemote(), this.selectedCase.getId(), this.correspondentPreviewCache);
                 }
                 this.pnlMetadataAll.setCaseParties(this.caseParties);
             }
