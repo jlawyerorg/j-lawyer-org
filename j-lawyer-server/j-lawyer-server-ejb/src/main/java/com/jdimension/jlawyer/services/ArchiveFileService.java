@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.services;
 
 import com.google.i18n.phonenumbers.PhoneNumberMatch;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
+import com.jdimension.jlawyer.documents.DocumentHierarchy;
 import com.jdimension.jlawyer.documents.DocumentKeywords;
 import com.jdimension.jlawyer.documents.DocumentPreview;
 import com.jdimension.jlawyer.documents.LibreOfficeAccess;
@@ -1930,18 +1931,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (!parent.getArchiveFileKey().getId().equals(aFile.getId())) {
             throw new Exception("Das übergeordnete Dokument muss zur selben Akte gehören!");
         }
-        if (documentId != null) {
-            // walk up from the new parent - reaching the document itself means a cycle
-            String current = parent.getParentId();
-            int depth = 0;
-            while (current != null && depth < 1000) {
-                if (current.equals(documentId)) {
-                    throw new Exception("Das Dokument " + parent.getName() + " ist diesem Dokument bereits untergeordnet!");
-                }
-                ArchiveFileDocumentsBean ancestor = this.archiveFileDocumentsFacade.find(current);
-                current = ancestor == null ? null : ancestor.getParentId();
-                depth++;
-            }
+        // walk up from the new parent - reaching the document itself means a cycle
+        boolean cycle = DocumentHierarchy.wouldCreateCycle(documentId, parentId, id -> {
+            ArchiveFileDocumentsBean ancestor = this.archiveFileDocumentsFacade.find(id);
+            return ancestor == null ? null : ancestor.getParentId();
+        });
+        if (cycle) {
+            throw new Exception("Das Dokument " + parent.getName() + " ist diesem Dokument bereits untergeordnet!");
         }
         return parentId;
     }
@@ -2322,12 +2318,18 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
 
         // preserve parent-child relations between documents of the copied set
+        HashMap<String, String> sourceParents = new HashMap<>();
+        HashMap<String, String> copyIds = new HashMap<>();
+        HashMap<String, ArchiveFileDocumentsBean> copiesById = new HashMap<>();
         for (ArchiveFileDocumentsBean src : sources) {
-            if (src.getParentId() != null && copies.containsKey(src.getParentId())) {
-                ArchiveFileDocumentsBean copy = copies.get(src.getId());
-                copy.setParentId(copies.get(src.getParentId()).getId());
-                this.archiveFileDocumentsFacade.edit(copy);
-            }
+            sourceParents.put(src.getId(), src.getParentId());
+            copyIds.put(src.getId(), copies.get(src.getId()).getId());
+            copiesById.put(copies.get(src.getId()).getId(), copies.get(src.getId()));
+        }
+        for (Map.Entry<String, String> rel : DocumentHierarchy.remapParents(sourceParents, copyIds).entrySet()) {
+            ArchiveFileDocumentsBean copy = copiesById.get(rel.getKey());
+            copy.setParentId(rel.getValue());
+            this.archiveFileDocumentsFacade.edit(copy);
         }
 
         return copies;

@@ -663,58 +663,111 @@
  */
 package org.jlawyer.test.documents;
 
-import com.jdimension.jlawyer.documents.DocumentKeywords;
-import java.util.Arrays;
-import java.util.List;
+import com.jdimension.jlawyer.documents.DocumentHierarchy;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
 /**
+ * Tests the cycle check and the relation remapping for copied / moved documents.
  *
  * @author jens
  */
-public class DocumentKeywordsTest {
+public class DocumentHierarchyTest {
 
-    @Test
-    public void testNormalize() {
-        assertEquals("Frist, Kosten, Vergleich angeboten", DocumentKeywords.normalize(" Frist ,Kosten,, frist , Vergleich   angeboten"));
-        assertNull(DocumentKeywords.normalize(null));
-        assertNull(DocumentKeywords.normalize(" , ,"));
+    /** mail -> anlage1, anlage2; anlage1 -> scan (three levels). */
+    private static Map<String, String> sampleParents() {
+        Map<String, String> parents = new HashMap<>();
+        parents.put("anlage1", "mail");
+        parents.put("anlage2", "mail");
+        parents.put("scan", "anlage1");
+        return parents;
     }
 
     @Test
-    public void testAddAndRemove() {
-        // the spelling of a new keyword is kept as entered, duplicates are compared case-insensitively
-        assertEquals("Frist, beweis", DocumentKeywords.add("Frist", "beweis, FRIST"));
-        assertEquals("Beweis", DocumentKeywords.add(null, "Beweis"));
-        assertEquals("Frist", DocumentKeywords.remove("Frist, Beweis", "beweis"));
-        assertNull(DocumentKeywords.remove("Frist", "frist"));
+    public void testNoCycle() {
+        Map<String, String> p = sampleParents();
+        assertFalse(DocumentHierarchy.wouldCreateCycle("other", "mail", p::get));
+        assertFalse(DocumentHierarchy.wouldCreateCycle("anlage2", "anlage1", p::get));
+        assertFalse(DocumentHierarchy.wouldCreateCycle("scan", "mail", p::get));
     }
 
     @Test
-    public void testJoinAndContains() {
-        assertEquals("a, b", DocumentKeywords.join(Arrays.asList("a", " b ", "A")));
-        assertTrue(DocumentKeywords.contains("Frist, Kosten", "kosten"));
-        assertFalse(DocumentKeywords.contains("Frist, Kosten", "Kost"));
+    public void testCycleDetected() {
+        Map<String, String> p = sampleParents();
+        assertTrue("self", DocumentHierarchy.wouldCreateCycle("mail", "mail", p::get));
+        assertTrue("direct child", DocumentHierarchy.wouldCreateCycle("mail", "anlage1", p::get));
+        assertTrue("grandchild", DocumentHierarchy.wouldCreateCycle("mail", "scan", p::get));
+        assertTrue("child of child", DocumentHierarchy.wouldCreateCycle("anlage1", "scan", p::get));
     }
 
     @Test
-    public void testMaxLength() {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < 400; i++) {
-            sb.append("keyword").append(i).append(",");
+    public void testNullArguments() {
+        Map<String, String> p = sampleParents();
+        assertFalse("no parent", DocumentHierarchy.wouldCreateCycle("mail", null, p::get));
+        assertFalse("new document", DocumentHierarchy.wouldCreateCycle(null, "mail", p::get));
+    }
+
+    @Test
+    public void testTerminatesOnCorruptData() {
+        // a <-> b already form a cycle; asking about an unrelated document must terminate
+        Map<String, String> p = new HashMap<>();
+        p.put("a", "b");
+        p.put("b", "a");
+        assertFalse(DocumentHierarchy.wouldCreateCycle("x", "a", p::get));
+        assertTrue(DocumentHierarchy.wouldCreateCycle("b", "a", p::get));
+    }
+
+    private static Map<String, String> copies(String... ids) {
+        Map<String, String> m = new HashMap<>();
+        for (String id : ids) {
+            m.put(id, id + "'");
         }
-        String n = DocumentKeywords.normalize(sb.toString());
-        assertTrue(n.length() <= DocumentKeywords.MAX_LENGTH);
-        assertFalse(n.endsWith(","));
-        assertTrue(n.endsWith("keyword" + (DocumentKeywords.split(n).size() - 1)));
+        return m;
     }
 
     @Test
-    public void testParseSuggestions() {
-        List<String> s = DocumentKeywords.parseSuggestions("Frist; Kostenfestsetzung\n- Vergleich\n2. \"Klage\"\n* **Beweis**.");
-        assertEquals(Arrays.asList("Frist", "Kostenfestsetzung", "Vergleich", "Klage", "Beweis"), s);
-        assertTrue(DocumentKeywords.parseSuggestions(null).isEmpty());
-        assertTrue(DocumentKeywords.parseSuggestions("Dies ist ein sehr langer Satz, der sicher kein Schlagwort mehr darstellt und deshalb verworfen wird").size() == 1);
+    public void testRemapParentAndChildren() {
+        Map<String, String> r = DocumentHierarchy.remapParents(sampleParents(), copies("mail", "anlage1", "anlage2"));
+        assertEquals(2, r.size());
+        assertEquals("mail'", r.get("anlage1'"));
+        assertEquals("mail'", r.get("anlage2'"));
+        assertFalse("parent has no parent", r.containsKey("mail'"));
+    }
+
+    @Test
+    public void testRemapThreeLevels() {
+        Map<String, String> r = DocumentHierarchy.remapParents(sampleParents(), copies("mail", "anlage1", "anlage2", "scan"));
+        assertEquals(3, r.size());
+        assertEquals("anlage1'", r.get("scan'"));
+    }
+
+    @Test
+    public void testRemapOnlyChild() {
+        // the parent stays behind: the copy becomes independent
+        Map<String, String> r = DocumentHierarchy.remapParents(sampleParents(), copies("anlage1"));
+        assertTrue(r.isEmpty());
+    }
+
+    @Test
+    public void testRemapOnlyParent() {
+        // children are not copied: the copied parent has no children
+        Map<String, String> r = DocumentHierarchy.remapParents(sampleParents(), copies("mail"));
+        assertTrue(r.isEmpty());
+    }
+
+    @Test
+    public void testRemapSkipsMissingLevel() {
+        // grandparent and grandchild without the level in between: no relation
+        Map<String, String> r = DocumentHierarchy.remapParents(sampleParents(), copies("mail", "scan"));
+        assertTrue(r.isEmpty());
+    }
+
+    @Test
+    public void testRemapUsesCopyIdsOnly() {
+        Map<String, String> r = DocumentHierarchy.remapParents(sampleParents(), copies("mail", "anlage1"));
+        assertFalse("no source ids as keys", r.containsKey("anlage1"));
+        assertFalse("no source ids as values", r.containsValue("mail"));
     }
 }

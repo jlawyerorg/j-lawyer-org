@@ -45,7 +45,7 @@ export function emailOrigin(subject: string, date: string | null, from: string, 
     const rcpt = parseAddress(to[0]);
     const more = to.length - 1;
     const name = rcpt.name || rcpt.address;
-    return { ...base, key: rcpt.address, name: more > 0 ? `${name} (+${more})` : name, direction: CORRESPONDENT_OUT };
+    return { ...base, key: rcpt.address, name: more > 0 ? `${name} +${more}` : name, direction: CORRESPONDENT_OUT };
   }
   return { ...base, key: sender.address, name: sender.name, direction: CORRESPONDENT_IN };
 }
@@ -62,7 +62,7 @@ export function beaOrigin(subject: string, receptionTime: string | null, senderS
     const first = recipients[0];
     const more = recipients.length - 1;
     const name = first.name || first.safeId;
-    return { ...base, key: first.safeId ?? '', name: more > 0 ? `${name} (+${more})` : name, direction: CORRESPONDENT_OUT };
+    return { ...base, key: first.safeId ?? '', name: more > 0 ? `${name} +${more}` : name, direction: CORRESPONDENT_OUT };
   }
   return { ...base, key: senderSafeId ?? '', name: senderName ?? '', direction: CORRESPONDENT_IN };
 }

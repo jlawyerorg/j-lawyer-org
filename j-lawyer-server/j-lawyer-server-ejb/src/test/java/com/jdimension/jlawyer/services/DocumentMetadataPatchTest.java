@@ -661,60 +661,230 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.test.documents;
+package com.jdimension.jlawyer.services;
 
-import com.jdimension.jlawyer.documents.DocumentKeywords;
-import java.util.Arrays;
-import java.util.List;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.services.DocumentMetadataPatch.KeywordOperation;
+import java.util.Date;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
 /**
+ * Tests the patch semantics of bulk metadata edits ({@link DocumentMetadataPatch}) and the
+ * normalization of {@link DocumentMetadata}.
  *
  * @author jens
  */
-public class DocumentKeywordsTest {
+public class DocumentMetadataPatchTest {
 
-    @Test
-    public void testNormalize() {
-        assertEquals("Frist, Kosten, Vergleich angeboten", DocumentKeywords.normalize(" Frist ,Kosten,, frist , Vergleich   angeboten"));
-        assertNull(DocumentKeywords.normalize(null));
-        assertNull(DocumentKeywords.normalize(" , ,"));
+    private static final Date RECEIVED = new Date(1767225600000L);
+
+    private static ArchiveFileDocumentsBean sampleDocument() {
+        ArchiveFileDocumentsBean d = new ArchiveFileDocumentsBean();
+        d.setId("doc1");
+        d.setName("scan.pdf");
+        d.setTitle("Klageschrift");
+        d.setKeywords("Frist, Kosten");
+        d.setReceivedDate(RECEIVED);
+        d.setCorrespondentId("contact1");
+        d.setCorrespondentName("RA Müller");
+        d.setCorrespondentDirection(ArchiveFileDocumentsBean.CORRESPONDENT_IN);
+        d.setParentId("mail1");
+        return d;
+    }
+
+    private static void assertUnchangedExceptKeywords(ArchiveFileDocumentsBean d) {
+        assertEquals("Klageschrift", d.getTitle());
+        assertEquals(RECEIVED, d.getReceivedDate());
+        assertEquals("contact1", d.getCorrespondentId());
+        assertEquals("RA Müller", d.getCorrespondentName());
+        assertEquals(ArchiveFileDocumentsBean.CORRESPONDENT_IN, d.getCorrespondentDirection());
+        assertEquals("mail1", d.getParentId());
     }
 
     @Test
-    public void testAddAndRemove() {
-        // the spelling of a new keyword is kept as entered, duplicates are compared case-insensitively
-        assertEquals("Frist, beweis", DocumentKeywords.add("Frist", "beweis, FRIST"));
-        assertEquals("Beweis", DocumentKeywords.add(null, "Beweis"));
-        assertEquals("Frist", DocumentKeywords.remove("Frist, Beweis", "beweis"));
-        assertNull(DocumentKeywords.remove("Frist", "frist"));
+    public void testEmptyPatchChangesNothing() {
+        DocumentMetadataPatch p = new DocumentMetadataPatch();
+        assertTrue(p.isEmpty());
+        ArchiveFileDocumentsBean d = sampleDocument();
+        assertFalse(p.applyTo(d));
+        assertEquals("Frist, Kosten", d.getKeywords());
+        assertUnchangedExceptKeywords(d);
     }
 
     @Test
-    public void testJoinAndContains() {
-        assertEquals("a, b", DocumentKeywords.join(Arrays.asList("a", " b ", "A")));
-        assertTrue(DocumentKeywords.contains("Frist, Kosten", "kosten"));
-        assertFalse(DocumentKeywords.contains("Frist, Kosten", "Kost"));
+    public void testTitleOnly() {
+        DocumentMetadataPatch p = new DocumentMetadataPatch();
+        p.setTitle("  Klageerwiderung ");
+        assertFalse(p.isEmpty());
+        ArchiveFileDocumentsBean d = sampleDocument();
+        assertTrue(p.applyTo(d));
+        assertEquals("Klageerwiderung", d.getTitle());
+        assertEquals("Frist, Kosten", d.getKeywords());
+        assertEquals("RA Müller", d.getCorrespondentName());
+        assertEquals("mail1", d.getParentId());
     }
 
     @Test
-    public void testMaxLength() {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < 400; i++) {
-            sb.append("keyword").append(i).append(",");
+    public void testClearTitle() {
+        DocumentMetadataPatch p = new DocumentMetadataPatch();
+        p.setTitle("   ");
+        ArchiveFileDocumentsBean d = sampleDocument();
+        assertTrue(p.applyTo(d));
+        assertNull(d.getTitle());
+    }
+
+    @Test
+    public void testKeywordsAdd() {
+        DocumentMetadataPatch p = new DocumentMetadataPatch();
+        p.setKeywords(KeywordOperation.ADD, "Beweis, frist");
+        ArchiveFileDocumentsBean d = sampleDocument();
+        assertTrue(p.applyTo(d));
+        assertEquals("Frist, Kosten, Beweis", d.getKeywords());
+        assertUnchangedExceptKeywords(d);
+    }
+
+    @Test
+    public void testKeywordsAddExistingIsNoChange() {
+        DocumentMetadataPatch p = new DocumentMetadataPatch();
+        p.setKeywords(KeywordOperation.ADD, "KOSTEN");
+        ArchiveFileDocumentsBean d = sampleDocument();
+        assertFalse(p.applyTo(d));
+        assertEquals("Frist, Kosten", d.getKeywords());
+    }
+
+    @Test
+    public void testKeywordsRemove() {
+        DocumentMetadataPatch p = new DocumentMetadataPatch();
+        p.setKeywords(KeywordOperation.REMOVE, "frist, Unbekannt");
+        ArchiveFileDocumentsBean d = sampleDocument();
+        assertTrue(p.applyTo(d));
+        assertEquals("Kosten", d.getKeywords());
+        assertUnchangedExceptKeywords(d);
+
+        p.setKeywords(KeywordOperation.REMOVE, "Kosten");
+        assertTrue(p.applyTo(d));
+        assertNull("last keyword removed", d.getKeywords());
+    }
+
+    @Test
+    public void testKeywordsSet() {
+        DocumentMetadataPatch p = new DocumentMetadataPatch();
+        p.setKeywords(KeywordOperation.SET, " Vergleich ,vergleich, Termin");
+        ArchiveFileDocumentsBean d = sampleDocument();
+        assertTrue(p.applyTo(d));
+        assertEquals("Vergleich, Termin", d.getKeywords());
+
+        p.setKeywords(KeywordOperation.SET, "");
+        assertTrue(p.applyTo(d));
+        assertNull("set to empty clears", d.getKeywords());
+    }
+
+    @Test
+    public void testNullOperationMeansUnchanged() {
+        DocumentMetadataPatch p = new DocumentMetadataPatch();
+        p.setKeywords(null, "Beweis");
+        assertTrue(p.isEmpty());
+        ArchiveFileDocumentsBean d = sampleDocument();
+        assertFalse(p.applyTo(d));
+        assertEquals("Frist, Kosten", d.getKeywords());
+    }
+
+    @Test
+    public void testReceivedDate() {
+        DocumentMetadataPatch p = new DocumentMetadataPatch();
+        Date other = new Date(1700000000000L);
+        p.setReceivedDate(other);
+        ArchiveFileDocumentsBean d = sampleDocument();
+        assertTrue(p.applyTo(d));
+        assertEquals(other, d.getReceivedDate());
+
+        p.setReceivedDate(null);
+        assertTrue(p.applyTo(d));
+        assertNull("activated with empty value clears", d.getReceivedDate());
+        assertEquals("Klageschrift", d.getTitle());
+    }
+
+    @Test
+    public void testCorrespondent() {
+        DocumentMetadataPatch p = new DocumentMetadataPatch();
+        p.setCorrespondent(null, "Mandant Meier", ArchiveFileDocumentsBean.CORRESPONDENT_OUT);
+        ArchiveFileDocumentsBean d = sampleDocument();
+        assertTrue(p.applyTo(d));
+        assertNull("free text drops the old contact", d.getCorrespondentId());
+        assertEquals("Mandant Meier", d.getCorrespondentName());
+        assertEquals(ArchiveFileDocumentsBean.CORRESPONDENT_OUT, d.getCorrespondentDirection());
+        assertEquals("Frist, Kosten", d.getKeywords());
+        assertEquals("Klageschrift", d.getTitle());
+    }
+
+    @Test
+    public void testClearCorrespondentResetsDirection() {
+        DocumentMetadataPatch p = new DocumentMetadataPatch();
+        p.setCorrespondent("", "  ", ArchiveFileDocumentsBean.CORRESPONDENT_IN);
+        ArchiveFileDocumentsBean d = sampleDocument();
+        assertTrue(p.applyTo(d));
+        assertNull(d.getCorrespondentId());
+        assertNull(d.getCorrespondentName());
+        assertEquals(ArchiveFileDocumentsBean.CORRESPONDENT_NONE, d.getCorrespondentDirection());
+    }
+
+    @Test
+    public void testPatchNeverTouchesParent() {
+        DocumentMetadataPatch p = new DocumentMetadataPatch();
+        p.setTitle("Neu");
+        p.setKeywords(KeywordOperation.SET, "A");
+        p.setReceivedDate(null);
+        p.setCorrespondent(null, null, 0);
+        ArchiveFileDocumentsBean d = sampleDocument();
+        p.applyTo(d);
+        assertEquals("mail1", d.getParentId());
+        assertEquals("scan.pdf", d.getName());
+    }
+
+    @Test
+    public void testMetadataApplyToNormalizesAndKeepsParent() {
+        DocumentMetadata md = new DocumentMetadata();
+        StringBuilder longTitle = new StringBuilder();
+        for (int i = 0; i < 60; i++) {
+            longTitle.append("0123456789");
         }
-        String n = DocumentKeywords.normalize(sb.toString());
-        assertTrue(n.length() <= DocumentKeywords.MAX_LENGTH);
-        assertFalse(n.endsWith(","));
-        assertTrue(n.endsWith("keyword" + (DocumentKeywords.split(n).size() - 1)));
+        md.setTitle("  " + longTitle + "  ");
+        md.setKeywords(" a, A ,b,, ");
+        md.setCorrespondentName(" X ");
+        md.setCorrespondentDirection(ArchiveFileDocumentsBean.CORRESPONDENT_IN);
+        md.setParentId("other");
+        ArchiveFileDocumentsBean d = sampleDocument();
+        md.applyTo(d);
+        assertEquals("title capped at 500", 500, d.getTitle().length());
+        assertEquals("a, b", d.getKeywords());
+        assertEquals("X", d.getCorrespondentName());
+        assertNull("empty contact id stays null", d.getCorrespondentId());
+        assertEquals("parent is set separately (validated)", "mail1", d.getParentId());
     }
 
     @Test
-    public void testParseSuggestions() {
-        List<String> s = DocumentKeywords.parseSuggestions("Frist; Kostenfestsetzung\n- Vergleich\n2. \"Klage\"\n* **Beweis**.");
-        assertEquals(Arrays.asList("Frist", "Kostenfestsetzung", "Vergleich", "Klage", "Beweis"), s);
-        assertTrue(DocumentKeywords.parseSuggestions(null).isEmpty());
-        assertTrue(DocumentKeywords.parseSuggestions("Dies ist ein sehr langer Satz, der sicher kein Schlagwort mehr darstellt und deshalb verworfen wird").size() == 1);
+    public void testFromDocumentRoundTrip() {
+        ArchiveFileDocumentsBean src = sampleDocument();
+        DocumentMetadata md = DocumentMetadata.fromDocument(src);
+        assertEquals("mail1", md.getParentId());
+        ArchiveFileDocumentsBean copy = new ArchiveFileDocumentsBean();
+        md.applyTo(copy);
+        assertEquals(src.getTitle(), copy.getTitle());
+        assertEquals(src.getKeywords(), copy.getKeywords());
+        assertEquals(src.getReceivedDate(), copy.getReceivedDate());
+        assertEquals(src.getCorrespondentId(), copy.getCorrespondentId());
+        assertEquals(src.getCorrespondentName(), copy.getCorrespondentName());
+        assertEquals(src.getCorrespondentDirection(), copy.getCorrespondentDirection());
+        assertNull("copy does not inherit the parent", copy.getParentId());
+    }
+
+    @Test
+    public void testAdditionalRecipients() {
+        DocumentMetadata md = new DocumentMetadata(null, null, null, "Gericht", ArchiveFileDocumentsBean.CORRESPONDENT_OUT);
+        md.addAdditionalRecipients(2);
+        assertEquals("Gericht +2", md.getCorrespondentName());
+        md.addAdditionalRecipients(0);
+        assertEquals("Gericht +2", md.getCorrespondentName());
     }
 }

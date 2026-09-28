@@ -661,60 +661,77 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.test.documents;
+package com.jdimension.jlawyer.documents;
 
-import com.jdimension.jlawyer.documents.DocumentKeywords;
-import java.util.Arrays;
-import java.util.List;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.UnaryOperator;
 
 /**
+ * Pure helper logic for the parent / attachment hierarchy of case documents, kept free of
+ * persistence so it can be unit tested. Documents are identified by their ids; the parent of a
+ * document is looked up through a function supplied by the caller.
  *
  * @author jens
  */
-public class DocumentKeywordsTest {
+public class DocumentHierarchy {
 
-    @Test
-    public void testNormalize() {
-        assertEquals("Frist, Kosten, Vergleich angeboten", DocumentKeywords.normalize(" Frist ,Kosten,, frist , Vergleich   angeboten"));
-        assertNull(DocumentKeywords.normalize(null));
-        assertNull(DocumentKeywords.normalize(" , ,"));
+    /** Upper bound for walking up a hierarchy, protects against corrupt (cyclic) data. */
+    public static final int MAX_DEPTH = 1000;
+
+    private DocumentHierarchy() {
     }
 
-    @Test
-    public void testAddAndRemove() {
-        // the spelling of a new keyword is kept as entered, duplicates are compared case-insensitively
-        assertEquals("Frist, beweis", DocumentKeywords.add("Frist", "beweis, FRIST"));
-        assertEquals("Beweis", DocumentKeywords.add(null, "Beweis"));
-        assertEquals("Frist", DocumentKeywords.remove("Frist, Beweis", "beweis"));
-        assertNull(DocumentKeywords.remove("Frist", "frist"));
-    }
-
-    @Test
-    public void testJoinAndContains() {
-        assertEquals("a, b", DocumentKeywords.join(Arrays.asList("a", " b ", "A")));
-        assertTrue(DocumentKeywords.contains("Frist, Kosten", "kosten"));
-        assertFalse(DocumentKeywords.contains("Frist, Kosten", "Kost"));
-    }
-
-    @Test
-    public void testMaxLength() {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < 400; i++) {
-            sb.append("keyword").append(i).append(",");
+    /**
+     * Checks whether making {@code newParentId} the parent of {@code documentId} would create a
+     * cycle, i.e. whether the document is the new parent itself or one of its ancestors.
+     *
+     * @param documentId the document that gets a new parent, may be null for a new document
+     * @param newParentId the new parent, may be null (no parent)
+     * @param parentOf returns the parent id of a document id, or null
+     * @return true if the relation would create a cycle
+     */
+    public static boolean wouldCreateCycle(String documentId, String newParentId, UnaryOperator<String> parentOf) {
+        if (documentId == null || newParentId == null) {
+            return false;
         }
-        String n = DocumentKeywords.normalize(sb.toString());
-        assertTrue(n.length() <= DocumentKeywords.MAX_LENGTH);
-        assertFalse(n.endsWith(","));
-        assertTrue(n.endsWith("keyword" + (DocumentKeywords.split(n).size() - 1)));
+        String current = newParentId;
+        Set<String> seen = new HashSet<>();
+        int depth = 0;
+        while (current != null && depth < MAX_DEPTH) {
+            if (current.equals(documentId)) {
+                return true;
+            }
+            if (!seen.add(current)) {
+                // existing data already contains a cycle not involving the document
+                return false;
+            }
+            current = parentOf.apply(current);
+            depth++;
+        }
+        return false;
     }
 
-    @Test
-    public void testParseSuggestions() {
-        List<String> s = DocumentKeywords.parseSuggestions("Frist; Kostenfestsetzung\n- Vergleich\n2. \"Klage\"\n* **Beweis**.");
-        assertEquals(Arrays.asList("Frist", "Kostenfestsetzung", "Vergleich", "Klage", "Beweis"), s);
-        assertTrue(DocumentKeywords.parseSuggestions(null).isEmpty());
-        assertTrue(DocumentKeywords.parseSuggestions("Dies ist ein sehr langer Satz, der sicher kein Schlagwort mehr darstellt und deshalb verworfen wird").size() == 1);
+    /**
+     * Computes the parent relations for copies of a set of documents: a copy only gets a parent
+     * if the parent of its source was copied in the same operation; relations to documents
+     * outside of the set are dropped.
+     *
+     * @param sourceParents source document id to its parent id (null or missing = no parent)
+     * @param copyIds source document id to the id of its copy, for all copied documents
+     * @return id of a copy to the id of its new parent (a copy as well); copies without parent
+     * are not contained
+     */
+    public static Map<String, String> remapParents(Map<String, String> sourceParents, Map<String, String> copyIds) {
+        Map<String, String> result = new HashMap<>();
+        for (Map.Entry<String, String> e : copyIds.entrySet()) {
+            String sourceParent = sourceParents.get(e.getKey());
+            if (sourceParent != null && copyIds.containsKey(sourceParent)) {
+                result.put(e.getValue(), copyIds.get(sourceParent));
+            }
+        }
+        return result;
     }
 }

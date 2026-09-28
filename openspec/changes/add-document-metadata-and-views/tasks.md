@@ -10,7 +10,7 @@
 - [x] 2.2b `copyDocumentsToCase` / `moveDocumentsToCase` (Remote + Local, JavaDoc, optionale Namens-Map): Inhalt, Etiketten, alle Metadaten übernehmen, `parent_id` innerhalb der Menge auf neue IDs umhängen, sonst weglassen; Verschieben = Quelle in Papierkorb; Historie je Akte (design D11)
 - [x] 2.3 `MessagingServiceRemote`/`Local`/`MessagingService`: `getInstantMessageCountsForCase(caseId)` (eine Abfrage, GROUP BY), `getInstantMessagesForDocument(docId)`
 - [x] 2.4 Kontaktauflösung für Von/An (Beteiligte zuerst, dann global; E-Mail, beA-SafeId, Faxnummer) als wiederverwendbarer Service-Helper
-- [ ] 2.5 Unit-Tests: Schlagwort-Normalisierung, Zyklusprüfung, Patch-Semantik, ID-Umhängung beim Kopieren/Verschieben (Parent+Kind, nur Kind, nur Parent)
+- [x] 2.5 Unit-Tests: Schlagwort-Normalisierung, Zyklusprüfung, Patch-Semantik, ID-Umhängung beim Kopieren/Verschieben (Parent+Kind, nur Kind, nur Parent) — *Zyklusprüfung und Umhängung als reine Logik in `DocumentHierarchy` (server-common) herausgezogen und vom `ArchiveFileService` genutzt; `DocumentHierarchyTest` (10), `DocumentKeywordsTest` (5, Erwartung zur Schreibweise korrigiert), `DocumentMetadataPatchTest` (15, im EJB-Modul, da server-api kein JUnit hat), `SearchQueryBuilderTest` (16), `MetadataSuggesterTest` (4) — alle grün*
 
 ## 3. Suche (Lucene)
 - [x] 3.1 `SearchAPI`: `title`/`keywords` analysiert indizieren, Keyword-Felder für `bezeichnung`, `schlagwort` (je Schlagwort ein Term), `von`
@@ -66,11 +66,11 @@
 - [x] 10.3 `document-actions` / `document-bulk-bar`: Metadaten bearbeiten (einzeln/Stapel, `document-metadata-dialog`), Nachrichten anzeigen und senden (`document-messages-dialog`); i18n DE/EN
 
 ## 11. Verifikation
-- [ ] 11.1 `openspec validate add-document-metadata-and-views --strict`
-- [ ] 11.2 Build (manuell durch den Entwickler)
-- [ ] 11.3 Manuelle Tests: Ansicht/Spalten an zweitem Arbeitsplatz wiederhergestellt; KI-Button (chat/extract) im Desktop einzeln und im Stapel; bestehende REST-Endpunkte (v1 Umbenennen/Liste) lassen neue Metadaten unverändert; E-Mail mit Anlagen speichern → Hierarchie/Metadaten; beA-Versand → An; Umschalten der Ansichten mit Auswahl; Stapelbearbeitung; Parent löschen/wiederherstellen; Parent+Kinder in andere Akte kopieren und verschieben (Beziehungen + Metadaten erhalten); Ingo „Dokument verschieben“; aktive Etiketten als Chips, Bearbeitung in Details/Dialog; Feldsuche `schlagwort:`
-- [ ] 11.4 REST v8 per curl: Liste, Update einzeln/Stapel, ACL-Ablehnung
-- [ ] 11.5 Web-Client: Dokumente-Reiter und Stapelleiste gegen laufenden Server
+- [x] 11.1 `openspec validate add-document-metadata-and-views --strict`
+- [x] 11.2 Build (manuell durch den Entwickler) — *Hinweis: das Web-Modul ist opt-in und wird nur mit `mvn -Pweb -pl j-lawyer-web -am install` gebaut*
+- [ ] 11.3 Manuelle Tests *(serverseitig per `verify_rest.py` erledigt: v1-Umbenennen/-Listen lassen neue Metadaten unverändert, Parent löschen/wiederherstellen/endgültig löschen, Feldsuche `schlagwort:`/`bezeichnung:` und Metadaten in der einfachen Suche; offen: alle Desktop-UI-Punkte sowie Kopieren/Verschieben in andere Akte und Ingo „Dokument verschieben“, da ohne REST-Weg)*: Ansicht/Spalten an zweitem Arbeitsplatz wiederhergestellt; KI-Button (chat/extract) im Desktop einzeln und im Stapel; bestehende REST-Endpunkte (v1 Umbenennen/Liste) lassen neue Metadaten unverändert; E-Mail mit Anlagen speichern → Hierarchie/Metadaten; beA-Versand → An; Umschalten der Ansichten mit Auswahl; Stapelbearbeitung; Parent löschen/wiederherstellen; Parent+Kinder in andere Akte kopieren und verschieben (Beziehungen + Metadaten erhalten); Ingo „Dokument verschieben“; aktive Etiketten als Chips, Bearbeitung in Details/Dialog; Feldsuche `schlagwort:`
+- [x] 11.4 REST v8 per curl: Liste, Update einzeln/Stapel, ACL-Ablehnung — *`verify_rest.py` (45 Prüfungen, legt eigene Testakten/-kontakte/-gruppe an und räumt auf): Liste, Einzel-Update mit Schlagwort-Normalisierung, Parent inkl. Zyklus-/Fremdakten-/Papierkorb-Ablehnung, Stapel ADD/REMOVE/SET/Titel/Von-An mit Patch-Semantik, 400 bei unbekannter Operation, Schlagwort-Endpunkt, Korrespondent-Auflösung (Beteiligte vor globalem Kontakt, E-Mail case-insensitiv, Freitext-Fallback), Nachrichten je Dokument, ACL über Gruppenbeschränkung (Lesen/Schreiben/Stapel abgelehnt, keine Änderung). Rollenbasierte Ablehnung (fehlende `writeArchiveFileRole`) nicht geprüft — kein Testbenutzer mit bekanntem Passwort.*
+- [ ] 11.5 Web-Client: Dokumente-Reiter und Stapelleiste gegen laufenden Server — *Payloads/Endpunkte des Web-Clients per `verify_rest.py` bestätigt; Bundle mit `-Pweb` neu gebaut und deployt (26.09.), neue Dialoge, v8-Endpunkte und i18n DE/EN im ausgelieferten Bundle bestätigt; Klicktest im Browser offen (in der Sandbox kein Browser verfügbar)*
 
 ## 12. Folge-Change (nicht Teil dieser Change)
 - [ ] 12.1 Eigene OpenSpec-Change anlegen: MCP-Server/Ingo-Tools (`list_case_documents` u. ä.) geben Bezeichnung, Schlagworte, Eingangsdatum, Von/An und Eltern-Dokument aus
