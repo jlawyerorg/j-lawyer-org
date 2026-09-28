@@ -667,6 +667,9 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.time.format.ResolverStyle;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
@@ -676,6 +679,75 @@ import java.util.Locale;
  * @author jens
  */
 public class DateUtils {
+
+    private static final DateTimeFormatter DESKTOP_DAY_FORMAT = DateTimeFormatter
+            .ofPattern("dd.MM.uuuu", Locale.GERMANY)
+            .withResolverStyle(ResolverStyle.STRICT);
+
+    /**
+     * Normalizes a deliberately editable date-only field. Unlike the general-purpose
+     * parser, this never interprets two-digit years or accepts a date prefix.
+     * Empty optional fields stay empty.
+     *
+     * @throws IllegalArgumentException if the format or calendar date is invalid
+     */
+    public static String normalizeDesktopDay(String input) {
+        if (input == null || input.trim().isEmpty()) {
+            return "";
+        }
+        String value = input.trim();
+        if (value.matches("[0-9]{8}")) {
+            value = value.substring(0, 2) + "." + value.substring(2, 4)
+                    + "." + value.substring(4);
+        }
+        if (!value.matches("[0-9]{2}\\.[0-9]{2}\\.[0-9]{4}")) {
+            throw new IllegalArgumentException("Bitte TT.MM.JJJJ oder TTMMJJJJ eingeben (vierstelliges Jahr).");
+        }
+        try {
+            LocalDate day = LocalDate.parse(value, DESKTOP_DAY_FORMAT);
+            if (day.getYear() < 1) {
+                throw new IllegalArgumentException("Das Jahr muss mindestens 0001 sein.");
+            }
+            return DESKTOP_DAY_FORMAT.format(day);
+        } catch (DateTimeParseException ex) {
+            throw new IllegalArgumentException("Dieses Kalenderdatum gibt es nicht: " + value, ex);
+        }
+    }
+
+    /** Parses a previously normalized date-only input without changing other date parsers. */
+    public static Date parseDesktopDay(String input) {
+        String value = normalizeDesktopDay(input);
+        return value.isEmpty() ? null : Date.from(LocalDate.parse(value, DESKTOP_DAY_FORMAT)
+                .atStartOfDay(ZoneId.systemDefault()).toInstant());
+    }
+
+    /** Rejects new implausible personal dates while tolerating malformed stored values left unchanged. */
+    public static void validatePersonalDays(String birthText, String deathText,
+            boolean birthChanged, boolean deathChanged, LocalDate today) {
+        LocalDate birth = comparablePersonalDay(birthText, birthChanged);
+        LocalDate death = comparablePersonalDay(deathText, deathChanged);
+        if (birthChanged && birth != null && birth.isAfter(today)) {
+            throw new IllegalArgumentException("Das Geburtsdatum darf nicht in der Zukunft liegen.");
+        }
+        if (deathChanged && death != null && death.isAfter(today)) {
+            throw new IllegalArgumentException("Das Sterbedatum darf nicht in der Zukunft liegen.");
+        }
+        if ((birthChanged || deathChanged) && birth != null && death != null && death.isBefore(birth)) {
+            throw new IllegalArgumentException("Das Sterbedatum darf nicht vor dem Geburtsdatum liegen.");
+        }
+    }
+
+    private static LocalDate comparablePersonalDay(String input, boolean changed) {
+        try {
+            String value = normalizeDesktopDay(input);
+            return value.isEmpty() ? null : LocalDate.parse(value, DESKTOP_DAY_FORMAT);
+        } catch (IllegalArgumentException ex) {
+            if (changed) {
+                throw ex;
+            }
+            return null;
+        }
+    }
 
     public static final String DATEFORMAT_DATETIME_FULL = "EEE, dd.MM.yyyy HH:mm:ss";
     public static final String DATEFORMAT_DATETIME_DEFAULT = "dd.MM.yyyy, HH:mm";
