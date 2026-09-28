@@ -703,6 +703,7 @@ public class DunningStatusDialog extends javax.swing.JDialog {
     public DunningStatusDialog(java.awt.Frame parent, boolean modal, DunningCaseStatus current) {
         super(parent, modal);
         initComponents();
+        com.jdimension.jlawyer.client.utils.DesktopDateEntry.hint(this.txtEventDate);
 
         for (DunningCaseStatus status : DunningCaseStatus.values()) {
             this.selectable.add(status);
@@ -936,6 +937,9 @@ public class DunningStatusDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdSelectEventDateActionPerformed
 
     private void cmdOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdOkActionPerformed
+        if (!com.jdimension.jlawyer.client.utils.DesktopDateEntry.check(this, this.txtEventDate, "Ereignisdatum", true)) {
+            return;
+        }
         if (getStatus() == null) {
             JOptionPane.showMessageDialog(this, "Bitte einen Status wählen.",
                     "Hinweis", JOptionPane.INFORMATION_MESSAGE);

@@ -711,6 +711,9 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
      */
     public ArchiveFileReviewsFindPanel() {
         initComponents();
+        com.jdimension.jlawyer.client.utils.DesktopDateEntry.installChooser(this.txtFromDate, this, "Zeitraum von");
+        com.jdimension.jlawyer.client.utils.DesktopDateEntry.installChooser(this.txtToDate, this, "Zeitraum bis");
+        this.cmdReset.setVerifyInputWhenFocusTarget(false);
         
         if (UserSettings.getInstance().isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
             this.detailsEditorClass = EditArchiveFileDetailsPanel.class.getName();
@@ -1191,6 +1194,10 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
     }//GEN-LAST:event_tblResultsMouseClicked
 
     private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
+        if (!com.jdimension.jlawyer.client.utils.DesktopDateEntry.checkChooser(this, this.txtFromDate, "Zeitraum von")
+                || !com.jdimension.jlawyer.client.utils.DesktopDateEntry.checkChooser(this, this.txtToDate, "Zeitraum bis")) {
+            return;
+        }
         // perform search here
         ThreadUtils.setWaitCursor(this);
         Date fromDate=this.txtFromDate.getDate();
@@ -1219,6 +1226,10 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
     }//GEN-LAST:event_rdAllStatusesActionPerformed
 
     private void cmdPrintActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPrintActionPerformed
+        if (!com.jdimension.jlawyer.client.utils.DesktopDateEntry.checkChooser(this, this.txtFromDate, "Zeitraum von")
+                || !com.jdimension.jlawyer.client.utils.DesktopDateEntry.checkChooser(this, this.txtToDate, "Zeitraum bis")) {
+            return;
+        }
         try {
             
             ReviewsStub printStub=this.getPrintValues();
