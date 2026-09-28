@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Explicit personal dates in desktop contacts
-Birth and death fields in the desktop contact editor MUST follow the desktop date-only input requirement and show `TT.MM.JJJJ` as a format hint. Quick contact creation MUST follow the same rule for birth dates. Empty optional dates MUST remain valid.
+Birth and death fields in the desktop contact editor MUST follow the desktop date-only input requirement and show `TTMMJJJJ` as a gray, non-value hint in empty fields. Quick contact creation MUST follow the same rule for birth dates. Empty optional dates MUST remain valid.
 
 #### Scenario: Birth date without dots
 - **WHEN** a user enters `28061979` in the contact editor or quick creation

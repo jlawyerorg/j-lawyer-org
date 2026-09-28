@@ -1,7 +1,15 @@
 ## ADDED Requirements
 
 ### Requirement: Eight-digit dates in desktop date-only input
-Every directly editable desktop field dedicated solely to a calendar date MUST accept exactly `DDMMYYYY` and `DD.MM.YYYY`, normalize the undotted form to `DD.MM.YYYY` before saving, and reject impossible dates with a useful error. The year MUST have four digits; the client MUST NOT guess a century.
+Every directly editable desktop field dedicated solely to a calendar date MUST accept exactly `DDMMYYYY` and `DD.MM.YYYY`, normalize a valid undotted form to `DD.MM.YYYY` visibly no later than leaving the field, and reject impossible dates with a useful error when committing the input. Empty form fields MUST show `TTMMJJJJ` as a gray placeholder that is not treated as a value. The year MUST have four digits; the client MUST NOT guess a century.
+
+#### Scenario: Empty date field
+- **WHEN** a user opens a form with an empty, editable date-only field
+- **THEN** the field displays `TTMMJJJJ` in gray until the user types, without saving the hint as a date
+
+#### Scenario: Undotted date on leaving the field
+- **WHEN** a user types `28061979` and moves to another form field
+- **THEN** the field displays `28.06.1979` before the form is saved
 
 #### Scenario: Accounting date without dots
 - **WHEN** a user commits `28061979` in a directly editable accounting date field

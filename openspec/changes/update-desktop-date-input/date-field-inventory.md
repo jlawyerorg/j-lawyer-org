@@ -1,6 +1,6 @@
 # Feldübersicht: reine Datumsangaben im installierten Client
 
-Stand: Quellcodeprüfung vom 26.09.2026. Die Tabelle nennt die bereits gefundenen Eingaben und dient als konkrete Prüfliste für die abschließende Inventur vor der Umsetzung. „Direkt editierbar“ beschreibt die sichtbaren Swing-Feldkonfigurationen; zur endgültigen Abnahme sind die jeweiligen Bildschirm- und Speicherpfade zu testen. `txt` und `dt` sind interne Feldnamen.
+Stand: Quellcodeprüfung vom 28.09.2026. Die Tabelle nennt die bereits gefundenen Eingaben und dient als konkrete Prüfliste für die abschließende Inventur vor der Umsetzung. „Direkt editierbar“ beschreibt die sichtbaren Swing-Feldkonfigurationen; zur endgültigen Abnahme sind die jeweiligen Bildschirm- und Speicherpfade zu testen. `txt` und `dt` sind interne Feldnamen.
 
 ## Direkt editierbare Datumsfelder: im Vorschlag enthalten
 
@@ -17,9 +17,11 @@ Stand: Quellcodeprüfung vom 26.09.2026. Die Tabelle nennt die bereits gefundene
 | Vollstreckungsmaßnahme: Anordnung und Versand | `editors/files/EnforcementMeasureDialog.java` | `txtOrderedDate`, `txtDispatchedDate` |
 | Drittschuldner: Zustellung und Erklärungseingang | `editors/files/ThirdPartyDebtorDialog.java` | `txtServed`, `txtDeclaration` |
 | E-Mail-Konto: Ablauf des Client-Geheimnisses | `configuration/MailboxSetupDialog.java` | `txtSecretExpiry` |
-| Wiedervorlagensuche: Zeitraum von/bis | `editors/files/ArchiveFileReviewsFindPanel.java` | `txtFromDate`, `txtToDate` (`JDateChooser` mit Texteingabe; Laufzeittest noch erforderlich) |
+| Wiedervorlagensuche: Zeitraum von/bis | `editors/files/ArchiveFileReviewsFindPanel.java` | `txtFromDate`, `txtToDate` (`JDateChooser`: Texteditor editierbar; acht Ziffern bleiben Text, bis sie ausdrücklich normalisiert werden; Integrationstest der Maske noch erforderlich) |
+| Vollstreckungsmaßnahme: Ergebnisdatum | `editors/files/ClaimLedgerEnforcementPanel.java` | `JOptionPane.showInputDialog` im Ergebnis-Dialog |
+| Drittschuldner: Eingang der Erklärung und Zahlungstag | `editors/files/ThirdPartyDebtorDialog.java` | Zwei `JOptionPane.showInputDialog`-Eingaben neben den oben genannten Textfeldern |
 
-Das sind 17 identifizierte Textfelder, zwei Datums-Auswahlfelder mit Texteingabe und eine editierbare Datums-Tabellenspalte in zwölf Masken/Dateien. Die Tabellenspalte kann mehrere Werte enthalten; sie wird nicht als einzelnes Textfeld gezählt. Geburt/Tod haben zusätzlich die besonderen Regeln zu Zukunft und Reihenfolge. Für die anderen Felder gilt keine pauschale Zukunftssperre; bisherige fachliche Beschränkungen bleiben zu prüfen.
+Das sind 17 identifizierte Textfelder, zwei Datums-Auswahlfelder mit Texteingabe, eine editierbare Datums-Tabellenspalte und drei Datumseingaben in kurzen Dialogfenstern in dreizehn Masken/Dateien. Die Tabellenspalte kann mehrere Werte enthalten; sie wird nicht als einzelnes Textfeld gezählt. Geburt/Tod haben zusätzlich die besonderen Regeln zu Zukunft und Reihenfolge. Für die anderen Felder gilt keine pauschale Zukunftssperre; bisherige fachliche Beschränkungen bleiben zu prüfen.
 
 ## Ausdrücklich abgrenzen (Beispiele)
 

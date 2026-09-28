@@ -11,7 +11,7 @@
 
 - Vor Implementierung alle geeigneten Felder inventarisieren und gemeinsame Normalisierung nur ausdrücklich daran anschließen. Weder Feldnamen noch Kalenderaufrufe genügen als automatische Erkennung.
 - Kalendergültigkeit und Format allgemein prüfen; Zukunft und Geburts-/Sterbereihenfolge nur für persönliche Daten. Bisherige spezifische Regeln sonstiger Felder wahren.
-- Erst neue Eingaben bei Übernahme normalisieren, gespeicherte Altwerte beim Laden nicht verändern. Bei formatierten Swing-Feldern Eingabe und Commit gesondert integrieren.
+- Neue gültige achtstellige Eingaben spätestens beim Verlassen des Eingabefelds sichtbar normalisieren; ungültige Eingaben bis zur Fehlermeldung beim Übernehmen sichtbar lassen. In leeren Feldern `TTMMJJJJ` als grauen, nicht gespeicherten Hinweis anzeigen. Gespeicherte Altwerte beim Laden nicht verändern. Bei formatierten Swing-Feldern Eingabe und Commit gesondert integrieren.
 
 ## Risks / Trade-offs
 
