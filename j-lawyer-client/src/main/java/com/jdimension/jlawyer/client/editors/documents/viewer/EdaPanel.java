@@ -770,6 +770,11 @@ public class EdaPanel extends javax.swing.JPanel implements PreviewPanel {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean stored =
                     locator.lookupDunningServiceRemote().storeEdaDocumentRendering(this.docId);
+            // Das Dokument entsteht auf dem Server; ohne diese Meldung stuende es erst nach einem
+            // Neuladen der Akte in der Dokumentenliste - und das sieht aus, als waere nichts
+            // geschehen, obwohl die Meldung das Gegenteil sagt.
+            com.jdimension.jlawyer.client.events.EventBroker.getInstance().publishEvent(
+                    new com.jdimension.jlawyer.client.events.DocumentAddedEvent(stored));
             javax.swing.JOptionPane.showMessageDialog(this,
                     "Die Darstellung liegt als \"" + stored.getName() + "\" in der Akte.",
                     "Abgelegt", javax.swing.JOptionPane.INFORMATION_MESSAGE);
