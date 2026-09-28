@@ -6,7 +6,7 @@ Bei Kontakten können zweistellige Jahresangaben zu falschen Altersangaben führ
 
 ## What Changes
 
-- Alle direkt bearbeitbaren Felder für reine Kalenderdaten akzeptieren `TTMMJJJJ` und `TT.MM.JJJJ`. Acht Ziffern ohne Punkte werden vor Speicherung als `TT.MM.JJJJ` dargestellt. Ungültige Kalenderdaten und zweistellige Jahre werden mit verständlicher Fehlermeldung abgewiesen; das Eingabeformat wird angezeigt.
+- Alle direkt bearbeitbaren Felder für reine Kalenderdaten akzeptieren `TTMMJJJJ` und `TT.MM.JJJJ`. In leeren Eingabefeldern zeigt ein grauer, nicht gespeicherter Hinweis `TTMMJJJJ` die einfache Eingabeform. Gültige acht Ziffern ohne Punkte erscheinen spätestens beim Wechsel in ein anderes Feld als `TT.MM.JJJJ`. Ungültige Kalenderdaten und zweistellige Jahre bleiben zur Korrektur sichtbar und werden beim Übernehmen mit verständlicher Fehlermeldung abgewiesen.
 - Bei neu eingegebenen/geänderten Geburts- und Sterbedaten zusätzlich Zukunftsdaten und einen neu entstandenen Widerspruch „Tod vor Geburt“ abweisen. Optionale Leerwerte sind erlaubt. Unveränderte fehlerhafte Altwerte bleiben erhalten und blockieren Änderungen anderer Kontaktdaten nicht.
 - Sachliche Daten wie Fälligkeiten dürfen in der Zukunft liegen, soweit ihre eigenen fachlichen Regeln es erlauben. Achtstellige Zahlen in Notizen/Freitext, Datum-Uhrzeit-Felder, bloße Anzeigen und bislang nur per Kalender bedienbare Felder werden nicht in eine neue Tastatureingabe einbezogen.
 - Die [Feldübersicht](date-field-inventory.md) benennt konkret die derzeit gefundenen editierbaren Datumsfelder und getrennt davon Kalender-/Anzeigefelder. Sie ist vor der Implementierung gegen alle Masken zu prüfen und bei weiteren Funden zu ergänzen.
