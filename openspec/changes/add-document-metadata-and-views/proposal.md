@@ -102,4 +102,5 @@ Liste mit Vorschau (Sichten, Lesen) oder eine dichte Tabelle (Sortieren, Verglei
 - **Ingo-Tools** (`ToolRegistry`): Dokument-Tools geben die neuen Felder aus, neue Tools
   `get_document_details`, `update_document_metadata` und `set_document_parent`; E-Mail-
   Speichern, Notiz/Vorlage und Nachrichten setzen bzw. kennen die Metadaten. Der MCP-Server
-  (Change `add-mcp-server`, noch nicht umgesetzt) übernimmt diese Tools bei der Parität.
+  (eigenes Repository `jlawyerorg/j-lawyer-mcpserver`) übernimmt diese Tools über seine
+  Paritätsanforderung (dort Change `add-document-metadata-tools`).

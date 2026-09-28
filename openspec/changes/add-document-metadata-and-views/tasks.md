@@ -81,5 +81,5 @@
 - [x] 12.6 `save_email_to_case`: Metadaten wie im Client, optional `saveAttachments` (Anhänge als Anlagen der E-Mail), optional `keywords`
 - [x] 12.7 `create_note`, `create_document_from_template`: optional `title`, `keywords`; `create_instant_message`: optional `documentId`; `search_instant_messages`: Filter `documentId` und Dokumentbezug in der Ausgabe
 - [x] 12.8 Chat-Anhang „Dokument als Kontext“: Metadaten-Kopf vor dem Dokumenttext
-- [x] 12.9 Hinweis im Change `add-mcp-server`: Parität umfasst die neuen/angepassten Dokument-Tools
+- [x] 12.9 MCP-Server: Parität im eigenen Repository `jlawyerorg/j-lawyer-mcpserver` hergestellt (Change `add-document-metadata-tools`, 67/67 Tools, 39 JSON-RPC-Prüfungen); in `add-mcp-server` auf dieses Repository verwiesen
 - [x] 12.10 Manuelle Tests per Ingo-Chat (Abschnitt 13 in `manual-test-11.3.md`) — *erfolgreich (28.09.)*

@@ -389,5 +389,6 @@ Rollback: Spalten bleiben ungenutzt; kein Datenverlust bestehender Felder.
 ## Resolved Questions
 - Kein nachträgliches Befüllen von Bestandsdaten (auch nicht in einem Folge-Change).
 - MCP-Server/Ingo sollen die neuen Felder ausgeben – zunächst als Folge-Change geplant, dann
-  in diesen Change aufgenommen (D16). Der MCP-Server selbst ist noch nicht umgesetzt
-  (`add-mcp-server`) und übernimmt die Tools über seine Paritätsanforderung.
+  in diesen Change aufgenommen (D16). Der MCP-Server liegt im eigenen Repository
+  `jlawyerorg/j-lawyer-mcpserver` und übernimmt die Tools über seine Paritätsanforderung (dort
+  Change `add-document-metadata-tools`).
