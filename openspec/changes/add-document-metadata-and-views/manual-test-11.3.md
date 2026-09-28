@@ -200,6 +200,29 @@ Eingang, Von/An und eine Etikette.
 
 ---
 
+## 13. Ingo-Tools (Task 12.10)
+
+Voraussetzung: Benutzer mit KI-Agenten-Rolle, Ingo mit einem Modell mit Tool-Unterstützung;
+Akte A mit Mail + zwei Anlagen, Metadaten und einer Nachricht zu einer Anlage (aus den
+Abschnitten 3, 5, 7).
+
+| # | Anfrage an Ingo | Erwartet |
+|---|-----------------|----------|
+| 13.1 | „Liste die Dokumente der Akte <Az A>.“ | Ingo nennt Bezeichnungen, Von/An, Eingang und Schlagworte; die Mail hat 2 Anlagen. Etiketten und Nachrichten werden in der Liste **nicht** genannt. |
+| 13.2 | „Zeig mir alle Details zur Mail.“ | `get_document_details`: zusätzlich Etiketten mit Werten, die beiden Anlagen und die verknüpften Nachrichten. |
+| 13.3 | „Suche in Akte <Az A> nach Kaufpreis.“ | Treffer über das Schlagwort, nicht nur über den Dateinamen. |
+| 13.4 | „Welche Dokumente sind diese Woche eingegangen?“ | `list_case_documents_by_date` mit `dateField=received`. |
+| 13.5 | „Setze bei allen Rechnungen das Schlagwort Beweis und als Von Vera Verifikation.“ | Bestätigungsdialog nennt Anzahl und Felder; danach tragen die Dokumente „Beweis“ und ↘ Vera (blau, Kontaktbezug), sonst unverändert. |
+| 13.6 | „Gib Anlage2 die Bezeichnung ‚Rechnung März‘.“ | Nur die Bezeichnung ändert sich, der Dateiname bleibt. |
+| 13.7 | „Hänge Vertrag.docx als Anlage an die Mail.“ / „Löse die Zuordnung wieder.“ | `set_document_parent`; Einrückung erscheint und verschwindet. Ein Zyklus (Mail an Anlage hängen) wird mit Hinweis abgelehnt. |
+| 13.8 | „Verschiebe die Mail samt Anlagen in Akte <Az B>.“ | `move_document_to_case` mit mehreren IDs; in B Hierarchie und Metadaten erhalten. |
+| 13.9 | „Speichere die letzte Mail von vera@example.org in Akte <Az A> inklusive Anhänge.“ | `save_email_to_case` mit `saveAttachments=true`: Bezeichnung = Betreff, Eingang = Mail-Datum, Von = Vera (Kontakt); Anhänge als Anlagen darunter. |
+| 13.10 | „Lege in Akte <Az A> eine Notiz zum Telefonat an, Bezeichnung ‚Telefonat Meier‘, Schlagwort Vergleich.“ | Notiz mit Bezeichnung und Schlagwort. Gleiches für ein Dokument aus einer Vorlage. |
+| 13.11 | „Schreib eine Nachricht zu Anlage1: Bitte prüfen.“ / „Welche Nachrichten gibt es zu Anlage1?“ | Nachricht mit Dokumentbezug (Zähler an Anlage1 steigt); die Suche liefert sie mit Dokumentnamen. |
+| 13.12 | Im Chat „Dokument als Kontext“ die Mail anhängen und fragen „Von wem ist das?“ | Der Kontext beginnt mit Bezeichnung, Von/An, Eingang und Schlagworten. |
+
+---
+
 ## Aufräumen
 
 - Akten „ZZ Test Metadaten A/B“ löschen (entfernt auch Dokumente und Nachrichten).

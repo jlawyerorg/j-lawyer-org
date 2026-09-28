@@ -289,3 +289,41 @@ size limit SHALL get no suggestions, with a hint that suggestions are possible a
 #### Scenario: Scanned PDF
 - **WHEN** a user asks for suggestions for a PDF without text layer in the save dialog
 - **THEN** nothing is uploaded and a hint explains that suggestions are possible after saving and text recognition
+
+### Requirement: Assistant Tools for Document Metadata
+The assistant (Ingo) tools that list or search case documents SHALL return the title, keywords,
+received date, correspondent with direction and contact reference, parent document and number
+of attachments of each document, and SHALL NOT return tags or linked messages in these lists.
+A tool `get_document_details` SHALL return all metadata of one document including its tags,
+parent, attachments and linked instant messages. Document search SHALL match file name, title,
+keywords and correspondent name, and listing by date SHALL support the creation date and the
+received date.
+
+The assistant SHALL be able to change the metadata of one or several documents with patch
+semantics (only given fields change; keywords can be added, removed or replaced) and to set or
+remove the parent of a document; both actions SHALL require the user's approval and SHALL be
+validated by the server like the same changes in the client. Moving documents to another case
+SHALL accept several documents and keep their relations. Saving an e-mail to a case SHALL set
+title, received date and correspondent like the client and, on request, SHALL save the
+attachments as attachments of the e-mail document. Creating a note or a document from a template
+SHALL accept a title and keywords, and instant messages created by the assistant SHALL be
+linkable to a document.
+
+#### Scenario: Listing shows metadata
+- **WHEN** the assistant lists the documents of a case containing an e-mail titled "Vergleichsangebot" from contact "RA Müller" with two attachments
+- **THEN** the e-mail entry contains the title, the correspondent "RA Müller" with direction "in" and contact id, and an attachment count of 2
+- **AND** the entry contains no tags and no messages
+
+#### Scenario: Details include tags and messages
+- **WHEN** the assistant requests the details of that e-mail document
+- **THEN** the result contains its tags with values, its two attachments and its linked instant messages
+
+#### Scenario: Assistant adds keywords to several documents
+- **WHEN** the assistant adds the keyword "Beweis" to three documents and the user approves
+- **THEN** each of the three documents additionally carries "Beweis" and no other field changes
+
+#### Scenario: Assistant saves an e-mail with attachments
+- **WHEN** the assistant saves an incoming e-mail with two attachments to a case with `saveAttachments` enabled
+- **THEN** the e-mail document gets the subject as title, the e-mail date as received date and the sender as correspondent
+- **AND** both attachments are stored as attachments of the e-mail document
+

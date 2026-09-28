@@ -72,5 +72,14 @@
 - [x] 11.4 REST v8 per curl: Liste, Update einzeln/Stapel, ACL-Ablehnung — *`verify_rest.py` (45 Prüfungen, legt eigene Testakten/-kontakte/-gruppe an und räumt auf): Liste, Einzel-Update mit Schlagwort-Normalisierung, Parent inkl. Zyklus-/Fremdakten-/Papierkorb-Ablehnung, Stapel ADD/REMOVE/SET/Titel/Von-An mit Patch-Semantik, 400 bei unbekannter Operation, Schlagwort-Endpunkt, Korrespondent-Auflösung (Beteiligte vor globalem Kontakt, E-Mail case-insensitiv, Freitext-Fallback), Nachrichten je Dokument, ACL über Gruppenbeschränkung (Lesen/Schreiben/Stapel abgelehnt, keine Änderung). Rollenbasierte Ablehnung (fehlende `writeArchiveFileRole`) nicht geprüft — kein Testbenutzer mit bekanntem Passwort.*
 - [x] 11.5 Web-Client: Dokumente-Reiter und Stapelleiste gegen laufenden Server — *Payloads/Endpunkte des Web-Clients per `verify_rest.py` bestätigt; Bundle mit `-Pweb` neu gebaut und deployt (26.09.), neue Dialoge, v8-Endpunkte und i18n DE/EN im ausgelieferten Bundle bestätigt; Kurzprüfung im Browser durch den Entwickler erfolgreich (28.09.)*
 
-## 12. Folge-Change (nicht Teil dieser Change)
-- [ ] 12.1 Eigene OpenSpec-Change anlegen: MCP-Server/Ingo-Tools (`list_case_documents` u. ä.) geben Bezeichnung, Schlagworte, Eingangsdatum, Von/An und Eltern-Dokument aus
+## 12. Ingo-Tools (`ToolRegistry`, zunächst als Folge-Change geplant)
+- [x] 12.1 `DocumentToolSupport`: gemeinsame JSON-Ausgabe eines Dokuments (nur gesetzte Metadatenfelder) und Parameter-Aufbereitung (Schlagwort-Operation, Richtung, Datum); Unit-Tests — *`DocumentToolSupportTest` (11) grün*
+- [x] 12.2 `list_case_documents`, `list_case_documents_by_date` (`dateField` created/received), `search_case_documents` (Suche in Dateiname, Bezeichnung, Schlagworten, Von/An) auf die gemeinsame Ausgabe umstellen
+- [x] 12.3 Neues Tool `get_document_details` (Metadaten, Etiketten, Eltern-Dokument, Anlagen, Nachrichten)
+- [x] 12.4 Neue Tools `update_document_metadata` (ein/mehrere Dokumente, Patch-Semantik) und `set_document_parent` (RISK_MEDIUM)
+- [x] 12.5 `move_document_to_case` mit `documentIds`; Beschreibung von `rename_document` präzisieren
+- [x] 12.6 `save_email_to_case`: Metadaten wie im Client, optional `saveAttachments` (Anhänge als Anlagen der E-Mail), optional `keywords`
+- [x] 12.7 `create_note`, `create_document_from_template`: optional `title`, `keywords`; `create_instant_message`: optional `documentId`; `search_instant_messages`: Filter `documentId` und Dokumentbezug in der Ausgabe
+- [x] 12.8 Chat-Anhang „Dokument als Kontext“: Metadaten-Kopf vor dem Dokumenttext
+- [x] 12.9 Hinweis im Change `add-mcp-server`: Parität umfasst die neuen/angepassten Dokument-Tools
+- [x] 12.10 Manuelle Tests per Ingo-Chat (Abschnitt 13 in `manual-test-11.3.md`) — *erfolgreich (28.09.)*

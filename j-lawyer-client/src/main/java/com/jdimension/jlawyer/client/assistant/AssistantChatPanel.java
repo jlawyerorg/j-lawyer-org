@@ -1165,6 +1165,8 @@ public class AssistantChatPanel extends JDialog {
                 for (ArchiveFileDocumentsBean doc : docs) {
                     DocumentPreview preview = afs.getDocumentPreview(doc.getId(), DocumentPreview.TYPE_TEXT);
                     sb.append("--- ").append(doc.getName()).append(" ---").append(System.lineSeparator());
+                    // title, correspondent, received date and keywords as far as they are set
+                    sb.append(DocumentToolSupport.metadataHeader(doc));
                     sb.append(preview.getText()).append(System.lineSeparator()).append(System.lineSeparator());
                 }
             }

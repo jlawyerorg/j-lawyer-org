@@ -19,7 +19,7 @@
   Such- und REST-Anbindung.
 - Non-Goals: mehrere Von/An-Einträge je Dokument; Ablösung der Etiketten; Metadaten an
   Kontakt-Dokumenten; Änderung bestehender REST-Endpunkte; Datenmigration/Backfill für
-  Bestandsdokumente; MCP/Ingo-Tool-Ausgabe (Folge-Change); KI-Schlagwortvorschläge im
+  Bestandsdokumente; KI-Schlagwortvorschläge im
   Web-Client und KI-Ausführung über REST.
 
 ## Decisions
@@ -341,6 +341,34 @@ Das bisherige Panel „Dokument-Etiketten“ unterhalb der Dokumentenliste (`jPa
 - `MetadataSuggester` arbeitet dafür mit einer Textquelle (`TextSource`) statt fest mit einem
   Akten-Dokument; Akten-Dokumente nutzen weiter die Text-Vorschau des Servers.
 
+### D16 – Ingo-Tools (`ToolRegistry`)
+- **Listen-Tools** (`list_case_documents`, `list_case_documents_by_date`,
+  `search_case_documents`) nutzen eine gemeinsame Ausgabe je Dokument: zusätzlich zu id,
+  Name, Größe, Erstelldatum, Ordner nur gesetzte Felder `title`, `keywords[]`,
+  `receivedDate` (`yyyy-MM-dd HH:mm`), `correspondent {name, contactId, direction in|out}`,
+  `parentId`, `attachmentCount`. Etiketten und Nachrichten stehen bewusst **nicht** in den
+  Listen (Größe der Tool-Antworten), sondern nur in `get_document_details`.
+- `search_case_documents` sucht zusätzlich in Bezeichnung, Schlagworten und Von/An;
+  `list_case_documents_by_date` filtert per `dateField` = `created` (Standard) oder
+  `received`.
+- **Neu, lesend:** `get_document_details` (Metadaten, Etiketten mit Wert, Eltern-Dokument,
+  Anlagen, verknüpfte Nachrichten).
+- **Neu, schreibend (mit Bestätigung):** `update_document_metadata` für ein oder mehrere
+  Dokumente mit Patch-Semantik wie D5 (nur übergebene Felder; Schlagworte
+  `add`/`remove`/`set`; Von/An per Kontakt-ID oder Freitext), `set_document_parent`
+  (Serverprüfung auf Zyklen/fremde Akten).
+- **Angepasst:** `move_document_to_case` akzeptiert `documentIds` (Hierarchie bleibt beim
+  gemeinsamen Verschieben erhalten); `rename_document` betrifft nur den Dateinamen;
+  `save_email_to_case` setzt Bezeichnung (Betreff), Eingang, Von/An (Kontaktauflösung wie im
+  Client über `MailDocumentOrigins`/`DocumentOrigin`) und speichert mit
+  `saveAttachments=true` die Anhänge als Anlagen der E-Mail; `create_note` und
+  `create_document_from_template` nehmen `title`/`keywords`; `create_instant_message` nimmt
+  `documentId`, `search_instant_messages` filtert danach und gibt den Dokumentbezug aus.
+- Der Chat-Anhang „Dokument als Kontext“ stellt Bezeichnung, Von/An, Eingang und Schlagworte
+  dem Dokumenttext voran.
+- Parameter-Aufbereitung (Schlagwort-Operation, Richtung, Datumsangaben) liegt in einer
+  reinen Hilfsklasse `DocumentToolSupport`, damit sie ohne Server testbar ist.
+
 ## Risks / Trade-offs
 - **Umfang der Client-Änderung** (`CaseFolderPanel` ≈ 2100 Zeilen, `ArchiveFilePanel`
   ≈ 11 000 Zeilen): Risiko von Regressionen bei DnD, Auswahl, Kontextmenü. Mitigation:
@@ -360,5 +388,6 @@ Rollback: Spalten bleiben ungenutzt; kein Datenverlust bestehender Felder.
 
 ## Resolved Questions
 - Kein nachträgliches Befüllen von Bestandsdaten (auch nicht in einem Folge-Change).
-- MCP-Server/Ingo sollen die neuen Felder ausgeben (`list_case_documents` u. ä.) – als
-  **Folge-Change** nach diesem, nicht Teil dieses Scopes.
+- MCP-Server/Ingo sollen die neuen Felder ausgeben – zunächst als Folge-Change geplant, dann
+  in diesen Change aufgenommen (D16). Der MCP-Server selbst ist noch nicht umgesetzt
+  (`add-mcp-server`) und übernimmt die Tools über seine Paritätsanforderung.

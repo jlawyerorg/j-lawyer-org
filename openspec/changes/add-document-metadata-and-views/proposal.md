@@ -99,5 +99,7 @@ Liste mit Vorschau (Sichten, Lesen) oder eine dichte Tabelle (Sortieren, Verglei
 - Außerhalb des Scopes: Metadaten an Kontakt-Dokumenten (`AddressDocumentsBean`),
   mehrere Empfänger je Dokument, nachträgliches Befüllen von Bestandsdokumenten,
   KI-Schlagwortvorschläge im Web-Client (vorerst zurückgestellt).
-- Folge-Change (bewusst getrennt): MCP-Server/Ingo-Tools (`list_case_documents` u. ä.)
-  geben die neuen Felder aus.
+- **Ingo-Tools** (`ToolRegistry`): Dokument-Tools geben die neuen Felder aus, neue Tools
+  `get_document_details`, `update_document_metadata` und `set_document_parent`; E-Mail-
+  Speichern, Notiz/Vorlage und Nachrichten setzen bzw. kennen die Metadaten. Der MCP-Server
+  (Change `add-mcp-server`, noch nicht umgesetzt) übernimmt diese Tools bei der Parität.

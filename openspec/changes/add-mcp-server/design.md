@@ -168,6 +168,16 @@ services, so the actual business logic is shared where it matters.
 cycles, forces a lowest-common-denominator tool model); having the MCP server call the client
 (nonsensical).
 
+*Parity includes document metadata* (change `add-document-metadata-and-views`, D16): the
+document tools return title, keywords, received date, correspondent, parent and attachment
+count; `get_document_details`, `update_document_metadata` and `set_document_parent` are new;
+`move_document_to_case` accepts several documents, `save_email_to_case` sets the metadata and
+can store attachments as children, `create_note`/`create_document_from_template` accept
+`title`/`keywords` and the instant message tools know the document context. The MCP tool
+catalogue follows `ToolRegistry` in this state, using the `*Local` methods of the same change
+(`updateDocumentsMetadata`, `setDocumentParent`, `resolveCorrespondent`, `addDocument` with
+`DocumentMetadata`).
+
 ### Decision 3a -- `web_search` and `fetch_url` are not exposed over MCP
 
 The MCP catalogue is the 60 tools that read or write j-lawyer data. The two web tools stay
