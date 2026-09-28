@@ -746,6 +746,8 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
 
     @EJB
     private DunningCaseFacadeLocal dunningCasesFacade;
+    @EJB
+    private SystemManagementLocal systemManagement;
 
     @EJB
     private ClaimLedgerPartyFacadeLocal claimLedgerPartiesFacade;
@@ -850,7 +852,9 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
         // actually read
         String content;
         try {
-            EdaFile file = new EdaMahnbescheidBuilder().buildFile(dunningCase,
+            EdaFile file = new EdaMahnbescheidBuilder()
+                    .withSoftwareVersion(this.systemManagement.getServerVersion())
+                    .buildFile(dunningCase,
                     partiesOf(parties, ClaimPartyRole.CREDITOR),
                     partiesOf(parties, ClaimPartyRole.DEBTOR),
                     toClaims(claims, components),

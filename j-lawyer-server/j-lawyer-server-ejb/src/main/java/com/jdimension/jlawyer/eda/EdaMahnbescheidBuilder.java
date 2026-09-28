@@ -670,7 +670,9 @@ import com.jdimension.jlawyer.persistence.InterestType;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Assembles a complete application for a Mahnbescheid from the parts of a dunning procedure.
@@ -691,6 +693,28 @@ public class EdaMahnbescheidBuilder {
     private final EdaClaimMapper claimMapper = new EdaClaimMapper();
     private final EdaRepresentativeMapper representativeMapper = new EdaRepresentativeMapper();
     private final EdaAncillaryClaimMapper ancillaryMapper = new EdaAncillaryClaimMapper();
+
+    /**
+     * Der Name, unter dem sich die erzeugende Software im Dateivorsatz nennt.
+     *
+     * Das Feld gibt es im Satzaufbau, und das Portal der Mahngerichte belegt es ("Online-Mahnantrag"
+     * mit dem Stand des Formats). Wer beim Gericht eine Datei prüft, sieht damit ohne Rückfrage,
+     * welches Programm sie geschrieben hat - und bei einer Monierung, ob es an der Fassung liegt.
+     */
+    public static final String SOFTWARE_NAME = "j-lawyer.org";
+
+    private String softwareVersion = null;
+
+    /**
+     * Sets the version the file announces itself with.
+     *
+     * @param softwareVersion the version of the installation, or null to leave the field empty
+     * @return this builder
+     */
+    public EdaMahnbescheidBuilder withSoftwareVersion(String softwareVersion) {
+        this.softwareVersion = softwareVersion;
+        return this;
+    }
 
     /**
      * Builds the records of one application.
@@ -773,8 +797,19 @@ public class EdaMahnbescheidBuilder {
             }
         }
         ancillary.sort((a, b) -> ancillaryRecordIdOf(a).compareTo(ancillaryRecordIdOf(b)));
+
+        // Je Kostenart ein Satz, mit der Summe. Das Format haelt fuer jede Art genau einen Satz
+        // bereit - der Schluessel MAHNK/00 traegt keine Folgenummer, anders als der Anspruchssatz
+        // ASPK/001 -, und das Portal der Mahngerichte schreibt es ebenso: drei Mahnungen zu je
+        // 2,50 EUR erscheinen dort als ein Satz ueber 7,50 EUR. Ein Satz je Position ergaebe
+        // dreimal denselben Schluessel, und was ein Gericht daraus macht, ist unbestimmt - im
+        // schlechtesten Fall nimmt es einen davon, und der Mandant verliert den Rest.
+        Map<String, List<EdaClaimMapper.Claim>> byKind = new LinkedHashMap<>();
         for (EdaClaimMapper.Claim claim : ancillary) {
-            records.add(mapAncillary(claim));
+            byKind.computeIfAbsent(ancillaryRecordIdOf(claim), k -> new ArrayList<>()).add(claim);
+        }
+        for (List<EdaClaimMapper.Claim> group : byKind.values()) {
+            records.add(mapAncillary(group));
         }
         return records;
     }
@@ -842,6 +877,8 @@ public class EdaMahnbescheidBuilder {
         header.set("BELART", EdaMahnbescheidLayouts.SATZART_MAHNBESCHEID);
         header.set("FORMAT", EdaMahnbescheidLayouts.FORMAT_MAHNBESCHEID);
         header.set("EDAID", fileName);
+        header.set("SWN", SOFTWARE_NAME);
+        header.set("SWV", this.softwareVersion);
         return header;
     }
 
@@ -875,20 +912,85 @@ public class EdaMahnbescheidBuilder {
      * and a second rule would have nowhere to go. That is not a limitation worth working around -
      * staggered interest on a reminder charge is not something the format contemplates.
      */
-    private EdaRecord mapAncillary(EdaClaimMapper.Claim claim) {
-        BigDecimal rate = null;
-        boolean aboveBaseRate = false;
-        Date from = null;
+    private EdaRecord mapAncillary(List<EdaClaimMapper.Claim> group) {
+
+        BigDecimal total = BigDecimal.ZERO;
+        for (EdaClaimMapper.Claim claim : group) {
+            total = total.add(claim.getAmount() == null ? BigDecimal.ZERO : claim.getAmount());
+        }
+
+        // Der Satz traegt einen Zinssatz und einen Zeitraum. Tragen zwei Positionen derselben Art
+        // verschiedene Zinsen, laesst sich das nicht abbilden - und stillschweigend den ersten zu
+        // nehmen hiesse, dem Mandanten Zinsen zu nehmen, ohne es ihm zu sagen.
+        EdaClaimMapper.Claim withInterest = null;
+        for (EdaClaimMapper.Claim claim : group) {
+            if (interestOf(claim) == null) {
+                continue;
+            }
+            if (withInterest != null && !sameInterest(withInterest, claim)) {
+                throw new IllegalArgumentException("Die Positionen der Art \""
+                        + label(group.get(0)) + "\" tragen verschiedene Zinsen. Das Format sieht "
+                        + "dafür einen Satz mit einem Zinssatz vor; bitte fassen Sie sie zu einer "
+                        + "Position zusammen oder verzichten Sie auf die abweichenden Zinsen.");
+            }
+            withInterest = claim;
+        }
+
+        EdaClaimMapper.Claim leading = withInterest == null ? group.get(0) : withInterest;
+        InterestRule rule = interestOf(leading);
+        boolean aboveBaseRate = rule != null && rule.getInterestType() != InterestType.FIXED;
+        BigDecimal rate = rule == null ? null
+                : (aboveBaseRate ? rule.getBaseMargin() : rule.getFixedRate());
+        Date from = rule == null ? null
+                : (leading.getInterestFrom() != null ? leading.getInterestFrom() : rule.getValidFrom());
+
+        return ancillaryMapper.map(leading.getComponent(), total, rate, aboveBaseRate,
+                from, leading.getInterestTo());
+    }
+
+    /**
+     * The first interest rule of a claim that names a rate, or null where none does.
+     */
+    private InterestRule interestOf(EdaClaimMapper.Claim claim) {
         for (InterestRule rule : claim.getInterestRules()) {
-            aboveBaseRate = rule.getInterestType() != InterestType.FIXED;
-            rate = aboveBaseRate ? rule.getBaseMargin() : rule.getFixedRate();
+            BigDecimal rate = rule.getInterestType() != InterestType.FIXED
+                    ? rule.getBaseMargin() : rule.getFixedRate();
             if (rate != null) {
-                from = claim.getInterestFrom() != null ? claim.getInterestFrom() : rule.getValidFrom();
-                break;
+                return rule;
             }
         }
-        return ancillaryMapper.map(claim.getComponent(), claim.getAmount(), rate, aboveBaseRate,
-                from, claim.getInterestTo());
+        return null;
+    }
+
+    /**
+     * Whether two claims would write the same interest into the record.
+     */
+    private boolean sameInterest(EdaClaimMapper.Claim a, EdaClaimMapper.Claim b) {
+        InterestRule ra = interestOf(a);
+        InterestRule rb = interestOf(b);
+        if (ra == null || rb == null) {
+            return ra == rb;
+        }
+        if (ra.getInterestType() != rb.getInterestType()) {
+            return false;
+        }
+        BigDecimal va = ra.getInterestType() != InterestType.FIXED ? ra.getBaseMargin() : ra.getFixedRate();
+        BigDecimal vb = rb.getInterestType() != InterestType.FIXED ? rb.getBaseMargin() : rb.getFixedRate();
+        if (va == null ? vb != null : vb == null || va.compareTo(vb) != 0) {
+            return false;
+        }
+        Date fa = a.getInterestFrom() != null ? a.getInterestFrom() : ra.getValidFrom();
+        Date fb = b.getInterestFrom() != null ? b.getInterestFrom() : rb.getValidFrom();
+        return fa == null ? fb == null : fb != null && fa.getTime() == fb.getTime();
+    }
+
+    /**
+     * What to call a kind of ancillary claim in a message to the user.
+     */
+    private String label(EdaClaimMapper.Claim claim) {
+        ClaimComponent component = claim.getComponent();
+        return component == null || component.getType() == null
+                ? "Nebenforderung" : component.getType().getLabel();
     }
 
     private EdaRecord kennsatz(DunningCase dunningCase, List<ClaimLedgerParty> debtors) {

@@ -1080,4 +1080,71 @@ public class EdaMahnbescheidBuilderTest {
         assertEquals("01", header.get("BELART"));
         assertEquals("4000", header.get("FORMAT"));
     }
+
+    private EdaClaimMapper.Claim ancillary(String id, ClaimComponentType type, String amount) {
+        ClaimComponent c = new ClaimComponent();
+        c.setId(id);
+        c.setName(type.getLabel());
+        c.setType(type);
+        return new EdaClaimMapper.Claim(c, new BigDecimal(amount));
+    }
+
+    /**
+     * Drei Mahnungen sind drei Positionen im Konto, aber eine Zeile im Antrag.
+     *
+     * Das Format haelt je Kostenart genau einen Satz bereit - der Schluessel MAHNK/00 traegt keine
+     * Folgenummer -, und das Portal der Mahngerichte schreibt es ebenso. Drei Saetze mit demselben
+     * Schluessel waeren unbestimmt: im schlechtesten Fall nimmt das Gericht einen davon, und der
+     * Mandant verliert den Rest.
+     */
+    @Test
+    public void ancillaryClaimsOfOneKindBecomeOneRecordWithTheirSum() throws Exception {
+        List<EdaRecord> records = builder.buildApplication(dunningCase(),
+                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
+                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
+                Arrays.asList(claim("11", "5192.78"),
+                        ancillary("m1", ClaimComponentType.PRECOURT_REMINDER_COSTS, "2.50"),
+                        ancillary("m2", ClaimComponentType.PRECOURT_REMINDER_COSTS, "2.50"),
+                        ancillary("m3", ClaimComponentType.PRECOURT_REMINDER_COSTS, "2.50")));
+
+        List<EdaRecord> reminders = new ArrayList<>();
+        for (EdaRecord r : records) {
+            if ("C29".equals(r.getLayout().getId())) {
+                reminders.add(r);
+            }
+        }
+        assertEquals("drei Positionen, ein Satz", 1, reminders.size());
+        assertEquals("750", reminders.get(0).get("MAHNK").trim());
+    }
+
+    /**
+     * Verschiedene Kostenarten bleiben getrennt - das Gericht entscheidet ueber Mahnkosten anders
+     * als ueber Inkassokosten, und ein Schuldner kann die eine bestreiten und die andere nicht.
+     */
+    @Test
+    public void ancillaryClaimsOfDifferentKindsStaySeparate() throws Exception {
+        List<String> ids = layoutSequence(builder.buildApplication(dunningCase(),
+                Arrays.asList(party("p1", "Frau", "Erika", "Gläubiger")),
+                Arrays.asList(party("p2", "Herr", "Max", "Schuldner")),
+                Arrays.asList(claim("11", "5000.00"),
+                        ancillary("m1", ClaimComponentType.PRECOURT_REMINDER_COSTS, "2.50"),
+                        ancillary("a1", ClaimComponentType.PRECOURT_EXPENSES, "12.50"))));
+
+        assertTrue(ids.contains("C28"));
+        assertTrue(ids.contains("C29"));
+    }
+
+    /**
+     * Der Dateivorsatz nennt die erzeugende Software - das Portal der Mahngerichte tut es auch, und
+     * bei einer Monierung ist die Fassung die erste Frage.
+     */
+    @Test
+    public void theFileHeaderNamesTheSoftware() {
+        EdaRecord header = builder.withSoftwareVersion("3.6.0.48")
+                .header("07774512", "MB0760", date(2026, 9, 28));
+
+        assertEquals("j-lawyer.org", header.get("SWN").trim());
+        assertEquals("3.6.0.48", header.get("SWV").trim());
+    }
+
 }
