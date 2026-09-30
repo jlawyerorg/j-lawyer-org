@@ -685,6 +685,7 @@ import java.awt.Graphics2D;
 import java.awt.BasicStroke;
 import java.awt.RenderingHints;
 import java.awt.geom.RoundRectangle2D;
+import java.awt.image.BufferedImage;
 import java.awt.Image;
 import java.awt.Frame;
 import java.awt.Toolkit;
@@ -1113,32 +1114,14 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
 
         // Calculate text area within bubble
         int textStartX = bubbleX + PADDING_H + leftContentOffset;
-        int textAreaWidth = bubbleWidth - (2 * PADDING_H) - leftContentOffset - 80; // 80 for icons
+        int textAreaWidth = textAreaWidthFor(width);
         int yOffset = PADDING_TOP + metrics.getHeight();
         int lineSpacing = metrics.getHeight();
 
         // Calculate content height first for bubble sizing
         String content = (this.message == null || this.message.getContent() == null) ? "" : this.message.getContent();
         String[] lines = content.split("\n");
-        int contentHeight = 0;
-        for (String line : lines) {
-            String[] words = line.split(" ");
-            String initial = (words.length > 0) ? words[0] : "";
-            StringBuilder currentLine = new StringBuilder(initial);
-
-            for (int i = 1; i < words.length; i++) {
-                String testLine = currentLine.toString() + " " + words[i];
-                if (metrics.stringWidth(testLine) <= textAreaWidth) {
-                    currentLine.append(" ").append(words[i]);
-                } else {
-                    contentHeight += lineSpacing;
-                    currentLine = new StringBuilder(words[i]);
-                }
-            }
-            contentHeight += lineSpacing;
-        }
-
-        int bubbleHeight = PADDING_TOP + contentHeight + PADDING_BOTTOM + lineSpacing; // extra for timestamp
+        int bubbleHeight = bubbleHeightFor(metrics, lines, textAreaWidth);
         int totalHeight = bubbleHeight + PADDING_TOP;
 
         // Draw avatar for other messages
@@ -1278,6 +1261,63 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
             lastPreferredWidth = parentWidth;
             lastPreferredHeight = totalHeight;
             this.setPreferredSize(new Dimension(parentWidth, totalHeight));
+        }
+    }
+
+    private int textAreaWidthFor(int width) {
+        int bubbleWidth = width - (2 * BUBBLE_MARGIN);
+        if (!this.isOwnMessage()) {
+            bubbleWidth -= AVATAR_SIZE + AVATAR_GAP;
+        }
+        int hasMentionBar = (this.message != null && this.message.hasMentions()) ? MENTION_BAR_WIDTH + 6 : 0;
+        int hasReadReceipt = (this.read != READ_NOTAPPLICABLE) ? READ_RECEIPT_WIDTH + 4 : 0;
+        return bubbleWidth - (2 * PADDING_H) - hasMentionBar - hasReadReceipt - 80; // 80 for icons
+    }
+
+    private int bubbleHeightFor(FontMetrics metrics, String[] lines, int textAreaWidth) {
+        int lineSpacing = metrics.getHeight();
+        int contentHeight = 0;
+        for (String line : lines) {
+            String[] words = line.split(" ");
+            String initial = (words.length > 0) ? words[0] : "";
+            StringBuilder currentLine = new StringBuilder(initial);
+
+            for (int i = 1; i < words.length; i++) {
+                String testLine = currentLine.toString() + " " + words[i];
+                if (metrics.stringWidth(testLine) <= textAreaWidth) {
+                    currentLine.append(" ").append(words[i]);
+                } else {
+                    contentHeight += lineSpacing;
+                    currentLine = new StringBuilder(words[i]);
+                }
+            }
+            contentHeight += lineSpacing;
+        }
+        return PADDING_TOP + contentHeight + PADDING_BOTTOM + lineSpacing; // extra for timestamp
+    }
+
+    /**
+     * Sets the preferred size for a width that is known before the component is shown. The
+     * size is otherwise only determined while painting, which is too late for a container
+     * that is sized to its content once, like a popup.
+     *
+     * @param parentWidth the callout width of the parent, see MessagePanel.getCalloutWidth
+     * @param width the width this component will be laid out with
+     */
+    public void presetPreferredSize(int parentWidth, int width) {
+        // same rendering hints as in paintComponent, they affect the text widths
+        Graphics2D g2d = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB).createGraphics();
+        try {
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
+            g2d.setFont(defaultFont);
+            String content = (this.message == null || this.message.getContent() == null) ? "" : this.message.getContent();
+            int totalHeight = bubbleHeightFor(g2d.getFontMetrics(), content.split("\n"), textAreaWidthFor(width)) + PADDING_TOP;
+            lastPreferredWidth = parentWidth;
+            lastPreferredHeight = totalHeight;
+            this.setPreferredSize(new Dimension(parentWidth, totalHeight));
+        } finally {
+            g2d.dispose();
         }
     }
 

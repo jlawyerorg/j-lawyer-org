@@ -824,6 +824,22 @@ public class MessagePanel extends javax.swing.JPanel implements CaseDropTarget {
     }
 
     /**
+     * Sizes the message for a container of the given width before it is shown. The size is
+     * otherwise only determined while painting, which is too late for a container that is sized
+     * to its content once, like a popup.
+     *
+     * @param parentWidth the width of the container the message is shown in
+     */
+    public void presetSize(int parentWidth) {
+        // see getCalloutWidth
+        int calloutWidth = parentWidth - this.lblUser.getPreferredSize().width - 30;
+        // lay out at the width the message will get, to learn what that leaves for the callout
+        this.setSize(calloutWidth, this.getPreferredSize().height);
+        this.doLayout();
+        this.calloutPanelComponent1.presetPreferredSize(calloutWidth, this.calloutPanelComponent1.getWidth());
+    }
+
+    /**
      * Refreshes dynamic UI parts like relative timestamps and tooltips.
      */
     public void refreshRelativeTime() {

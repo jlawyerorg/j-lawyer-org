@@ -769,6 +769,9 @@ public class CaseDocumentsTable extends JPanel {
     private static final int EXPANDER_SIZE = 20;
     // gap between the expander slot and the title (JLabel default icon text gap)
     private static final int EXPANDER_GAP = 4;
+    // width of the messages popup, and the height from which it scrolls
+    private static final int MESSAGES_POPUP_WIDTH = 520;
+    private static final int MESSAGES_POPUP_MAX_HEIGHT = 480;
     // reserves the expander slot for documents without attachments
     private static final Icon NO_EXPANDER = new Icon() {
         @Override
@@ -1440,12 +1443,34 @@ public class CaseDocumentsTable extends JPanel {
         JScrollPane sp = new JScrollPane(list);
         sp.setBorder(null);
         sp.getVerticalScrollBar().setUnitIncrement(16);
-        sp.setPreferredSize(new Dimension(460, Math.min(360, list.getPreferredSize().height + 8)));
+        sp.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        // The messages wrap their text to the width of the list and are as high as that takes.
+        // Whether the list scrolls is therefore decided up front: a scrollbar that comes and goes
+        // changes the width, with it the heights, and with them the scrollbar again.
+        int height = presetMessageSizes(list, MESSAGES_POPUP_WIDTH);
+        boolean scrolls = height > MESSAGES_POPUP_MAX_HEIGHT;
+        if (scrolls) {
+            presetMessageSizes(list, MESSAGES_POPUP_WIDTH - sp.getVerticalScrollBar().getPreferredSize().width);
+        }
+        sp.setVerticalScrollBarPolicy(scrolls ? JScrollPane.VERTICAL_SCROLLBAR_ALWAYS : JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+        sp.setPreferredSize(new Dimension(MESSAGES_POPUP_WIDTH, Math.min(MESSAGES_POPUP_MAX_HEIGHT, height)));
         JPanel content = new JPanel(new BorderLayout());
         content.add(sp, BorderLayout.CENTER);
         content.add(footer, BorderLayout.SOUTH);
         popup.add(content);
         popup.show(this.table, e.getX(), e.getY());
+    }
+
+    /**
+     * @return the height of the list once its messages are sized for the given width
+     */
+    private static int presetMessageSizes(JPanel list, int width) {
+        for (Component c : list.getComponents()) {
+            if (c instanceof MessagePanel) {
+                ((MessagePanel) c).presetSize(width);
+            }
+        }
+        return list.getPreferredSize().height;
     }
 
     // ---- saving in-place edits -------------------------------------------------------------
