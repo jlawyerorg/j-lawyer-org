@@ -1,6 +1,7 @@
 package org.jlawyer.io.rest.v8;
 import org.jlawyer.io.rest.tools.RestErrorResponses;
 
+import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.InvoiceFacadeLocal;
 import com.jdimension.jlawyer.persistence.Timesheet;
 import com.jdimension.jlawyer.persistence.TimesheetPosition;
@@ -556,11 +557,13 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
      *
      * A non-empty invoiceId links the position to that invoice; omitting it leaves an
      * existing link untouched, so clients not sending the field cannot unbill a position.
-     * An invoiceId that cannot be resolved is rejected and nothing is saved.
+     * An invoiceId that cannot be resolved, or that belongs to an invoice of another case,
+     * is rejected and nothing is saved.
      *
      * @param timesheetId timesheet ID
      * @param positionId position ID
      * @param position updated position data
+     * @response 400 Invoice does not belong to the case of the timesheet
      * @response 401 User not authorized
      * @response 403 User not authenticated
      * @response 404 Timesheet or invoice not found
@@ -572,7 +575,7 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
     @Path("/{timesheetId}/positions/{positionId}")
     @RolesAllowed({"writeArchiveFileRole"})
     @io.swagger.annotations.ApiOperation(value="Updates an existing timesheet position, optionally linking it to an invoice", response=org.jlawyer.io.rest.v8.pojo.RestfulTimesheetPositionV8.class)
-    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
+    @io.swagger.annotations.ApiResponses({@io.swagger.annotations.ApiResponse(code=400, message="Invoice does not belong to the case of the timesheet"), @io.swagger.annotations.ApiResponse(code=404, message="Not Found")})
     public Response updatePosition(@PathParam("timesheetId") String timesheetId, @PathParam("positionId") String positionId, @io.swagger.annotations.ApiParam RestfulTimesheetPositionV8 position) {
         try {
             InitialContext ic = new InitialContext();
@@ -586,9 +589,16 @@ public class TimesheetsEndpointV8 implements TimesheetsEndpointLocalV8 {
             String invoiceId = position.getInvoiceId();
             if (invoiceId != null && !invoiceId.trim().isEmpty()) {
                 InvoiceFacadeLocal invoiceFacade = (InvoiceFacadeLocal) ic.lookup(LOOKUP_INVOICE_FACADE);
-                if (invoiceFacade.find(invoiceId) == null) {
+                Invoice invoice = invoiceFacade.find(invoiceId);
+                if (invoice == null) {
                     log.error("invoice with id " + invoiceId + " does not exist");
                     return Response.status(Response.Status.NOT_FOUND).entity("Invoice not found").build();
+                }
+                // the invoice must belong to the same case as the timesheet
+                if (invoice.getArchiveFileKey() == null || ts.getArchiveFileKey() == null
+                        || !invoice.getArchiveFileKey().getId().equals(ts.getArchiveFileKey().getId())) {
+                    log.error("invoice with id " + invoiceId + " does not belong to the case of timesheet " + timesheetId);
+                    return Response.status(Response.Status.BAD_REQUEST).entity("Invoice does not belong to the case of the timesheet").build();
                 }
             }
 
