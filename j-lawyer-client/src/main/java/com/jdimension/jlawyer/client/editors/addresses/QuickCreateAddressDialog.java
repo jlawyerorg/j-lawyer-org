@@ -702,6 +702,7 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
     public QuickCreateAddressDialog(java.awt.Dialog parent, boolean modal) {
         super(parent, modal);
         initComponents();
+        com.jdimension.jlawyer.client.utils.DesktopDateEntry.hint(this.txtBirthDate);
         this.result=null;
         
         ClientSettings settings = ClientSettings.getInstance();
@@ -1326,6 +1327,19 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
     private void cmdUseSelectionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdUseSelectionActionPerformed
         if ((this.txtName.getText() == null || "".equals(this.txtName.getText())) && (this.txtCompany.getText() == null || "".equals(this.txtCompany.getText()))) {
             JOptionPane.showMessageDialog(this, "Es muss mindestens ein Name oder ein Firmenname angegeben werden, um eine Adresse zu speichern.", "Adressen - Gültigkeitsprüfung", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        if (!com.jdimension.jlawyer.client.utils.DesktopDateEntry.check(
+                this, this.txtBirthDate, "Geburtsdatum", false)) {
+            return;
+        }
+        try {
+            com.jdimension.jlawyer.client.utils.DateUtils.validatePersonalDays(
+                    this.txtBirthDate.getText(), null, true, false, java.time.LocalDate.now());
+        } catch (IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Ungültiges Datum", JOptionPane.WARNING_MESSAGE);
+            this.txtBirthDate.requestFocusInWindow();
             return;
         }
 

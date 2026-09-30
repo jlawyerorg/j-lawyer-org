@@ -719,6 +719,7 @@ public class ClaimLedgerDunningPanel extends javax.swing.JPanel {
      */
     public ClaimLedgerDunningPanel() {
         initComponents();
+        com.jdimension.jlawyer.client.utils.DesktopDateEntry.hint(this.txtSentDate);
 
         this.tblStages.setModel(new DefaultTableModel(
                 new Object[]{"Versandt am", "Mahnstufe", "Zahlungsfrist bis", "Status",
@@ -991,6 +992,9 @@ public class ClaimLedgerDunningPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_cmdRefreshActionPerformed
 
     private void cmdSendStageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSendStageActionPerformed
+        if (!com.jdimension.jlawyer.client.utils.DesktopDateEntry.check(this, this.txtSentDate, "Versanddatum", true)) {
+            return;
+        }
         int index = this.cmbNextStage.getSelectedIndex();
         if (this.ledger == null || index < 0 || index >= this.selectableStages.size()) {
             return;

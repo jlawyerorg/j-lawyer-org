@@ -706,6 +706,9 @@ public class ClaimLedgerTitleDialog extends javax.swing.JDialog {
     public ClaimLedgerTitleDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
+        com.jdimension.jlawyer.client.utils.DesktopDateEntry.hint(this.txtIssueDate);
+        com.jdimension.jlawyer.client.utils.DesktopDateEntry.hint(this.txtClauseDate);
+        com.jdimension.jlawyer.client.utils.DesktopDateEntry.hint(this.txtServiceDate);
 
         for (EnforcementTitleType t : EnforcementTitleType.values()) {
             this.cmbType.addItem(t);
@@ -1041,6 +1044,11 @@ public class ClaimLedgerTitleDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_txtIssueDateFocusLost
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
+        if (!com.jdimension.jlawyer.client.utils.DesktopDateEntry.check(this, this.txtIssueDate, "Ausstellungsdatum", false)
+                || !com.jdimension.jlawyer.client.utils.DesktopDateEntry.check(this, this.txtClauseDate, "Klauseldatum", false)
+                || !com.jdimension.jlawyer.client.utils.DesktopDateEntry.check(this, this.txtServiceDate, "Zustellungsdatum", false)) {
+            return;
+        }
         Date issueDate = parseDate(this.txtIssueDate.getText());
         if (!this.txtIssueDate.getText().trim().isEmpty() && issueDate == null) {
             JOptionPane.showMessageDialog(this,

@@ -1,4 +1,5 @@
-/*                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*
+                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -660,336 +661,167 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.editors.files;
+package com.jdimension.jlawyer.client.utils;
 
-import com.jdimension.jlawyer.client.components.MultiCalDialog;
-import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
-import com.jdimension.jlawyer.client.events.EventBroker;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.persistence.ClaimLedger;
-import com.jdimension.jlawyer.pojo.ClaimStatement;
-import com.jdimension.jlawyer.services.ClaimLedgerServiceRemote;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.awt.Cursor;
-import java.io.FileOutputStream;
-import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
+import java.awt.Component;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.util.Date;
-import javax.swing.JFileChooser;
+import java.util.Objects;
+import javax.swing.InputVerifier;
+import javax.swing.JComponent;
 import javax.swing.JOptionPane;
-import org.apache.log4j.Logger;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import com.toedter.calendar.JDateChooser;
 
-/**
- * Shows the claim statement (Forderungsaufstellung) of a claim ledger to a chosen key date, and
- * lets the user file it in the case as a PDF or export it as CSV.
- *
- * The preview is assembled on the server, so what the user reads here is what a stored document
- * would contain - the dialog does not compute anything of its own.
- *
- * @author jens
- */
-public class ClaimStatementDialog extends javax.swing.JDialog {
+/** Validation of explicitly identified, editable date-only controls at commit time. */
+public final class DesktopDateEntry {
 
-    private static final Logger log = Logger.getLogger(ClaimStatementDialog.class.getName());
-
-    private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
-
-    private ClaimLedger ledger = null;
-    private ClaimStatement statement = null;
-
-    /**
-     * Creates the dialog.
-     *
-     * @param parent the parent window
-     * @param modal whether the dialog is modal
-     */
-    public ClaimStatementDialog(java.awt.Frame parent, boolean modal) {
-        super(parent, modal);
-        initComponents();
-        com.jdimension.jlawyer.client.utils.DesktopDateEntry.hint(this.txtKeyDate);
-        this.txtKeyDate.setText(this.df.format(new Date()));
+    private DesktopDateEntry() {
     }
 
-    /**
-     * Sets the ledger to state and loads the statement for today.
-     *
-     * @param ledger the claim ledger
-     */
-    public void setLedger(ClaimLedger ledger) {
-        this.ledger = ledger;
-        if (ledger != null) {
-            this.setTitle("Forderungsaufstellung - " + ledger.getName());
+    public static void hint(JTextField field) {
+        field.putClientProperty("JTextField.placeholderText", "TTMMJJJJ");
+        String previous = field.getToolTipText();
+        String format = "TT.MM.JJJJ oder TTMMJJJJ (vierstelliges Jahr)";
+        field.setToolTipText(previous == null || previous.isEmpty()
+                ? format : previous + "; Format: " + format);
+        field.addFocusListener(new FocusAdapter() {
+            private String textOnFocus;
+
+            @Override
+            public void focusGained(FocusEvent event) {
+                textOnFocus = field.getText();
+            }
+
+            @Override
+            public void focusLost(FocusEvent event) {
+                if (!Objects.equals(textOnFocus, field.getText())) {
+                    normalizeCompleteDigits(field);
+                }
+            }
+        });
+    }
+
+    /** Give immediate visual feedback when a complete, valid undotted date is entered. */
+    public static void normalizeCompleteDigits(JTextField field) {
+        String text = field.getText();
+        if (text == null || !text.matches("[0-9]{8}")) {
+            return;
         }
-        loadStatement();
-    }
-
-    /**
-     * The key date currently entered, or today if the entry cannot be read as a date.
-     *
-     * @return the key date
-     */
-    private Date keyDate() {
         try {
-            return this.df.parse(this.txtKeyDate.getText());
-        } catch (Exception ex) {
-            return new Date();
+            field.setText(DateUtils.normalizeDesktopDay(text));
+        } catch (IllegalArgumentException ignored) {
+            // Invalid input remains visible until explicit validation explains it.
         }
     }
 
     /**
-     * Loads the statement from the server and renders the preview.
+     * @return true if the field can be saved; on failure leaves the input in place
      */
-    private void loadStatement() {
-        if (this.ledger == null || this.ledger.getId() == null) {
-            return;
-        }
-        if (!com.jdimension.jlawyer.client.utils.DesktopDateEntry.check(this, this.txtKeyDate, "Stichtag", true)) {
-            return;
-        }
-
-        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+    public static boolean check(Component owner, JTextField field, String label, boolean required) {
         try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            ClaimLedgerServiceRemote ledgerService = locator.lookupClaimLedgerServiceRemote();
-
-            this.statement = ledgerService.assembleClaimStatement(this.ledger.getId(), keyDate(),
-                    this.chkIncludeSubLedgers.isSelected());
-            this.txtStatement.setText(ledgerService.exportClaimStatementAsCsv(this.statement));
-            this.txtStatement.setCaretPosition(0);
-
-        } catch (Exception ex) {
-            log.error("Unable to load the claim statement of ledger " + this.ledger.getId(), ex);
-            JOptionPane.showMessageDialog(this,
-                    "Die Forderungsaufstellung konnte nicht geladen werden: " + ex.getMessage(),
-                    "Fehler", JOptionPane.ERROR_MESSAGE);
-        } finally {
-            this.setCursor(Cursor.getDefaultCursor());
+            String value = DateUtils.normalizeDesktopDay(field.getText());
+            if (required && value.isEmpty()) {
+                throw new IllegalArgumentException("Bitte ein Datum eingeben.");
+            }
+            field.setText(value);
+            return true;
+        } catch (IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(owner, label + ": " + ex.getMessage(),
+                    "Ungültiges Datum", JOptionPane.WARNING_MESSAGE);
+            field.requestFocusInWindow();
+            return false;
         }
     }
 
-    /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
-     */
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-    private void initComponents() {
+    /** Parser for a field that has passed {@link #check}. */
+    public static Date day(JTextField field) {
+        return DateUtils.parseDesktopDay(field.getText());
+    }
 
-        lblKeyDate = new javax.swing.JLabel();
-        txtKeyDate = new javax.swing.JTextField();
-        cmdSelectKeyDate = new javax.swing.JButton();
-        chkIncludeSubLedgers = new javax.swing.JCheckBox();
-        cmdRefresh = new javax.swing.JButton();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        txtStatement = new javax.swing.JTextArea();
-        cmdExportCsv = new javax.swing.JButton();
-        cmdStorePdf = new javax.swing.JButton();
-        cmdClose = new javax.swing.JButton();
+    /** For short date-only prompts without a persistent Swing field. */
+    public static Date requiredDay(String input) {
+        Date day = DateUtils.parseDesktopDay(input);
+        if (day == null) {
+            throw new IllegalArgumentException("Bitte ein Datum eingeben.");
+        }
+        return day;
+    }
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("Forderungsaufstellung");
-
-        lblKeyDate.setText("Stichtag:");
-
-        cmdSelectKeyDate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule.png"))); // NOI18N
-        cmdSelectKeyDate.setToolTipText("Stichtag wählen");
-        cmdSelectKeyDate.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdSelectKeyDateActionPerformed(evt);
-            }
-        });
-
-        chkIncludeSubLedgers.setText("Unterkonten einbeziehen");
-        chkIncludeSubLedgers.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkIncludeSubLedgersActionPerformed(evt);
-            }
-        });
-
-        cmdRefresh.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/reload.png"))); // NOI18N
-        cmdRefresh.setText("Aktualisieren");
-        cmdRefresh.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdRefreshActionPerformed(evt);
-            }
-        });
-
-        txtStatement.setEditable(false);
-        txtStatement.setColumns(20);
-        txtStatement.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
-        txtStatement.setRows(5);
-        jScrollPane1.setViewportView(txtStatement);
-
-        cmdExportCsv.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/calc.png"))); // NOI18N
-        cmdExportCsv.setText("CSV exportieren");
-        cmdExportCsv.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdExportCsvActionPerformed(evt);
-            }
-        });
-
-        cmdStorePdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/fileicons/file_type_pdf.png"))); // NOI18N
-        cmdStorePdf.setText("Als PDF in Akte ablegen");
-        cmdStorePdf.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdStorePdfActionPerformed(evt);
-            }
-        });
-
-        cmdClose.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
-        cmdClose.setText("Schließen");
-        cmdClose.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdCloseActionPerformed(evt);
-            }
-        });
-
-        org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(layout.createSequentialGroup()
-                .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 800, Short.MAX_VALUE)
-                    .add(layout.createSequentialGroup()
-                        .add(lblKeyDate)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(txtKeyDate, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 110, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdSelectKeyDate)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                        .add(chkIncludeSubLedgers)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                        .add(cmdRefresh)
-                        .add(0, 0, Short.MAX_VALUE))
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                        .add(0, 0, Short.MAX_VALUE)
-                        .add(cmdExportCsv)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdStorePdf)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdClose)))
-                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(layout.createSequentialGroup()
-                .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(lblKeyDate)
-                    .add(txtKeyDate, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(cmdSelectKeyDate)
-                    .add(chkIncludeSubLedgers)
-                    .add(cmdRefresh))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 460, Short.MAX_VALUE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(cmdClose)
-                    .add(cmdStorePdf)
-                    .add(cmdExportCsv))
-                .addContainerGap())
-        );
-
-        pack();
-    }// </editor-fold>//GEN-END:initComponents
-
-    private void cmdSelectKeyDateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSelectKeyDateActionPerformed
-        MultiCalDialog dlg = new MultiCalDialog(this.txtKeyDate, this, true);
-        dlg.setVisible(true);
-        loadStatement();
-    }//GEN-LAST:event_cmdSelectKeyDateActionPerformed
-
-    private void chkIncludeSubLedgersActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkIncludeSubLedgersActionPerformed
-        loadStatement();
-    }//GEN-LAST:event_chkIncludeSubLedgersActionPerformed
-
-    private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
-        loadStatement();
-    }//GEN-LAST:event_cmdRefreshActionPerformed
-
-    private void cmdExportCsvActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportCsvActionPerformed
-        if (this.statement == null) {
+    /** Connects the actual text editor of a date chooser to date-only validation. */
+    public static void installChooser(JDateChooser chooser, Component owner, String label) {
+        chooser.setDateFormatString("dd.MM.yyyy");
+        JComponent component = chooser.getDateEditor().getUiComponent();
+        if (!(component instanceof JTextField) || !((JTextField) component).isEditable()) {
             return;
         }
-        if (!com.jdimension.jlawyer.client.utils.DesktopDateEntry.check(this, this.txtKeyDate, "Stichtag", true)) {
-            return;
-        }
+        JTextField field = (JTextField) component;
+        field.putClientProperty("JTextField.placeholderText", "TTMMJJJJ");
+        field.setToolTipText("TT.MM.JJJJ oder TTMMJJJJ (vierstelliges Jahr)");
+        field.getDocument().addDocumentListener(new DocumentListener() {
+            private void normalizeCompleteDigits() {
+                String typed = field.getText();
+                if (!typed.matches("[0-9]{8}")) {
+                    return;
+                }
+                SwingUtilities.invokeLater(() -> {
+                    if (typed.equals(field.getText())) {
+                        try {
+                            chooser.setDate(DateUtils.parseDesktopDay(typed));
+                        } catch (IllegalArgumentException ignored) {
+                            // Keep the impossible date visible for the verifier to explain.
+                        }
+                    }
+                });
+            }
 
-        JFileChooser chooser = new JFileChooser();
-        chooser.setSelectedFile(new java.io.File("Forderungsaufstellung_"
-                + new SimpleDateFormat("yyyy-MM-dd").format(keyDate()) + ".csv"));
-        if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
-            return;
-        }
+            @Override
+            public void insertUpdate(DocumentEvent event) {
+                normalizeCompleteDigits();
+            }
 
-        try (FileOutputStream out = new FileOutputStream(chooser.getSelectedFile())) {
-            out.write(this.txtStatement.getText().getBytes(StandardCharsets.UTF_8));
-            JOptionPane.showMessageDialog(this,
-                    "Die Forderungsaufstellung wurde gespeichert.",
-                    "Export", JOptionPane.INFORMATION_MESSAGE);
-        } catch (Exception ex) {
-            log.error("Unable to export the claim statement", ex);
-            JOptionPane.showMessageDialog(this,
-                    "Die Datei konnte nicht geschrieben werden: " + ex.getMessage(),
-                    "Fehler", JOptionPane.ERROR_MESSAGE);
-        }
-    }//GEN-LAST:event_cmdExportCsvActionPerformed
+            @Override
+            public void removeUpdate(DocumentEvent event) {
+                normalizeCompleteDigits();
+            }
 
-    private void cmdStorePdfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdStorePdfActionPerformed
-        if (this.ledger == null || this.ledger.getId() == null) {
-            return;
-        }
-        if (!com.jdimension.jlawyer.client.utils.DesktopDateEntry.check(this, this.txtKeyDate, "Stichtag", true)) {
-            return;
-        }
+            @Override
+            public void changedUpdate(DocumentEvent event) {
+                normalizeCompleteDigits();
+            }
+        });
+        field.setInputVerifier(new InputVerifier() {
+            @Override
+            public boolean verify(JComponent input) {
+                return checkChooser(owner, chooser, label);
+            }
+        });
+    }
 
-        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+    /** Checks the text rather than getDate(), which is null for eight undotted digits. */
+    public static boolean checkChooser(Component owner, JDateChooser chooser, String label) {
+        JComponent component = chooser.getDateEditor().getUiComponent();
+        if (!(component instanceof JTextField) || !((JTextField) component).isEditable()) {
+            return true;
+        }
+        JTextField field = (JTextField) component;
         try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-
-            ArchiveFileDocumentsBean document = locator.lookupClaimLedgerServiceRemote()
-                    .storeClaimStatement(this.ledger.getId(), keyDate(),
-                            this.chkIncludeSubLedgers.isSelected(), null);
-
-            // same as everywhere a document is created from a dialog: the document tab does not poll
-            EventBroker.getInstance().publishEvent(new DocumentAddedEvent(document));
-
-            JOptionPane.showMessageDialog(this,
-                    "Die Forderungsaufstellung wurde in der Akte abgelegt:\n" + document.getName(),
-                    "Forderungsaufstellung", JOptionPane.INFORMATION_MESSAGE);
-
-        } catch (Exception ex) {
-            log.error("Unable to store the claim statement of ledger " + this.ledger.getId(), ex);
-            JOptionPane.showMessageDialog(this,
-                    "Die Forderungsaufstellung konnte nicht abgelegt werden: " + ex.getMessage(),
-                    "Fehler", JOptionPane.ERROR_MESSAGE);
-        } finally {
-            this.setCursor(Cursor.getDefaultCursor());
+            Date parsed = DateUtils.parseDesktopDay(field.getText());
+            // setDate fires a "date" event even for the current value. Some
+            // forms search again on that event and call checkChooser recursively.
+            if (!Objects.equals(chooser.getDate(), parsed)) {
+                chooser.setDate(parsed);
+            }
+            return true;
+        } catch (IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(owner, label + ": " + ex.getMessage(),
+                    "Ungültiges Datum", JOptionPane.WARNING_MESSAGE);
+            field.requestFocusInWindow();
+            return false;
         }
-    }//GEN-LAST:event_cmdStorePdfActionPerformed
-
-    private void cmdCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCloseActionPerformed
-        this.setVisible(false);
-        this.dispose();
-    }//GEN-LAST:event_cmdCloseActionPerformed
-
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JCheckBox chkIncludeSubLedgers;
-    private javax.swing.JButton cmdClose;
-    private javax.swing.JButton cmdExportCsv;
-    private javax.swing.JButton cmdRefresh;
-    private javax.swing.JButton cmdSelectKeyDate;
-    private javax.swing.JButton cmdStorePdf;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JLabel lblKeyDate;
-    private javax.swing.JTextField txtKeyDate;
-    private javax.swing.JTextArea txtStatement;
-    // End of variables declaration//GEN-END:variables
-
+    }
 }

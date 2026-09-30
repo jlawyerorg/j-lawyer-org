@@ -780,6 +780,7 @@ public class CaseAccountEntryDialog extends javax.swing.JDialog {
         } catch (Exception ex) {
             log.error("error saving invoice", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Buchung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return;
         }
         
         this.setVisible(false);

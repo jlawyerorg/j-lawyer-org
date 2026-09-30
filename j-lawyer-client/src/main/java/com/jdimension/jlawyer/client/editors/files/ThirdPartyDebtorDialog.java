@@ -765,6 +765,8 @@ public class ThirdPartyDebtorDialog extends javax.swing.JDialog {
     public ThirdPartyDebtorDialog(java.awt.Dialog parent, boolean modal) {
         super(parent, modal);
         initComponents();
+        com.jdimension.jlawyer.client.utils.DesktopDateEntry.hint(this.txtServed);
+        com.jdimension.jlawyer.client.utils.DesktopDateEntry.hint(this.txtDeclaration);
 
         this.tblDebtors.setModel(new DefaultTableModel(
                 new Object[]{"Drittschuldner", "gepfändet", "zugestellt", "Erklärung bis",
@@ -1294,6 +1296,10 @@ public class ThirdPartyDebtorDialog extends javax.swing.JDialog {
         if (this.measure == null || this.measure.getId() == null) {
             return;
         }
+        if (!com.jdimension.jlawyer.client.utils.DesktopDateEntry.check(this, this.txtServed, "Zustellungsdatum", false)
+                || !com.jdimension.jlawyer.client.utils.DesktopDateEntry.check(this, this.txtDeclaration, "Eingang der Erklärung", false)) {
+            return;
+        }
 
         ContactItem item = (ContactItem) this.cmbContact.getSelectedItem();
         AddressBean contact = item == null ? null : item.contact();
@@ -1404,10 +1410,10 @@ public class ThirdPartyDebtorDialog extends javax.swing.JDialog {
         }
         Date receivedOn;
         try {
-            receivedOn = dayFormat.parse(entered.trim());
-        } catch (ParseException ex) {
+            receivedOn = com.jdimension.jlawyer.client.utils.DesktopDateEntry.requiredDay(entered);
+        } catch (IllegalArgumentException ex) {
             JOptionPane.showMessageDialog(this,
-                    "Das Datum konnte nicht gelesen werden. Erwartet wird TT.MM.JJJJ.",
+                    ex.getMessage(),
                     "Eingabe", JOptionPane.WARNING_MESSAGE);
             return;
         }
@@ -1469,10 +1475,10 @@ public class ThirdPartyDebtorDialog extends javax.swing.JDialog {
         }
         Date paidOn;
         try {
-            paidOn = dayFormat.parse(enteredDate.trim());
-        } catch (ParseException ex) {
+            paidOn = com.jdimension.jlawyer.client.utils.DesktopDateEntry.requiredDay(enteredDate);
+        } catch (IllegalArgumentException ex) {
             JOptionPane.showMessageDialog(this,
-                    "Das Datum konnte nicht gelesen werden. Erwartet wird TT.MM.JJJJ.",
+                    ex.getMessage(),
                     "Eingabe", JOptionPane.WARNING_MESSAGE);
             return;
         }

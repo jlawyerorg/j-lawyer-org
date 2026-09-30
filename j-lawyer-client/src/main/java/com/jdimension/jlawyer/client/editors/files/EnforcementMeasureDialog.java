@@ -762,6 +762,8 @@ public class EnforcementMeasureDialog extends javax.swing.JDialog {
     public EnforcementMeasureDialog(java.awt.Dialog parent, boolean modal) {
         super(parent, modal);
         initComponents();
+        com.jdimension.jlawyer.client.utils.DesktopDateEntry.hint(this.txtOrderedDate);
+        com.jdimension.jlawyer.client.utils.DesktopDateEntry.hint(this.txtDispatchedDate);
 
         this.cmbMeasureType.addActionListener(e -> updateHint());
         this.cmbMeasureType.addActionListener(e -> updateDispatchHint());
@@ -1183,6 +1185,10 @@ public class EnforcementMeasureDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmbTitleActionPerformed
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
+        if (!com.jdimension.jlawyer.client.utils.DesktopDateEntry.check(this, this.txtOrderedDate, "Anordnungsdatum", true)
+                || !com.jdimension.jlawyer.client.utils.DesktopDateEntry.check(this, this.txtDispatchedDate, "Absendedatum", false)) {
+            return;
+        }
         EnforcementMeasureOption option = selectedOption();
         if (option == null || (!option.isAvailable() && this.edited == null)) {
             JOptionPane.showMessageDialog(this,

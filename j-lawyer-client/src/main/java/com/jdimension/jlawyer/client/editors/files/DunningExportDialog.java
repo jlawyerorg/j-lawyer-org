@@ -684,7 +684,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
+import javax.swing.DefaultCellEditor;
 import javax.swing.JOptionPane;
+import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 import org.apache.log4j.Logger;
 
@@ -752,6 +754,8 @@ public class DunningExportDialog extends javax.swing.JDialog {
         this.dunningCase = dunningCase;
         this.ledger = ledger;
         initComponents();
+        com.jdimension.jlawyer.client.utils.DesktopDateEntry.hint(this.txtOrderDate);
+        this.tblClaims.setToolTipText("Zinsen bis: TT.MM.JJJJ oder TTMMJJJJ (vierstelliges Jahr)");
 
         this.tblClaims.setModel(new DefaultTableModel(
                 new Object[]{"", "Position", "Art", "Betrag", "Rechnungsnr.", "Zinsen bis"}, 0) {
@@ -766,6 +770,15 @@ public class DunningExportDialog extends javax.swing.JDialog {
             }
         });
         this.tblClaims.getColumnModel().getColumn(COL_INCLUDED).setMaxWidth(30);
+        JTextField interestDateEditor = new JTextField();
+        com.jdimension.jlawyer.client.utils.DesktopDateEntry.hint(interestDateEditor);
+        this.tblClaims.getColumnModel().getColumn(COL_INTEREST_TO).setCellEditor(new DefaultCellEditor(interestDateEditor) {
+            @Override
+            public boolean stopCellEditing() {
+                com.jdimension.jlawyer.client.utils.DesktopDateEntry.normalizeCompleteDigits(interestDateEditor);
+                return super.stopCellEditing();
+            }
+        });
 
         loadHeader();
         loadComponents();
@@ -992,12 +1005,36 @@ public class DunningExportDialog extends javax.swing.JDialog {
         return claims;
     }
 
+    private boolean checkInterestDates() {
+        DefaultTableModel model = (DefaultTableModel) this.tblClaims.getModel();
+        for (int row = 0; row < model.getRowCount(); row++) {
+            if (!Boolean.TRUE.equals(model.getValueAt(row, COL_INCLUDED))) {
+                continue;
+            }
+            Object raw = model.getValueAt(row, COL_INTEREST_TO);
+            try {
+                String normalized = com.jdimension.jlawyer.client.utils.DateUtils.normalizeDesktopDay(
+                        raw == null ? "" : raw.toString());
+                model.setValueAt(normalized, row, COL_INTEREST_TO);
+            } catch (IllegalArgumentException ex) {
+                JOptionPane.showMessageDialog(this, "Position " + (row + 1) + ", Zinsen bis: " + ex.getMessage(),
+                        "Ungültiges Datum", JOptionPane.WARNING_MESSAGE);
+                this.tblClaims.changeSelection(row, COL_INTEREST_TO, false, false);
+                return false;
+            }
+        }
+        return true;
+    }
+
     /**
      * Writes what was entered here back to the procedure.
      *
      * @return whether it could be written
      */
     private boolean writeBack() {
+        if (!com.jdimension.jlawyer.client.utils.DesktopDateEntry.check(this, this.txtOrderDate, "Auftragsdatum", false)) {
+            return false;
+        }
         this.dunningCase.setOrderDate(parseDate(this.txtOrderDate.getText()));
         this.dunningCase.setOffsetAmount(parseAmount(this.txtOffsetAmount.getText()));
         this.dunningCase.setSpecialEffort(this.chkSpecialEffort.isSelected());
@@ -1329,6 +1366,9 @@ public class DunningExportDialog extends javax.swing.JDialog {
     private void cmdExportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportActionPerformed
         if (this.tblClaims.isEditing()) {
             this.tblClaims.getCellEditor().stopCellEditing();
+        }
+        if (!checkInterestDates()) {
+            return;
         }
         this.txtClaimValue.setText(currencyFormat.format(sumOfSelected()));
 

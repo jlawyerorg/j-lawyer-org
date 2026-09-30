@@ -718,6 +718,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
     public MailboxSetupDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
+        com.jdimension.jlawyer.client.utils.DesktopDateEntry.hint(this.txtSecretExpiry);
 
         this.htmlEmailSig = new WebViewHtmlEditorPanel();
         this.jPanel4.add(this.htmlEmailSig);
@@ -1702,6 +1703,11 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         int row = this.tblMailboxes.getSelectedRow();
 
         if (row >= 0) {
+
+            if (!com.jdimension.jlawyer.client.utils.DesktopDateEntry.check(
+                    this, this.txtSecretExpiry, "Ablaufdatum des Client-Geheimnisses", false)) {
+                return;
+            }
 
             if (StringUtils.isEmpty(this.txtEmailAddress.getText()) || StringUtils.isEmpty(this.txtInServer.getText()) || StringUtils.isEmpty(this.txtInUser.getText()) || StringUtils.isEmpty(new String(this.pwdInPassword.getPassword()))) {
                 JOptionPane.showMessageDialog(this, "Postfachangaben sind unvollständig", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
