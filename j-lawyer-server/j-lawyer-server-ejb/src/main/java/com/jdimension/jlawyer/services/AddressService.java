@@ -683,6 +683,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Resource;
@@ -816,29 +817,9 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
 
         AddressBean dto = this.addressFacade.find(id);
 
-        List l = this.archiveFileAddressesFacade.findByAddressKey(dto);
-        if (l != null) {
-            if (!l.isEmpty()) {
-                throw new EJBException("Kontakt ist als Beteiligter in min. einer Akte vorhanden und kann nicht gelöscht werden.");
-            }
-        }
-
-        List<Invoice> invoices = this.invoicesFacade.findByAddress(dto);
-        if (invoices != null && !invoices.isEmpty()) {
-            List<String> references = new ArrayList<>();
-            for (Invoice i : invoices) {
-                references.add(toReference(i.getInvoiceNumber(), i.getArchiveFileKey()));
-            }
-            throw new EJBException(describeReferences("Rechnung(en)", references));
-        }
-
-        List<Payment> payments = this.paymentsFacade.findByAddress(dto);
-        if (payments != null && !payments.isEmpty()) {
-            List<String> references = new ArrayList<>();
-            for (Payment p : payments) {
-                references.add(toReference(p.getPaymentNumber(), p.getArchiveFileKey()));
-            }
-            throw new EJBException(describeReferences("Zahlung(en)", references));
+        String blockingReferences = this.describeBlockingReferences(dto);
+        if (blockingReferences != null) {
+            throw new EJBException(blockingReferences);
         }
 
         this.addressFacade.remove(dto);
@@ -857,6 +838,68 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
     }
 
     /**
+     * Collects everything that prevents a contact from being deleted: its
+     * participations in cases and the invoices and payments it is the recipient
+     * of. All three are checked, so that the user gets the complete picture in
+     * one go instead of having to retry after clearing each kind of reference.
+     *
+     * @param dto the contact to check
+     * @return the message naming all blocking references, or null if the
+     * contact is not referenced and may be deleted
+     */
+    private String describeBlockingReferences(AddressBean dto) {
+        StringBuilder sb = new StringBuilder();
+
+        List<ArchiveFileAddressesBean> parties = this.archiveFileAddressesFacade.findByAddressKey(dto);
+        if (parties != null && !parties.isEmpty()) {
+            List<String> references = new ArrayList<>();
+            for (ArchiveFileAddressesBean p : parties) {
+                references.add(toPartyReference(p));
+            }
+            appendReferences(sb, "Beteiligung(en) in Akten", references);
+        }
+
+        List<Invoice> invoices = this.invoicesFacade.findByAddress(dto);
+        if (invoices != null && !invoices.isEmpty()) {
+            List<String> references = new ArrayList<>();
+            for (Invoice i : invoices) {
+                references.add(toReference(i.getInvoiceNumber(), i.getArchiveFileKey()));
+            }
+            appendReferences(sb, "Rechnung(en) als Empfänger", references);
+        }
+
+        List<Payment> payments = this.paymentsFacade.findByAddress(dto);
+        if (payments != null && !payments.isEmpty()) {
+            List<String> references = new ArrayList<>();
+            for (Payment p : payments) {
+                references.add(toReference(p.getPaymentNumber(), p.getArchiveFileKey()));
+            }
+            appendReferences(sb, "Zahlung(en) als Empfänger", references);
+        }
+
+        if (sb.length() == 0) {
+            return null;
+        }
+        return "Kontakt wird noch verwendet und kann nicht gelöscht werden:" + sb.toString();
+    }
+
+    /**
+     * Renders a participation in a case as "file number (party type)". The
+     * name of the case is left out on purpose: the caller is not necessarily
+     * allowed to access that case.
+     */
+    private static String toPartyReference(ArchiveFileAddressesBean party) {
+        String result = "ohne Aktenzeichen";
+        if (party.getArchiveFileKey() != null && party.getArchiveFileKey().getFileNumber() != null) {
+            result = party.getArchiveFileKey().getFileNumber();
+        }
+        if (party.getReferenceType() != null && party.getReferenceType().getName() != null) {
+            result = result + " (" + party.getReferenceType().getName() + ")";
+        }
+        return result;
+    }
+
+    /**
      * Renders a single blocking document as "number (file number)".
      */
     private static String toReference(String number, ArchiveFileBean aFile) {
@@ -871,22 +914,20 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
     }
 
     /**
-     * Builds the error message for a contact that can not be deleted because it is
-     * still referenced. At most MAX_LISTED_REFERENCES entries are listed.
+     * Appends one kind of blocking references to the error message for a
+     * contact that can not be deleted. At most MAX_LISTED_REFERENCES entries
+     * are listed.
      */
-    private static String describeReferences(String label, List<String> references) {
+    private static void appendReferences(StringBuilder sb, String label, List<String> references) {
         Collections.sort(references);
-        StringBuilder sb = new StringBuilder();
-        sb.append("Kontakt ist in ").append(references.size()).append(" ").append(label);
-        sb.append(" als Empfänger hinterlegt und kann nicht gelöscht werden:");
+        sb.append("\n").append(references.size()).append(" ").append(label).append(":");
         int listed = Math.min(references.size(), MAX_LISTED_REFERENCES);
         for (int i = 0; i < listed; i++) {
             sb.append("\n  ").append(references.get(i));
         }
         if (references.size() > listed) {
-            sb.append("\n... und ").append(references.size() - listed).append(" weitere.");
+            sb.append("\n  ... und ").append(references.size() - listed).append(" weitere.");
         }
-        return sb.toString();
     }
 
     /**
@@ -924,16 +965,26 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
     @Override
     @RolesAllowed({"removeAddressRole"})
     public List<String> removeAddresses(List<String> ids) {
-        List<String> failedIds = new ArrayList<>();
+        return new ArrayList<>(this.removeAddressesWithReasons(ids).keySet());
+    }
+
+    @Override
+    @RolesAllowed({"removeAddressRole"})
+    public Map<String, String> removeAddressesWithReasons(List<String> ids) {
+        Map<String, String> failures = new LinkedHashMap<>();
         for (String id : ids) {
             try {
                 this.removeAddress(id);
             } catch (Exception ex) {
                 log.error("Error removing address " + id, ex);
-                failedIds.add(id);
+                String reason = ex.getMessage();
+                if (reason == null || reason.trim().isEmpty()) {
+                    reason = ex.getClass().getName();
+                }
+                failures.put(id, reason);
             }
         }
-        return failedIds;
+        return failures;
     }
 
     @Override

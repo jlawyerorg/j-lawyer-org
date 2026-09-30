@@ -705,6 +705,8 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
@@ -1028,13 +1030,44 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
                     }
                 }
                 if (!failedIds.isEmpty()) {
-                    JOptionPane.showMessageDialog(QuickAddressSearchPanel.this, "" + failedIds.size() + " Adresse(n) konnten nicht gelöscht werden, bspw. weil sie noch als Beteiligte in Nutzung sind.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    showDeleteFailures(failedIds, action.getFailureReasons(), namesById);
                 }
                 EditorsRegistry.getInstance().clearStatus(false);
             }
         });
         action.start();
     }//GEN-LAST:event_mnuDeleteSelectedAddressesActionPerformed
+
+    /**
+     * Tells the user which contacts could not be deleted and why, i.e. in which cases, invoices
+     * and payments each of them is still in use. The reasons are provided by the server; the
+     * list can get long, so it is shown in a scrollable text area.
+     *
+     * @param failedIds the contacts that could not be deleted
+     * @param reasons contact ID to the reason reported by the server
+     * @param namesById display names of the contacts, for the message
+     */
+    private void showDeleteFailures(List<String> failedIds, Map<String, String> reasons, Map<String, String> namesById) {
+        StringBuilder msg = new StringBuilder();
+        msg.append(failedIds.size()).append(" Adresse(n) konnten nicht gelöscht werden.");
+        for (String id : failedIds) {
+            String name = namesById.get(id);
+            msg.append("\n\n").append(name == null ? id : name);
+            String reason = reasons.get(id);
+            if (reason == null || reason.trim().isEmpty()) {
+                reason = "Grund unbekannt - Details im Serverlog.";
+            }
+            for (String line : reason.split("\n")) {
+                msg.append("\n  ").append(line);
+            }
+        }
+
+        String text = msg.toString();
+        JTextArea ta = new JTextArea(text, Math.min(text.split("\n").length, 25), 60);
+        ta.setEditable(false);
+        ta.setCaretPosition(0);
+        JOptionPane.showMessageDialog(this, new JScrollPane(ta), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+    }
 
     /**
      * Asks whether the selected contacts are really to be deleted, naming those that still carry

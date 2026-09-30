@@ -688,11 +688,12 @@ public interface AddressServiceRemote {
     /**
      * Deletes a contact. The deletion is rejected if the contact is still
      * referenced, i.e. if it is a party in at least one case, or if it is the
-     * recipient of at least one invoice or of at least one payment. In the
-     * latter two cases the exception message lists the blocking documents by
-     * their number and case file number, limited to 20 entries per document
-     * type. On success the contact is removed from the connected cloud address
-     * book and a removal event is fired.
+     * recipient of at least one invoice or of at least one payment. The
+     * exception message lists all blocking references of all three kinds:
+     * participations by case file number and party type, invoices and payments
+     * by their number and case file number, limited to 20 entries per kind. On
+     * success the contact is removed from the connected cloud address book and
+     * a removal event is fired.
      *
      * @param id ID of the address to delete
      * @throws javax.ejb.EJBException if the contact is still referenced
@@ -705,7 +706,7 @@ public interface AddressServiceRemote {
      * in a case, or still the recipient of an invoice or payment) does not
      * prevent the others from being deleted. Cloud sync and removal events are
      * fired for each successfully deleted address. The reason for an individual
-     * failure is written to the server log only - use removeAddress to obtain it.
+     * failure is not returned - use removeAddressesWithReasons to obtain it.
      *
      * @param ids list of address IDs to delete
      * @return list of address IDs that could not be deleted (e.g. still
@@ -713,6 +714,22 @@ public interface AddressServiceRemote {
      *         means all deletions succeeded
      */
     List<String> removeAddresses(List<String> ids);
+
+    /**
+     * Removes multiple addresses in a single batch operation, like
+     * removeAddresses, but additionally reports why an address could not be
+     * deleted. For an address that is still referenced, the reason lists all
+     * blocking references: participations by case file number and party type,
+     * invoices and payments by their number and case file number, limited to 20
+     * entries per kind. The reason is a multi-line, human readable text in
+     * German.
+     *
+     * @param ids list of address IDs to delete
+     * @return address ID to failure reason for every address that could not be
+     *         deleted, in the order of the given IDs; an empty map means all
+     *         deletions succeeded
+     */
+    Map<String, String> removeAddressesWithReasons(List<String> ids);
 
     AddressBean[] searchSimple(String query);
 

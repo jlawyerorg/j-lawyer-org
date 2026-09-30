@@ -6,7 +6,9 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import org.apache.log4j.Logger;
 
 public class RemoveAddressesAction extends ProgressableAction {
@@ -15,6 +17,7 @@ public class RemoveAddressesAction extends ProgressableAction {
 
     private final List<String> allIds;
     private final List<String> failedIds = new ArrayList<>();
+    private final Map<String, String> failureReasons = new LinkedHashMap<>();
     private final int batchSize;
 
     public RemoveAddressesAction(ProgressIndicator i, List<String> allIds, int batchSize) {
@@ -46,8 +49,9 @@ public class RemoveAddressesAction extends ProgressableAction {
             }
             int end = Math.min(i + batchSize, total);
             List<String> batch = allIds.subList(i, end);
-            List<String> batchFailed = addressService.removeAddresses(new ArrayList<>(batch));
-            failedIds.addAll(batchFailed);
+            Map<String, String> batchFailed = addressService.removeAddressesWithReasons(new ArrayList<>(batch));
+            failedIds.addAll(batchFailed.keySet());
+            failureReasons.putAll(batchFailed);
             for (int j = 0; j < batch.size(); j++) {
                 progress("Lösche Adressen... (" + Math.min(i + j + 1, total) + "/" + total + ")");
             }
@@ -57,5 +61,13 @@ public class RemoveAddressesAction extends ProgressableAction {
 
     public List<String> getFailedIds() {
         return failedIds;
+    }
+
+    /**
+     * @return address ID to the reason reported by the server, for every address that could not
+     * be deleted
+     */
+    public Map<String, String> getFailureReasons() {
+        return failureReasons;
     }
 }
