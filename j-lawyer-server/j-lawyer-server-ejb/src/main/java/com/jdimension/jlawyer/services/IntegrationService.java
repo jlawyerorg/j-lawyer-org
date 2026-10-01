@@ -735,7 +735,6 @@ import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.jms.JMSConnectionFactory;
 import javax.jms.JMSContext;
-import javax.jms.ObjectMessage;
 import org.apache.log4j.Logger;
 import org.apache.tika.Tika;
 import org.jboss.ejb3.annotation.TransactionTimeout;
@@ -843,8 +842,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
 
     private void publishOcrRequest(OcrRequest req) {
         try {
-            ObjectMessage msg = this.jmsContext.createObjectMessage(req);
-            jmsContext.createProducer().send(searchIndexQueue, msg);
+            OcrUtils.publishOcrRequest(this.jmsContext, this.searchIndexQueue, req);
 
         } catch (Exception ex) {
             log.error("could not publish OCR request", ex);

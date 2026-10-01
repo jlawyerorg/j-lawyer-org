@@ -705,7 +705,6 @@ import javax.ejb.Singleton;
 import javax.inject.Inject;
 import javax.jms.JMSConnectionFactory;
 import javax.jms.JMSContext;
-import javax.jms.ObjectMessage;
 import javax.naming.InitialContext;
 import org.apache.log4j.Logger;
 import org.jlawyer.utils.ocr.OcrRequest;
@@ -872,8 +871,7 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
 
     private void publishOcrRequest(OcrRequest req) {
         try {
-            ObjectMessage msg = this.jmsContext.createObjectMessage(req);
-            jmsContext.createProducer().send(searchIndexQueue, msg);
+            OcrUtils.publishOcrRequest(this.jmsContext, this.searchIndexQueue, req);
 
         } catch (Exception ex) {
             log.error("could not publish OCR request", ex);

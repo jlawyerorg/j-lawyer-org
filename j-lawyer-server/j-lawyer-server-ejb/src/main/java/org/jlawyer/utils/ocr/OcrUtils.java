@@ -672,6 +672,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Properties;
+import javax.jms.JMSContext;
+import javax.jms.ObjectMessage;
+import javax.jms.Queue;
 import org.apache.log4j.Logger;
 
 /**
@@ -687,6 +690,29 @@ public class OcrUtils {
     private static final String METAPROPERTIES_KEY_OCRSTATUS = "file.ocrstatus";
     private static final String METAPROPERTIES_KEY_PRINCIPAL = "file.principal";
     private static final String METAPROPERTIES_KEY_SOURCE = "file.source";
+
+    /**
+     * JMS message property used to route messages on the shared search index
+     * queue: OCR requests carry {@link #MESSAGE_TYPE_OCR} and are consumed by
+     * the OcrProcessor, everything else by the SearchIndexProcessor.
+     */
+    public static final String MESSAGE_PROPERTY_TYPE = "jlType";
+    public static final String MESSAGE_TYPE_OCR = "ocr";
+
+    /**
+     * Publishes an OCR request, tagged so that only the OCR message driven bean
+     * picks it up. All OCR requests must be sent through this method.
+     *
+     * @param jmsContext JMS context of the publishing bean
+     * @param queue the search index queue
+     * @param req the OCR request
+     * @throws Exception if the message could not be sent
+     */
+    public static void publishOcrRequest(JMSContext jmsContext, Queue queue, OcrRequest req) throws Exception {
+        ObjectMessage msg = jmsContext.createObjectMessage(req);
+        msg.setStringProperty(MESSAGE_PROPERTY_TYPE, MESSAGE_TYPE_OCR);
+        jmsContext.createProducer().send(queue, msg);
+    }
 
 
     public static int performOcr(String[] cmd, File inputFile, File outputFile) throws Exception {

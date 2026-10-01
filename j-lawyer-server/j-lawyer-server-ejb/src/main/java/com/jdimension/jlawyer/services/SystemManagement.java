@@ -719,7 +719,6 @@ import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.jms.JMSConnectionFactory;
 import javax.jms.JMSContext;
-import javax.jms.ObjectMessage;
 import javax.mail.Folder;
 import javax.mail.Message;
 import javax.mail.PasswordAuthentication;
@@ -2431,8 +2430,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     private void publishOcrRequest(OcrRequest req) {
         try {
-            ObjectMessage msg = this.jmsContext.createObjectMessage(req);
-            jmsContext.createProducer().send(searchIndexQueue, msg);
+            OcrUtils.publishOcrRequest(this.jmsContext, this.searchIndexQueue, req);
 
         } catch (Exception ex) {
             log.error("could not publish OCR request", ex);

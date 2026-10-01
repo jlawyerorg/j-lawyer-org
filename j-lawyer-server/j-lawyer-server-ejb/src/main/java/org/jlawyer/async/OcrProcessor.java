@@ -663,24 +663,37 @@
  */
 package org.jlawyer.async;
 
-import com.jdimension.jlawyer.documents.DocumentPreview;
-import com.jdimension.jlawyer.documents.PreviewGenerator;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBeanFacadeLocal;
+import com.jdimension.jlawyer.documents.TikaConfigurator;
+import com.jdimension.jlawyer.persistence.ServerSettingsBean;
+import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
+import com.jdimension.jlawyer.pojo.FileMetadata;
+import com.jdimension.jlawyer.server.utils.ServerFileUtils;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.Reader;
+import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import javax.ejb.*;
 import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.ObjectMessage;
 import org.apache.log4j.Logger;
-import org.jboss.ejb3.annotation.TransactionTimeout;
-import org.jlawyer.search.SearchAPI;
-import org.jlawyer.search.SearchIndexRequest;
+import org.apache.tika.Tika;
 import org.jlawyer.utils.ocr.OcrRequest;
 import org.jlawyer.utils.ocr.OcrUtils;
 
 /**
+ * Performs OCR for files in the observed scan directory. Shares the search
+ * index queue with the SearchIndexProcessor, but only receives messages tagged
+ * as OCR requests (see OcrUtils#publishOcrRequest). maxSession=1 makes OCR run
+ * strictly sequentially, so the same file is never processed by two threads
+ * and only one OCR process consumes CPU at a time.
+ *
+ * Runs without a transaction: there is no transactional work, and a batch of
+ * OCR runs may take longer than any reasonable transaction timeout.
  *
  * @author jens
  */
@@ -688,100 +701,138 @@ import org.jlawyer.utils.ocr.OcrUtils;
     @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge"),
     @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
     @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/searchIndexProcessorQueue"),
-    // OCR requests on the same queue are handled by the OcrProcessor; IS NULL is required because
-    // messages without the property would otherwise match neither selector
-    @ActivationConfigProperty(propertyName = "messageSelector", propertyValue = OcrUtils.MESSAGE_PROPERTY_TYPE + " IS NULL OR " + OcrUtils.MESSAGE_PROPERTY_TYPE + " <> '" + OcrUtils.MESSAGE_TYPE_OCR + "'"),
-    @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "18000")
+    @ActivationConfigProperty(propertyName = "messageSelector", propertyValue = OcrUtils.MESSAGE_PROPERTY_TYPE + " = '" + OcrUtils.MESSAGE_TYPE_OCR + "'"),
+    @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "1")
 })
-public class SearchIndexProcessor implements MessageListener {
+@TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+public class OcrProcessor implements MessageListener {
 
-    private static final Logger log = Logger.getLogger(SearchIndexProcessor.class.getName());
+    private static final Logger log = Logger.getLogger(OcrProcessor.class.getName());
 
     @EJB
-    private ArchiveFileDocumentsBeanFacadeLocal archiveFileDocumentsFacade;
+    private ServerSettingsBeanFacadeLocal settingsFacade;
 
-    public SearchIndexProcessor() {
+    public OcrProcessor() {
     }
 
     @Override
-    @TransactionTimeout(value = 15, unit = TimeUnit.MINUTES)
     public void onMessage(Message message) {
 
         try {
+            if (!(message instanceof ObjectMessage)) {
+                log.error("Unexpected message type on OCR processor: " + message);
+                return;
+            }
+            Object o = ((ObjectMessage) message).getObject();
+            if (!(o instanceof OcrRequest)) {
+                log.error("Unexpected payload on OCR processor: " + o);
+                return;
+            }
 
-            if (message instanceof ObjectMessage) {
-                ObjectMessage om = (ObjectMessage) message;
-                Object o = om.getObject();
-                if (o instanceof SearchIndexRequest) {
-                    SearchIndexRequest req = (SearchIndexRequest) o;
-                    SearchAPI api = SearchAPI.getInstance();
-                    if (req.getAction() == SearchIndexRequest.ACTION_ADD) {
-                        // the metadata are read from the document, so no publisher has to carry them
-                        ArchiveFileDocumentsBean md = this.archiveFileDocumentsFacade.find(req.getId());
-                        api.addToIndex(req.getId(), req.getFileName(), req.getText(), req.getArchiveFileId(), req.getArchiveFileName(), req.getArchiveFileNumber(), title(md), keywords(md), correspondent(md));
-                    } else if (req.getAction() == SearchIndexRequest.ACTION_DELETE) {
-                        api.removeFromIndex(req.getId());
-                    } else if (req.getAction() == SearchIndexRequest.ACTION_UPDATE) {
-                        ArchiveFileDocumentsBean md = this.archiveFileDocumentsFacade.find(req.getId());
-                        api.updateInIndex(req.getId(), req.getFileName(), req.getText(), req.getArchiveFileId(), req.getArchiveFileName(), req.getArchiveFileNumber(), title(md), keywords(md), correspondent(md));
-                    } else if (req.getAction() == SearchIndexRequest.ACTION_UPDATE_METADATA) {
-                        // metadata changed, content did not: reuse the stored text preview instead
-                        // of extracting the text again
-                        ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(req.getId());
-                        if (db != null && !db.isDeleted()) {
-                            PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade, null);
-                            api.updateInIndex(db.getId(), db.getName(), pg.getDocumentPreview(db.getId(), DocumentPreview.TYPE_TEXT).getText(), db.getArchiveFileKey().getId(), db.getArchiveFileKey().getName(), db.getArchiveFileKey().getFileNumber(), title(db), keywords(db), correspondent(db));
-                        }
-                    } else if (req.getAction() == SearchIndexRequest.ACTION_DELETEALL) {
-                        api.deleteAll();
-                    } else if (req.getAction() == SearchIndexRequest.ACTION_REINDEXALL) {
-                        api.deleteAll();
-
-                        PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade, null);
-                        List<ArchiveFileDocumentsBean> allDocs = this.archiveFileDocumentsFacade.findAll();
-                        for (ArchiveFileDocumentsBean db : allDocs) {
-                            if (db.isDeleted()) {
-                                continue;
-                            }
-                            try {
-                                this.doAddToIndex(db, pg, api);
-                            } catch (Throwable th) {
-                                log.error("Could not process search index request for " + db.getName() + ": " + message.toString(), th);
-                            }
-                        }
-                        log.info("full re-indexing finished");
+            // the same file may be contained in several requests (the directory observer re-publishes
+            // all open files until they are picked up) - only process files this request claims itself
+            List<File> claimed = new ArrayList<>();
+            for (String absolutePath : ((OcrRequest) o).getAbsolutePaths()) {
+                File f = new File(absolutePath);
+                try {
+                    FileMetadata currentMetadata = OcrUtils.getMetadata(f);
+                    if (currentMetadata == null || currentMetadata.getOcrStatus() != FileMetadata.OCRSTATUS_OPEN) {
+                        continue;
                     }
-                } else if (o instanceof OcrRequest) {
-                    // OCR requests are routed to the OcrProcessor via message selector - ending up here means
-                    // a publisher did not use OcrUtils#publishOcrRequest
-                    log.error("Received untagged OCR request - it will not be processed. Publish OCR requests via OcrUtils#publishOcrRequest");
+                    OcrUtils.updateOcrStatus(f, FileMetadata.OCRSTATUS_PROCESSING);
+                    claimed.add(f);
+                } catch (Throwable t) {
+                    log.error("Could not claim file for OCR: " + absolutePath, t);
+                }
+            }
+
+            if (claimed.isEmpty()) {
+                return;
+            }
+
+            String[] cmd = null;
+            ServerSettingsBean s = this.settingsFacade.find("jlawyer.server.observe.ocrcmd");
+            if (s != null && s.getSettingValue() != null && s.getSettingValue().length() > 0) {
+                cmd = s.getSettingValue().split(" ");
+            }
+
+            for (File f : claimed) {
+                try {
+                    this.processFile(f, cmd);
+                } catch (Throwable t) {
+                    log.error("OCR failed for file " + f.getAbsolutePath(), t);
+                    try {
+                        OcrUtils.updateOcrStatus(f, FileMetadata.OCRSTATUS_WITHOUTOCR);
+                    } catch (Throwable t2) {
+                        log.error("Could not update OCR status for file " + f.getAbsolutePath(), t2);
+                    }
                 }
             }
 
         } catch (Throwable t) {
-            log.error("Could not process search index request — message will be DROPPED: " + message.toString(), t);
-
+            log.error("Could not process OCR request — message will be DROPPED: " + message.toString(), t);
         }
 
     }
 
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    private void doAddToIndex(ArchiveFileDocumentsBean db, PreviewGenerator pg, SearchAPI api) throws Exception {
-        log.info("indexing document " + db.getName());
-        api.addToIndex(db.getId(), db.getName(), pg.getDocumentPreview(db.getId(), DocumentPreview.TYPE_TEXT).getText(), db.getArchiveFileKey().getId(), db.getArchiveFileKey().getName(), db.getArchiveFileKey().getFileNumber(), title(db), keywords(db), correspondent(db));
+    private void processFile(File f, String[] cmdTemplate) throws Exception {
+        byte[] data = ServerFileUtils.readFile(f);
+        if (data == null) {
+            log.error("Error checking for OCR information - content data for file is null");
+            OcrUtils.updateOcrStatus(f, FileMetadata.OCRSTATUS_WITHOUTOCR);
+            return;
+        }
 
-    }
+        Tika tika = TikaConfigurator.newTika(f.getName());
+        String result = "";
+        try {
+            try (Reader r = tika.parse(new ByteArrayInputStream(data)); BufferedReader br = new BufferedReader(r); StringWriter sw = new StringWriter(); BufferedWriter bw = new BufferedWriter(sw)) {
+                char[] buffer = new char[1024];
+                int bytesRead = -1;
+                while ((bytesRead = br.read(buffer)) > -1) {
+                    bw.write(buffer, 0, bytesRead);
+                }
+                result = sw.toString();
+            }
 
-    private static String title(ArchiveFileDocumentsBean db) {
-        return db == null ? null : db.getTitle();
-    }
+        } catch (Throwable t) {
+            log.error("Error checking for OCR information - text extraction failed", t);
+            OcrUtils.updateOcrStatus(f, FileMetadata.OCRSTATUS_WITHOUTOCR);
+            return;
+        }
 
-    private static String keywords(ArchiveFileDocumentsBean db) {
-        return db == null ? null : db.getKeywords();
-    }
+        if (result.length() > 0) {
+            // no OCR required
+            OcrUtils.updateOcrStatus(f, FileMetadata.OCRSTATUS_WITHOCR);
+            return;
+        }
 
-    private static String correspondent(ArchiveFileDocumentsBean db) {
-        return db == null ? null : db.getCorrespondentName();
+        if (cmdTemplate == null) {
+            log.info("OCR not configured");
+            return;
+        }
+
+        log.info("performing OCR for file " + f.getName() + " (" + ServerFileUtils.getFileSizeHumanReadable(f.length()) + ")");
+        File outputFile = File.createTempFile("jlawyer-ocr-", ".pdf");
+        try {
+            // performOcr replaces the placeholders in place, so each file needs its own copy
+            int exitCode = OcrUtils.performOcr(cmdTemplate.clone(), f, outputFile);
+
+            if (!outputFile.exists() || outputFile.length() == 0) {
+                log.error("OCR failed for file " + f.getAbsolutePath());
+                OcrUtils.updateOcrStatus(f, FileMetadata.OCRSTATUS_WITHOUTOCR);
+            } else {
+                byte[] ocrFile = ServerFileUtils.readFile(outputFile);
+                ServerFileUtils.writeFile(f, ocrFile);
+                if (exitCode < 0) {
+                    OcrUtils.updateOcrStatus(f, FileMetadata.OCRSTATUS_WITHOUTOCR);
+                } else {
+                    OcrUtils.updateOcrStatus(f, FileMetadata.OCRSTATUS_WITHOCR);
+                }
+            }
+        } finally {
+            outputFile.delete();
+        }
     }
 
 }
