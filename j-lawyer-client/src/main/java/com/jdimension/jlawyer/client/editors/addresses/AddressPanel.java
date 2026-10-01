@@ -689,6 +689,7 @@ import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.JTextFieldLimit;
+import com.jdimension.jlawyer.client.utils.IbanUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
@@ -748,6 +749,8 @@ import java.util.Hashtable;
 import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -837,6 +840,23 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.txtStreetNr.setDocument(new JTextFieldLimit(19));
         this.txtInitials.setDocument(new JTextFieldLimit(19));
         this.txtAdjunct.setDocument(new JTextFieldLimit(249));
+
+        this.txtBankAccount.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                validateIban();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                validateIban();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                // only fired for styled documents
+            }
+        });
 
         ServerSettings sset = ServerSettings.getInstance();
         this.lblCustom1.setText(sset.getSetting(ServerSettings.DATA_CUSTOMFIELD_ADDRESS_PREFIX + "1", "Eigenes Feld 1"));
@@ -993,6 +1013,21 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         for (Component c : this.tagPanel.getComponents()) {
             c.setEnabled(!readOnly);
+        }
+    }
+
+    /**
+     * Marks the IBAN field with a red outline if its content is not a valid
+     * IBAN. Saving an invalid IBAN is still possible.
+     */
+    private void validateIban() {
+        IbanUtils.IbanValidationResult result = IbanUtils.validate(this.txtBankAccount.getText());
+        if (result.isValid()) {
+            this.txtBankAccount.putClientProperty("JComponent.outline", null);
+            this.txtBankAccount.setToolTipText(null);
+        } else {
+            this.txtBankAccount.putClientProperty("JComponent.outline", "error");
+            this.txtBankAccount.setToolTipText(result.getMessage());
         }
     }
 
