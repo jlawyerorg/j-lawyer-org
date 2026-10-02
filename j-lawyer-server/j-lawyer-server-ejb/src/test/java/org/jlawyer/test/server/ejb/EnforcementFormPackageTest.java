@@ -670,12 +670,15 @@ import java.nio.file.Files;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 import static org.junit.Assert.assertTrue;
 import org.junit.Rule;
 import org.junit.Test;
@@ -717,17 +720,52 @@ public class EnforcementFormPackageTest {
     }
 
     @Test
-    public void eachOfTheEightAnnexesIsCoveredExactlyOnce() {
+    public void eachOfTheEightAnnexesIsCoveredExactlyOncePerVersion() {
         // Anlage 1 bis 8 der ZVFV 2022. Eine doppelt vergebene Nummer hiesse, dass zwei Dateien
-        // dasselbe Formular sein wollen, und die Auswahl der Fassung wuerde sie verwechseln.
+        // dasselbe Formular sein wollen, und die Auswahl der Fassung wuerde sie verwechseln -
+        // innerhalb einer Fassung, denn dieselbe Anlage in zwei Fassungen ist gerade der Zweck.
         List<String> keys = formPackage.getFormKeys();
-        Set<String> distinct = new HashSet<>(keys);
-
-        assertEquals("jede Anlage genau einmal", keys.size(), distinct.size());
         assertEquals(8, keys.size());
         for (int i = 1; i <= 8; i++) {
-            assertTrue("Anlage " + i + " fehlt", distinct.contains("ANLAGE_" + i));
+            assertTrue("Anlage " + i + " fehlt", keys.contains("ANLAGE_" + i));
         }
+
+        for (String version : formPackage.getVersions()) {
+            List<String> ofVersion = new ArrayList<>();
+            for (EnforcementFormPackage.Entry entry : formPackage.getEntries(version)) {
+                ofVersion.add(entry.getFormKey());
+            }
+            Set<String> distinct = new HashSet<>(ofVersion);
+            assertEquals("Fassung " + version + ": jede Anlage genau einmal",
+                    ofVersion.size(), distinct.size());
+            assertEquals("Fassung " + version + " deckt acht Anlagen ab", 8, ofVersion.size());
+        }
+    }
+
+    /**
+     * Jede ausgelieferte Fassung liegt in ihrem eigenen Verzeichnis, und der Eintrag sagt, in
+     * welchem. Das ist nicht Geschmackssache: für die ab 01.10.2026 geltende Fassung hat das BMJ die
+     * Formulare unter den *gleichen* Dateinamen neu veröffentlicht, weiterhin datiert auf 20240901.
+     * Wer die Fassung aus dem Namen ableitet, liefert das falsche Formular aus.
+     */
+    @Test
+    public void thesameFileNameInTwoVersionsYieldsDifferentForms() throws Exception {
+        EnforcementFormPackage.Entry old2024 = entryOf("2024-09-01", "ANLAGE_1");
+        EnforcementFormPackage.Entry new2026 = entryOf("2026-10-01", "ANLAGE_1");
+
+        assertEquals("der Herausgeber hat den Namen nicht geändert",
+                old2024.getFileName(), new2026.getFileName());
+        assertFalse("es sind aber verschiedene Dateien",
+                Arrays.equals(formPackage.read(old2024), formPackage.read(new2026)));
+    }
+
+    private EnforcementFormPackage.Entry entryOf(String version, String formKey) {
+        for (EnforcementFormPackage.Entry entry : formPackage.getEntries(version)) {
+            if (formKey.equals(entry.getFormKey())) {
+                return entry;
+            }
+        }
+        throw new IllegalStateException(formKey + " fehlt in Fassung " + version);
     }
 
     @Test
@@ -738,11 +776,12 @@ public class EnforcementFormPackageTest {
         List<String> withoutFields = new ArrayList<>();
 
         for (EnforcementFormPackage.Entry entry : formPackage.getEntries()) {
-            File file = temporary.newFile(entry.getFormKey() + ".pdf");
+            File file = temporary.newFile(entry.getVersion() + "_" + entry.getFormKey() + ".pdf");
             Files.write(file.toPath(), formPackage.read(entry));
             List<AcroFormFieldDescription> fields = filler.describe(file);
             if (fields.isEmpty()) {
-                withoutFields.add(entry.getFormKey() + " / " + entry.getFileName());
+                withoutFields.add(entry.getVersion() + " / " + entry.getFormKey() + " / "
+                        + entry.getFileName());
             }
         }
         assertEquals("ausgelieferte Dateien ohne Formularfelder: " + withoutFields,
@@ -750,12 +789,34 @@ public class EnforcementFormPackageTest {
     }
 
     @Test
-    public void theVersionAndItsStartAgree() {
-        assertEquals("2024-09-01", EnforcementFormPackage.VERSION);
+    public void everyVersionKnowsWhenItAppliesAndTheyAbut() {
+        assertEquals(Arrays.asList("2024-09-01", "2026-10-01"), formPackage.getVersions());
+        assertEquals("2026-10-01", formPackage.getCurrentVersion());
 
-        Date expected = Date.from(LocalDate.of(2024, 9, 1)
+        assertEquals(day(2024, 9, 1), formPackage.getValidFrom("2024-09-01"));
+        // Die Ablösung ist nicht aus dem Dateinamen zu lesen - der sagt weiterhin 20240901 -,
+        // sondern aus dem Inkrafttreten der Änderungsverordnung.
+        assertEquals(day(2026, 10, 1), formPackage.getValidFrom("2026-10-01"));
+
+        // Kein Spalt und keine Überlappung: an jedem Tag gilt genau eine Fassung, sonst müsste die
+        // Auswahl raten.
+        assertEquals(day(2026, 9, 30), formPackage.getValidTo("2024-09-01"));
+        assertNull("die geltende Fassung trägt kein Ende", formPackage.getValidTo("2026-10-01"));
+    }
+
+    @Test
+    public void anUnknownVersionIsSaidSoRatherThanAnswered() {
+        try {
+            formPackage.getValidFrom("2030-01-01");
+            fail("eine Fassung, die nicht ausgeliefert wird, darf kein Datum bekommen");
+        } catch (IllegalArgumentException expected) {
+            assertTrue(expected.getMessage().contains("2030-01-01"));
+        }
+    }
+
+    private Date day(int year, int month, int dayOfMonth) {
+        return Date.from(LocalDate.of(year, month, dayOfMonth)
                 .atStartOfDay(ZoneId.systemDefault()).toInstant());
-        assertEquals(expected, formPackage.getValidFrom());
     }
 
     @Test
@@ -787,5 +848,40 @@ public class EnforcementFormPackageTest {
         assertTrue(keys.contains("ANLAGE_6"));
         assertTrue(keys.contains("ANLAGE_7"));
         assertTrue(keys.contains("ANLAGE_8"));
+    }
+
+    /**
+     * Die Zuordnung wird je Fassung geliefert und je Fassung gelesen.
+     *
+     * Das ist die Stelle, an der ein Fehler lautlos wäre: ein Profil der falschen Fassung zeigt auf
+     * Feldnamen, die es auch dort gibt, und schreibt in die falschen Kästchen. Zwischen 2024-09-01
+     * und 2026-10-01 haben drei Ankreuzfelder des PfÜB-Antrags genau so ihre Bedeutung getauscht.
+     */
+    @Test
+    public void themappingIsReadFromTheVersionItBelongsTo() throws Exception {
+        for (String version : formPackage.getVersions()) {
+            assertFalse("Fassung " + version + " liefert keine Zuordnung für Anlage 1",
+                    formPackage.readMapping(version, "ANLAGE_1").isEmpty());
+            assertFalse("Fassung " + version + " liefert keine Zuordnung für Anlage 6",
+                    formPackage.readMapping(version, "ANLAGE_6").isEmpty());
+        }
+    }
+
+    /**
+     * Für ein Formular ohne mitgelieferte Zuordnung ist die Antwort leer und keine Ausnahme - die
+     * Kanzlei ordnet dann selbst zu, und der Import sagt es ihr.
+     */
+    @Test
+    public void aformWithoutAshippedMappingYieldsNothing() throws Exception {
+        assertTrue(formPackage.readMapping(formPackage.getCurrentVersion(), "ANLAGE_3").isEmpty());
+    }
+
+    /**
+     * Eine Zuordnung, nach der in einer Fassung gefragt wird, die es nicht gibt, ist leer statt
+     * irgendeine - sonst käme die Zuordnung der falschen Fassung zurück.
+     */
+    @Test
+    public void anUnknownVersionCarriesNoMapping() throws Exception {
+        assertTrue(formPackage.readMapping("2030-01-01", "ANLAGE_1").isEmpty());
     }
 }

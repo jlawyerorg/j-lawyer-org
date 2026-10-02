@@ -665,10 +665,13 @@ package org.jlawyer.test.server.ejb;
 import com.jdimension.jlawyer.documents.AcroFormFieldDescription;
 import com.jdimension.jlawyer.documents.AcroFormFillResult;
 import com.jdimension.jlawyer.documents.AcroFormFiller;
+import com.jdimension.jlawyer.services.EnforcementFormPackage;
 import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.Map;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
@@ -701,11 +704,17 @@ public class AcroFormFillerTest {
 
     private final AcroFormFiller filler = new AcroFormFiller();
 
-    /** The bailiff order - the form of the daily work. */
+    /**
+     * The bailiff order of the version in force - the form of the daily work.
+     *
+     * The version is a directory, because the publisher reuses its file names: the forms amended to
+     * 01.10.2026 came out under the same names, still dated 20240901.
+     */
     private File bailiffOrder() {
         String base = System.getProperty("basedir");
-        File f = new File(base == null ? "." : base,
-                "src/main/resources/zvfv/20240901_Vollstreckungsauftrag-Gerichtsvollzieher.pdf");
+        File f = new File(base == null ? "." : base, "src/main/resources/zvfv/"
+                + new EnforcementFormPackage().getCurrentVersion()
+                + "/20240901_Vollstreckungsauftrag-Gerichtsvollzieher.pdf");
         Assume.assumeTrue("the ZVFV forms are not present", f.isFile());
         return f;
     }
@@ -872,18 +881,29 @@ public class AcroFormFillerTest {
     public void theFormDescribesItsFieldsWithTheirLabels() throws Exception {
         List<AcroFormFieldDescription> fields = filler.describe(bailiffOrder());
 
-        assertEquals(350, fields.size());
+        assertEquals(352, fields.size());
         AcroFormFieldDescription first = fields.get(0);
         assertEquals("Textfeld 1", first.getName());
         assertEquals(AcroFormFieldDescription.Kind.TEXT, first.getKind());
         assertNotNull("ohne die Bezeichnung waere der Name nichts wert", first.getLabel());
         assertTrue(first.getLabel().contains("Gerichtsvollzieher"));
 
+        // Jedes Ankreuzfeld nennt genau einen On-State, und er ist aus der Datei zu lesen statt
+        // festzuschreiben: in der Fassung 2024-09-01 hiess er ueberall "Ja", in der Fassung
+        // 2026-10-01 tragen die fuenf neu hinzugekommenen Felder "Yes". Ein festgeschriebenes "Ja"
+        // liesse sie leer, waehrend das gedruckte Formular angekreuzt aussieht.
+        Set<String> onStates = new HashSet<>();
+        int checkBoxes = 0;
         for (AcroFormFieldDescription field : fields) {
             if (field.getKind() == AcroFormFieldDescription.Kind.CHECK_BOX) {
-                assertEquals(Arrays.asList("Ja"), field.getAdmittedValues());
-                return;
+                checkBoxes++;
+                assertEquals(field.getName() + " nennt nicht genau einen On-State",
+                        1, field.getAdmittedValues().size());
+                onStates.add(field.getAdmittedValues().get(0));
             }
         }
+        assertTrue("das Formular traegt Ankreuzfelder", checkBoxes > 0);
+        assertEquals("in dieser Fassung kommen zwei verschiedene On-States vor",
+                new HashSet<>(Arrays.asList("Ja", "Yes")), onStates);
     }
 }

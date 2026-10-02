@@ -785,6 +785,8 @@ public interface EnforcementServiceLocal {
      */
     int replaceFormMapping(String templateId) throws Exception;
 
+    List<String> copyFormMapping(String fromTemplateId, String toTemplateId) throws Exception;
+
 
     /**
      * The third-party debtors named in an attachment measure.

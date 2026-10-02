@@ -662,235 +662,254 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.test.server.ejb;
 
+import com.jdimension.jlawyer.documents.AcroFormFieldComparison;
+import com.jdimension.jlawyer.documents.AcroFormFieldDescription;
+import com.jdimension.jlawyer.documents.AcroFormFiller;
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationWidget;
 import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
-import org.apache.pdfbox.pdmodel.interactive.form.PDCheckBox;
 import org.apache.pdfbox.pdmodel.interactive.form.PDField;
 import org.apache.pdfbox.pdmodel.interactive.form.PDNonTerminalField;
-import org.apache.pdfbox.pdmodel.interactive.form.PDRadioButton;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import org.junit.Assume;
-import org.junit.Test;
 
 /**
- * The official enforcement forms, and the field index kept beside them.
+ * The field index of an official form: writing it, and comparing two of them.
  *
- * The forms are filled by field name, and a name exists nowhere but in the file. The index under
- * {@code zvfv/felder} is what the mapping profiles are written against, so it has to say what the
- * files actually contain - a replaced form whose index was not regenerated would send the mapping
- * looking for fields that are no longer there, and the filler would produce a form that prints
- * correctly and is empty where it matters.
+ * The technical names of an AcroForm field say nothing - "Textfeld 353", "Kontrollkästchen 3036".
+ * What a field means stands in its tooltip and nowhere else, and a check box additionally carries an
+ * on-state that cannot be guessed. The index under {@code src/test/resources/zvfv/felder} is that
+ * knowledge in a form a person can read and a diff can compare, and it is what a mapping profile is
+ * written against.
  *
- * The tests also hold two properties the filler is built on: that every field carries a label, and
- * that a check box's on-state is read rather than assumed.
+ * The forms are replaced every one to two years, and then two questions decide all further work:
+ * what does the new file contain, and what changed. This answers both. It was a throwaway program
+ * twice; the second time it was needed, nobody had it any more.
+ *
+ * <pre>
+ * schreiben:  ZvfvFieldIndexTool write &lt;Fassung&gt;        (z. B. 2026-10-01)
+ * vergleichen: ZvfvFieldIndexTool diff &lt;alt&gt; &lt;neu&gt;
+ * </pre>
+ *
+ * Run it from the module directory, for instance with
+ * {@code mvn -q exec:java -Dexec.mainClass=... -Dexec.classpathScope=test}, or from the IDE.
+ *
+ * The rendering lives here and not in a script, so that {@link ZvfvFormFieldIndexTest} checks the
+ * very text this writes: one implementation, not two that drift apart.
  *
  * @author jens
  */
-public class ZvfvFormFieldIndexTest {
+public final class ZvfvFieldIndexTool {
 
-    private File formsDirectory() {
-        String base = System.getProperty("basedir");
-        File dir = new File(base == null ? "." : base, "src/main/resources/zvfv");
-        Assume.assumeTrue("the ZVFV forms are not present", dir.isDirectory());
-        return dir;
+    /** Where the forms are shipped, relative to the module. */
+    public static final String FORMS = "src/main/resources/zvfv";
+
+    /** Where the index is kept, relative to the module. */
+    public static final String INDEX = "src/test/resources/zvfv/felder";
+
+    private ZvfvFieldIndexTool() {
     }
 
     /**
-     * Every version shipped, as the directories under {@code zvfv} name it.
+     * The index of one form, as it is written to file.
      *
-     * The versions are directories because the publisher reuses its file names: the forms in force
-     * from 01.10.2026 are published under the same names, still dated 20240901. A test that looked
-     * only at the top level would find nothing and - worse - would say so by skipping.
+     * @param pdf the form
+     * @return the whole text including the explaining header
+     * @throws IOException if the file cannot be read
      */
-    private List<File> versionDirectories() {
-        File[] dirs = formsDirectory().listFiles(File::isDirectory);
-        List<File> sorted = new ArrayList<>();
-        if (dirs != null) {
-            for (File dir : dirs) {
-                if (dir.getName().matches("\\d{4}-\\d{2}-\\d{2}")) {
-                    sorted.add(dir);
-                }
+    public static String render(File pdf) throws IOException {
+        try (PDDocument document = PDDocument.load(pdf)) {
+            List<PDField> fields = fieldsOf(document);
+            int pages = 0;
+            for (PDField field : fields) {
+                pages = Math.max(pages, pageOf(document, field));
+            }
+            StringBuilder sb = new StringBuilder();
+            sb.append("# Feldverzeichnis von ").append(pdf.getName()).append("\n");
+            sb.append("# ").append(fields.size()).append(" Felder auf ").append(pages)
+                    .append(" Seiten\n");
+            sb.append("#\n");
+            sb.append("# Spalten: Seite <TAB> Name <TAB> Art <TAB> Werte <TAB> Bezeichnung\n");
+            sb.append("#\n");
+            sb.append("# Die technischen Namen sind nichtssagend - \"Textfeld 353\". Was ein Feld\n");
+            sb.append("# bedeutet, steht in seinem Tooltip, und der ist hier die letzte Spalte.\n");
+            sb.append("# Ohne ihn waere die Zuordnung reine Sucharbeit am gedruckten Formular.\n");
+            sb.append("#\n");
+            sb.append("# Bei Ankreuzfeldern ist \"Werte\" der On-State - der Wert, der \"angekreuzt\"\n");
+            sb.append("# bedeutet. Er steht nirgends ausser in der Datei und laesst sich nicht\n");
+            sb.append("# raten; ein falscher erzeugt ein Formular, das gedruckt richtig aussieht\n");
+            sb.append("# und maschinell leer ist.\n");
+            for (PDField field : fields) {
+                sb.append(pageOf(document, field)).append("\t")
+                        .append(clean(field.getFullyQualifiedName())).append("\t")
+                        .append(kindOf(field)).append("\t")
+                        .append(clean(valuesOf(field))).append("\t")
+                        .append(clean(field.getAlternateFieldName())).append("\n");
+            }
+            return sb.toString();
+        }
+    }
+
+    /**
+     * Writes the index of every form of a version.
+     *
+     * @param module the module directory
+     * @param version the version, which is the directory the forms sit in
+     * @return what was written, line by line
+     * @throws IOException if a form cannot be read or the index cannot be written
+     */
+    public static List<String> write(File module, String version) throws IOException {
+        File forms = new File(new File(module, FORMS), version);
+        File target = new File(new File(module, INDEX), version);
+        target.mkdirs();
+
+        List<String> report = new ArrayList<>();
+        for (File pdf : pdfsOf(forms)) {
+            String text = render(pdf);
+            if (text.contains("# 0 Felder")) {
+                // die Hinweisblaetter sind Merkblaetter und tragen keine Formularfelder
+                report.add(pdf.getName() + ": keine Formularfelder, kein Verzeichnis");
+                continue;
+            }
+            File file = new File(target, pdf.getName().replaceAll("\\.pdf$", "") + ".txt");
+            Files.write(file.toPath(), text.getBytes(StandardCharsets.UTF_8));
+            report.add(pdf.getName() + " -> " + file.getName());
+        }
+        return report;
+    }
+
+    /**
+     * Compares the forms of two versions, form by form.
+     *
+     * @param module the module directory
+     * @param before the older version
+     * @param after the newer one
+     * @return the comparison in words
+     * @throws IOException if a form cannot be read
+     */
+    public static String diff(File module, String before, String after) throws IOException {
+        File oldDir = new File(new File(module, FORMS), before);
+        File newDir = new File(new File(module, FORMS), after);
+        AcroFormFiller filler = new AcroFormFiller();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("Fassung ").append(before).append(" -> ").append(after).append("\n");
+        for (File pdf : pdfsOf(newDir)) {
+            File previous = new File(oldDir, pdf.getName());
+            sb.append("\n").append(pdf.getName()).append("\n");
+            if (!previous.isFile()) {
+                sb.append("    neu in dieser Fassung\n");
+                continue;
+            }
+            List<AcroFormFieldDescription> was = filler.describe(previous);
+            List<AcroFormFieldDescription> is = filler.describe(pdf);
+            if (was.isEmpty() && is.isEmpty()) {
+                sb.append("    Merkblatt ohne Formularfelder\n");
+                continue;
+            }
+            for (String line : AcroFormFieldComparison.of(was, is).describe().split("\n")) {
+                sb.append("    ").append(line).append("\n");
             }
         }
-        assertFalse("unter zvfv/ liegt kein Fassungsverzeichnis", sorted.isEmpty());
+        return sb.toString();
+    }
+
+    private static List<File> pdfsOf(File directory) {
+        File[] files = directory.listFiles((d, name) -> name.toLowerCase().endsWith(".pdf"));
+        List<File> sorted = new ArrayList<>();
+        if (files != null) {
+            for (File file : files) {
+                sorted.add(file);
+            }
+        }
         sorted.sort((a, b) -> a.getName().compareTo(b.getName()));
         return sorted;
     }
 
-    private List<File> forms() {
-        List<File> sorted = new ArrayList<>();
-        for (File version : versionDirectories()) {
-            File[] pdfs = version.listFiles((d, name) -> name.toLowerCase().endsWith(".pdf"));
-            if (pdfs != null) {
-                sorted.addAll(Arrays.asList(pdfs));
-            }
-        }
-        assertFalse("keine Formulare in den Fassungsverzeichnissen", sorted.isEmpty());
-        sorted.sort((a, b) -> a.getPath().compareTo(b.getPath()));
-        return sorted;
-    }
-
-    private void collect(List<PDField> fields, List<PDField> out) {
-        for (PDField f : fields) {
-            if (f instanceof PDNonTerminalField) {
-                collect(((PDNonTerminalField) f).getChildren(), out);
-            } else {
-                out.add(f);
-            }
-        }
-    }
-
-    private List<PDField> fieldsOf(PDDocument document) {
+    private static List<PDField> fieldsOf(PDDocument document) {
         PDAcroForm form = document.getDocumentCatalog().getAcroForm();
-        if (form == null) {
-            return new ArrayList<>();
-        }
         List<PDField> all = new ArrayList<>();
-        collect(form.getFields(), all);
+        if (form != null) {
+            collect(form.getFields(), all);
+        }
         return all;
     }
 
+    private static void collect(List<PDField> fields, List<PDField> out) {
+        for (PDField field : fields) {
+            if (field instanceof PDNonTerminalField) {
+                collect(((PDNonTerminalField) field).getChildren(), out);
+            } else {
+                out.add(field);
+            }
+        }
+    }
+
+    private static int pageOf(PDDocument document, PDField field) {
+        try {
+            for (PDAnnotationWidget widget : field.getWidgets()) {
+                PDPage page = widget.getPage();
+                if (page != null) {
+                    int at = document.getPages().indexOf(page);
+                    if (at >= 0) {
+                        return at + 1;
+                    }
+                }
+            }
+        } catch (RuntimeException ignored) {
+            // ein Feld ohne Widget sitzt auf keiner Seite; die Null sagt das
+        }
+        return 0;
+    }
+
+    private static String kindOf(PDField field) {
+        if (field instanceof org.apache.pdfbox.pdmodel.interactive.form.PDCheckBox) {
+            return "Ankreuzfeld";
+        }
+        if (field instanceof org.apache.pdfbox.pdmodel.interactive.form.PDRadioButton) {
+            return "Auswahlfeld";
+        }
+        return "Text";
+    }
+
+    private static String valuesOf(PDField field) {
+        if (field instanceof org.apache.pdfbox.pdmodel.interactive.form.PDCheckBox) {
+            return ((org.apache.pdfbox.pdmodel.interactive.form.PDCheckBox) field).getOnValue();
+        }
+        if (field instanceof org.apache.pdfbox.pdmodel.interactive.form.PDRadioButton) {
+            return String.join("|",
+                    ((org.apache.pdfbox.pdmodel.interactive.form.PDRadioButton) field).getOnValues());
+        }
+        return "";
+    }
+
+    private static String clean(String value) {
+        return value == null ? ""
+                : value.replace('\t', ' ').replace('\r', ' ').replace('\n', ' ').trim();
+    }
+
     /**
-     * The index sits in the test resources while the forms are shipped in the deployment: the forms
-     * are part of the product, the index is working material for whoever writes a mapping profile.
+     * @param args {@code write <Fassung>} or {@code diff <alt> <neu>}
+     * @throws IOException if a file cannot be read or written
      */
-    private File indexFor(File pdf) {
-        String base = System.getProperty("basedir");
-        File felder = new File(base == null ? "." : base, "src/test/resources/zvfv/felder");
-        // das Verzeichnis folgt der Fassung des Formulars, sonst traegen zwei Fassungen desselben
-        // Formulars denselben Verzeichnisnamen
-        File ofVersion = new File(felder, pdf.getParentFile().getName());
-        return new File(ofVersion, pdf.getName().replaceAll("\\.pdf$", "") + ".txt");
-    }
-
-    /** The field names the index records, in the order it records them. */
-    private List<String> recordedNames(File index) throws Exception {
-        List<String> names = new ArrayList<>();
-        for (String line : Files.readAllLines(index.toPath(), StandardCharsets.UTF_8)) {
-            if (line.isEmpty() || line.charAt(0) == '#') {
-                continue;
+    public static void main(String[] args) throws IOException {
+        File module = new File(System.getProperty("basedir", "."));
+        if (args.length == 2 && "write".equals(args[0])) {
+            for (String line : write(module, args[1])) {
+                System.out.println(line);
             }
-            String[] parts = line.split("\t", -1);
-            if (parts.length >= 2) {
-                names.add(parts[1]);
-            }
+            return;
         }
-        return names;
-    }
-
-    @Test
-    public void everyFormWithFieldsHasAnIndexThatMatchesIt() throws Exception {
-        List<String> problems = new ArrayList<>();
-        for (File pdf : forms()) {
-            try (PDDocument document = PDDocument.load(pdf)) {
-                List<PDField> fields = fieldsOf(document);
-                if (fields.isEmpty()) {
-                    // die Hinweisblätter sind Merkblätter und tragen keine Formularfelder
-                    continue;
-                }
-                File index = indexFor(pdf);
-                if (!index.isFile()) {
-                    problems.add(pdf.getName() + ": kein Feldverzeichnis unter felder/");
-                    continue;
-                }
-                // Zeichen fuer Zeichen gegen das, was das Werkzeug heute erzeugen wuerde - nicht
-                // nur die Feldnamen. Eine Bezeichnung, die sich geaendert hat, ist der gefaehrliche
-                // Fall: der Name bleibt, die Bedeutung wandert, und eine Zuordnung schreibt lautlos
-                // in das falsche Kaestchen.
-                String recorded = new String(Files.readAllBytes(index.toPath()),
-                        StandardCharsets.UTF_8);
-                String current = ZvfvFieldIndexTool.render(pdf);
-                if (!recorded.equals(current)) {
-                    problems.add(pdf.getName() + ": Verzeichnis weicht vom Formular ab - mit "
-                            + "\"ZvfvFieldIndexTool write " + pdf.getParentFile().getName()
-                            + "\" neu erzeugen und den Unterschied ansehen");
-                }
-            }
+        if (args.length == 3 && "diff".equals(args[0])) {
+            System.out.println(diff(module, args[1], args[2]));
+            return;
         }
-        assertEquals("Feldverzeichnisse, die nicht zu ihrem Formular passen: " + problems,
-                0, problems.size());
-    }
-
-    @Test
-    public void everyFieldCarriesALabel() throws Exception {
-        // Die technischen Namen sind nichtssagend - "Textfeld 353". Ohne den Tooltip wäre die
-        // Zuordnung Sucharbeit am gedruckten Formular. Dass alle acht Formulare ihn durchgängig
-        // tragen, ist die Voraussetzung, auf der die Zuordnungsprofile stehen.
-        List<String> without = new ArrayList<>();
-        for (File pdf : forms()) {
-            try (PDDocument document = PDDocument.load(pdf)) {
-                for (PDField f : fieldsOf(document)) {
-                    String label = f.getAlternateFieldName();
-                    if (label == null || label.trim().isEmpty()) {
-                        without.add(pdf.getName() + ": " + f.getFullyQualifiedName());
-                    }
-                }
-            }
-        }
-        assertEquals("Felder ohne Bezeichnung: " + without, 0, without.size());
-    }
-
-    @Test
-    public void everyCheckBoxOffersAnOnState() throws Exception {
-        // Ein Ankreuzfeld ohne On-State liesse sich nicht ankreuzen. Und der Wert wird gelesen,
-        // nicht angenommen: heute heisst er in allen acht Formularen "Ja", eine spaetere Fassung
-        // darf das aendern, und ein falscher On-State erzeugt ein Formular, das gedruckt
-        // angekreuzt aussieht und maschinell leer ist.
-        Set<String> states = new HashSet<>();
-        List<String> without = new ArrayList<>();
-        for (File pdf : forms()) {
-            try (PDDocument document = PDDocument.load(pdf)) {
-                for (PDField f : fieldsOf(document)) {
-                    Set<String> onValues = null;
-                    if (f instanceof PDCheckBox) {
-                        onValues = ((PDCheckBox) f).getOnValues();
-                    } else if (f instanceof PDRadioButton) {
-                        onValues = ((PDRadioButton) f).getOnValues();
-                    }
-                    if (onValues == null) {
-                        continue;
-                    }
-                    if (onValues.isEmpty()) {
-                        without.add(pdf.getName() + ": " + f.getFullyQualifiedName());
-                    }
-                    states.addAll(onValues);
-                }
-            }
-        }
-        assertEquals("Ankreuzfelder ohne On-State: " + without, 0, without.size());
-        assertFalse("es wurde kein einziges Ankreuzfeld gefunden - der Test prüft nichts",
-                states.isEmpty());
-    }
-
-    @Test
-    public void theFormsInScopeArePresent() {
-        // Ohne die Anlagen 1, 4 und 5 lassen sich Gerichtsvollzieherauftrag und Forderungspfändung
-        // nicht bauen, und das ist die tägliche Arbeit.
-        List<String> required = Arrays.asList("Vollstreckungsauftrag", "Antrag_Pfaendungsbeschluss",
-                "Entwurf_Pfaendungsbeschluss", "Forderungsaufstellung_Gerichtsvollzieher");
-        List<String> missing = new ArrayList<>();
-        for (String fragment : required) {
-            boolean found = false;
-            for (File pdf : forms()) {
-                if (pdf.getName().contains(fragment)) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                missing.add(fragment);
-            }
-        }
-        assertTrue("Formulare fehlen: " + missing, missing.isEmpty());
+        System.out.println("ZvfvFieldIndexTool write <Fassung>");
+        System.out.println("ZvfvFieldIndexTool diff <alte Fassung> <neue Fassung>");
     }
 }

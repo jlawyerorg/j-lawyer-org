@@ -1,0 +1,70 @@
+# Feldzuordnung für Anlage 1 der ZVFV, Vollstreckungsauftrag an Gerichtsvollzieher.
+#
+# Spalten: Feldname <TAB> Schluessel <TAB> Pflicht (0/1) <TAB> Bezeichnung
+#
+# Der Feldname ist der Name im PDF und sagt fuer sich nichts - "Textfeld 220". Der Schluessel
+# benennt, woraus gefuellt wird; das Vokabular dazu ist EnforcementFormDataSource. Die Bezeichnung
+# ist der Tooltip des Formulars und der einzige Beleg dafuer, dass die Zuordnung das meint, was sie
+# behauptet: gibt eine spaetere Fassung demselben Namen eine andere Bedeutung, faellt es beim
+# Vergleich auf.
+#
+# Zugeordnet ist, was ein Auftrag mindestens braucht. Die Optionen des § 802a Abs. 2 ZPO haengen an
+# der einzelnen Massnahme und nicht am Formular.
+#
+# Geprueft an einem ausgefuellten Muster und an der Geometrie des Formulars: die Rechtecke der
+# Felder aus dem PDF, daneben die gedruckten Ueberschriften mit ihren Koordinaten.
+#
+# Das war noetig, weil die Bezeichnungen allein nicht reichen. Seite 1 traegt unter "Angaben zum
+# Schuldner" die Felder "Name/Firma", "Strasse", "Postleitzahl", "Ort" - und der Block
+# "Kontaktdaten des Auftraggebers" darunter traegt dieselben Bezeichnungen. Die Zuordnung hatte
+# deshalb die Kanzlei in den Schuldnerblock gesetzt; aufgefallen war es nicht, weil die
+# Kanzleidaten bis dahin nie gefuellt wurden. Der Auftraggeberblock hat ueberdies gar keine
+# Anschriftsfelder, nur Name, Vorname, Telefon, E-Mail, Fax und SAFE-ID.
+
+Textfeld 1	empfaenger.name	1	Name Gerichtsvollzieher oder Bezeichnung Verteilungsstelle des Amtsgerichts
+Textfeld 2	empfaenger.name_fortsetzung	0	ggfls. Fortsetzung Gerichtsvollzieher oder Bezeichnung Verteilungsstelle des Amtsgerichts
+Textfeld 3	empfaenger.strasse	1	Postfach oder Straße und Hausnummer
+Textfeld 4	empfaenger.plz_ort	1	Postleitzahl und Ort
+Kontrollkästchen 1	schuldner.ist_herr	0	Herr
+Kontrollkästchen 2	schuldner.ist_frau	0	Frau
+Kontrollkästchen 3	schuldner.ist_unternehmen	0	Unternehmen
+Kontrollkästchen 4	schuldner.ist_sonstige	0	Sonstige
+Textfeld 198	schuldner.land	0	Land (wenn nicht Deutschland)
+Kontrollkästchen 5	absender.ist_glaeubiger	0	Gläubiger
+Kontrollkästchen 7	absender.ist_bevollmaechtigter	0	Bevollmächtigter
+Textfeld 192	schuldner.name	1	Name/Firma
+Textfeld 193	schuldner.vorname	0	ggf. Vorname(n)
+Textfeld 194	schuldner.strasse	0	Straße
+Textfeld 195	schuldner.hausnummer	0	Hausnummer
+Textfeld 196	schuldner.plz	0	Postleitzahl
+Textfeld 197	schuldner.ort	0	Ort
+Textfeld 203	bevollmaechtigter.name	0	Name/Firma
+Textfeld 202	bevollmaechtigter.vorname	0	ggf. Vorname(n)
+Textfeld 19	bevollmaechtigter.telefon	0	Telefon
+Textfeld 20	bevollmaechtigter.email	0	E-Mail
+Textfeld 204	akte.zeichen	0	Geschäftszeichen
+Textfeld 5	ort	0	Ort
+Textfeld 6	datum	1	Datum
+Kontrollkästchen 166	glaeubiger.ist_herr	0	Herr
+Kontrollkästchen 165	glaeubiger.ist_frau	0	Frau
+Kontrollkästchen 164	glaeubiger.ist_unternehmen	0	Unternehmen
+Kontrollkästchen 163	glaeubiger.ist_sonstige	0	Sonstige
+Textfeld 220	glaeubiger.name	1	Name/Firma
+Textfeld 219	glaeubiger.vorname	0	ggf. Vorname(n)
+Textfeld 218	glaeubiger.strasse	1	Straße
+Textfeld 217	glaeubiger.hausnummer	0	Hausnummer
+Textfeld 216	glaeubiger.plz	1	Postleitzahl
+Textfeld 215	glaeubiger.ort	1	Ort
+Textfeld 222	glaeubiger.land	0	Land (wenn nicht Deutschland)
+Kontrollkästchen 174	schuldner.ist_herr	0	Herr
+Kontrollkästchen 173	schuldner.ist_frau	0	Frau
+Kontrollkästchen 172	schuldner.ist_unternehmen	0	Unternehmen
+Kontrollkästchen 171	schuldner.ist_sonstige	0	Sonstige
+Textfeld 240	schuldner.name	1	Name/Firma
+Textfeld 239	schuldner.vorname	0	ggf. Vorname(n)
+Textfeld 238	schuldner.strasse	1	Straße
+Textfeld 237	schuldner.hausnummer	0	Hausnummer
+Textfeld 236	schuldner.plz	1	Postleitzahl
+Textfeld 244	schuldner.ort	1	Ort
+Textfeld 260	schuldner.land	0	Land (wenn nicht Deutschland)
+Textfeld 247	schuldner.geburtsdatum	0	Geburtsdatum

@@ -1,0 +1,267 @@
+# Feldverzeichnis von 20240901_Forderungsaufstellung_Gerichtsvollzieher.pdf
+# 254 Felder auf 2 Seiten
+#
+# Spalten: Seite <TAB> Name <TAB> Art <TAB> Werte <TAB> Bezeichnung
+#
+# Die technischen Namen sind nichtssagend - "Textfeld 353". Was ein Feld
+# bedeutet, steht in seinem Tooltip, und der ist hier die letzte Spalte.
+# Ohne ihn waere die Zuordnung reine Sucharbeit am gedruckten Formular.
+#
+# Bei Ankreuzfeldern ist "Werte" der On-State - der Wert, der "angekreuzt"
+# bedeutet. Er steht nirgends ausser in der Datei und laesst sich nicht
+# raten; ein falscher erzeugt ein Formular, das gedruckt richtig aussieht
+# und maschinell leer ist.
+1	Textfeld 1	Text		Lfd. Nr.
+1	Kontrollkästchen 1	Ankreuzfeld	Ja	Hauptforderung
+1	Kontrollkästchen 2	Ankreuzfeld	Ja	Restforderung
+1	Kontrollkästchen 3	Ankreuzfeld	Ja	Teilforderung
+1	Kontrollkästchen 4	Ankreuzfeld	Ja	Prozentpunkte
+1	Kontrollkästchen 5	Ankreuzfeld	Ja	Prozent
+1	Kontrollkästchen 6	Ankreuzfeld	Ja	Prozentpunkte
+1	Kontrollkästchen 7	Ankreuzfeld	Ja	Prozent
+1	Kontrollkästchen 8	Ankreuzfeld	Ja	Prozentpunkte
+1	Kontrollkästchen 9	Ankreuzfeld	Ja	Prozent
+1	Kontrollkästchen 10	Ankreuzfeld	Ja	Prozentpunkte
+1	Kontrollkästchen 11	Ankreuzfeld	Ja	Prozent
+1	Kontrollkästchen 12	Ankreuzfeld	Ja	Hauptforderung
+1	Kontrollkästchen 13	Ankreuzfeld	Ja	Restforderung
+1	Kontrollkästchen 14	Ankreuzfeld	Ja	Teilforderung
+1	Kontrollkästchen 15	Ankreuzfeld	Ja	Prozentpunkte
+1	Kontrollkästchen 16	Ankreuzfeld	Ja	Prozent
+1	Kontrollkästchen 17	Ankreuzfeld	Ja	Prozentpunkte
+1	Kontrollkästchen 18	Ankreuzfeld	Ja	Prozent
+1	Kontrollkästchen 19	Ankreuzfeld	Ja	Prozentpunkte
+1	Kontrollkästchen 20	Ankreuzfeld	Ja	Prozent
+1	Kontrollkästchen 21	Ankreuzfeld	Ja	Prozentpunkte
+1	Kontrollkästchen 22	Ankreuzfeld	Ja	Prozent
+1	Kontrollkästchen 23	Ankreuzfeld	Ja	Hauptforderung
+1	Kontrollkästchen 24	Ankreuzfeld	Ja	Restforderung
+1	Kontrollkästchen 25	Ankreuzfeld	Ja	Teilforderung
+1	Kontrollkästchen 26	Ankreuzfeld	Ja	Weitere Forderungen
+1	Textfeld 67	Text		Name
+1	Textfeld 68	Text		Vorname(n)
+1	Textfeld 69	Text		Geburtsdatum
+1	Kontrollkästchen 27	Ankreuzfeld	Ja	Prozentpunkte
+1	Kontrollkästchen 28	Ankreuzfeld	Ja	Prozent
+1	Kontrollkästchen 29	Ankreuzfeld	Ja	Prozentpunkte
+1	Kontrollkästchen 30	Ankreuzfeld	Ja	Prozent
+1	Kontrollkästchen 31	Ankreuzfeld	Ja	Prozentpunkte
+1	Kontrollkästchen 32	Ankreuzfeld	Ja	Prozent
+1	Kontrollkästchen 33	Ankreuzfeld	Ja	Prozentpunkte
+1	Kontrollkästchen 34	Ankreuzfeld	Ja	Prozent
+1	Kontrollkästchen 35	Ankreuzfeld	Ja	Gesamtkosten
+1	Kontrollkästchen 36	Ankreuzfeld	Ja	Restkosten
+1	Kontrollkästchen 37	Ankreuzfeld	Ja	Teilkosten
+1	Textfeld 637	Text		Ziffer
+1	Textfeld 4	Text		Betrag
+1	Textfeld 5	Text		Betrag
+1	Textfeld 6	Text		Betrag
+1	Textfeld 7	Text		Betrag
+1	Textfeld 8	Text		Zahl
+1	Textfeld 9	Text		Zahl
+1	Textfeld 10	Text		Betrag
+1	Textfeld 11	Text		Datum von
+1	Textfeld 12	Text		Datum bis
+1	Textfeld 13	Text		Betrag
+1	Textfeld 14	Text		Zahl
+1	Textfeld 15	Text		Zahl
+1	Textfeld 16	Text		Betrag
+1	Textfeld 17	Text		Datum von
+1	Textfeld 18	Text		Datum bis
+1	Textfeld 19	Text		Betrag
+1	Textfeld 20	Text		Zahl
+1	Textfeld 21	Text		Zahl
+1	Textfeld 22	Text		Betrag
+1	Textfeld 23	Text		Datum
+1	Textfeld 25	Text		Zahl
+1	Textfeld 26	Text		Zahl
+1	Textfeld 27	Text		Betrag
+1	Textfeld 28	Text		Datum
+1	Textfeld 30	Text		Betrag
+1	Textfeld 31	Text		Betrag
+1	Textfeld 32	Text		Betrag
+1	Textfeld 33	Text		Betrag
+1	Textfeld 34	Text		Zahl
+1	Textfeld 35	Text		Zahl
+1	Textfeld 36	Text		Betrag
+1	Textfeld 37	Text		Datum von
+1	Textfeld 38	Text		Datum bis
+1	Textfeld 39	Text		Betrag
+1	Textfeld 40	Text		Zahl
+1	Textfeld 41	Text		Zahl
+1	Textfeld 42	Text		Betrag
+1	Textfeld 43	Text		Datum von
+1	Textfeld 44	Text		Datum bis
+1	Textfeld 45	Text		Betrag
+1	Textfeld 46	Text		Zahl
+1	Textfeld 47	Text		Zahl
+1	Textfeld 48	Text		Betrag
+1	Textfeld 49	Text		Datum
+1	Textfeld 51	Text		Zahl
+1	Textfeld 52	Text		Zahl
+1	Textfeld 53	Text		Betrag
+1	Textfeld 54	Text		Datum
+1	Textfeld 55	Text		Betrag
+1	Textfeld 56	Text		Betrag
+1	Textfeld 57	Text		Betrag
+1	Textfeld 191	Text		Rechtsgrundlage
+1	Textfeld 58	Text		Betrag
+1	Textfeld 59	Text		Datum von
+1	Textfeld 60	Text		Datum bis
+1	Textfeld 61	Text		Betrag
+1	Textfeld 202	Text		Rechtsgrundlage
+1	Textfeld 201	Text		Betrag
+1	Textfeld 200	Text		Datum
+1	Textfeld 65	Text		Weitere Forderungen
+1	Textfeld 66	Text		Betrag
+1	Textfeld 70	Text		Datum von
+1	Textfeld 71	Text		Datum bis
+1	Textfeld 72	Text		Betrag
+1	Textfeld 73	Text		Betrag
+1	Textfeld 74	Text		Zahl
+1	Textfeld 75	Text		Zahl
+1	Textfeld 76	Text		Betrag
+1	Textfeld 77	Text		Datum von
+1	Textfeld 78	Text		Datum bis
+1	Textfeld 79	Text		Betrag
+1	Textfeld 80	Text		Zahl
+1	Textfeld 81	Text		Zahl
+1	Textfeld 82	Text		Betrag
+1	Textfeld 83	Text		Datum von
+1	Textfeld 84	Text		Datum bis
+1	Textfeld 85	Text		Betrag
+1	Textfeld 86	Text		Zahl
+1	Textfeld 87	Text		Zahl
+1	Textfeld 88	Text		Betrag
+1	Textfeld 89	Text		Datum
+1	Textfeld 91	Text		Zahl
+1	Textfeld 92	Text		Zahl
+1	Textfeld 93	Text		Betrag
+1	Textfeld 94	Text		Datum
+1	Textfeld 96	Text		Betrag
+1	Textfeld 97	Text		Betrag
+1	Textfeld 98	Text		Betrag
+1	Textfeld 99	Text		Betrag
+2	Kontrollkästchen 38	Ankreuzfeld	Ja	Prozentpunkte
+2	Kontrollkästchen 39	Ankreuzfeld	Ja	Prozent
+2	Kontrollkästchen 40	Ankreuzfeld	Ja	Prozentpunkte
+2	Kontrollkästchen 41	Ankreuzfeld	Ja	Prozent
+2	Kontrollkästchen 42	Ankreuzfeld	Ja	Prozentpunkte
+2	Kontrollkästchen 43	Ankreuzfeld	Ja	Prozent
+2	Kontrollkästchen 44	Ankreuzfeld	Ja	Prozentpunkte
+2	Kontrollkästchen 45	Ankreuzfeld	Ja	Prozent
+2	Kontrollkästchen 46	Ankreuzfeld	Ja	Gesamtkosten
+2	Kontrollkästchen 47	Ankreuzfeld	Ja	Restkosten
+2	Kontrollkästchen 48	Ankreuzfeld	Ja	Teilkosten
+2	Kontrollkästchen 49	Ankreuzfeld	Ja	Prozentpunkte
+2	Kontrollkästchen 50	Ankreuzfeld	Ja	Prozent
+2	Kontrollkästchen 51	Ankreuzfeld	Ja	Prozentpunkte
+2	Kontrollkästchen 52	Ankreuzfeld	Ja	Prozent
+2	Kontrollkästchen 53	Ankreuzfeld	Ja	Prozentpunkte
+2	Kontrollkästchen 54	Ankreuzfeld	Ja	Prozent
+2	Kontrollkästchen 55	Ankreuzfeld	Ja	Prozentpunkte
+2	Kontrollkästchen 56	Ankreuzfeld	Ja	Prozent
+2	Kontrollkästchen 57	Ankreuzfeld	Ja	Gesamtkosten
+2	Kontrollkästchen 58	Ankreuzfeld	Ja	Restkosten
+2	Kontrollkästchen 59	Ankreuzfeld	Ja	Teilkosten
+2	Kontrollkästchen 60	Ankreuzfeld	Ja	Prozentpunkte
+2	Kontrollkästchen 61	Ankreuzfeld	Ja	Prozent
+2	Kontrollkästchen 62	Ankreuzfeld	Ja	Prozentpunkte
+2	Kontrollkästchen 63	Ankreuzfeld	Ja	Prozent
+2	Kontrollkästchen 64	Ankreuzfeld	Ja	Prozentpunkte
+2	Kontrollkästchen 65	Ankreuzfeld	Ja	Prozent
+2	Kontrollkästchen 66	Ankreuzfeld	Ja	Prozentpunkte
+2	Kontrollkästchen 67	Ankreuzfeld	Ja	Prozent
+2	Kontrollkästchen 68	Ankreuzfeld	Ja	Weitere Kosten
+2	Kontrollkästchen 69	Ankreuzfeld	Ja	Weitere Kosten
+2	Textfeld 100	Text		Zahl
+2	Textfeld 101	Text		Zahl
+2	Textfeld 102	Text		Betrag
+2	Textfeld 103	Text		Datum von
+2	Textfeld 104	Text		Datum bis
+2	Textfeld 105	Text		Betrag
+2	Textfeld 106	Text		Zahl
+2	Textfeld 107	Text		Zahl
+2	Textfeld 108	Text		Betrag
+2	Textfeld 109	Text		Datum von
+2	Textfeld 110	Text		Datum bis
+2	Textfeld 111	Text		Betrag
+2	Textfeld 112	Text		Zahl
+2	Textfeld 113	Text		Zahl
+2	Textfeld 114	Text		Betrag
+2	Textfeld 115	Text		Datum
+2	Textfeld 117	Text		Zahl
+2	Textfeld 118	Text		Zahl
+2	Textfeld 119	Text		Betrag
+2	Textfeld 120	Text		Datum
+2	Textfeld 122	Text		Betrag
+2	Textfeld 123	Text		Betrag
+2	Textfeld 124	Text		Betrag
+2	Textfeld 125	Text		Betrag
+2	Textfeld 126	Text		Zahl
+2	Textfeld 127	Text		Zahl
+2	Textfeld 128	Text		Betrag
+2	Textfeld 129	Text		Datum von
+2	Textfeld 130	Text		Datum bis
+2	Textfeld 131	Text		Betrag
+2	Textfeld 132	Text		Zahl
+2	Textfeld 133	Text		Zahl
+2	Textfeld 134	Text		Betrag
+2	Textfeld 135	Text		Datum von
+2	Textfeld 136	Text		Datum bis
+2	Textfeld 137	Text		Betrag
+2	Textfeld 138	Text		Zahl
+2	Textfeld 139	Text		Zahl
+2	Textfeld 140	Text		Betrag
+2	Textfeld 141	Text		Datum
+2	Textfeld 143	Text		Zahl
+2	Textfeld 144	Text		Zahl
+2	Textfeld 145	Text		Betrag
+2	Textfeld 146	Text		Datum
+2	Textfeld 148	Text		Betrag
+2	Textfeld 149	Text		Betrag
+2	Textfeld 150	Text		Betrag
+2	Textfeld 151	Text		Betrag
+2	Textfeld 152	Text		Zahl
+2	Textfeld 153	Text		Zahl
+2	Textfeld 154	Text		Betrag
+2	Textfeld 155	Text		Datum von
+2	Textfeld 156	Text		Datum bis
+2	Textfeld 157	Text		Betrag
+2	Textfeld 158	Text		Zahl
+2	Textfeld 159	Text		Zahl
+2	Textfeld 160	Text		Betrag
+2	Textfeld 161	Text		Datum von
+2	Textfeld 162	Text		Datum bis
+2	Textfeld 163	Text		Betrag
+2	Textfeld 164	Text		Zahl
+2	Textfeld 165	Text		Zahl
+2	Textfeld 166	Text		Betrag
+2	Textfeld 167	Text		Datum
+2	Textfeld 169	Text		Zahl
+2	Textfeld 170	Text		Zahl
+2	Textfeld 171	Text		Betrag
+2	Textfeld 172	Text		Datum
+2	Textfeld 174	Text		Weitere Kosten
+2	Textfeld 175	Text		Betrag
+2	Textfeld 176	Text		Betrag
+2	Textfeld 177	Text		Beschreibung
+2	Textfeld 177a	Text		Betrag
+2	Textfeld 178	Text		Betrag
+2	Textfeld 179	Text		Betrag
+2	Textfeld 180	Text		Weitere Auslagen
+2	Textfeld 181	Text		Betrag
+2	Textfeld 182	Text		Betrag
+2	Textfeld 193	Text		Betrag
+2	Textfeld 183	Text		Beschreibung
+2	Textfeld 184	Text		Betrag
+2	Textfeld 185	Text		Betrag
+2	Textfeld 186	Text		Betrag
+2	Textfeld 187	Text		Weitere Auslagen
+2	Textfeld 188	Text		Betrag
+2	Textfeld 189	Text		Betrag
+2	Textfeld 194	Text		Betrag
+2	Textfeld 190	Text		Betrag
+2	Textfeld 195	Text		Weitere Kosten
+2	Textfeld 196	Text		Betrag
+2	Textfeld 198	Text		Betrag

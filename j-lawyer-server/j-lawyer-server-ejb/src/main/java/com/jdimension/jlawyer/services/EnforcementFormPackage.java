@@ -679,6 +679,16 @@ import java.util.List;
  * them. What cannot travel with them is the knowledge of which file is which annex - the file names
  * of the publisher say "Antrag_Pfaendungsbeschluss", not "Anlage 4" - and that is what this holds.
  *
+ * More than one version is shipped at a time. The ZVFV replaces its annexes on its own schedule,
+ * and a measure produced under the previous version was not wrong, it was current - so the versions
+ * stand beside each other, each with the period it applies to, and every entry says which one it
+ * belongs to.
+ *
+ * The files keep the names the publisher issued, which is why the version is a directory and not a
+ * prefix: for the amendment in force from 01.10.2026 the Bundesministerium der Justiz republished
+ * the forms under the *same* file names, still dated 20240901. A name is therefore no statement
+ * about the version, and anyone deriving one from it would ship the wrong form.
+ *
  * Kept apart from the service so the assignment can be read and tested without a database.
  *
  * @author jens
@@ -688,30 +698,45 @@ public class EnforcementFormPackage {
     /** Where the files sit in the deployment. */
     private static final String RESOURCE_PATH = "/zvfv/";
 
+    /** The version in force until the amendment of 01.10.2026. */
+    public static final String VERSION_2024_09_01 = "2024-09-01";
+
     /**
-     * The version of the forms shipped here.
+     * The version in force from 01.10.2026.
      *
-     * Taken from the publisher's file names, which carry 20240901. Not verified against the
-     * commencement provisions of the ZVFV itself - for choosing between versions it is enough, and
-     * an administrator can correct the date on the template.
+     * The publisher did not rename its files for it - they still read 20240901 - so the date comes
+     * from the commencement of the amending Verordnung, not from a file name. The documents
+     * themselves bear it out: unchanged titles and creation dates, but modified in June 2026.
      */
-    public static final String VERSION = "2024-09-01";
+    public static final String VERSION_2026_10_01 = "2026-10-01";
 
     /**
      * One shipped form: which annex it is, what to call it and where its file is.
      */
     public static class Entry {
 
+        private final String version;
         private final String formKey;
         private final String name;
         private final String fileName;
         private final String description;
 
-        Entry(String formKey, String name, String fileName, String description) {
+        Entry(String version, String formKey, String name, String fileName, String description) {
+            this.version = version;
             this.formKey = formKey;
             this.name = name;
             this.fileName = fileName;
             this.description = description;
+        }
+
+        /**
+         * The version this form belongs to, which is also the directory it sits in.
+         *
+         * @return the version, as {@link EnforcementFormPackage#VERSION_2024_09_01} and its siblings
+         * name it
+         */
+        public String getVersion() {
+            return version;
         }
 
         /**
@@ -743,35 +768,54 @@ public class EnforcementFormPackage {
         }
     }
 
-    private static final List<Entry> ENTRIES = Collections.unmodifiableList(Arrays.asList(
-            new Entry("ANLAGE_1", "Vollstreckungsauftrag an Gerichtsvollzieher",
+    /**
+     * The eight annexes of the ZVFV, for one version.
+     *
+     * Every version shipped so far carries the same annexes under the same file names, so they are
+     * described once. A future version that renames a file or drops an annex needs its own list -
+     * and will then also need the difference written down, because a changed name is the one thing
+     * the version directory cannot express.
+     */
+    private static List<Entry> annexesOf(String version) {
+        return Arrays.asList(
+            new Entry(version, "ANLAGE_1", "Vollstreckungsauftrag an Gerichtsvollzieher",
                     "20240901_Vollstreckungsauftrag-Gerichtsvollzieher.pdf",
                     "Der Auftrag nach § 753 ZPO mit den Optionen des § 802a Abs. 2 ZPO: "
                     + "Sachpfändung, gütliche Erledigung, Vermögensauskunft, Haftbefehl, Zustellung."),
-            new Entry("ANLAGE_2", "Antrag auf richterliche Durchsuchungsanordnung",
+            new Entry(version, "ANLAGE_2", "Antrag auf richterliche Durchsuchungsanordnung",
                     "20240901_Antrag_Durchsuchungsanordnung.pdf",
                     "Auch für die Vollstreckung zur Nachtzeit und an Sonn- und Feiertagen."),
-            new Entry("ANLAGE_3", "Entwurf der richterlichen Durchsuchungsanordnung",
+            new Entry(version, "ANLAGE_3", "Entwurf der richterlichen Durchsuchungsanordnung",
                     "20240901_Entwurf_Durchsuchungsanordnung.pdf",
                     "Der Entwurf, den das Gericht als seine Anordnung übernimmt."),
-            new Entry("ANLAGE_4", "Antrag auf Pfändungs- und Überweisungsbeschluss",
+            new Entry(version, "ANLAGE_4", "Antrag auf Pfändungs- und Überweisungsbeschluss",
                     "20240901_Antrag_Pfaendungsbeschluss.pdf",
                     "Ein Antragsformular für alle Geldforderungen; ob es um Unterhalt geht, "
                     + "entscheidet allein die beigefügte Forderungsaufstellung."),
-            new Entry("ANLAGE_5", "Entwurf des Pfändungs- und Überweisungsbeschlusses",
+            new Entry(version, "ANLAGE_5", "Entwurf des Pfändungs- und Überweisungsbeschlusses",
                     "20240901_Entwurf_Pfaendungsbeschluss.pdf",
                     "Der Entwurf, den das Gericht als seinen Beschluss übernimmt - er wird mit dem "
                     + "Antrag eingereicht."),
-            new Entry("ANLAGE_6", "Forderungsaufstellung zum Vollstreckungsauftrag",
+            new Entry(version, "ANLAGE_6", "Forderungsaufstellung zum Vollstreckungsauftrag",
                     "20240901_Forderungsaufstellung_Gerichtsvollzieher.pdf",
                     "Die Aufstellung, die dem Gerichtsvollzieherauftrag beiliegt."),
-            new Entry("ANLAGE_7", "Forderungsaufstellung zum PfÜB (kein Unterhalt)",
+            new Entry(version, "ANLAGE_7", "Forderungsaufstellung zum PfÜB (kein Unterhalt)",
                     "20240901_ForderungsaufstK_eUnterhaltsansprueche.pdf",
                     "Für Forderungen, die keine gesetzlichen Unterhaltsansprüche sind."),
-            new Entry("ANLAGE_8", "Forderungsaufstellung zum PfÜB (Unterhalt)",
+            new Entry(version, "ANLAGE_8", "Forderungsaufstellung zum PfÜB (Unterhalt)",
                     "20240901_Forderungsaufstellg_Unterhaltsansprueche.pdf",
                     "Für gesetzliche Unterhaltsansprüche - sie sind bevorrechtigt und unterliegen "
-                    + "anderen Pfändungsgrenzen (§ 850d ZPO).")));
+                    + "anderen Pfändungsgrenzen (§ 850d ZPO)."));
+    }
+
+    private static final List<Entry> ENTRIES;
+
+    static {
+        List<Entry> all = new ArrayList<>();
+        all.addAll(annexesOf(VERSION_2024_09_01));
+        all.addAll(annexesOf(VERSION_2026_10_01));
+        ENTRIES = Collections.unmodifiableList(all);
+    }
 
     /**
      * @return the forms shipped, in the order of their annexes
@@ -781,14 +825,64 @@ public class EnforcementFormPackage {
     }
 
     /**
-     * The day this version takes effect, as the publisher's file names date it.
-     *
-     * @return the date, never null
+     * @return the versions shipped, oldest first
      */
-    public Date getValidFrom() {
+    public List<String> getVersions() {
+        return Arrays.asList(VERSION_2024_09_01, VERSION_2026_10_01);
+    }
+
+    /**
+     * @return the newest version shipped, which is the one to use for a new measure today
+     */
+    public String getCurrentVersion() {
+        return VERSION_2026_10_01;
+    }
+
+    /**
+     * The day a version takes effect.
+     *
+     * For 2024-09-01 this is the date the publisher's file names carry. For 2026-10-01 it is the
+     * commencement of the amending Verordnung, because the publisher kept the old file names - see
+     * the note on {@link #VERSION_2026_10_01}.
+     *
+     * @param version one of the versions shipped
+     * @return the date, never null
+     * @throws IllegalArgumentException if the version is not one that is shipped
+     */
+    public Date getValidFrom(String version) {
+        if (VERSION_2024_09_01.equals(version)) {
+            return day(2024, java.util.Calendar.SEPTEMBER, 1);
+        }
+        if (VERSION_2026_10_01.equals(version)) {
+            return day(2026, java.util.Calendar.OCTOBER, 1);
+        }
+        throw new IllegalArgumentException("Unbekannte Fassung: " + version);
+    }
+
+    /**
+     * The last day a version applies.
+     *
+     * A version that is followed by another ends the day before the next begins; there is no gap and
+     * no overlap, because on any given day exactly one version is the one to use.
+     *
+     * @param version one of the versions shipped
+     * @return the last day it applies, or null while it is the current one
+     * @throws IllegalArgumentException if the version is not one that is shipped
+     */
+    public Date getValidTo(String version) {
+        if (VERSION_2024_09_01.equals(version)) {
+            return day(2026, java.util.Calendar.SEPTEMBER, 30);
+        }
+        if (VERSION_2026_10_01.equals(version)) {
+            return null;
+        }
+        throw new IllegalArgumentException("Unbekannte Fassung: " + version);
+    }
+
+    private Date day(int year, int month, int dayOfMonth) {
         java.util.Calendar calendar = java.util.Calendar.getInstance();
         calendar.clear();
-        calendar.set(2024, java.util.Calendar.SEPTEMBER, 1);
+        calendar.set(year, month, dayOfMonth);
         return calendar.getTime();
     }
 
@@ -800,7 +894,7 @@ public class EnforcementFormPackage {
      * @throws IOException if the file is not in the deployment or cannot be read
      */
     public byte[] read(Entry entry) throws IOException {
-        String resource = RESOURCE_PATH + entry.getFileName();
+        String resource = RESOURCE_PATH + entry.getVersion() + "/" + entry.getFileName();
         try (InputStream in = EnforcementFormPackage.class.getResourceAsStream(resource)) {
             if (in == null) {
                 throw new IOException("Das Formular " + entry.getFileName()
@@ -870,13 +964,20 @@ public class EnforcementFormPackage {
      * written for. It is emphatically not a database seed - a seed runs at deployment, when no
      * template exists yet, and would silently insert nothing.
      *
+     * The profile belongs to the version, not to the form: a new version may give the same field
+     * name a different meaning, and a profile of the previous one would then write into the wrong
+     * box without anything failing. That is not a theoretical worry - between 2024-09-01 and
+     * 2026-10-01 three check boxes of the PfÜB application swapped meanings while keeping their
+     * names.
+     *
+     * @param version the version of the form
      * @param formKey the annex
      * @return the assignments, empty where no profile is shipped for that form
      * @throws IOException if the file is there but cannot be read
      */
-    public List<Mapping> readMapping(String formKey) throws IOException {
+    public List<Mapping> readMapping(String version, String formKey) throws IOException {
         List<Mapping> mappings = new ArrayList<>();
-        String resource = RESOURCE_PATH + "mapping/" + formKey + ".txt";
+        String resource = RESOURCE_PATH + version + "/mapping/" + formKey + ".txt";
 
         try (InputStream in = EnforcementFormPackage.class.getResourceAsStream(resource)) {
             if (in == null) {
@@ -906,8 +1007,26 @@ public class EnforcementFormPackage {
     public List<String> getFormKeys() {
         List<String> keys = new ArrayList<>();
         for (Entry entry : ENTRIES) {
-            keys.add(entry.getFormKey());
+            if (!keys.contains(entry.getFormKey())) {
+                keys.add(entry.getFormKey());
+            }
         }
         return keys;
+    }
+
+    /**
+     * The forms of one version.
+     *
+     * @param version the version wanted
+     * @return its entries, in the order of their annexes; empty for a version not shipped
+     */
+    public List<Entry> getEntries(String version) {
+        List<Entry> of = new ArrayList<>();
+        for (Entry entry : ENTRIES) {
+            if (entry.getVersion().equals(version)) {
+                of.add(entry);
+            }
+        }
+        return of;
     }
 }

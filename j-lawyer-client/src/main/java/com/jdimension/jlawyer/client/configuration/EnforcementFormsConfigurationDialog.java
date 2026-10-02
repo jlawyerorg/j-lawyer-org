@@ -671,6 +671,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import javax.swing.JFileChooser;
@@ -803,6 +804,7 @@ public class EnforcementFormsConfigurationDialog extends javax.swing.JDialog {
         EnforcementFormTemplate template = selectedTemplate();
         this.cmdRemoveTemplate.setEnabled(template != null);
         this.cmdSetValidTo.setEnabled(template != null);
+        this.cmdCopyMapping.setEnabled(template != null);
         if (template == null) {
             return;
         }
@@ -835,6 +837,7 @@ public class EnforcementFormsConfigurationDialog extends javax.swing.JDialog {
         tblTemplates = new javax.swing.JTable();
         cmdImportPackage = new javax.swing.JButton();
         cmdReplaceMapping = new javax.swing.JButton();
+        cmdCopyMapping = new javax.swing.JButton();
         cmdAddTemplate = new javax.swing.JButton();
         cmdRemoveTemplate = new javax.swing.JButton();
         cmdSetValidTo = new javax.swing.JButton();
@@ -861,6 +864,15 @@ public class EnforcementFormsConfigurationDialog extends javax.swing.JDialog {
         cmdReplaceMapping.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/reload.png"))); // NOI18N
         cmdReplaceMapping.setText("Zuordnung übernehmen");
         cmdReplaceMapping.setToolTipText("Die mitgelieferte Feldzuordnung für die gewählte Vorlage übernehmen und die vorhandene dabei verwerfen");
+        cmdCopyMapping.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy2.png"))); // NOI18N
+        cmdCopyMapping.setText("Von Fassung übernehmen");
+        cmdCopyMapping.setToolTipText("Die Feldzuordnung einer anderen Fassung desselben Formulars übernehmen - Felder, die es nicht mehr gibt oder die ihre Bedeutung geändert haben, bleiben zurück und werden genannt");
+        cmdCopyMapping.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCopyMappingActionPerformed(evt);
+            }
+        });
+
         cmdReplaceMapping.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdReplaceMappingActionPerformed(evt);
@@ -937,6 +949,8 @@ public class EnforcementFormsConfigurationDialog extends javax.swing.JDialog {
                         .addComponent(cmdImportPackage)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdReplaceMapping)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdCopyMapping)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(cmdAddTemplate)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -964,6 +978,7 @@ public class EnforcementFormsConfigurationDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdImportPackage)
                     .addComponent(cmdReplaceMapping)
+                    .addComponent(cmdCopyMapping)
                     .addComponent(cmdAddTemplate)
                     .addComponent(cmdSetValidTo)
                     .addComponent(cmdRemoveTemplate)
@@ -1005,6 +1020,70 @@ public class EnforcementFormsConfigurationDialog extends javax.swing.JDialog {
                     JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_cmdReplaceMappingActionPerformed
+
+
+    private void cmdCopyMappingActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCopyMappingActionPerformed
+        EnforcementFormTemplate target = selectedTemplate();
+        if (target == null) {
+            JOptionPane.showMessageDialog(this, "Bitte zuerst die Vorlage auswählen, die die "
+                    + "Zuordnung bekommen soll.", "Von Fassung übernehmen",
+                    JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        // Zur Wahl stehen nur die anderen Fassungen desselben Formulars. Eine Zuordnung in ein
+        // anderes Formular zu uebernehmen ergaebe nichts - und die Feldnamen der amtlichen
+        // Formulare aehneln sich genug, dass es zum Teil sogar gelaenge.
+        List<EnforcementFormTemplate> candidates = new ArrayList<>();
+        for (EnforcementFormTemplate other : this.templates) {
+            if (!other.getId().equals(target.getId()) && other.getFormKey() != null
+                    && other.getFormKey().equals(target.getFormKey())) {
+                candidates.add(other);
+            }
+        }
+        if (candidates.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Zu \"" + target.getName() + "\" gibt es keine "
+                    + "andere Fassung, aus der sich eine Zuordnung übernehmen ließe.",
+                    "Von Fassung übernehmen", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        String[] options = new String[candidates.size()];
+        for (int i = 0; i < candidates.size(); i++) {
+            EnforcementFormTemplate c = candidates.get(i);
+            options[i] = c.getName() + " (" + (c.getVersion() == null ? "ohne Fassung"
+                    : c.getVersion()) + ")";
+        }
+        Object selection = JOptionPane.showInputDialog(this,
+                "Aus welcher Fassung soll die Feldzuordnung übernommen werden?",
+                "Von Fassung übernehmen", JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+        if (selection == null) {
+            return;
+        }
+        EnforcementFormTemplate source =
+                candidates.get(Arrays.asList(options).indexOf(selection.toString()));
+
+        List<String> report;
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            report = JLawyerServiceLocator.getInstance(settings.getLookupProperties())
+                    .lookupEnforcementServiceRemote().copyFormMapping(source.getId(), target.getId());
+        } catch (Exception ex) {
+            log.error("Unable to copy the field mapping from " + source.getId() + " to "
+                    + target.getId(), ex);
+            JOptionPane.showMessageDialog(this,
+                    "Die Zuordnung konnte nicht übernommen werden: " + ex.getMessage(),
+                    com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR,
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        // Der Bericht nennt, was nicht uebernommen wurde und warum. Ein blosses "fertig" liesse
+        // offen, ob ein Feld fehlt - und ein fehlendes Feld faellt sonst erst auf, wenn ein
+        // Gerichtsvollzieher das Formular in der Hand haelt.
+        JOptionPane.showMessageDialog(this, String.join("\n", report),
+                "Von Fassung übernehmen", JOptionPane.INFORMATION_MESSAGE);
+        showFieldsOfSelection();
+    }//GEN-LAST:event_cmdCopyMappingActionPerformed
 
     private void cmdImportPackageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdImportPackageActionPerformed
         List<String> report;
@@ -1158,6 +1237,7 @@ public class EnforcementFormsConfigurationDialog extends javax.swing.JDialog {
     private javax.swing.JButton cmdAddTemplate;
     private javax.swing.JButton cmdClose;
     private javax.swing.JButton cmdImportPackage;
+    private javax.swing.JButton cmdCopyMapping;
     private javax.swing.JButton cmdReplaceMapping;
     private javax.swing.JButton cmdRemoveTemplate;
     private javax.swing.JButton cmdSetValidTo;

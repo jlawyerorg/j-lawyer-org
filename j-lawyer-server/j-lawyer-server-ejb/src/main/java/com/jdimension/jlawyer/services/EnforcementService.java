@@ -664,6 +664,7 @@ package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.documents.AcroFormFieldDescription;
 import com.jdimension.jlawyer.documents.AcroFormFillResult;
+import com.jdimension.jlawyer.documents.AcroFormFieldComparison;
 import com.jdimension.jlawyer.documents.AcroFormFiller;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
@@ -729,6 +730,7 @@ import java.util.Set;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
@@ -841,9 +843,20 @@ public class EnforcementService implements EnforcementServiceRemote, Enforcement
         List<EnforcementFormTemplate> held = this.formTemplatesFacade.findAll();
 
         for (EnforcementFormPackage.Entry entry : this.formPackage.getEntries()) {
-            EnforcementFormTemplate existing = find(held, entry.getFormKey(),
-                    EnforcementFormPackage.VERSION);
+            EnforcementFormTemplate existing = find(held, entry.getFormKey(), entry.getVersion());
             if (existing != null) {
+                // Eine abgelöste Fassung ohne Gültigkeitsende bekommt eines. Das ist keine Korrektur
+                // einer Anpassung: ein leeres Ende heißt "das ist die geltende Fassung", und das ist
+                // nach einer Ablösung einfach nicht mehr wahr. Stünde dort ein von Hand gesetztes
+                // Datum, bliebe es - wer die Zeiträume selbst pflegt, soll sie behalten.
+                Date shouldEnd = this.formPackage.getValidTo(entry.getVersion());
+                if (shouldEnd != null && existing.getValidTo() == null) {
+                    existing.setValidTo(shouldEnd);
+                    this.formTemplatesFacade.edit(existing);
+                    report.add(entry.getName() + " (" + entry.getFormKey() + ", Fassung "
+                            + entry.getVersion() + "): abgelöst, Gültigkeit endet "
+                            + new java.text.SimpleDateFormat("dd.MM.yyyy").format(shouldEnd));
+                }
                 // Was schon da ist, bleibt, wie es ist - samt der Anpassungen einer Kanzlei.
                 //
                 // Eine fehlende Datei ist davon ausgenommen: eine Vorlage ohne PDF ist keine
@@ -855,10 +868,11 @@ public class EnforcementService implements EnforcementServiceRemote, Enforcement
                         existing.setFileName(entry.getFileName());
                     }
                     this.formTemplatesFacade.edit(existing);
-                    report.add(entry.getName() + " (" + entry.getFormKey()
-                            + "): vorhanden, fehlende Datei ergänzt");
+                    report.add(entry.getName() + " (" + entry.getFormKey() + ", Fassung "
+                            + entry.getVersion() + "): vorhanden, fehlende Datei ergänzt");
                 } else {
-                    report.add(entry.getName() + " (" + entry.getFormKey() + "): bereits vorhanden");
+                    report.add(entry.getName() + " (" + entry.getFormKey() + ", Fassung "
+                            + entry.getVersion() + "): bereits vorhanden");
                 }
                 // Eine fehlende Zuordnung wird ebenso ergänzt wie eine fehlende Datei - aber nur
                 // eine fehlende: was eine Kanzlei angepasst hat, bleibt unangetastet.
@@ -878,16 +892,20 @@ public class EnforcementService implements EnforcementServiceRemote, Enforcement
             template.setId(new StringGenerator().getID().toString());
             template.setFormKey(entry.getFormKey());
             template.setName(entry.getName());
-            template.setVersion(EnforcementFormPackage.VERSION);
-            template.setValidFrom(this.formPackage.getValidFrom());
-            template.setValidTo(null);
+            template.setVersion(entry.getVersion());
+            template.setValidFrom(this.formPackage.getValidFrom(entry.getVersion()));
+            // Die abgelöste Fassung endet am Tag vor dem Beginn der nächsten; die geltende trägt
+            // kein Ende. Ohne das Ende wären nach einer Ablösung zwei Fassungen gleichzeitig
+            // gültig, und die Auswahl müsste raten.
+            template.setValidTo(this.formPackage.getValidTo(entry.getVersion()));
             template.setFileName(entry.getFileName());
             template.setDescription(entry.getDescription());
             template.setPdfContent(this.formPackage.read(entry));
 
             this.formTemplatesFacade.create(template);
             int mapped = importMapping(template);
-            report.add(entry.getName() + " (" + entry.getFormKey() + "): importiert"
+            report.add(entry.getName() + " (" + entry.getFormKey() + ", Fassung "
+                    + entry.getVersion() + "): importiert"
                     + (mapped > 0 ? ", " + mapped + " Felder zugeordnet"
                             : ", ohne Feldzuordnung"));
         }
@@ -1002,7 +1020,7 @@ public class EnforcementService implements EnforcementServiceRemote, Enforcement
             throw new Exception("Die Formularvorlage existiert nicht!");
         }
         List<EnforcementFormPackage.Mapping> shipped =
-                this.formPackage.readMapping(template.getFormKey());
+                this.formPackage.readMapping(template.getVersion(), template.getFormKey());
         if (shipped.isEmpty()) {
             throw new Exception("Für \"" + template.getName() + "\" wird keine Zuordnung "
                     + "mitgeliefert; es gibt nichts zu übernehmen.");
@@ -1014,6 +1032,116 @@ public class EnforcementService implements EnforcementServiceRemote, Enforcement
             this.formFieldMappingsFacade.remove(mapping);
         }
         return importMapping(template);
+    }
+
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public List<String> copyFormMapping(String fromTemplateId, String toTemplateId)
+            throws Exception {
+
+        EnforcementFormTemplate from = this.formTemplatesFacade.find(fromTemplateId);
+        EnforcementFormTemplate to = this.formTemplatesFacade.find(toTemplateId);
+        if (from == null || to == null) {
+            throw new Exception("Die Formularvorlage existiert nicht!");
+        }
+        if (from.getId().equals(to.getId())) {
+            throw new Exception("Quelle und Ziel sind dieselbe Vorlage.");
+        }
+        // Zwei Fassungen desselben Formulars - sonst hiesse "uebernehmen", die Zuordnung eines
+        // Vollstreckungsauftrags in eine Forderungsaufstellung zu schreiben. Die Feldnamen der
+        // amtlichen Formulare aehneln sich genug, dass das zum Teil sogar gelaenge.
+        if (from.getFormKey() == null || !from.getFormKey().equals(to.getFormKey())) {
+            throw new Exception("\"" + from.getName() + "\" und \"" + to.getName() + "\" sind nicht "
+                    + "zwei Fassungen desselben Formulars.");
+        }
+        if (!this.formFieldMappingsFacade.findByTemplate(to).isEmpty()) {
+            throw new Exception("\"" + to.getName() + "\" trägt bereits eine Feldzuordnung. "
+                    + "Übernehmen würde zwei Zuordnungen vermischen; bitte die vorhandene erst "
+                    + "entfernen.");
+        }
+
+        List<EnforcementFormFieldMapping> source = this.formFieldMappingsFacade.findByTemplate(from);
+        if (source.isEmpty()) {
+            throw new Exception("\"" + from.getName() + "\" trägt keine Feldzuordnung, die sich "
+                    + "übernehmen ließe.");
+        }
+
+        AcroFormFieldComparison comparison = AcroFormFieldComparison.of(
+                fieldsOf(from), fieldsOf(to));
+
+        Map<String, AcroFormFieldComparison.Relabelled> relabelled = new LinkedHashMap<>();
+        for (AcroFormFieldComparison.Relabelled field : comparison.getRelabelled()) {
+            relabelled.put(field.getFieldName(), field);
+        }
+        Set<String> gone = new LinkedHashSet<>(comparison.getRemoved());
+
+        List<String> report = new ArrayList<>();
+        List<String> notTaken = new ArrayList<>();
+        int taken = 0;
+
+        for (EnforcementFormFieldMapping mapping : source) {
+            if (gone.contains(mapping.getFieldName())) {
+                notTaken.add("    " + mapping.getFieldName() + " (" + mapping.getSourceKey()
+                        + "): das Feld gibt es in der neuen Fassung nicht mehr");
+                continue;
+            }
+            AcroFormFieldComparison.Relabelled changed = relabelled.get(mapping.getFieldName());
+            if (changed != null) {
+                // Der gefaehrliche Fall: gleicher Name, andere Bedeutung. Stillschweigend zu
+                // uebernehmen hiesse, in das falsche Kaestchen zu schreiben, ohne dass irgendetwas
+                // fehlschlaegt.
+                notTaken.add("    " + mapping.getFieldName() + " (" + mapping.getSourceKey()
+                        + "): bedeutet jetzt \"" + changed.getAfter() + "\" statt \""
+                        + changed.getBefore() + "\" - bitte einzeln prüfen");
+                continue;
+            }
+
+            EnforcementFormFieldMapping row = new EnforcementFormFieldMapping();
+            row.setId(new StringGenerator().getID().toString());
+            row.setTemplate(to);
+            row.setFieldName(mapping.getFieldName());
+            row.setFieldLabel(mapping.getFieldLabel());
+            row.setSourceKey(mapping.getSourceKey());
+            row.setFixedValue(mapping.getFixedValue());
+            row.setMandatory(mapping.isMandatory());
+            this.formFieldMappingsFacade.create(row);
+            taken++;
+        }
+
+        report.add(taken + " von " + source.size() + " Zuordnungen übernommen: \""
+                + from.getName() + "\" (" + from.getVersion() + ") → \"" + to.getName() + "\" ("
+                + to.getVersion() + ")");
+        if (!notTaken.isEmpty()) {
+            report.add(notTaken.size() + " nicht übernommen:");
+            report.addAll(notTaken);
+        }
+        // Neue Felder sind harmlos, solange sie niemand braucht - aber zu wissen, dass es sie gibt,
+        // ist der halbe Grund, eine neue Fassung ueberhaupt anzusehen.
+        if (!comparison.getAdded().isEmpty()) {
+            report.add(comparison.getAdded().size() + " Felder sind in der neuen Fassung "
+                    + "hinzugekommen und bisher nicht zugeordnet.");
+        }
+        return report;
+    }
+
+    /**
+     * The fields of the form a template carries.
+     */
+    private List<AcroFormFieldDescription> fieldsOf(EnforcementFormTemplate template)
+            throws Exception {
+
+        if (template.getPdfContent() == null || template.getPdfContent().length == 0) {
+            throw new Exception("Zur Vorlage \"" + template.getName() + "\" ist keine Datei "
+                    + "hinterlegt; ohne sie lässt sich nicht sagen, welche Felder sie hat.");
+        }
+        File temporary = Files.createTempFile("zvfv-", ".pdf").toFile();
+        try {
+            Files.write(temporary.toPath(), template.getPdfContent());
+            return this.filler.describe(temporary);
+        } finally {
+            temporary.delete();
+        }
     }
 
     /**
@@ -1030,8 +1158,12 @@ public class EnforcementService implements EnforcementServiceRemote, Enforcement
         if (!this.formFieldMappingsFacade.findByTemplate(template).isEmpty()) {
             return 0;
         }
+        // Die Zuordnung der Fassung, die diese Vorlage ist - nicht die der neuesten: zwischen
+        // 2024-09-01 und 2026-10-01 haben drei Ankreuzfelder des PfÜB-Antrags ihre Bedeutung
+        // getauscht und ihre Namen behalten. Ein Profil der falschen Fassung würde lautlos in die
+        // falschen Kästchen schreiben.
         List<EnforcementFormPackage.Mapping> shipped =
-                this.formPackage.readMapping(template.getFormKey());
+                this.formPackage.readMapping(template.getVersion(), template.getFormKey());
 
         int written = 0;
         for (EnforcementFormPackage.Mapping mapping : shipped) {

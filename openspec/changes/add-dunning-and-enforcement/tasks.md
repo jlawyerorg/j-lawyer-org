@@ -1456,7 +1456,7 @@
 - [ ] 5.4 Ledger REST endpoints (totals, payment booking, statement)
 - [ ] 5.5 Documentation: user-facing description of the workflow, admin guide for court table, fee
       tables, reminder stages and form templates
-- [ ] 5.5b **Zum 01.10.2026 ändern sich die amtlichen Formulare.** Die neue Fassung ist zu
+- [x] 5.5b **Zum 01.10.2026 ändern sich die amtlichen Formulare.** Die neue Fassung ist zu
       beschaffen, aufzunehmen und mit einer Feldzuordnung zu versehen — das ist der erste echte
       Anwendungsfall von 5.5a, und er kommt, bevor die Werkzeuge von dort existieren.
       Ausgeliefert ist heute der Stand 01.09.2024 (`EnforcementFormPackage.VERSION`), mit einem
@@ -1481,7 +1481,45 @@
       *Bis dahin ist nichts kaputt:* `EnforcementFormTemplateSelector` warnt, wenn am Stichtag keine
       Fassung gilt, und liefert die jüngste. Eine Kanzlei kann also übergangsweise auf der alten
       Fassung einreichen, statt gar nicht einreichen zu können.
-- [ ] 5.5a Write down how a changed official form is taken over, and build the two tools that make
+      *Erledigt am 02.10.2026, mit zwei Überraschungen.*
+      **Erstens hat das BMJ die Dateinamen nicht geändert.** Die geänderten Formulare kamen unter
+      genau denselben Namen heraus, weiterhin datiert auf `20240901`. Die Annahme dieses Punktes —
+      "das Präfix im Dateinamen trägt den Stand ohnehin" — war damit falsch, und "daneben legen"
+      ging nicht. Die Fassung ist deshalb ein **Verzeichnis**: `zvfv/<JJJJ-MM-TT>/` mit den PDFs und
+      `mapping/`, ebenso `felder/<JJJJ-MM-TT>/`. Die Namen des Herausgebers bleiben unangetastet,
+      weil sie der Beleg sind, woher eine Datei stammt. Dass es eine neue Fassung ist und nicht eine
+      Korrektur, belegen die Dokumente selbst: unveränderter Titel, unverändertes Erstellungsdatum,
+      Änderungsdatum 09.06.2026.
+      **Zweitens blieben die Feldnamen und wanderten die Bedeutungen** — genau der Fall, für den
+      `Anlage1MappingTest` die Bezeichnungen mitführt. Im Antrag auf PfÜB rotieren
+      `Kontrollkästchen 44/45/46` ihre Bedeutung, der Anlagenblock `1070`–`1076` verschiebt sich um
+      eine Position; im Vollstreckungsauftrag wird aus `474` Vermögensverzeichnis ein bedingter
+      Pfändungsauftrag, aus `486` Rentenversicherung eine Anschrift. Dazu drei entfallene und fünf
+      neue Felder (350 → 352) und korrigierte Zitate (§ 753a S. 1 → § 752a Abs. 1, § 754a Abs. 1
+      S. 1 Nr. 4 → § 754a Abs. 3 Nr. 1 und 2). Die fünf neuen Felder tragen den On-State `Yes`
+      statt `Ja` — hätte der Filler ihn festgeschrieben, blieben sie leer, während das gedruckte
+      Formular angekreuzt aussieht.
+      **Betroffen sind nur Anlage 1, 2 und 4**; 3, 5, 6, 7 und 8 sind bis aufs Byte unverändert.
+      *Die Zuordnung trug unverändert:* beide Profile gegen die neuen Feldverzeichnisse gestellt —
+      Anlage 1 (47 Felder) und Anlage 6 (131 Felder), kein verschwundenes Feld, keine geänderte
+      Bezeichnung. Alle Verschiebungen liegen in Feldern, die wir nicht füllen. Schritt 3 entfiel
+      damit; die Profile wurden in das neue Fassungsverzeichnis übernommen und dort gegen das neue
+      Formular geprüft.
+      *Code:* die Fassung sitzt am Eintrag (`Entry.getVersion()`), `getVersions()`,
+      `getCurrentVersion()`, `getValidFrom(version)`/`getValidTo(version)`; `read(entry)` und
+      `readMapping(version, formKey)` lesen aus dem Fassungsverzeichnis. Der Import legt beide
+      Fassungen an und setzt der abgelösten ein Gültigkeitsende — aber nur, wo keines steht, denn
+      ein von Hand gesetztes Datum ist eine Pflege und keine veraltete Tatsache.
+      `V3_6_0_52__ZvfvFormVersion20261001.sql` tut dasselbe für Bestandsinstallationen, damit der
+      Fassungswähler die abgelöste Fassung nicht weiterhin für die geltende hält.
+      *Ein Muster wurde gefüllt und angesehen* (Anlage 1 der neuen Fassung, 47 von 47 Feldern): die
+      Werte sitzen unter den gedruckten Überschriften, die ihre Zuordnung nennt.
+      *Offen bleibt:* die neue Fassung erreicht eine Installation erst, wenn ein Administrator
+      "Standardpaket importieren" auslöst — nichts ruft es von selbst. Bis dahin warnt der
+      Fassungswähler bei jeder Formularerzeugung, dass das Formular möglicherweise nicht mehr das
+      vorgeschriebene ist. Das ist sichtbar und damit besser als ein lautlos veraltetes Formular,
+      aber ein automatischer Abgleich beim Start wäre das Richtige.
+- [x] 5.5a Write down how a changed official form is taken over, and build the two tools that make
       it cheap. The forms of the ZVFV are replaced on their own schedule: the Verordnung is from
       2022, the forms shipped here carry Stand 01.09.2024, so the annexes are amended faster than
       the Verordnung — expect every one to two years.
@@ -1508,6 +1546,30 @@
       firm can file on last month's form meanwhile. A separately downloadable, signed package would
       remove that weakness and cost a distribution infrastructure; worth building only if the
       cadence turns out to be a real problem in practice.
+      *Erledigt am 02.10.2026, zusammen mit 5.5b — der Anwendungsfall kam zuerst und hat die
+      Werkzeuge entworfen.*
+      **Das Verfahren** steht in `src/test/resources/zvfv/README.md` unter "Wenn eine Fassung
+      abgelöst wird": sechs Schritte für die Entwicklung und ein eigener Abschnitt für die Kanzlei.
+      **Werkzeug 1, der Feldvergleich.** `AcroFormFieldComparison` (Hauptquellen, weil die
+      Übernahme-Aktion ihn braucht) stellt zwei Formulare gegenüber und trennt drei Fälle, die nicht
+      gleich schwer wiegen: entfallen, neu, und — der gefährliche — gleicher Name bei anderer
+      Bedeutung. Verglichen wird über die Bezeichnung aus dem Tooltip, denn die technischen Namen
+      sagen nichts. `ZvfvFieldIndexTool` (Testquellen) erzeugt daraus die Feldverzeichnisse
+      (`write <Fassung>`) und den Bericht (`diff <alt> <neu>`). Es ist kein Wegwerfprogramm mehr:
+      `ZvfvFormFieldIndexTest` vergleicht die abgelegten Verzeichnisse **Zeichen für Zeichen** gegen
+      das, was das Werkzeug heute erzeugen würde — eine Implementierung, nicht zwei, die auseinander
+      laufen.
+      **Werkzeug 2, "Von Fassung übernehmen"** im Verwaltungsdialog (`copyFormMapping`). Es kopiert
+      die Zuordnung einer anderen Fassung desselben Formulars und kopiert sie ausdrücklich **nicht**
+      blind: ein entfallenes Feld bleibt zurück und wird genannt, ein umbenanntes ebenfalls und
+      getrennt, mit beiden Bezeichnungen, damit ein Mensch entscheidet. Nur Felder, die in beiden
+      Fassungen dasselbe bedeuten, werden übernommen. Übernommen wird außerdem nur in eine Vorlage
+      ohne eigene Zuordnung und nur zwischen Fassungen desselben Formulars — die Feldnamen der
+      amtlichen Formulare ähneln sich genug, dass ein Querschuss sonst teilweise gelänge.
+      *Am echten Fall gemessen:* `diff 2024-09-01 2026-10-01` liefert in einem Aufruf, wofür vorher
+      von Hand zu vergleichen war — elf umbenannte Felder im PfÜB-Antrag, eines in der
+      Durchsuchungsanordnung, fünf neue und drei entfallene im Vollstreckungsauftrag, und für die
+      übrigen fünf Anlagen die Auskunft, dass sie unverändert sind.
 - [ ] 5.6 End-to-end test: claim → reminder → Mahnbescheid → Vollstreckungsbescheid → bailiff order
       → PfÜB → payments → statement, verifying bookings, deadlines and documents
 - [ ] 5.7 Revisit the reference data decision for the two catalogues. The main claim catalogue and

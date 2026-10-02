@@ -711,28 +711,46 @@ public class ZvfvMappingProfileTest {
     }
 
     /**
-     * The shipped profiles, by the form key they belong to.
+     * The shipped profiles, keyed by the version and the annex they belong to.
+     *
+     * A profile belongs to a version, not to a form: a new version may give the same field name a
+     * different meaning, and between 2024-09-01 and 2026-10-01 three check boxes of the PfÜB
+     * application did exactly that while keeping their names. Every version is therefore checked
+     * against its own forms.
      */
     private Map<String, File> profiles() {
         Map<String, File> profiles = new LinkedHashMap<>();
-        File directory = new File(basedir(), "src/main/resources/zvfv/mapping");
-        Assume.assumeTrue("no mapping profiles are shipped", directory.isDirectory());
-        File[] files = directory.listFiles((d, n) -> n.endsWith(".txt"));
-        Assume.assumeTrue("no mapping profiles are shipped", files != null && files.length > 0);
-        for (File file : files) {
-            profiles.put(file.getName().substring(0, file.getName().length() - 4), file);
+        for (String version : new EnforcementFormPackage().getVersions()) {
+            File directory = new File(basedir(), "src/main/resources/zvfv/" + version + "/mapping");
+            if (!directory.isDirectory()) {
+                continue;
+            }
+            File[] files = directory.listFiles((d, n) -> n.endsWith(".txt"));
+            if (files == null) {
+                continue;
+            }
+            for (File file : files) {
+                String formKey = file.getName().substring(0, file.getName().length() - 4);
+                profiles.put(version + "/" + formKey, file);
+            }
         }
+        Assume.assumeTrue("no mapping profiles are shipped", !profiles.isEmpty());
         return profiles;
     }
 
     /**
      * The form a profile belongs to, taken from the package rather than from a second list that
      * could drift away from it.
+     *
+     * @param key the key {@link #profiles()} uses, version and annex
      */
-    private File formOf(String formKey) {
-        for (EnforcementFormPackage.Entry entry : new EnforcementFormPackage().getEntries()) {
+    private File formOf(String key) {
+        String version = key.substring(0, key.indexOf('/'));
+        String formKey = key.substring(key.indexOf('/') + 1);
+        for (EnforcementFormPackage.Entry entry : new EnforcementFormPackage().getEntries(version)) {
             if (entry.getFormKey().equals(formKey)) {
-                File file = new File(basedir(), "src/main/resources/zvfv/" + entry.getFileName());
+                File file = new File(basedir(),
+                        "src/main/resources/zvfv/" + version + "/" + entry.getFileName());
                 return file.isFile() ? file : null;
             }
         }
@@ -926,7 +944,7 @@ public class ZvfvMappingProfileTest {
                 }
             }
 
-            File target = temporary.newFile(profile.getKey() + ".pdf");
+            File target = temporary.newFile(profile.getKey().replace('/', '_') + ".pdf");
             AcroFormFillResult result =
                     new AcroFormFiller().fill(form, values, mandatory, target, false);
 

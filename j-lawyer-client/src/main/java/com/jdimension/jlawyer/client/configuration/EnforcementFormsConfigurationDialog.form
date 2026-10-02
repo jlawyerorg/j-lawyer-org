@@ -36,6 +36,8 @@
                       <Component id="cmdImportPackage" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="cmdReplaceMapping" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="cmdCopyMapping" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="cmdAddTemplate" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
@@ -67,6 +69,7 @@
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="cmdImportPackage" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="cmdReplaceMapping" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmdCopyMapping" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="cmdAddTemplate" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="cmdSetValidTo" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="cmdRemoveTemplate" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -112,6 +115,18 @@
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdImportPackageActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdCopyMapping">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons/editcopy2.png"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="Von Fassung übernehmen"/>
+        <Property name="toolTipText" type="java.lang.String" value="Die Feldzuordnung einer anderen Fassung desselben Formulars übernehmen - Felder, die es nicht mehr gibt oder die ihre Bedeutung geändert haben, bleiben zurück und werden genannt"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdCopyMappingActionPerformed"/>
       </Events>
     </Component>
     <Component class="javax.swing.JButton" name="cmdReplaceMapping">

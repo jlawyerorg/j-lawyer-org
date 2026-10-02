@@ -987,6 +987,36 @@ public interface EnforcementServiceRemote {
 
 
     /**
+     * Takes over the field assignment of one version of a form into another.
+     *
+     * An official form is replaced every one to two years, and a firm that has adjusted its
+     * assignment - or that gets a new form before the next release ships one - would otherwise have
+     * to enter it again field by field. This copies it.
+     *
+     * What it does not do is copy it blindly. Three things can have happened to a field, and they
+     * are not of equal weight. A field that no longer exists cannot be written, so its assignment is
+     * left behind and named. A field that kept its name and changed its meaning is the dangerous
+     * one - everything would keep working and the entries would land in the wrong boxes - so its
+     * assignment is left behind as well and named separately, for a person to decide. Only fields
+     * that mean the same in both versions are taken over.
+     *
+     * That is not a theoretical distinction: between the ZVFV forms of 01.09.2024 and those of
+     * 01.10.2026 three check boxes of the Pfändungsbeschluss application swapped meanings among
+     * themselves while keeping their names.
+     *
+     * An assignment already held by the target is not touched; the target is expected to be empty,
+     * and taking over into a filled one would raise the question which of the two is meant.
+     *
+     * @param fromTemplateId the template to take the assignment from, usually the previous version
+     * @param toTemplateId the template to write it to
+     * @return a report naming what was taken over and what was not, line by line
+     * @throws Exception if either template does not exist, they are not two versions of the same
+     * form, or the target already carries an assignment
+     */
+    List<String> copyFormMapping(String fromTemplateId, String toTemplateId) throws Exception;
+
+
+    /**
      * The third-party debtors named in an attachment measure.
      *
      * An attachment does not reach into the debtor's pocket; it reaches whoever owes him something

@@ -666,6 +666,7 @@ import com.jdimension.jlawyer.documents.AcroFormFieldDescription;
 import com.jdimension.jlawyer.documents.AcroFormFillResult;
 import com.jdimension.jlawyer.documents.AcroFormFiller;
 import com.jdimension.jlawyer.services.EnforcementFormDataSource;
+import com.jdimension.jlawyer.services.EnforcementFormPackage;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -700,18 +701,29 @@ public class Anlage1MappingTest {
     @Rule
     public TemporaryFolder temporary = new TemporaryFolder();
 
+    /**
+     * The version this test measures: the one in force.
+     *
+     * The profile and the form have to be of the same version. Checking a profile of 2024-09-01
+     * against the form of 2026-10-01 would be the very mistake this test exists to catch - the
+     * publisher reused its file names, so nothing but the directory says which form is which.
+     */
+    private String version() {
+        return new EnforcementFormPackage().getCurrentVersion();
+    }
+
     private File profileFile() {
         String base = System.getProperty("basedir");
         File file = new File(base == null ? "." : base,
-                "src/main/resources/zvfv/mapping/ANLAGE_1.txt");
+                "src/main/resources/zvfv/" + version() + "/mapping/ANLAGE_1.txt");
         Assume.assumeTrue("the mapping profile is not present", file.isFile());
         return file;
     }
 
     private File form() {
         String base = System.getProperty("basedir");
-        File file = new File(base == null ? "." : base,
-                "src/main/resources/zvfv/20240901_Vollstreckungsauftrag-Gerichtsvollzieher.pdf");
+        File file = new File(base == null ? "." : base, "src/main/resources/zvfv/" + version()
+                + "/20240901_Vollstreckungsauftrag-Gerichtsvollzieher.pdf");
         Assume.assumeTrue("the ZVFV forms are not present", file.isFile());
         return file;
     }
@@ -743,7 +755,8 @@ public class Anlage1MappingTest {
         // Zuordnung gehoeren koennte - der Seed fuegte still nichts ein. Das Profil gehoert
         // deshalb in die Auslieferung, neben das PDF, und wird beim Import geschrieben.
         String base = System.getProperty("basedir");
-        File shipped = new File(base == null ? "." : base, "src/main/resources/zvfv/mapping");
+        File shipped = new File(base == null ? "." : base,
+                "src/main/resources/zvfv/" + version() + "/mapping");
         assertTrue("die Profile muessen mit den Formularen ausgeliefert werden", shipped.isDirectory());
 
         // Die wirkungslose Migration bleibt unveraendert stehen - Flyway erkennt sie an der

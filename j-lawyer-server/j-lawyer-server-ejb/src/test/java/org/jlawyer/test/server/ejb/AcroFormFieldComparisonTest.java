@@ -662,235 +662,154 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.test.server.ejb;
 
-import java.io.File;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.util.ArrayList;
+import com.jdimension.jlawyer.documents.AcroFormFieldComparison;
+import com.jdimension.jlawyer.documents.AcroFormFieldDescription;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
-import java.util.Set;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
-import org.apache.pdfbox.pdmodel.interactive.form.PDCheckBox;
-import org.apache.pdfbox.pdmodel.interactive.form.PDField;
-import org.apache.pdfbox.pdmodel.interactive.form.PDNonTerminalField;
-import org.apache.pdfbox.pdmodel.interactive.form.PDRadioButton;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import org.junit.Assume;
 import org.junit.Test;
 
 /**
- * The official enforcement forms, and the field index kept beside them.
- *
- * The forms are filled by field name, and a name exists nowhere but in the file. The index under
- * {@code zvfv/felder} is what the mapping profiles are written against, so it has to say what the
- * files actually contain - a replaced form whose index was not regenerated would send the mapping
- * looking for fields that are no longer there, and the filler would produce a form that prints
- * correctly and is empty where it matters.
- *
- * The tests also hold two properties the filler is built on: that every field carries a label, and
- * that a check box's on-state is read rather than assumed.
+ * What changed between two versions of a form - and whether the comparison says so.
  *
  * @author jens
  */
-public class ZvfvFormFieldIndexTest {
+public class AcroFormFieldComparisonTest {
 
-    private File formsDirectory() {
-        String base = System.getProperty("basedir");
-        File dir = new File(base == null ? "." : base, "src/main/resources/zvfv");
-        Assume.assumeTrue("the ZVFV forms are not present", dir.isDirectory());
-        return dir;
+    private AcroFormFieldDescription field(String name, String label) {
+        AcroFormFieldDescription f = new AcroFormFieldDescription();
+        f.setName(name);
+        f.setLabel(label);
+        f.setKind(AcroFormFieldDescription.Kind.TEXT);
+        return f;
+    }
+
+    private List<AcroFormFieldDescription> fields(String... pairs) {
+        AcroFormFieldDescription[] all = new AcroFormFieldDescription[pairs.length / 2];
+        for (int i = 0; i < pairs.length; i += 2) {
+            all[i / 2] = field(pairs[i], pairs[i + 1]);
+        }
+        return Arrays.asList(all);
+    }
+
+    @Test
+    public void twoIdenticalFormsHaveNothingToReport() {
+        AcroFormFieldComparison c = AcroFormFieldComparison.of(
+                fields("Textfeld 1", "Name", "Textfeld 2", "Ort"),
+                fields("Textfeld 1", "Name", "Textfeld 2", "Ort"));
+
+        assertTrue(c.isIdentical());
+        assertEquals(2, c.getUnchanged().size());
+        assertTrue(c.describe().contains("stimmen überein"));
+    }
+
+    @Test
+    public void afieldThatIsGoneIsNamed() {
+        AcroFormFieldComparison c = AcroFormFieldComparison.of(
+                fields("Textfeld 1", "Name", "Textfeld 2", "Ort"),
+                fields("Textfeld 1", "Name"));
+
+        assertFalse(c.isIdentical());
+        assertEquals(Arrays.asList("Textfeld 2"), c.getRemoved());
+        assertTrue(c.getAdded().isEmpty());
+    }
+
+    @Test
+    public void afieldThatIsNewIsNamed() {
+        AcroFormFieldComparison c = AcroFormFieldComparison.of(
+                fields("Textfeld 1", "Name"),
+                fields("Textfeld 1", "Name", "Ankreuzfeld1", "Haftbefehl"));
+
+        assertEquals(Arrays.asList("Ankreuzfeld1"), c.getAdded());
+        assertTrue(c.getRemoved().isEmpty());
     }
 
     /**
-     * Every version shipped, as the directories under {@code zvfv} name it.
-     *
-     * The versions are directories because the publisher reuses its file names: the forms in force
-     * from 01.10.2026 are published under the same names, still dated 20240901. A test that looked
-     * only at the top level would find nothing and - worse - would say so by skipping.
+     * Der gefährliche Fall, und der eigentliche Grund für diese Klasse: der Name bleibt, die
+     * Bedeutung wandert. Nichts schlägt fehl, das Formular wird anstandslos gefüllt, und die
+     * Eintragungen landen im falschen Kästchen. Zwischen den ZVFV-Fassungen 01.09.2024 und
+     * 01.10.2026 ist das elf Feldern des Pfändungsbeschluss-Antrags passiert.
      */
-    private List<File> versionDirectories() {
-        File[] dirs = formsDirectory().listFiles(File::isDirectory);
-        List<File> sorted = new ArrayList<>();
-        if (dirs != null) {
-            for (File dir : dirs) {
-                if (dir.getName().matches("\\d{4}-\\d{2}-\\d{2}")) {
-                    sorted.add(dir);
-                }
-            }
-        }
-        assertFalse("unter zvfv/ liegt kein Fassungsverzeichnis", sorted.isEmpty());
-        sorted.sort((a, b) -> a.getName().compareTo(b.getName()));
-        return sorted;
-    }
+    @Test
+    public void afieldThatKeptItsNameAndChangedItsMeaningIsTheOneToReport() {
+        AcroFormFieldComparison c = AcroFormFieldComparison.of(
+                fields("Kontrollkästchen 44", "Versand als elektronisches Dokument"),
+                fields("Kontrollkästchen 44", "Gleichzeitige Übersendung auf dem Postweg"));
 
-    private List<File> forms() {
-        List<File> sorted = new ArrayList<>();
-        for (File version : versionDirectories()) {
-            File[] pdfs = version.listFiles((d, name) -> name.toLowerCase().endsWith(".pdf"));
-            if (pdfs != null) {
-                sorted.addAll(Arrays.asList(pdfs));
-            }
-        }
-        assertFalse("keine Formulare in den Fassungsverzeichnissen", sorted.isEmpty());
-        sorted.sort((a, b) -> a.getPath().compareTo(b.getPath()));
-        return sorted;
-    }
-
-    private void collect(List<PDField> fields, List<PDField> out) {
-        for (PDField f : fields) {
-            if (f instanceof PDNonTerminalField) {
-                collect(((PDNonTerminalField) f).getChildren(), out);
-            } else {
-                out.add(f);
-            }
-        }
-    }
-
-    private List<PDField> fieldsOf(PDDocument document) {
-        PDAcroForm form = document.getDocumentCatalog().getAcroForm();
-        if (form == null) {
-            return new ArrayList<>();
-        }
-        List<PDField> all = new ArrayList<>();
-        collect(form.getFields(), all);
-        return all;
+        assertFalse(c.isIdentical());
+        assertTrue("es ist weder verschwunden noch neu",
+                c.getRemoved().isEmpty() && c.getAdded().isEmpty());
+        assertEquals(1, c.getRelabelled().size());
+        assertEquals("Kontrollkästchen 44", c.getRelabelled().get(0).getFieldName());
+        assertEquals("Versand als elektronisches Dokument", c.getRelabelled().get(0).getBefore());
+        assertEquals("Gleichzeitige Übersendung auf dem Postweg",
+                c.getRelabelled().get(0).getAfter());
+        assertTrue(c.describe().contains("einzeln zu prüfen"));
     }
 
     /**
-     * The index sits in the test resources while the forms are shipped in the deployment: the forms
-     * are part of the product, the index is working material for whoever writes a mapping profile.
+     * Bedeutungen, die untereinander rotieren, dürfen sich nicht gegenseitig aufheben: jede der drei
+     * Zuordnungen ist falsch, obwohl die Menge der Bezeichnungen dieselbe geblieben ist.
      */
-    private File indexFor(File pdf) {
-        String base = System.getProperty("basedir");
-        File felder = new File(base == null ? "." : base, "src/test/resources/zvfv/felder");
-        // das Verzeichnis folgt der Fassung des Formulars, sonst traegen zwei Fassungen desselben
-        // Formulars denselben Verzeichnisnamen
-        File ofVersion = new File(felder, pdf.getParentFile().getName());
-        return new File(ofVersion, pdf.getName().replaceAll("\\.pdf$", "") + ".txt");
-    }
+    @Test
+    public void meaningsThatRotateAmongThemselvesAreAllReported() {
+        AcroFormFieldComparison c = AcroFormFieldComparison.of(
+                fields("K 46", "A", "K 45", "B", "K 44", "C"),
+                fields("K 46", "C", "K 45", "A", "K 44", "B"));
 
-    /** The field names the index records, in the order it records them. */
-    private List<String> recordedNames(File index) throws Exception {
-        List<String> names = new ArrayList<>();
-        for (String line : Files.readAllLines(index.toPath(), StandardCharsets.UTF_8)) {
-            if (line.isEmpty() || line.charAt(0) == '#') {
-                continue;
-            }
-            String[] parts = line.split("\t", -1);
-            if (parts.length >= 2) {
-                names.add(parts[1]);
-            }
-        }
-        return names;
+        assertEquals(3, c.getRelabelled().size());
+        assertTrue(c.getUnchanged().isEmpty());
     }
 
     @Test
-    public void everyFormWithFieldsHasAnIndexThatMatchesIt() throws Exception {
-        List<String> problems = new ArrayList<>();
-        for (File pdf : forms()) {
-            try (PDDocument document = PDDocument.load(pdf)) {
-                List<PDField> fields = fieldsOf(document);
-                if (fields.isEmpty()) {
-                    // die Hinweisblätter sind Merkblätter und tragen keine Formularfelder
-                    continue;
-                }
-                File index = indexFor(pdf);
-                if (!index.isFile()) {
-                    problems.add(pdf.getName() + ": kein Feldverzeichnis unter felder/");
-                    continue;
-                }
-                // Zeichen fuer Zeichen gegen das, was das Werkzeug heute erzeugen wuerde - nicht
-                // nur die Feldnamen. Eine Bezeichnung, die sich geaendert hat, ist der gefaehrliche
-                // Fall: der Name bleibt, die Bedeutung wandert, und eine Zuordnung schreibt lautlos
-                // in das falsche Kaestchen.
-                String recorded = new String(Files.readAllBytes(index.toPath()),
-                        StandardCharsets.UTF_8);
-                String current = ZvfvFieldIndexTool.render(pdf);
-                if (!recorded.equals(current)) {
-                    problems.add(pdf.getName() + ": Verzeichnis weicht vom Formular ab - mit "
-                            + "\"ZvfvFieldIndexTool write " + pdf.getParentFile().getName()
-                            + "\" neu erzeugen und den Unterschied ansehen");
-                }
-            }
-        }
-        assertEquals("Feldverzeichnisse, die nicht zu ihrem Formular passen: " + problems,
-                0, problems.size());
+    public void whitespaceIsNotAchangeOfMeaning() {
+        AcroFormFieldComparison c = AcroFormFieldComparison.of(
+                fields("Textfeld 1", "Name"),
+                fields("Textfeld 1", "  Name  "));
+
+        assertTrue(c.isIdentical());
+    }
+
+    /**
+     * Ein Feld ohne Tooltip gibt es in den amtlichen Formularen nicht, aber eine spätere Fassung
+     * darf einen weglassen - und dann ist das eine Änderung und kein Gleichstand.
+     */
+    @Test
+    public void alabelThatDisappearsIsAchange() {
+        AcroFormFieldComparison c = AcroFormFieldComparison.of(
+                fields("Textfeld 1", "Name"),
+                Arrays.asList(field("Textfeld 1", null)));
+
+        assertEquals(1, c.getRelabelled().size());
+        assertEquals("", c.getRelabelled().get(0).getAfter() == null
+                ? "" : c.getRelabelled().get(0).getAfter());
     }
 
     @Test
-    public void everyFieldCarriesALabel() throws Exception {
-        // Die technischen Namen sind nichtssagend - "Textfeld 353". Ohne den Tooltip wäre die
-        // Zuordnung Sucharbeit am gedruckten Formular. Dass alle acht Formulare ihn durchgängig
-        // tragen, ist die Voraussetzung, auf der die Zuordnungsprofile stehen.
-        List<String> without = new ArrayList<>();
-        for (File pdf : forms()) {
-            try (PDDocument document = PDDocument.load(pdf)) {
-                for (PDField f : fieldsOf(document)) {
-                    String label = f.getAlternateFieldName();
-                    if (label == null || label.trim().isEmpty()) {
-                        without.add(pdf.getName() + ": " + f.getFullyQualifiedName());
-                    }
-                }
-            }
-        }
-        assertEquals("Felder ohne Bezeichnung: " + without, 0, without.size());
+    public void anEmptyOrMissingSideIsNoReasonToFail() {
+        assertTrue(AcroFormFieldComparison.of(null, null).isIdentical());
+        assertEquals(1, AcroFormFieldComparison.of(null, fields("A", "x")).getAdded().size());
+        assertEquals(1, AcroFormFieldComparison.of(fields("A", "x"), null).getRemoved().size());
+        assertTrue(AcroFormFieldComparison.of(Collections.<AcroFormFieldDescription>emptyList(),
+                Collections.<AcroFormFieldDescription>emptyList()).isIdentical());
     }
 
+    /**
+     * Der Bericht ist für einen Menschen; bei hunderten neuen Feldern soll er lesbar bleiben.
+     */
     @Test
-    public void everyCheckBoxOffersAnOnState() throws Exception {
-        // Ein Ankreuzfeld ohne On-State liesse sich nicht ankreuzen. Und der Wert wird gelesen,
-        // nicht angenommen: heute heisst er in allen acht Formularen "Ja", eine spaetere Fassung
-        // darf das aendern, und ein falscher On-State erzeugt ein Formular, das gedruckt
-        // angekreuzt aussieht und maschinell leer ist.
-        Set<String> states = new HashSet<>();
-        List<String> without = new ArrayList<>();
-        for (File pdf : forms()) {
-            try (PDDocument document = PDDocument.load(pdf)) {
-                for (PDField f : fieldsOf(document)) {
-                    Set<String> onValues = null;
-                    if (f instanceof PDCheckBox) {
-                        onValues = ((PDCheckBox) f).getOnValues();
-                    } else if (f instanceof PDRadioButton) {
-                        onValues = ((PDRadioButton) f).getOnValues();
-                    }
-                    if (onValues == null) {
-                        continue;
-                    }
-                    if (onValues.isEmpty()) {
-                        without.add(pdf.getName() + ": " + f.getFullyQualifiedName());
-                    }
-                    states.addAll(onValues);
-                }
-            }
+    public void alongListIsShortenedRatherThanPoured() {
+        String[] many = new String[60];
+        for (int i = 0; i < 30; i++) {
+            many[i * 2] = "Feld " + i;
+            many[i * 2 + 1] = "Bezeichnung";
         }
-        assertEquals("Ankreuzfelder ohne On-State: " + without, 0, without.size());
-        assertFalse("es wurde kein einziges Ankreuzfeld gefunden - der Test prüft nichts",
-                states.isEmpty());
-    }
+        AcroFormFieldComparison c = AcroFormFieldComparison.of(fields(), fields(many));
 
-    @Test
-    public void theFormsInScopeArePresent() {
-        // Ohne die Anlagen 1, 4 und 5 lassen sich Gerichtsvollzieherauftrag und Forderungspfändung
-        // nicht bauen, und das ist die tägliche Arbeit.
-        List<String> required = Arrays.asList("Vollstreckungsauftrag", "Antrag_Pfaendungsbeschluss",
-                "Entwurf_Pfaendungsbeschluss", "Forderungsaufstellung_Gerichtsvollzieher");
-        List<String> missing = new ArrayList<>();
-        for (String fragment : required) {
-            boolean found = false;
-            for (File pdf : forms()) {
-                if (pdf.getName().contains(fragment)) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                missing.add(fragment);
-            }
-        }
-        assertTrue("Formulare fehlen: " + missing, missing.isEmpty());
+        assertEquals(30, c.getAdded().size());
+        assertTrue(c.describe().contains("weitere"));
     }
 }
