@@ -1395,8 +1395,11 @@ public class ClaimLedgerCourtDunningPanel extends javax.swing.JPanel {
         }
         dunningCase.setCourtXJustizId(chosen.getCourt().getXjustizId());
         dunningCase.setCourtName(chosen.getCourt().getName());
-        dunningCase.setCourtPostalCode(chosen.getCourt().getPostalCode());
-        dunningCase.setCourtCity(chosen.getCourt().getCity());
+        // Die Zustellbezirks-PLZ: die XJustiz-Kennung geht nicht mit in die Datei, PLZ und Ort sind
+        // die einzige Kennzeichnung des angeschriebenen Mahngerichts. Eine Grossempfaenger-PLZ steht
+        // in der Zustellbezirks-Tabelle der Gerichte nicht.
+        dunningCase.setCourtPostalCode(chosen.getCourt().deliveryPostalCode());
+        dunningCase.setCourtCity(chosen.getCourt().deliveryCity());
         this.txtCourt.setText(chosen.getCourt().getName()
                 + (chosen.getCourt().getCity() == null ? "" : ", " + chosen.getCourt().getCity()));
 

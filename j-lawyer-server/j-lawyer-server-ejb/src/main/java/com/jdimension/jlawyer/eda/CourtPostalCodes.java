@@ -660,494 +660,139 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package com.jdimension.jlawyer.eda;
 
-import java.io.Serializable;
+import com.jdimension.jlawyer.persistence.Court;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
+import java.util.Set;
 
 /**
- * A court or comparable judicial body, held once as master data so that no feature stores a court's
- * address of its own.
+ * Whether a postcode entered for a court is the one the dunning courts expect.
  *
- * Two addresses are kept because the courts publish two and they differ. The postal address is
- * where post and applications go; for most central dunning courts it is a bulk-mail address of
- * postcode and place with no street, and for some it is a Postfach, which is why the street is
- * optional and may hold one. The house address is the one for visitors and couriers.
+ * The exchange format identifies both the dunning court (MGPLZ/MGO) and the court of the contested
+ * proceedings (PGPLZ/PGO) by postcode and place - no key, no name. The courts resolve that pair
+ * through their table of delivery districts, which is why the postcode of the house address belongs
+ * there and not the one a court was assigned as a large recipient.
  *
- * The XJustiz identifier is the stable key for seeding, matching and later imports. It is not
- * assumed to be the identifier a given procedural interface expects: the EDA dunning application
- * addresses the court by postcode and place, so a court used for dunning has to carry both.
+ * The master data of a firm usually holds both numbers, one line apart. Where the entered one is the
+ * postal code of a court whose house address names a different one, that is not a matter of taste:
+ * the file would carry a number the courts' table does not know. They heal such an entry where the
+ * place holds a single court of the kind, and report it where it does not - the application that
+ * named "70154 Stuttgart" was monitioned because Stuttgart has two Amtsgerichte.
  *
- * A superseded court is not deleted. Its validity is ended so it is no longer offered, while
- * records that already reference it keep resolving to it.
+ * This asks the question the court would ask, before the file goes out.
  *
  * @author jens
  */
-@Entity
-@Table(name = "courts")
-@NamedQueries({
-    @NamedQuery(name = "Court.findAll", query = "SELECT c FROM Court c ORDER BY c.name ASC"),
-    @NamedQuery(name = "Court.findActive", query = "SELECT c FROM Court c WHERE c.active = true ORDER BY c.name ASC"),
-    @NamedQuery(name = "Court.findByXJustizId", query = "SELECT c FROM Court c WHERE c.xjustizId = :xjustizId"),
-    @NamedQuery(name = "Court.findByScope", query = "SELECT c FROM Court c, CourtScope s WHERE s.court = c AND s.scope = :scope AND c.active = true ORDER BY c.name ASC")
-})
-public class Court implements Serializable {
+public class CourtPostalCodes {
 
-    private static final long serialVersionUID = 1L;
-
-    @Id
-    @Column(name = "id")
-    private String id;
-
-    @Column(name = "xjustiz_id", length = 20)
-    private String xjustizId;
-
-    @Column(name = "name", length = 250)
-    private String name;
-
-    @Column(name = "additional_designation", length = 250)
-    private String additionalDesignation;
-
-    @Column(name = "postal_street", length = 250)
-    private String postalStreet;
-
-    @Column(name = "postal_code", length = 10)
-    private String postalCode;
-
-    @Column(name = "city", length = 250)
-    private String city;
-
-    @Column(name = "house_street", length = 250)
-    private String houseStreet;
-
-    @Column(name = "house_postal_code", length = 10)
-    private String housePostalCode;
-
-    @Column(name = "house_city", length = 250)
-    private String houseCity;
-
-    @Column(name = "phone", length = 100)
-    private String phone;
-
-    @Column(name = "fax", length = 100)
-    private String fax;
-
-    @Column(name = "email", length = 250)
-    private String email;
-
-    @Column(name = "web", length = 250)
-    private String web;
-
-    @Column(name = "electronic_recipient_id", length = 250)
-    private String electronicRecipientId;
-
-    @Column(name = "bank_account_holder", length = 250)
-    private String bankAccountHolder;
-
-    @Column(name = "bank_iban", length = 50)
-    private String bankIban;
-
-    @Column(name = "bank_bic", length = 20)
-    private String bankBic;
-
-    @Column(name = "notes", length = 1000)
-    private String notes;
-
-    @Column(name = "valid_from")
-    @Temporal(TemporalType.DATE)
-    private Date validFrom;
-
-    @Column(name = "valid_to")
-    @Temporal(TemporalType.DATE)
-    private Date validTo;
-
-    @Column(name = "active")
-    private boolean active = true;
-
-    // No cascade and no orphan removal: the scope rows are owned by CourtService, which deletes and
-    // recreates them explicitly. Letting the mapping cascade as well would make Hibernate a second
-    // owner of the same rows - and with orphan removal it also forbids replacing the collection on a
-    // loaded court, which is exactly what reading a court for a remote client has to do.
-    @OneToMany(mappedBy = "court", fetch = FetchType.LAZY)
-    private List<CourtScope> scopes = new ArrayList<>();
-
-    /**
-     * @return the technical identifier
-     */
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
+    private CourtPostalCodes() {
     }
 
     /**
-     * @return the XJustiz identifier from the code list gds.gerichte, the stable key
+     * What is wrong with an entered postcode, where anything is.
      */
-    public String getXjustizId() {
-        return xjustizId;
-    }
+    public static class Correction {
 
-    public void setXjustizId(String xjustizId) {
-        this.xjustizId = xjustizId;
-    }
+        private final String courtName;
+        private final String postalCode;
+        private final List<String> candidates;
 
-    /**
-     * @return the official name in the spelling the judiciary uses
-     */
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * @return an addition such as "Zentrales Mahngericht", or null
-     */
-    public String getAdditionalDesignation() {
-        return additionalDesignation;
-    }
-
-    public void setAdditionalDesignation(String additionalDesignation) {
-        this.additionalDesignation = additionalDesignation;
-    }
-
-    /**
-     * @return the street or Postfach of the postal address, or null for a bulk-mail address
-     */
-    public String getPostalStreet() {
-        return postalStreet;
-    }
-
-    public void setPostalStreet(String postalStreet) {
-        this.postalStreet = postalStreet;
-    }
-
-    /**
-     * @return the postcode of the postal address
-     */
-    public String getPostalCode() {
-        return postalCode;
-    }
-
-    public void setPostalCode(String postalCode) {
-        this.postalCode = postalCode;
-    }
-
-    /**
-     * @return the place of the postal address
-     */
-    public String getCity() {
-        return city;
-    }
-
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    /**
-     * @return the street of the house address, or null if the court publishes none
-     */
-    public String getHouseStreet() {
-        return houseStreet;
-    }
-
-    public void setHouseStreet(String houseStreet) {
-        this.houseStreet = houseStreet;
-    }
-
-    /**
-     * @return the postcode of the house address
-     */
-    public String getHousePostalCode() {
-        return housePostalCode;
-    }
-
-    public void setHousePostalCode(String housePostalCode) {
-        this.housePostalCode = housePostalCode;
-    }
-
-    /**
-     * @return the place of the house address
-     */
-    public String getHouseCity() {
-        return houseCity;
-    }
-
-    public void setHouseCity(String houseCity) {
-        this.houseCity = houseCity;
-    }
-
-    /**
-     * The postcode a court is to be named by where it has to be identified by its place rather than
-     * by a key - above all in the dunning procedure.
-     *
-     * A court usually has two postcodes. The postal address carries the one assigned to it as a
-     * large recipient or for its post-office box; the house address carries the one of the delivery
-     * district it actually sits in. The Amtsgericht Stuttgart is 70154 Stuttgart on an envelope and
-     * 70190 Stuttgart in Hauffstraße 5.
-     *
-     * The courts of the dunning procedure expect the second one. Their own sample files carry it,
-     * and they resolve a postcode to a court through the delivery districts; a large-recipient code
-     * is not in that table. Where a place holds only one court of the kind they heal the entry from
-     * the place alone - but Stuttgart has two Amtsgerichte, and an application naming 70154 was
-     * monitioned for exactly that reason.
-     *
-     * Where no house address is recorded the postal one is all there is, and it is often the same
-     * number anyway; it is then returned rather than nothing.
-     *
-     * @return the postcode of the house address, the postal one where none is recorded, or null
-     */
-    public String deliveryPostalCode() {
-        return isBlank(this.housePostalCode) ? this.postalCode : this.housePostalCode;
-    }
-
-    /**
-     * The place belonging to {@link #deliveryPostalCode()}.
-     *
-     * It is taken from the same address as the postcode wherever that address names one. Only where
-     * a house postcode was recorded without a place does the postal place answer - an empty place
-     * would leave the court unidentifiable, and in practice both lines name the same town.
-     *
-     * @return the place of the house address, the postal one where no house postcode is recorded,
-     * or null
-     */
-    public String deliveryCity() {
-        if (isBlank(this.housePostalCode)) {
-            return this.city;
+        Correction(String courtName, String postalCode, List<String> candidates) {
+            this.courtName = courtName;
+            this.postalCode = postalCode;
+            this.candidates = candidates;
         }
-        // a house postcode without a place does occur in hand-kept data; an empty place would leave
-        // the court unidentifiable, and both lines name the same town in practice
-        return isBlank(this.houseCity) ? this.city : this.houseCity;
-    }
 
-    private boolean isBlank(String s) {
-        return s == null || s.trim().isEmpty();
-    }
-
-    /**
-     * @return the phone number, or null
-     */
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    /**
-     * @return the fax number, or null
-     */
-    public String getFax() {
-        return fax;
-    }
-
-    public void setFax(String fax) {
-        this.fax = fax;
-    }
-
-    /**
-     * @return the e-mail address, or null
-     */
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    /**
-     * @return the web address, or null
-     */
-    public String getWeb() {
-        return web;
-    }
-
-    public void setWeb(String web) {
-        this.web = web;
-    }
-
-    /**
-     * @return the EGVP/beA SAFE-ID used for electronic transmission, or null
-     */
-    public String getElectronicRecipientId() {
-        return electronicRecipientId;
-    }
-
-    public void setElectronicRecipientId(String electronicRecipientId) {
-        this.electronicRecipientId = electronicRecipientId;
-    }
-
-    /**
-     * @return the account holder for court fees, or null
-     */
-    public String getBankAccountHolder() {
-        return bankAccountHolder;
-    }
-
-    public void setBankAccountHolder(String bankAccountHolder) {
-        this.bankAccountHolder = bankAccountHolder;
-    }
-
-    /**
-     * @return the IBAN for court fees, or null
-     */
-    public String getBankIban() {
-        return bankIban;
-    }
-
-    public void setBankIban(String bankIban) {
-        this.bankIban = bankIban;
-    }
-
-    /**
-     * @return the BIC for court fees, or null
-     */
-    public String getBankBic() {
-        return bankBic;
-    }
-
-    public void setBankBic(String bankBic) {
-        this.bankBic = bankBic;
-    }
-
-    /**
-     * @return a free note, or null
-     */
-    public String getNotes() {
-        return notes;
-    }
-
-    public void setNotes(String notes) {
-        this.notes = notes;
-    }
-
-    /**
-     * @return the day the court record becomes applicable, or null
-     */
-    public Date getValidFrom() {
-        return validFrom;
-    }
-
-    public void setValidFrom(Date validFrom) {
-        this.validFrom = validFrom;
-    }
-
-    /**
-     * @return the day the court was superseded, or null while it is current
-     */
-    public Date getValidTo() {
-        return validTo;
-    }
-
-    public void setValidTo(Date validTo) {
-        this.validTo = validTo;
-    }
-
-    /**
-     * @return whether the court is offered for new records
-     */
-    public boolean isActive() {
-        return active;
-    }
-
-    public void setActive(boolean active) {
-        this.active = active;
-    }
-
-    /**
-     * @return what the court is used for; never null
-     */
-    public List<CourtScope> getScopes() {
-        return scopes;
-    }
-
-    public void setScopes(List<CourtScope> scopes) {
-        this.scopes = scopes == null ? new ArrayList<>() : scopes;
-    }
-
-    /**
-     * Whether the court may be selected for a given purpose.
-     *
-     * @param scope the purpose
-     * @return whether the court carries that scope
-     */
-    public boolean hasScope(CourtScopeType scope) {
-        if (this.scopes == null) {
-            return false;
+        /**
+         * @return the court the entered postcode belongs to, or null where more than one does
+         */
+        public String getCourtName() {
+            return this.courtName;
         }
-        for (CourtScope s : this.scopes) {
-            if (s.getScope() == scope) {
-                return true;
+
+        /**
+         * @return the postcode to use instead, or null where the courts found disagree and none can
+         * be named
+         */
+        public String getPostalCode() {
+            return this.postalCode;
+        }
+
+        /**
+         * @return the courts the entered postcode belongs to, each with the postcode it should be
+         * named by; one entry in the ordinary case
+         */
+        public List<String> getCandidates() {
+            return this.candidates;
+        }
+    }
+
+    /**
+     * Looks for a better postcode for a court named by postcode and place.
+     *
+     * Only a court whose postal code is the one entered is considered, and only where its house
+     * address names a different number: that is the case in which the entry is demonstrably the
+     * wrong one of the two the master data holds. Everything else - an unknown postcode, a court
+     * without a house address, a postcode that already is the one of the house address - yields
+     * nothing, because nothing better is known. A check that complained there would stop
+     * applications the courts accept.
+     *
+     * @param courts the courts of the master data; may be null or empty, and then nothing is found
+     * @param postalCode the postcode that was entered
+     * @param city the place that was entered; where it is blank, the postcode alone decides
+     * @return what to use instead, or null where there is nothing to say
+     */
+    public static Correction findCorrection(List<Court> courts, String postalCode, String city) {
+
+        if (courts == null || isBlank(postalCode)) {
+            return null;
+        }
+        String entered = postalCode.trim();
+
+        List<String> candidates = new ArrayList<>();
+        Set<String> better = new LinkedHashSet<>();
+        Set<String> names = new LinkedHashSet<>();
+        for (Court court : courts) {
+            if (court == null || isBlank(court.getPostalCode())
+                    || !entered.equals(court.getPostalCode().trim())) {
+                continue;
             }
+            // the place has to agree where one was entered: the same postcode may be the postal one
+            // of a court elsewhere, and that court says nothing about this entry
+            if (!isBlank(city) && !isBlank(court.getCity())
+                    && !city.trim().equalsIgnoreCase(court.getCity().trim())) {
+                continue;
+            }
+            String delivery = court.deliveryPostalCode();
+            if (isBlank(delivery) || entered.equals(delivery.trim())) {
+                continue;
+            }
+            candidates.add(name(court) + " (" + delivery.trim() + ")");
+            better.add(delivery.trim());
+            names.add(name(court));
         }
-        return false;
+
+        if (candidates.isEmpty()) {
+            return null;
+        }
+        // two courts of one place may share the postal code and sit in different districts; then the
+        // right number cannot be named, only the choice
+        boolean single = better.size() == 1 && names.size() == 1;
+        return new Correction(single ? names.iterator().next() : null,
+                single ? better.iterator().next() : null, candidates);
     }
 
-    /**
-     * Whether the court is usable on a given day, judging by its validity range and its active flag.
-     *
-     * @param at the day to judge by; the current date if null
-     * @return whether the court may be offered
-     */
-    public boolean isValidAt(Date at) {
-        if (!this.active) {
-            return false;
+    private static String name(Court court) {
+        if (!isBlank(court.getName())) {
+            return court.getName().trim();
         }
-        Date day = at == null ? new Date() : at;
-        if (this.validFrom != null && day.before(this.validFrom)) {
-            return false;
-        }
-        return !(this.validTo != null && day.after(this.validTo));
+        return isBlank(court.getCity()) ? "ein Gericht" : "das Gericht in " + court.getCity().trim();
     }
 
-    /**
-     * The designation as it belongs on a document: the name, and the court's own addition where it
-     * uses one.
-     *
-     * @return the full designation
-     */
-    public String getFullDesignation() {
-        if (this.additionalDesignation == null || this.additionalDesignation.trim().isEmpty()) {
-            return this.name;
-        }
-        return this.name + " – " + this.additionalDesignation + " –";
-    }
-
-    @Override
-    public int hashCode() {
-        return (id != null ? id.hashCode() : 0);
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        if (!(object instanceof Court)) {
-            return false;
-        }
-        Court other = (Court) object;
-        return !((this.id == null && other.id != null)
-                || (this.id != null && !this.id.equals(other.id)));
-    }
-
-    @Override
-    public String toString() {
-        return this.name == null ? ("com.jdimension.jlawyer.persistence.Court[ id=" + id + " ]") : this.name;
+    private static boolean isBlank(String s) {
+        return s == null || s.trim().isEmpty();
     }
 }

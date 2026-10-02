@@ -290,6 +290,9 @@
       </Properties>
     </Component>
     <Component class="javax.swing.JTextField" name="txtHousePostalCode">
+      <Properties>
+        <Property name="toolTipText" type="java.lang.String" value="Zustellbezirks-PLZ der Hausanschrift. Das Mahnverfahren identifiziert ein Gericht allein über PLZ und Ort und löst sie über die Zustellbezirke auf - eine Großempfänger-PLZ der Postanschrift steht dort nicht."/>
+      </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="lbl_txtHouseCity">
       <Properties>

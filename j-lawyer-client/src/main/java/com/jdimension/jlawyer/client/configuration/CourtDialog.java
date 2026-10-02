@@ -868,6 +868,7 @@ public class CourtDialog extends javax.swing.JDialog {
         lbl_txtCity.setText("Postanschrift Ort:");
         lbl_txtHouseStreet.setText("Hausanschrift Straße:");
         lbl_txtHousePostalCode.setText("Hausanschrift PLZ:");
+        txtHousePostalCode.setToolTipText("Zustellbezirks-PLZ der Hausanschrift. Das Mahnverfahren identifiziert ein Gericht allein über PLZ und Ort und löst sie über die Zustellbezirke auf - eine Großempfänger-PLZ der Postanschrift steht dort nicht.");
         lbl_txtHouseCity.setText("Hausanschrift Ort:");
         lbl_txtPhone.setText("Telefon:");
         lbl_txtFax.setText("Fax:");

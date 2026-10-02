@@ -690,6 +690,7 @@ import com.jdimension.jlawyer.persistence.ClaimComponent;
 import com.jdimension.jlawyer.persistence.ClaimComponentFacadeLocal;
 import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
 import com.jdimension.jlawyer.persistence.ClaimPartyRole;
+import com.jdimension.jlawyer.persistence.CourtFacadeLocal;
 import com.jdimension.jlawyer.persistence.DunningCaseEvent;
 import com.jdimension.jlawyer.persistence.DunningCaseEventFacadeLocal;
 import com.jdimension.jlawyer.persistence.DunningCaseStatus;
@@ -795,6 +796,9 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
     @EJB
     private ArchiveFileGroupsBeanFacadeLocal caseGroupsFacade;
 
+    @EJB
+    private CourtFacadeLocal courtFacade;
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public DunningValidationResult validateApplication(String dunningCaseId, BigDecimal claimValue,
@@ -811,7 +815,7 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
         requireAccess(ledger.getArchiveFileKey());
 
         AppUserBean lawyer = lawyerByKennziffer(dunningCase.getKennziffer());
-        return new DunningApplicationValidator().validate(dunningCase,
+        return new DunningApplicationValidator(this.courtFacade.findAll()).validate(dunningCase,
                 new ArrayList<>(this.claimLedgerPartiesFacade.findByLedger(ledger)),
                 new ArrayList<>(this.claimComponentsFacade.findByLedger(ledger)),
                 claimValue, ReferenceData.getMainClaimCatalogue(),
@@ -851,7 +855,8 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
         // Mit den Eingaben dieses Antrags: korrigiert jemand hier das Anspruchsdatum, ohne das
         // Konto zu ändern, muss die Prüfung das sehen - sonst verweigert sie einen Antrag, der
         // vollständig ist.
-        DunningValidationResult validation = new DunningApplicationValidator().validate(dunningCase,
+        DunningValidationResult validation = new DunningApplicationValidator(
+                this.courtFacade.findAll()).validate(dunningCase,
                 parties, components, claimValue, ReferenceData.getMainClaimCatalogue(), edaPrefix,
                 claims);
         if (!validation.isReady()) {

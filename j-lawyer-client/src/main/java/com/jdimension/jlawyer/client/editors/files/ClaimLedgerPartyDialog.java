@@ -1415,9 +1415,13 @@ lblLitigationCourt.setText("Prozessgericht:");
             return;
         }
         Court chosen = courts.get(java.util.Arrays.asList(options).indexOf(selection.toString()));
-        this.txtLitigationCourtPostalCode.setText(chosen.getPostalCode() == null
-                ? "" : chosen.getPostalCode());
-        this.txtLitigationCourtCity.setText(chosen.getCity() == null ? "" : chosen.getCity());
+        // Die Zustellbezirks-PLZ der Hausanschrift, nicht die Postanschrift-PLZ: das Gericht loest
+        // PLZ und Ort ueber die Zustellbezirke auf, und eine Grossempfaenger-PLZ steht dort nicht.
+        // Hier stand die Postanschrift, und genau das hat das Mahngericht moniert ("70154 Stuttgart"
+        // statt 70190).
+        this.txtLitigationCourtPostalCode.setText(chosen.deliveryPostalCode() == null
+                ? "" : chosen.deliveryPostalCode());
+        this.txtLitigationCourtCity.setText(chosen.deliveryCity() == null ? "" : chosen.deliveryCity());
     }//GEN-LAST:event_cmdSelectLitigationCourtActionPerformed
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed

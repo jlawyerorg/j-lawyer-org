@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.persistence.ClaimComponentType;
 import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
 import com.jdimension.jlawyer.persistence.ClaimLedgerPartyRepresentative;
 import com.jdimension.jlawyer.persistence.ClaimPartyRole;
+import com.jdimension.jlawyer.persistence.Court;
 import com.jdimension.jlawyer.persistence.DunningCase;
 import com.jdimension.jlawyer.persistence.LitigationCourtType;
 import com.jdimension.jlawyer.persistence.DunningRepresentativeFeeMode;
@@ -707,7 +708,10 @@ public class DunningApplicationValidatorTest {
         DunningCase c = new DunningCase();
         c.setCourtXJustizId("B2609");
         c.setCourtName("Amtsgericht Stuttgart");
-        c.setCourtPostalCode("70154");
+        // Die Zustellbezirks-PLZ der Hausanschrift, nicht die 70154 des Briefkopfs: das Gericht löst
+        // PLZ und Ort über die Zustellbezirke auf, und eine vollständige Mahnsache passiert die
+        // Prüfung.
+        c.setCourtPostalCode("70190");
         c.setCourtCity("Stuttgart");
         c.setKennziffer("123456");
         // without this the application is monited; § 688 Abs. 2 Nr. 2 ZPO wants to know whether the
@@ -1437,6 +1441,180 @@ public class DunningApplicationValidatorTest {
                 ReferenceData.getMainClaimCatalogue(), "FSR", Arrays.asList(other));
 
         assertTrue(hasIssueAbout(r, "Anspruchsdatum"));
+    }
+
+    private Court court(String name, String postalCode, String city,
+            String housePostalCode, String houseCity) {
+        Court c = new Court();
+        c.setName(name);
+        c.setPostalCode(postalCode);
+        c.setCity(city);
+        c.setHousePostalCode(housePostalCode);
+        c.setHouseCity(houseCity);
+        return c;
+    }
+
+    /**
+     * Die Stammdaten des Amtsgerichts Stuttgart, wie sie tatsächlich aussehen: 70154 auf dem
+     * Briefkopf, 70190 in der Hauffstraße.
+     */
+    private List<Court> stuttgartCourts() {
+        return Arrays.asList(court("Amtsgericht Stuttgart", "70154", "Stuttgart", "70190", "Stuttgart"));
+    }
+
+    private DunningValidationResult validateWithCourts(DunningCase c, List<ClaimLedgerParty> parties,
+            List<Court> courts) {
+        return new DunningApplicationValidator(courts).validate(c, parties,
+                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), new BigDecimal("5000.00"),
+                ReferenceData.getMainClaimCatalogue(), "FSR", null);
+    }
+
+    /**
+     * Punkt 3 aus dem Rücklauf des Mahngerichts: als Prozessgericht war "70154 Stuttgart"
+     * angegeben - die Großempfänger-PLZ. Das Gericht löst PLZ und Ort über die Zustellbezirke auf,
+     * und weil Stuttgart zwei Amtsgerichte hat, konnte seine Heilungsroutine nicht greifen.
+     */
+    @Test
+    public void thelargeRecipientCodeOfTheLitigationCourtBlocksAndNamesTheRightOne() {
+        ClaimLedgerParty debtor = withLitigationCourt(
+                party("p2", ClaimPartyRole.DEBTOR, "Max Schuldner", "Nebenstr. 2", "70174", "Stuttgart"));
+        debtor.setLitigationCourtPostalCode("70154");
+        debtor.setLitigationCourtCity("Stuttgart");
+        List<ClaimLedgerParty> parties = new ArrayList<>(Arrays.asList(
+                party("p1", ClaimPartyRole.CREDITOR, "Gläubiger GmbH", "Hauptstr. 1", "70173", "Stuttgart"),
+                debtor));
+
+        DunningValidationResult r = validateWithCourts(completeCase(), parties, stuttgartCourts());
+
+        assertFalse(r.isReady());
+        assertTrue(hasIssueAbout(r, "Prozessgericht"));
+
+        String message = "";
+        for (DunningValidationIssue i : r.getBlockingIssues()) {
+            if ("Prozessgericht".equals(i.getField())) {
+                message = i.getMessage();
+            }
+        }
+        assertTrue("die Meldung muss die anzugebende PLZ nennen: " + message, message.contains("70190"));
+        assertTrue("und das Gericht benennen: " + message, message.contains("Amtsgericht Stuttgart"));
+        assertTrue("und sagen, warum: " + message, message.contains("Zustellbezirk"));
+    }
+
+    /**
+     * Mit der Zustellbezirks-PLZ ist nichts zu beanstanden. Ohne diesen Test wäre eine Prüfung, die
+     * immer meldet, von einer richtigen nicht zu unterscheiden.
+     */
+    @Test
+    public void thedeliveryCodeOfTheLitigationCourtPassesThrough() {
+        ClaimLedgerParty debtor = withLitigationCourt(
+                party("p2", ClaimPartyRole.DEBTOR, "Max Schuldner", "Nebenstr. 2", "70174", "Stuttgart"));
+        debtor.setLitigationCourtPostalCode("70190");
+        List<ClaimLedgerParty> parties = new ArrayList<>(Arrays.asList(
+                party("p1", ClaimPartyRole.CREDITOR, "Gläubiger GmbH", "Hauptstr. 1", "70173", "Stuttgart"),
+                debtor));
+
+        DunningValidationResult r = validateWithCourts(completeCase(), parties, stuttgartCourts());
+
+        assertFalse(hasIssueAbout(r, "Prozessgericht"));
+        assertTrue("" + r.getIssues(), r.isReady());
+    }
+
+    /**
+     * Das Mahngericht trägt dieselbe Prüfung: seine XJustiz-Kennung geht nicht mit in die Datei, PLZ
+     * und Ort sind die einzige Kennzeichnung des angeschriebenen Gerichts.
+     */
+    @Test
+    public void thelargeRecipientCodeOfTheDunningCourtBlocksToo() {
+        DunningCase c = completeCase();
+        c.setCourtPostalCode("70154");
+
+        DunningValidationResult r = validateWithCourts(c, completeParties(), stuttgartCourts());
+
+        assertFalse(r.isReady());
+        assertTrue(hasIssueAbout(r, "Mahngericht"));
+
+        String message = "";
+        for (DunningValidationIssue i : r.getBlockingIssues()) {
+            if ("Mahngericht".equals(i.getField())) {
+                message = i.getMessage();
+            }
+        }
+        assertTrue("die Meldung muss 70190 nennen: " + message, message.contains("70190"));
+    }
+
+    /**
+     * Zwei Amtsgerichte eines Ortes mit derselben Postanschrift-PLZ: dann kann die Prüfung keine Zahl
+     * nennen, muss aber die Wahl zeigen - genau der Fall, an dem das Gericht gescheitert ist.
+     */
+    @Test
+    public void twoCourtsOfOnePlaceAreBothOffered() {
+        List<Court> courts = Arrays.asList(
+                court("Amtsgericht Stuttgart", "70154", "Stuttgart", "70190", "Stuttgart"),
+                court("Amtsgericht Stuttgart-Bad Cannstatt", "70154", "Stuttgart", "70372", "Stuttgart"));
+
+        DunningCase c = completeCase();
+        c.setCourtPostalCode("70154");
+
+        DunningValidationResult r = validateWithCourts(c, completeParties(), courts);
+
+        String message = "";
+        for (DunningValidationIssue i : r.getBlockingIssues()) {
+            if ("Mahngericht".equals(i.getField())) {
+                message = i.getMessage();
+            }
+        }
+        assertTrue("beide Gerichte müssen genannt sein: " + message,
+                message.contains("70190") && message.contains("70372"));
+        assertTrue(message.contains("Bad Cannstatt"));
+    }
+
+    /**
+     * Ohne Gerichtsstammdaten schweigt die Regel. Sie behauptet nichts, was sie nicht wissen kann -
+     * und ein Mandant ohne gepflegte Gerichtsliste kann weiterhin einreichen.
+     */
+    @Test
+    public void withoutCourtMasterDataTheRuleSaysNothing() {
+        DunningValidationResult r = validateWithCourts(completeCase(), completeParties(), null);
+
+        assertFalse(hasIssueAbout(r, "Mahngericht"));
+        assertTrue("" + r.getIssues(), r.isReady());
+    }
+
+    /**
+     * Ein Gericht ohne erfasste Hausanschrift: die Postanschrift ist alles, was es gibt, und beim AG
+     * Aschersleben ist 39418 auch die richtige Zahl.
+     */
+    @Test
+    public void acourtWithoutAhouseAddressRaisesNothing() {
+        DunningCase c = completeCase();
+        c.setCourtName("Amtsgericht Aschersleben");
+        c.setCourtPostalCode("39418");
+        c.setCourtCity("Staßfurt");
+
+        DunningValidationResult r = validateWithCourts(c, completeParties(),
+                Arrays.asList(court("Amtsgericht Aschersleben", "39418", "Staßfurt", null, null)));
+
+        assertFalse(hasIssueAbout(r, "Mahngericht"));
+    }
+
+    /**
+     * Fehlt die PLZ ganz, bleibt es bei der einen Meldung darüber - kein zweiter Satz über eine Zahl,
+     * die niemand eingetragen hat.
+     */
+    @Test
+    public void amissingPostcodeIsReportedOnlyOnce() {
+        DunningCase c = completeCase();
+        c.setCourtPostalCode(null);
+
+        DunningValidationResult r = validateWithCourts(c, completeParties(), stuttgartCourts());
+
+        int mentions = 0;
+        for (DunningValidationIssue i : r.getIssues()) {
+            if ("Mahngericht".equals(i.getField())) {
+                mentions++;
+            }
+        }
+        assertEquals(1, mentions);
     }
 
 }

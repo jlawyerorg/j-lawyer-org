@@ -666,12 +666,14 @@ import com.jdimension.jlawyer.eda.EdaId;
 import java.util.Date;
 import com.jdimension.jlawyer.pojo.DunningClaimInput;
 import com.jdimension.jlawyer.eda.ClaimPeriod;
+import com.jdimension.jlawyer.eda.CourtPostalCodes;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ClaimComponent;
 import com.jdimension.jlawyer.persistence.ClaimComponentType;
 import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
 import com.jdimension.jlawyer.persistence.ClaimLedgerPartyRepresentative;
 import com.jdimension.jlawyer.persistence.ClaimPartyRole;
+import com.jdimension.jlawyer.persistence.Court;
 import com.jdimension.jlawyer.persistence.DunningCase;
 import com.jdimension.jlawyer.pojo.DunningValidationResult;
 import com.jdimension.jlawyer.referencedata.CatalogueAddition;
@@ -701,6 +703,30 @@ import java.util.List;
  * @author jens
  */
 public class DunningApplicationValidator {
+
+    private final List<Court> courts;
+
+    /**
+     * A validator without the court master data.
+     *
+     * It checks everything but the one rule that needs the courts: whether a postcode entered for a
+     * court is the one those courts are to be named by.
+     */
+    public DunningApplicationValidator() {
+        this(null);
+    }
+
+    /**
+     * A validator that can also judge the postcode of a court.
+     *
+     * The master data is reference data, not an input of a single application, which is why it is
+     * handed to the validator once rather than to every check.
+     *
+     * @param courts the courts of the firm; may be null, and then that one rule stays silent
+     */
+    public DunningApplicationValidator(List<Court> courts) {
+        this.courts = courts;
+    }
 
     /**
      * Checks an application.
@@ -770,7 +796,51 @@ public class DunningApplicationValidator {
             result.error("Mahngericht",
                     "Für das Mahngericht fehlen PLZ oder Ort. Der EDA-Antrag adressiert das Gericht "
                     + "über diese beiden Angaben.", null);
+            return;
         }
+        // Die XJustiz-Kennung geht nicht mit hinaus: PLZ und Ort sind die einzige Kennzeichnung des
+        // angeschriebenen Mahngerichts in der Datei. Eine Großempfänger-PLZ steht in der
+        // Zustellbezirks-Tabelle der Gerichte nicht.
+        validatePostalCode(dunningCase.getCourtPostalCode(), dunningCase.getCourtCity(),
+                "Mahngericht", "Als Mahngericht ist ", result, null);
+    }
+
+    /**
+     * Whether a court is named by the postcode the dunning courts resolve.
+     *
+     * A court usually has two: the one it was assigned as a large recipient or for its post-office
+     * box, and the one of the delivery district it sits in. The format carries no key for either
+     * court, so postcode and place are the whole identification, and the courts look them up in
+     * their table of delivery districts - where a large-recipient code does not appear.
+     *
+     * This fires only where the master data proves the entry wrong: the entered number is the postal
+     * code of a court whose house address names another. Where nothing better is known the check
+     * stays silent rather than hold up an application the courts accept.
+     */
+    private void validatePostalCode(String postalCode, String city, String field, String lead,
+            DunningValidationResult result, String reference) {
+
+        CourtPostalCodes.Correction correction =
+                CourtPostalCodes.findCorrection(this.courts, postalCode, city);
+        if (correction == null) {
+            return;
+        }
+        if (correction.getPostalCode() != null) {
+            result.error(field, lead + postalCode.trim() + " " + city.trim() + " angegeben. "
+                    + postalCode.trim() + " ist die Postanschrift-PLZ des Gerichts \""
+                    + correction.getCourtName()
+                    + "\"; anzugeben ist die Zustellbezirks-PLZ " + correction.getPostalCode()
+                    + ". Die Mahngerichte lösen PLZ und Ort über die Zustellbezirke auf und monieren "
+                    + "einen Antrag, dessen PLZ dort nicht steht.", reference);
+            return;
+        }
+        // mehrere Gerichte des Ortes teilen die PLZ - genau der Fall, in dem die Heilungsroutine des
+        // Gerichts aufgibt und uns die Wahl überlässt
+        result.error(field, lead + postalCode.trim() + " " + city.trim() + " angegeben. "
+                + postalCode.trim() + " ist eine Postanschrift-PLZ, und in " + city.trim()
+                + " kommen mehrere Gerichte in Frage: " + String.join(", ", correction.getCandidates())
+                + ". Anzugeben ist die Zustellbezirks-PLZ des zuständigen Gerichts; die "
+                + "Heilungsroutine der Mahngerichte greift hier nicht.", reference);
     }
 
     private void validateKennziffer(DunningCase dunningCase, DunningValidationResult result) {
@@ -879,6 +949,11 @@ public class DunningApplicationValidator {
                             "Für " + party.getEffectiveDesignation() + " ist nicht angegeben, "
                             + "welches Gericht bei Widerspruch das streitige Verfahren führt.",
                             "§ 690 Abs. 1 Nr. 5 ZPO");
+                } else {
+                    validatePostalCode(party.getLitigationCourtPostalCode(),
+                            party.getLitigationCourtCity(), "Prozessgericht",
+                            "Als Prozessgericht für " + party.getEffectiveDesignation() + " ist ",
+                            result, party.getId());
                 }
             }
         }
