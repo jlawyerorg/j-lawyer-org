@@ -677,7 +677,9 @@ import java.util.List;
  * Files written by hand or by other tools are read all the same: where line breaks are present they
  * are taken as the separation, which keeps the diagnostics of a malformed file readable. Where they
  * are absent the stream is cut every {@value #RECORD_LENGTH} characters, and a remainder that does
- * not fill a record is returned as it stands so the verifier can report it rather than hide it.
+ * not fill a record is returned as it stands so the verifier can report it rather than hide it. A
+ * line that is short by no more than the separator it lost is filled up again - see
+ * {@link #SEPARATOR_ALLOWANCE}.
  *
  * @author jens
  */
@@ -685,6 +687,24 @@ public final class EdaRecords {
 
     /** How long a record is, in characters. */
     public static final int RECORD_LENGTH = 128;
+
+    /**
+     * How much of a record a line separator may occupy.
+     *
+     * The courts transmit their messages line by line, and they keep the 128-byte block: a line
+     * carries 126 characters and the CR LF that follows fills it up. Read as text, such a record is
+     * two characters short of the layout, and refusing it means a firm cannot read the court's reply
+     * at all - which is what happened with the first Erlassnachricht of the test exchange.
+     *
+     * The two characters cannot carry anything: every message layout ends in filler, at least three
+     * characters of it, so what the separator takes is blank by construction. They are therefore
+     * added back.
+     *
+     * A record that falls short by more than this is not this convention but a damaged file, and it
+     * is left as it stands so the caller reports it. Blank-filling anything would turn a truncated
+     * record into one with empty fields, and an empty field in a court message is a statement.
+     */
+    private static final int SEPARATOR_ALLOWANCE = 2;
 
     private EdaRecords() {
     }
@@ -704,7 +724,7 @@ public final class EdaRecords {
         if (content.indexOf('\n') >= 0 || content.indexOf('\r') >= 0) {
             for (String line : content.split("\r\n|\n|\r")) {
                 if (!line.isEmpty()) {
-                    records.add(line);
+                    records.add(restoreSeparator(line));
                 }
             }
             return records;
@@ -713,5 +733,24 @@ public final class EdaRecords {
             records.add(content.substring(at, Math.min(at + RECORD_LENGTH, content.length())));
         }
         return records;
+    }
+
+    /**
+     * Gives back what the line separator took, where that is all it can have taken.
+     *
+     * @param line one line of a record-per-line file
+     * @return the line filled up to a full record, or unchanged where it is too short for that to be
+     * the separator's doing
+     */
+    private static String restoreSeparator(String line) {
+        if (line.length() >= RECORD_LENGTH
+                || line.length() < RECORD_LENGTH - SEPARATOR_ALLOWANCE) {
+            return line;
+        }
+        StringBuilder filled = new StringBuilder(line);
+        while (filled.length() < RECORD_LENGTH) {
+            filled.append(' ');
+        }
+        return filled.toString();
     }
 }

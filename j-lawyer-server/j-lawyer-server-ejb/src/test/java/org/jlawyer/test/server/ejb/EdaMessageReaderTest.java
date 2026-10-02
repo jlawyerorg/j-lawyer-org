@@ -827,4 +827,131 @@ public class EdaMessageReaderTest {
 
         assertNull(reader.read(codec.write(r)).get(0).getReportedDate());
     }
+
+    /**
+     * Die Gerichte übermitteln satzweise und halten dabei den 128-Byte-Block: eine Zeile trägt 126
+     * Zeichen, das CR LF füllt sie auf. Als Text gelesen ist so ein Satz zwei Zeichen zu kurz, und
+     * daran ist der Import der ersten Erlassnachricht des Testlaufs gescheitert - die Kanzlei konnte
+     * die Antwort des Gerichts überhaupt nicht lesen.
+     */
+    @Test
+    public void arecordShortenedByItsOwnLineSeparatorIsStillRead() throws Exception {
+        String full = serviceNotice("00029/26", "1", "260930");
+        assertEquals(128, full.length());
+
+        String asTheCourtSendsIt = full.substring(0, 126) + "\r\n";
+
+        List<EdaMessage> messages = reader.read(asTheCourtSendsIt);
+
+        assertEquals(1, messages.size());
+        assertEquals("00029/26", messages.get(0).getOwnReference());
+        assertEquals("26-1234567", messages.get(0).getCourtFileNumber());
+    }
+
+    /**
+     * Und zwar mit demselben Ergebnis wie ohne Zeilentrenner: was der Trenner nimmt, ist in jedem
+     * Nachrichten-Layout Füllzeichen, kann also keinen Inhalt tragen.
+     */
+    @Test
+    public void itIsReadTheSameWayAsAfileWithoutSeparators() throws Exception {
+        String full = serviceNotice("00029/26", "1", "260930");
+
+        EdaMessage withSeparator = reader.read(full.substring(0, 126) + "\r\n").get(0);
+        EdaMessage without = reader.read(full).get(0);
+
+        assertEquals(without.getOwnReference(), withSeparator.getOwnReference());
+        assertEquals(without.getCourtFileNumber(), withSeparator.getCourtFileNumber());
+        assertEquals(without.getMessageKind(), withSeparator.getMessageKind());
+        assertEquals(without.getReportedDate(), withSeparator.getReportedDate());
+    }
+
+    /**
+     * Dass jedes Nachrichten-Layout am Ende genug Füllzeichen führt, ist die Voraussetzung dafür -
+     * ohne sie wäre das Auffüllen ein stilles Verlieren von Inhalt.
+     */
+    @Test
+    public void everyMessageLayoutEndsInEnoughFillerToLoseAseparator() {
+        for (EdaRecordLayout layout : EdaMessageLayouts.getLayouts().values()) {
+            int trailingFiller = 0;
+            List<com.jdimension.jlawyer.eda.EdaField> fields = layout.getFields();
+            for (int i = fields.size() - 1; i >= 0 && fields.get(i).isFiller(); i--) {
+                trailingFiller += fields.get(i).getLength();
+            }
+            assertTrue(layout.getId() + " endet mit nur " + trailingFiller + " Füllzeichen",
+                    trailingFiller >= 2);
+        }
+    }
+
+    /**
+     * Mehr als der Zeilentrenner fehlt nicht aus Versehen. Eine abgeschnittene Datei wird weiter
+     * abgewiesen, denn Blanks aufzufüllen würde aus fehlenden Angaben leere machen - und ein leeres
+     * Feld ist in einer Nachricht des Gerichts eine Aussage.
+     */
+    @Test
+    public void arecordShortByMoreThanAseparatorIsStillRefused() throws Exception {
+        String truncated = serviceNotice("00029/26", "1", "260930").substring(0, 125) + "\r\n";
+
+        try {
+            reader.read(truncated);
+            fail("eine abgeschnittene Datei darf nicht teilweise eingelesen werden");
+        } catch (IllegalArgumentException expected) {
+            assertTrue(expected.getMessage().contains("128"));
+            assertTrue(expected.getMessage().contains("125"));
+        }
+    }
+
+    /**
+     * Die Erlassnachricht des Mahngerichts, wie sie im Testlauf ankam: Satzart 03 mit Kennsatz,
+     * Ausgangsbetrag, zwei Zahlwegsätzen und der Rechtsmittelbelehrung, jede Zeile 126 Zeichen plus
+     * CR LF, umschlossen von AA und BB.
+     */
+    @Test
+    public void thecostAndIssueNoticeOfTheCourtIsReadWithItsFileNumber() throws Exception {
+        StringBuilder file = new StringBuilder();
+        for (String line : new String[]{
+            frame("AA", "0777451226093003077745124100FSR50108"),
+            keyRecord(),
+            record("03AUSGB00", "000000000000965000000000414000002000000000000000007"),
+            record("03ZAW  01", "Landesoberkasse Baden-Württemberg"),
+            record("03ZAW  02", "000965026111111100"),
+            record("03RM   00", "100§ 66 GKG       170154Stuttgart"),
+            frame("BB", "0777451200000010000005000000000000000519278000000001111111")}) {
+            file.append(line.substring(0, 126)).append("\r\n");
+        }
+
+        List<EdaMessage> messages = reader.read(file.toString());
+
+        assertEquals("der Rahmen ist keine Nachricht", 1, messages.size());
+        EdaMessage notice = messages.get(0);
+        assertEquals("03", notice.getSatzart());
+        assertEquals("00029/26", notice.getOwnReference());
+        assertEquals("26111111100", notice.getCourtFileNumber());
+        assertEquals("die fünf Sätze der Nachricht ohne den Rahmen", 5, notice.getRawRecords().size());
+    }
+
+    private String frame(String satzart, String rest) {
+        return pad(satzart + rest);
+    }
+
+    private String keyRecord() throws Exception {
+        EdaRecord r = new EdaRecord(EdaMessageLayouts.L01_KOSTEN_ERLASS_MB);
+        r.set("KEZI", "07774512");
+        r.set("ASGZ", "00029/26");
+        r.set("GNR1", "26111111100");
+        r.set("ELD", "260930");
+        return codec.write(r);
+    }
+
+    private String record(String key, String rest) {
+        return pad(key + rest);
+    }
+
+    private String pad(String s) {
+        StringBuilder b = new StringBuilder(s);
+        while (b.length() < 128) {
+            b.append(' ');
+        }
+        return b.toString();
+    }
+
 }
