@@ -278,6 +278,32 @@
       correspond to them one for one, which makes the mapping a lookup rather than a judgement — and
       a necessary one, since a court decides differently on a reminder charge than on collection
       costs. No record area of Satzart 01 is left unmapped
+- [ ] 3.12a **Offene Frage: der Auslagenbetrag des Prozessbevollmächtigten (`ASPVMBAUSL`, Satz
+      C10).** Das Feld wird von uns nie gefüllt. Der Erzeuger könnte es — `EdaRepresentativeMapper`
+      schreibt es aus `EdaProcessRepresentative.disbursements`, richtig beschränkt auf Fälle, in
+      denen das RVG gilt —, aber nichts setzt diesen Wert: `DunningService.representativeOf()` lässt
+      ihn aus, `DunningCase` hat kein Feld dafür, und `setDisbursements(...)` wird ausschließlich in
+      Tests aufgerufen. Dass es ein Versehen und keine Entscheidung ist, zeigt das Nachbarfeld:
+      `VV2300MBET` ist über `dunningCase.getOffsetAmount()` angebunden, in derselben Methode.
+      *Nicht zu verwechseln mit den Auslagen des Gläubigers.* Die sind buchbar
+      (`ClaimComponentType.PRECOURT_EXPENSES`) und landen in C28/`VPBET`; dieser Weg funktioniert
+      nachweislich, die Mahnkosten einer echten Testdatei stehen als C29/`MAHNK` darin. `ASPVMBAUSL`
+      gehört dagegen in den Vergütungsblock der eigenen Kanzlei und ist keine Forderungsposition —
+      die gesetzliche Verfahrensgebühr rechnet das Gericht selbst aus dem Streitwert, die Auslagen
+      muss der Antrag nennen.
+      *Warum offen und nicht einfach gebaut:* es ist unklar, welchen Betrag das Gericht erwartet und
+      ob die Angabe verlangt ist. Die Referenzdatei `01-natperson-katalog11.eda` führt 12,00 €,
+      während ihre Erfassungsanleitung für denselben Fall *„Auslagen/Nebenforderungen: keine"*
+      festhält; 20 % der Verfahrensgebühr bei 5.000 € Streitwert wären gedeckelte 20 € (Nr. 7002
+      VV RVG), nicht 12. Im selben Satz ist der Unterschied zwischen leer und `0,00` an anderer
+      Stelle ein Verzicht (`IKUBET`, siehe A.7 der Referenz-README) — ein Feld, dessen Belegung eine
+      rechtliche Erklärung sein kann, wird nicht auf Vermutung angebunden.
+      *Zu klären mit dem Mahngericht:* welcher Betrag gehört in `ASPVMBAUSL`, ist die Angabe
+      verlangt, und bedeutet leer dort einen Verzicht? Danach: Feld an `DunningCase` mit Migration,
+      Eingabe und Vorbelegung im Export-Schritt (3.17), Durchreichen in `representativeOf()`, Tests.
+      *Gefunden* beim Gegenlesen der Testdatei vom 02.10.2026 — durch einen satzartweisen Vergleich
+      gegen die Referenzdateien, der zugleich zeigte, dass genau dieser Vergleich im Build fehlt
+      (siehe `eda/reference/README.md`, Abschnitt „Was damit gebaut wird")
 - [x] 3.13 Structural verifier (record length, framing, record order, per-area frequency, trailer
       counts, character set) with violations reported per record and field
 - [x] 3.14 `AppUserBean` lawyer identification number (Kennziffer) with migration and the user
