@@ -724,7 +724,8 @@ public class DunningExportDialog extends javax.swing.JDialog {
     private static final int COL_INCLUDED = 0;
     private static final int COL_AMOUNT = 3;
     private static final int COL_INVOICE = 4;
-    private static final int COL_INTEREST_TO = 5;
+    private static final int COL_CLAIM_FROM = 5;
+    private static final int COL_INTEREST_TO = 6;
 
     private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
     private final DecimalFormat currencyFormat = new DecimalFormat("#,##0.00");
@@ -752,7 +753,8 @@ public class DunningExportDialog extends javax.swing.JDialog {
         initComponents();
 
         this.tblClaims.setModel(new DefaultTableModel(
-                new Object[]{"", "Position", "Art", "Betrag", "Rechnungsnr.", "Zinsen bis"}, 0) {
+                new Object[]{"", "Position", "Art", "Betrag", "Rechnungsnr.", "vom",
+                    "Zinsen bis"}, 0) {
             @Override
             public Class<?> getColumnClass(int column) {
                 return column == COL_INCLUDED ? Boolean.class : String.class;
@@ -849,6 +851,10 @@ public class DunningExportDialog extends javax.swing.JDialog {
                 // frueher bei jedem Erzeugen neu getippt. Was hier steht, geht hinaus - fuer diese
                 // eine Einreichung darf sie abweichen, ohne die Position zu aendern.
                 nullSafe(c.getClaimReasonReference()),
+                // Das Datum, aus dem der Anspruch entstanden ist. Es geht als Vom-Datum des
+                // Anspruchs hinaus und wird vom Gericht neben der Begruendung gedruckt; fehlt es,
+                // wird der Antrag moniert. Hier sichtbar, damit das vor dem Einreichen auffaellt.
+                c.getClaimFrom() == null ? "" : df.format(c.getClaimFrom()),
                 ""});
         }
     }
@@ -1005,6 +1011,8 @@ public class DunningExportDialog extends javax.swing.JDialog {
             if (invoice != null && !invoice.toString().trim().isEmpty()) {
                 input.setInvoiceNumber(invoice.toString().trim());
             }
+            Object claimFrom = model.getValueAt(i, COL_CLAIM_FROM);
+            input.setFrom(parseDate(claimFrom == null ? null : claimFrom.toString()));
             Object interestTo = model.getValueAt(i, COL_INTEREST_TO);
             input.setInterestTo(parseDate(interestTo == null ? null : interestTo.toString()));
             claims.add(input);
@@ -1324,8 +1332,10 @@ public class DunningExportDialog extends javax.swing.JDialog {
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            // Mit den Eingaben der Tabelle: wer das Anspruchsdatum nur fuer diese Einreichung
+            // eintraegt, soll nicht hoeren, es fehle - die Datei wuerde es tragen.
             result = locator.lookupDunningServiceRemote()
-                    .validateApplication(this.dunningCase.getId(), claimValue);
+                    .validateApplication(this.dunningCase.getId(), claimValue, selectedClaims());
         } catch (Exception ex) {
             log.error("Unable to validate dunning case " + this.dunningCase.getId(), ex);
             this.txtResult.setText("Der Antrag konnte nicht geprüft werden: " + ex.getMessage());

@@ -46,6 +46,7 @@
                                   <Component id="lblCatalogue" alignment="0" min="-2" max="-2" attributes="0"/>
                                   <Component id="lblReason" alignment="0" min="-2" max="-2" attributes="0"/>
                                   <Component id="lblReasonReference" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="lblClaimPeriod" alignment="0" min="-2" max="-2" attributes="0"/>
                                   <Component id="lblAddition" alignment="0" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
@@ -55,6 +56,18 @@
                                   <Component id="cmbCatalogue" max="32767" attributes="0"/>
                                   <Component id="cmbReason" max="32767" attributes="0"/>
                                   <Component id="txtReasonReference" max="32767" attributes="0"/>
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <Component id="txtClaimFrom" min="-2" pref="120" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="cmdClaimFrom" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                                      <Component id="lblClaimTo" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="txtClaimTo" min="-2" pref="120" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="cmdClaimTo" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                                  </Group>
                                   <Group type="102" attributes="0">
                                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
                                           <Component id="cmbType" max="32767" attributes="0"/>
@@ -161,6 +174,14 @@
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="lblReasonReference" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="txtReasonReference" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="lblClaimPeriod" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="txtClaimFrom" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmdClaimFrom" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="lblClaimTo" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="txtClaimTo" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmdClaimTo" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
@@ -434,6 +455,52 @@
         </Property>
         <Property name="toolTipText" type="java.lang.String" value="H&#xf6;chstens 35 Zeichen - so viele f&#xfc;hrt die Austauschdatei"/>
       </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblClaimPeriod">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="vom:"/>
+        <Property name="toolTipText" type="java.lang.String" value="Der Tag, aus dem der Anspruch entstanden ist - das Datum der Rechnung, des Vertrages, der Abrechnung. Der Mahnbescheid nennt es neben der Begr&#xfc;ndung."/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JTextField" name="txtClaimFrom">
+      <Properties>
+        <Property name="enabled" type="boolean" value="false"/>
+        <Property name="toolTipText" type="java.lang.String" value="Der Tag, aus dem der Anspruch entstanden ist - das Datum der Rechnung, des Vertrages, der Abrechnung. Der Mahnbescheid nennt es neben der Begr&#xfc;ndung."/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdClaimFrom">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons/schedule.png"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="Der Tag, aus dem der Anspruch entstanden ist - das Datum der Rechnung, des Vertrages, der Abrechnung. Der Mahnbescheid nennt es neben der Begr&#xfc;ndung."/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdClaimFromActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblClaimTo">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="bis:"/>
+        <Property name="toolTipText" type="java.lang.String" value="Nur bei Forderungen &#xfc;ber einen Zeitraum (Miete, Pacht, wiederkehrende Betr&#xe4;ge) - sonst bleibt das Feld leer."/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JTextField" name="txtClaimTo">
+      <Properties>
+        <Property name="enabled" type="boolean" value="false"/>
+        <Property name="toolTipText" type="java.lang.String" value="Nur bei Forderungen &#xfc;ber einen Zeitraum (Miete, Pacht, wiederkehrende Betr&#xe4;ge) - sonst bleibt das Feld leer."/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdClaimTo">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons/schedule.png"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="Nur bei Forderungen &#xfc;ber einen Zeitraum (Miete, Pacht, wiederkehrende Betr&#xe4;ge) - sonst bleibt das Feld leer."/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdClaimToActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JLabel" name="lblAddition">
       <Properties>

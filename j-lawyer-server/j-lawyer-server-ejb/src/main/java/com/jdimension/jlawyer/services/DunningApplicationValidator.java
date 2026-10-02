@@ -663,6 +663,9 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.eda.EdaId;
+import java.util.Date;
+import com.jdimension.jlawyer.pojo.DunningClaimInput;
+import com.jdimension.jlawyer.eda.ClaimPeriod;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ClaimComponent;
 import com.jdimension.jlawyer.persistence.ClaimComponentType;
@@ -715,6 +718,29 @@ public class DunningApplicationValidator {
             List<ClaimComponent> components, BigDecimal claimValue, MainClaimCatalogue catalogue,
             String edaPrefix) {
 
+        return validate(dunningCase, parties, components, claimValue, catalogue, edaPrefix, null);
+    }
+
+    /**
+     * Checks an application, with the entries made for this one filing.
+     *
+     * The dates of a claim may be corrected for a single application without changing the ledger.
+     * The check therefore has to judge what will be written, not what the ledger happens to hold -
+     * otherwise it would refuse an application that is complete, or pass one that is not.
+     *
+     * @param dunningCase the procedure
+     * @param parties its parties
+     * @param components the positions of the ledger
+     * @param claimValue the value applied for
+     * @param catalogue the main claim catalogue, or null
+     * @param edaPrefix the three-letter code the file will be named after
+     * @param claims what was entered for this application, or null where nothing was
+     * @return every finding, blocking and otherwise
+     */
+    public DunningValidationResult validate(DunningCase dunningCase, List<ClaimLedgerParty> parties,
+            List<ClaimComponent> components, BigDecimal claimValue, MainClaimCatalogue catalogue,
+            String edaPrefix, List<DunningClaimInput> claims) {
+
         DunningValidationResult result = new DunningValidationResult();
 
         if (dunningCase == null) {
@@ -727,7 +753,7 @@ public class DunningApplicationValidator {
         validateDeclarations(dunningCase, result);
         validateRepresentativeFee(dunningCase, result);
         validateParties(parties, result);
-        validateClaims(components, claimValue, catalogue, result);
+        validateClaims(components, claimValue, catalogue, result, claims);
 
         return result;
     }
@@ -953,7 +979,8 @@ public class DunningApplicationValidator {
     }
 
     private void validateClaims(List<ClaimComponent> components, BigDecimal claimValue,
-            MainClaimCatalogue catalogue, DunningValidationResult result) {
+            MainClaimCatalogue catalogue, DunningValidationResult result,
+            List<DunningClaimInput> claims) {
 
         int mainClaims = 0;
         if (components != null) {
@@ -961,7 +988,7 @@ public class DunningApplicationValidator {
                 if (component.getType() == ClaimComponentType.MAIN_CLAIM
                         || component.getType() == ClaimComponentType.MAIN_CLAIM_RECURRING) {
                     mainClaims++;
-                    validateCatalogue(component, catalogue, result);
+                    validateCatalogue(component, catalogue, result, inputFor(claims, component));
                 }
             }
         }
@@ -975,6 +1002,60 @@ public class DunningApplicationValidator {
     }
 
     /**
+     * The dates of the claim: the day it arose, and - where it covers a period - the day it ends.
+     *
+     * The Mahnbescheid prints the first beside the reason, and every sample file the courts publish
+     * carries it, including those for a claim that arose on a single day. An application without it
+     * is monitioned, which is how this check came to exist.
+     *
+     * An end is asked for only where the claim is one over a period: a running monthly claim, or a
+     * catalogue number that demands one. Asking for it everywhere would turn a sale into a period.
+     */
+    private void validateClaimPeriod(ClaimComponent component, MainClaimCatalogue catalogue,
+            DunningClaimInput input, String name, DunningValidationResult result) {
+
+        Date from = ClaimPeriod.effectiveFrom(input, component);
+        Date to = ClaimPeriod.effectiveTo(input, component);
+
+        if (from == null) {
+            result.error("Anspruchsdatum",
+                    name + ": es fehlt das Datum, aus dem der Anspruch entstanden ist - das Datum "
+                    + "der Rechnung, des Vertrages, der Abrechnung. Der Mahnbescheid nennt es neben "
+                    + "der Anspruchsbegründung (\"aus Rechnung Nr. 4711 vom 15.09.2025\"); ohne es "
+                    + "wird der Antrag moniert.", component.getId());
+        }
+
+        if (ClaimPeriod.needsPeriod(component, catalogue)) {
+            if (to == null) {
+                result.error("Anspruchszeitraum",
+                        name + ": die Forderung läuft über einen Zeitraum, dazu gehört neben dem "
+                        + "Vom- auch ein Bis-Datum.", component.getId());
+            }
+        }
+
+        if (from != null && to != null && to.before(from)) {
+            result.error("Anspruchszeitraum",
+                    name + ": das Bis-Datum liegt vor dem Vom-Datum.", component.getId());
+        }
+    }
+
+    /**
+     * What was entered for this position in this application, where anything was.
+     */
+    private DunningClaimInput inputFor(List<DunningClaimInput> claims, ClaimComponent component) {
+        if (claims == null || component == null) {
+            return null;
+        }
+        for (DunningClaimInput input : claims) {
+            if (input != null && component.getId() != null
+                    && component.getId().equals(input.getComponentId())) {
+                return input;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Checks a catalogue number and the further entry it demands.
      *
      * Several numbers only work together with an additional entry - the postcode and place of the
@@ -982,7 +1063,7 @@ public class DunningApplicationValidator {
      * monitions an application that omits it, which costs weeks, so it is checked here.
      */
     private void validateCatalogue(ClaimComponent component, MainClaimCatalogue catalogue,
-            DunningValidationResult result) {
+            DunningValidationResult result, DunningClaimInput input) {
 
         String number = component.getCatalogueNumber();
         String name = isBlank(component.getName()) ? "Hauptforderung" : component.getName();
@@ -996,6 +1077,8 @@ public class DunningApplicationValidator {
                     + "Vertrag ...). Der Antrag geht dann mit einer abgeleiteten Angabe hinaus.",
                     component.getId());
         }
+
+        validateClaimPeriod(component, catalogue, input, name, result);
 
         if (isBlank(number)) {
             // a free-text claim is allowed; the format carries a designation for it
@@ -1041,9 +1124,10 @@ public class DunningApplicationValidator {
                 given = !isBlank(component.getCatalogueReferenceDetail());
                 break;
             case CLAIM_PERIOD:
-                // der Zeitraum, den Nr. 70 verlangt, ist das von/bis der Anspruchszeile selbst -
-                // ein eigenes Feld gibt es dafür nicht, und der Assistent der Gerichte fragt auch
-                // nicht danach
+                // Der Zeitraum, den Nr. 70 verlangt, ist das von/bis der Anspruchszeile selbst -
+                // und das prüft validateClaimPeriod, für diese Katalognummer verbindlich. Hier
+                // stand früher nur ein return samt der Annahme, das Datum werde "ohnehin gefüllt";
+                // gefüllt wurde es nie, und das Mahngericht hat es beanstandet.
                 return;
             default:
                 // the catalogue demands something this code does not know how to hold. Saying so is

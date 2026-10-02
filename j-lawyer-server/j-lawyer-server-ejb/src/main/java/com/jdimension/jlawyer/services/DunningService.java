@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.eda.EdaDocumentDescriber;
 import com.jdimension.jlawyer.eda.EdaEncodingException;
 import com.jdimension.jlawyer.eda.EdaFieldLengthException;
 import com.jdimension.jlawyer.eda.EdaFile;
+import com.jdimension.jlawyer.eda.ClaimPeriod;
 import com.jdimension.jlawyer.eda.EdaMahnbescheidBuilder;
 import com.jdimension.jlawyer.referencedata.CatalogueAddition;
 import com.jdimension.jlawyer.eda.EdaProcessRepresentative;
@@ -796,8 +797,8 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
-    public DunningValidationResult validateApplication(String dunningCaseId, BigDecimal claimValue)
-            throws Exception {
+    public DunningValidationResult validateApplication(String dunningCaseId, BigDecimal claimValue,
+            List<DunningClaimInput> claims) throws Exception {
 
         DunningCase dunningCase = this.dunningCasesFacade.find(dunningCaseId);
         if (dunningCase == null) {
@@ -814,7 +815,7 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
                 new ArrayList<>(this.claimLedgerPartiesFacade.findByLedger(ledger)),
                 new ArrayList<>(this.claimComponentsFacade.findByLedger(ledger)),
                 claimValue, ReferenceData.getMainClaimCatalogue(),
-                lawyer == null ? null : lawyer.getDunningEdaPrefix());
+                lawyer == null ? null : lawyer.getDunningEdaPrefix(), claims);
     }
 
     @Override
@@ -847,8 +848,12 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
         String edaPrefix = lawyer == null ? null : lawyer.getDunningEdaPrefix();
 
         // nothing is produced that has not been checked first
+        // Mit den Eingaben dieses Antrags: korrigiert jemand hier das Anspruchsdatum, ohne das
+        // Konto zu ändern, muss die Prüfung das sehen - sonst verweigert sie einen Antrag, der
+        // vollständig ist.
         DunningValidationResult validation = new DunningApplicationValidator().validate(dunningCase,
-                parties, components, claimValue, ReferenceData.getMainClaimCatalogue(), edaPrefix);
+                parties, components, claimValue, ReferenceData.getMainClaimCatalogue(), edaPrefix,
+                claims);
         if (!validation.isReady()) {
             throw new Exception("Der Antrag ist noch nicht vollständig:\n" + describe(validation));
         }
@@ -1658,8 +1663,11 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
             // amount into the record would apply for nothing at all
             EdaClaimMapper.Claim claim = new EdaClaimMapper.Claim(component,
                     input.getAmount() == null ? component.getPrincipalAmount() : input.getAmount());
-            claim.setFrom(input.getFrom());
-            claim.setTo(input.getTo());
+            // Das Vom-Datum des Anspruchs: was fuer diesen Antrag eingetragen wurde, sonst das
+            // Datum der Position. Beides stand bisher nie zur Verfuegung, und das Feld ging leer
+            // hinaus - genau das hat das Mahngericht beanstandet.
+            claim.setFrom(ClaimPeriod.effectiveFrom(input, component));
+            claim.setTo(ClaimPeriod.effectiveTo(input, component));
             // For a few catalogue numbers the further entry the catalogue demands occupies the very
             // column the invoice number would use - the courts' wizard refuses the account number
             // of catalogue 36 anywhere but "im Feld Rechnungsnummer". There is one field, so giving

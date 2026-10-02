@@ -727,7 +727,9 @@ public class DunningEndpointV7 implements DunningEndpointLocalV7 {
 
             BigDecimal value = claimValue == null || claimValue.trim().isEmpty()
                     ? null : new BigDecimal(claimValue.trim());
-            DunningValidationResult result = dunning.validateApplication(dunningCaseId, value);
+            // Ohne Eingaben einer einzelnen Einreichung: hier wird geprueft, was im
+            // Forderungskonto steht.
+            DunningValidationResult result = dunning.validateApplication(dunningCaseId, value, null);
 
             List<String> issues = new ArrayList<>();
             for (DunningValidationIssue issue : result.getIssues()) {

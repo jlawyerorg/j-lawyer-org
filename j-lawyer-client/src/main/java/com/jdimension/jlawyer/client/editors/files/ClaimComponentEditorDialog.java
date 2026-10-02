@@ -691,6 +691,10 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
 
     private static final Logger log = Logger.getLogger(ClaimComponentEditorDialog.class.getName());
 
+    // Kein static: SimpleDateFormat ist nicht nebenläufigkeitsfest, und ein statisches Feld teilen
+    // sich alle Aufrufe.
+    private final SimpleDateFormat DAY_FORMAT = new SimpleDateFormat("dd.MM.yyyy");
+
     private boolean okPressed = false;
     private ClaimComponent entry = null;
     private ClaimLedger ledger = null;
@@ -926,6 +930,10 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
         this.cmbReason.setSelectedItem(component.getClaimReason() == null
                 ? REASON_UNSET : component.getClaimReason());
         this.txtReasonReference.setText(nonNull(component.getClaimReasonReference()));
+        this.txtClaimFrom.setText(component.getClaimFrom() == null
+                ? "" : DAY_FORMAT.format(component.getClaimFrom()));
+        this.txtClaimTo.setText(component.getClaimTo() == null
+                ? "" : DAY_FORMAT.format(component.getClaimTo()));
         updateCatalogueAddition();
     }
 
@@ -960,6 +968,31 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
                 ? (ClaimReason) reason : null);
         component.setClaimReasonReference(mainClaim && addition != CatalogueAddition.REFERENCE_DETAIL
                 ? emptyToNull(this.txtReasonReference.getText()) : null);
+
+        // Das Anspruchsdatum gehört wie die Begründung zur Hauptforderung; eine Auslage entsteht
+        // nicht aus einer Rechnung, die der Mahnbescheid nennt.
+        component.setClaimFrom(mainClaim ? dayOf(this.txtClaimFrom) : null);
+        component.setClaimTo(mainClaim ? dayOf(this.txtClaimTo) : null);
+    }
+
+    /**
+     * Liest ein Datum aus einem der Kalenderfelder.
+     *
+     * Geschrieben wird dort nur vom Kalender, die Felder sind nicht eingebbar - ein unlesbarer Wert
+     * kann also nicht entstehen. Käme er doch, bliebe das Datum leer, und der Prüfbericht sagt
+     * danach, dass es fehlt.
+     */
+    private Date dayOf(javax.swing.JTextField field) {
+        String entered = field.getText() == null ? "" : field.getText().trim();
+        if (entered.isEmpty()) {
+            return null;
+        }
+        try {
+            return DAY_FORMAT.parse(entered);
+        } catch (java.text.ParseException ex) {
+            log.warn("Unreadable claim date \"" + entered + "\"");
+            return null;
+        }
     }
 
     private String nonNull(String s) {
@@ -998,6 +1031,12 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
         cmbReason = new javax.swing.JComboBox<>();
         lblReasonReference = new javax.swing.JLabel();
         txtReasonReference = new javax.swing.JTextField();
+        lblClaimPeriod = new javax.swing.JLabel();
+        txtClaimFrom = new javax.swing.JTextField();
+        cmdClaimFrom = new javax.swing.JButton();
+        lblClaimTo = new javax.swing.JLabel();
+        txtClaimTo = new javax.swing.JTextField();
+        cmdClaimTo = new javax.swing.JButton();
         lblAddition = new javax.swing.JLabel();
         txtAdditionZip = new javax.swing.JTextField();
         txtAdditionCity = new javax.swing.JTextField();
@@ -1058,6 +1097,38 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
 
         txtReasonReference.setFont(txtReasonReference.getFont());
         txtReasonReference.setToolTipText("Höchstens 35 Zeichen - so viele führt die Austauschdatei");
+
+        lblClaimPeriod.setFont(lblClaimPeriod.getFont());
+        lblClaimPeriod.setText("vom:");
+        lblClaimPeriod.setToolTipText("Der Tag, aus dem der Anspruch entstanden ist - das Datum der Rechnung, des Vertrages, der Abrechnung. Der Mahnbescheid nennt es neben der Begründung.");
+
+        txtClaimFrom.setFont(txtClaimFrom.getFont());
+        txtClaimFrom.setEnabled(false);
+        txtClaimFrom.setToolTipText("Der Tag, aus dem der Anspruch entstanden ist - das Datum der Rechnung, des Vertrages, der Abrechnung. Der Mahnbescheid nennt es neben der Begründung.");
+
+        cmdClaimFrom.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule.png"))); // NOI18N
+        cmdClaimFrom.setToolTipText("Der Tag, aus dem der Anspruch entstanden ist - das Datum der Rechnung, des Vertrages, der Abrechnung. Der Mahnbescheid nennt es neben der Begründung.");
+        cmdClaimFrom.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdClaimFromActionPerformed(evt);
+            }
+        });
+
+        lblClaimTo.setFont(lblClaimTo.getFont());
+        lblClaimTo.setText("bis:");
+        lblClaimTo.setToolTipText("Nur bei Forderungen über einen Zeitraum (Miete, Pacht, wiederkehrende Beträge) - sonst bleibt das Feld leer.");
+
+        txtClaimTo.setFont(txtClaimTo.getFont());
+        txtClaimTo.setEnabled(false);
+        txtClaimTo.setToolTipText("Nur bei Forderungen über einen Zeitraum (Miete, Pacht, wiederkehrende Beträge) - sonst bleibt das Feld leer.");
+
+        cmdClaimTo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule.png"))); // NOI18N
+        cmdClaimTo.setToolTipText("Nur bei Forderungen über einen Zeitraum (Miete, Pacht, wiederkehrende Beträge) - sonst bleibt das Feld leer.");
+        cmdClaimTo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdClaimToActionPerformed(evt);
+            }
+        });
 
         cmbCatalogue.setModel(new javax.swing.DefaultComboBoxModel<>());
         cmbCatalogue.addActionListener(new java.awt.event.ActionListener() {
@@ -1184,6 +1255,7 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
                                     .addComponent(lblCatalogue)
                                     .addComponent(lblReason)
                                     .addComponent(lblReasonReference)
+                                    .addComponent(lblClaimPeriod)
                                     .addComponent(lblAddition))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1192,6 +1264,17 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
                                     .addComponent(cmbCatalogue)
                                     .addComponent(cmbReason)
                                     .addComponent(txtReasonReference)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(txtClaimFrom, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(cmdClaimFrom)
+                                        .addGap(18, 18, 18)
+                                        .addComponent(lblClaimTo)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(txtClaimTo, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(cmdClaimTo)
+                                        .addGap(0, 0, Short.MAX_VALUE))
                                     .addGroup(layout.createSequentialGroup()
                                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                             .addComponent(cmbType, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -1275,6 +1358,14 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
                     .addComponent(txtReasonReference, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblClaimPeriod)
+                    .addComponent(txtClaimFrom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cmdClaimFrom)
+                    .addComponent(lblClaimTo)
+                    .addComponent(txtClaimTo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cmdClaimTo))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblAddition)
                     .addComponent(txtAdditionZip, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(txtAdditionCity, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -1333,6 +1424,16 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
         setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdSaveActionPerformed
+
+    private void cmdClaimFromActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdClaimFromActionPerformed
+        MultiCalDialog dlg = new MultiCalDialog(this.txtClaimFrom, this, true);
+        dlg.setVisible(true);
+    }//GEN-LAST:event_cmdClaimFromActionPerformed
+
+    private void cmdClaimToActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdClaimToActionPerformed
+        MultiCalDialog dlg = new MultiCalDialog(this.txtClaimTo, this, true);
+        dlg.setVisible(true);
+    }//GEN-LAST:event_cmdClaimToActionPerformed
 
     private void cmdValidFromActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdValidFromActionPerformed
         MultiCalDialog dlg = new MultiCalDialog(this.txtValidFrom, this, true);
@@ -1507,12 +1608,18 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
     private javax.swing.JComboBox<String> cmbContractType;
     private javax.swing.JLabel lblCatalogue;
     private javax.swing.JLabel lblReason;
+    private javax.swing.JLabel lblClaimPeriod;
+    private javax.swing.JLabel lblClaimTo;
     private javax.swing.JLabel lblReasonReference;
     private javax.swing.JLabel lblAddition;
     private javax.swing.JTextField txtAdditionZip;
     private javax.swing.JTextField txtAdditionCity;
+    private javax.swing.JTextField txtClaimFrom;
+    private javax.swing.JTextField txtClaimTo;
     private javax.swing.JTextField txtReasonReference;
     private javax.swing.JTextField txtReferenceDetail;
+    private javax.swing.JButton cmdClaimFrom;
+    private javax.swing.JButton cmdClaimTo;
     private javax.swing.JButton cmdAddInterestRule;
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdRemoveInterestRule;

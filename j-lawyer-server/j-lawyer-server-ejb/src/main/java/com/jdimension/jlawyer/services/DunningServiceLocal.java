@@ -666,6 +666,7 @@ import com.jdimension.jlawyer.pojo.DunningMessageProposal;
 import com.jdimension.jlawyer.pojo.DunningWorklistFilter;
 import com.jdimension.jlawyer.pojo.DunningWorklistRow;
 import com.jdimension.jlawyer.pojo.DunningValidationResult;
+import com.jdimension.jlawyer.pojo.DunningClaimInput;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -679,7 +680,8 @@ import javax.ejb.Local;
 @Local
 public interface DunningServiceLocal {
 
-    DunningValidationResult validateApplication(String dunningCaseId, BigDecimal claimValue) throws Exception;
+    DunningValidationResult validateApplication(String dunningCaseId, BigDecimal claimValue,
+            List<DunningClaimInput> claims) throws Exception;
 
     List<DunningMessageProposal> analyseCourtMessages(String documentId) throws Exception;
 

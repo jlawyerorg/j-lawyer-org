@@ -662,781 +662,119 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.test.server.ejb;
 
-import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.eda.ClaimPeriod;
 import com.jdimension.jlawyer.persistence.ClaimComponent;
 import com.jdimension.jlawyer.persistence.ClaimComponentType;
-import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
-import com.jdimension.jlawyer.persistence.ClaimLedgerPartyRepresentative;
-import com.jdimension.jlawyer.persistence.ClaimPartyRole;
-import com.jdimension.jlawyer.persistence.DunningCase;
-import com.jdimension.jlawyer.persistence.LitigationCourtType;
-import com.jdimension.jlawyer.persistence.DunningRepresentativeFeeMode;
 import com.jdimension.jlawyer.pojo.DunningClaimInput;
-import com.jdimension.jlawyer.pojo.DunningValidationIssue;
-import com.jdimension.jlawyer.pojo.DunningValidationResult;
 import com.jdimension.jlawyer.referencedata.ReferenceData;
-import com.jdimension.jlawyer.services.DunningApplicationValidator;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
-import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 /**
- * The readiness check for a dunning application.
- *
- * Its purpose is to spare the user a sequence of rejections: everything that is wrong has to come
- * back at once. The cases worth pinning are therefore not only "an incomplete address is caught"
- * but "five faults yield five findings", and the catalogue rule - a number that demands a further
- * entry and does not get one is monitioned by the court, which costs weeks.
+ * When a claim arose, and whether it covers a period.
  *
  * @author jens
  */
-public class DunningApplicationValidatorTest {
-
-    private final DunningApplicationValidator validator = new DunningApplicationValidator();
-
-    private DunningCase completeCase() {
-        DunningCase c = new DunningCase();
-        c.setCourtXJustizId("B2609");
-        c.setCourtName("Amtsgericht Stuttgart");
-        c.setCourtPostalCode("70154");
-        c.setCourtCity("Stuttgart");
-        c.setKennziffer("123456");
-        // without this the application is monited; § 688 Abs. 2 Nr. 2 ZPO wants to know whether the
-        // claim depends on a counter-performance still owed
-        c.setCounterPerformanceRendered(true);
-        return c;
-    }
-
-    private ClaimLedgerParty party(String id, ClaimPartyRole role, String name,
-            String street, String zip, String city) {
-        AddressBean a = new AddressBean();
-        a.setName(name);
-        a.setStreet(street);
-        a.setZipCode(zip);
-        a.setCity(city);
-        ClaimLedgerParty p = new ClaimLedgerParty();
-        p.setId(id);
-        p.setRole(role);
-        p.setContact(a);
-        p.setSnapshotDesignation(name);
-        return p;
-    }
-
-    private List<ClaimLedgerParty> completeParties() {
-        return new ArrayList<>(Arrays.asList(
-                party("p1", ClaimPartyRole.CREDITOR, "Gläubiger GmbH", "Hauptstr. 1", "70173", "Stuttgart"),
-                withLitigationCourt(
-                        party("p2", ClaimPartyRole.DEBTOR, "Max Schuldner", "Nebenstr. 2", "70174", "Stuttgart"))));
-    }
-
-    /**
-     * Every defendant has to name the court for the contested proceedings (§ 690 Abs. 1 Nr. 5 ZPO),
-     * so a party that is meant to be complete carries one.
-     */
-    private ClaimLedgerParty withLitigationCourt(ClaimLedgerParty party) {
-        party.setLitigationCourtType(LitigationCourtType.AMTSGERICHT);
-        party.setLitigationCourtPostalCode("70190");
-        party.setLitigationCourtCity("Stuttgart");
-        return party;
-    }
-
-    private ClaimComponent mainClaim(String id, String name, String catalogueNumber) {
-        ClaimComponent c = new ClaimComponent();
-        c.setId(id);
-        c.setName(name);
-        c.setType(ClaimComponentType.MAIN_CLAIM);
-        c.setCatalogueNumber(catalogueNumber);
-        // Eine vollstaendige Position sagt auch, worauf der Anspruch beruht; ohne das meldet die
-        // Pruefung einen Hinweis, und darum geht es in diesen Faellen nicht.
-        c.setClaimReason(com.jdimension.jlawyer.persistence.ClaimReason.RECHNUNG);
-        // ... und wann der Anspruch entstanden ist: ohne dieses Datum monierte das Gericht unseren
-        // Testantrag, seither sperrt die Pruefung. Es gehoert damit zu einer vollstaendigen Position.
-        c.setClaimFrom(day(2026, 6, 15));
-        return c;
-    }
+public class ClaimPeriodTest {
 
     private Date day(int y, int m, int d) {
         return Date.from(LocalDate.of(y, m, d).atStartOfDay(ZoneId.systemDefault()).toInstant());
     }
 
-    @Test
-    public void apositionThatDoesNotSayWhatItRestsOnIsPointedOut() {
-        // Ohne Erfassung leitet der Erzeuger die Anspruchsbegruendung ab. Das geht - aber dann hat
-        // sie niemand gesagt, und im Mahnbescheid steht sie trotzdem.
-        ClaimComponent silent = mainClaim("c1", "Kaufpreis", "11");
-        silent.setClaimReason(null);
-
-        DunningValidationResult result = validate(completeCase(), completeParties(),
-                Arrays.asList(silent), "5000.00");
-
-        boolean mentioned = false;
-        for (com.jdimension.jlawyer.pojo.DunningValidationIssue issue : result.getIssues()) {
-            mentioned = mentioned || "Anspruchsbegründung".equals(issue.getField());
-        }
-        assertTrue("der fehlende Anspruchsgrund muss auffallen", mentioned);
-        assertTrue("er darf den Antrag aber nicht aufhalten", result.getBlockingIssues().isEmpty());
-    }
-
-    private DunningValidationResult validate(DunningCase c, List<ClaimLedgerParty> parties,
-            List<ClaimComponent> components, String value) {
-        return validate(c, parties, components, value, "FSR");
-    }
-
-    private DunningValidationResult validate(DunningCase c, List<ClaimLedgerParty> parties,
-            List<ClaimComponent> components, String value, String edaPrefix) {
-        return validator.validate(c, parties, components,
-                value == null ? null : new BigDecimal(value), ReferenceData.getMainClaimCatalogue(),
-                edaPrefix);
-    }
-
-    private boolean hasIssueAbout(DunningValidationResult r, String fieldFragment) {
-        for (DunningValidationIssue i : r.getIssues()) {
-            if (i.getField() != null && i.getField().contains(fieldFragment)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @Test
-    public void completeDataIsReady() {
-        DunningValidationResult r = validate(completeCase(), completeParties(),
-                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00");
-
-        assertTrue("nothing should stand in the way: " + r.getIssues(), r.isReady());
-        assertTrue(r.isEmpty());
-    }
-
-    @Test
-    public void everyProblemIsReportedInOnePass() {
-        DunningCase c = completeCase();
-        c.setCourtPostalCode(null);
-        c.setKennziffer(null);
-
-        List<ClaimLedgerParty> parties = new ArrayList<>(Arrays.asList(
-                party("p1", ClaimPartyRole.CREDITOR, "Gläubiger GmbH", "Hauptstr. 1", null, "Stuttgart"),
-                party("p2", ClaimPartyRole.DEBTOR, "Max Schuldner", null, "70174", null)));
-
-        DunningValidationResult r = validate(c, parties, Collections.emptyList(), "0");
-
-        assertFalse(r.isReady());
-        // court, Kennziffer, creditor postcode, debtor street, debtor city, no main claim, no value
-        assertEquals("a user should learn all of it at once", 8, r.getBlockingIssues().size());
-        assertTrue(hasIssueAbout(r, "Mahngericht"));
-        assertTrue(hasIssueAbout(r, "Kennziffer"));
-        assertTrue(hasIssueAbout(r, "Antragsteller"));
-        assertTrue(hasIssueAbout(r, "Antragsgegner"));
-        assertTrue(hasIssueAbout(r, "Hauptforderung"));
-        assertTrue(hasIssueAbout(r, "Gegenstandswert"));
-    }
-
-    @Test
-    public void aCourtWithoutPostcodeOrPlaceIsRefused() {
-        DunningCase c = completeCase();
-        c.setCourtCity(null);
-
-        DunningValidationResult r = validate(c, completeParties(),
-                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00");
-
-        assertFalse(r.isReady());
-        assertTrue("the reason has to name what the postcode and place are for",
-                r.getBlockingIssues().get(0).getMessage().contains("EDA"));
-    }
-
-    @Test
-    public void aMissingKennzifferSaysWhereItComesFrom() {
-        DunningCase c = completeCase();
-        c.setKennziffer("   ");
-
-        DunningValidationResult r = validate(c, completeParties(),
-                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00");
-
-        assertFalse(r.isReady());
-        assertTrue(r.getBlockingIssues().get(0).getMessage().contains("beantragt"));
-    }
-
-    @Test
-    public void aPartyWithoutAnyAddressIsCaught() {
-        ClaimLedgerParty debtor = new ClaimLedgerParty();
-        debtor.setId("p2");
-        debtor.setRole(ClaimPartyRole.DEBTOR);
-        debtor.setSnapshotDesignation("Max Schuldner");
-
-        List<ClaimLedgerParty> parties = new ArrayList<>(Arrays.asList(
-                party("p1", ClaimPartyRole.CREDITOR, "Gläubiger GmbH", "Hauptstr. 1", "70173", "Stuttgart"),
-                debtor));
-
-        DunningValidationResult r = validate(completeCase(), parties,
-                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00");
-
-        assertFalse(r.isReady());
-        assertTrue(hasIssueAbout(r, "Antragsgegner"));
-    }
-
-    @Test
-    public void aMissingCreditorOrDebtorIsReported() {
-        List<ClaimLedgerParty> onlyCreditor = new ArrayList<>(Arrays.asList(
-                party("p1", ClaimPartyRole.CREDITOR, "Gläubiger GmbH", "Hauptstr. 1", "70173", "Stuttgart")));
-
-        DunningValidationResult r = validate(completeCase(), onlyCreditor,
-                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00");
-
-        assertFalse(r.isReady());
-        assertTrue(hasIssueAbout(r, "Antragsgegner"));
-    }
-
-    // ----- the catalogue rules -----
-
-    @Test
-    public void aCatalogueNumberDemandingAFurtherEntryIsCheckedForIt() {
-        // 19 is residential rent, which needs the postcode and place of the flat
-        DunningValidationResult r = validate(completeCase(), completeParties(),
-                Arrays.asList(mainClaim("c1", "Miete", "19")), "5000.00");
-
-        assertFalse(r.isReady());
-        assertTrue(hasIssueAbout(r, "Zusatzangabe"));
-        assertTrue("the finding has to say what happens otherwise",
-                r.getBlockingIssues().get(0).getMessage().contains("moniert"));
-    }
-
-    @Test
-    public void theWrongFurtherEntryDoesNotSatisfyTheRule() {
-        // bisher genügte irgendeines der vier Zusatzfelder für jede Nummer - eine PLZ dort, wo die
-        // Vertragsart verlangt ist, hätte den Antrag passieren lassen. Das Gericht sähe es anders.
-        ClaimComponent damages = mainClaim("c1", "Schadenersatz", "28");
-        damages.setCataloguePropertyZip("70173");
-        damages.setCataloguePropertyCity("Stuttgart");
-
-        DunningValidationResult r = validate(completeCase(), completeParties(),
-                Arrays.asList(damages), "5000.00");
-
-        assertFalse(r.isReady());
-        assertTrue(hasIssueAbout(r, "Zusatzangabe"));
-    }
-
-    @Test
-    public void ahalfGivenPropertyLocationIsNotGiven() {
-        // die Nummer verlangt PLZ *und* Ort; nur eines davon nennt die Wohnung nicht
-        ClaimComponent rent = mainClaim("c1", "Miete", "19");
-        rent.setCataloguePropertyZip("70173");
-
-        DunningValidationResult r = validate(completeCase(), completeParties(),
-                Arrays.asList(rent), "5000.00");
-
-        assertFalse(r.isReady());
-    }
-
-    @Test
-    public void anAdmittedContractTypeSatisfiesTheRule() {
-        ClaimComponent damages = mainClaim("c1", "Schadenersatz", "28");
-        damages.setCatalogueContractDesignation("KAUF");
-
-        DunningValidationResult r = validate(completeCase(), completeParties(),
-                Arrays.asList(damages), "5000.00");
-
-        assertTrue("KAUF steht auf der veröffentlichten Liste: " + r.getIssues(), r.isReady());
-    }
-
-    @Test
-    public void acontractTypeOutsideTheListIsRefusedRatherThanWarnedAbout() {
-        // anders als bei der Bezeichnung des gesetzlichen Vertreters ist die Monierung hier belegt:
-        // die Anleitung der Gerichte sagt sie für eine Vertragsart außerhalb der Liste ausdrücklich
-        ClaimComponent damages = mainClaim("c1", "Schadenersatz", "28");
-        damages.setCatalogueContractDesignation("Handschlag");
-
-        DunningValidationResult r = validate(completeCase(), completeParties(),
-                Arrays.asList(damages), "5000.00");
-
-        assertFalse(r.isReady());
-        assertTrue(hasIssueAbout(r, "Vertragsart"));
-    }
-
-    @Test
-    public void areferenceDetailAnswersTheNumbersThatAskForOne() {
-        // 36 will die Konto-Nr., 42 die Zähler-Nr., 61 die Art der Wahlleistung - drei
-        // Bezeichnungen, ein Feld, und im Antrag eine Spalte
-        for (String number : new String[]{"36", "42", "61"}) {
-            ClaimComponent c = mainClaim("c1", "Forderung", number);
-            assertFalse("Nr. " + number + " müsste die Zusatzangabe verlangen",
-                    validate(completeCase(), completeParties(), Arrays.asList(c), "5000.00").isReady());
-
-            c.setCatalogueReferenceDetail("12345");
-            assertTrue("Nr. " + number + " müsste damit vollständig sein",
-                    validate(completeCase(), completeParties(), Arrays.asList(c), "5000.00").isReady());
-        }
+    private ClaimComponent component(String catalogueNumber, ClaimComponentType type) {
+        ClaimComponent c = new ClaimComponent();
+        c.setId("c1");
+        c.setName("Kaufpreis");
+        c.setType(type);
+        c.setCatalogueNumber(catalogueNumber);
+        return c;
     }
 
     /**
-     * Nr. 70 verlangt laut Katalog einen Zeitraum. Dass dieser Test ihn früher für erledigt hielt
-     * ("das von/bis der Anspruchszeile, das ohnehin gefüllt wird"), war die geschriebene Form des
-     * Fehlers, den das Mahngericht gemeldet hat: gefüllt wurde das von/bis nie, weil es die Felder
-     * nicht gab. Jetzt gibt es sie, und Nr. 70 fragt danach.
+     * Was für diesen Antrag eingetragen wurde, gilt - eine Korrektur für eine Einreichung darf das
+     * Konto nicht umschreiben, und das Konto darf die Korrektur nicht überstimmen.
      */
     @Test
-    public void thePeriodOfNumber70IsAskedFor() {
-        ClaimComponent fee = mainClaim("c1", "Kita-Beitrag", "70");
-
-        DunningValidationResult open = validate(completeCase(), completeParties(),
-                Arrays.asList(fee), "5000.00");
-
-        assertFalse("ohne Bis-Datum ist der Zeitraum unvollständig", open.isReady());
-        assertTrue(hasIssueAbout(open, "Anspruchszeitraum"));
-
-        fee.setClaimTo(day(2026, 8, 31));
-
-        DunningValidationResult closed = validate(completeCase(), completeParties(),
-                Arrays.asList(fee), "5000.00");
-
-        assertTrue("mit vom und bis ist nichts offen: " + closed.getIssues(), closed.isReady());
-        assertTrue(closed.isEmpty());
-    }
-
-    @Test
-    public void theFurtherEntryPresentSatisfiesTheRule() {
-        ClaimComponent rent = mainClaim("c1", "Miete", "19");
-        rent.setCataloguePropertyZip("70173");
-        rent.setCataloguePropertyCity("Stuttgart");
-
-        DunningValidationResult r = validate(completeCase(), completeParties(),
-                Arrays.asList(rent), "5000.00");
-
-        assertTrue("with the flat's address given, the number is usable: " + r.getIssues(), r.isReady());
-    }
-
-    @Test
-    public void aCatalogueNumberThatDoesNotExistIsRefused() {
-        DunningValidationResult r = validate(completeCase(), completeParties(),
-                Arrays.asList(mainClaim("c1", "Irgendwas", "47")), "5000.00");
-
-        assertFalse("47 is not in the published catalogue", r.isReady());
-        assertTrue(hasIssueAbout(r, "Katalognummer"));
-    }
-
-    @Test
-    public void somethingThatIsNotANumberIsRefused() {
-        DunningValidationResult r = validate(completeCase(), completeParties(),
-                Arrays.asList(mainClaim("c1", "Irgendwas", "Kaufvertrag")), "5000.00");
-
-        assertFalse(r.isReady());
-        assertTrue(hasIssueAbout(r, "Katalognummer"));
-    }
-
-    @Test
-    public void aFreeTextClaimNeedsNoCatalogueNumber() {
-        DunningValidationResult r = validate(completeCase(), completeParties(),
-                Arrays.asList(mainClaim("c1", "Sonstiger Anspruch", null)), "5000.00");
-
-        assertTrue("the format carries a designation for claims outside the catalogue", r.isReady());
-    }
-
-    @Test
-    public void withoutACatalogueTheNumbersAreLeftAlone() {
-        DunningValidationResult r = validator.validate(completeCase(), completeParties(),
-                Arrays.asList(mainClaim("c1", "Miete", "19")), new BigDecimal("5000.00"), null,
-                "FSR");
-
-        assertTrue("no catalogue to check against, so no claim about the number", r.isReady());
-    }
-
-    // ----- the shape of the answer -----
-
-    @Test
-    public void withoutADunningCaseNothingElseIsClaimed() {
-        DunningValidationResult r = validate(null, completeParties(),
-                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00");
-
-        assertEquals("one finding, not a cascade of consequential ones", 1, r.getIssues().size());
-    }
-
-    @Test
-    public void findingsCarryTheRecordTheyBelongTo() {
-        List<ClaimLedgerParty> parties = new ArrayList<>(Arrays.asList(
-                party("p1", ClaimPartyRole.CREDITOR, "Gläubiger GmbH", "Hauptstr. 1", "70173", "Stuttgart"),
-                party("p2", ClaimPartyRole.DEBTOR, "Max Schuldner", "Nebenstr. 2", null, "Stuttgart")));
-
-        DunningValidationResult r = validate(completeCase(), parties,
-                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00");
-
-        assertEquals("p2", r.getBlockingIssues().get(0).getReference());
-    }
-
-    // ----- die Erklärung, die das Gericht verlangt -----
-
-    @Test
-    public void anApplicationWithoutTheCounterPerformanceDeclarationIsNotReady() {
-        DunningCase c = completeCase();
-        c.setCounterPerformanceRendered(false);
-        c.setCounterPerformanceIndependent(false);
-
-        DunningValidationResult r = validate(c, completeParties(), Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00");
-
-        assertFalse("the court monits an application that does not say which case applies",
-                r.isReady());
-        boolean named = false;
-        for (DunningValidationIssue issue : r.getBlockingIssues()) {
-            if ("Gegenleistung".equals(issue.getField())) {
-                named = true;
-                assertEquals("§ 688 Abs. 2 Nr. 2 ZPO", issue.getReference());
-            }
-        }
-        assertTrue("the beanstandung names the field it is about", named);
-    }
-
-    @Test
-    public void eitherDeclarationOnItsOwnIsEnough() {
-        DunningCase rendered = completeCase();
-        assertTrue(validate(rendered, completeParties(), Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00").isReady());
-
-        DunningCase independent = completeCase();
-        independent.setCounterPerformanceRendered(false);
-        independent.setCounterPerformanceIndependent(true);
-        assertTrue(validate(independent, completeParties(), Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00").isReady());
-    }
-
-    @Test
-    public void bothTogetherAreNotTreatedAsAContradiction() {
-        // the Satzbeschreibung allows both fields at once for an application over several claims
-        DunningCase both = completeCase();
-        both.setCounterPerformanceIndependent(true);
-
-        assertTrue(validate(both, completeParties(), Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00").isReady());
-    }
-
-    // ----- die Vergütung des Prozessbevollmächtigten -----
-
-    @Test
-    public void anAgreedFeeWithoutAnAmountIsRefused() {
-        // without a figure the court would read the entry as a waiver of the fee
-        DunningCase c = completeCase();
-        c.setRepresentativeFeeMode(DunningRepresentativeFeeMode.AGREED);
-
-        DunningValidationResult r = validate(c, completeParties(),
-                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00");
-
-        assertFalse(r.isReady());
-        assertTrue(hasIssueAbout(r, "Vergütung"));
-    }
-
-    @Test
-    public void aZeroIsNotAnAgreedFeeEither() {
-        DunningCase c = completeCase();
-        c.setRepresentativeFeeMode(DunningRepresentativeFeeMode.AGREED);
-        c.setRepresentativeFeeAmount(BigDecimal.ZERO);
-
-        assertFalse(validate(c, completeParties(),
-                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00").isReady());
-    }
-
-    @Test
-    public void theOtherTwoChoicesNeedNoAmount() {
-        for (DunningRepresentativeFeeMode mode : new DunningRepresentativeFeeMode[]{
-            DunningRepresentativeFeeMode.LEGAL, DunningRepresentativeFeeMode.WAIVED}) {
-
-            DunningCase c = completeCase();
-            c.setRepresentativeFeeMode(mode);
-
-            assertTrue(mode.getLabel(), validate(c, completeParties(),
-                    Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00").isReady());
-        }
-    }
-
-    @Test
-    public void anAgreedFeeWithAnAmountPassesFor() {
-        DunningCase c = completeCase();
-        c.setRepresentativeFeeMode(DunningRepresentativeFeeMode.AGREED);
-        c.setRepresentativeFeeAmount(new BigDecimal("280.00"));
-
-        assertTrue(validate(c, completeParties(),
-                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00").isReady());
-    }
-
-    // ----- die Vertretungskette -----
-
-    private ClaimLedgerPartyRepresentative rep(String company, String first, String last,
-            String function, int sequence) {
-        AddressBean a = new AddressBean();
-        a.setCompany(company);
-        a.setFirstName(first);
-        a.setName(last);
-        ClaimLedgerPartyRepresentative r = new ClaimLedgerPartyRepresentative();
-        r.setContact(a);
-        r.setFunctionDesignation(function);
-        r.setSequenceNumber(sequence);
-        return r;
-    }
-
-    private List<ClaimLedgerParty> partiesWithChain(String legalForm,
-            ClaimLedgerPartyRepresentative... chain) {
-        List<ClaimLedgerParty> parties = completeParties();
-        ClaimLedgerParty debtor = parties.get(1);
-        debtor.getContact().setCompany("Muster Transport GmbH & Co. KG");
-        debtor.getContact().setLegalForm(legalForm);
-        debtor.getRepresentatives().addAll(Arrays.asList(chain));
-        return parties;
-    }
-
-    @Test
-    public void anAdmittedDesignationRaisesNothing() {
-        // Schlüssel 31 lässt für die GmbH & Co KG den Geschäftsführer zu
-        DunningValidationResult r = validate(completeCase(),
-                partiesWithChain("GmbH & Co KG", rep(null, "Max", "Muster", "Geschäftsführer", 1)),
-                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00");
-
-        assertTrue("nichts sollte zu beanstanden sein: " + r.getIssues(), r.isEmpty());
-    }
-
-    @Test
-    public void aDesignationOutsideTheListIsAWarningAndNotABlock() {
-        // die Liste ist Stand 06.10.2015; das Gericht kann monieren, aber die Kanzlei entscheidet,
-        // ob sie den Antrag trotzdem stellt
-        DunningValidationResult r = validate(completeCase(),
-                partiesWithChain("GmbH & Co KG", rep(null, "Max", "Muster", "Chef", 1)),
-                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00");
-
-        assertTrue(hasIssueAbout(r, "Antragsgegner"));
-        assertTrue("eine unzulässige Bezeichnung darf den Antrag nicht aufhalten", r.isReady());
-    }
-
-    @Test
-    public void theNextStepIsMeasuredAgainstTheLegalFormOfTheOneBeforeIt() {
-        // die Kette: die KG durch ihre Komplementär-GmbH, die GmbH durch ihren CEO. "CEO" lässt die
-        // Liste für die GmbH (Schlüssel 10) zu, für die KG (Schlüssel 31) nicht. Würde die zweite
-        // Stufe gegen die Rechtsform der Partei statt gegen die ihres Vorgängers gemessen, stünde
-        // hier eine Warnung, die der Sache nach falsch wäre
-        ClaimLedgerPartyRepresentative komplementaerin = rep("Muster Verwaltungs-GmbH", null, null, null, 1);
-        komplementaerin.getContact().setLegalForm("Gesellschaft mit beschr. Haftung");
-        DunningValidationResult r = validate(completeCase(),
-                partiesWithChain("GmbH & Co KG", komplementaerin,
-                        rep(null, "Max", "Muster", "CEO", 2)),
-                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00");
-
-        assertTrue("CEO ist für die GmbH zugelassen: " + r.getIssues(), r.isEmpty());
-    }
-
-    @Test
-    public void adesignationAdmittedOnlyFurtherUpTheChainIsStillFlagged() {
-        // die Gegenprobe: "CEO" auf der ersten Stufe wird gegen die KG gemessen und ist dort nicht
-        // zugelassen
-        DunningValidationResult r = validate(completeCase(),
-                partiesWithChain("GmbH & Co KG", rep(null, "Max", "Muster", "CEO", 1)),
-                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00");
-
-        assertTrue(hasIssueAbout(r, "Antragsgegner"));
-    }
-
-    @Test
-    public void acompanyAsRepresentativeIsNotMeasuredAgainstTheFunctionList() {
-        // ihr Name steht im Feld der Stellung; eine Funktion wird daneben nicht geschrieben
-        ClaimLedgerPartyRepresentative komplementaerin = rep("Muster Verwaltungs-GmbH", null, null,
-                "Komplementärin", 1);
-        komplementaerin.getContact().setLegalForm("GmbH");
-        DunningValidationResult r = validate(completeCase(),
-                partiesWithChain("GmbH & Co KG", komplementaerin),
-                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00");
-
-        assertTrue("nichts sollte zu beanstanden sein: " + r.getIssues(), r.isEmpty());
-    }
-
-    @Test
-    public void anUnknownLegalFormYieldsNoVerdictAtAll() {
-        // ohne Liste gibt es nichts zu messen, und eine Warnung ins Blaue wäre schlechter als keine
-        DunningValidationResult r = validate(completeCase(),
-                partiesWithChain("Wohnzimmer GbR & Freunde", rep(null, "Max", "Muster", "Chef", 1)),
-                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00");
-
-        assertTrue("nichts sollte zu beanstanden sein: " + r.getIssues(), r.isEmpty());
-    }
-
-    @Test
-    public void aChainLongerThanTheFormatCarriesIsAnError() {
-        // der siebte Vertreter würde nicht geschrieben - ein Antrag, der weniger Vertreter nennt
-        // als er soll, ist keiner, über den das Gericht wie gewollt entscheiden kann
-        ClaimLedgerPartyRepresentative[] chain = new ClaimLedgerPartyRepresentative[7];
-        for (int i = 0; i < chain.length; i++) {
-            chain[i] = rep(null, "Max", "Muster " + i, "Geschäftsführer", i + 1);
-        }
-        DunningValidationResult r = validate(completeCase(),
-                partiesWithChain("GmbH & Co KG", chain),
-                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00");
-
-        assertFalse(r.isReady());
-        assertTrue(hasIssueAbout(r, "Antragsgegner"));
-    }
-
-    /**
-     * Das Mahngericht musste unsere erste Datei von Hand umbenennen, weil ihr Name erfunden war.
-     * Ohne Kürzel entsteht erst gar keine.
-     */
-    @Test
-    public void withoutACodeNoFileIsBuilt() {
-        DunningValidationResult r = validate(completeCase(), completeParties(),
-                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00", null);
-
-        assertTrue(hasIssueAbout(r, "EDA-ID"));
-        assertFalse("ohne Dateinamen darf kein Antrag hinausgehen", r.isReady());
-    }
-
-    @Test
-    public void aCodeThatIsNotThreeLettersIsRefused() {
-        DunningValidationResult r = validate(completeCase(), completeParties(),
-                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00", "FS");
-
-        assertTrue(hasIssueAbout(r, "EDA-ID"));
-        assertFalse(r.isReady());
-    }
-
-    @Test
-    public void aProperCodePassesUnremarked() {
-        DunningValidationResult r = validate(completeCase(), completeParties(),
-                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00", "fsr");
-
-        assertFalse(hasIssueAbout(r, "EDA-ID"));
-    }
-
-    /**
-     * Ein Problem, eine Meldung: wer keine Kennziffer hat, braucht keinen zweiten Satz über ein
-     * Kürzel, das zu einer Kennziffer gehört, die es nicht gibt.
-     */
-    @Test
-    public void withoutAKennzifferTheCodeIsNotMentioned() {
-        DunningCase c = completeCase();
-        c.setKennziffer(null);
-
-        DunningValidationResult r = validate(c, completeParties(), Arrays.asList(mainClaim("c1", "Kaufpreis", "11")),
-                "5000.00", null);
-
-        assertTrue(hasIssueAbout(r, "Kennziffer"));
-        assertFalse(hasIssueAbout(r, "EDA-ID"));
-    }
-
-    /**
-     * Punkt 2 aus dem Rücklauf des Mahngerichts: im Anspruchssatz C20 fehlte das
-     * Anspruchs-Vom-Datum. Es fehlte, weil niemand danach fragte - dieser Test fragt.
-     */
-    @Test
-    public void amissingDayTheClaimAroseBlocksAndNamesThePosition() {
-        ClaimComponent undated = mainClaim("c1", "Kaufpreis", "11");
-        undated.setClaimFrom(null);
-
-        DunningValidationResult r = validate(completeCase(), completeParties(),
-                Arrays.asList(undated), "5000.00");
-
-        assertFalse("ohne Anspruchsdatum moniert das Gericht", r.isReady());
-        assertTrue(hasIssueAbout(r, "Anspruchsdatum"));
-
-        boolean named = false;
-        for (DunningValidationIssue i : r.getBlockingIssues()) {
-            named = named || (i.getMessage() != null && i.getMessage().contains("Kaufpreis"));
-        }
-        assertTrue("die Meldung muss sagen, welche Position gemeint ist", named);
-    }
-
-    @Test
-    public void adatedPositionPassesThrough() {
-        DunningValidationResult r = validate(completeCase(), completeParties(),
-                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00");
-
-        assertFalse(hasIssueAbout(r, "Anspruchsdatum"));
-        assertTrue(r.isReady());
-    }
-
-    /**
-     * Eine gewöhnliche Forderung entsteht an einem Tag - in der Beispieldatei des Gerichtsportals
-     * zum Kaufvertrag steht das Vom-Datum und das Bis bleibt leer. Ein Bis zu verlangen hieße, einen
-     * Kauf zu einem Zeitraum zu machen.
-     */
-    @Test
-    public void asingleDayClaimNeedsNoEnd() {
-        DunningValidationResult r = validate(completeCase(), completeParties(),
-                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00");
-
-        assertFalse(hasIssueAbout(r, "Anspruchszeitraum"));
-    }
-
-    @Test
-    public void arunningMonthlyClaimWithoutAnEndBlocks() {
-        ClaimComponent rent = mainClaim("c1", "Miete", "19");
-        rent.setType(ClaimComponentType.MAIN_CLAIM_RECURRING);
-        rent.setCataloguePropertyZip("70173");
-        rent.setCataloguePropertyCity("Stuttgart");
-
-        DunningValidationResult open = validate(completeCase(), completeParties(),
-                Arrays.asList(rent), "5000.00");
-
-        assertFalse("eine laufende Forderung läuft bis zu einem Tag", open.isReady());
-        assertTrue(hasIssueAbout(open, "Anspruchszeitraum"));
-
-        rent.setClaimTo(day(2026, 8, 31));
-
-        assertTrue("mit Ende ist der Zeitraum vollständig",
-                validate(completeCase(), completeParties(), Arrays.asList(rent), "5000.00").isReady());
-    }
-
-    @Test
-    public void anEndBeforeTheBeginningBlocks() {
-        ClaimComponent rent = mainClaim("c1", "Miete", "19");
-        rent.setType(ClaimComponentType.MAIN_CLAIM_RECURRING);
-        rent.setCataloguePropertyZip("70173");
-        rent.setCataloguePropertyCity("Stuttgart");
-        rent.setClaimFrom(day(2026, 8, 31));
-        rent.setClaimTo(day(2026, 6, 1));
-
-        DunningValidationResult r = validate(completeCase(), completeParties(),
-                Arrays.asList(rent), "5000.00");
-
-        assertFalse(r.isReady());
-        assertTrue(hasIssueAbout(r, "Anspruchszeitraum"));
-    }
-
-    /**
-     * Im Export-Dialog lässt sich das Datum für diese Einreichung eintragen, ohne das Konto zu
-     * ändern. Was dort steht, genügt der Prüfung - sonst beanstandete sie etwas, das in der Datei
-     * steht.
-     */
-    @Test
-    public void adateEnteredOnlyForThisApplicationIsEnough() {
-        ClaimComponent undated = mainClaim("c1", "Kaufpreis", "11");
-        undated.setClaimFrom(null);
+    public void whatWasEnteredForThisApplicationWins() {
+        ClaimComponent c = component("11", ClaimComponentType.MAIN_CLAIM);
+        c.setClaimFrom(day(2026, 1, 15));
 
         DunningClaimInput input = new DunningClaimInput();
-        input.setComponentId("c1");
         input.setFrom(day(2026, 6, 15));
 
-        DunningValidationResult r = validator.validate(completeCase(), completeParties(),
-                Arrays.asList(undated), new BigDecimal("5000.00"),
-                ReferenceData.getMainClaimCatalogue(), "FSR", Arrays.asList(input));
+        assertEquals(day(2026, 6, 15), ClaimPeriod.effectiveFrom(input, c));
+    }
 
-        assertFalse(hasIssueAbout(r, "Anspruchsdatum"));
-        assertTrue("mit dem Datum des Antrags ist alles beisammen: " + r.getIssues(), r.isReady());
+    @Test
+    public void withoutAnEntryTheLedgerAnswers() {
+        ClaimComponent c = component("11", ClaimComponentType.MAIN_CLAIM);
+        c.setClaimFrom(day(2026, 1, 15));
+
+        assertEquals(day(2026, 1, 15), ClaimPeriod.effectiveFrom(new DunningClaimInput(), c));
+        assertEquals(day(2026, 1, 15), ClaimPeriod.effectiveFrom(null, c));
+    }
+
+    @Test
+    public void withoutEitherThereIsNoDate() {
+        assertNull(ClaimPeriod.effectiveFrom(null, component("11", ClaimComponentType.MAIN_CLAIM)));
+        assertNull(ClaimPeriod.effectiveFrom(null, null));
+        assertNull(ClaimPeriod.effectiveTo(new DunningClaimInput(),
+                component("11", ClaimComponentType.MAIN_CLAIM)));
+    }
+
+    @Test
+    public void theEndFollowsTheSameOrder() {
+        ClaimComponent c = component("19", ClaimComponentType.MAIN_CLAIM_RECURRING);
+        c.setClaimTo(day(2026, 8, 31));
+
+        assertEquals(day(2026, 8, 31), ClaimPeriod.effectiveTo(null, c));
+
+        DunningClaimInput input = new DunningClaimInput();
+        input.setTo(day(2026, 9, 30));
+        assertEquals(day(2026, 9, 30), ClaimPeriod.effectiveTo(input, c));
     }
 
     /**
-     * Die Eingabe gehört zu einer Position, nicht zu allen: ein Datum, das für eine andere Position
-     * eingetragen wurde, deckt die undatierte nicht zu.
+     * Eine laufende monatliche Forderung ist ihrer Art nach ein Zeitraum - Miete für März bis August
+     * ist kein Anspruch, der an einem Tag entstanden ist.
      */
     @Test
-    public void adateForAnotherPositionDoesNotCoverThisOne() {
-        ClaimComponent undated = mainClaim("c1", "Kaufpreis", "11");
-        undated.setClaimFrom(null);
-
-        DunningClaimInput other = new DunningClaimInput();
-        other.setComponentId("c2");
-        other.setFrom(day(2026, 6, 15));
-
-        DunningValidationResult r = validator.validate(completeCase(), completeParties(),
-                Arrays.asList(undated), new BigDecimal("5000.00"),
-                ReferenceData.getMainClaimCatalogue(), "FSR", Arrays.asList(other));
-
-        assertTrue(hasIssueAbout(r, "Anspruchsdatum"));
+    public void arunningMonthlyClaimIsAPeriod() {
+        assertTrue(ClaimPeriod.needsPeriod(component("19", ClaimComponentType.MAIN_CLAIM_RECURRING),
+                ReferenceData.getMainClaimCatalogue()));
     }
 
+    /**
+     * Eine gewöhnliche Katalogforderung nennt einen Tag und lässt das Ende leer - so steht es auch
+     * in der Beispieldatei zum Kaufvertrag.
+     */
+    @Test
+    public void anOrdinaryClaimNeedsNoEnd() {
+        assertFalse(ClaimPeriod.needsPeriod(component("11", ClaimComponentType.MAIN_CLAIM),
+                ReferenceData.getMainClaimCatalogue()));
+    }
+
+    @Test
+    public void nothingIsDemandedWithoutACatalogueOrAComponent() {
+        assertFalse(ClaimPeriod.needsPeriod(null, ReferenceData.getMainClaimCatalogue()));
+        assertFalse(ClaimPeriod.needsPeriod(component("11", ClaimComponentType.MAIN_CLAIM), null));
+        assertFalse(ClaimPeriod.needsPeriod(component(null, ClaimComponentType.MAIN_CLAIM),
+                ReferenceData.getMainClaimCatalogue()));
+    }
+
+    /**
+     * Eine unlesbare Katalognummer beanstandet der Validator an anderer Stelle; hier entsteht daraus
+     * keine zweite Meldung.
+     */
+    @Test
+    public void anUnreadableCatalogueNumberDemandsNothingHere() {
+        assertFalse(ClaimPeriod.needsPeriod(component("elf", ClaimComponentType.MAIN_CLAIM),
+                ReferenceData.getMainClaimCatalogue()));
+    }
 }

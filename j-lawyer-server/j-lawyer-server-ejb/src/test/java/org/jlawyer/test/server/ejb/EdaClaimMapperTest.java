@@ -748,6 +748,42 @@ public class EdaClaimMapperTest {
         assertEquals("the amount is written in cents", "500000", record.get("ASPBET"));
     }
 
+    /**
+     * Eine Forderung über einen Zeitraum - Miete für Juni bis August - nennt beide Tage. In der
+     * Beispieldatei des Gerichtsportals zur Wohnraummiete stehen 250601 und 250831; bis zum Rücklauf
+     * des Mahngerichts hat niemand geprüft, dass wir das Bis-Datum überhaupt schreiben.
+     */
+    @Test
+    public void aclaimOverAPeriodCarriesBothDays() throws Exception {
+        ClaimComponent rent = component("Miete", "19");
+        rent.setType(ClaimComponentType.MAIN_CLAIM_RECURRING);
+        EdaClaimMapper.Claim claim = new EdaClaimMapper.Claim(rent, new BigDecimal("1800.00"));
+        claim.setFrom(date(2026, 6, 1));
+        claim.setTo(date(2026, 8, 31));
+
+        EdaRecord record = recordOf(mapper.map(claim), "C20");
+
+        assertEquals("260601", record.get("ASPVD"));
+        assertEquals("260831", record.get("ASPBD"));
+    }
+
+    /**
+     * Umgekehrt bleibt das Bis-Datum leer, wo die Forderung an einem Tag entstanden ist - so steht es
+     * in der Beispieldatei zum Kaufvertrag.
+     */
+    @Test
+    public void asingleDayClaimLeavesTheEndEmpty() throws Exception {
+        EdaClaimMapper.Claim claim = new EdaClaimMapper.Claim(
+                component("Kaufpreis", "11"), new BigDecimal("5000.00"));
+        claim.setFrom(date(2026, 1, 15));
+
+        EdaRecord record = recordOf(mapper.map(claim), "C20");
+
+        assertEquals("260115", record.get("ASPVD"));
+        assertTrue("das Bis-Datum bleibt leer: " + record.get("ASPBD"),
+                record.get("ASPBD") == null || record.get("ASPBD").trim().isEmpty());
+    }
+
     @Test
     public void aClaimWithoutACatalogueNumberCarriesItsReasoning() throws Exception {
         EdaClaimMapper.Claim claim = new EdaClaimMapper.Claim(

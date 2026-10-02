@@ -2592,6 +2592,8 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
         before.setCatalogueReferenceDetail(component.getCatalogueReferenceDetail());
         before.setClaimReason(component.getClaimReason());
         before.setClaimReasonReference(component.getClaimReasonReference());
+        before.setClaimFrom(component.getClaimFrom());
+        before.setClaimTo(component.getClaimTo());
 
         this.claimComponentsFacade.edit(before);
 

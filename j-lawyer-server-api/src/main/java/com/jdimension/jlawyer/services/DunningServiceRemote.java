@@ -701,10 +701,15 @@ public interface DunningServiceRemote {
      * @param dunningCaseId the procedure to check
      * @param claimValue the value that would be applied for; the caller determines it, because
      * whether a position counts as an ancillary claim (§ 43 GKG) is a judgement
+     * @param claims what would be applied for, as entered for this filing; may be null, and then
+     * the positions of the ledger answer alone. It is passed because an entry made for one filing -
+     * a corrected invoice number, the day the claim arose - is not stored on the position: without
+     * it the check would report something missing that the file would carry.
      * @return every finding, blocking and otherwise; never null
      * @throws Exception if the procedure does not exist or the user may not see its case
      */
-    DunningValidationResult validateApplication(String dunningCaseId, BigDecimal claimValue) throws Exception;
+    DunningValidationResult validateApplication(String dunningCaseId, BigDecimal claimValue,
+            List<DunningClaimInput> claims) throws Exception;
 
     /**
      * Produces the EDA file for a dunning application, stores it in the case and records that the

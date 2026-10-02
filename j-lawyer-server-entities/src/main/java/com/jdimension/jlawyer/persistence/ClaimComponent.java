@@ -669,6 +669,9 @@ import java.util.List;
 import javax.persistence.Basic;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
+import javax.persistence.TemporalType;
+import javax.persistence.Temporal;
+import java.util.Date;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -817,6 +820,26 @@ public class ClaimComponent implements Serializable {
      */
     @Column(name = "claim_reason_reference", length = 35)
     private String claimReasonReference;
+
+    /**
+     * The day the claim arose - the date of the invoice, of the contract, of the statement.
+     *
+     * The Mahnbescheid prints it beside the reason ("aus Rechnung Nr. 4711 vom 15.09.2025"), and the
+     * exchange format carries it as ASPVD. Every sample file the dunning courts publish has it set,
+     * including those for a single claim; an application without it is monitioned.
+     */
+    @Column(name = "claim_from")
+    @Temporal(TemporalType.DATE)
+    private Date claimFrom;
+
+    /**
+     * The last day a claim over a period covers - rent, lease, recurring amounts (ASPBD).
+     *
+     * Empty for a claim that arose on one day, which is the ordinary case.
+     */
+    @Column(name = "claim_to")
+    @Temporal(TemporalType.DATE)
+    private Date claimTo;
 
     @OneToMany(mappedBy = "component", cascade = CascadeType.REMOVE)
     private List<InterestRule> interestRules = new ArrayList<>();
@@ -1151,6 +1174,28 @@ public class ClaimComponent implements Serializable {
      */
     public void setClaimReasonReference(String claimReasonReference) {
         this.claimReasonReference = claimReasonReference;
+    }
+
+    /**
+     * @return the day the claim arose, or null where it was not recorded
+     */
+    public Date getClaimFrom() {
+        return claimFrom;
+    }
+
+    public void setClaimFrom(Date claimFrom) {
+        this.claimFrom = claimFrom;
+    }
+
+    /**
+     * @return the last day a claim over a period covers, or null
+     */
+    public Date getClaimTo() {
+        return claimTo;
+    }
+
+    public void setClaimTo(Date claimTo) {
+        this.claimTo = claimTo;
     }
 
 

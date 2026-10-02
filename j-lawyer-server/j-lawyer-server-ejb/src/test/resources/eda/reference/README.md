@@ -406,8 +406,14 @@ Spalte, nicht zwei. Was die Spaltenzählung des Papiervordrucks bedeutet, ist f�
 unerheblich.
 
 Zu **Nr. 70** hat der Assistent **überhaupt keine Zusatzangabe verlangt**. Der *Zeitraum vom – bis*,
-den der Katalog nennt, ist das von/bis der Anspruchszeile selbst, das ohnehin gefüllt wird. Ein
-eigenes Feld dafür gibt es nicht.
+den der Katalog nennt, ist das von/bis der Anspruchszeile selbst (ASPVD/ASPBD). Ein eigenes Feld
+dafür gibt es nicht.
+
+> **Nachtrag.** Hier stand, dieses von/bis werde „ohnehin gefüllt". Das war falsch und hat eine
+> Monierung gekostet: das Forderungskonto führte überhaupt kein Anspruchsdatum, und das Feld ging
+> leer hinaus. Seit `V3_6_0_51` trägt die Position ein Vom- und ein Bis-Datum, und der Prüfbericht
+> verweigert den Antrag ohne das Vom-Datum. In **allen** Dateien dieses Verzeichnisses ist ASPVD
+> gesetzt, auch bei Einzelforderungen — ein Blick, der die Lücke früher gezeigt hätte.
 
 Damit ist der offene Punkt geschlossen; die Dateien 14 bis 16 werden nicht gebraucht.
 
