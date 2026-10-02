@@ -1,0 +1,57 @@
+# Feldzuordnung für Anlage 2 der ZVFV, Antrag auf richterliche Durchsuchungsanordnung.
+#
+# Spalten: Feldname <TAB> Schluessel <TAB> Pflicht (0/1) <TAB> Bezeichnung
+#
+# Der Feldname ist der Name im PDF und sagt fuer sich nichts - "Textfeld 352". Der Schluessel
+# benennt, woraus gefuellt wird; das Vokabular dazu ist EnforcementFormDataSource. Die Bezeichnung
+# ist der Tooltip des Formulars und der einzige Beleg dafuer, dass die Zuordnung das meint, was sie
+# behauptet.
+#
+# Geprueft an einer Probe, in der jedes Feld seinen eigenen Namen trug - die Bezeichnungen allein
+# reichen auch hier nicht: "Name/Firma" und "ggf. Vorname(n)" stehen zweimal auf Seite 1, einmal
+# unter "Angaben zum Schuldner" und einmal unter "Kontaktdaten des Antragstellers".
+#
+# Der Empfaenger ist hier das Amtsgericht als Vollstreckungsgericht und nicht der
+# Gerichtsvollzieher. Der Satz "- Vollstreckungsgericht -" steht gedruckt zwischen Bezeichnung und
+# Anschrift; ein zweites Namensfeld gibt es nicht, eine mehrzeilige Bezeichnung wird also gekuerzt.
+#
+# Nicht zugeordnet und mit Absicht leer:
+#
+# Die beiden Begruendungen nach § 758a Abs. 1 und Abs. 4 ZPO (Textfeld 357, 358). Sie sind der
+# eigentliche Inhalt des Antrags und die Aussage eines Anwalts gegenueber einem Richter. Die
+# Maßnahme fuehrt zwar ein Notizfeld, aber eine interne Notiz vor einen Richter zu tragen waere
+# schlimmer als ein leeres Feld: das leere faellt beim Durchsehen auf, die Notiz nicht.
+#
+# Alles auf Seite 2 - Ausfertigung statt beglaubigter Abschrift, Direktweiterleitung an den
+# Gerichtsvollzieher, Absehen von der Anhoerung samt Gruenden, die beigefuegten Anlagen und die
+# Versicherungen. Das sind Entscheidungen des Einreichenden zu diesem einen Antrag, keine Daten der
+# Akte. Ein Kreuz, das die Software von sich aus setzt, ist eine Erklaerung, die niemand abgegeben
+# hat - bei der Versicherung nach § 752a Abs. 1 ZPO sogar eine anwaltliche.
+#
+# Ebenfalls offen: "gesetzlicher Vertreter" im Antragstellerblock und das Faxfeld - beides hat im
+# Vokabular keine Entsprechung.
+
+Textfeld 838	empfaenger.name	1	Bezeichnung des Amtsgerichts
+Textfeld 837	empfaenger.strasse	0	Straße und Hausnummer oder gegebenenfalls Postfach
+Textfeld 836	empfaenger.plz_ort	1	Postleitzahl Ort
+Textfeld 355	ort	0	Ort
+Textfeld 356	datum	0	Datum
+Kontrollkästchen 3033	schuldner.ist_herr	0	Herr
+Kontrollkästchen 3032	schuldner.ist_frau	0	Frau
+Kontrollkästchen 331	schuldner.ist_unternehmen	0	Unternehmen
+Kontrollkästchen 3031	schuldner.ist_sonstige	0	Sonstige
+Textfeld 352	schuldner.name	1	Name/Firma
+Textfeld 351	schuldner.vorname	0	ggf. Vorname(n)
+Textfeld 350	schuldner.strasse	0	Straße
+Textfeld 349	schuldner.hausnummer	0	Hausnummer
+Textfeld 348	schuldner.plz	0	Postleitzahl
+Textfeld 347	schuldner.ort	0	Ort
+Textfeld 346	schuldner.land	0	Land (wenn nicht Deutschland)
+Kontrollkästchen 190	absender.ist_glaeubiger	0	Gläubiger
+Kontrollkästchen 188	absender.ist_bevollmaechtigter	0	Bevollmächtigter
+Textfeld 338	bevollmaechtigter.name	0	Name/Firma
+Textfeld 339	bevollmaechtigter.vorname	0	ggf. Vorname(n)
+Textfeld 835	bevollmaechtigter.telefon	0	Telefon
+Textfeld 834	bevollmaechtigter.email	0	E-Mail
+Textfeld 345	akte.zeichen	0	Geschäftszeichen
+Textfeld 839	glaeubiger.name	0	Namen

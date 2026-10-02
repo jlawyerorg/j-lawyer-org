@@ -1,0 +1,82 @@
+# Feldzuordnung für Anlage 5 der ZVFV, Entwurf des Pfändungs- und Überweisungsbeschlusses.
+#
+# Spalten: Feldname <TAB> Schluessel <TAB> Pflicht (0/1) <TAB> Bezeichnung
+#
+# Wie Anlage 3 ist dies nicht der Antrag, sondern der Entwurf, den das Gericht als seinen eigenen
+# Beschluss uebernimmt - und das groesste Formular der Verordnung: 411 Felder auf neun Seiten.
+#
+# Zugeordnet sind die Angaben, die aus der Akte kommen und die das Gericht nicht hat: das
+# Vollstreckungsgericht, der Glaeubiger mit seinem Bevollmaechtigten, der Schuldner, der
+# Drittschuldner und der Vollstreckungstitel. Sie stehen im Beschluss wie im Antrag.
+#
+# Nicht zugeordnet und mit Absicht leer:
+#
+# Der Beschluss selbst - die gepfaendete Forderung nach Art und Umfang (die Module A bis G des
+# Formulars), die Anordnungen, die Rechtsbehelfsbelehrung, Datum und Unterschrift. Was gepfaendet
+# wird, ist die Entscheidung des Glaeubigers im Einzelfall und haengt an einer Forderungsart, die
+# das Forderungskonto je Drittschuldner fuehrt, aber nicht in der Gliederung dieses Formulars. Ein
+# Entwurf, der hier etwas ankreuzt, pfaendet etwas.
+#
+# Die Bankverbindung fuer die Ueberweisung und die Kontoinhaber-Angaben: sie stehen am Anwalt und
+# nicht an der Massnahme, und ein falsches Konto in einem Ueberweisungsbeschluss ist der teuerste
+# Fehler, den dieses Formular zulaesst.
+#
+# Die Bloecke fuer gesetzliche Vertreter und Betreuer, aus demselben Grund wie in Anlage 3: das
+# Konto fuehrt die Vertretungskette nicht.
+#
+# Der zweite und dritte Drittschuldner. Das Konto kennt mehrere, das Formular auch - aber in
+# Modulen, deren Zuordnung zur Forderungsart von Hand zu treffen ist. Der erste wird gesetzt, und
+# "weitere Drittschuldner" bleibt dem Einreichenden.
+#
+# Geprueft an einer Probe, in der jedes Feld seinen eigenen Namen trug.
+
+Textfeld 268	empfaenger.name	1	Bezeichnung des Amtsgerichts
+Kontrollkästchen 144	glaeubiger.ist_herr	0	Herr
+Kontrollkästchen 143	glaeubiger.ist_frau	0	Frau
+Kontrollkästchen 142	glaeubiger.ist_unternehmen	0	Unternehmen
+Kontrollkästchen 141	glaeubiger.ist_sonstige	0	Sonstige
+Textfeld 279	glaeubiger.name	1	Name/Firma
+Textfeld 278	glaeubiger.vorname	0	ggf. Vorname(n)
+Textfeld 277	glaeubiger.strasse	0	Straße
+Textfeld 276	glaeubiger.hausnummer	0	Hausnummer
+Textfeld 275	glaeubiger.plz	0	Postleitzahl
+Textfeld 274	glaeubiger.ort	0	Ort
+Textfeld 273	glaeubiger.land	0	Land (wenn nicht Deutschland)
+Kontrollkästchen 148	bevollmaechtigter.ist_herr	0	Herr
+Kontrollkästchen 147	bevollmaechtigter.ist_frau	0	Frau
+Kontrollkästchen 146	bevollmaechtigter.ist_unternehmen	0	Unternehmen
+Textfeld 11019	bevollmaechtigter.name	0	Name/Firma
+Textfeld 11018	bevollmaechtigter.vorname	0	ggf. Vorname(n)
+Textfeld 11017	bevollmaechtigter.strasse	0	Straße
+Textfeld 11013	bevollmaechtigter.hausnummer	0	Hausnummer
+Textfeld 17a 12	bevollmaechtigter.plz	0	Postleitzahl
+Textfeld 18a 14	bevollmaechtigter.ort	0	Ort
+Textfeld 10102	akte.zeichen	0	Geschäftszeichen
+Kontrollkästchen 166	schuldner.ist_herr	0	Herr
+Kontrollkästchen 165	schuldner.ist_frau	0	Frau
+Kontrollkästchen 164	schuldner.ist_unternehmen	0	Unternehmen
+Kontrollkästchen 163	schuldner.ist_sonstige	0	Sonstige
+Textfeld 323	schuldner.name	1	Name/Firma
+Textfeld 322	schuldner.vorname	0	ggf. Vorname(n)
+Textfeld 321	schuldner.strasse	0	Straße
+Textfeld 320	schuldner.hausnummer	0	Hausnummer
+Textfeld 319	schuldner.plz	0	Postleitzahl
+Textfeld 318	schuldner.ort	0	Ort
+Textfeld 317	schuldner.land	0	Land (wenn nicht Deutschland)
+Textfeld 315	schuldner.geburtsdatum	0	Geburtsdatum
+Textfeld 5013	titel.art	0	Art
+Textfeld 5012	titel.gericht	0	Gericht/Notar/Behörde
+Textfeld 5011	titel.datum	0	Datum
+Textfeld 5010	titel.aktenzeichen	0	Geschäftszeichen
+Kontrollkästchen 366	drittschuldner.ist_herr	0	Herr
+Kontrollkästchen 365	drittschuldner.ist_frau	0	Frau
+Kontrollkästchen 364	drittschuldner.ist_unternehmen	0	Unternehmen
+Kontrollkästchen 363	drittschuldner.ist_sonstige	0	Sonstige
+Textfeld 948	drittschuldner.name	0	Name/Firma
+Textfeld 947	drittschuldner.vorname	0	ggf. Vorname(n)
+Textfeld 946	drittschuldner.strasse	0	Straße
+Textfeld 945	drittschuldner.hausnummer	0	Hausnummer
+Textfeld 944	drittschuldner.plz	0	Postleitzahl
+Textfeld 943	drittschuldner.ort	0	Ort
+Textfeld 942	drittschuldner.land	0	Land (wenn nicht Deutschland)
+Kontrollkästchen 1084	drittschuldner.ist_weitere	0	weitere Drittschuldner

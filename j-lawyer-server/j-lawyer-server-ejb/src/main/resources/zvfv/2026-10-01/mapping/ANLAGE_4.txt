@@ -1,0 +1,53 @@
+# Feldzuordnung für Anlage 4 der ZVFV, Antrag auf Pfändungs- und Überweisungsbeschluss.
+#
+# Spalten: Feldname <TAB> Schluessel <TAB> Pflicht (0/1) <TAB> Bezeichnung
+#
+# Der Feldname ist der Name im PDF und sagt fuer sich nichts. Der Schluessel benennt, woraus
+# gefuellt wird; das Vokabular dazu ist EnforcementFormDataSource. Die Bezeichnung ist der Tooltip
+# des Formulars und der Beleg dafuer, dass die Zuordnung das meint, was sie behauptet.
+#
+# Ein Antragsformular fuer alle Geldforderungen: ob es um Unterhalt geht, entscheidet allein die
+# beigefuegte Forderungsaufstellung (Anlage 7 oder 8). Der Drittschuldner steht nicht hier, sondern
+# im Entwurf (Anlage 5) - dieses Blatt nennt nur Gericht, Schuldner und Antragsteller.
+#
+# Geprueft an einer Probe, in der jedes Feld seinen eigenen Namen trug. Noetig, weil "Name/Firma"
+# und "ggf. Vorname(n)" zweimal auf Seite 1 stehen: unter "Angaben zum Schuldner" und unter
+# "Kontaktdaten des Antragstellers".
+#
+# Nicht zugeordnet und mit Absicht leer:
+#
+# Der Kostenblock - elektronische Kostenmarke mit Nummer, Wert und Datum, SEPA-Lastschriftmandat,
+# Gerichtskostenbefreiung. Wie eine Kanzlei die Gerichtskosten zahlt, steht nicht in der Akte, und
+# ein falsch gesetztes Kreuz waere eine Zahlungszusage.
+#
+# Die Angabe zur Vorpfaendung nach § 845 ZPO. Sie ist eine Tatsache ueber dieses Verfahren, die das
+# Forderungskonto heute nicht fuehrt - und ein Kreuz zu setzen, wo keine Vorpfaendung ergangen ist,
+# waere eine falsche Erklaerung gegenueber dem Gericht.
+#
+# Alles auf Seite 2 - Ausfertigung, Zustellung durch die Geschaeftsstelle, Aufforderung nach § 840
+# ZPO, Prozesskostenhilfe, die beigefuegten Anlagen und die Versicherungen. Entscheidungen des
+# Einreichenden zu diesem einen Antrag, keine Daten der Akte.
+
+Textfeld 353	empfaenger.name	1	Bezeichnung des Amtsgerichts
+Textfeld 354	empfaenger.strasse	0	Straße und Hausnummer oder gegebenenfalls Postfach
+Textfeld 518	empfaenger.plz_ort	1	Postleitzahl Ort
+Textfeld 355	ort	0	Ort
+Textfeld 356	datum	0	Datum
+Kontrollkästchen 367	schuldner.ist_herr	0	Herr
+Kontrollkästchen 366	schuldner.ist_frau	0	Frau
+Kontrollkästchen 365	schuldner.ist_unternehmen	0	Unternehmen
+Kontrollkästchen 364	schuldner.ist_sonstige	0	Sonstige
+Textfeld 352	schuldner.name	1	Name/Firma
+Textfeld 351	schuldner.vorname	0	ggf. Vorname(n)
+Textfeld 350	schuldner.strasse	0	Straße
+Textfeld 349	schuldner.hausnummer	0	Hausnummer
+Textfeld 348	schuldner.plz	0	Postleitzahl
+Textfeld 347	schuldner.ort	0	Ort
+Textfeld 346	schuldner.land	0	Land (wenn nicht Deutschland)
+Kontrollkästchen 333	absender.ist_glaeubiger	0	Gläubiger
+Kontrollkästchen 331	absender.ist_bevollmaechtigter	0	Bevollmächtigter
+Textfeld 846	bevollmaechtigter.name	0	Name/Firma
+Textfeld 845	bevollmaechtigter.vorname	0	ggf. Vorname(n)
+Textfeld 842	bevollmaechtigter.telefon	0	Telefon
+Textfeld 841	bevollmaechtigter.email	0	E-Mail
+Textfeld 839	akte.zeichen	0	Geschäftszeichen

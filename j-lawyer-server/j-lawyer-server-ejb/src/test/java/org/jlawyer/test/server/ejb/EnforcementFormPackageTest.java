@@ -870,10 +870,34 @@ public class EnforcementFormPackageTest {
     /**
      * Für ein Formular ohne mitgelieferte Zuordnung ist die Antwort leer und keine Ausnahme - die
      * Kanzlei ordnet dann selbst zu, und der Import sagt es ihr.
+     *
+     * Hier stand einmal ANLAGE_3, weil zu dem Zeitpunkt nur Anlage 1 und 6 ein Profil hatten. Alle
+     * acht haben jetzt eines; die Regel gilt weiter und wird deshalb an einer Anlage geprüft, die
+     * es nicht gibt.
      */
     @Test
     public void aformWithoutAshippedMappingYieldsNothing() throws Exception {
-        assertTrue(formPackage.readMapping(formPackage.getCurrentVersion(), "ANLAGE_3").isEmpty());
+        assertTrue(formPackage.readMapping(formPackage.getCurrentVersion(), "ANLAGE_99").isEmpty());
+    }
+
+    /**
+     * Zu jeder der acht Anlagen wird eine Zuordnung geliefert, und zwar in jeder Fassung.
+     *
+     * Ohne sie laesst sich das Formular nicht erzeugen - die Erzeugung bricht ab, statt ein leeres
+     * Blatt in die Akte zu legen. Das war bis zur Fassung 2026-10-01 fuer sechs der acht so, und
+     * eine Kanzlei merkte es erst, wenn sie die Massnahme brauchte.
+     */
+    @Test
+    public void everyAnnexCarriesAmappingInEveryVersion() throws Exception {
+        List<String> without = new ArrayList<>();
+        for (String version : formPackage.getVersions()) {
+            for (EnforcementFormPackage.Entry entry : formPackage.getEntries(version)) {
+                if (formPackage.readMapping(version, entry.getFormKey()).isEmpty()) {
+                    without.add(version + "/" + entry.getFormKey());
+                }
+            }
+        }
+        assertEquals("Formulare ohne mitgelieferte Feldzuordnung: " + without, 0, without.size());
     }
 
     /**

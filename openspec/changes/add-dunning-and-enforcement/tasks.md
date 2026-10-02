@@ -818,8 +818,11 @@
       description records where the money came from, which on an attachment is the news.
       The vocabulary `drittschuldner.*` in `EnforcementFormDataSource` fills the block from the
       first of them, with `drittschuldner.weitere` naming the rest, so that nothing goes out that
-      claims there is only one. What the official forms make of a second and third one is a question
-      for the profiles of Anlagen 2-5, which wait for the 2026 forms (5.5a).
+      claims there is only one. What the official forms make of a second and third one was a
+      question for the profiles of Anlagen 2-5, which waited for the 2026 forms (5.5a).
+      *Beantwortet am 02.10.2026 mit den Profilen:* Anlage 5 fuehrt die weiteren Drittschuldner in
+      Modulen, deren Zuordnung zur Forderungsart von Hand zu treffen ist. Gesetzt wird deshalb der
+      erste samt dem Haken "weitere Drittschuldner"; die Module bleiben dem Einreichenden.
       The client keeps them in a window of their own (`ThirdPartyDebtorDialog`), reached from the
       enforcement tab: several of them belong to one order, each carries his own period, and the
       overdue ones say so beside the date. The contact is picked from the parties of the case where
@@ -1570,6 +1573,39 @@
       von Hand zu vergleichen war — elf umbenannte Felder im PfÜB-Antrag, eines in der
       Durchsuchungsanordnung, fünf neue und drei entfallene im Vollstreckungsauftrag, und für die
       übrigen fünf Anlagen die Auskunft, dass sie unverändert sind.
+- [x] 5.5c **Feldzuordnungen für die Anlagen 2, 3, 4, 5, 7 und 8.** Bis dahin trugen nur Anlage 1
+      (47 Felder) und Anlage 6 (131) ein Profil, und das hiess: von sechs Massnahmearten liessen sich
+      drei erzeugen. Gerichtsvollzieherauftrag, Vermoegensauskunft und Haftbefehlsantrag gingen,
+      die richterliche Durchsuchungsanordnung und jede Form der Forderungspfaendung nicht - die
+      Erzeugung brach ab, statt ein leeres Blatt in die Akte zu legen. Aufgefallen ist es einer
+      Kanzlei, die eine Durchsuchungsanordnung erzeugen wollte.
+      Zugeordnet ist jetzt zu allen acht Anlagen, in beiden Fassungen: Anlage 2 (24), Anlage 3 (34),
+      Anlage 4 (23), Anlage 5 (50), Anlage 7 (113), Anlage 8 (70). `everyAnnexCarriesAmappingInEveryVersion`
+      wacht darueber, dass keine Anlage ohne Profil bleibt.
+      *Was dabei absichtlich leer bleibt, und warum.* Bei den Antraegen (2, 4) die Entscheidungen
+      des Einreichenden - Ausfertigung statt Abschrift, Direktweiterleitung, Absehen von der
+      Anhoerung, die beigefuegten Anlagen, die Versicherungen. Ein Kreuz, das die Software von sich
+      aus setzt, ist eine Erklaerung, die niemand abgegeben hat; bei der Versicherung nach § 752a
+      Abs. 1 ZPO sogar eine anwaltliche. Ebenso der Kostenblock des PfUEB-Antrags: wie eine Kanzlei
+      die Gerichtskosten zahlt, steht nicht in der Akte, und ein Kreuz dort waere eine Zahlungszusage.
+      Bei den Entwuerfen (3, 5) der Beschluss selbst - die Anordnung, ihre Reichweite, bei Anlage 5
+      die gepfaendete Forderung nach Art und Umfang. Ein Entwurf, der das ausfuellt, pfaendet etwas.
+      Bei Anlage 8 der Unterhaltsabschnitt: er fragt nach Verwandtschaftsgrad, Rhythmus und Zahltag,
+      und das Konto fuehrt eine Forderung mit Betrag und Zinslauf, keinen Unterhaltstitel. Eine
+      bevorrechtigte Pfaendung nach § 850d ZPO auf eine Vermutung zu stuetzen waere schlimmer als
+      ein leeres Feld. Was das Konto dafuer fuehren muesste, ist eine eigene Frage.
+      Bei den Begruendungen der Durchsuchungsanordnung (§ 758a Abs. 1 und 4 ZPO): die Massnahme
+      fuehrt ein Notizfeld, aber eine interne Notiz vor einen Richter zu tragen waere schlimmer als
+      ein leeres Feld - das leere faellt beim Durchsehen auf, die Notiz nicht.
+      *Vokabular ergaenzt* um `bevollmaechtigter.ist_herr/ist_frau/ist_unternehmen`: der Entwurf der
+      Durchsuchungsanordnung fragt nach der Anrede des Bevollmaechtigten, der Gerichtsvollzieher-
+      auftrag nicht.
+      *Methode:* jedes Formular mit einer Probe gelesen, in der jedes Feld seinen eigenen Namen
+      trug. Noetig, weil die Bezeichnungen allein nicht unterscheiden - "Name/Firma" steht auf einer
+      Seite bis zu dreimal, fuer Glaeubiger, Bevollmaechtigten und Schuldner. `Anlage1MappingTest`
+      und `ZvfvMappingProfileTest` haben dabei einen Fehler von mir gefangen: "Aussteller" ist die
+      gedruckte Ueberschrift, der Tooltip heisst "Gericht/Notar/Behoerde".
+
 - [ ] 5.6 End-to-end test: claim → reminder → Mahnbescheid → Vollstreckungsbescheid → bailiff order
       → PfÜB → payments → statement, verifying bookings, deadlines and documents
 - [ ] 5.7 Revisit the reference data decision for the two catalogues. The main claim catalogue and

@@ -892,6 +892,14 @@ public class EnforcementFormDataSource {
         values.put("absender.ist_glaeubiger", tick(!present));
         values.put("absender.ist_bevollmaechtigter", tick(present));
 
+        // Die Anrede des Bevollmaechtigten fragt der Entwurf der Durchsuchungsanordnung ab, der
+        // Auftrag an den Gerichtsvollzieher nicht - eine Kanzlei ist dort meist ein Unternehmen,
+        // ein einzelner Anwalt aber nicht.
+        ContactSalutation anrede = new ContactSalutation();
+        values.put("bevollmaechtigter.ist_herr", tick(present && anrede.isMale(filedBy)));
+        values.put("bevollmaechtigter.ist_frau", tick(present && anrede.isFemale(filedBy)));
+        values.put("bevollmaechtigter.ist_unternehmen", tick(present && anrede.isCompany(filedBy)));
+
         values.put("bevollmaechtigter.name", present
                 ? (notEmpty(filedBy.getCompany()) ? filedBy.getCompany() : nonNull(filedBy.getName()))
                 : EMPTY);

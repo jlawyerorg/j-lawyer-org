@@ -1,0 +1,94 @@
+# Feldzuordnung für Anlage 8 der ZVFV, Forderungsaufstellung zum Pfändungs- und
+# Überweisungsbeschluss bei gesetzlichen Unterhaltsansprüchen.
+#
+# Spalten: Feldname <TAB> Schluessel <TAB> Pflicht (0/1) <TAB> Bezeichnung
+#
+# Die Abschnitte II und III sind dieselben wie in Anlage 7 und werden ebenso gefuellt: drei
+# Kostenbloecke mit je zwei ausgerechneten und zwei laufenden Zinszeilen, davon je die erste
+# zugeordnet, und darunter die Kosten dieser Zwangsvollstreckung.
+#
+# Abschnitt I - die rueckstaendigen und laufenden Unterhaltsansprueche - ist **nicht** zugeordnet,
+# und das ist der Kern dieses Formulars. Es fragt nach dem Verhaeltnis, aus dem der Unterhalt
+# geschuldet wird (Kind, Ehegatte, Mutter oder Vater, Eltern, Enkel), nach Rhythmus und Zahltag,
+# nach Rueckstaenden je Zeitraum und nach dem laufenden Betrag. Das Forderungskonto fuehrt eine
+# Forderung mit Betrag und Zinslauf; es fuehrt keinen Unterhaltstitel mit Verwandtschaftsgrad und
+# Faelligkeitsrhythmus. Diese Angaben zu raten hiesse, eine bevorrechtigte Pfaendung nach § 850d
+# ZPO auf eine Vermutung zu stuetzen.
+#
+# Die Folge ist bewusst: eine Kanzlei bekommt das Formular mit gefuellten Kostenabschnitten und
+# traegt Abschnitt I selbst ein. Das ist weniger, als wir fuer Anlage 7 leisten - aber es ist
+# nachvollziehbar, waehrend ein geratener Unterhaltsabschnitt es nicht waere. Was das Konto dafuer
+# fuehren muesste, ist eine eigene Frage.
+#
+# Geprueft an einer Probe, in der jedes Feld seinen eigenen Namen trug.
+
+Kontrollkästchen 315	aufstellung.kosten.mahnverfahren.ist_gesamtkosten	0	Gesamtkosten
+Kontrollkästchen 314	aufstellung.kosten.mahnverfahren.ist_restkosten	0	Restkosten
+Kontrollkästchen 313	aufstellung.kosten.mahnverfahren.ist_teilkosten	0	Teilkosten
+Textfeld 3011	aufstellung.kosten.mahnverfahren.restkosten	0	Betrag
+Textfeld 3010	aufstellung.kosten.mahnverfahren.teilkosten	0	Betrag
+Textfeld 304	aufstellung.kosten.mahnverfahren.betrag	0	Betrag
+Textfeld 303	aufstellung.kosten.mahnverfahren.zinsen_ausgerechnet	0	Betrag
+Kontrollkästchen 1022	aufstellung.kosten.mahnverfahren.zins.ist_prozentpunkte	0	Prozentpunkte
+Kontrollkästchen 1021	aufstellung.kosten.mahnverfahren.zins.ist_prozent	0	Prozent
+Textfeld 1029	aufstellung.kosten.mahnverfahren.zins.prozentpunkte	0	Zahl
+Textfeld 1028	aufstellung.kosten.mahnverfahren.zins.prozent	0	Zahl
+Textfeld 1027	aufstellung.kosten.mahnverfahren.zins.aus_betrag	0	Betrag
+Textfeld 1026	aufstellung.kosten.mahnverfahren.zins.von	0	Datum von
+Textfeld 1025	aufstellung.kosten.mahnverfahren.zins.bis	0	Datum bis
+Textfeld 1024	aufstellung.kosten.mahnverfahren.zins.betrag	0	Betrag
+Kontrollkästchen 1018	aufstellung.kosten.mahnverfahren.laufender_zins.ist_prozentpunkte	0	Prozentpunkte
+Kontrollkästchen 1017	aufstellung.kosten.mahnverfahren.laufender_zins.ist_prozent	0	Prozent
+Textfeld 532	aufstellung.kosten.mahnverfahren.laufender_zins.prozentpunkte	0	Zahl
+Textfeld 531	aufstellung.kosten.mahnverfahren.laufender_zins.prozent	0	Zahl
+Textfeld 530	aufstellung.kosten.mahnverfahren.laufender_zins.aus_betrag	0	Betrag
+Textfeld 529	aufstellung.kosten.mahnverfahren.laufender_zins.seit	0	Datum
+Kontrollkästchen 1014	aufstellung.kosten.vorgerichtlich.ist_gesamtkosten	0	Gesamtkosten
+Kontrollkästchen 1013	aufstellung.kosten.vorgerichtlich.ist_restkosten	0	Restkosten
+Kontrollkästchen 312	aufstellung.kosten.vorgerichtlich.ist_teilkosten	0	Teilkosten
+Textfeld 524	aufstellung.kosten.vorgerichtlich.restkosten	0	Betrag
+Textfeld 523	aufstellung.kosten.vorgerichtlich.teilkosten	0	Betrag
+Textfeld 522	aufstellung.kosten.vorgerichtlich.betrag	0	Betrag
+Textfeld 521	aufstellung.kosten.vorgerichtlich.zinsen_ausgerechnet	0	Betrag
+Kontrollkästchen 311	aufstellung.kosten.vorgerichtlich.zins.ist_prozentpunkte	0	Prozentpunkte
+Kontrollkästchen 310	aufstellung.kosten.vorgerichtlich.zins.ist_prozent	0	Prozent
+Textfeld 520	aufstellung.kosten.vorgerichtlich.zins.prozentpunkte	0	Zahl
+Textfeld 519	aufstellung.kosten.vorgerichtlich.zins.prozent	0	Zahl
+Textfeld 518	aufstellung.kosten.vorgerichtlich.zins.aus_betrag	0	Betrag
+Textfeld 517	aufstellung.kosten.vorgerichtlich.zins.von	0	Datum von
+Textfeld 516	aufstellung.kosten.vorgerichtlich.zins.bis	0	Datum bis
+Textfeld 515	aufstellung.kosten.vorgerichtlich.zins.betrag	0	Betrag
+Kontrollkästchen 307	aufstellung.kosten.vorgerichtlich.laufender_zins.ist_prozentpunkte	0	Prozentpunkte
+Kontrollkästchen 306	aufstellung.kosten.vorgerichtlich.laufender_zins.ist_prozent	0	Prozent
+Textfeld 508	aufstellung.kosten.vorgerichtlich.laufender_zins.prozentpunkte	0	Zahl
+Textfeld 507	aufstellung.kosten.vorgerichtlich.laufender_zins.prozent	0	Zahl
+Textfeld 506	aufstellung.kosten.vorgerichtlich.laufender_zins.aus_betrag	0	Betrag
+Textfeld 505	aufstellung.kosten.vorgerichtlich.laufender_zins.seit	0	Datum
+Kontrollkästchen 303	aufstellung.kosten.festgesetzt.ist_gesamtkosten	0	Gesamtkosten
+Kontrollkästchen 300	aufstellung.kosten.festgesetzt.ist_restkosten	0	Restkosten
+Kontrollkästchen 299	aufstellung.kosten.festgesetzt.ist_teilkosten	0	Teilkosten
+Textfeld 500	aufstellung.kosten.festgesetzt.restkosten	0	Betrag
+Textfeld 499	aufstellung.kosten.festgesetzt.teilkosten	0	Betrag
+Textfeld 498	aufstellung.kosten.festgesetzt.betrag	0	Betrag
+Textfeld 497	aufstellung.kosten.festgesetzt.zinsen_ausgerechnet	0	Betrag
+Kontrollkästchen 298	aufstellung.kosten.festgesetzt.zins.ist_prozentpunkte	0	Prozentpunkte
+Kontrollkästchen 297	aufstellung.kosten.festgesetzt.zins.ist_prozent	0	Prozent
+Textfeld 496	aufstellung.kosten.festgesetzt.zins.prozentpunkte	0	Zahl
+Textfeld 495	aufstellung.kosten.festgesetzt.zins.prozent	0	Zahl
+Textfeld 494	aufstellung.kosten.festgesetzt.zins.aus_betrag	0	Betrag
+Textfeld 493	aufstellung.kosten.festgesetzt.zins.von	0	Datum von
+Textfeld 492	aufstellung.kosten.festgesetzt.zins.bis	0	Datum bis
+Textfeld 491	aufstellung.kosten.festgesetzt.zins.betrag	0	Betrag
+Kontrollkästchen 294	aufstellung.kosten.festgesetzt.laufender_zins.ist_prozentpunkte	0	Prozentpunkte
+Kontrollkästchen 293	aufstellung.kosten.festgesetzt.laufender_zins.ist_prozent	0	Prozent
+Textfeld 484	aufstellung.kosten.festgesetzt.laufender_zins.prozentpunkte	0	Zahl
+Textfeld 483	aufstellung.kosten.festgesetzt.laufender_zins.prozent	0	Zahl
+Textfeld 482	aufstellung.kosten.festgesetzt.laufender_zins.aus_betrag	0	Betrag
+Textfeld 481	aufstellung.kosten.festgesetzt.laufender_zins.seit	0	Datum
+Textfeld 535	massnahme.kosten.gegenstandswert	0	Betrag
+Textfeld 472	massnahme.kosten.verfahrensgebuehr	0	Betrag
+Textfeld 4010	massnahme.kosten.post_telekom	0	Betrag
+Textfeld 409	massnahme.kosten.weitere_auslagen_bezeichnung	0	Weitere Auslagen
+Textfeld 408	massnahme.kosten.weitere_auslagen	0	Betrag
+Textfeld 407	massnahme.kosten.umsatzsteuer	0	Betrag
+Textfeld 544	massnahme.kosten.zwischensumme	0	Betrag

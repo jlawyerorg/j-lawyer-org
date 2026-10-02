@@ -1,0 +1,142 @@
+# Feldzuordnung für Anlage 7 der ZVFV, Forderungsaufstellung zum Pfändungs- und
+# Überweisungsbeschluss, ohne gesetzliche Unterhaltsansprüche.
+#
+# Spalten: Feldname <TAB> Schluessel <TAB> Pflicht (0/1) <TAB> Bezeichnung
+#
+# Dasselbe Genre wie Anlage 6 und derselbe Aufbau: kein Formular mit Zeilen, sondern eines mit
+# Plaetzen. Je Abschnitt ein Block mit Gesamt-, Rest- und Teilbetrag, darunter die im Titel
+# ausgerechneten Zinsen und vier Zinszeilen - zwei mit Endedatum (ausgerechnet) und zwei ohne
+# (laufend). Welche Forderung auf welchen Platz gehoert, entscheidet EnforcementItemisationSlots;
+# das ist eine rechtliche Aussage und keine Formatierung.
+#
+# Die Tooltips sind hier so nichtssagend wie dort - "Betrag", "Zahl", "Datum von". Was ein Feld
+# bedeutet, ergibt sich aus seinem Platz auf dem Blatt; die Zuordnung ist deshalb an einer Probe
+# gelesen, in der jedes Feld seinen eigenen Namen trug, und nicht aus der Reihenfolge geraten.
+#
+# Nicht zugeordnet und deshalb leer:
+#  - Abschnitt II (Renten wegen Koerper- oder Gesundheitsverletzung): eine wiederkehrende Rente
+#    mit Zahlungsrhythmus, die das Forderungskonto nicht fuehrt.
+#  - Der dritte Hauptforderungsblock samt Saeumniszuschlaegen - ein steuerrechtlicher Zuschlag,
+#    den das Konto nicht kennt. Wie in Anlage 6.
+#  - Die zweite ausgerechnete und die zweite laufende Zinszeile je Block: eine Forderung des
+#    Kontos hat einen Zinslauf, nicht zwei.
+#  - "Bisherige Vollstreckungskosten gemaess Aufstellung in weiterer Anlage" und die
+#    Inkassodienstleister-Zeile: beide verweisen auf Anlagen, die wir nicht beilegen.
+#  - "Lfd. Nr." und "zu Ziffer": beides nummeriert der Antrag, dem die Aufstellung beiliegt.
+#  - Die Gerichtskosten nach KV Nr. 2111 GKG: der Kostenvorschlag fuehrt Gegenstandswert,
+#    Verfahrensgebuehr, Auslagen und Umsatzsteuer, aber keine Gerichtsgebuehr - dieselbe Luecke wie
+#    bei den Gerichtsvollzieherkosten in Anlage 6 (Aufgabe 0.3).
+
+Kontrollkästchen 1010	aufstellung.forderung.1.ist_hauptforderung	0	Hauptforderung
+Kontrollkästchen 102	aufstellung.forderung.1.ist_restforderung	0	Restforderung
+Kontrollkästchen 101	aufstellung.forderung.1.ist_teilforderung	0	Teilforderung
+Textfeld 342	aufstellung.forderung.1.restbetrag	0	Betrag
+Textfeld 341	aufstellung.forderung.1.teilbetrag	0	Betrag
+Textfeld 340	aufstellung.forderung.1.betrag	0	Betrag
+Textfeld 339	aufstellung.forderung.1.zinsen_ausgerechnet	0	Betrag
+Kontrollkästchen 133	aufstellung.forderung.1.zins.ist_prozentpunkte	0	Prozentpunkte
+Kontrollkästchen 132	aufstellung.forderung.1.zins.ist_prozent	0	Prozent
+Textfeld 338	aufstellung.forderung.1.zins.prozentpunkte	0	Zahl
+Textfeld 337	aufstellung.forderung.1.zins.prozent	0	Zahl
+Textfeld 336	aufstellung.forderung.1.zins.aus_betrag	0	Betrag
+Textfeld 335	aufstellung.forderung.1.zins.von	0	Datum von
+Textfeld 334	aufstellung.forderung.1.zins.bis	0	Datum bis
+Textfeld 333	aufstellung.forderung.1.zins.betrag	0	Betrag
+Kontrollkästchen 129	aufstellung.forderung.1.laufender_zins.ist_prozentpunkte	0	Prozentpunkte
+Kontrollkästchen 128	aufstellung.forderung.1.laufender_zins.ist_prozent	0	Prozent
+Textfeld 326	aufstellung.forderung.1.laufender_zins.prozentpunkte	0	Zahl
+Textfeld 325	aufstellung.forderung.1.laufender_zins.prozent	0	Zahl
+Textfeld 324	aufstellung.forderung.1.laufender_zins.aus_betrag	0	Betrag
+Textfeld 323	aufstellung.forderung.1.laufender_zins.seit	0	Datum
+Kontrollkästchen 125	aufstellung.forderung.2.ist_hauptforderung	0	Hauptforderung
+Kontrollkästchen 124	aufstellung.forderung.2.ist_restforderung	0	Restforderung
+Kontrollkästchen 123	aufstellung.forderung.2.ist_teilforderung	0	Teilforderung
+Textfeld 318	aufstellung.forderung.2.restbetrag	0	Betrag
+Textfeld 317	aufstellung.forderung.2.teilbetrag	0	Betrag
+Textfeld 316	aufstellung.forderung.2.betrag	0	Betrag
+Textfeld 315	aufstellung.forderung.2.zinsen_ausgerechnet	0	Betrag
+Kontrollkästchen 122	aufstellung.forderung.2.zins.ist_prozentpunkte	0	Prozentpunkte
+Kontrollkästchen 121	aufstellung.forderung.2.zins.ist_prozent	0	Prozent
+Textfeld 314	aufstellung.forderung.2.zins.prozentpunkte	0	Zahl
+Textfeld 313	aufstellung.forderung.2.zins.prozent	0	Zahl
+Textfeld 312	aufstellung.forderung.2.zins.aus_betrag	0	Betrag
+Textfeld 311	aufstellung.forderung.2.zins.von	0	Datum von
+Textfeld 310	aufstellung.forderung.2.zins.bis	0	Datum bis
+Textfeld 309	aufstellung.forderung.2.zins.betrag	0	Betrag
+Kontrollkästchen 118	aufstellung.forderung.2.laufender_zins.ist_prozentpunkte	0	Prozentpunkte
+Kontrollkästchen 117	aufstellung.forderung.2.laufender_zins.ist_prozent	0	Prozent
+Textfeld 302	aufstellung.forderung.2.laufender_zins.prozentpunkte	0	Zahl
+Textfeld 301	aufstellung.forderung.2.laufender_zins.prozent	0	Zahl
+Textfeld 300	aufstellung.forderung.2.laufender_zins.aus_betrag	0	Betrag
+Textfeld 299	aufstellung.forderung.2.laufender_zins.seit	0	Datum
+Kontrollkästchen 2010	aufstellung.kosten.mahnverfahren.ist_gesamtkosten	0	Gesamtkosten
+Kontrollkästchen 208	aufstellung.kosten.mahnverfahren.ist_restkosten	0	Restkosten
+Kontrollkästchen 207	aufstellung.kosten.mahnverfahren.ist_teilkosten	0	Teilkosten
+Textfeld 564	aufstellung.kosten.mahnverfahren.restkosten	0	Betrag
+Textfeld 563	aufstellung.kosten.mahnverfahren.teilkosten	0	Betrag
+Textfeld 562	aufstellung.kosten.mahnverfahren.betrag	0	Betrag
+Textfeld 561	aufstellung.kosten.mahnverfahren.zinsen_ausgerechnet	0	Betrag
+Kontrollkästchen 206	aufstellung.kosten.mahnverfahren.zins.ist_prozentpunkte	0	Prozentpunkte
+Kontrollkästchen 205	aufstellung.kosten.mahnverfahren.zins.ist_prozent	0	Prozent
+Textfeld 1021	aufstellung.kosten.mahnverfahren.zins.prozentpunkte	0	Zahl
+Textfeld 1020	aufstellung.kosten.mahnverfahren.zins.prozent	0	Zahl
+Textfeld 1019	aufstellung.kosten.mahnverfahren.zins.aus_betrag	0	Betrag
+Textfeld 1018	aufstellung.kosten.mahnverfahren.zins.von	0	Datum von
+Textfeld 1017	aufstellung.kosten.mahnverfahren.zins.bis	0	Datum bis
+Textfeld 1016	aufstellung.kosten.mahnverfahren.zins.betrag	0	Betrag
+Kontrollkästchen 202	aufstellung.kosten.mahnverfahren.laufender_zins.ist_prozentpunkte	0	Prozentpunkte
+Kontrollkästchen 201	aufstellung.kosten.mahnverfahren.laufender_zins.ist_prozent	0	Prozent
+Textfeld 558	aufstellung.kosten.mahnverfahren.laufender_zins.prozentpunkte	0	Zahl
+Textfeld 557	aufstellung.kosten.mahnverfahren.laufender_zins.prozent	0	Zahl
+Textfeld 556	aufstellung.kosten.mahnverfahren.laufender_zins.aus_betrag	0	Betrag
+Textfeld 555	aufstellung.kosten.mahnverfahren.laufender_zins.seit	0	Datum
+Kontrollkästchen 231	aufstellung.kosten.vorgerichtlich.ist_gesamtkosten	0	Gesamtkosten
+Kontrollkästchen 230	aufstellung.kosten.vorgerichtlich.ist_restkosten	0	Restkosten
+Kontrollkästchen 229	aufstellung.kosten.vorgerichtlich.ist_teilkosten	0	Teilkosten
+Textfeld 550	aufstellung.kosten.vorgerichtlich.restkosten	0	Betrag
+Textfeld 549	aufstellung.kosten.vorgerichtlich.teilkosten	0	Betrag
+Textfeld 548	aufstellung.kosten.vorgerichtlich.betrag	0	Betrag
+Textfeld 4011	aufstellung.kosten.vorgerichtlich.zinsen_ausgerechnet	0	Betrag
+Kontrollkästchen 228	aufstellung.kosten.vorgerichtlich.zins.ist_prozentpunkte	0	Prozentpunkte
+Kontrollkästchen 227	aufstellung.kosten.vorgerichtlich.zins.ist_prozent	0	Prozent
+Textfeld 4010	aufstellung.kosten.vorgerichtlich.zins.prozentpunkte	0	Zahl
+Textfeld 409	aufstellung.kosten.vorgerichtlich.zins.prozent	0	Zahl
+Textfeld 408	aufstellung.kosten.vorgerichtlich.zins.aus_betrag	0	Betrag
+Textfeld 407	aufstellung.kosten.vorgerichtlich.zins.von	0	Datum von
+Textfeld 406	aufstellung.kosten.vorgerichtlich.zins.bis	0	Datum bis
+Textfeld 405	aufstellung.kosten.vorgerichtlich.zins.betrag	0	Betrag
+Kontrollkästchen 224	aufstellung.kosten.vorgerichtlich.laufender_zins.ist_prozentpunkte	0	Prozentpunkte
+Kontrollkästchen 223	aufstellung.kosten.vorgerichtlich.laufender_zins.ist_prozent	0	Prozent
+Textfeld 544	aufstellung.kosten.vorgerichtlich.laufender_zins.prozentpunkte	0	Zahl
+Textfeld 543	aufstellung.kosten.vorgerichtlich.laufender_zins.prozent	0	Zahl
+Textfeld 542	aufstellung.kosten.vorgerichtlich.laufender_zins.aus_betrag	0	Betrag
+Textfeld 541	aufstellung.kosten.vorgerichtlich.laufender_zins.seit	0	Datum
+Kontrollkästchen 220	aufstellung.kosten.festgesetzt.ist_gesamtkosten	0	Gesamtkosten
+Kontrollkästchen 219	aufstellung.kosten.festgesetzt.ist_restkosten	0	Restkosten
+Kontrollkästchen 218	aufstellung.kosten.festgesetzt.ist_teilkosten	0	Teilkosten
+Textfeld 536	aufstellung.kosten.festgesetzt.restkosten	0	Betrag
+Textfeld 535	aufstellung.kosten.festgesetzt.teilkosten	0	Betrag
+Textfeld 534	aufstellung.kosten.festgesetzt.betrag	0	Betrag
+Textfeld 533	aufstellung.kosten.festgesetzt.zinsen_ausgerechnet	0	Betrag
+Kontrollkästchen 217	aufstellung.kosten.festgesetzt.zins.ist_prozentpunkte	0	Prozentpunkte
+Kontrollkästchen 216	aufstellung.kosten.festgesetzt.zins.ist_prozent	0	Prozent
+Textfeld 532	aufstellung.kosten.festgesetzt.zins.prozentpunkte	0	Zahl
+Textfeld 531	aufstellung.kosten.festgesetzt.zins.prozent	0	Zahl
+Textfeld 530	aufstellung.kosten.festgesetzt.zins.aus_betrag	0	Betrag
+Textfeld 529	aufstellung.kosten.festgesetzt.zins.von	0	Datum von
+Textfeld 528	aufstellung.kosten.festgesetzt.zins.bis	0	Datum bis
+Textfeld 527	aufstellung.kosten.festgesetzt.zins.betrag	0	Betrag
+Kontrollkästchen 213	aufstellung.kosten.festgesetzt.laufender_zins.ist_prozentpunkte	0	Prozentpunkte
+Kontrollkästchen 212	aufstellung.kosten.festgesetzt.laufender_zins.ist_prozent	0	Prozent
+Textfeld 520	aufstellung.kosten.festgesetzt.laufender_zins.prozentpunkte	0	Zahl
+Textfeld 519	aufstellung.kosten.festgesetzt.laufender_zins.prozent	0	Zahl
+Textfeld 518	aufstellung.kosten.festgesetzt.laufender_zins.aus_betrag	0	Betrag
+Textfeld 517	aufstellung.kosten.festgesetzt.laufender_zins.seit	0	Datum
+Textfeld 571	massnahme.kosten.gegenstandswert	0	Betrag
+Textfeld 570	massnahme.kosten.verfahrensgebuehr	0	Betrag
+Textfeld 569	massnahme.kosten.post_telekom	0	Betrag
+Textfeld 568	massnahme.kosten.weitere_auslagen_bezeichnung	0	Weitere Auslagen
+Textfeld 567	massnahme.kosten.weitere_auslagen	0	Betrag
+Textfeld 566	massnahme.kosten.umsatzsteuer	0	Betrag
+Textfeld 583	massnahme.kosten.zwischensumme	0	Betrag
+Textfeld 584	aufstellung.summe	0	Betrag

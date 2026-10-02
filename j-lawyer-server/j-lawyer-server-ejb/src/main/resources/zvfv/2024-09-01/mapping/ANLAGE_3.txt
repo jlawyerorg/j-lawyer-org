@@ -1,0 +1,64 @@
+# Feldzuordnung für Anlage 3 der ZVFV, Entwurf der richterlichen Durchsuchungsanordnung.
+#
+# Spalten: Feldname <TAB> Schluessel <TAB> Pflicht (0/1) <TAB> Bezeichnung
+#
+# Der Feldname ist der Name im PDF und sagt fuer sich nichts. Der Schluessel benennt, woraus
+# gefuellt wird; das Vokabular dazu ist EnforcementFormDataSource. Die Bezeichnung ist der Tooltip
+# des Formulars und der Beleg dafuer, dass die Zuordnung das meint, was sie behauptet.
+#
+# Dieses Formular ist nicht der Antrag, sondern der Entwurf, den das Gericht als seinen eigenen
+# Beschluss uebernimmt. Daraus folgt, was zugeordnet ist und was nicht.
+#
+# Zugeordnet sind die Angaben, die aus der Akte kommen und die das Gericht nicht hat: das
+# angerufene Amtsgericht, der Glaeubiger mit seinem Bevollmaechtigten, der Schuldner. Sie stehen im
+# Beschluss wie im Antrag, und sie zweimal von Hand einzutragen waere die Arbeit, die diese
+# Zuordnung spart.
+#
+# Nicht zugeordnet ist der Beschluss selbst - die Anordnung, ihre Reichweite, die Gruende, die
+# Rechtsbehelfsbelehrung, Datum und Unterschrift des Richters. Das ist die Entscheidung des
+# Gerichts, und ein Entwurf, der sie schon ausfuellt, nimmt sie vorweg.
+#
+# Ebenfalls offen bleiben die Bloecke fuer gesetzliche Vertreter und Betreuer (Felder der Art
+# "Textfeld 4a 7"). Sie koennen mehrfach auftreten und ineinander geschachtelt sein - der
+# Glaeubiger vertreten durch eine GmbH, diese durch ihren Geschaeftsfuehrer -, und das
+# Forderungskonto fuehrt diese Kette heute nicht. Sie zu raten waere schlimmer als sie leer zu
+# lassen.
+#
+# Geprueft an einer Probe, in der jedes Feld seinen eigenen Namen trug. Das war noetig: "Name/Firma"
+# steht auf diesen beiden Seiten dreimal - fuer den Glaeubiger, fuer dessen Bevollmaechtigten und
+# fuer den Schuldner -, und die Bezeichnungen allein unterscheiden sie nicht.
+
+Textfeld 353	empfaenger.name	1	Bezeichnung des Amtsgerichts
+Kontrollkästchen 342	glaeubiger.ist_herr	0	Herr
+Kontrollkästchen 341	glaeubiger.ist_frau	0	Frau
+Kontrollkästchen 340	glaeubiger.ist_unternehmen	0	Unternehmen
+Kontrollkästchen 339	glaeubiger.ist_sonstige	0	Sonstige
+Textfeld 855	glaeubiger.name	1	Name/Firma
+Textfeld 854	glaeubiger.vorname	0	ggf. Vorname(n)
+Textfeld 853	glaeubiger.strasse	0	Straße
+Textfeld 852	glaeubiger.hausnummer	0	Hausnummer
+Textfeld 851	glaeubiger.plz	0	Postleitzahl
+Textfeld 850	glaeubiger.ort	0	Ort
+Textfeld 849	glaeubiger.land	0	Land (wenn nicht Deutschland)
+Kontrollkästchen 374	bevollmaechtigter.ist_herr	0	Herr
+Kontrollkästchen 373	bevollmaechtigter.ist_frau	0	Frau
+Kontrollkästchen 372	bevollmaechtigter.ist_unternehmen	0	Unternehmen
+Textfeld 11017	bevollmaechtigter.name	0	Name/Firma
+Textfeld 11016	bevollmaechtigter.vorname	0	ggf. Vorname(n)
+Textfeld 11015	bevollmaechtigter.strasse	0	Straße
+Textfeld 11012	bevollmaechtigter.hausnummer	0	Hausnummer
+Textfeld 17a 11	bevollmaechtigter.plz	0	Postleitzahl
+Textfeld 18a 13	bevollmaechtigter.ort	0	Ort
+Textfeld 1099	akte.zeichen	0	Geschäftszeichen
+Kontrollkästchen 366	schuldner.ist_herr	0	Herr
+Kontrollkästchen 365	schuldner.ist_frau	0	Frau
+Kontrollkästchen 364	schuldner.ist_unternehmen	0	Unternehmen
+Kontrollkästchen 363	schuldner.ist_sonstige	0	Sonstige
+Textfeld 957	schuldner.name	1	Name/Firma
+Textfeld 956	schuldner.vorname	0	ggf. Vorname(n)
+Textfeld 955	schuldner.strasse	0	Straße
+Textfeld 954	schuldner.hausnummer	0	Hausnummer
+Textfeld 953	schuldner.plz	0	Postleitzahl
+Textfeld 952	schuldner.ort	0	Ort
+Textfeld 951	schuldner.land	0	Land (wenn nicht Deutschland)
+Textfeld 949	schuldner.geburtsdatum	0	Geburtsdatum
