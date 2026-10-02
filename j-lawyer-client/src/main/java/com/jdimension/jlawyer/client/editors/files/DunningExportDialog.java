@@ -683,7 +683,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Random;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import org.apache.log4j.Logger;
@@ -721,7 +720,6 @@ public class DunningExportDialog extends javax.swing.JDialog {
     private static final Logger log = Logger.getLogger(DunningExportDialog.class.getName());
 
     /** How long the file name may be - field EDAID of the Dateivorsatz. */
-    private static final int FILE_NAME_LENGTH = 6;
 
     private static final int COL_INCLUDED = 0;
     private static final int COL_AMOUNT = 3;
@@ -800,11 +798,17 @@ public class DunningExportDialog extends javax.swing.JDialog {
                     + "Datei nicht erzeugt werden.</font>");
         } else {
             sb.append("Kennziffer ").append(this.dunningCase.getKennziffer());
+            if (edaPrefix() == null) {
+                sb.append(" <font color=\"red\">- zu dieser Kennziffer ist kein EDA-Kürzel "
+                        + "hinterlegt; es wird in der Benutzerverwaltung beim Anwalt im Reiter "
+                        + "\"Finanzen\" erfasst, und ohne es kann die Datei nicht erzeugt "
+                        + "werden.</font>");
+            }
         }
         if (this.dunningCase.getFileName() != null
                 && !this.dunningCase.getFileName().trim().isEmpty()) {
             sb.append("<br>Zuletzt übermittelt als Datei ").append(this.dunningCase.getFileName())
-                    .append(" - ein erneuter Antrag erhält einen eigenen Dateinamen.");
+                    .append(" - ein erneuter Antrag erhält eine eigene EDA-ID.");
         }
         sb.append("</html>");
         this.lblHeader.setText(sb.toString());
@@ -877,26 +881,42 @@ public class DunningExportDialog extends javax.swing.JDialog {
         this.txtFeeAmount.setText(this.dunningCase.getRepresentativeFeeAmount() == null
                 ? "" : currencyFormat.format(this.dunningCase.getRepresentativeFeeAmount()));
         feeModeChanged(null);
-        // deliberately a new name even for a repeat: the file name identifies the transmission, and
-        // the receipt the court sends back names the file and nothing else. Two transmissions under
-        // one name would leave a receipt pointing at both
-        this.txtFileName.setText(generatedFileName());
+        // Die ID wird beim Erzeugen vergeben, nicht hier. Gezeigt wird deshalb das Muster und keine
+        // Nummer: welche es wird, entscheidet sich erst am Server, und eine angezeigte Nummer, die
+        // hinterher eine andere ist, wäre schlimmer als gar keine. Jede Übermittlung bekommt
+        // ohnehin eine eigene - die Empfangsbestätigung des Gerichts nennt die Datei und sonst
+        // nichts.
+        String prefix = edaPrefix();
+        this.txtFileName.setText(prefix == null ? "— kein EDA-Kürzel hinterlegt —" : prefix + "###");
     }
 
     /**
-     * A name for the file that is six characters long and not the same as the last one, so two
-     * exports of one procedure do not collide - neither in the court's inbox nor among the documents
-     * of the case, which are named after it.
+     * The three-letter code the file of this procedure will be named after.
+     *
+     * Looked up over the Kennziffer of the procedure, the same way the server does it. Only to show
+     * something true in the dialog - what is binding is the check on the server, which refuses an
+     * application whose lawyer has no code.
+     *
+     * @return the code, or null where none is recorded
      */
-    private String generatedFileName() {
-        String previous = this.dunningCase.getFileName();
-        for (int attempt = 0; attempt < 10; attempt++) {
-            String candidate = "MB" + String.format("%04d", new Random().nextInt(10000));
-            if (!candidate.equals(previous)) {
-                return candidate;
+    private String edaPrefix() {
+        String kennziffer = this.dunningCase == null ? null : this.dunningCase.getKennziffer();
+        if (kennziffer == null || kennziffer.trim().isEmpty()) {
+            return null;
+        }
+        com.jdimension.jlawyer.persistence.AppUserBean[] lawyers =
+                com.jdimension.jlawyer.client.settings.UserSettings.getInstance().getLawyerUsers();
+        if (lawyers == null) {
+            return null;
+        }
+        for (com.jdimension.jlawyer.persistence.AppUserBean lawyer : lawyers) {
+            if (kennziffer.trim().equals(lawyer.getDunningKennziffer() == null
+                    ? null : lawyer.getDunningKennziffer().trim())) {
+                String prefix = lawyer.getDunningEdaPrefix();
+                return prefix == null || prefix.trim().isEmpty() ? null : prefix.trim().toUpperCase();
             }
         }
-        return "MB" + String.format("%04d", new Random().nextInt(10000));
+        return null;
     }
 
     private BigDecimal sumOfSelected() {
@@ -1146,10 +1166,12 @@ public class DunningExportDialog extends javax.swing.JDialog {
             }
         });
 
-        lblFileName.setText("Dateiname:");
-        lblFileName.setToolTipText("Sechs Zeichen, Feld EDAID im Dateivorsatz.");
+        lblFileName.setText("EDA-ID:");
+        lblFileName.setToolTipText("Kürzel des einreichenden Anwalts und eine fortlaufende Nummer; die Nummer wird beim Erzeugen der Datei vergeben.");
 
+        txtFileName.setEditable(false);
         txtFileName.setText("");
+        txtFileName.setToolTipText("Kürzel des einreichenden Anwalts und eine fortlaufende Nummer; die Nummer wird beim Erzeugen der Datei vergeben.");
 
         txtResult.setEditable(false);
         txtResult.setColumns(20);
@@ -1345,14 +1367,6 @@ public class DunningExportDialog extends javax.swing.JDialog {
                     "Hinweis", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
-        String fileName = this.txtFileName.getText() == null ? "" : this.txtFileName.getText().trim();
-        if (fileName.length() != FILE_NAME_LENGTH) {
-            JOptionPane.showMessageDialog(this,
-                    "Der Dateiname muss genau " + FILE_NAME_LENGTH + " Zeichen lang sein.",
-                    "Hinweis", JOptionPane.INFORMATION_MESSAGE);
-            return;
-        }
-
         // said before rather than discovered afterwards: the export is not a draft
         int answer = JOptionPane.showConfirmDialog(this,
                 "Es werden " + claims.size() + " Position(en) über " + currencyFormat.format(claimValue)
@@ -1372,7 +1386,7 @@ public class DunningExportDialog extends javax.swing.JDialog {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             this.exported = locator.lookupDunningServiceRemote().exportApplication(
-                    this.dunningCase.getId(), claimValue, claims, fileName.toUpperCase());
+                    this.dunningCase.getId(), claimValue, claims);
         } catch (Exception ex) {
             log.error("Unable to export dunning case " + this.dunningCase.getId(), ex);
             // the server refuses an incomplete or structurally faulty application and says why; that

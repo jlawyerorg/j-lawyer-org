@@ -251,7 +251,6 @@
                           <Component id="jLabel39" min="-2" max="-2" attributes="0"/>
                           <Component id="jLabel40" min="-2" max="-2" attributes="0"/>
                           <Component id="jLabel41" min="-2" max="-2" attributes="0"/>
-                          <Component id="lblDunningKennziffer" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
@@ -265,9 +264,8 @@
                           <Component id="txtFax" alignment="0" max="32767" attributes="0"/>
                           <Component id="txtPhone" alignment="0" max="32767" attributes="0"/>
                           <Component id="txtEmail" alignment="0" max="32767" attributes="0"/>
-                          <Component id="txtDunningKennziffer" min="-2" pref="300" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="46" max="32767" attributes="0"/>
+                      <EmptySpace pref="266" max="32767" attributes="0"/>
                       <Component id="chkLawyer" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
@@ -282,11 +280,7 @@
                           <Group type="102" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Group type="102" attributes="0">
-                                      <Group type="103" groupAlignment="3" attributes="0">
-                                          <Component id="lblDunningKennziffer" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="txtDunningKennziffer" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      </Group>
-                                      <EmptySpace max="-2" attributes="0"/>
+                                      <EmptySpace min="-2" pref="37" max="-2" attributes="0"/>
                                       <Group type="103" groupAlignment="3" attributes="0">
                                           <Component id="txtEmail" alignment="3" min="-2" max="-2" attributes="0"/>
                                           <Component id="jLabel13" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -423,17 +417,6 @@
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="chkLawyerActionPerformed"/>
               </Events>
-            </Component>
-            <Component class="javax.swing.JLabel" name="lblDunningKennziffer">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="Kennziffer:"/>
-                <Property name="toolTipText" type="java.lang.String" value="wird beim Mahngericht beantragt und identifiziert die einreichende Anw&#xe4;ltin bzw. den einreichenden Anwalt"/>
-              </Properties>
-            </Component>
-            <Component class="javax.swing.JTextField" name="txtDunningKennziffer">
-              <Properties>
-                <Property name="toolTipText" type="java.lang.String" value="wird beim Mahngericht beantragt und identifiziert die einreichende Anw&#xe4;ltin bzw. den einreichenden Anwalt"/>
-              </Properties>
             </Component>
             <Component class="javax.swing.JTextField" name="txtFirstName">
             </Component>
@@ -1813,8 +1796,8 @@
         <Container class="javax.swing.JPanel" name="jPanel12">
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
-              <JTabbedPaneConstraints tabName="Belege">
-                <Property name="tabTitle" type="java.lang.String" value="Belege"/>
+              <JTabbedPaneConstraints tabName="Finanzen">
+                <Property name="tabTitle" type="java.lang.String" value="Finanzen"/>
               </JTabbedPaneConstraints>
             </Constraint>
           </Constraints>
@@ -1822,11 +1805,32 @@
           <Layout>
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" alignment="0" attributes="0">
+                  <Group type="102" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jScrollPane3" pref="911" max="32767" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="102" attributes="0">
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
+                                  <Component id="lblDunningEdaPrefix" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="lblDunningKennziffer" alignment="0" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="jScrollPane3" pref="911" max="32767" attributes="0"/>
+                                  <Group type="102" attributes="0">
+                                      <Group type="103" groupAlignment="0" attributes="0">
+                                          <Component id="txtDunningEdaPrefix" min="-2" pref="80" max="-2" attributes="0"/>
+                                          <Component id="txtDunningKennziffer" min="-2" pref="300" max="-2" attributes="0"/>
+                                      </Group>
+                                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                                  </Group>
+                              </Group>
+                          </Group>
+                          <Group type="102" alignment="0" attributes="0">
+                              <Component id="jLabel45" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                          </Group>
+                      </Group>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
@@ -1840,7 +1844,19 @@
                               <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
                               <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                           </Group>
-                          <Component id="jScrollPane3" pref="0" max="32767" attributes="0"/>
+                          <Component id="jScrollPane3" pref="334" max="32767" attributes="0"/>
+                      </Group>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                      <Component id="jLabel45" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="txtDunningEdaPrefix" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblDunningEdaPrefix" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="txtDunningKennziffer" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblDunningKennziffer" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
@@ -1875,6 +1891,49 @@
                 </Component>
               </SubComponents>
             </Container>
+            <Component class="javax.swing.JLabel" name="lblDunningEdaPrefix">
+              <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font component="lblDunningEdaPrefix" property="font" relativeSize="true" size="0"/>
+                  </FontInfo>
+                </Property>
+                <Property name="text" type="java.lang.String" value="EDA-K&#xfc;rzel:"/>
+                <Property name="toolTipText" type="java.lang.String" value="dreistelliges Buchstabenk&#xfc;rzel, das das Mahngericht zusammen mit der Kennziffer zuteilt; die EDA-Datei wird daraus und einer fortlaufenden Nummer benannt"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JTextField" name="txtDunningEdaPrefix">
+              <Properties>
+                <Property name="columns" type="int" value="3"/>
+                <Property name="toolTipText" type="java.lang.String" value="dreistelliges Buchstabenk&#xfc;rzel, das das Mahngericht zusammen mit der Kennziffer zuteilt; die EDA-Datei wird daraus und einer fortlaufenden Nummer benannt"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="lblDunningKennziffer">
+              <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font component="lblDunningKennziffer" property="font" relativeSize="true" size="0"/>
+                  </FontInfo>
+                </Property>
+                <Property name="text" type="java.lang.String" value="Kennziffer:"/>
+                <Property name="toolTipText" type="java.lang.String" value="wird beim Mahngericht beantragt und identifiziert die einreichende Anw&#xe4;ltin bzw. den einreichenden Anwalt"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JTextField" name="txtDunningKennziffer">
+              <Properties>
+                <Property name="toolTipText" type="java.lang.String" value="wird beim Mahngericht beantragt und identifiziert die einreichende Anw&#xe4;ltin bzw. den einreichenden Anwalt"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="jLabel45">
+              <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+                  <FontInfo relative="true">
+                    <Font bold="true" component="jLabel45" property="font" relativeSize="true" size="0"/>
+                  </FontInfo>
+                </Property>
+                <Property name="text" type="java.lang.String" value="Mahnverfahren"/>
+              </Properties>
+            </Component>
           </SubComponents>
         </Container>
       </SubComponents>

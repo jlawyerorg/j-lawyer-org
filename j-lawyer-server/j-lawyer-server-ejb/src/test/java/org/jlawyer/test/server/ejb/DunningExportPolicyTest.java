@@ -748,7 +748,9 @@ public class DunningExportPolicyTest {
     public void anEarlierFileNameOrApplicationDateAlsoMakesItOne() {
         // the status can have been corrected by hand; what actually went out is what counts
         DunningCase withFile = caseIn(DunningCaseStatus.PREPARED);
-        withFile.setFileName("MB0001");
+        // bewusst ein Name aus der Zeit vor der EDA-ID-Vergabe: Bestandsvorgänge müssen weiter als
+        // Wiedereinreichung erkannt werden
+        withFile.setFileName("MB6718");
         assertTrue(policy.isRepeat(withFile));
 
         DunningCase withDate = caseIn(DunningCaseStatus.PREPARED);
@@ -760,8 +762,8 @@ public class DunningExportPolicyTest {
 
     @Test
     public void theDocumentCarriesTheEdaFileNameSoAReceiptCanBeTraced() {
-        assertEquals("Mahnbescheidsantrag_123_26_MB0001.eda",
-                policy.documentName(caseIn(DunningCaseStatus.PREPARED), "MB0001"));
+        assertEquals("Mahnbescheidsantrag_123_26_FSR001.eda",
+                policy.documentName(caseIn(DunningCaseStatus.PREPARED), "FSR001"));
     }
 
     @Test
@@ -769,12 +771,12 @@ public class DunningExportPolicyTest {
         DunningCase c = caseIn(DunningCaseStatus.MB_APPLIED);
 
         assertFalse("two documents of one name cannot be told apart",
-                policy.documentName(c, "MB0001").equals(policy.documentName(c, "MB0002")));
+                policy.documentName(c, "FSR001").equals(policy.documentName(c, "FSR002")));
     }
 
     @Test
     public void theCaseReferenceLosesItsSlashBecauseThatIsAPathSeparator() {
-        String name = policy.documentName(caseIn(DunningCaseStatus.PREPARED), "MB0001");
+        String name = policy.documentName(caseIn(DunningCaseStatus.PREPARED), "FSR001");
 
         assertFalse("a slash would break saving the file locally", name.contains("/"));
         assertTrue(name.endsWith(".eda"));
@@ -785,7 +787,7 @@ public class DunningExportPolicyTest {
         DunningCase c = caseIn(DunningCaseStatus.PREPARED);
         c.setOwnReference(null);
 
-        assertEquals("Mahnbescheidsantrag_MB0001.eda", policy.documentName(c, "MB0001"));
+        assertEquals("Mahnbescheidsantrag_FSR001.eda", policy.documentName(c, "FSR001"));
     }
 
     @Test

@@ -777,8 +777,14 @@ public class DunningApplicationValidatorTest {
 
     private DunningValidationResult validate(DunningCase c, List<ClaimLedgerParty> parties,
             List<ClaimComponent> components, String value) {
+        return validate(c, parties, components, value, "FSR");
+    }
+
+    private DunningValidationResult validate(DunningCase c, List<ClaimLedgerParty> parties,
+            List<ClaimComponent> components, String value, String edaPrefix) {
         return validator.validate(c, parties, components,
-                value == null ? null : new BigDecimal(value), ReferenceData.getMainClaimCatalogue());
+                value == null ? null : new BigDecimal(value), ReferenceData.getMainClaimCatalogue(),
+                edaPrefix);
     }
 
     private boolean hasIssueAbout(DunningValidationResult r, String fieldFragment) {
@@ -1011,7 +1017,8 @@ public class DunningApplicationValidatorTest {
     @Test
     public void withoutACatalogueTheNumbersAreLeftAlone() {
         DunningValidationResult r = validator.validate(completeCase(), completeParties(),
-                Arrays.asList(mainClaim("c1", "Miete", "19")), new BigDecimal("5000.00"), null);
+                Arrays.asList(mainClaim("c1", "Miete", "19")), new BigDecimal("5000.00"), null,
+                "FSR");
 
         assertTrue("no catalogue to check against, so no claim about the number", r.isReady());
     }
@@ -1240,4 +1247,51 @@ public class DunningApplicationValidatorTest {
         assertFalse(r.isReady());
         assertTrue(hasIssueAbout(r, "Antragsgegner"));
     }
+
+    /**
+     * Das Mahngericht musste unsere erste Datei von Hand umbenennen, weil ihr Name erfunden war.
+     * Ohne Kürzel entsteht erst gar keine.
+     */
+    @Test
+    public void withoutACodeNoFileIsBuilt() {
+        DunningValidationResult r = validate(completeCase(), completeParties(),
+                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00", null);
+
+        assertTrue(hasIssueAbout(r, "EDA-ID"));
+        assertFalse("ohne Dateinamen darf kein Antrag hinausgehen", r.isReady());
+    }
+
+    @Test
+    public void aCodeThatIsNotThreeLettersIsRefused() {
+        DunningValidationResult r = validate(completeCase(), completeParties(),
+                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00", "FS");
+
+        assertTrue(hasIssueAbout(r, "EDA-ID"));
+        assertFalse(r.isReady());
+    }
+
+    @Test
+    public void aProperCodePassesUnremarked() {
+        DunningValidationResult r = validate(completeCase(), completeParties(),
+                Arrays.asList(mainClaim("c1", "Kaufpreis", "11")), "5000.00", "fsr");
+
+        assertFalse(hasIssueAbout(r, "EDA-ID"));
+    }
+
+    /**
+     * Ein Problem, eine Meldung: wer keine Kennziffer hat, braucht keinen zweiten Satz über ein
+     * Kürzel, das zu einer Kennziffer gehört, die es nicht gibt.
+     */
+    @Test
+    public void withoutAKennzifferTheCodeIsNotMentioned() {
+        DunningCase c = completeCase();
+        c.setKennziffer(null);
+
+        DunningValidationResult r = validate(c, completeParties(), Arrays.asList(mainClaim("c1", "Kaufpreis", "11")),
+                "5000.00", null);
+
+        assertTrue(hasIssueAbout(r, "Kennziffer"));
+        assertFalse(hasIssueAbout(r, "EDA-ID"));
+    }
+
 }

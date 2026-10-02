@@ -748,6 +748,8 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
     private DunningCaseFacadeLocal dunningCasesFacade;
     @EJB
     private SystemManagementLocal systemManagement;
+    @EJB
+    private EdaIdAllocatorLocal edaIdAllocator;
 
     @EJB
     private ClaimLedgerPartyFacadeLocal claimLedgerPartiesFacade;
@@ -807,16 +809,18 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
         }
         requireAccess(ledger.getArchiveFileKey());
 
+        AppUserBean lawyer = lawyerByKennziffer(dunningCase.getKennziffer());
         return new DunningApplicationValidator().validate(dunningCase,
                 new ArrayList<>(this.claimLedgerPartiesFacade.findByLedger(ledger)),
                 new ArrayList<>(this.claimComponentsFacade.findByLedger(ledger)),
-                claimValue, ReferenceData.getMainClaimCatalogue());
+                claimValue, ReferenceData.getMainClaimCatalogue(),
+                lawyer == null ? null : lawyer.getDunningEdaPrefix());
     }
 
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public ArchiveFileDocumentsBean exportApplication(String dunningCaseId, BigDecimal claimValue,
-            List<DunningClaimInput> claims, String fileName) throws Exception {
+            List<DunningClaimInput> claims) throws Exception {
 
         DunningCase dunningCase = this.dunningCasesFacade.find(dunningCaseId);
         if (dunningCase == null) {
@@ -839,12 +843,20 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
         List<ClaimLedgerParty> parties = new ArrayList<>(this.claimLedgerPartiesFacade.findByLedger(ledger));
         List<ClaimComponent> components = new ArrayList<>(this.claimComponentsFacade.findByLedger(ledger));
 
+        AppUserBean lawyer = lawyerByKennziffer(dunningCase.getKennziffer());
+        String edaPrefix = lawyer == null ? null : lawyer.getDunningEdaPrefix();
+
         // nothing is produced that has not been checked first
         DunningValidationResult validation = new DunningApplicationValidator().validate(dunningCase,
-                parties, components, claimValue, ReferenceData.getMainClaimCatalogue());
+                parties, components, claimValue, ReferenceData.getMainClaimCatalogue(), edaPrefix);
         if (!validation.isReady()) {
             throw new Exception("Der Antrag ist noch nicht vollständig:\n" + describe(validation));
         }
+
+        // Die EDA-ID wird hier vergeben und nicht vom Aufrufer geliefert: sie besteht aus dem
+        // Kürzel, das das Mahngericht mit der Kennziffer zugeteilt hat, und einer fortlaufenden
+        // Nummer, die in der ganzen Installation nur einmal vergeben werden darf.
+        String fileName = this.edaIdAllocator.allocate(edaPrefix);
 
         // the exceptions of the eda package live in this module and would not deserialise on the
         // desktop client - the client would see "Failed to read response" instead of the sentence

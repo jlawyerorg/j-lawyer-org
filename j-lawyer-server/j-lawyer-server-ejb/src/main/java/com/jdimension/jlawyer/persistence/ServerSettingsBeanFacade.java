@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.persistence;
 import javax.annotation.security.PermitAll;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
+import javax.persistence.LockModeType;
 import javax.persistence.PersistenceContext;
 
 /**
@@ -686,5 +687,10 @@ public class ServerSettingsBeanFacade extends AbstractFacade<ServerSettingsBean>
     public ServerSettingsBeanFacade() {
         super(ServerSettingsBean.class);
     }
-    
+
+    @Override
+    public ServerSettingsBean findForUpdate(String key) {
+        return em.find(ServerSettingsBean.class, key, LockModeType.PESSIMISTIC_WRITE);
+    }
+
 }

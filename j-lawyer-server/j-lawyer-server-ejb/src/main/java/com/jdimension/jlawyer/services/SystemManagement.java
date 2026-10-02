@@ -780,6 +780,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @EJB
     private ServerSettingsBeanFacadeLocal settingsFacade;
     @EJB
+    private EdaIdAllocatorLocal edaIdAllocator;
+    @EJB
     private PartyTypeBeanFacadeLocal partyTypesFacade;
     @EJB
     private ContactRelationTypeFacadeLocal contactRelationTypesFacade;
@@ -1135,6 +1137,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         StringGenerator idGen = new StringGenerator();
         // create password hash
         user.setPassword(PasswordsUtil.createPasswordHash(user.getPassword()));
+        user.setDunningEdaPrefix(normalizeEdaPrefix(user.getDunningEdaPrefix()));
+        this.edaIdAllocator.prepare(user.getDunningEdaPrefix());
         this.userBeanFacade.create(user);
 
         for (AppRoleBean r : roles) {
@@ -1197,6 +1201,13 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         // no password change via updateUser, only by using updatePassword service
         // preserve current password hash
         user.setPassword(outdated.getPassword());
+
+        // Das EDA-Kürzel wird großgeschrieben abgelegt, damit "fsr" und "FSR" nicht zwei Zähler
+        // ergeben, und seine Form wird hier geprüft: ein zweibuchstabiges Kürzel ergäbe einen zu
+        // kurzen Dateinamen, den das Mahngericht beanstandet.
+        user.setDunningEdaPrefix(normalizeEdaPrefix(user.getDunningEdaPrefix()));
+        this.edaIdAllocator.prepare(user.getDunningEdaPrefix());
+
         this.userBeanFacade.edit(user);
 
         List<AppRoleBean> delRoles = this.roleBeanFacade.findByPrincipalId(user.getPrincipalId());
@@ -1272,6 +1283,25 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         File wildFlyLog = new File(logDir.getAbsolutePath() + File.separator + "server.log");
         return ServerFileUtils.readLinesFromEnd(wildFlyLog, numberOfLines);
 
+    }
+
+    /**
+     * The EDA code as it is stored: trimmed, in capitals, and only if it has the assigned form.
+     *
+     * @param prefix as entered
+     * @return the normalised code, or null where none was entered
+     * @throws Exception if something was entered that is not three letters
+     */
+    private String normalizeEdaPrefix(String prefix) throws Exception {
+        String normalized = com.jdimension.jlawyer.eda.EdaId.normalizePrefix(prefix);
+        if (normalized == null) {
+            return null;
+        }
+        if (!com.jdimension.jlawyer.eda.EdaId.isPrefix(normalized)) {
+            throw new Exception("Das EDA-Kürzel muss aus genau drei Buchstaben bestehen (z. B. "
+                    + "FSR). Es wird vom Mahngericht zusammen mit der Kennziffer zugeteilt.");
+        }
+        return normalized;
     }
 
     @Override

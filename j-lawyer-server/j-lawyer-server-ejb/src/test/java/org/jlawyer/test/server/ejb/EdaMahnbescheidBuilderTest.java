@@ -1147,4 +1147,19 @@ public class EdaMahnbescheidBuilderTest {
         assertEquals("3.6.0.48", header.get("SWV").trim());
     }
 
+    /**
+     * Die EDA-ID steht ohne auffüllende Leerzeichen im Vorsatz.
+     *
+     * Das Feld ist sechs Zeichen lang und wird rechts mit Leerzeichen aufgefüllt; eine zu kurze ID
+     * fiele also nicht auf, bis das Gericht sie beanstandet. Kürzel plus dreistellige Nummer füllt
+     * es genau aus.
+     */
+    @Test
+    public void theFileHeaderCarriesTheAssignedEdaId() {
+        EdaRecord header = builder.header("07774512", "FSR001", date(2026, 9, 28));
+
+        assertEquals("FSR001", header.get("EDAID"));
+        assertEquals(6, header.get("EDAID").length());
+    }
+
 }

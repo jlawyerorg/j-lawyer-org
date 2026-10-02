@@ -686,5 +686,17 @@ public interface ServerSettingsBeanFacadeLocal {
     List<ServerSettingsBean> findRange(int[] range);
 
     int count();
-    
+
+    /**
+     * Reads a setting and locks its row until the end of the transaction.
+     *
+     * For a setting that is read, incremented and written back - a counter - the ordinary find is
+     * not enough: two callers would read the same value and write the same successor. The row is
+     * found by its primary key, so this locks exactly one row.
+     *
+     * @param key the setting
+     * @return it, or null where it does not exist yet
+     */
+    ServerSettingsBean findForUpdate(String key);
+
 }

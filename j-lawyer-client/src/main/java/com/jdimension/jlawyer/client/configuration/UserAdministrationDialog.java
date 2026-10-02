@@ -866,8 +866,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         txtEmail = new javax.swing.JTextField();
         txtDisplayName = new javax.swing.JTextField();
         chkLawyer = new javax.swing.JCheckBox();
-        lblDunningKennziffer = new javax.swing.JLabel();
-        txtDunningKennziffer = new javax.swing.JTextField();
         txtFirstName = new javax.swing.JTextField();
         jLabel14 = new javax.swing.JLabel();
         txtName = new javax.swing.JTextField();
@@ -997,6 +995,11 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         jLabel7 = new javax.swing.JLabel();
         jScrollPane3 = new javax.swing.JScrollPane();
         tblInvoicePools = new javax.swing.JTable();
+        lblDunningEdaPrefix = new javax.swing.JLabel();
+        txtDunningEdaPrefix = new javax.swing.JTextField();
+        lblDunningKennziffer = new javax.swing.JLabel();
+        txtDunningKennziffer = new javax.swing.JTextField();
+        jLabel45 = new javax.swing.JLabel();
         chkShowExternalUsers = new javax.swing.JCheckBox();
 
         mnuDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
@@ -1081,11 +1084,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 chkLawyerActionPerformed(evt);
             }
         });
-
-        lblDunningKennziffer.setText("Kennziffer:");
-        lblDunningKennziffer.setToolTipText("wird beim Mahngericht beantragt und identifiziert die einreichende Anwältin bzw. den einreichenden Anwalt");
-
-        txtDunningKennziffer.setToolTipText("wird beim Mahngericht beantragt und identifiziert die einreichende Anwältin bzw. den einreichenden Anwalt");
 
         jLabel14.setText("Vorname:");
 
@@ -1182,8 +1180,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(jLabel38)
                     .add(jLabel39)
                     .add(jLabel40)
-                    .add(jLabel41)
-                    .add(lblDunningKennziffer))
+                    .add(jLabel41))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
                     .add(txtTaxNr)
@@ -1195,9 +1192,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(txtMobile)
                     .add(txtFax)
                     .add(txtPhone)
-                    .add(txtEmail)
-                    .add(txtDunningKennziffer, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 300, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 46, Short.MAX_VALUE)
+                    .add(txtEmail))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 266, Short.MAX_VALUE)
                 .add(chkLawyer)
                 .addContainerGap())
         );
@@ -1210,10 +1206,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(jPanel14Layout.createSequentialGroup()
                         .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jPanel14Layout.createSequentialGroup()
-                                .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                                    .add(lblDunningKennziffer)
-                                    .add(txtDunningKennziffer, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(37, 37, 37)
                                 .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                                     .add(txtEmail, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                     .add(jLabel13))
@@ -2068,15 +2061,45 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         });
         jScrollPane3.setViewportView(tblInvoicePools);
 
+        lblDunningEdaPrefix.setFont(lblDunningEdaPrefix.getFont());
+        lblDunningEdaPrefix.setText("EDA-Kürzel:");
+        lblDunningEdaPrefix.setToolTipText("dreistelliges Buchstabenkürzel, das das Mahngericht zusammen mit der Kennziffer zuteilt; die EDA-Datei wird daraus und einer fortlaufenden Nummer benannt");
+
+        txtDunningEdaPrefix.setColumns(3);
+        txtDunningEdaPrefix.setToolTipText("dreistelliges Buchstabenkürzel, das das Mahngericht zusammen mit der Kennziffer zuteilt; die EDA-Datei wird daraus und einer fortlaufenden Nummer benannt");
+
+        lblDunningKennziffer.setFont(lblDunningKennziffer.getFont());
+        lblDunningKennziffer.setText("Kennziffer:");
+        lblDunningKennziffer.setToolTipText("wird beim Mahngericht beantragt und identifiziert die einreichende Anwältin bzw. den einreichenden Anwalt");
+
+        txtDunningKennziffer.setToolTipText("wird beim Mahngericht beantragt und identifiziert die einreichende Anwältin bzw. den einreichenden Anwalt");
+
+        jLabel45.setFont(jLabel45.getFont().deriveFont(jLabel45.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel45.setText("Mahnverfahren");
+
         org.jdesktop.layout.GroupLayout jPanel12Layout = new org.jdesktop.layout.GroupLayout(jPanel12);
         jPanel12.setLayout(jPanel12Layout);
         jPanel12Layout.setHorizontalGroup(
             jPanel12Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel12Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jLabel7)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 911, Short.MAX_VALUE)
+                .add(jPanel12Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jPanel12Layout.createSequentialGroup()
+                        .add(jPanel12Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jLabel7)
+                            .add(lblDunningEdaPrefix)
+                            .add(lblDunningKennziffer))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jPanel12Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 911, Short.MAX_VALUE)
+                            .add(jPanel12Layout.createSequentialGroup()
+                                .add(jPanel12Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                                    .add(txtDunningEdaPrefix, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 80, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(txtDunningKennziffer, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 300, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                                .add(0, 0, Short.MAX_VALUE))))
+                    .add(jPanel12Layout.createSequentialGroup()
+                        .add(jLabel45)
+                        .add(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel12Layout.setVerticalGroup(
@@ -2087,11 +2110,21 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(jPanel12Layout.createSequentialGroup()
                         .add(jLabel7)
                         .add(0, 0, Short.MAX_VALUE))
-                    .add(jScrollPane3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                    .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 334, Short.MAX_VALUE))
+                .add(18, 18, 18)
+                .add(jLabel45)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel12Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(txtDunningEdaPrefix, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(lblDunningEdaPrefix))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel12Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(txtDunningKennziffer, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(lblDunningKennziffer))
                 .addContainerGap())
         );
 
-        jTabbedPane1.addTab("Belege", jPanel12);
+        jTabbedPane1.addTab("Finanzen", jPanel12);
 
         chkShowExternalUsers.setText("Nutzer aus externen Systemen anzeigen");
         chkShowExternalUsers.addActionListener(new java.awt.event.ActionListener() {
@@ -2323,6 +2356,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 this.setRoles(roles);
                 this.chkLawyer.setSelected(u.isLawyer());
                 this.txtDunningKennziffer.setText(u.getDunningKennziffer() == null ? "" : u.getDunningKennziffer());
+                this.txtDunningEdaPrefix.setText(u.getDunningEdaPrefix() == null ? "" : u.getDunningEdaPrefix());
                 updateDunningKennzifferEnabled();
                 this.chkAutoLockDocuments.setSelected(u.isAutoLockDocuments());
 
@@ -2510,6 +2544,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         } else {
             this.chkLawyer.setSelected(false);
             this.txtDunningKennziffer.setText("");
+            this.txtDunningEdaPrefix.setText("");
             updateDunningKennzifferEnabled();
             this.chkAutoLockDocuments.setSelected(true);
             this.cmbCountry.setSelectedIndex(0);
@@ -2597,6 +2632,12 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 u.setDunningKennziffer(this.chkLawyer.isSelected()
                         ? (this.txtDunningKennziffer.getText().trim().isEmpty()
                                 ? null : this.txtDunningKennziffer.getText().trim())
+                        : null);
+                // Das Kürzel gehört zur Kennziffer und teilt deren Schicksal; großgeschrieben, damit
+                // nicht "fsr" und "FSR" zwei Nummernkreise ergeben - der Server prüft es ohnehin.
+                u.setDunningEdaPrefix(this.chkLawyer.isSelected()
+                        ? (this.txtDunningEdaPrefix.getText().trim().isEmpty()
+                                ? null : this.txtDunningEdaPrefix.getText().trim().toUpperCase())
                         : null);
                 u.setAutoLockDocuments(this.chkAutoLockDocuments.isSelected());
                 u.setAbbreviation(this.txtAbbreviation.getText());
@@ -3473,8 +3514,11 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         boolean lawyer = this.chkLawyer.isSelected();
         this.lblDunningKennziffer.setEnabled(lawyer);
         this.txtDunningKennziffer.setEnabled(lawyer);
+        this.lblDunningEdaPrefix.setEnabled(lawyer);
+        this.txtDunningEdaPrefix.setEnabled(lawyer);
         if (!lawyer) {
             this.txtDunningKennziffer.setText("");
+            this.txtDunningEdaPrefix.setText("");
         }
     }
 
@@ -3554,6 +3598,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel42;
     private javax.swing.JLabel jLabel43;
     private javax.swing.JLabel jLabel44;
+    private javax.swing.JLabel jLabel45;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
@@ -3585,6 +3630,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JSeparator jSeparator3;
     private javax.swing.JTabbedPane jTabbedPane1;
+    private javax.swing.JLabel lblDunningEdaPrefix;
     private javax.swing.JLabel lblDunningKennziffer;
     private javax.swing.JLabel lblEpostRegistered;
     private javax.swing.JList lstUsers;
@@ -3610,6 +3656,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JTextField txtCompany;
     private javax.swing.JTextField txtDisplayName;
     private javax.swing.JTextField txtDropscanScanboxes;
+    private javax.swing.JTextField txtDunningEdaPrefix;
     private javax.swing.JTextField txtDunningKennziffer;
     private javax.swing.JTextField txtEmail;
     private javax.swing.JTextField txtEpostCustomer;

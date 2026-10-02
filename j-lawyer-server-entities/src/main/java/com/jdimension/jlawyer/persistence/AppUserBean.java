@@ -704,6 +704,18 @@ public class AppUserBean implements Serializable {
      */
     @Column(name = "dunning_kennziffer")
     private String dunningKennziffer;
+
+    /**
+     * The three-letter code the dunning court assigns together with the Kennziffer. The EDA id of
+     * an application file is made of it and a running number, so it is what identifies our files in
+     * the court's inbox.
+     *
+     * The running number does **not** belong here. Several lawyers of one firm commonly file under
+     * the same code, and a counter per user would hand out the same numbers twice; it is kept per
+     * code in the server settings instead.
+     */
+    @Column(name = "dunning_eda_prefix")
+    private String dunningEdaPrefix;
     @Column(name = "countryCode")
     private String countryCode;
     @Column(name = "areaCode")
@@ -943,6 +955,18 @@ public class AppUserBean implements Serializable {
 
     public void setDunningKennziffer(String dunningKennziffer) {
         this.dunningKennziffer = dunningKennziffer;
+    }
+
+    /**
+     * @return the three-letter code this lawyer's EDA files are named after, or null if none was
+     * assigned
+     */
+    public String getDunningEdaPrefix() {
+        return dunningEdaPrefix;
+    }
+
+    public void setDunningEdaPrefix(String dunningEdaPrefix) {
+        this.dunningEdaPrefix = dunningEdaPrefix;
     }
 
     public boolean isLawyer() {

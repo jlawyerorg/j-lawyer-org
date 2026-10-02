@@ -662,6 +662,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.eda.EdaId;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ClaimComponent;
 import com.jdimension.jlawyer.persistence.ClaimComponentType;
@@ -711,7 +712,8 @@ public class DunningApplicationValidator {
      * @return every finding, never null
      */
     public DunningValidationResult validate(DunningCase dunningCase, List<ClaimLedgerParty> parties,
-            List<ClaimComponent> components, BigDecimal claimValue, MainClaimCatalogue catalogue) {
+            List<ClaimComponent> components, BigDecimal claimValue, MainClaimCatalogue catalogue,
+            String edaPrefix) {
 
         DunningValidationResult result = new DunningValidationResult();
 
@@ -721,6 +723,7 @@ public class DunningApplicationValidator {
         }
         validateCourt(dunningCase, result);
         validateKennziffer(dunningCase, result);
+        validateEdaPrefix(dunningCase, edaPrefix, result);
         validateDeclarations(dunningCase, result);
         validateRepresentativeFee(dunningCase, result);
         validateParties(parties, result);
@@ -749,6 +752,41 @@ public class DunningApplicationValidator {
             result.error("Kennziffer",
                     "Es ist keine Kennziffer hinterlegt. Sie identifiziert den einreichenden Anwalt "
                     + "gegenüber dem Mahngericht und muss vorher dort beantragt werden.", null);
+        }
+    }
+
+    /**
+     * The three-letter code the EDA id is built from.
+     *
+     * The court assigns it together with the Kennziffer and expects every file to be named after it.
+     * Without it the name would be invented - which is what happened before this check existed, and
+     * the court had to correct the file by hand before it could even read it.
+     *
+     * Where no Kennziffer is recorded this says nothing: the one problem has already been reported,
+     * and a second sentence about a code that belongs to a Kennziffer nobody has would only obscure
+     * it.
+     */
+    private void validateEdaPrefix(DunningCase dunningCase, String edaPrefix,
+            DunningValidationResult result) {
+
+        if (isBlank(dunningCase.getKennziffer())) {
+            return;
+        }
+        if (isBlank(edaPrefix)) {
+            result.error("EDA-ID",
+                    "Zu dieser Kennziffer ist kein EDA-Kürzel hinterlegt. Die Datei trägt einen "
+                    + "Namen aus dem dreistelligen Buchstabenkürzel, das das Mahngericht zusammen "
+                    + "mit der Kennziffer zugeteilt hat (etwa \"FSR\"), und einer fortlaufenden "
+                    + "Nummer. Das Kürzel wird in der Benutzerverwaltung beim einreichenden Anwalt "
+                    + "im Reiter \"Finanzen\" erfasst.", null);
+            return;
+        }
+        if (!EdaId.isPrefix(edaPrefix)) {
+            result.error("EDA-ID",
+                    "Das hinterlegte EDA-Kürzel \"" + edaPrefix.trim() + "\" besteht nicht aus "
+                    + "genau drei Buchstaben. Das Mahngericht teilt es zusammen mit der Kennziffer "
+                    + "zu; der Dateiname setzt sich aus ihm und einer fortlaufenden Nummer "
+                    + "zusammen.", null);
         }
     }
 

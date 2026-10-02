@@ -213,13 +213,15 @@
     </Component>
     <Component class="javax.swing.JLabel" name="lblFileName">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Dateiname:"/>
-        <Property name="toolTipText" type="java.lang.String" value="Sechs Zeichen, Feld EDAID im Dateivorsatz."/>
+        <Property name="text" type="java.lang.String" value="EDA-ID:"/>
+        <Property name="toolTipText" type="java.lang.String" value="K&#xfc;rzel des einreichenden Anwalts und eine fortlaufende Nummer; die Nummer wird beim Erzeugen der Datei vergeben."/>
       </Properties>
     </Component>
     <Component class="javax.swing.JTextField" name="txtFileName">
       <Properties>
+        <Property name="editable" type="boolean" value="false"/>
         <Property name="text" type="java.lang.String" value=""/>
+        <Property name="toolTipText" type="java.lang.String" value="K&#xfc;rzel des einreichenden Anwalts und eine fortlaufende Nummer; die Nummer wird beim Erzeugen der Datei vergeben."/>
       </Properties>
     </Component>
     <Component class="javax.swing.JCheckBox" name="chkCounterPerformanceRendered">

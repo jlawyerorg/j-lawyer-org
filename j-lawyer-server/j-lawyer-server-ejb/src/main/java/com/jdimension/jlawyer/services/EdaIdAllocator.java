@@ -662,263 +662,125 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.services;
 
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.persistence.DunningCase;
-import com.jdimension.jlawyer.persistence.DunningCaseEvent;
-import com.jdimension.jlawyer.persistence.DunningCaseStatus;
-import com.jdimension.jlawyer.pojo.DunningClaimInput;
-import com.jdimension.jlawyer.pojo.DunningMessageProposal;
-import com.jdimension.jlawyer.pojo.EdaDocumentView;
-import com.jdimension.jlawyer.pojo.DunningWorklistFilter;
-import com.jdimension.jlawyer.pojo.DunningWorklistRow;
-import com.jdimension.jlawyer.pojo.DunningValidationResult;
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
-import javax.ejb.Remote;
+import com.jdimension.jlawyer.eda.EdaId;
+import com.jdimension.jlawyer.persistence.ServerSettingsBean;
+import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
+import javax.annotation.security.PermitAll;
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+import org.apache.log4j.Logger;
 
 /**
- * The court dunning procedure.
+ * Hands out the name an exchange file announces itself under.
  *
- * At present this exposes the readiness check for an application; the operations that carry a
- * procedure through its stages join it as they are built.
+ * The counter is kept per three-letter code and not per lawyer: several lawyers of one firm commonly
+ * file under the same code, and a counter per lawyer would hand out one number twice on the same
+ * day. It lives in the server settings under `eda.&lt;CODE&gt;.lastused`.
+ *
+ * Two decisions worth knowing about.
+ *
+ * The row is locked while it is read and written. Reading a setting and writing it back are two
+ * calls, and two exports that run into each other would read the same value and write the same
+ * successor - which is exactly the duplicate the court must never see. Locking one row by its
+ * primary key costs nothing measurable.
+ *
+ * And it happens in a transaction of its own. The export writes the finished document into the
+ * document store afterwards, which in some installations is a Samba or SFTP share; a row lock held
+ * across that write would let one hanging share block every further export under the same code. The
+ * price is that a failed export leaves a gap in the numbering, which nobody minds - the court needs
+ * names that differ, not names without gaps.
  *
  * @author jens
  */
-@Remote
-public interface DunningServiceRemote {
+@Stateless
+@PermitAll
+public class EdaIdAllocator implements EdaIdAllocatorLocal {
+
+    private static final Logger log = Logger.getLogger(EdaIdAllocator.class.getName());
+
+    @EJB
+    private ServerSettingsBeanFacadeLocal settingsFacade;
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public String allocate(String prefix) throws Exception {
+
+        String code = EdaId.normalizePrefix(prefix);
+        if (!EdaId.isPrefix(code)) {
+            throw new Exception("Das EDA-Kürzel \"" + prefix + "\" besteht nicht aus genau drei "
+                    + "Buchstaben. Es wird vom Mahngericht zusammen mit der Kennziffer zugeteilt "
+                    + "und ist in der Benutzerverwaltung beim einreichenden Anwalt zu erfassen.");
+        }
+
+        String key = EdaId.settingKey(code);
+        ServerSettingsBean counter = this.settingsFacade.findForUpdate(key);
+        if (counter == null) {
+            // Normalerweise steht die Zeile schon, weil das Speichern des Kürzels sie anlegt. Fehlt
+            // sie doch, entsteht sie hier - und zwei Exporte, die zugleich in diesen Fall laufen,
+            // gehen einander in den Schlüsselkonflikt. Das ist ein Wettlauf von Millisekunden, der
+            // sich durch einen zweiten Versuch erledigt; stillschweigend dieselbe Nummer zweimal zu
+            // vergeben, wäre die schlechtere Antwort.
+            try {
+                counter = new ServerSettingsBean();
+                counter.setSettingKey(key);
+                counter.setSettingValue(String.valueOf(EdaId.FIRST));
+                this.settingsFacade.create(counter);
+                return EdaId.format(code, EdaId.FIRST);
+            } catch (Exception ex) {
+                log.error("Unable to create the EDA id counter " + key, ex);
+                throw new Exception("Die EDA-ID konnte nicht vergeben werden, weil der Zähler für "
+                        + "das Kürzel \"" + code + "\" gerade angelegt wird. Bitte erzeugen Sie die "
+                        + "Datei noch einmal.");
+            }
+        }
+
+        int number = EdaId.next(numberOf(counter.getSettingValue()));
+        counter.setSettingValue(String.valueOf(number));
+        this.settingsFacade.edit(counter);
+        return EdaId.format(code, number);
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void prepare(String prefix) {
+
+        String code = EdaId.normalizePrefix(prefix);
+        if (!EdaId.isPrefix(code)) {
+            return;
+        }
+        String key = EdaId.settingKey(code);
+        if (this.settingsFacade.find(key) != null) {
+            return;
+        }
+        try {
+            ServerSettingsBean counter = new ServerSettingsBean();
+            counter.setSettingKey(key);
+            // noch nichts vergeben: die erste Datei bekommt 001
+            counter.setSettingValue("0");
+            this.settingsFacade.create(counter);
+        } catch (Exception ex) {
+            // ein zweiter Administrator war schneller - die Zeile steht, mehr war nicht gewollt
+            log.warn("EDA id counter " + key + " was created elsewhere", ex);
+        }
+    }
 
     /**
-     * Checks whether a dunning application can be filed, without producing or changing anything.
+     * What the stored value says, or nothing where it says something unusable.
      *
-     * Every problem is reported together rather than the first one raised, so a user learns in one
-     * pass what needs fixing. The check reads; it stores nothing.
-     *
-     * Note what it does not yet cover: whether the data also fits the field lengths and value
-     * domains of the record format is a separate question that needs the Satzbeschreibung, and that
-     * check joins this one with the EDA core.
-     *
-     * @param dunningCaseId the procedure to check
-     * @param claimValue the value that would be applied for; the caller determines it, because
-     * whether a position counts as an ancillary claim (§ 43 GKG) is a judgement
-     * @return every finding, blocking and otherwise; never null
-     * @throws Exception if the procedure does not exist or the user may not see its case
+     * A counter that somebody has edited by hand into a word must not stop an application; it starts
+     * the range over, which is what an unknown state deserves.
      */
-    DunningValidationResult validateApplication(String dunningCaseId, BigDecimal claimValue) throws Exception;
-
-    /**
-     * Produces the EDA file for a dunning application, stores it in the case and records that the
-     * application has gone out.
-     *
-     * Nothing is produced that has not been checked. The data is validated first and the finished
-     * file is verified structurally afterwards; if either fails, no document is stored and no status
-     * is changed - an unverified file must never leave the firm, and a procedure must not claim to
-     * have applied for something it did not send.
-     *
-     * The name the file announces itself under is assigned here and not passed in: it is made of
-     * the three-letter code the court assigned together with the Kennziffer and a running number
-     * that may be handed out only once per code. A caller that chose its own name could hand the
-     * court two transmissions under one name, and a receipt would then belong to neither.
-     *
-     * @param dunningCaseId the procedure to file
-     * @param claimValue the value applied for
-     * @param claims what is applied for, in the order it should appear
-     * @return the stored document
-     * @throws Exception if the data is incomplete, no code is recorded for the filing lawyer, the
-     * file fails verification, or it cannot be stored; the message names what went wrong
-     */
-    ArchiveFileDocumentsBean exportApplication(String dunningCaseId, BigDecimal claimValue,
-            List<DunningClaimInput> claims) throws Exception;
-
-    /**
-     * Reads the court messages in a document and proposes what each of them belongs to.
-     *
-     * Nothing is applied and nothing is stored. This is what a user is shown before confirming: one
-     * entry per message, with the procedure the system found for it or the statement that it found
-     * none and the user has to choose.
-     *
-     * The search runs across all procedures rather than within the document's case. Courts send
-     * collective files - the trailer counts the messages in one - so a single document can carry news
-     * for many procedures in many cases; where it was filed is provenance, not context.
-     *
-     * @param documentId the document holding the exchange file
-     * @return one proposal per message, in the order they appear
-     * @throws Exception if the document does not exist, is empty, or the user may not see its case
-     */
-    List<DunningMessageProposal> analyseCourtMessages(String documentId) throws Exception;
-
-    /**
-     * Resolves an EDA exchange file of a case against the Satzbeschreibungen, so it can be read.
-     *
-     * The files are fixed-length records of 128 bytes with nothing separating the fields inside
-     * them; reading one by eye means counting columns. This returns the same file with its records
-     * and fields named, together with what the file says about itself - the record type, the format
-     * version, the Kennziffer, and whether it is an application the firm sent or a message the court
-     * sent back. That direction is derived from the record type, not from where the file sits.
-     *
-     * Records no Satzbeschreibung covers are still returned, with their raw line and without fields,
-     * so a file from a newer format version stays partly readable rather than appearing empty.
-     *
-     * @param documentId the document holding the exchange file
-     * @return the file as it can be shown, never null
-     * @throws Exception if the document does not exist, is empty, or its case is not accessible
-     */
-    EdaDocumentView describeEdaDocument(String documentId) throws Exception;
-
-    /**
-     * Lays out the application of an exchange file as a page.
-     *
-     * The file is a sequence of fixed-width records, which is what the viewer shows and what is
-     * needed to check a file against the specification. It is not what is needed to check an
-     * application against the intention behind it. The page arranges the same data the way the
-     * courts' own Online-Mahnantrag prints its overview - who files, for whom, against whom and
-     * what is claimed - so that the two can be held side by side.
-     *
-     * Nothing is computed and nothing is added: a figure the file does not carry, such as the court
-     * fee, is left out rather than worked out.
-     *
-     * @param documentId the document holding the exchange file
-     * @return the page as a PDF
-     * @throws Exception if the document does not exist, is empty, holds no application, or its case
-     * is not accessible
-     */
-    byte[] renderEdaDocument(String documentId) throws Exception;
-
-    /**
-     * Lays out the application of an exchange file and files the page in the same case.
-     *
-     * @param documentId the document holding the exchange file
-     * @return the document that was created
-     * @throws Exception if the document does not exist, is empty, holds no application, belongs to
-     * no case, or its case is not accessible
-     */
-    ArchiveFileDocumentsBean storeEdaDocumentRendering(String documentId) throws Exception;
-
-    /**
-     * Applies the court messages of a document, as the user assigned them.
-     *
-     * A message left unassigned is not applied and not stored anywhere - it stays in the document,
-     * and running this again later picks it up. That is why nothing is lost by confirming only part
-     * of a file.
-     *
-     * A message that would move a procedure backwards is reported and skipped. Re-running an import
-     * is a normal thing to do, so an older message must not undo what a newer one already recorded.
-     *
-     * @param documentId the document holding the exchange file
-     * @param assignments the procedure chosen per message, keyed by the message's position in the
-     * file as {@code analyseCourtMessages} reported it; a position left out stays unapplied
-     * @return what happened to each message, in words for the user
-     * @throws Exception if the document cannot be read
-     */
-    List<String> applyCourtMessages(String documentId, Map<Integer, String> assignments) throws Exception;
-
-    /**
-     * Returns the dunning procedures conducted over a claim ledger.
-     *
-     * @param ledgerId the claim ledger
-     * @return the procedures, most recently created first; never null
-     * @throws Exception if the ledger does not exist or its case is not accessible
-     */
-    List<DunningCase> getDunningCases(String ledgerId) throws Exception;
-
-    /**
-     * Creates a dunning procedure over a claim ledger.
-     *
-     * The procedure starts in preparation and carries the court and Kennziffer it is given. Its own
-     * reference is what every later message from the court will echo back, so it is generated where
-     * the caller supplies none - a procedure without one cannot be matched to its replies.
-     *
-     * @param ledgerId the claim ledger
-     * @param dunningCase the procedure to create
-     * @return the created procedure as it was stored
-     * @throws Exception if the ledger does not exist, its case is not accessible, or it cannot be
-     * stored
-     */
-    DunningCase addDunningCase(String ledgerId, DunningCase dunningCase) throws Exception;
-
-    /**
-     * Updates the master data of a dunning procedure - court, Kennziffer, reference, description.
-     *
-     * The status is not changed here. Moving a procedure is recorded through
-     * {@link #recordStatus(String, DunningCaseStatus, java.util.Date, String)}, which journals who
-     * did it and on what basis.
-     *
-     * @param dunningCase the procedure with its changed values
-     * @return the updated procedure
-     * @throws Exception if it does not exist or its case is not accessible
-     */
-    DunningCase updateDunningCase(DunningCase dunningCase) throws Exception;
-
-    /**
-     * Deletes a dunning procedure that has not left the firm.
-     *
-     * Only a procedure still in preparation can be deleted - one without a court file number, and
-     * without any procedural date recorded. Up to that point it is an entry somebody made, and
-     * deleting it removes a mistake rather than a record.
-     *
-     * Once an application has gone to the court the answer is a status instead: withdrawn or
-     * completed. Deleting then would not undo the procedure at the court, it would only destroy what
-     * the firm knows about it - the journal with its dates, users and sources, the deadlines
-     * computed from the procedural dates, and the service date from which the interest of components
-     * awarded interest on service runs. The condition is enforced here and not only in the user
-     * interface.
-     *
-     * The journal entries and the deadline records of the procedure go with it. So do the follow-ups
-     * those deadlines created, which would otherwise remain in the calendar pointing at a procedure
-     * that no longer exists.
-     *
-     * @param dunningCaseId the procedure to delete
-     * @throws Exception if it does not exist, its case is not accessible, or it has left the firm -
-     * the message then says which of those it is
-     */
-    void removeDunningCase(String dunningCaseId) throws Exception;
-
-    /**
-     * Records that a procedure has reached a new status.
-     *
-     * The change is journalled with the procedural date, the user and the fact that a person entered
-     * it rather than a court message reporting it. That distinction is the first thing to look at
-     * when a procedure turns out to have been recorded wrongly.
-     *
-     * @param dunningCaseId the procedure
-     * @param status the status it reaches
-     * @param eventDate the procedural date - the day of service, of issue - which is what deadlines
-     * are computed from, not the day of entry
-     * @param comment a note on the change, or null
-     * @return the updated procedure
-     * @throws Exception if the procedure does not exist or its case is not accessible
-     */
-    DunningCase recordStatus(String dunningCaseId, DunningCaseStatus status, java.util.Date eventDate,
-            String comment) throws Exception;
-
-    /**
-     * Returns the journal of a procedure.
-     *
-     * @param dunningCaseId the procedure
-     * @return its status changes, oldest first, so the list reads as the course of the procedure
-     * @throws Exception if the procedure does not exist or its case is not accessible
-     */
-    List<DunningCaseEvent> getHistory(String dunningCaseId) throws Exception;
-
-    /**
-     * Returns the dunning procedures the calling user may see, filtered.
-     *
-     * Only cases the user has access to appear; the list is a view of their own work, not of the
-     * firm's. Each row carries the next open deadline, because the question the list answers is what
-     * needs doing, and a status without a date does not answer it.
-     *
-     * @param filter what to show; null means everything the user may see
-     * @return the rows, the most urgent deadline first; never null
-     * @throws Exception if the list cannot be assembled
-     */
-    List<DunningWorklistRow> getWorklist(DunningWorklistFilter filter) throws Exception;
-
-    /**
-     * Renders a worklist as CSV, so it can be worked through outside the program.
-     *
-     * @param rows the rows to render, as returned by {@link #getWorklist(DunningWorklistFilter)}
-     * @return the CSV text
-     * @throws Exception if it cannot be rendered
-     */
-    String exportWorklistAsCsv(List<DunningWorklistRow> rows) throws Exception;
+    private Integer numberOf(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(value.trim());
+        } catch (NumberFormatException ex) {
+            log.warn("Unreadable EDA id counter \"" + value + "\"; starting over");
+            return null;
+        }
+    }
 }
