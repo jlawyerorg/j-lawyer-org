@@ -1060,6 +1060,13 @@ public class EdaClaimMapper {
                         claim.getInterestFrom() != null ? claim.getInterestFrom() : rule.getValidFrom()));
             }
             record.set("ZIBD", EdaValues.date(claim.getInterestTo()));
+            // ZIRGBET bleibt leer, und das ist keine Lücke: das Mahngericht hat auf Nachfrage
+            // bestätigt, dass der zu verzinsende Betrag nur anzugeben ist, "wenn ein von der
+            // Hauptforderung abweichender Betrag verzinst werden soll". Eine Position führt bei uns
+            // einen principalAmount, und ihre Zinsregeln gelten für ihn - ein abweichender Betrag
+            // kann also nicht entstehen. Die Beispieldateien des Portals füllen das Feld mit der
+            // Hauptforderung, was auf dasselbe hinausläuft. Entsteht hier einmal eine Teilverzinsung,
+            // ist dieses Feld zu setzen, sonst rechnet das Gericht auf die ganze Forderung.
             records.add(record);
         }
         return records;

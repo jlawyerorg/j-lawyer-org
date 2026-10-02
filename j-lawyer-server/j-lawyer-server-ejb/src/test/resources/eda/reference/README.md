@@ -442,9 +442,33 @@ Damit ist der offene Punkt geschlossen; die Dateien 14 bis 16 werden nicht gebra
 1. **Annahmetest:** jede Datei wird mit unserem Codec gelesen und muss von
    `EdaStructureVerifier` beanstandungsfrei angenommen werden. Beanstandet er eine nachweislich
    korrekte Datei, ist *er* zu streng.
-2. **Konformitätstest:** dieselben Falldaten laufen durch `EdaMahnbescheidBuilder`, und das
-   Ergebnis wird satzweise und feldweise gegen die Referenz gestellt — mit einem Bericht, welches
-   Feld in welchem Satzbereich abweicht.
+2. **Konformitätstest:** dieselben Falldaten laufen durch `EdaMahnbescheidBuilder`, und die
+   **Satzfolge** des Ergebnisses wird gegen die der Referenz gestellt — welche Satzbereiche in
+   welcher Reihenfolge entstehen.
 
-Punkt 2 ist der Zweck der Übung. Er nimmt vorweg, was sonst erst der Testlauf beim Mahngericht
-zeigen würde.
+Punkt 2 nimmt vorweg, was sonst erst der Testlauf beim Mahngericht zeigen würde — aber nur für die
+Satzfolge.
+
+> **Was er nicht prüft:** die **Feldinhalte**. `assertSameRecords` vergleicht `areasOf(...)`, also
+> die Folge der Satzbereiche, und nicht Feld für Feld. Hier stand einmal, das Ergebnis werde
+> "satzweise und feldweise" verglichen, "mit einem Bericht, welches Feld in welchem Satzbereich
+> abweicht". Das war nie so, und es hat Geld gekostet: das leere `ASPVD` (siehe oben) stand in jeder
+> erzeugten Datei, während alle Referenzdateien es führen, und kein Build hat es gesehen. Ein
+> feldweiser Vergleich wäre der nächste sinnvolle Schritt an diesen Dateien.
+
+## Nachtrag: ZIRGBET (zu verzinsender Betrag, Satz C26)
+
+Die Referenzdateien füllen `ZIRGBET` ausnahmslos — und immer mit dem Betrag der Hauptforderung
+(`0000500000` neben `ASPBET 0000500000`). Daraus ließe sich schließen, das Feld sei verlangt. Es ist
+nicht so: das Mahngericht hat auf Nachfrage bestätigt, dass die Angabe *„nur dann erforderlich [ist],
+wenn ein von der Hauptforderung abweichender Betrag verzinst werden soll"*.
+
+Wir schreiben es nicht, und das ist richtig: eine Forderungsposition führt einen Betrag, und ihre
+Zinsregeln gelten für ihn — ein abweichender Zinsbetrag kann im Datenmodell nicht entstehen. Leer
+heißt für das Gericht „auf die Hauptforderung", also dasselbe, was die Beispieldateien ausdrücklich
+hinschreiben.
+
+Wer hier einmal eine Teilverzinsung einbaut (Zinsen nur auf einen Teilbetrag, auf den Nettobetrag,
+auf den nach Teilzahlung verbliebenen Rest), muss `ZIRGBET` mit setzen. Ohne das rechnet das Gericht
+stillschweigend auf die ganze Forderung — ein Fehler, der Geld kostet und den keine Strukturprüfung
+findet.
