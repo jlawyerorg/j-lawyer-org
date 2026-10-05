@@ -680,6 +680,8 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -691,6 +693,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import javax.swing.Box;
+import javax.swing.DefaultListModel;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -698,7 +701,6 @@ import javax.swing.JScrollBar;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
-import javax.swing.table.DefaultTableModel;
 import org.apache.log4j.Logger;
 
 /**
@@ -715,10 +717,6 @@ public class AiChatHistoryPanel extends javax.swing.JPanel implements EventConsu
 
     private static final Logger log = Logger.getLogger(AiChatHistoryPanel.class.getName());
 
-    private static final int COL_TITLE = 0;
-    private static final int COL_LASTACTIVITY = 1;
-    private static final int COL_WORDS = 2;
-    private static final int COL_OWNER = 3;
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm");
     private final NumberFormat numberFormat = NumberFormat.getIntegerInstance(Locale.GERMANY);
@@ -736,8 +734,12 @@ public class AiChatHistoryPanel extends javax.swing.JPanel implements EventConsu
 
     private String displayedChatId = null;
 
+    private final DefaultListModel<AiChatSummary> listModel = new DefaultListModel<>();
+    private final AiChatListCellRenderer listRenderer = new AiChatListCellRenderer();
+
     private final Map<String, String> firstMessageCache = new HashMap<>();
-    private int tooltipRow = -1;
+    // what the tooltip currently describes: "<index>:first" or "<index>:owner"
+    private String tooltipKey = null;
 
     private final ToolRegistry toolRegistry = new ToolRegistry();
 
@@ -747,16 +749,16 @@ public class AiChatHistoryPanel extends javax.swing.JPanel implements EventConsu
     public AiChatHistoryPanel() {
         initComponents();
 
-        this.tblChats.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        this.tblChats.getSelectionModel().addListSelectionListener(e -> {
+        this.lstChats.setModel(this.listModel);
+        this.lstChats.setCellRenderer(this.listRenderer);
+        this.lstChats.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        this.lstChats.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 this.selectionChanged();
             }
         });
-        this.tblChats.getColumnModel().getColumn(COL_TITLE).setPreferredWidth(240);
-        this.tblChats.getColumnModel().getColumn(COL_LASTACTIVITY).setPreferredWidth(110);
-        this.tblChats.getColumnModel().getColumn(COL_WORDS).setPreferredWidth(60);
-        this.tblChats.getColumnModel().getColumn(COL_OWNER).setPreferredWidth(80);
+        this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
+        this.jScrollPane1.setMinimumSize(new Dimension(220, 0));
         this.jScrollPane2.getVerticalScrollBar().setUnitIncrement(32);
 
         com.jdimension.jlawyer.client.utils.ComponentUtils.decorateSplitPane(this.jSplitPane1);
@@ -791,6 +793,8 @@ public class AiChatHistoryPanel extends javax.swing.JPanel implements EventConsu
         this.canModifyCaseChats = UserSettings.getInstance().isCurrentUserInRole("writeArchiveFileRole");
         this.cmdAssign.setVisible(false);
         this.mnuAssign.setVisible(false);
+        // case chats may be started by different users
+        this.listRenderer.setShowOwner(true);
         this.reset();
     }
 
@@ -805,9 +809,7 @@ public class AiChatHistoryPanel extends javax.swing.JPanel implements EventConsu
         this.cmdAssign.setVisible(true);
         this.mnuAssign.setVisible(true);
         // the owner is always the current user
-        this.tblChats.getColumnModel().getColumn(COL_OWNER).setMinWidth(0);
-        this.tblChats.getColumnModel().getColumn(COL_OWNER).setMaxWidth(0);
-        this.tblChats.getColumnModel().getColumn(COL_OWNER).setPreferredWidth(0);
+        this.listRenderer.setShowOwner(false);
         this.reset();
     }
 
@@ -815,7 +817,7 @@ public class AiChatHistoryPanel extends javax.swing.JPanel implements EventConsu
         this.loaded = false;
         this.rows.clear();
         this.firstMessageCache.clear();
-        ((DefaultTableModel) this.tblChats.getModel()).setRowCount(0);
+        this.listModel.clear();
         this.clearTranscript();
         this.updateActionStates();
     }
@@ -902,7 +904,7 @@ public class AiChatHistoryPanel extends javax.swing.JPanel implements EventConsu
 
     private Set<String> getSelectedIds() {
         Set<String> ids = new HashSet<>();
-        for (int r : this.tblChats.getSelectedRows()) {
+        for (int r : this.lstChats.getSelectedIndices()) {
             if (r >= 0 && r < this.rows.size()) {
                 ids.add(this.rows.get(r).getId());
             }
@@ -912,7 +914,7 @@ public class AiChatHistoryPanel extends javax.swing.JPanel implements EventConsu
 
     private List<AiChatSummary> getSelectedChats() {
         List<AiChatSummary> selected = new ArrayList<>();
-        for (int r : this.tblChats.getSelectedRows()) {
+        for (int r : this.lstChats.getSelectedIndices()) {
             if (r >= 0 && r < this.rows.size()) {
                 selected.add(this.rows.get(r));
             }
@@ -925,28 +927,18 @@ public class AiChatHistoryPanel extends javax.swing.JPanel implements EventConsu
     }
 
     /**
-     * Sorts the rows by last activity, newest first, and refills the table, restoring the
+     * Sorts the rows by last activity, newest first, and refills the list, restoring the
      * selection by chat id. The transcript is not touched.
      */
     private void rebuildTable(Set<String> selectedIds) {
         this.rows.sort((a, b) -> activityOf(b).compareTo(activityOf(a)));
 
-        DefaultTableModel model = (DefaultTableModel) this.tblChats.getModel();
-        model.setRowCount(0);
-        for (AiChatSummary c : this.rows) {
-            String title = c.getTitle();
-            if (title == null || title.trim().isEmpty()) {
-                title = "(ohne Text)";
-            }
-            model.addRow(new Object[]{
-                title,
-                c.getLastActivity() != null ? this.dateFormat.format(c.getLastActivity()) : "",
-                this.numberFormat.format(c.getWordCount()),
-                c.getOwner()});
-        }
-
-        ListSelectionModel sel = this.tblChats.getSelectionModel();
+        ListSelectionModel sel = this.lstChats.getSelectionModel();
         sel.setValueIsAdjusting(true);
+        this.listModel.clear();
+        for (AiChatSummary c : this.rows) {
+            this.listModel.addElement(c);
+        }
         sel.clearSelection();
         for (int i = 0; i < this.rows.size(); i++) {
             if (selectedIds.contains(this.rows.get(i).getId())) {
@@ -954,7 +946,7 @@ public class AiChatHistoryPanel extends javax.swing.JPanel implements EventConsu
             }
         }
         sel.setValueIsAdjusting(false);
-        this.tooltipRow = -1;
+        this.tooltipKey = null;
         this.updateActionStates();
     }
 
@@ -1039,7 +1031,7 @@ public class AiChatHistoryPanel extends javax.swing.JPanel implements EventConsu
     }
 
     private void updateActionStates() {
-        int count = this.tblChats.getSelectedRowCount();
+        int count = this.lstChats.getSelectedIndices().length;
         boolean canModify = !this.caseMode || this.canModifyCaseChats;
         this.cmdContinue.setEnabled(count == 1);
         this.mnuContinue.setEnabled(count == 1);
@@ -1168,21 +1160,46 @@ public class AiChatHistoryPanel extends javax.swing.JPanel implements EventConsu
         return "<html><div style='width:500px'>" + escape(text).replace("\r\n", "<br/>").replace("\n", "<br/>") + "</div></html>";
     }
 
-    private void showTooltipFor(int row) {
-        if (row == this.tooltipRow) {
+    /**
+     * @return the index of the list entry at the point, or -1 if the point is not on an entry
+     */
+    private int indexAt(Point p) {
+        int index = this.lstChats.locationToIndex(p);
+        if (index < 0) {
+            return -1;
+        }
+        Rectangle bounds = this.lstChats.getCellBounds(index, index);
+        return (bounds != null && bounds.contains(p)) ? index : -1;
+    }
+
+    /**
+     * Shows the name of the user who started the chat when the mouse is on the user icon, the
+     * complete first message otherwise. The first message is loaded on first hover and cached.
+     */
+    private void showTooltipAt(Point p) {
+        int index = this.indexAt(p);
+        boolean onOwner = index >= 0 && this.caseMode
+                && AiChatListCellRenderer.isOwnerIconAt(this.lstChats.getCellBounds(index, index), p);
+        String key = index < 0 ? null : index + (onOwner ? ":owner" : ":first");
+        if (key == null ? this.tooltipKey == null : key.equals(this.tooltipKey)) {
             return;
         }
-        this.tooltipRow = row;
-        if (row < 0 || row >= this.rows.size()) {
-            this.tblChats.setToolTipText(null);
+        this.tooltipKey = key;
+        if (index < 0 || index >= this.rows.size()) {
+            this.lstChats.setToolTipText(null);
             return;
         }
-        final String chatId = this.rows.get(row).getId();
+        if (onOwner) {
+            this.lstChats.setToolTipText("gestartet von " + AiChatListCellRenderer.ownerName(this.rows.get(index).getOwner()));
+            return;
+        }
+        final String chatId = this.rows.get(index).getId();
         if (this.firstMessageCache.containsKey(chatId)) {
-            this.tblChats.setToolTipText(toTooltipHtml(this.firstMessageCache.get(chatId)));
+            this.lstChats.setToolTipText(toTooltipHtml(this.firstMessageCache.get(chatId)));
             return;
         }
-        this.tblChats.setToolTipText(null);
+        this.lstChats.setToolTipText(null);
+        final String expectedKey = key;
         new SwingWorker<String, Void>() {
             @Override
             protected String doInBackground() throws Exception {
@@ -1194,8 +1211,8 @@ public class AiChatHistoryPanel extends javax.swing.JPanel implements EventConsu
                 try {
                     String first = get();
                     firstMessageCache.put(chatId, first == null ? "" : first);
-                    if (tooltipRow >= 0 && tooltipRow < rows.size() && chatId.equals(rows.get(tooltipRow).getId())) {
-                        tblChats.setToolTipText(toTooltipHtml(first));
+                    if (expectedKey.equals(tooltipKey)) {
+                        lstChats.setToolTipText(toTooltipHtml(first));
                     }
                 } catch (Exception ex) {
                     log.warn("Could not load first message of AI chat " + chatId, ex);
@@ -1212,12 +1229,12 @@ public class AiChatHistoryPanel extends javax.swing.JPanel implements EventConsu
         if (!evt.isPopupTrigger()) {
             return;
         }
-        int row = this.tblChats.rowAtPoint(evt.getPoint());
-        if (row >= 0 && !this.tblChats.isRowSelected(row)) {
-            this.tblChats.setRowSelectionInterval(row, row);
+        int index = this.indexAt(evt.getPoint());
+        if (index >= 0 && !this.lstChats.isSelectedIndex(index)) {
+            this.lstChats.setSelectedIndex(index);
         }
-        if (this.tblChats.getSelectedRowCount() > 0) {
-            this.popChats.show(this.tblChats, evt.getX(), evt.getY());
+        if (!this.lstChats.isSelectionEmpty()) {
+            this.popChats.show(this.lstChats, evt.getX(), evt.getY());
         }
     }
 
@@ -1242,7 +1259,7 @@ public class AiChatHistoryPanel extends javax.swing.JPanel implements EventConsu
         cmdRefresh = new javax.swing.JButton();
         jSplitPane1 = new javax.swing.JSplitPane();
         jScrollPane1 = new javax.swing.JScrollPane();
-        tblChats = new javax.swing.JTable();
+        lstChats = new javax.swing.JList<>();
         pnlTranscript = new javax.swing.JPanel();
         lblTranscriptHeader = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
@@ -1337,41 +1354,28 @@ public class AiChatHistoryPanel extends javax.swing.JPanel implements EventConsu
         });
         pnlActions.add(cmdRefresh);
 
-        jSplitPane1.setDividerLocation(380);
+        jSplitPane1.setDividerLocation(320);
 
-        tblChats.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
+        jScrollPane1.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
-            },
-            new String [] {
-                "Titel", "Letzte Aktivität", "Wörter", "Ersteller"
-            }
-        ) {
-            boolean[] canEdit = new boolean [] {
-                false, false, false, false
-            };
-
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
-            }
-        });
-        tblChats.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+        lstChats.setBackground(new java.awt.Color(255, 255, 255));
+        lstChats.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
             public void mouseMoved(java.awt.event.MouseEvent evt) {
-                tblChatsMouseMoved(evt);
+                lstChatsMouseMoved(evt);
             }
         });
-        tblChats.addMouseListener(new java.awt.event.MouseAdapter() {
+        lstChats.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                tblChatsMouseClicked(evt);
+                lstChatsMouseClicked(evt);
             }
             public void mousePressed(java.awt.event.MouseEvent evt) {
-                tblChatsMousePressed(evt);
+                lstChatsMousePressed(evt);
             }
             public void mouseReleased(java.awt.event.MouseEvent evt) {
-                tblChatsMouseReleased(evt);
+                lstChatsMouseReleased(evt);
             }
         });
-        jScrollPane1.setViewportView(tblChats);
+        jScrollPane1.setViewportView(lstChats);
 
         jSplitPane1.setLeftComponent(jScrollPane1);
 
@@ -1508,26 +1512,26 @@ public class AiChatHistoryPanel extends javax.swing.JPanel implements EventConsu
         }
     }//GEN-LAST:event_cmdRefreshActionPerformed
 
-    private void tblChatsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblChatsMouseClicked
+    private void lstChatsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstChatsMouseClicked
         if (evt.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(evt)) {
-            int row = this.tblChats.rowAtPoint(evt.getPoint());
-            if (row >= 0 && row < this.rows.size()) {
-                this.continueChat(this.rows.get(row));
+            int index = this.indexAt(evt.getPoint());
+            if (index >= 0 && index < this.rows.size()) {
+                this.continueChat(this.rows.get(index));
             }
         }
-    }//GEN-LAST:event_tblChatsMouseClicked
+    }//GEN-LAST:event_lstChatsMouseClicked
 
-    private void tblChatsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblChatsMousePressed
+    private void lstChatsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstChatsMousePressed
         this.showPopup(evt);
-    }//GEN-LAST:event_tblChatsMousePressed
+    }//GEN-LAST:event_lstChatsMousePressed
 
-    private void tblChatsMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblChatsMouseReleased
+    private void lstChatsMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstChatsMouseReleased
         this.showPopup(evt);
-    }//GEN-LAST:event_tblChatsMouseReleased
+    }//GEN-LAST:event_lstChatsMouseReleased
 
-    private void tblChatsMouseMoved(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblChatsMouseMoved
-        this.showTooltipFor(this.tblChats.rowAtPoint(evt.getPoint()));
-    }//GEN-LAST:event_tblChatsMouseMoved
+    private void lstChatsMouseMoved(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstChatsMouseMoved
+        this.showTooltipAt(evt.getPoint());
+    }//GEN-LAST:event_lstChatsMouseMoved
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -1540,6 +1544,7 @@ public class AiChatHistoryPanel extends javax.swing.JPanel implements EventConsu
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JLabel lblTranscriptHeader;
+    private javax.swing.JList<AiChatSummary> lstChats;
     private javax.swing.JMenuItem mnuAssign;
     private javax.swing.JMenuItem mnuContinue;
     private javax.swing.JMenuItem mnuDelete;
@@ -1547,7 +1552,6 @@ public class AiChatHistoryPanel extends javax.swing.JPanel implements EventConsu
     private javax.swing.JPanel pnlActions;
     private javax.swing.JPanel pnlMessages;
     private javax.swing.JPanel pnlTranscript;
-    private javax.swing.JTable tblChats;
     private javax.swing.JPopupMenu popChats;
     // End of variables declaration//GEN-END:variables
 }
