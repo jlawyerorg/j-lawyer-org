@@ -1056,7 +1056,6 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
                 .addContainerGap())
         );
 
-        jPanel2.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
         jPanel2.setOpaque(false);
 
         cmdExport.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/calc.png"))); // NOI18N
