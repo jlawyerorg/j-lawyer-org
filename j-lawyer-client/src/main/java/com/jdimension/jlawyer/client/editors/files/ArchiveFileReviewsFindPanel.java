@@ -679,7 +679,6 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.server.constants.ArchiveFileConstants;
 import java.awt.Component;
-import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -761,18 +760,15 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
         return selected.toString().trim();
     }
 
+    /**
+     * The search is a tab of the calendar overview and does not paint a background of its own;
+     * the image is only passed on to the cases opened from the results.
+     */
     @Override
     public void setBackgroundImage(Image image) {
         this.backgroundImage=image;
+        // same look as the list tab of the overview
         this.tblResults.setOpaque(false);
-        
-    }
-    
-    @Override
-    public void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        if(this.backgroundImage != null)
-            g.drawImage(this.backgroundImage, 0,0,this.getWidth(),this.getHeight(),this);
     }
     
     /** This method is called from within the constructor to
@@ -810,8 +806,6 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
         jLabel6 = new javax.swing.JLabel();
         jLabel7 = new javax.swing.JLabel();
         cmbAssignee = new javax.swing.JComboBox<>();
-        jLabel18 = new javax.swing.JLabel();
-        lblPanelTitle = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
         cmdExport = new javax.swing.JButton();
         cmdRefresh = new javax.swing.JButton();
@@ -1062,13 +1056,6 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
                 .addContainerGap())
         );
 
-        jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-15.png"))); // NOI18N
-
-        lblPanelTitle.setFont(lblPanelTitle.getFont().deriveFont(lblPanelTitle.getFont().getStyle() | java.awt.Font.BOLD, lblPanelTitle.getFont().getSize()+12));
-        lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
-        lblPanelTitle.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        lblPanelTitle.setText("Wiedervorlagen, Fristen und Termine suchen");
-
         jPanel2.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
         jPanel2.setOpaque(false);
 
@@ -1120,6 +1107,8 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
                 .addContainerGap())
         );
 
+        setOpaque(false);
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -1129,23 +1118,14 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(jScrollPane1)
-                    .add(layout.createSequentialGroup()
-                        .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                        .add(jLabel18)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 566, Short.MAX_VALUE)))
+                    .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
                 .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -1169,7 +1149,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
                     ((PopulateOptionsEditor)editor).populateOptions();
                 }       
                 ((ArchiveFilePanel)editor).setArchiveFileDTO(id.getArchiveFileDTO());
-                ((ArchiveFilePanel)editor).setOpenedFromEditorClass(this.getClass().getName());
+                ((ArchiveFilePanel)editor).setOpenedFromEditorClass(ArchiveFileReviewsOverviewPanel.class.getName());
                 EditorsRegistry.getInstance().setMainEditorsPaneView((Component)editor);
                 
             } catch (Exception ex) {
@@ -1194,7 +1174,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
                     ((PopulateOptionsEditor)editor).populateOptions();
                 }       
                 ((ArchiveFilePanel)editor).setArchiveFileDTO(id.getArchiveFileDTO());
-                ((ArchiveFilePanel)editor).setOpenedFromEditorClass(this.getClass().getName());
+                ((ArchiveFilePanel)editor).setOpenedFromEditorClass(ArchiveFileReviewsOverviewPanel.class.getName());
                 EditorsRegistry.getInstance().setMainEditorsPaneView((Component)editor);
                 
             } catch (Exception ex) {
@@ -1404,7 +1384,6 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
     private javax.swing.ButtonGroup grpType;
     private javax.swing.JTextField inputFulltextSearch;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel18;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -1415,7 +1394,6 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel labelSearchAZ;
-    protected javax.swing.JLabel lblPanelTitle;
     private javax.swing.JMenuItem mnuOpenArchiveFile;
     private javax.swing.JPopupMenu popupArchiveFileActions;
     private javax.swing.JRadioButton rdAllStatuses;

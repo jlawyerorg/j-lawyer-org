@@ -931,8 +931,8 @@ public class Main {
         ModuleMetadata reviewsDue = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.fup.byduedate"));
         reviewsDue.setEditorClass("com.jdimension.jlawyer.client.editors.files.ArchiveFileReviewsOverviewPanel");
         reviewsDue.setBackgroundImage("reviews.jpg");
-        reviewsDue.setFullName("Wiedervorlagen, Fristen und Termine in chronologischer Reihenfolge");
-        reviewsDue.setEditorName("chronologisch");
+        reviewsDue.setFullName("Wiedervorlagen, Fristen und Termine: Liste, Kalenderblatt und Suche");
+        reviewsDue.setEditorName("Übersicht");
         reviewsDue.setModuleName(moduleNameCalendar);
         reviewsDue.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-22-blue.png")));
         reviewsDue.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-22-green.png")));
@@ -942,15 +942,6 @@ public class Main {
             reviewsDue.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F6, InputEvent.SHIFT_DOWN_MASK), "Shift+F6");
         }
         reviews.addChildModule(reviewsDue);
-        ModuleMetadata reviewsSearch = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.fup.find"));
-        reviewsSearch.setEditorClass("com.jdimension.jlawyer.client.editors.files.ArchiveFileReviewsFindPanel");
-        reviewsSearch.setBackgroundImage("reviews.jpg");
-        reviewsSearch.setFullName("Suche nach Wiedervorlagen, Fristen und Terminen");
-        reviewsSearch.setEditorName("suchen");
-        reviewsSearch.setModuleName(moduleNameCalendar);
-        reviewsSearch.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-15-blue.png")));
-        reviewsSearch.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-15-green.png")));
-        reviews.addChildModule(reviewsSearch);
         ModuleMetadata reviewsMissing = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.fup.missing"));
         reviewsMissing.setEditorClass("com.jdimension.jlawyer.client.editors.files.ArchiveFileReviewsMissingPanel");
         reviewsMissing.setBackgroundImage("reviews.jpg");

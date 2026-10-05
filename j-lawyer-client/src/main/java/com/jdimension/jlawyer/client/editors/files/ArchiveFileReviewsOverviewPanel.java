@@ -914,6 +914,8 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
     public void setBackgroundImage(Image image) {
         this.backgroundImage=image;
         this.calendarPanel1.setParentEditor(this.getClass().getName(), detailsEditorClass, backgroundImage);
+        // the search passes the background on to the cases it opens
+        this.findPanel.setBackgroundImage(image);
         this.tblResults.setOpaque(false);
         
     }
@@ -936,14 +938,19 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
         mnuOpenArchiveFile = new javax.swing.JMenuItem();
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
-        lblStatus = new javax.swing.JLabel();
-        jPanel1 = new javax.swing.JPanel();
+        jTabbedPane1 = new javax.swing.JTabbedPane();
+        pnlList = new javax.swing.JPanel();
+        pnlListActions = new javax.swing.JPanel();
         cmdExport = new javax.swing.JButton();
         cmdRefresh = new javax.swing.JButton();
-        jTabbedPane1 = new javax.swing.JTabbedPane();
+        lblStatus = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblResults = new javax.swing.JTable();
+        pnlSheet = new javax.swing.JPanel();
+        pnlSheetActions = new javax.swing.JPanel();
+        cmdRefreshSheet = new javax.swing.JButton();
         calendarPanel1 = new de.costache.calendar.CalendarPanel();
+        findPanel = new com.jdimension.jlawyer.client.editors.files.ArchiveFileReviewsFindPanel();
 
         mnuOpenArchiveFile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
         mnuOpenArchiveFile.setText("Akte bearbeiten");
@@ -959,14 +966,19 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
 
         lblPanelTitle.setFont(lblPanelTitle.getFont().deriveFont(lblPanelTitle.getFont().getStyle() | java.awt.Font.BOLD, lblPanelTitle.getFont().getSize()+12));
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
-        lblPanelTitle.setText("Kalendereinträge (chronologisch)");
+        lblPanelTitle.setText("Kalendereinträge");
 
-        lblStatus.setForeground(new java.awt.Color(255, 255, 255));
-        lblStatus.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        lblStatus.setText("");
+        jTabbedPane1.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                jTabbedPane1StateChanged(evt);
+            }
+        });
 
-        jPanel1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
-        jPanel1.setOpaque(false);
+        pnlList.setOpaque(false);
+        pnlList.setLayout(new java.awt.BorderLayout());
+
+        pnlListActions.setOpaque(false);
+        pnlListActions.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 4, 5));
 
         cmdExport.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/calc.png"))); // NOI18N
         cmdExport.setToolTipText("Liste nach LibreOffice exportieren");
@@ -975,41 +987,22 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
                 cmdExportActionPerformed(evt);
             }
         });
+        pnlListActions.add(cmdExport);
 
         cmdRefresh.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/reload.png"))); // NOI18N
-        cmdRefresh.setToolTipText("Aktualisieren");
+        cmdRefresh.setToolTipText("Liste aktualisieren");
         cmdRefresh.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdRefreshActionPerformed(evt);
             }
         });
+        pnlListActions.add(cmdRefresh);
 
-        org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(cmdExport)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(cmdRefresh)
-                .addContainerGap())
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(cmdRefresh)
-                    .add(cmdExport))
-                .addContainerGap())
-        );
+        lblStatus.setForeground(new java.awt.Color(255, 255, 255));
+        lblStatus.setText("");
+        pnlListActions.add(lblStatus);
 
-        jTabbedPane1.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                jTabbedPane1StateChanged(evt);
-            }
-        });
+        pnlList.add(pnlListActions, java.awt.BorderLayout.NORTH);
 
         tblResults.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -1033,8 +1026,30 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
         });
         jScrollPane1.setViewportView(tblResults);
 
-        jTabbedPane1.addTab("Liste", jScrollPane1);
-        jTabbedPane1.addTab("Kalenderblatt", calendarPanel1);
+        pnlList.add(jScrollPane1, java.awt.BorderLayout.CENTER);
+
+        jTabbedPane1.addTab("Liste", pnlList);
+
+        pnlSheet.setOpaque(false);
+        pnlSheet.setLayout(new java.awt.BorderLayout());
+
+        pnlSheetActions.setOpaque(false);
+        pnlSheetActions.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 4, 5));
+
+        cmdRefreshSheet.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/reload.png"))); // NOI18N
+        cmdRefreshSheet.setToolTipText("Kalenderblatt aktualisieren");
+        cmdRefreshSheet.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRefreshSheetActionPerformed(evt);
+            }
+        });
+        pnlSheetActions.add(cmdRefreshSheet);
+
+        pnlSheet.add(pnlSheetActions, java.awt.BorderLayout.NORTH);
+        pnlSheet.add(calendarPanel1, java.awt.BorderLayout.CENTER);
+
+        jTabbedPane1.addTab("Kalenderblatt", pnlSheet);
+        jTabbedPane1.addTab("suchen", findPanel);
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
@@ -1044,13 +1059,9 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(layout.createSequentialGroup()
-                        .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(jLabel18)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblStatus))
+                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 879, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -1058,12 +1069,9 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
                 .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, lblStatus, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 356, Short.MAX_VALUE)
                 .addContainerGap())
@@ -1133,12 +1141,18 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
         // a refresh the user asked for reloads regardless of the version - it is the way out if
         // the version ever misses a change - and reports failures instead of swallowing them
         this.load(-1, false);
-        this.calendarPanel1.reloadVisibleInterval();
-
     }//GEN-LAST:event_cmdRefreshActionPerformed
 
+    private void cmdRefreshSheetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshSheetActionPerformed
+        this.calendarPanel1.reloadVisibleInterval();
+    }//GEN-LAST:event_cmdRefreshSheetActionPerformed
+
+    /**
+     * Reloads the list and the calendar sheet.
+     */
     public void refresh() {
-        this.cmdRefreshActionPerformed(null);
+        this.load(-1, false);
+        this.calendarPanel1.reloadVisibleInterval();
     }
 
     /**
@@ -1187,13 +1201,18 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
     private de.costache.calendar.CalendarPanel calendarPanel1;
     private javax.swing.JButton cmdExport;
     private javax.swing.JButton cmdRefresh;
+    private javax.swing.JButton cmdRefreshSheet;
+    private com.jdimension.jlawyer.client.editors.files.ArchiveFileReviewsFindPanel findPanel;
     private javax.swing.JLabel jLabel18;
-    private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTabbedPane jTabbedPane1;
     protected javax.swing.JLabel lblPanelTitle;
     private javax.swing.JLabel lblStatus;
     private javax.swing.JMenuItem mnuOpenArchiveFile;
+    private javax.swing.JPanel pnlList;
+    private javax.swing.JPanel pnlListActions;
+    private javax.swing.JPanel pnlSheet;
+    private javax.swing.JPanel pnlSheetActions;
     private javax.swing.JPopupMenu popupArchiveFileActions;
     private javax.swing.JTable tblResults;
     // End of variables declaration//GEN-END:variables
