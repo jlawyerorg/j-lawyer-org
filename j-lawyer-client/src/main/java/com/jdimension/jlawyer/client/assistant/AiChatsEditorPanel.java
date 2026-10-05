@@ -722,9 +722,19 @@ public class AiChatsEditorPanel extends javax.swing.JPanel implements ThemeableE
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        cmdRefresh = new javax.swing.JButton();
         lblIcon = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
         chatHistory = new com.jdimension.jlawyer.client.assistant.AiChatHistoryPanel();
+        cmdNewChat = new javax.swing.JButton();
+
+        cmdRefresh.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_refresh_blue_36dp.png"))); // NOI18N
+        cmdRefresh.setToolTipText("Aktualisieren");
+        cmdRefresh.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRefreshActionPerformed(evt);
+            }
+        });
 
         lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/j-lawyer-ai.png"))); // NOI18N
 
@@ -734,6 +744,14 @@ public class AiChatsEditorPanel extends javax.swing.JPanel implements ThemeableE
 
         chatHistory.setOpaque(false);
 
+        cmdNewChat.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/j-lawyer-ai.png"))); // NOI18N
+        cmdNewChat.setToolTipText("neuen Chat beginnen");
+        cmdNewChat.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdNewChatActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -742,10 +760,13 @@ public class AiChatsEditorPanel extends javax.swing.JPanel implements ThemeableE
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
+                        .addComponent(cmdRefresh)
+                        .addGap(18, 18, 18)
                         .addComponent(lblIcon)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblPanelTitle)
-                        .addGap(0, 0, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(cmdNewChat))
                     .addComponent(chatHistory, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -755,16 +776,28 @@ public class AiChatsEditorPanel extends javax.swing.JPanel implements ThemeableE
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                     .addComponent(lblIcon, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(lblPanelTitle, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(lblPanelTitle, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(cmdNewChat, javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(cmdRefresh, javax.swing.GroupLayout.Alignment.LEADING))
                 .addGap(8, 8, 8)
                 .addComponent(chatHistory, javax.swing.GroupLayout.DEFAULT_SIZE, 500, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    private void cmdNewChatActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewChatActionPerformed
+        AssistantAccess.getInstance().showNewToolChatMenu(this.cmdNewChat);
+    }//GEN-LAST:event_cmdNewChatActionPerformed
+
+    private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
+        this.chatHistory.reload();
+    }//GEN-LAST:event_cmdRefreshActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private com.jdimension.jlawyer.client.assistant.AiChatHistoryPanel chatHistory;
+    private javax.swing.JButton cmdNewChat;
+    private javax.swing.JButton cmdRefresh;
     private javax.swing.JLabel lblIcon;
     private javax.swing.JLabel lblPanelTitle;
     // End of variables declaration//GEN-END:variables

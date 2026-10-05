@@ -20,10 +20,13 @@
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
+                      <Component id="cmdRefresh" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
                       <Component id="lblIcon" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="lblPanelTitle" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
+                      <Component id="cmdNewChat" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <Component id="chatHistory" alignment="0" max="32767" attributes="0"/>
               </Group>
@@ -38,6 +41,8 @@
               <Group type="103" groupAlignment="1" max="-2" attributes="0">
                   <Component id="lblIcon" alignment="0" max="32767" attributes="0"/>
                   <Component id="lblPanelTitle" alignment="0" max="32767" attributes="0"/>
+                  <Component id="cmdNewChat" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmdRefresh" alignment="0" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
               <Component id="chatHistory" pref="500" max="32767" attributes="0"/>
@@ -47,6 +52,17 @@
     </DimensionLayout>
   </Layout>
   <SubComponents>
+    <Component class="javax.swing.JButton" name="cmdRefresh">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons32/material/baseline_refresh_blue_36dp.png"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="Aktualisieren"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdRefreshActionPerformed"/>
+      </Events>
+    </Component>
     <Component class="javax.swing.JLabel" name="lblIcon">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
@@ -71,6 +87,17 @@
       <Properties>
         <Property name="opaque" type="boolean" value="false"/>
       </Properties>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdNewChat">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons32/material/j-lawyer-ai.png"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="neuen Chat beginnen"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdNewChatActionPerformed"/>
+      </Events>
     </Component>
   </SubComponents>
 </Form>

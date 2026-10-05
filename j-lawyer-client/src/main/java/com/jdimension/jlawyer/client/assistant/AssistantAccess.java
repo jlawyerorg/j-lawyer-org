@@ -1329,6 +1329,61 @@ public class AssistantAccess {
 
     }
 
+    /**
+     * Shows a popup menu below the given invoker with all chat capabilities (without input)
+     * whose model supports tools. Selecting an entry starts a new chat without case context.
+     *
+     * @param invoker component the popup is shown below, also used as parent for messages
+     */
+    public void showNewToolChatMenu(Component invoker) {
+        try {
+            Map<AssistantConfig, List<AiCapability>> chatCapabilities = this.filterCapabilities(AiCapability.REQUESTTYPE_CHAT, AiCapability.INPUTTYPE_NONE);
+
+            // Determine which models support tools
+            ClientSettings cs = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(cs.getLookupProperties());
+            Map<AssistantConfig, List<AiModel>> modelsMap = locator.lookupIntegrationServiceRemote().getAssistantModels();
+            Set<String> toolModelNames = new HashSet<>();
+            for (List<AiModel> models : modelsMap.values()) {
+                for (AiModel m : models) {
+                    if (m.isSupportsTools()) {
+                        toolModelNames.add(m.getName());
+                    }
+                }
+            }
+
+            // Filter to only capabilities whose model supports tools
+            Map<AssistantConfig, List<AiCapability>> toolCapabilities = new HashMap<>();
+            for (Map.Entry<AssistantConfig, List<AiCapability>> entry : chatCapabilities.entrySet()) {
+                for (AiCapability c : entry.getValue()) {
+                    if (c.getModelRef() != null && toolModelNames.contains(c.getModelRef())) {
+                        toolCapabilities.computeIfAbsent(entry.getKey(), k -> new ArrayList<>()).add(c);
+                    }
+                }
+            }
+
+            if (toolCapabilities.isEmpty()) {
+                JOptionPane.showMessageDialog(invoker, "Es sind keine Chat-Aktionen mit Tool-Unterstützung konfiguriert.", "Ingo", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            AssistantInputAdapter emptyAdapter = new AssistantInputAdapter() {
+                @Override
+                public List<InputData> getInputs(AiCapability c) { return java.util.Collections.emptyList(); }
+                @Override
+                public List<Message> getMessages(AiCapability c) { return java.util.Collections.emptyList(); }
+            };
+
+            JPopupMenu popup = new JPopupMenu();
+            this.populateMenu(popup, toolCapabilities, emptyAdapter, null, EditorsRegistry.getInstance().getMainWindow(), false);
+            popup.show(invoker, 0, invoker.getHeight());
+
+        } catch (Exception ex) {
+            log.error("Error loading Ingo chat capabilities", ex);
+            JOptionPane.showMessageDialog(invoker, "Fehler beim Laden der Ingo-Aktionen: " + ex.getMessage(), "Ingo", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     public void populateMenu(JMenu menu, Map<AssistantConfig, List<AiCapability>> capabilities, AssistantInputAdapter adapter, ArchiveFileBean selectedCase) {
 
         addCapabilityItems(targetOf(menu), capabilities, (config, c) -> {

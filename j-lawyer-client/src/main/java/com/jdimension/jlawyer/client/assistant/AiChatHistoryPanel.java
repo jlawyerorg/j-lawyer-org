@@ -793,6 +793,7 @@ public class AiChatHistoryPanel extends javax.swing.JPanel implements EventConsu
         this.canModifyCaseChats = UserSettings.getInstance().isCurrentUserInRole("writeArchiveFileRole");
         this.cmdAssign.setVisible(false);
         this.mnuAssign.setVisible(false);
+        this.cmdRefresh.setVisible(true);
         // case chats may be started by different users
         this.listRenderer.setShowOwner(true);
         this.reset();
@@ -808,6 +809,8 @@ public class AiChatHistoryPanel extends javax.swing.JPanel implements EventConsu
         this.caseView = null;
         this.cmdAssign.setVisible(true);
         this.mnuAssign.setVisible(true);
+        // the hosting module offers its own refresh button in the header
+        this.cmdRefresh.setVisible(false);
         // the owner is always the current user
         this.listRenderer.setShowOwner(false);
         this.reset();
@@ -828,6 +831,19 @@ public class AiChatHistoryPanel extends javax.swing.JPanel implements EventConsu
     public void ensureLoaded() {
         if (!this.loaded) {
             this.refresh();
+        }
+    }
+
+    /**
+     * Fetches the list from the server and reloads the transcript of the displayed chat.
+     */
+    public void reload() {
+        this.refresh();
+        if (this.displayedChatId != null) {
+            int index = this.indexOf(this.displayedChatId);
+            if (index >= 0) {
+                this.loadTranscript(this.rows.get(index));
+            }
         }
     }
 
@@ -1251,16 +1267,17 @@ public class AiChatHistoryPanel extends javax.swing.JPanel implements EventConsu
         mnuRename = new javax.swing.JMenuItem();
         mnuAssign = new javax.swing.JMenuItem();
         mnuDelete = new javax.swing.JMenuItem();
+        jSplitPane1 = new javax.swing.JSplitPane();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        lstChats = new javax.swing.JList<>();
+        pnlTranscript = new javax.swing.JPanel();
+        pnlTranscriptTop = new javax.swing.JPanel();
         pnlActions = new javax.swing.JPanel();
         cmdContinue = new javax.swing.JButton();
         cmdRename = new javax.swing.JButton();
         cmdAssign = new javax.swing.JButton();
         cmdDelete = new javax.swing.JButton();
         cmdRefresh = new javax.swing.JButton();
-        jSplitPane1 = new javax.swing.JSplitPane();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        lstChats = new javax.swing.JList<>();
-        pnlTranscript = new javax.swing.JPanel();
         lblTranscriptHeader = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
         pnlMessages = new javax.swing.JPanel();
@@ -1301,7 +1318,38 @@ public class AiChatHistoryPanel extends javax.swing.JPanel implements EventConsu
         });
         popChats.add(mnuDelete);
 
+        jSplitPane1.setDividerLocation(320);
+
+        jScrollPane1.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
+        lstChats.setBackground(new java.awt.Color(255, 255, 255));
+        lstChats.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+            public void mouseMoved(java.awt.event.MouseEvent evt) {
+                lstChatsMouseMoved(evt);
+            }
+        });
+        lstChats.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lstChatsMouseClicked(evt);
+            }
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                lstChatsMousePressed(evt);
+            }
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                lstChatsMouseReleased(evt);
+            }
+        });
+        jScrollPane1.setViewportView(lstChats);
+
+        jSplitPane1.setLeftComponent(jScrollPane1);
+
+        pnlTranscript.setLayout(new java.awt.BorderLayout());
+
+        pnlTranscriptTop.setOpaque(false);
+        pnlTranscriptTop.setLayout(new java.awt.BorderLayout());
+
         pnlActions.setOpaque(false);
+        pnlActions.setBorder(javax.swing.BorderFactory.createEmptyBorder(4, 4, 0, 4));
         pnlActions.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 4, 0));
 
         cmdContinue.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/j-lawyer-ai.png"))); // NOI18N
@@ -1354,36 +1402,13 @@ public class AiChatHistoryPanel extends javax.swing.JPanel implements EventConsu
         });
         pnlActions.add(cmdRefresh);
 
-        jSplitPane1.setDividerLocation(320);
-
-        jScrollPane1.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-
-        lstChats.setBackground(new java.awt.Color(255, 255, 255));
-        lstChats.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
-            public void mouseMoved(java.awt.event.MouseEvent evt) {
-                lstChatsMouseMoved(evt);
-            }
-        });
-        lstChats.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                lstChatsMouseClicked(evt);
-            }
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                lstChatsMousePressed(evt);
-            }
-            public void mouseReleased(java.awt.event.MouseEvent evt) {
-                lstChatsMouseReleased(evt);
-            }
-        });
-        jScrollPane1.setViewportView(lstChats);
-
-        jSplitPane1.setLeftComponent(jScrollPane1);
-
-        pnlTranscript.setLayout(new java.awt.BorderLayout());
+        pnlTranscriptTop.add(pnlActions, java.awt.BorderLayout.NORTH);
 
         lblTranscriptHeader.setText(" ");
         lblTranscriptHeader.setBorder(javax.swing.BorderFactory.createEmptyBorder(6, 8, 6, 8));
-        pnlTranscript.add(lblTranscriptHeader, java.awt.BorderLayout.NORTH);
+        pnlTranscriptTop.add(lblTranscriptHeader, java.awt.BorderLayout.CENTER);
+
+        pnlTranscript.add(pnlTranscriptTop, java.awt.BorderLayout.NORTH);
 
         jScrollPane2.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
         jScrollPane2.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -1403,17 +1428,13 @@ public class AiChatHistoryPanel extends javax.swing.JPanel implements EventConsu
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(pnlActions, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 900, Short.MAX_VALUE))
+                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 900, Short.MAX_VALUE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(pnlActions, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 500, Short.MAX_VALUE)
                 .addContainerGap())
         );
@@ -1503,13 +1524,7 @@ public class AiChatHistoryPanel extends javax.swing.JPanel implements EventConsu
     }//GEN-LAST:event_cmdDeleteActionPerformed
 
     private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
-        this.refresh();
-        if (this.displayedChatId != null) {
-            int index = this.indexOf(this.displayedChatId);
-            if (index >= 0) {
-                this.loadTranscript(this.rows.get(index));
-            }
-        }
+        this.reload();
     }//GEN-LAST:event_cmdRefreshActionPerformed
 
     private void lstChatsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstChatsMouseClicked
@@ -1552,6 +1567,7 @@ public class AiChatHistoryPanel extends javax.swing.JPanel implements EventConsu
     private javax.swing.JPanel pnlActions;
     private javax.swing.JPanel pnlMessages;
     private javax.swing.JPanel pnlTranscript;
+    private javax.swing.JPanel pnlTranscriptTop;
     private javax.swing.JPopupMenu popChats;
     // End of variables declaration//GEN-END:variables
 }

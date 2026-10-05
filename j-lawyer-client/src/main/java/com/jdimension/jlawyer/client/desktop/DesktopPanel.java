@@ -667,10 +667,7 @@ import com.jdimension.jlawyer.client.bea.BeaCheckTimerTask;
 import com.jdimension.jlawyer.client.bea.BeaInboxPanel;
 import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
 import com.jdimension.jlawyer.client.configuration.UserProfileDialog;
-import com.jdimension.jlawyer.ai.AiCapability;
-import com.jdimension.jlawyer.ai.AiModel;
 import com.jdimension.jlawyer.client.assistant.AssistantAccess;
-import com.jdimension.jlawyer.client.assistant.AssistantInputAdapter;
 import com.jdimension.jlawyer.client.editors.*;
 import com.jdimension.jlawyer.client.editors.documents.ScannerPanel;
 import com.jdimension.jlawyer.client.editors.addresses.EditAddressPanel;
@@ -711,7 +708,6 @@ import com.jdimension.jlawyer.persistence.InstantMessage;
 import com.jdimension.jlawyer.persistence.InstantMessageMention;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
-import com.jdimension.jlawyer.persistence.AssistantConfig;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Component;
@@ -727,8 +723,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.ResourceBundle;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -2381,53 +2375,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     }//GEN-LAST:event_cmdGlobalSearchMouseClicked
 
     private void cmdIngoChatActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdIngoChatActionPerformed
-        try {
-            AssistantAccess ingo = AssistantAccess.getInstance();
-            Map<AssistantConfig, List<AiCapability>> chatCapabilities = ingo.filterCapabilities(AiCapability.REQUESTTYPE_CHAT, AiCapability.INPUTTYPE_NONE);
-
-            // Determine which models support tools
-            ClientSettings cs = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(cs.getLookupProperties());
-            Map<AssistantConfig, List<AiModel>> modelsMap = locator.lookupIntegrationServiceRemote().getAssistantModels();
-            Set<String> toolModelNames = new java.util.HashSet<>();
-            for (List<AiModel> models : modelsMap.values()) {
-                for (AiModel m : models) {
-                    if (m.isSupportsTools()) {
-                        toolModelNames.add(m.getName());
-                    }
-                }
-            }
-
-            // Filter to only capabilities whose model supports tools
-            Map<AssistantConfig, List<AiCapability>> toolCapabilities = new java.util.HashMap<>();
-            for (Map.Entry<AssistantConfig, List<AiCapability>> entry : chatCapabilities.entrySet()) {
-                for (AiCapability c : entry.getValue()) {
-                    if (c.getModelRef() != null && toolModelNames.contains(c.getModelRef())) {
-                        toolCapabilities.computeIfAbsent(entry.getKey(), k -> new ArrayList<>()).add(c);
-                    }
-                }
-            }
-
-            if (toolCapabilities.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Es sind keine Chat-Aktionen mit Tool-Unterstützung konfiguriert.", "Ingo", JOptionPane.INFORMATION_MESSAGE);
-                return;
-            }
-
-            AssistantInputAdapter emptyAdapter = new AssistantInputAdapter() {
-                @Override
-                public List<com.jdimension.jlawyer.ai.InputData> getInputs(AiCapability c) { return java.util.Collections.emptyList(); }
-                @Override
-                public List<com.jdimension.jlawyer.ai.Message> getMessages(AiCapability c) { return java.util.Collections.emptyList(); }
-            };
-
-            JPopupMenu popup = new JPopupMenu();
-            ingo.populateMenu(popup, toolCapabilities, emptyAdapter, null, EditorsRegistry.getInstance().getMainWindow(), false);
-            popup.show(cmdIngoChat, 0, cmdIngoChat.getHeight());
-
-        } catch (Exception ex) {
-            log.error("Error loading Ingo chat capabilities", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Ingo-Aktionen: " + ex.getMessage(), "Ingo", JOptionPane.ERROR_MESSAGE);
-        }
+        AssistantAccess.getInstance().showNewToolChatMenu(this.cmdIngoChat);
     }//GEN-LAST:event_cmdIngoChatActionPerformed
 
 
