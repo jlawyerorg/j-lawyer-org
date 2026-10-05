@@ -1873,6 +1873,42 @@ public class ReportService implements ReportServiceRemote, ReportServiceLocal {
         }
     }
 
+    /**
+     * Removes characters that XML 1.0 does not allow. An ODS file is XML, and a single control
+     * character in a cell (e.g. a vertical tab pasted into a description) makes the serializer
+     * abort the whole export.
+     *
+     * @param value cell text, may be null
+     * @return the text without characters invalid in XML 1.0; empty string for null
+     */
+    public static String stripInvalidXmlChars(String value) {
+        if (value == null) {
+            return "";
+        }
+        StringBuilder sb = null;
+        for (int i = 0; i < value.length(); i++) {
+            int cp = value.codePointAt(i);
+            boolean valid = cp == 0x9 || cp == 0xA || cp == 0xD
+                    || (cp >= 0x20 && cp <= 0xD7FF)
+                    || (cp >= 0xE000 && cp <= 0xFFFD)
+                    || (cp >= 0x10000 && cp <= 0x10FFFF);
+            if (Character.isSupplementaryCodePoint(cp)) {
+                i++;
+            }
+            if (!valid) {
+                if (sb == null) {
+                    sb = new StringBuilder(value.length());
+                    sb.append(value, 0, i);
+                }
+                continue;
+            }
+            if (sb != null) {
+                sb.appendCodePoint(cp);
+            }
+        }
+        return sb == null ? value : sb.toString();
+    }
+
     private byte[] generateOds(String[] headers, String[][] data, boolean[] numericColumns) throws Exception {
         org.odftoolkit.simple.SpreadsheetDocument ods = org.odftoolkit.simple.SpreadsheetDocument.newSpreadsheetDocument();
         org.odftoolkit.simple.table.Table sheet = ods.getSheetByIndex(0);
@@ -1881,7 +1917,7 @@ public class ReportService implements ReportServiceRemote, ReportServiceLocal {
         org.odftoolkit.simple.table.Row headerRow = sheet.getRowByIndex(0);
         for (int i = 0; i < headers.length; i++) {
             org.odftoolkit.simple.table.Cell cell = headerRow.getCellByIndex(i);
-            cell.setStringValue(headers[i] != null ? headers[i] : "");
+            cell.setStringValue(stripInvalidXmlChars(headers[i]));
             cell.getFont().setFontStyle(org.odftoolkit.simple.style.StyleTypeDefinitions.FontStyle.BOLD);
         }
 
@@ -1895,10 +1931,10 @@ public class ReportService implements ReportServiceRemote, ReportServiceLocal {
                         cell.setDoubleValue(Double.parseDouble(value));
                         cell.setFormatString("#,##0.00");
                     } catch (NumberFormatException nfe) {
-                        cell.setStringValue(value);
+                        cell.setStringValue(stripInvalidXmlChars(value));
                     }
                 } else {
-                    cell.setStringValue(value != null ? value : "");
+                    cell.setStringValue(stripInvalidXmlChars(value));
                 }
             }
         }
