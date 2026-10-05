@@ -209,6 +209,55 @@ public class ToolRegistry {
         TOOLS.add(new ToolDefinition("get_parties_for_case", "Gibt alle Beteiligten einer Akte mit vollständigen Kontaktdaten zurück.",
                 Arrays.asList(new ToolParameter("caseId", "string", "Interne ID der Akte", true))));
 
+        // Case links and contact relationships (read-only)
+        TOOLS.add(new ToolDefinition("get_case_links",
+                "Gibt die Aktenverknüpfungen einer Akte zurück (z.B. Gegenakte, Folgeakte), je Verknüpfung mit Beschreibung und Aktenzeichen, Kurzrubrum, Grund und Archivstatus der verknüpften Akte. Akten ohne Leseberechtigung fehlen. Die Akten-ID liefern search_cases bzw. get_case.",
+                Arrays.asList(new ToolParameter("caseId", "string", "Interne ID der Akte", true))));
+
+        TOOLS.add(new ToolDefinition("get_contact_relations",
+                "Gibt die Kontaktbeziehungen eines Kontakts zurück (z.B. Mutter/Kind, Geschäftsführer/Gesellschaft), je Beziehung mit Bezeichnung aus Sicht dieses Kontakts (label, z.B. \"ist Mutter von\"), Beziehungstyp, Notiz und dem verbundenen Kontakt. Die Kontakt-ID liefern search_contacts bzw. get_parties_for_case.",
+                Arrays.asList(new ToolParameter("contactId", "string", "Interne ID des Kontakts", true))));
+
+        TOOLS.add(new ToolDefinition("get_cases_for_contact",
+                "Gibt alle Akten zurück, in denen ein Kontakt beteiligt ist, je Akte mit Beteiligtentyp (z.B. Mandant, Gegner) und Zeichen des Beteiligten. Akten ohne Leseberechtigung fehlen.",
+                Arrays.asList(
+                        new ToolParameter("contactId", "string", "Interne ID des Kontakts", true),
+                        new ToolParameter("includeArchived", "string", "false, um archivierte Akten auszulassen (Standard: true)", false))));
+
+        TOOLS.add(new ToolDefinition("get_case_network",
+                "Ermittelt alle Akten, die über Aktenverknüpfungen (auch über mehrere Stufen) mit einer Akte zusammenhängen, je Akte mit Abstand (depth) und über welche Akte/Verknüpfung sie erreicht wurde. "
+                + "Liefert zusätzlich sharedParties: Kontakte, die in mehr als einer dieser Akten beteiligt sind, mit ihrer Rolle je Akte. "
+                + "Begrenzt auf " + NetworkToolSupport.MAX_NODES + " Akten und " + NetworkToolSupport.MAX_REMOTE_CALLS + " Serverabfragen; bei Erreichen ist truncated=true.",
+                Arrays.asList(
+                        new ToolParameter("caseId", "string", "Interne ID der Ausgangsakte", true),
+                        new ToolParameter("maxDepth", "integer", "Maximale Anzahl Verknüpfungsstufen, 1 bis 3 (Standard: 1)", false))));
+
+        TOOLS.add(new ToolDefinition("get_contact_network",
+                "Ermittelt das Beziehungsumfeld eines Kontakts über Kontaktbeziehungen (auch über mehrere Stufen): Kontakte mit Abstand (depth) und die Beziehungen zwischen ihnen (label aus Sicht von fromContactId). "
+                + "Mit includeCases=true zusätzlich je Kontakt die Akten, in denen er beteiligt ist, samt Rolle (höchstens " + NetworkToolSupport.MAX_HUB_CASES + " je Kontakt, sonst hub=true). "
+                + "Begrenzt auf " + NetworkToolSupport.MAX_NODES + " Kontakte und " + NetworkToolSupport.MAX_REMOTE_CALLS + " Serverabfragen; bei Erreichen ist truncated=true.",
+                Arrays.asList(
+                        new ToolParameter("contactId", "string", "Interne ID des Ausgangskontakts", true),
+                        new ToolParameter("maxDepth", "integer", "Maximale Anzahl Beziehungsstufen, 1 oder 2 (Standard: 1)", false),
+                        new ToolParameter("includeCases", "string", "true, um die Akten jedes Kontakts mitzuliefern (Standard: false)", false))));
+
+        TOOLS.add(new ToolDefinition("find_party_connections",
+                "Prüft die Beteiligten einer Akte auf Verbindungen zu anderen Akten: je Beteiligtem (a) die anderen Akten, in denen derselbe Kontakt beteiligt ist, mit Rolle und roleDiffers=true, wenn die Rolle von der in dieser Akte abweicht, "
+                + "und (b) direkt verbundene Kontakte (Kontaktbeziehungen), die in anderen Akten oder in dieser Akte beteiligt sind. "
+                + "Das Ergebnis ist ein Hinweis für eine Kollisionsprüfung, keine abschließende Prüfung: Es berücksichtigt nur erfasste Beteiligungen und Beziehungen und nur Akten, die der Nutzer sehen darf. "
+                + "Kontakte mit mehr als " + NetworkToolSupport.MAX_HUB_CASES + " Akten werden gekürzt (hub=true). Begrenzt auf " + NetworkToolSupport.MAX_REMOTE_CALLS + " Serverabfragen; bei Erreichen ist truncated=true.",
+                Arrays.asList(new ToolParameter("caseId", "string", "Interne ID der Akte", true))));
+
+        TOOLS.add(new ToolDefinition("find_connection",
+                "Sucht den kürzesten Zusammenhang zwischen zwei Kontakten über Kontaktbeziehungen, Beteiligungen an Akten und Aktenverknüpfungen. "
+                + "Liefert bei found=true den Pfad als lesbare Schritte (steps) und Knoten (path), sonst found=false. "
+                + "Kontakte mit mehr als " + NetworkToolSupport.MAX_HUB_CASES + " Akten werden unterwegs nicht über ihre Akten weiterverfolgt (hubsNotExpanded). "
+                + "Begrenzt auf " + NetworkToolSupport.MAX_NODES + " Knoten und " + NetworkToolSupport.MAX_REMOTE_CALLS + " Serverabfragen; bei Erreichen ist truncated=true.",
+                Arrays.asList(
+                        new ToolParameter("contactIdA", "string", "Interne ID des ersten Kontakts", true),
+                        new ToolParameter("contactIdB", "string", "Interne ID des zweiten Kontakts", true),
+                        new ToolParameter("maxDepth", "integer", "Maximale Anzahl Schritte des Pfads, 1 bis 4 (Standard: 3)", false))));
+
         TOOLS.add(new ToolDefinition("get_all_open_events", "Gibt alle offenen Kalenderereignisse zurück. Optional nach Typ und/oder Verantwortlichem filterbar.",
                 Arrays.asList(
                         new ToolParameter("eventType", "string", "Ereignistyp zum Filtern: Wiedervorlage, Frist oder Termin (optional, Standard: alle)", false),
@@ -692,6 +741,20 @@ public class ToolRegistry {
                     return executeGetEventsForCase(args);
                 case "get_parties_for_case":
                     return executeGetPartiesForCase(args);
+                case "get_case_links":
+                    return executeGetCaseLinks(args);
+                case "get_contact_relations":
+                    return executeGetContactRelations(args);
+                case "get_cases_for_contact":
+                    return executeGetCasesForContact(args);
+                case "get_case_network":
+                    return executeGetCaseNetwork(args);
+                case "get_contact_network":
+                    return executeGetContactNetwork(args);
+                case "find_party_connections":
+                    return executeFindPartyConnections(args);
+                case "find_connection":
+                    return executeFindConnection(args);
                 case "get_all_open_events":
                     return executeGetAllOpenEvents(args);
                 case "get_all_open_events_between_dates":
@@ -913,6 +976,20 @@ public class ToolRegistry {
                     return "Termine der Akte: " + args.getOrDefault("caseId", "");
                 case "get_parties_for_case":
                     return "Beteiligte der Akte: " + args.getOrDefault("caseId", "");
+                case "get_case_links":
+                    return "Aktenverknüpfungen: " + args.getOrDefault("caseId", "");
+                case "get_contact_relations":
+                    return "Kontaktbeziehungen: " + args.getOrDefault("contactId", "");
+                case "get_cases_for_contact":
+                    return "Akten des Kontakts: " + args.getOrDefault("contactId", "");
+                case "get_case_network":
+                    return "Aktennetz: " + args.getOrDefault("caseId", "");
+                case "get_contact_network":
+                    return "Beziehungsumfeld: " + args.getOrDefault("contactId", "");
+                case "find_party_connections":
+                    return "Verbindungen der Beteiligten: " + args.getOrDefault("caseId", "");
+                case "find_connection":
+                    return "Zusammenhang: " + args.getOrDefault("contactIdA", "") + " / " + args.getOrDefault("contactIdB", "");
                 case "get_all_open_events":
                     return "Alle offenen Termine";
                 case "get_all_open_events_between_dates":
@@ -2569,6 +2646,94 @@ public class ToolRegistry {
         }
         sb.append("}");
         return sb.toString();
+    }
+
+    private String executeGetCaseLinks(JsonObject args) throws Exception {
+        String caseId = (String) args.get("caseId");
+        if (caseId == null || caseId.trim().isEmpty()) {
+            return ToolJsonUtils.error("Akten-ID fehlt");
+        }
+        JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
+        NetworkToolSupport.Source source = NetworkToolSupport.remoteSource(locator.lookupArchiveFileServiceRemote(), locator.lookupAddressServiceRemote());
+        return NetworkToolSupport.caseLinksJson(caseId, source.getCaseLinks(caseId));
+    }
+
+    private String executeGetContactRelations(JsonObject args) throws Exception {
+        String contactId = (String) args.get("contactId");
+        if (contactId == null || contactId.trim().isEmpty()) {
+            return ToolJsonUtils.error("Kontakt-ID fehlt");
+        }
+        JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
+        NetworkToolSupport.Source source = NetworkToolSupport.remoteSource(locator.lookupArchiveFileServiceRemote(), locator.lookupAddressServiceRemote());
+        return NetworkToolSupport.relationsJson(contactId, source.getRelations(contactId));
+    }
+
+    private String executeGetCasesForContact(JsonObject args) throws Exception {
+        String contactId = (String) args.get("contactId");
+        if (contactId == null || contactId.trim().isEmpty()) {
+            return ToolJsonUtils.error("Kontakt-ID fehlt");
+        }
+        boolean includeArchived = booleanArg(args, "includeArchived", true);
+        JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
+        NetworkToolSupport.Source source = NetworkToolSupport.remoteSource(locator.lookupArchiveFileServiceRemote(), locator.lookupAddressServiceRemote());
+        return NetworkToolSupport.casesForContactJson(contactId, source.getCasesForContact(contactId), includeArchived);
+    }
+
+    private String executeGetCaseNetwork(JsonObject args) throws Exception {
+        String caseId = (String) args.get("caseId");
+        if (caseId == null || caseId.trim().isEmpty()) {
+            return ToolJsonUtils.error("Akten-ID fehlt");
+        }
+        int maxDepth = clampedIntArg(args, "maxDepth", 1, 1, 3);
+        JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
+        return NetworkToolSupport.caseNetworkJson(NetworkToolSupport.remoteSource(locator.lookupArchiveFileServiceRemote(), locator.lookupAddressServiceRemote()), caseId, maxDepth);
+    }
+
+    private String executeGetContactNetwork(JsonObject args) throws Exception {
+        String contactId = (String) args.get("contactId");
+        if (contactId == null || contactId.trim().isEmpty()) {
+            return ToolJsonUtils.error("Kontakt-ID fehlt");
+        }
+        int maxDepth = clampedIntArg(args, "maxDepth", 1, 1, 2);
+        boolean includeCases = booleanArg(args, "includeCases", false);
+        JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
+        return NetworkToolSupport.contactNetworkJson(NetworkToolSupport.remoteSource(locator.lookupArchiveFileServiceRemote(), locator.lookupAddressServiceRemote()), contactId, maxDepth, includeCases);
+    }
+
+    private String executeFindPartyConnections(JsonObject args) throws Exception {
+        String caseId = (String) args.get("caseId");
+        if (caseId == null || caseId.trim().isEmpty()) {
+            return ToolJsonUtils.error("Akten-ID fehlt");
+        }
+        JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
+        return NetworkToolSupport.partyConnectionsJson(NetworkToolSupport.remoteSource(locator.lookupArchiveFileServiceRemote(), locator.lookupAddressServiceRemote()), caseId);
+    }
+
+    private String executeFindConnection(JsonObject args) throws Exception {
+        String contactIdA = (String) args.get("contactIdA");
+        String contactIdB = (String) args.get("contactIdB");
+        if (contactIdA == null || contactIdA.trim().isEmpty() || contactIdB == null || contactIdB.trim().isEmpty()) {
+            return ToolJsonUtils.error("Beide Kontakt-IDs (contactIdA, contactIdB) sind erforderlich");
+        }
+        int maxDepth = clampedIntArg(args, "maxDepth", 3, 1, 4);
+        JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
+        return NetworkToolSupport.connectionJson(NetworkToolSupport.remoteSource(locator.lookupArchiveFileServiceRemote(), locator.lookupAddressServiceRemote()), contactIdA.trim(), contactIdB.trim(), maxDepth);
+    }
+
+    private static boolean booleanArg(JsonObject args, String name, boolean defaultValue) {
+        Object value = args.get(name);
+        if (value == null || value.toString().trim().isEmpty()) {
+            return defaultValue;
+        }
+        return Boolean.parseBoolean(value.toString().trim());
+    }
+
+    private static int clampedIntArg(JsonObject args, String name, int defaultValue, int min, int max) {
+        Integer value = ToolJsonUtils.toInteger(args.get(name));
+        if (value == null) {
+            return defaultValue;
+        }
+        return Math.max(min, Math.min(max, value));
     }
 
     private String executeGetPartiesForCase(JsonObject args) throws Exception {
