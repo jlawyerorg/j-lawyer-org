@@ -24,6 +24,8 @@ public class Message implements Serializable {
     private String toolCallId=null;
     private String toolName=null;
     private String modelRef=null;
+    // author of a stored chat message; j-lawyer only, never sent to the AI backend
+    private String principalId=null;
 
     public Message() {
     }
@@ -96,6 +98,22 @@ public class Message implements Serializable {
      */
     public void setModelRef(String modelRef) {
         this.modelRef = modelRef;
+    }
+
+
+    /**
+     * @return principal id of the user whose request produced this message, as stored with a chat;
+     * null for messages that are not stored yet. Not sent to the AI backend.
+     */
+    public String getPrincipalId() {
+        return principalId;
+    }
+
+    /**
+     * @param principalId principal id of the user whose request produced this message
+     */
+    public void setPrincipalId(String principalId) {
+        this.principalId = principalId;
     }
 
 }

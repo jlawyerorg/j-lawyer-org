@@ -1,5 +1,4 @@
-/*
-                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -661,30 +660,38 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.assistant;
+package com.jdimension.jlawyer.persistence;
 
-import com.jdimension.jlawyer.ai.AiCapability;
-import com.jdimension.jlawyer.ai.InputData;
-import com.jdimension.jlawyer.ai.Message;
 import java.util.List;
+import javax.ejb.Local;
 
 /**
+ * Persistence operations for the messages of stored AI chats.
  *
  * @author jens
  */
-public interface AssistantInputAdapter {
-    
-    public List<InputData> getInputs(AiCapability c);
-    public List<Message> getMessages(AiCapability c);
+@Local
+public interface AiChatMessageFacadeLocal {
+
+    void create(AiChatMessage message);
+
+    void edit(AiChatMessage message);
+
+    void remove(AiChatMessage message);
+
+    AiChatMessage find(Object id);
 
     /**
-     * Tells whether a chat started through this adapter is started from a case view. Such chats
-     * are stored with a reference to the case.
-     *
-     * @return true if the adapter belongs to a case view
+     * @param chatId id of the chat
+     * @return the messages of the chat in conversation order
      */
-    public default boolean isCaseView() {
-        return false;
-    }
+    List<AiChatMessage> findByChat(String chatId);
 
+    /**
+     * Deletes all messages of a chat.
+     *
+     * @param chatId id of the chat
+     * @return the number of deleted messages
+     */
+    int deleteByChat(String chatId);
 }

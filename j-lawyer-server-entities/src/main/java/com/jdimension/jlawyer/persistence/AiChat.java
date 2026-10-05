@@ -1,5 +1,4 @@
-/*
-                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -661,30 +660,353 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.assistant;
+package com.jdimension.jlawyer.persistence;
 
-import com.jdimension.jlawyer.ai.AiCapability;
-import com.jdimension.jlawyer.ai.InputData;
-import com.jdimension.jlawyer.ai.Message;
-import java.util.List;
+import java.io.Serializable;
+import java.util.Date;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 
 /**
+ * A chat conducted with the AI assistant (Ingo).
+ *
+ * A chat either belongs to a case (caseId set) and is then visible to everyone with access to that
+ * case, or it has no case and is private to its owner. The case is referenced by id only: there is
+ * no association to ArchiveFileBean, so loading a chat never pulls a case with its group and folder
+ * tree, and deleting a case removes its chats through the database cascade alone.
+ *
+ * The messages live in AiChatMessage. The complete first user message is kept here as well,
+ * because the chat lists show it as tooltip; lists read chats through a projection that leaves
+ * this potentially large column out.
  *
  * @author jens
  */
-public interface AssistantInputAdapter {
-    
-    public List<InputData> getInputs(AiCapability c);
-    public List<Message> getMessages(AiCapability c);
+@Entity
+@Table(name = "ai_chats")
+@NamedQueries({
+    @NamedQuery(name = "AiChat.findAll", query = "SELECT c FROM AiChat c"),
+    @NamedQuery(name = "AiChat.findByOwnerWithoutCase", query = "SELECT c FROM AiChat c WHERE c.owner = :owner AND c.caseId IS NULL")
+})
+public class AiChat implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /**
-     * Tells whether a chat started through this adapter is started from a case view. Such chats
-     * are stored with a reference to the case.
-     *
-     * @return true if the adapter belongs to a case view
+     * Number of characters of the first user message that make up a derived title.
      */
-    public default boolean isCaseView() {
-        return false;
+    public static final int DERIVED_TITLE_LENGTH = 80;
+
+    /**
+     * Maximum length of a title, matching the column.
+     */
+    public static final int MAX_TITLE_LENGTH = 255;
+
+    @Id
+    @Column(name = "id")
+    private String id;
+
+    @Column(name = "case_id", length = 50)
+    private String caseId;
+
+    @Column(name = "owner", length = 50)
+    private String owner;
+
+    @Column(name = "title", length = 255)
+    private String title;
+
+    @Column(name = "title_custom")
+    private boolean titleCustom = false;
+
+    @Column(name = "first_message", columnDefinition = "LONGTEXT")
+    private String firstMessage;
+
+    @Column(name = "word_count")
+    private int wordCount = 0;
+
+    @Column(name = "message_version")
+    private int messageVersion = 0;
+
+    @Column(name = "assistant_config_id", length = 50)
+    private String assistantConfigId;
+
+    @Column(name = "request_type", length = 50)
+    private String requestType;
+
+    @Column(name = "action_id", length = 250)
+    private String actionId;
+
+    @Column(name = "model_ref", length = 250)
+    private String modelRef;
+
+    @Column(name = "capability_name", length = 250)
+    private String capabilityName;
+
+    @Column(name = "system_prompt", columnDefinition = "TEXT")
+    private String systemPrompt;
+
+    @Column(name = "configuration_values", columnDefinition = "TEXT")
+    private String configurationValues;
+
+    @Column(name = "created")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date created;
+
+    @Column(name = "last_activity")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date lastActivity;
+
+    /**
+     * Derives a chat title from its first user message: whitespace runs (including line breaks)
+     * are collapsed to single blanks, the result is trimmed and cut to
+     * {@link #DERIVED_TITLE_LENGTH} characters.
+     *
+     * @param firstMessage the first user message, may be null
+     * @return the title, an empty string if there is no text
+     */
+    public static String deriveTitle(String firstMessage) {
+        if (firstMessage == null) {
+            return "";
+        }
+        String collapsed = firstMessage.replaceAll("\\s+", " ").trim();
+        if (collapsed.length() > DERIVED_TITLE_LENGTH) {
+            collapsed = collapsed.substring(0, DERIVED_TITLE_LENGTH);
+        }
+        return collapsed;
     }
 
+    /**
+     * Normalises a title entered by a user: trimmed and cut to {@link #MAX_TITLE_LENGTH}
+     * characters.
+     *
+     * @param title the entered title, may be null
+     * @return the normalised title, null if nothing but whitespace was entered - which means "use
+     * the derived title again"
+     */
+    public static String normaliseCustomTitle(String title) {
+        if (title == null) {
+            return null;
+        }
+        String t = title.trim();
+        if (t.isEmpty()) {
+            return null;
+        }
+        if (t.length() > MAX_TITLE_LENGTH) {
+            t = t.substring(0, MAX_TITLE_LENGTH);
+        }
+        return t;
+    }
+
+    /**
+     * @return the technical identifier
+     */
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    /**
+     * @return id of the case the chat belongs to, or null for a private chat
+     */
+    public String getCaseId() {
+        return caseId;
+    }
+
+    public void setCaseId(String caseId) {
+        this.caseId = caseId;
+    }
+
+    /**
+     * @return principal id of the user who created the chat
+     */
+    public String getOwner() {
+        return owner;
+    }
+
+    public void setOwner(String owner) {
+        this.owner = owner;
+    }
+
+    /**
+     * @return the title shown in the chat lists
+     */
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    /**
+     * @return true if the title was set by a user, false if it is derived from the first message
+     */
+    public boolean isTitleCustom() {
+        return titleCustom;
+    }
+
+    public void setTitleCustom(boolean titleCustom) {
+        this.titleCustom = titleCustom;
+    }
+
+    /**
+     * @return the complete first user message
+     */
+    public String getFirstMessage() {
+        return firstMessage;
+    }
+
+    public void setFirstMessage(String firstMessage) {
+        this.firstMessage = firstMessage;
+    }
+
+    /**
+     * @return number of words over all messages of the chat
+     */
+    public int getWordCount() {
+        return wordCount;
+    }
+
+    public void setWordCount(int wordCount) {
+        this.wordCount = wordCount;
+    }
+
+    /**
+     * @return version of the stored messages, incremented by every message save
+     */
+    public int getMessageVersion() {
+        return messageVersion;
+    }
+
+    public void setMessageVersion(int messageVersion) {
+        this.messageVersion = messageVersion;
+    }
+
+    /**
+     * @return id of the assistant configuration the chat runs on
+     */
+    public String getAssistantConfigId() {
+        return assistantConfigId;
+    }
+
+    public void setAssistantConfigId(String assistantConfigId) {
+        this.assistantConfigId = assistantConfigId;
+    }
+
+    /**
+     * @return request type of the capability the chat runs on
+     */
+    public String getRequestType() {
+        return requestType;
+    }
+
+    public void setRequestType(String requestType) {
+        this.requestType = requestType;
+    }
+
+    /**
+     * @return action id of the capability the chat runs on
+     */
+    public String getActionId() {
+        return actionId;
+    }
+
+    public void setActionId(String actionId) {
+        this.actionId = actionId;
+    }
+
+    /**
+     * @return model reference of the capability the chat runs on
+     */
+    public String getModelRef() {
+        return modelRef;
+    }
+
+    public void setModelRef(String modelRef) {
+        this.modelRef = modelRef;
+    }
+
+    /**
+     * @return display name of the capability the chat runs on
+     */
+    public String getCapabilityName() {
+        return capabilityName;
+    }
+
+    public void setCapabilityName(String capabilityName) {
+        this.capabilityName = capabilityName;
+    }
+
+    /**
+     * @return the system prompt sent with every request of the chat, or null
+     */
+    public String getSystemPrompt() {
+        return systemPrompt;
+    }
+
+    public void setSystemPrompt(String systemPrompt) {
+        this.systemPrompt = systemPrompt;
+    }
+
+    /**
+     * @return the prompt configuration (e.g. temperature) sent with every request of the chat, in
+     * the properties format of AiCapability.getConfigurationValues(), or null
+     */
+    public String getConfigurationValues() {
+        return configurationValues;
+    }
+
+    public void setConfigurationValues(String configurationValues) {
+        this.configurationValues = configurationValues;
+    }
+
+    /**
+     * @return when the chat was created
+     */
+    public Date getCreated() {
+        return created;
+    }
+
+    public void setCreated(Date created) {
+        this.created = created;
+    }
+
+    /**
+     * @return when messages of the chat were saved last
+     */
+    public Date getLastActivity() {
+        return lastActivity;
+    }
+
+    public void setLastActivity(Date lastActivity) {
+        this.lastActivity = lastActivity;
+    }
+
+    @Override
+    public int hashCode() {
+        return (id != null ? id.hashCode() : 0);
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (!(object instanceof AiChat)) {
+            return false;
+        }
+        AiChat other = (AiChat) object;
+        return !((this.id == null && other.id != null)
+                || (this.id != null && !this.id.equals(other.id)));
+    }
+
+    @Override
+    public String toString() {
+        return "AiChat[id=" + this.id + "]";
+    }
 }

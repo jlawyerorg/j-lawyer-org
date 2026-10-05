@@ -1,5 +1,4 @@
-/*
-                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -661,30 +660,40 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.assistant;
+package com.jdimension.jlawyer.persistence;
 
-import com.jdimension.jlawyer.ai.AiCapability;
-import com.jdimension.jlawyer.ai.InputData;
-import com.jdimension.jlawyer.ai.Message;
 import java.util.List;
+import javax.ejb.Stateless;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 
 /**
- *
  * @author jens
  */
-public interface AssistantInputAdapter {
-    
-    public List<InputData> getInputs(AiCapability c);
-    public List<Message> getMessages(AiCapability c);
+@Stateless
+public class AiChatMessageFacade extends AbstractFacade<AiChatMessage> implements AiChatMessageFacadeLocal {
 
-    /**
-     * Tells whether a chat started through this adapter is started from a case view. Such chats
-     * are stored with a reference to the case.
-     *
-     * @return true if the adapter belongs to a case view
-     */
-    public default boolean isCaseView() {
-        return false;
+    @PersistenceContext(unitName = "j-lawyer-server-ejbPU")
+    private EntityManager em;
+
+    @Override
+    protected EntityManager getEntityManager() {
+        return em;
     }
 
+    public AiChatMessageFacade() {
+        super(AiChatMessage.class);
+    }
+
+    @Override
+    public List<AiChatMessage> findByChat(String chatId) {
+        return em.createNamedQuery("AiChatMessage.findByChat", AiChatMessage.class)
+                .setParameter("chatId", chatId).getResultList();
+    }
+
+    @Override
+    public int deleteByChat(String chatId) {
+        return em.createNamedQuery("AiChatMessage.deleteByChat")
+                .setParameter("chatId", chatId).executeUpdate();
+    }
 }

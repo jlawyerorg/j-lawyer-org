@@ -1,5 +1,4 @@
-/*
-                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -661,30 +660,390 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.assistant;
+package com.jdimension.jlawyer.services;
 
-import com.jdimension.jlawyer.ai.AiCapability;
-import com.jdimension.jlawyer.ai.InputData;
+import com.jdimension.jlawyer.ai.ChatWordCounter;
 import com.jdimension.jlawyer.ai.Message;
+import com.jdimension.jlawyer.persistence.AiChat;
+import com.jdimension.jlawyer.persistence.AiChatFacadeLocal;
+import com.jdimension.jlawyer.persistence.AiChatMessage;
+import com.jdimension.jlawyer.persistence.AiChatMessageFacadeLocal;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.utils.StringGenerator;
+import com.jdimension.jlawyer.server.utils.SecurityUtils;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Objects;
+import javax.annotation.Resource;
+import javax.annotation.security.RolesAllowed;
+import javax.ejb.EJB;
+import javax.ejb.SessionContext;
+import javax.ejb.Stateless;
+import org.apache.log4j.Logger;
 
 /**
+ * Stores the chats conducted with the AI assistant and gives access to them.
+ *
+ * Access rules: a chat without case belongs to its owner alone. A case chat may be read and
+ * continued by everyone with readArchiveFileRole and group access to the case; renaming and
+ * deleting it requires writeArchiveFileRole. The checks are made here per chat, because one method
+ * serves both kinds of chats.
  *
  * @author jens
  */
-public interface AssistantInputAdapter {
-    
-    public List<InputData> getInputs(AiCapability c);
-    public List<Message> getMessages(AiCapability c);
+@Stateless
+public class AiChatService implements AiChatServiceRemote, AiChatServiceLocal {
 
-    /**
-     * Tells whether a chat started through this adapter is started from a case view. Such chats
-     * are stored with a reference to the case.
-     *
-     * @return true if the adapter belongs to a case view
-     */
-    public default boolean isCaseView() {
-        return false;
+    private static final Logger log = Logger.getLogger(AiChatService.class.getName());
+
+    private static final String MSG_MISSINGPRIVILEGE_CASE = "Keine Berechtigung für diese Akte";
+    private static final String MSG_MISSINGPRIVILEGE_CHAT = "Keine Berechtigung für diesen Chat";
+    private static final String MSG_MISSING_CHAT = "Chat kann nicht gefunden werden";
+    private static final String MSG_MISSING_CASE = "Akte kann nicht gefunden werden";
+
+    private static final String ROLE_READ_CASE = "readArchiveFileRole";
+    private static final String ROLE_WRITE_CASE = "writeArchiveFileRole";
+
+    @Resource
+    private SessionContext context;
+
+    @EJB
+    private AiChatFacadeLocal chatFacade;
+
+    @EJB
+    private AiChatMessageFacadeLocal messageFacade;
+
+    @EJB
+    private ArchiveFileBeanFacadeLocal archiveFileFacade;
+
+    @EJB
+    private ArchiveFileGroupsBeanFacadeLocal caseGroupsFacade;
+
+    @EJB
+    private SecurityServiceLocal securityFacade;
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public AiChatSaveResult saveChat(AiChatSummary chat, int expectedVersion, List<Message> messages) throws Exception {
+        if (chat == null) {
+            throw new Exception("Kein Chat angegeben");
+        }
+        if (messages == null) {
+            messages = new ArrayList<>();
+        }
+
+        if (chat.getId() == null) {
+            AiChat created = this.createChat(chat.getCaseId(), chat, messages, null);
+            return new AiChatSaveResult(this.chatFacade.findSummary(created.getId()), false);
+        }
+
+        AiChat stored = this.chatFacade.findForUpdate(chat.getId());
+        if (stored == null) {
+            // deleted in the meantime - keep the conversation as a new chat; the authors of the
+            // earlier messages are gone with it, so all messages are attributed to the caller
+            AiChat created = this.createChat(chat.getCaseId(), chat, messages, null);
+            return new AiChatSaveResult(this.chatFacade.findSummary(created.getId()), true);
+        }
+
+        this.checkRead(stored);
+
+        if (stored.getMessageVersion() != expectedVersion) {
+            // someone else saved this chat in between - never overwrite their messages
+            log.info("AI chat " + stored.getId() + " was saved concurrently (expected version " + expectedVersion + ", found " + stored.getMessageVersion() + "), storing as new chat");
+            AiChat created = this.createChat(stored.getCaseId(), chat, messages, this.messageFacade.findByChat(stored.getId()));
+            return new AiChatSaveResult(this.chatFacade.findSummary(created.getId()), true);
+        }
+
+        List<AiChatMessage> previous = this.messageFacade.findByChat(stored.getId());
+        this.messageFacade.deleteByChat(stored.getId());
+        this.writeMessages(stored, chat, messages, previous);
+        this.chatFacade.edit(stored);
+        return new AiChatSaveResult(this.chatFacade.findSummary(stored.getId()), false);
     }
 
+    /**
+     * Creates a chat for the caller and stores its messages.
+     *
+     * @param caseId the case of the new chat, or null
+     * @param meta capability fields of the chat
+     * @param messages the conversation
+     * @param previous stored messages the conversation continues, used to keep their authors; null
+     * if there are none
+     * @return the created chat
+     * @throws Exception if the case does not exist or the caller may not access it
+     */
+    private AiChat createChat(String caseId, AiChatSummary meta, List<Message> messages, List<AiChatMessage> previous) throws Exception {
+        if (caseId != null) {
+            this.checkCaseAccess(caseId, ROLE_READ_CASE);
+        }
+
+        AiChat c = new AiChat();
+        c.setId(new StringGenerator().getID().toString());
+        c.setCaseId(caseId);
+        c.setOwner(this.context.getCallerPrincipal().getName());
+        c.setCreated(new Date());
+        c.setMessageVersion(0);
+        c.setTitleCustom(false);
+        // the chat row must be inserted before its messages (foreign key); Hibernate executes the
+        // inserts in persist order. Changes writeMessages makes to the managed chat afterwards are
+        // flushed as an update.
+        this.chatFacade.create(c);
+        this.writeMessages(c, meta, messages, previous);
+        return c;
+    }
+
+    /**
+     * Determines the author of each message of a conversation that is about to be stored.
+     *
+     * The client always sends the complete conversation, so the messages that were stored before
+     * are sent again. A message keeps the author it was stored with if the stored message at the
+     * same position has the same role and content; every other message is new and is attributed
+     * to the caller, whose request produced it.
+     *
+     * @param messages the conversation to store, null entries are skipped
+     * @param previous the messages stored so far, in order, or null
+     * @param caller principal id of the user saving the conversation
+     * @return one author per non-null message, in order
+     */
+    public static List<String> attributeAuthors(List<Message> messages, List<AiChatMessage> previous, String caller) {
+        List<String> authors = new ArrayList<>();
+        int seq = 0;
+        for (Message m : messages) {
+            if (m == null) {
+                continue;
+            }
+            String author = caller;
+            if (previous != null && seq < previous.size()) {
+                AiChatMessage p = previous.get(seq);
+                if (Objects.equals(p.getRole(), m.getRole()) && Objects.equals(p.getContent(), m.getContent()) && p.getPrincipalId() != null) {
+                    author = p.getPrincipalId();
+                }
+            }
+            authors.add(author);
+            seq++;
+        }
+        return authors;
+    }
+
+    /**
+     * Stores the messages of a chat and updates the fields derived from them. The caller has
+     * removed the previous messages already.
+     */
+    private void writeMessages(AiChat c, AiChatSummary meta, List<Message> messages, List<AiChatMessage> previous) {
+        List<String> authors = attributeAuthors(messages, previous, this.context.getCallerPrincipal().getName());
+        int seq = 0;
+        for (Message m : messages) {
+            if (m == null) {
+                continue;
+            }
+            AiChatMessage cm = new AiChatMessage();
+            cm.setPrincipalId(authors.get(seq));
+            cm.setId(new StringGenerator().getID().toString());
+            cm.setChatId(c.getId());
+            cm.setSeq(seq++);
+            cm.setRole(m.getRole());
+            cm.setContent(m.getContent());
+            cm.setToolCallId(m.getToolCallId());
+            cm.setToolName(m.getToolName());
+            cm.setModelRef(m.getModelRef());
+            this.messageFacade.create(cm);
+        }
+
+        if (c.getFirstMessage() == null) {
+            for (Message m : messages) {
+                if (m != null && Message.ROLE_USER.equals(m.getRole()) && m.getContent() != null) {
+                    c.setFirstMessage(m.getContent());
+                    break;
+                }
+            }
+        }
+        if (!c.isTitleCustom()) {
+            c.setTitle(AiChat.deriveTitle(c.getFirstMessage()));
+        }
+
+        c.setWordCount(ChatWordCounter.countWords(messages));
+        c.setMessageVersion(c.getMessageVersion() + 1);
+        c.setLastActivity(new Date());
+        c.setAssistantConfigId(meta.getAssistantConfigId());
+        c.setRequestType(meta.getRequestType());
+        c.setActionId(meta.getActionId());
+        c.setModelRef(meta.getModelRef());
+        c.setCapabilityName(meta.getCapabilityName());
+        c.setSystemPrompt(meta.getSystemPrompt());
+        c.setConfigurationValues(meta.getConfigurationValues());
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<AiChatSummary> getChatsForCase(String caseId) throws Exception {
+        this.checkCaseAccess(caseId, ROLE_READ_CASE);
+        return this.chatFacade.findSummariesByCase(caseId);
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<AiChatSummary> getOwnChatsWithoutCase() throws Exception {
+        return this.chatFacade.findSummariesByOwnerWithoutCase(this.context.getCallerPrincipal().getName());
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public AiChatSummary getChat(String chatId) throws Exception {
+        AiChat c = this.chatFacade.find(chatId);
+        if (c == null) {
+            return null;
+        }
+        this.checkRead(c);
+        return this.chatFacade.findSummary(chatId);
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<Message> getMessages(String chatId) throws Exception {
+        AiChat c = this.findExisting(chatId);
+        this.checkRead(c);
+
+        List<Message> result = new ArrayList<>();
+        for (AiChatMessage cm : this.messageFacade.findByChat(chatId)) {
+            Message m = new Message();
+            m.setRole(cm.getRole());
+            m.setContent(cm.getContent());
+            m.setToolCallId(cm.getToolCallId());
+            m.setToolName(cm.getToolName());
+            m.setModelRef(cm.getModelRef());
+            m.setPrincipalId(cm.getPrincipalId());
+            result.add(m);
+        }
+        return result;
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public String getFirstMessage(String chatId) throws Exception {
+        AiChat c = this.findExisting(chatId);
+        this.checkRead(c);
+        return c.getFirstMessage();
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public AiChatSummary renameChat(String chatId, String title) throws Exception {
+        AiChat c = this.findExisting(chatId);
+        this.checkModify(c);
+
+        String custom = AiChat.normaliseCustomTitle(title);
+        if (custom == null) {
+            c.setTitleCustom(false);
+            c.setTitle(AiChat.deriveTitle(c.getFirstMessage()));
+        } else {
+            c.setTitleCustom(true);
+            c.setTitle(custom);
+        }
+        this.chatFacade.edit(c);
+        return this.chatFacade.findSummary(chatId);
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public AiChatSummary assignChatToCase(String chatId, String caseId) throws Exception {
+        AiChat c = this.findExisting(chatId);
+        if (c.getCaseId() != null) {
+            throw new Exception("Der Chat ist bereits einer Akte zugeordnet");
+        }
+        this.checkRead(c);
+        if (caseId == null) {
+            throw new Exception(MSG_MISSING_CASE);
+        }
+        this.checkCaseAccess(caseId, ROLE_READ_CASE);
+
+        c.setCaseId(caseId);
+        this.chatFacade.edit(c);
+        return this.chatFacade.findSummary(chatId);
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public void removeChats(List<String> chatIds) throws Exception {
+        if (chatIds == null) {
+            return;
+        }
+        List<AiChat> toRemove = new ArrayList<>();
+        for (String id : chatIds) {
+            AiChat c = this.chatFacade.find(id);
+            if (c == null) {
+                continue;
+            }
+            this.checkModify(c);
+            toRemove.add(c);
+        }
+        for (AiChat c : toRemove) {
+            // messages are removed by the foreign key cascade
+            this.chatFacade.remove(c);
+        }
+    }
+
+    @Override
+    public int removePrivateChatsOfUser(String principalId) {
+        if (principalId == null) {
+            return 0;
+        }
+        List<AiChat> chats = this.chatFacade.findByOwnerWithoutCase(principalId);
+        for (AiChat c : chats) {
+            this.chatFacade.remove(c);
+        }
+        return chats.size();
+    }
+
+    private AiChat findExisting(String chatId) throws Exception {
+        AiChat c = this.chatFacade.find(chatId);
+        if (c == null) {
+            throw new Exception(MSG_MISSING_CHAT);
+        }
+        return c;
+    }
+
+    /**
+     * Reading and continuing: the owner for a private chat, read access to the case for a case
+     * chat.
+     */
+    private void checkRead(AiChat c) throws Exception {
+        if (c.getCaseId() == null) {
+            this.checkOwner(c);
+        } else {
+            this.checkCaseAccess(c.getCaseId(), ROLE_READ_CASE);
+        }
+    }
+
+    /**
+     * Renaming and deleting: the owner for a private chat, write access to the case for a case
+     * chat.
+     */
+    private void checkModify(AiChat c) throws Exception {
+        if (c.getCaseId() == null) {
+            this.checkOwner(c);
+        } else {
+            this.checkCaseAccess(c.getCaseId(), ROLE_WRITE_CASE);
+        }
+    }
+
+    private void checkOwner(AiChat c) throws Exception {
+        String principalId = this.context.getCallerPrincipal().getName();
+        if (principalId == null || !principalId.equals(c.getOwner())) {
+            throw new Exception(MSG_MISSINGPRIVILEGE_CHAT);
+        }
+    }
+
+    private void checkCaseAccess(String caseId, String role) throws Exception {
+        if (!this.context.isCallerInRole(role)) {
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+        }
+        ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
+        if (aFile == null) {
+            throw new Exception(MSG_MISSING_CASE);
+        }
+        SecurityUtils.checkGroupsForCase(this.context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.caseGroupsFacade.findByCase(aFile));
+    }
 }

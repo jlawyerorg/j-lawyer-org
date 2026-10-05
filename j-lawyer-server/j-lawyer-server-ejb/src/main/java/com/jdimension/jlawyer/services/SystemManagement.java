@@ -770,6 +770,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @EJB
     private AppOptionGroupBeanFacadeLocal appOptionGroupBeanFacade;
     @EJB
+    private AiChatServiceLocal aiChatService;
+    @EJB
     private BankDataBeanFacadeLocal bankDataBeanFacade;
     @EJB
     private CityDataBeanFacadeLocal cityDataBeanFacade;
@@ -1258,6 +1260,9 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         for (AppRoleBean r : delRoles) {
             this.roleBeanFacade.remove(r);
         }
+
+        // private AI chats leave with their user, case chats stay with their case
+        this.aiChatService.removePrivateChatsOfUser(principalId);
 
         AppUserBean u = this.userBeanFacade.findByPrincipalId(principalId);
         this.userBeanFacade.remove(u);

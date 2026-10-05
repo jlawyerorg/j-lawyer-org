@@ -1,5 +1,4 @@
-/*
-                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -661,30 +660,47 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.assistant;
+package com.jdimension.jlawyer.client.events;
 
-import com.jdimension.jlawyer.ai.AiCapability;
-import com.jdimension.jlawyer.ai.InputData;
-import com.jdimension.jlawyer.ai.Message;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Published after stored AI chats were deleted in this client.
  *
  * @author jens
  */
-public interface AssistantInputAdapter {
-    
-    public List<InputData> getInputs(AiCapability c);
-    public List<Message> getMessages(AiCapability c);
+public class AiChatDeletedEvent extends Event {
+
+    private List<String> chatIds;
+    private String caseId;
 
     /**
-     * Tells whether a chat started through this adapter is started from a case view. Such chats
-     * are stored with a reference to the case.
-     *
-     * @return true if the adapter belongs to a case view
+     * @param chatIds ids of the deleted chats
+     * @param caseId id of the case the chats belonged to, or null for private chats
      */
-    public default boolean isCaseView() {
-        return false;
+    public AiChatDeletedEvent(List<String> chatIds, String caseId) {
+        super(Event.TYPE_AICHATDELETED);
+        this.chatIds = chatIds == null ? new ArrayList<>() : new ArrayList<>(chatIds);
+        this.caseId = caseId;
     }
 
+    @Override
+    public boolean isUiUpdateTrigger() {
+        return true;
+    }
+
+    /**
+     * @return ids of the deleted chats
+     */
+    public List<String> getChatIds() {
+        return chatIds;
+    }
+
+    /**
+     * @return id of the case the chats belonged to, or null for private chats
+     */
+    public String getCaseId() {
+        return caseId;
+    }
 }

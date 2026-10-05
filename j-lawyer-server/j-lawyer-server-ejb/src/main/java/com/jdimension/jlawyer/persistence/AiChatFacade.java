@@ -1,5 +1,4 @@
-/*
-                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -661,30 +660,72 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.assistant;
+package com.jdimension.jlawyer.persistence;
 
-import com.jdimension.jlawyer.ai.AiCapability;
-import com.jdimension.jlawyer.ai.InputData;
-import com.jdimension.jlawyer.ai.Message;
+import com.jdimension.jlawyer.services.AiChatSummary;
 import java.util.List;
+import javax.ejb.Stateless;
+import javax.persistence.EntityManager;
+import javax.persistence.LockModeType;
+import javax.persistence.PersistenceContext;
 
 /**
- *
  * @author jens
  */
-public interface AssistantInputAdapter {
-    
-    public List<InputData> getInputs(AiCapability c);
-    public List<Message> getMessages(AiCapability c);
+@Stateless
+public class AiChatFacade extends AbstractFacade<AiChat> implements AiChatFacadeLocal {
 
     /**
-     * Tells whether a chat started through this adapter is started from a case view. Such chats
-     * are stored with a reference to the case.
-     *
-     * @return true if the adapter belongs to a case view
+     * Projects a chat without its first message, which may contain the full text of documents
+     * that were sent as input.
      */
-    public default boolean isCaseView() {
-        return false;
+    private static final String SUMMARY_SELECT = "SELECT NEW com.jdimension.jlawyer.services.AiChatSummary("
+            + "c.id, c.caseId, c.owner, c.title, c.titleCustom, c.wordCount, c.messageVersion, "
+            + "c.assistantConfigId, c.requestType, c.actionId, c.modelRef, c.capabilityName, c.systemPrompt, c.configurationValues, c.created, c.lastActivity) "
+            + "FROM AiChat c ";
+
+    @PersistenceContext(unitName = "j-lawyer-server-ejbPU")
+    private EntityManager em;
+
+    @Override
+    protected EntityManager getEntityManager() {
+        return em;
     }
 
+    public AiChatFacade() {
+        super(AiChat.class);
+    }
+
+    @Override
+    public AiChat findForUpdate(String id) {
+        return em.find(AiChat.class, id, LockModeType.PESSIMISTIC_WRITE);
+    }
+
+    @Override
+    public AiChatSummary findSummary(String id) {
+        List<AiChatSummary> result = em.createQuery(SUMMARY_SELECT + "WHERE c.id = :id", AiChatSummary.class)
+                .setParameter("id", id).getResultList();
+        if (result.isEmpty()) {
+            return null;
+        }
+        return result.get(0);
+    }
+
+    @Override
+    public List<AiChatSummary> findSummariesByCase(String caseId) {
+        return em.createQuery(SUMMARY_SELECT + "WHERE c.caseId = :caseId ORDER BY c.lastActivity DESC", AiChatSummary.class)
+                .setParameter("caseId", caseId).getResultList();
+    }
+
+    @Override
+    public List<AiChatSummary> findSummariesByOwnerWithoutCase(String owner) {
+        return em.createQuery(SUMMARY_SELECT + "WHERE c.owner = :owner AND c.caseId IS NULL ORDER BY c.lastActivity DESC", AiChatSummary.class)
+                .setParameter("owner", owner).getResultList();
+    }
+
+    @Override
+    public List<AiChat> findByOwnerWithoutCase(String owner) {
+        return em.createNamedQuery("AiChat.findByOwnerWithoutCase", AiChat.class)
+                .setParameter("owner", owner).getResultList();
+    }
 }

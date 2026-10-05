@@ -1,5 +1,4 @@
-/*
-                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -661,30 +660,37 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.assistant;
+package com.jdimension.jlawyer.client.events;
 
-import com.jdimension.jlawyer.ai.AiCapability;
-import com.jdimension.jlawyer.ai.InputData;
-import com.jdimension.jlawyer.ai.Message;
-import java.util.List;
+import com.jdimension.jlawyer.services.AiChatSummary;
 
 /**
+ * Published whenever a stored AI chat changed in this client: its messages were saved (including a
+ * save that created a new chat), it was renamed, or it was assigned to a case.
+ *
+ * The event carries the chat summary, so a chat list can update its entry without asking the
+ * server.
  *
  * @author jens
  */
-public interface AssistantInputAdapter {
-    
-    public List<InputData> getInputs(AiCapability c);
-    public List<Message> getMessages(AiCapability c);
+public class AiChatSavedEvent extends Event {
 
-    /**
-     * Tells whether a chat started through this adapter is started from a case view. Such chats
-     * are stored with a reference to the case.
-     *
-     * @return true if the adapter belongs to a case view
-     */
-    public default boolean isCaseView() {
-        return false;
+    private AiChatSummary chat;
+
+    public AiChatSavedEvent(AiChatSummary chat) {
+        super(Event.TYPE_AICHATSAVED);
+        this.chat = chat;
     }
 
+    @Override
+    public boolean isUiUpdateTrigger() {
+        return true;
+    }
+
+    /**
+     * @return the chat as stored after the change
+     */
+    public AiChatSummary getChat() {
+        return chat;
+    }
 }

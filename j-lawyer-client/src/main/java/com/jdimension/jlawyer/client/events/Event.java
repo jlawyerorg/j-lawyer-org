@@ -706,6 +706,8 @@ public abstract class Event {
     public static final Integer TYPE_CASESMISSINGEVENT=210;
 
     public static final Integer TYPE_DROPSCANSTATUS=220;
+    public static final Integer TYPE_AICHATSAVED=230;
+    public static final Integer TYPE_AICHATDELETED=231;
     
     
     private Integer type=TYPE_DEFAULT;

@@ -1,5 +1,4 @@
-/*
-                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -661,30 +660,80 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.assistant;
+package org.jlawyer.test.server.ejb;
 
-import com.jdimension.jlawyer.ai.AiCapability;
-import com.jdimension.jlawyer.ai.InputData;
 import com.jdimension.jlawyer.ai.Message;
+import com.jdimension.jlawyer.persistence.AiChatMessage;
+import com.jdimension.jlawyer.services.AiChatService;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import static org.junit.Assert.assertEquals;
+import org.junit.Test;
 
 /**
+ * How the authors of stored chat messages are kept when a chat is saved again.
+ *
+ * Every save sends the complete conversation. Messages stored before must keep the user who asked
+ * them, otherwise a case chat continued by a colleague would be attributed to the colleague as a
+ * whole.
  *
  * @author jens
  */
-public interface AssistantInputAdapter {
-    
-    public List<InputData> getInputs(AiCapability c);
-    public List<Message> getMessages(AiCapability c);
+public class AiChatAuthorshipTest {
 
-    /**
-     * Tells whether a chat started through this adapter is started from a case view. Such chats
-     * are stored with a reference to the case.
-     *
-     * @return true if the adapter belongs to a case view
-     */
-    public default boolean isCaseView() {
-        return false;
+    private static Message message(String role, String content) {
+        Message m = new Message();
+        m.setRole(role);
+        m.setContent(content);
+        return m;
     }
 
+    private static AiChatMessage stored(String role, String content, String principalId) {
+        AiChatMessage m = new AiChatMessage();
+        m.setRole(role);
+        m.setContent(content);
+        m.setPrincipalId(principalId);
+        return m;
+    }
+
+    @Test
+    public void newChatIsAttributedToTheCaller() {
+        List<Message> conversation = Arrays.asList(
+                message(Message.ROLE_USER, "Frage"),
+                message(Message.ROLE_ASSISTANT, "Antwort"));
+        assertEquals(Arrays.asList("bob", "bob"), AiChatService.attributeAuthors(conversation, null, "bob"));
+        assertEquals(Arrays.asList("bob", "bob"), AiChatService.attributeAuthors(conversation, new ArrayList<>(), "bob"));
+    }
+
+    @Test
+    public void continuedChatKeepsEarlierAuthors() {
+        List<AiChatMessage> previous = Arrays.asList(
+                stored(Message.ROLE_USER, "Frage 1", "alice"),
+                stored(Message.ROLE_ASSISTANT, "Antwort 1", "alice"));
+        List<Message> conversation = Arrays.asList(
+                message(Message.ROLE_USER, "Frage 1"),
+                message(Message.ROLE_ASSISTANT, "Antwort 1"),
+                message(Message.ROLE_USER, "Frage 2"),
+                message(Message.ROLE_ASSISTANT, "Antwort 2"));
+        assertEquals(Arrays.asList("alice", "alice", "bob", "bob"), AiChatService.attributeAuthors(conversation, previous, "bob"));
+    }
+
+    @Test
+    public void changedMessageAtAPositionCountsAsNew() {
+        List<AiChatMessage> previous = Arrays.asList(
+                stored(Message.ROLE_USER, "Frage 1", "alice"),
+                stored(Message.ROLE_ASSISTANT, "Antwort 1", "alice"));
+        List<Message> conversation = Arrays.asList(
+                message(Message.ROLE_USER, "Frage 1"),
+                message(Message.ROLE_ASSISTANT, "{\"type\":\"tool_use\",\"toolCalls\":[]}"));
+        assertEquals(Arrays.asList("alice", "bob"), AiChatService.attributeAuthors(conversation, previous, "bob"));
+    }
+
+    @Test
+    public void nullMessagesAreSkipped() {
+        List<AiChatMessage> previous = Arrays.asList(stored(Message.ROLE_USER, "Frage 1", "alice"));
+        List<Message> conversation = Arrays.asList(null, message(Message.ROLE_USER, "Frage 1"), null, message(Message.ROLE_ASSISTANT, "Antwort"));
+        assertEquals(Arrays.asList("alice", "bob"), AiChatService.attributeAuthors(conversation, previous, "bob"));
+    }
 }

@@ -1,5 +1,4 @@
-/*
-                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -661,30 +660,60 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.assistant;
+package com.jdimension.jlawyer.persistence;
 
-import com.jdimension.jlawyer.ai.AiCapability;
-import com.jdimension.jlawyer.ai.InputData;
-import com.jdimension.jlawyer.ai.Message;
+import com.jdimension.jlawyer.services.AiChatSummary;
 import java.util.List;
+import javax.ejb.Local;
 
 /**
+ * Persistence operations for stored AI chats.
  *
  * @author jens
  */
-public interface AssistantInputAdapter {
-    
-    public List<InputData> getInputs(AiCapability c);
-    public List<Message> getMessages(AiCapability c);
+@Local
+public interface AiChatFacadeLocal {
+
+    void create(AiChat chat);
+
+    void edit(AiChat chat);
+
+    void remove(AiChat chat);
+
+    AiChat find(Object id);
+
+    List<AiChat> findAll();
 
     /**
-     * Tells whether a chat started through this adapter is started from a case view. Such chats
-     * are stored with a reference to the case.
+     * Loads a chat and locks its row for the rest of the transaction, so that two saves of the same
+     * chat are serialised and the second one sees the version written by the first.
      *
-     * @return true if the adapter belongs to a case view
+     * @param id id of the chat
+     * @return the chat, or null if it does not exist
      */
-    public default boolean isCaseView() {
-        return false;
-    }
+    AiChat findForUpdate(String id);
 
+    /**
+     * @param id id of the chat
+     * @return the chat as summary, or null if it does not exist
+     */
+    AiChatSummary findSummary(String id);
+
+    /**
+     * @param caseId id of the case
+     * @return the chats of the case as summaries, the most recently active first
+     */
+    List<AiChatSummary> findSummariesByCase(String caseId);
+
+    /**
+     * @param owner principal id of the owner
+     * @return the owner's chats without case as summaries, the most recently active first
+     */
+    List<AiChatSummary> findSummariesByOwnerWithoutCase(String owner);
+
+    /**
+     * @param owner principal id of the owner
+     * @return the owner's chats without case
+     */
+    List<AiChat> findByOwnerWithoutCase(String owner);
 }

@@ -1105,6 +1105,16 @@ public class Main {
         reporting.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_insert_chart_green_48dp.png")));
         history.addChildModule(reporting);
 
+        ModuleMetadata aiChats = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.history.aichats"));
+        aiChats.setEditorClass("com.jdimension.jlawyer.client.assistant.AiChatsEditorPanel");
+        aiChats.setBackgroundImage("research.jpg");
+        aiChats.setFullName("AI-Chats");
+        aiChats.setEditorName("AI");
+        aiChats.setModuleName("Recherche");
+        aiChats.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/j-lawyer-ai.png")));
+        aiChats.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/j-lawyer-ai-green.png")));
+        history.addChildModule(aiChats);
+
         ModuleMetadata knowledge = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.knowledge"));
         knowledge.setFullName("Historie");
         root.addChildModule(knowledge);

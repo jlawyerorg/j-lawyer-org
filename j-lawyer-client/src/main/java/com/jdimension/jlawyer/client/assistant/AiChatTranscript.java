@@ -1,5 +1,4 @@
-/*
-                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -663,28 +662,354 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.assistant;
 
-import com.jdimension.jlawyer.ai.AiCapability;
-import com.jdimension.jlawyer.ai.InputData;
+import com.formdev.flatlaf.ui.FlatLineBorder;
 import com.jdimension.jlawyer.ai.Message;
+import com.jdimension.jlawyer.ai.ToolCall;
+import com.jdimension.jlawyer.ai.ToolDefinition;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Insets;
+import java.util.ArrayList;
 import java.util.List;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import themes.colors.DefaultColorTheme;
+import org.apache.log4j.Logger;
+import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
+import org.json.simple.Jsoner;
 
 /**
+ * Turns the messages of a stored AI chat into what a transcript displays.
+ *
+ * User messages and plain assistant answers are shown as they are. An assistant message that asked
+ * for tools carries a JSON structure (type, optional text, toolCalls) instead of plain text; it is
+ * shown as its text, if any, followed by one compact line per tool call. Tool results and system
+ * messages are not shown - the tool call line stands for them.
  *
  * @author jens
  */
-public interface AssistantInputAdapter {
-    
-    public List<InputData> getInputs(AiCapability c);
-    public List<Message> getMessages(AiCapability c);
+public class AiChatTranscript {
+
+    private static final Logger log = Logger.getLogger(AiChatTranscript.class.getName());
+
+    private static final int USER_MSG_TRUNCATE_LENGTH = 300;
+
+    // Gray-tone bubble colors (no blue)
+    private static final Color USER_BUBBLE_BG = new Color(232, 232, 232);
+    private static final Color ASSISTANT_BUBBLE_BG = new Color(245, 245, 245);
+    private static final Color USER_ICON_BG = new Color(150, 150, 150);
+    private static final Color BUBBLE_BORDER_COLOR = new Color(215, 215, 215);
 
     /**
-     * Tells whether a chat started through this adapter is started from a case view. Such chats
-     * are stored with a reference to the case.
-     *
-     * @return true if the adapter belongs to a case view
+     * One displayable element of a transcript.
      */
-    public default boolean isCaseView() {
-        return false;
+    public static class Entry {
+
+        public static final int KIND_USER = 1;
+        public static final int KIND_ASSISTANT = 2;
+        public static final int KIND_TOOL = 3;
+
+        private final int kind;
+        private final String text;
+        private final String riskLevel;
+        private final String modelRef;
+        private final String principalId;
+
+        Entry(int kind, String text, String riskLevel, String modelRef, String principalId) {
+            this.kind = kind;
+            this.text = text;
+            this.riskLevel = riskLevel;
+            this.modelRef = modelRef;
+            this.principalId = principalId;
+        }
+
+        /**
+         * @return KIND_USER, KIND_ASSISTANT or KIND_TOOL
+         */
+        public int getKind() {
+            return kind;
+        }
+
+        /**
+         * @return the text to display
+         */
+        public String getText() {
+            return text;
+        }
+
+        /**
+         * @return risk level of the tool, for KIND_TOOL only
+         */
+        public String getRiskLevel() {
+            return riskLevel;
+        }
+
+        /**
+         * @return the model of an assistant message, or null
+         */
+        public String getModelRef() {
+            return modelRef;
+        }
+
+        /**
+         * @return principal id of the user whose request produced the entry, or null
+         */
+        public String getPrincipalId() {
+            return principalId;
+        }
+
+        /**
+         * @return the entry as message, for user and assistant entries
+         */
+        public Message toMessage() {
+            Message m = new Message();
+            m.setRole(kind == KIND_USER ? Message.ROLE_USER : Message.ROLE_ASSISTANT);
+            m.setContent(text);
+            m.setModelRef(modelRef);
+            m.setPrincipalId(principalId);
+            return m;
+        }
     }
 
+    private AiChatTranscript() {
+    }
+
+    /**
+     * @param messages the stored messages of a chat
+     * @param registry used to describe tool calls
+     * @param defaultModelRef model of the chat, used for assistant messages that do not name their
+     * model (the conversation returned by the backend during tool calling carries none)
+     * @return the displayable entries in conversation order
+     */
+    public static List<Entry> toEntries(List<Message> messages, ToolRegistry registry, String defaultModelRef) {
+        List<Entry> entries = new ArrayList<>();
+        if (messages == null) {
+            return entries;
+        }
+        for (Message m : messages) {
+            if (m == null || m.getRole() == null) {
+                continue;
+            }
+            if (Message.ROLE_USER.equals(m.getRole())) {
+                entries.add(new Entry(Entry.KIND_USER, nullToEmpty(m.getContent()), null, null, m.getPrincipalId()));
+            } else if (Message.ROLE_ASSISTANT.equals(m.getRole())) {
+                addAssistantEntries(entries, m, registry, defaultModelRef);
+            }
+        }
+        return entries;
+    }
+
+    private static void addAssistantEntries(List<Entry> entries, Message m, ToolRegistry registry, String defaultModelRef) {
+        String content = m.getContent();
+        String modelRef = m.getModelRef() != null ? m.getModelRef() : defaultModelRef;
+        JsonObject structured = parseStructured(content);
+        if (structured == null) {
+            entries.add(new Entry(Entry.KIND_ASSISTANT, nullToEmpty(content), null, modelRef, m.getPrincipalId()));
+            return;
+        }
+
+        Object text = structured.get("text");
+        if (text != null && !text.toString().trim().isEmpty()) {
+            entries.add(new Entry(Entry.KIND_ASSISTANT, text.toString(), null, modelRef, m.getPrincipalId()));
+        }
+        Object calls = structured.get("toolCalls");
+        if (calls instanceof JsonArray) {
+            for (Object o : (JsonArray) calls) {
+                if (!(o instanceof JsonObject)) {
+                    continue;
+                }
+                JsonObject call = (JsonObject) o;
+                String toolName = call.get("toolName") != null ? call.get("toolName").toString() : (call.get("name") != null ? call.get("name").toString() : "Werkzeug");
+                Object args = call.get("arguments");
+                String summary = toolName;
+                try {
+                    ToolCall tc = new ToolCall();
+                    tc.setToolName(toolName);
+                    tc.setArguments(args == null ? "{}" : (args instanceof String ? (String) args : Jsoner.serialize(args)));
+                    summary = registry.formatToolCallSummary(tc);
+                } catch (Throwable t) {
+                    log.debug("could not describe tool call " + toolName, t);
+                }
+                entries.add(new Entry(Entry.KIND_TOOL, summary, registry.getRiskLevel(toolName), null, m.getPrincipalId()));
+            }
+        }
+    }
+
+    /**
+     * @return the JSON structure of an assistant message that asked for tools, or null for plain
+     * text
+     */
+    private static JsonObject parseStructured(String content) {
+        if (content == null) {
+            return null;
+        }
+        String trimmed = content.trim();
+        if (!trimmed.startsWith("{") || !trimmed.contains("toolCalls")) {
+            return null;
+        }
+        try {
+            Object o = Jsoner.deserialize(trimmed);
+            if (o instanceof JsonObject && ((JsonObject) o).containsKey("toolCalls")) {
+                return (JsonObject) o;
+            }
+        } catch (Throwable t) {
+            // plain text that happens to look like JSON
+        }
+        return null;
+    }
+
+    private static String nullToEmpty(String s) {
+        return s == null ? "" : s;
+    }
+
+    /**
+     * Creates the compact line a transcript shows for a tool call, in the colours of its risk
+     * level.
+     *
+     * @param text description of the tool call
+     * @param riskLevel risk level of the tool
+     * @return the line
+     */
+    public static JPanel createToolLine(String text, String riskLevel) {
+        Color bgColor;
+        Color borderColor;
+        Color indicatorColor;
+        if (ToolDefinition.RISK_HIGH.equals(riskLevel)) {
+            bgColor = new Color(255, 240, 240);
+            borderColor = new Color(220, 150, 150);
+            indicatorColor = new Color(244, 67, 54);
+        } else if (ToolDefinition.RISK_MEDIUM.equals(riskLevel)) {
+            bgColor = new Color(255, 248, 220);
+            borderColor = new Color(220, 180, 100);
+            indicatorColor = new Color(255, 152, 0);
+        } else {
+            bgColor = new Color(240, 255, 240);
+            borderColor = new Color(150, 200, 150);
+            indicatorColor = new Color(76, 175, 80);
+        }
+
+        JPanel toolPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 4));
+        toolPanel.setOpaque(true);
+        toolPanel.setBackground(bgColor);
+        toolPanel.setBorder(new FlatLineBorder(new Insets(4, 8, 4, 8), borderColor, 1, 8));
+
+        JLabel riskIndicator = new JLabel("●");
+        riskIndicator.setFont(riskIndicator.getFont().deriveFont(10f));
+        riskIndicator.setForeground(indicatorColor);
+        toolPanel.add(riskIndicator);
+
+        JLabel lbl = new JLabel(text);
+        lbl.setFont(lbl.getFont().deriveFont(lbl.getFont().getSize2D() - 1f));
+        lbl.setForeground(Color.DARK_GRAY);
+        toolPanel.add(lbl);
+
+        toolPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        toolPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, toolPanel.getPreferredSize().height + 8));
+        return toolPanel;
+    }
+
+    /**
+     * Creates a message bubble the way the chat dialog shows it.
+     *
+     * @param msg the message
+     * @param owner dialog used for the text selection of the bubble, may be null
+     * @return the styled bubble
+     */
+    public static AiChatMessageMarkdownPanel createMessagePanel(Message msg, JDialog owner) {
+        AiChatMessageMarkdownPanel panel = new AiChatMessageMarkdownPanel(msg, owner);
+        styleMessageBubble(panel, Message.ROLE_USER.equals(msg.getRole()));
+        return panel;
+    }
+
+    /**
+     * Applies rounded FlatLineBorder and gray-tone colors to a message bubble.
+     *
+     * @param panel the bubble
+     * @param isUser true for a user message
+     */
+    public static void styleMessageBubble(AiChatMessageMarkdownPanel panel, boolean isUser) {
+        Color bg = isUser ? USER_BUBBLE_BG : ASSISTANT_BUBBLE_BG;
+        Color iconBg = isUser ? USER_ICON_BG : DefaultColorTheme.COLOR_DARK_GREY;
+
+        panel.setOpaque(true);
+        panel.setBackground(bg);
+        panel.setBorder(new FlatLineBorder(new Insets(8, 8, 8, 8), BUBBLE_BORDER_COLOR, 1, 12));
+
+        applyBubbleColors(panel, bg, iconBg);
+    }
+
+    private static void applyBubbleColors(Container container, Color bg, Color iconBg) {
+        for (Component c : container.getComponents()) {
+            if (c instanceof JLabel && ((JLabel) c).getIcon() != null) {
+                c.setBackground(iconBg);
+            } else {
+                c.setBackground(bg);
+            }
+            if (c instanceof Container) {
+                applyBubbleColors((Container) c, bg, iconBg);
+            }
+        }
+    }
+
+    /**
+     * Wraps a long user message in a collapsible panel that shows a truncated preview with a
+     * "mehr anzeigen" link. Returns null if the message is short enough to display in full.
+     *
+     * @param fullPanel bubble with the complete message
+     * @param content the complete message text
+     * @param owner dialog used for the text selection of the bubbles, may be null
+     * @param messagesPanel the panel the bubbles are placed in; its width is the width of a bubble
+     * @return the wrapper, or null
+     */
+    public static JPanel wrapLongUserMessage(AiChatMessageMarkdownPanel fullPanel, String content, JDialog owner, JComponent messagesPanel) {
+        if (content == null || content.length() <= USER_MSG_TRUNCATE_LENGTH) {
+            return null;
+        }
+
+        JPanel wrapper = new JPanel(new BorderLayout());
+        wrapper.setOpaque(false);
+        wrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+
+        // Create truncated preview panel
+        String preview = content.substring(0, USER_MSG_TRUNCATE_LENGTH) + " ...";
+        Message previewMsg = new Message();
+        previewMsg.setRole(Message.ROLE_USER);
+        previewMsg.setContent(preview);
+        AiChatMessageMarkdownPanel previewPanel = createMessagePanel(previewMsg, owner);
+        Dimension maxSize = previewPanel.getPreferredSize();
+        maxSize.setSize(messagesPanel.getWidth(), maxSize.getHeight());
+        previewPanel.setPreferredSize(maxSize);
+
+        JLabel lblMore = new JLabel("mehr anzeigen \u25bc");
+        lblMore.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
+        lblMore.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        lblMore.setBorder(BorderFactory.createEmptyBorder(2, 42, 4, 0));
+
+        wrapper.add(previewPanel, BorderLayout.CENTER);
+        wrapper.add(lblMore, BorderLayout.SOUTH);
+
+        lblMore.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                wrapper.removeAll();
+                wrapper.add(fullPanel, BorderLayout.CENTER);
+                Dimension size = fullPanel.getPreferredSize();
+                size.setSize(messagesPanel.getWidth(), size.getHeight());
+                fullPanel.setPreferredSize(size);
+                wrapper.revalidate();
+                wrapper.repaint();
+                messagesPanel.revalidate();
+            }
+        });
+
+        return wrapper;
+    }
 }

@@ -1242,7 +1242,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         b.subscribeConsumer(this, Event.TYPE_REVIEWUPDATED);
         b.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_MESSAGEDELETED);
         b.subscribeConsumer(this, Event.TYPE_INSTANTMESSAGING_NEWMESSAGES);
-        
+
+        this.aiChatHistoryPanel.setCaseContext(null, this);
+
         this.togFulltextSearch.setSelected(UserSettings.getInstance().getSettingAsBoolean(UserSettingsKeys.CONF_CASES_SEARCH_FULLTEXT_INCASE, false));
 
     }
@@ -2321,6 +2323,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             this.cmdCaseNetwork.setEnabled(true);
         }
 
+        // chats are loaded lazily, when the AI tab is selected (like the history)
+        this.aiChatHistoryPanel.setCaseContext(this.dto, this);
+
         this.txtFilterParties.setText("");
 
         this.groupPrivilegesChanged = false;
@@ -2555,6 +2560,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.dto = null;
         this.cmdIngoChat.setEnabled(false);
         this.cmdCaseNetwork.setEnabled(false);
+        this.aiChatHistoryPanel.setCaseContext(null, this);
 
         this.newEventPanel.reset();
 
@@ -3057,6 +3063,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         jLabel19 = new javax.swing.JLabel();
         txtFormDescription = new javax.swing.JTextField();
         cmdFormsManager = new javax.swing.JButton();
+        tabAiChats = new javax.swing.JPanel();
+        aiChatHistoryPanel = new com.jdimension.jlawyer.client.assistant.AiChatHistoryPanel();
         tabHistory = new javax.swing.JPanel();
         jPanel10 = new javax.swing.JPanel();
         jScrollPane4 = new javax.swing.JScrollPane();
@@ -4938,6 +4946,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         tabPaneArchiveFile.addTab("Falldaten", new javax.swing.ImageIcon(getClass().getResource("/icons/baseline_import_contacts_black_36dp.png")), jPanel5); // NOI18N
 
+        tabAiChats.setLayout(new java.awt.BorderLayout());
+        tabAiChats.add(aiChatHistoryPanel, java.awt.BorderLayout.CENTER);
+
+        tabPaneArchiveFile.addTab("AI", new javax.swing.ImageIcon(getClass().getResource("/icons16/material/j-lawyer-ai.png")), tabAiChats); // NOI18N
+
         jPanel10.setBorder(javax.swing.BorderFactory.createTitledBorder("Aktenhistorie"));
 
         tblHistory.setModel(new javax.swing.table.DefaultTableModel(
@@ -6621,7 +6634,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 this.loadForms();
             }
 
-        } else if (this.tabPaneArchiveFile.getSelectedIndex() == 8) {
+        } else if (this.tabPaneArchiveFile.getSelectedComponent() == this.tabAiChats) {
+            if (this.dto == null || this.dto.getId() == null) {
+                this.confirmSave("Bevor Chats angezeigt werden können,\nmuss die Akte gespeichert werden.\n\nJetzt speichern?", null);
+                this.aiChatHistoryPanel.setCaseContext(this.dto, this);
+            }
+            this.aiChatHistoryPanel.ensureLoaded();
+        } else if (this.tabPaneArchiveFile.getSelectedComponent() == this.tabHistory) {
             // tabs that load data that is not loaded yet
             if (this.tblHistory.getRowCount() == 0) {
                 Date sinceDate = null;
@@ -10164,6 +10183,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
                 @Override
                 public List<Message> getMessages(AiCapability c) { return Collections.emptyList(); }
+                @Override
+                public boolean isCaseView() { return true; }
             };
 
             JPopupMenu popup = new JPopupMenu();
@@ -10746,6 +10767,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }
 
     @Override
+    public boolean isCaseView() {
+        return true;
+    }
+
+    @Override
     public List<InputData> getInputs(AiCapability c) {
         ArrayList<InputData> inputs = new ArrayList<>();
         try {
@@ -10945,6 +10971,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private com.jdimension.jlawyer.client.assistant.AiChatHistoryPanel aiChatHistoryPanel;
     private com.jdimension.jlawyer.ui.folders.CaseFolderPanel caseFolderPanel1;
     private javax.swing.JCheckBox chkArchived;
     protected javax.swing.JComboBox cmbAssistant;
@@ -11162,6 +11189,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JSplitPane splitNotes;
     private javax.swing.JTabbedPane subTabsFinance;
     protected javax.swing.JTextArea taCustom3;
+    private javax.swing.JPanel tabAiChats;
     private javax.swing.JPanel tabDocuments;
     private javax.swing.JPanel tabFinance;
     private javax.swing.JPanel tabGeneralData;

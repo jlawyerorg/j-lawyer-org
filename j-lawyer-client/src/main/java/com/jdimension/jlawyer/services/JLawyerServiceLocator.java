@@ -816,6 +816,15 @@ public class JLawyerServiceLocator {
         }
     }
 
+    public AiChatServiceRemote lookupAiChatServiceRemote() {
+        try {
+            return (AiChatServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//AiChatService!com.jdimension.jlawyer.services.AiChatServiceRemote");
+        } catch (NamingException ne) {
+            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
+            throw new RuntimeException(ne);
+        }
+    }
+
     public DataBucketLoaderRemote lookupDataBucketLoaderRemote() {
         try {
             return (DataBucketLoaderRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//DataBucketLoader!com.jdimension.jlawyer.services.DataBucketLoaderRemote");

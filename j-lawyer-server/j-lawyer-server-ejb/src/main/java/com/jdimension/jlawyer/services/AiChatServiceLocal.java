@@ -1,5 +1,4 @@
-/*
-                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -661,30 +660,24 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.assistant;
+package com.jdimension.jlawyer.services;
 
-import com.jdimension.jlawyer.ai.AiCapability;
-import com.jdimension.jlawyer.ai.InputData;
-import com.jdimension.jlawyer.ai.Message;
-import java.util.List;
+import javax.ejb.Local;
 
 /**
+ * Server-side operations on stored AI chats.
  *
  * @author jens
  */
-public interface AssistantInputAdapter {
-    
-    public List<InputData> getInputs(AiCapability c);
-    public List<Message> getMessages(AiCapability c);
+@Local
+public interface AiChatServiceLocal {
 
     /**
-     * Tells whether a chat started through this adapter is started from a case view. Such chats
-     * are stored with a reference to the case.
+     * Deletes all chats without case of a user, together with their messages. Called when the user
+     * is deleted; the user's case chats stay with their cases.
      *
-     * @return true if the adapter belongs to a case view
+     * @param principalId principal id of the user
+     * @return the number of deleted chats
      */
-    public default boolean isCaseView() {
-        return false;
-    }
-
+    int removePrivateChatsOfUser(String principalId);
 }

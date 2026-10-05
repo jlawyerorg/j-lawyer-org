@@ -1,5 +1,4 @@
-/*
-                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -661,30 +660,53 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.assistant;
+package com.jdimension.jlawyer.services;
 
-import com.jdimension.jlawyer.ai.AiCapability;
-import com.jdimension.jlawyer.ai.InputData;
-import com.jdimension.jlawyer.ai.Message;
-import java.util.List;
+import java.io.Serializable;
 
 /**
+ * Outcome of saving the messages of an AI chat.
+ *
+ * If the save was based on an outdated message version - another user or dialog saved the same
+ * chat in between - or the chat was deleted meanwhile, the messages were stored as a new chat
+ * instead, and forked is true. The caller continues with the chat returned here in either case.
  *
  * @author jens
  */
-public interface AssistantInputAdapter {
-    
-    public List<InputData> getInputs(AiCapability c);
-    public List<Message> getMessages(AiCapability c);
+public class AiChatSaveResult implements Serializable {
 
-    /**
-     * Tells whether a chat started through this adapter is started from a case view. Such chats
-     * are stored with a reference to the case.
-     *
-     * @return true if the adapter belongs to a case view
-     */
-    public default boolean isCaseView() {
-        return false;
+    private static final long serialVersionUID = 1L;
+
+    private AiChatSummary chat;
+    private boolean forked;
+
+    public AiChatSaveResult() {
     }
 
+    public AiChatSaveResult(AiChatSummary chat, boolean forked) {
+        this.chat = chat;
+        this.forked = forked;
+    }
+
+    /**
+     * @return the stored chat, with its new message version
+     */
+    public AiChatSummary getChat() {
+        return chat;
+    }
+
+    public void setChat(AiChatSummary chat) {
+        this.chat = chat;
+    }
+
+    /**
+     * @return true if the messages were stored as a new chat instead of the one passed in
+     */
+    public boolean isForked() {
+        return forked;
+    }
+
+    public void setForked(boolean forked) {
+        this.forked = forked;
+    }
 }

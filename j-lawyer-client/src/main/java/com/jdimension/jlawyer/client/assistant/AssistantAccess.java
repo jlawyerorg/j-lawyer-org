@@ -672,11 +672,14 @@ import com.jdimension.jlawyer.ai.AiRequestStatus;
 import com.jdimension.jlawyer.ai.ConfigurationData;
 import com.jdimension.jlawyer.ai.ConfigurationUtils;
 import com.jdimension.jlawyer.ai.Input;
+import com.jdimension.jlawyer.ai.InputData;
+import com.jdimension.jlawyer.ai.Message;
 import com.jdimension.jlawyer.ai.ParameterData;
 import com.jdimension.jlawyer.ai.Prompt;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.AssistantPrompt;
+import com.jdimension.jlawyer.services.AiChatSummary;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.io.StringReader;
@@ -698,6 +701,7 @@ import javax.swing.JMenu;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import com.jdimension.jlawyer.client.utils.CompoundIcon;
 import org.apache.log4j.Logger;
@@ -963,6 +967,166 @@ public class AssistantAccess {
             }
         }
         return toolCapabilities;
+    }
+
+    /**
+     * Continues a stored chat in a new chat dialog, with the capability it was conducted with. If
+     * that capability is no longer available, the user picks one of the available chat
+     * capabilities; if there is none, the user is informed and no dialog is opened.
+     *
+     * @param chat the stored chat
+     * @param adapter the input adapter of the view the chat is continued from, or null
+     * @param selectedCase the case of the chat, or null
+     * @param parent component to show messages relative to
+     */
+    public void openStoredChat(AiChatSummary chat, AssistantInputAdapter adapter, ArchiveFileBean selectedCase, Component parent) {
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            List<Message> storedMessages = locator.lookupAiChatServiceRemote().getMessages(chat.getId());
+
+            AssistantConfig matchConfig = null;
+            AiCapability matchCapability = this.resolveStoredChatCapability(chat, locator);
+            if (matchCapability != null) {
+                for (AssistantConfig cfg : this.getCapabilities().keySet()) {
+                    if (equalsNullSafe(cfg.getId(), chat.getAssistantConfigId())) {
+                        matchConfig = cfg;
+                        break;
+                    }
+                }
+            }
+
+            // fallback: the user picks one of the chat entries the menus offer
+            List<AssistantConfig> chatConfigs = new ArrayList<>();
+            List<AiCapability> chatCapabilities = new ArrayList<>();
+            if (matchCapability == null) {
+                Set<String> seen = new HashSet<>();
+                for (String inputType : new String[]{AiCapability.INPUTTYPE_NONE, AiCapability.INPUTTYPE_STRING}) {
+                    for (Map.Entry<AssistantConfig, List<AiCapability>> e : this.filterCapabilities(AiCapability.REQUESTTYPE_CHAT, inputType).entrySet()) {
+                        for (AiCapability c : e.getValue()) {
+                            String key = e.getKey().getId() + "|" + c.getActionId() + "|" + c.getModelRef() + "|" + c.getName();
+                            if (seen.add(key)) {
+                                chatConfigs.add(e.getKey());
+                                chatCapabilities.add(c);
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (matchCapability == null) {
+                if (chatCapabilities.isEmpty()) {
+                    JOptionPane.showMessageDialog(parent, "Es ist kein Chat-Assistent konfiguriert, mit dem der Chat fortgesetzt werden kann.", "Chat fortsetzen", JOptionPane.INFORMATION_MESSAGE);
+                    return;
+                }
+                String[] labels = new String[chatCapabilities.size()];
+                for (int i = 0; i < chatCapabilities.size(); i++) {
+                    AiCapability c = chatCapabilities.get(i);
+                    labels[i] = chatConfigs.get(i).getName() + ": " + c.getName() + (c.getModelRef() != null ? " (" + c.getModelRef() + ")" : "");
+                }
+                Object selected = JOptionPane.showInputDialog(parent,
+                        "Der Assistent, mit dem der Chat geführt wurde (" + (chat.getCapabilityName() != null ? chat.getCapabilityName() : "unbekannt") + "),\nist nicht mehr verfügbar. Mit welchem Assistenten soll der Chat fortgesetzt werden?",
+                        "Chat fortsetzen", JOptionPane.QUESTION_MESSAGE, null, labels, labels[0]);
+                if (selected == null) {
+                    return;
+                }
+                for (int i = 0; i < labels.length; i++) {
+                    if (labels[i].equals(selected)) {
+                        matchConfig = chatConfigs.get(i);
+                        matchCapability = chatCapabilities.get(i);
+                        break;
+                    }
+                }
+            }
+
+            AssistantInputAdapter effectiveAdapter = adapter;
+            if (effectiveAdapter == null) {
+                effectiveAdapter = new AssistantInputAdapter() {
+                    @Override
+                    public List<InputData> getInputs(AiCapability c) {
+                        return new ArrayList<>();
+                    }
+
+                    @Override
+                    public List<Message> getMessages(AiCapability c) {
+                        return new ArrayList<>();
+                    }
+                };
+            }
+
+            AssistantChatPanel dlg = new AssistantChatPanel(selectedCase, matchConfig, matchCapability, effectiveAdapter, EditorsRegistry.getInstance().getMainWindow(), false);
+            dlg.setVisible(true);
+            dlg.loadStoredChat(chat, storedMessages);
+        } catch (Exception ex) {
+            log.error("Error continuing AI chat " + chat.getId(), ex);
+            JOptionPane.showMessageDialog(parent, "Der Chat kann nicht fortgesetzt werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * Rebuilds the capability a stored chat is continued with.
+     *
+     * The next request of a chat needs the assistant configuration, request type, action and model
+     * as well as the system prompt and prompt configuration it was started with; the name of a
+     * custom prompt is irrelevant. The assistant configuration must still offer a capability with
+     * the stored request type and action, and the stored model must still exist for that
+     * configuration. The result is a copy of that capability with the stored model, system prompt
+     * and configuration; asynchronous execution and parameters come from the capability.
+     *
+     * @param chat the stored chat
+     * @param locator service locator
+     * @return the capability, or null if configuration, capability or model no longer exist
+     */
+    private AiCapability resolveStoredChatCapability(AiChatSummary chat, JLawyerServiceLocator locator) throws Exception {
+        AiCapability base = null;
+        AssistantConfig baseConfig = null;
+        for (Map.Entry<AssistantConfig, List<AiCapability>> e : this.getCapabilities().entrySet()) {
+            if (!equalsNullSafe(e.getKey().getId(), chat.getAssistantConfigId())) {
+                continue;
+            }
+            for (AiCapability c : e.getValue()) {
+                if (equalsNullSafe(c.getRequestType(), chat.getRequestType()) && equalsNullSafe(c.getActionId(), chat.getActionId())) {
+                    base = c;
+                    baseConfig = e.getKey();
+                    break;
+                }
+            }
+        }
+        if (base == null) {
+            return null;
+        }
+
+        if (chat.getModelRef() != null) {
+            boolean modelExists = false;
+            Map<AssistantConfig, List<AiModel>> models = locator.lookupIntegrationServiceRemote().getAssistantModels();
+            for (Map.Entry<AssistantConfig, List<AiModel>> e : models.entrySet()) {
+                if (!equalsNullSafe(e.getKey().getId(), baseConfig.getId()) || e.getValue() == null) {
+                    continue;
+                }
+                for (AiModel m : e.getValue()) {
+                    if (chat.getModelRef().equals(m.getName())) {
+                        modelExists = true;
+                        break;
+                    }
+                }
+            }
+            if (!modelExists) {
+                return null;
+            }
+        }
+
+        AiCapability resolved = (AiCapability) base.clone();
+        resolved.setModelRef(chat.getModelRef());
+        resolved.setSystemPrompt(chat.getSystemPrompt());
+        resolved.setConfigurationValues(chat.getConfigurationValues());
+        if (chat.getCapabilityName() != null) {
+            resolved.setName(chat.getCapabilityName());
+        }
+        return resolved;
+    }
+
+    private static boolean equalsNullSafe(String a, String b) {
+        return a == null ? b == null : a.equals(b);
     }
 
     public void resetCapabilities() {

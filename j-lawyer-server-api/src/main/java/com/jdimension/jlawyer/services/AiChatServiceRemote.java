@@ -1,5 +1,4 @@
-/*
-                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -661,30 +660,137 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.assistant;
+package com.jdimension.jlawyer.services;
 
-import com.jdimension.jlawyer.ai.AiCapability;
-import com.jdimension.jlawyer.ai.InputData;
 import com.jdimension.jlawyer.ai.Message;
 import java.util.List;
+import javax.ejb.Remote;
 
 /**
+ * Stores the chats conducted with the AI assistant (Ingo) and gives access to them.
+ *
+ * A chat either belongs to a case or is private. A private chat is visible only to the user who
+ * created it. A case chat is visible to every user with read access to the case, and every such
+ * user may continue it; renaming and deleting it requires write access to the case. No case
+ * history entries are written for any chat operation.
  *
  * @author jens
  */
-public interface AssistantInputAdapter {
-    
-    public List<InputData> getInputs(AiCapability c);
-    public List<Message> getMessages(AiCapability c);
+@Remote
+public interface AiChatServiceRemote {
 
     /**
-     * Tells whether a chat started through this adapter is started from a case view. Such chats
-     * are stored with a reference to the case.
+     * Saves the messages of a chat, creating the chat if it is not stored yet.
      *
-     * @return true if the adapter belongs to a case view
+     * A chat is created if the summary has no id. Its case id is taken from the summary, its owner
+     * is the caller, and its title is derived from the first user message. For an existing chat
+     * the stored message list is replaced by the given one, the message version is incremented, and
+     * the word count, the time of the last activity and the fields needed to continue the chat
+     * (assistant configuration, request type, action, model, system prompt, prompt configuration)
+     * as well as the capability name are updated. A save never
+     * changes the case, the owner or the title of an existing chat.
+     *
+     * The save must be based on the current message version of the chat. If the stored version is
+     * different - another user or dialog saved the chat in between - or the chat was deleted
+     * meanwhile, the messages are stored as a new chat with the same case and the caller as owner,
+     * and the stored chat is left untouched. The result then reports the fork.
+     *
+     * Every stored message records the user whose request produced it. Messages that were stored
+     * before keep their author; new messages are attributed to the caller. An author passed in
+     * the messages is ignored.
+     *
+     * @param chat the chat to save; its id, case id and the fields needed to continue it are read
+     * @param expectedVersion the message version the given messages are based on, 0 for a new chat
+     * @param messages the complete conversation in order
+     * @return the stored chat, with its new message version, and whether it was forked
+     * @throws Exception if the caller may not access the chat or its case, or the case no longer
+     * exists
      */
-    public default boolean isCaseView() {
-        return false;
-    }
+    AiChatSaveResult saveChat(AiChatSummary chat, int expectedVersion, List<Message> messages) throws Exception;
 
+    /**
+     * Returns the chats of a case, the most recently active first.
+     *
+     * @param caseId id of the case
+     * @return the chats of the case, empty if there are none
+     * @throws Exception if the case does not exist or the caller may not access it
+     */
+    List<AiChatSummary> getChatsForCase(String caseId) throws Exception;
+
+    /**
+     * Returns the caller's own chats that do not belong to a case, the most recently active first.
+     *
+     * @return the caller's private chats, empty if there are none
+     * @throws Exception on persistence errors
+     */
+    List<AiChatSummary> getOwnChatsWithoutCase() throws Exception;
+
+    /**
+     * Returns a single chat without its messages.
+     *
+     * @param chatId id of the chat
+     * @return the chat, or null if it does not exist
+     * @throws Exception if the caller may not access the chat
+     */
+    AiChatSummary getChat(String chatId) throws Exception;
+
+    /**
+     * Returns the messages of a chat in conversation order. Each message carries the principal id
+     * of the user whose request produced it.
+     *
+     * @param chatId id of the chat
+     * @return the messages, empty if the chat has none
+     * @throws Exception if the chat does not exist or the caller may not access it
+     */
+    List<Message> getMessages(String chatId) throws Exception;
+
+    /**
+     * Returns the complete first user message of a chat, as shown in the tooltip of the chat lists.
+     *
+     * @param chatId id of the chat
+     * @return the first user message, or null if there is none
+     * @throws Exception if the chat does not exist or the caller may not access it
+     */
+    String getFirstMessage(String chatId) throws Exception;
+
+    /**
+     * Renames a chat.
+     *
+     * The title is trimmed and limited to 255 characters. An empty or null title resets the chat to
+     * the title derived from its first user message. Renaming does not change the message version,
+     * so a dialog that has the chat open can keep saving to it.
+     *
+     * @param chatId id of the chat
+     * @param title the new title, or null/empty to reset it
+     * @return the renamed chat
+     * @throws Exception if the chat does not exist or the caller may not rename it
+     */
+    AiChatSummary renameChat(String chatId, String title) throws Exception;
+
+    /**
+     * Assigns a private chat to a case.
+     *
+     * Only the owner of a chat without case may assign it, and only to a case the owner has read
+     * access to. The chat then becomes visible to every user with access to that case. The
+     * assignment is final: a case chat cannot be detached or assigned to another case. The message
+     * version does not change.
+     *
+     * @param chatId id of the chat
+     * @param caseId id of the case
+     * @return the assigned chat
+     * @throws Exception if the chat or case does not exist, the chat already belongs to a case, or
+     * the caller may not assign it
+     */
+    AiChatSummary assignChatToCase(String chatId, String caseId) throws Exception;
+
+    /**
+     * Deletes chats together with their messages.
+     *
+     * Ids of chats that no longer exist are ignored. If the caller may not delete one of the chats,
+     * nothing is deleted.
+     *
+     * @param chatIds ids of the chats to delete
+     * @throws Exception if the caller may not delete one of the chats
+     */
+    void removeChats(List<String> chatIds) throws Exception;
 }

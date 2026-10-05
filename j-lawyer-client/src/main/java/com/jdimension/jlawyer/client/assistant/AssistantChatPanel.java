@@ -4,6 +4,7 @@ import com.jdimension.jlawyer.ai.AiCapability;
 import com.jdimension.jlawyer.ai.AiModel;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
 import com.jdimension.jlawyer.ai.AiResponse;
+import com.jdimension.jlawyer.ai.ChatWordCounter;
 import com.jdimension.jlawyer.ai.ConfigurationData;
 import com.jdimension.jlawyer.ai.ConfigurationUtils;
 import com.jdimension.jlawyer.ai.InputData;
@@ -17,6 +18,8 @@ import com.jdimension.jlawyer.persistence.AssistantPrompt;
 import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
 import com.jdimension.jlawyer.client.desktop.DesktopPanel;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.events.AiChatSavedEvent;
+import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
 import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
@@ -35,6 +38,8 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.AssistantConfig;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.pojo.PartiesTriplet;
+import com.jdimension.jlawyer.services.AiChatSaveResult;
+import com.jdimension.jlawyer.services.AiChatSummary;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.SelectAttachmentDialog;
@@ -72,6 +77,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
+import java.text.NumberFormat;
+import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
@@ -162,13 +171,17 @@ public class AssistantChatPanel extends JDialog {
     // tracks whether the first message has been sent (to include input data)
     private boolean isFirstMessage = true;
 
-    private static final int USER_MSG_TRUNCATE_LENGTH = 300;
+    // the stored chat this conversation is saved to; replaced by a new reference on reset, so a
+    // save still pending for the previous conversation cannot attach itself to the new one
+    private StoredChatRef storedChat = new StoredChatRef();
+    // saves run one after another, so each save is based on the version the previous one returned
+    private final ExecutorService saveExecutor = Executors.newSingleThreadExecutor();
+    private boolean forkNoticeShown = false;
 
-    // Gray-tone bubble colors (no blue)
-    private static final Color USER_BUBBLE_BG = new Color(232, 232, 232);
-    private static final Color ASSISTANT_BUBBLE_BG = new Color(245, 245, 245);
-    private static final Color USER_ICON_BG = new Color(150, 150, 150);
-    private static final Color BUBBLE_BORDER_COLOR = new Color(215, 215, 215);
+    private static final class StoredChatRef {
+
+        private volatile AiChatSummary chat = null;
+    }
 
     // UI components
     private JPanel pnlTitle;
@@ -193,6 +206,7 @@ public class AssistantChatPanel extends JDialog {
     private JButton cmdNewDocument;
     private JButton cmdCopy;
     private JLabel lblSupportsTools;
+    private JLabel lblWordCount;
     private JLabel lblIcon;
     private JPanel pnlPlaceholder;
     private JPopupMenu popAssistant;
@@ -432,6 +446,8 @@ public class AssistantChatPanel extends JDialog {
 
         this.cmbDevices.removeAllItems();
         AudioUtils.populateMicrophoneDevices(this.cmbDevices);
+
+        this.updateWordCount();
     }
 
     private void buildUI() {
@@ -463,11 +479,18 @@ public class AssistantChatPanel extends JDialog {
         lblSupportsTools.setForeground(new Color(153, 153, 153));
         lblSupportsTools.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
 
+        lblWordCount = new JLabel();
+        lblWordCount.setFont(lblWordCount.getFont().deriveFont(lblWordCount.getFont().getSize() - 2f));
+        lblWordCount.setForeground(new Color(153, 153, 153));
+        lblWordCount.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
+        lblWordCount.setToolTipText("Anzahl der Wörter im gesamten Chat - wird bei jeder Fortsetzung erneut an das Modell gesendet");
+
         JPanel pnlCenterTitle = new JPanel();
         pnlCenterTitle.setOpaque(false);
         pnlCenterTitle.setLayout(new BoxLayout(pnlCenterTitle, BoxLayout.X_AXIS));
         pnlCenterTitle.add(lblRequestType);
         pnlCenterTitle.add(lblSupportsTools);
+        pnlCenterTitle.add(lblWordCount);
         pnlCenterTitle.add(Box.createHorizontalGlue());
         pnlTitle.add(pnlCenterTitle, BorderLayout.CENTER);
 
@@ -1136,6 +1159,9 @@ public class AssistantChatPanel extends JDialog {
 
                 cmdSubmit.setVisible(true);
                 cmdInterrupt.setVisible(false);
+
+                updateWordCount();
+                saveChat();
             }
         };
 
@@ -1193,6 +1219,119 @@ public class AssistantChatPanel extends JDialog {
             log.error("Error attaching document context", ex);
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    @Override
+    public void dispose() {
+        // lets pending saves finish, but accepts no new ones
+        this.saveExecutor.shutdown();
+        super.dispose();
+    }
+
+    private void updateWordCount() {
+        int words = ChatWordCounter.countWords(this.messages);
+        this.lblWordCount.setText(NumberFormat.getIntegerInstance(Locale.GERMANY).format(words) + " Wörter");
+    }
+
+    /**
+     * Saves the current conversation in the background. A chat started from a case view is stored
+     * with a reference to that case; all other chats are stored without case.
+     */
+    private void saveChat() {
+        if (this.messages == null || this.messages.isEmpty() || this.saveExecutor.isShutdown()) {
+            return;
+        }
+        final StoredChatRef ref = this.storedChat;
+        final List<Message> snapshot = new ArrayList<>(this.messages);
+        boolean fromCaseView = this.caseView != null || (this.inputAdapter != null && this.inputAdapter.isCaseView());
+        final String caseId = (fromCaseView && this.selectedCase != null) ? this.selectedCase.getId() : null;
+        final AssistantConfig cfg = this.config;
+        final AiCapability cap = this.capability;
+
+        this.saveExecutor.submit(() -> {
+            try {
+                AiChatSummary meta = new AiChatSummary();
+                int expectedVersion = 0;
+                AiChatSummary current = ref.chat;
+                if (current != null) {
+                    meta.setId(current.getId());
+                    meta.setCaseId(current.getCaseId());
+                    expectedVersion = current.getMessageVersion();
+                } else {
+                    meta.setCaseId(caseId);
+                }
+                meta.setAssistantConfigId(cfg != null ? cfg.getId() : null);
+                meta.setRequestType(cap.getRequestType());
+                meta.setActionId(cap.getActionId());
+                meta.setModelRef(cap.getModelRef());
+                meta.setCapabilityName(cap.getName());
+                meta.setSystemPrompt(cap.getSystemPrompt());
+                meta.setConfigurationValues(cap.getConfigurationValues());
+
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                AiChatSaveResult saveResult = locator.lookupAiChatServiceRemote().saveChat(meta, expectedVersion, snapshot);
+                ref.chat = saveResult.getChat();
+
+                SwingUtilities.invokeLater(() -> {
+                    EventBroker.getInstance().publishEvent(new AiChatSavedEvent(saveResult.getChat()));
+                    if (saveResult.isForked() && !this.forkNoticeShown) {
+                        this.forkNoticeShown = true;
+                        JOptionPane.showMessageDialog(this, "Der Chat wurde zwischenzeitlich an anderer Stelle geändert.\nDieser Verlauf wurde als neuer Chat gespeichert.", "Chat gespeichert", JOptionPane.INFORMATION_MESSAGE);
+                    }
+                });
+            } catch (Throwable t) {
+                log.error("Could not save AI chat", t);
+                EditorsRegistry.getInstance().updateStatus("Chat konnte nicht gespeichert werden: " + t.getMessage(), 5000);
+            }
+        });
+    }
+
+    /**
+     * Continues a stored chat: shows its messages and saves new messages to it. The input text of
+     * this dialog is not sent again. Call after the dialog has been made visible, so the message
+     * panels get their width.
+     *
+     * @param chat the stored chat
+     * @param storedMessages its messages
+     */
+    public void loadStoredChat(AiChatSummary chat, List<Message> storedMessages) {
+        StoredChatRef ref = new StoredChatRef();
+        ref.chat = chat;
+        this.storedChat = ref;
+        this.messages = new ArrayList<>(storedMessages);
+        this.isFirstMessage = false;
+        this.initialPrompt = "";
+        this.taPrompt.setText("");
+        this.taPrompt.setEnabled(true);
+
+        removePlaceholder();
+        for (AiChatTranscript.Entry entry : AiChatTranscript.toEntries(storedMessages, this.toolRegistry, this.capability.getModelRef())) {
+            if (entry.getKind() == AiChatTranscript.Entry.KIND_TOOL) {
+                addToolStatusMessage(entry.getText(), entry.getRiskLevel(), null);
+                continue;
+            }
+            Message m = entry.toMessage();
+            AiChatMessageMarkdownPanel msgPanel = createStyledMessagePanel(m, this);
+            Dimension maxSize = msgPanel.getPreferredSize();
+            maxSize.setSize(pnlMessages.getWidth(), maxSize.getHeight());
+            msgPanel.setPreferredSize(maxSize);
+            if (pnlMessages.getComponentCount() > 0) {
+                pnlMessages.add(Box.createRigidArea(new Dimension(0, 12)));
+            }
+            JPanel userWrapper = (entry.getKind() == AiChatTranscript.Entry.KIND_USER) ? wrapUserMessage(msgPanel, m.getContent(), this) : null;
+            if (userWrapper != null) {
+                userWrapper.setAlignmentX(Component.LEFT_ALIGNMENT);
+                pnlMessages.add(userWrapper);
+            } else {
+                msgPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+                pnlMessages.add(msgPanel);
+            }
+        }
+        pnlMessages.revalidate();
+        pnlMessages.repaint();
+        scrollToBottom();
+        this.updateWordCount();
     }
 
     private void cmdCloseActionPerformed(java.awt.event.ActionEvent evt) {
@@ -1316,12 +1455,15 @@ public class AssistantChatPanel extends JDialog {
     }
 
     private void cmdResetChatActionPerformed(java.awt.event.ActionEvent evt) {
-        this.messages.clear();
+        // the next message starts a new stored chat, the previous one stays stored
+        this.storedChat = new StoredChatRef();
+        this.messages = new ArrayList<>();
         this.pnlMessages.removeAll();
         this.pnlMessages.revalidate();
         this.pnlMessages.repaint();
         this.taPrompt.setText(this.initialPrompt);
         this.isFirstMessage = true;
+        this.updateWordCount();
     }
 
     private void cmdNewDocumentActionPerformed(java.awt.event.ActionEvent evt) {
@@ -1629,27 +1771,7 @@ public class AssistantChatPanel extends JDialog {
      * Applies rounded FlatLineBorder and gray-tone colors to a message bubble.
      */
     private void styleMessageBubble(AiChatMessageMarkdownPanel panel, boolean isUser) {
-        Color bg = isUser ? USER_BUBBLE_BG : ASSISTANT_BUBBLE_BG;
-        Color iconBg = isUser ? USER_ICON_BG : DefaultColorTheme.COLOR_DARK_GREY;
-
-        panel.setOpaque(true);
-        panel.setBackground(bg);
-        panel.setBorder(new FlatLineBorder(new Insets(8, 8, 8, 8), BUBBLE_BORDER_COLOR, 1, 12));
-
-        applyBubbleColors(panel, bg, iconBg);
-    }
-
-    private void applyBubbleColors(java.awt.Container container, Color bg, Color iconBg) {
-        for (Component c : container.getComponents()) {
-            if (c instanceof JLabel && ((JLabel) c).getIcon() != null) {
-                c.setBackground(iconBg);
-            } else {
-                c.setBackground(bg);
-            }
-            if (c instanceof java.awt.Container) {
-                applyBubbleColors((java.awt.Container) c, bg, iconBg);
-            }
-        }
+        AiChatTranscript.styleMessageBubble(panel, isUser);
     }
 
     /**
@@ -1681,47 +1803,7 @@ public class AssistantChatPanel extends JDialog {
      * enough to display in full.
      */
     private JPanel wrapUserMessage(AiChatMessageMarkdownPanel fullPanel, String content, JDialog owner) {
-        if (content.length() <= USER_MSG_TRUNCATE_LENGTH) {
-            return null;
-        }
-
-        JPanel wrapper = new JPanel(new BorderLayout());
-        wrapper.setOpaque(false);
-        wrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
-
-        // Create truncated preview panel
-        String preview = content.substring(0, USER_MSG_TRUNCATE_LENGTH) + " ...";
-        Message previewMsg = new Message();
-        previewMsg.setRole(Message.ROLE_USER);
-        previewMsg.setContent(preview);
-        AiChatMessageMarkdownPanel previewPanel = createStyledMessagePanel(previewMsg, owner);
-        Dimension maxSize = previewPanel.getPreferredSize();
-        maxSize.setSize(pnlMessages.getWidth(), maxSize.getHeight());
-        previewPanel.setPreferredSize(maxSize);
-
-        JLabel lblMore = new JLabel("mehr anzeigen \u25bc");
-        lblMore.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
-        lblMore.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        lblMore.setBorder(BorderFactory.createEmptyBorder(2, 42, 4, 0));
-
-        wrapper.add(previewPanel, BorderLayout.CENTER);
-        wrapper.add(lblMore, BorderLayout.SOUTH);
-
-        lblMore.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                wrapper.removeAll();
-                wrapper.add(fullPanel, BorderLayout.CENTER);
-                Dimension size = fullPanel.getPreferredSize();
-                size.setSize(pnlMessages.getWidth(), size.getHeight());
-                fullPanel.setPreferredSize(size);
-                wrapper.revalidate();
-                wrapper.repaint();
-                pnlMessages.revalidate();
-            }
-        });
-
-        return wrapper;
+        return AiChatTranscript.wrapLongUserMessage(fullPanel, content, owner, pnlMessages);
     }
 
     private List<ParameterData> getParameters() {

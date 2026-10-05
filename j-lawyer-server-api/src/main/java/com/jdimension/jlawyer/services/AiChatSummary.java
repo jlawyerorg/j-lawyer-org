@@ -1,5 +1,4 @@
-/*
-                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -661,30 +660,261 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.assistant;
+package com.jdimension.jlawyer.services;
 
-import com.jdimension.jlawyer.ai.AiCapability;
-import com.jdimension.jlawyer.ai.InputData;
-import com.jdimension.jlawyer.ai.Message;
-import java.util.List;
+import java.io.Serializable;
+import java.util.Date;
 
 /**
+ * A stored AI chat without its messages and without its first message.
+ *
+ * This is what the chat lists get instead of the AiChat entity, whose first message may contain
+ * the full text of documents that were sent as input. The first message is fetched separately
+ * when a list needs it for a tooltip.
+ *
+ * A summary with a null id describes a chat that is not stored yet; it is passed to
+ * AiChatServiceRemote.saveChat to create one.
  *
  * @author jens
  */
-public interface AssistantInputAdapter {
-    
-    public List<InputData> getInputs(AiCapability c);
-    public List<Message> getMessages(AiCapability c);
+public class AiChatSummary implements Serializable {
 
-    /**
-     * Tells whether a chat started through this adapter is started from a case view. Such chats
-     * are stored with a reference to the case.
-     *
-     * @return true if the adapter belongs to a case view
-     */
-    public default boolean isCaseView() {
-        return false;
+    private static final long serialVersionUID = 1L;
+
+    private String id;
+    private String caseId;
+    private String owner;
+    private String title;
+    private boolean titleCustom;
+    private int wordCount;
+    private int messageVersion;
+    private String assistantConfigId;
+    private String requestType;
+    private String actionId;
+    private String modelRef;
+    private String capabilityName;
+    private String systemPrompt;
+    private String configurationValues;
+    private Date created;
+    private Date lastActivity;
+
+    public AiChatSummary() {
     }
 
+    /**
+     * Constructor used by the projection queries.
+     *
+     * @param id id of the chat
+     * @param caseId id of the case, or null
+     * @param owner principal id of the creator
+     * @param title the title
+     * @param titleCustom whether the title was set by a user
+     * @param wordCount number of words over all messages
+     * @param messageVersion version of the stored messages
+     * @param assistantConfigId id of the assistant configuration
+     * @param requestType request type of the capability
+     * @param actionId action id of the capability
+     * @param modelRef model reference of the capability
+     * @param capabilityName display name of the capability
+     * @param systemPrompt system prompt sent with every request
+     * @param configurationValues prompt configuration sent with every request
+     * @param created creation time
+     * @param lastActivity time of the last message save
+     */
+    public AiChatSummary(String id, String caseId, String owner, String title, boolean titleCustom, int wordCount, int messageVersion, String assistantConfigId, String requestType, String actionId, String modelRef, String capabilityName, String systemPrompt, String configurationValues, Date created, Date lastActivity) {
+        this.id = id;
+        this.caseId = caseId;
+        this.owner = owner;
+        this.title = title;
+        this.titleCustom = titleCustom;
+        this.wordCount = wordCount;
+        this.messageVersion = messageVersion;
+        this.assistantConfigId = assistantConfigId;
+        this.requestType = requestType;
+        this.actionId = actionId;
+        this.modelRef = modelRef;
+        this.capabilityName = capabilityName;
+        this.systemPrompt = systemPrompt;
+        this.configurationValues = configurationValues;
+        this.created = created;
+        this.lastActivity = lastActivity;
+    }
+
+    /**
+     * @return id of the chat, null if not stored yet
+     */
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    /**
+     * @return id of the case the chat belongs to, or null for a private chat
+     */
+    public String getCaseId() {
+        return caseId;
+    }
+
+    public void setCaseId(String caseId) {
+        this.caseId = caseId;
+    }
+
+    /**
+     * @return principal id of the user who created the chat
+     */
+    public String getOwner() {
+        return owner;
+    }
+
+    public void setOwner(String owner) {
+        this.owner = owner;
+    }
+
+    /**
+     * @return the title shown in the chat lists
+     */
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    /**
+     * @return true if the title was set by a user
+     */
+    public boolean isTitleCustom() {
+        return titleCustom;
+    }
+
+    public void setTitleCustom(boolean titleCustom) {
+        this.titleCustom = titleCustom;
+    }
+
+    /**
+     * @return number of words over all messages of the chat
+     */
+    public int getWordCount() {
+        return wordCount;
+    }
+
+    public void setWordCount(int wordCount) {
+        this.wordCount = wordCount;
+    }
+
+    /**
+     * @return version of the stored messages; a save must be based on it
+     */
+    public int getMessageVersion() {
+        return messageVersion;
+    }
+
+    public void setMessageVersion(int messageVersion) {
+        this.messageVersion = messageVersion;
+    }
+
+    /**
+     * @return id of the assistant configuration the chat runs on
+     */
+    public String getAssistantConfigId() {
+        return assistantConfigId;
+    }
+
+    public void setAssistantConfigId(String assistantConfigId) {
+        this.assistantConfigId = assistantConfigId;
+    }
+
+    /**
+     * @return request type of the capability the chat runs on
+     */
+    public String getRequestType() {
+        return requestType;
+    }
+
+    public void setRequestType(String requestType) {
+        this.requestType = requestType;
+    }
+
+    /**
+     * @return action id of the capability the chat runs on
+     */
+    public String getActionId() {
+        return actionId;
+    }
+
+    public void setActionId(String actionId) {
+        this.actionId = actionId;
+    }
+
+    /**
+     * @return model reference of the capability the chat runs on
+     */
+    public String getModelRef() {
+        return modelRef;
+    }
+
+    public void setModelRef(String modelRef) {
+        this.modelRef = modelRef;
+    }
+
+    /**
+     * @return display name of the capability the chat was started with (e.g. the name of a custom
+     * prompt); for display only
+     */
+    public String getCapabilityName() {
+        return capabilityName;
+    }
+
+    public void setCapabilityName(String capabilityName) {
+        this.capabilityName = capabilityName;
+    }
+
+    /**
+     * @return the system prompt sent with every request of the chat, or null
+     */
+    public String getSystemPrompt() {
+        return systemPrompt;
+    }
+
+    public void setSystemPrompt(String systemPrompt) {
+        this.systemPrompt = systemPrompt;
+    }
+
+    /**
+     * @return the prompt configuration (e.g. temperature) sent with every request of the chat, in
+     * the properties format of AiCapability.getConfigurationValues(), or null
+     */
+    public String getConfigurationValues() {
+        return configurationValues;
+    }
+
+    public void setConfigurationValues(String configurationValues) {
+        this.configurationValues = configurationValues;
+    }
+
+    /**
+     * @return when the chat was created
+     */
+    public Date getCreated() {
+        return created;
+    }
+
+    public void setCreated(Date created) {
+        this.created = created;
+    }
+
+    /**
+     * @return when messages of the chat were saved last
+     */
+    public Date getLastActivity() {
+        return lastActivity;
+    }
+
+    public void setLastActivity(Date lastActivity) {
+        this.lastActivity = lastActivity;
+    }
 }

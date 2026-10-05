@@ -1,5 +1,4 @@
-/*
-                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -661,30 +660,62 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.assistant;
+package org.jlawyer.test.server.ejb;
 
-import com.jdimension.jlawyer.ai.AiCapability;
-import com.jdimension.jlawyer.ai.InputData;
-import com.jdimension.jlawyer.ai.Message;
-import java.util.List;
+import com.jdimension.jlawyer.persistence.AiChat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import org.junit.Test;
 
 /**
+ * How the title of a stored AI chat is derived from its first message and how a title entered by a
+ * user is normalised.
  *
  * @author jens
  */
-public interface AssistantInputAdapter {
-    
-    public List<InputData> getInputs(AiCapability c);
-    public List<Message> getMessages(AiCapability c);
+public class AiChatTitleTest {
 
-    /**
-     * Tells whether a chat started through this adapter is started from a case view. Such chats
-     * are stored with a reference to the case.
-     *
-     * @return true if the adapter belongs to a case view
-     */
-    public default boolean isCaseView() {
-        return false;
+    @Test
+    public void shortMessageIsTheTitle() {
+        assertEquals("Fasse den Schriftsatz zusammen", AiChat.deriveTitle("Fasse den Schriftsatz zusammen"));
     }
 
+    @Test
+    public void longMessageIsCutToEightyCharacters() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 30; i++) {
+            sb.append("Wort").append(i).append(' ');
+        }
+        String title = AiChat.deriveTitle(sb.toString());
+        assertEquals(AiChat.DERIVED_TITLE_LENGTH, title.length());
+        assertEquals(sb.toString().substring(0, AiChat.DERIVED_TITLE_LENGTH), title);
+    }
+
+    @Test
+    public void whitespaceIsCollapsedBeforeCutting() {
+        assertEquals("Bitte prüfen: Frist läuft", AiChat.deriveTitle("  Bitte\n\nprüfen:\t Frist   läuft \n"));
+    }
+
+    @Test
+    public void emptyFirstMessageGivesEmptyTitle() {
+        assertEquals("", AiChat.deriveTitle(null));
+        assertEquals("", AiChat.deriveTitle(" \n "));
+    }
+
+    @Test
+    public void customTitleIsTrimmedAndLimited() {
+        assertEquals("Fristberechnung Berufung", AiChat.normaliseCustomTitle("  Fristberechnung Berufung "));
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 300; i++) {
+            sb.append('x');
+        }
+        assertEquals(AiChat.MAX_TITLE_LENGTH, AiChat.normaliseCustomTitle(sb.toString()).length());
+    }
+
+    @Test
+    public void emptyCustomTitleMeansReset() {
+        assertNull(AiChat.normaliseCustomTitle(null));
+        assertNull(AiChat.normaliseCustomTitle(""));
+        assertNull(AiChat.normaliseCustomTitle("   "));
+    }
 }

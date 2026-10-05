@@ -1,5 +1,4 @@
-/*
-                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -661,30 +660,178 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.assistant;
+package com.jdimension.jlawyer.persistence;
 
-import com.jdimension.jlawyer.ai.AiCapability;
-import com.jdimension.jlawyer.ai.InputData;
-import com.jdimension.jlawyer.ai.Message;
-import java.util.List;
+import java.io.Serializable;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.Table;
 
 /**
+ * One message of a stored AI chat, mirroring com.jdimension.jlawyer.ai.Message.
+ *
+ * The chat is referenced by id only. Messages are always written as a whole list per chat, so seq
+ * is the position of the message in its conversation.
  *
  * @author jens
  */
-public interface AssistantInputAdapter {
-    
-    public List<InputData> getInputs(AiCapability c);
-    public List<Message> getMessages(AiCapability c);
+@Entity
+@Table(name = "ai_chat_messages")
+@NamedQueries({
+    @NamedQuery(name = "AiChatMessage.findByChat", query = "SELECT m FROM AiChatMessage m WHERE m.chatId = :chatId ORDER BY m.seq ASC"),
+    @NamedQuery(name = "AiChatMessage.deleteByChat", query = "DELETE FROM AiChatMessage m WHERE m.chatId = :chatId")
+})
+public class AiChatMessage implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    @Id
+    @Column(name = "id")
+    private String id;
+
+    @Column(name = "chat_id", length = 50)
+    private String chatId;
+
+    @Column(name = "seq")
+    private int seq;
+
+    @Column(name = "role", length = 20)
+    private String role;
+
+    @Column(name = "content", columnDefinition = "LONGTEXT")
+    private String content;
+
+    @Column(name = "tool_call_id", length = 250)
+    private String toolCallId;
+
+    @Column(name = "tool_name", length = 250)
+    private String toolName;
+
+    @Column(name = "model_ref", length = 250)
+    private String modelRef;
+
+    @Column(name = "principal_id", length = 50)
+    private String principalId;
 
     /**
-     * Tells whether a chat started through this adapter is started from a case view. Such chats
-     * are stored with a reference to the case.
-     *
-     * @return true if the adapter belongs to a case view
+     * @return the technical identifier
      */
-    public default boolean isCaseView() {
-        return false;
+    public String getId() {
+        return id;
     }
 
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    /**
+     * @return id of the chat this message belongs to
+     */
+    public String getChatId() {
+        return chatId;
+    }
+
+    public void setChatId(String chatId) {
+        this.chatId = chatId;
+    }
+
+    /**
+     * @return position of the message in its conversation, starting at 0
+     */
+    public int getSeq() {
+        return seq;
+    }
+
+    public void setSeq(int seq) {
+        this.seq = seq;
+    }
+
+    /**
+     * @return user, assistant, system or tool
+     */
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    /**
+     * @return the message text
+     */
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    /**
+     * @return id of the tool call a tool message answers, or null
+     */
+    public String getToolCallId() {
+        return toolCallId;
+    }
+
+    public void setToolCallId(String toolCallId) {
+        this.toolCallId = toolCallId;
+    }
+
+    /**
+     * @return name of the tool a tool message belongs to, or null
+     */
+    public String getToolName() {
+        return toolName;
+    }
+
+    public void setToolName(String toolName) {
+        this.toolName = toolName;
+    }
+
+    /**
+     * @return the model that produced an assistant message, or null
+     */
+    public String getModelRef() {
+        return modelRef;
+    }
+
+    public void setModelRef(String modelRef) {
+        this.modelRef = modelRef;
+    }
+
+    /**
+     * @return principal id of the user whose request produced this message
+     */
+    public String getPrincipalId() {
+        return principalId;
+    }
+
+    public void setPrincipalId(String principalId) {
+        this.principalId = principalId;
+    }
+
+    @Override
+    public int hashCode() {
+        return (id != null ? id.hashCode() : 0);
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (!(object instanceof AiChatMessage)) {
+            return false;
+        }
+        AiChatMessage other = (AiChatMessage) object;
+        return !((this.id == null && other.id != null)
+                || (this.id != null && !this.id.equals(other.id)));
+    }
+
+    @Override
+    public String toString() {
+        return "AiChatMessage[id=" + this.id + "]";
+    }
 }
