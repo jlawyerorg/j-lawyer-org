@@ -671,16 +671,17 @@ import com.jdimension.jlawyer.client.utils.CommonStrings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
-import com.jdimension.jlawyer.documents.PlaceHolders;
+import com.jdimension.jlawyer.documents.PlaceHolderCatalog;
+import com.jdimension.jlawyer.documents.PlaceHolderContext;
 import com.jdimension.jlawyer.email.EmailTemplate;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.server.utils.ContentTypes;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Graphics;
 import java.awt.Image;
-import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import javax.swing.*;
@@ -725,22 +726,15 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
             this.cmbFormat.addItem(s);
         }
 
-        DefaultListModel lm = new DefaultListModel();
-        this.lstPlaceHolders.setModel(lm);
-
+        this.placeHolderPicker.setInsertListener(() -> this.cmdAddPlaceHolderActionPerformed(null));
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
             List<PartyTypeBean> allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
-            List<String> placeHolders = new ArrayList<>();
+            Map<String, String> partyTypes = new LinkedHashMap<>();
             for (PartyTypeBean ptb : allPartyTypes) {
-                placeHolders.add(ptb.getPlaceHolder());
+                partyTypes.put(ptb.getPlaceHolder(), ptb.getName());
             }
-
-            ArrayList<String> allPlaceHolders = PlaceHolders.getAllPlaceHolders(placeHolders, new ArrayList<>());
-            Collections.sort(allPlaceHolders);
-            for (String s : allPlaceHolders) {
-                ((DefaultListModel) this.lstPlaceHolders.getModel()).addElement(s);
-            }
+            this.placeHolderPicker.setPlaceHolders(PlaceHolderCatalog.getPlaceHolders(PlaceHolderContext.EMAIL, partyTypes, null));
         } catch (Exception ex) {
             log.error("Error getting all party types", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Laden der Beteiligtentypen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -839,8 +833,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         jLabel6 = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
         cmdAddPlaceHolder = new javax.swing.JButton();
-        jScrollPane3 = new javax.swing.JScrollPane();
-        lstPlaceHolders = new javax.swing.JList();
+        placeHolderPicker = new com.jdimension.jlawyer.client.mail.PlaceHolderPickerPanel();
         cmbPlaceHolderTarget = new javax.swing.JComboBox();
 
         jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/message_big.png"))); // NOI18N
@@ -1072,13 +1065,6 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
             }
         });
 
-        lstPlaceHolders.setModel(new javax.swing.AbstractListModel() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-            public int getSize() { return strings.length; }
-            public Object getElementAt(int i) { return strings[i]; }
-        });
-        jScrollPane3.setViewportView(lstPlaceHolders);
-
         cmbPlaceHolderTarget.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
         org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
@@ -1090,7 +1076,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
                 .add(cmdAddPlaceHolder)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 236, Short.MAX_VALUE)
+                    .add(placeHolderPicker, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 236, Short.MAX_VALUE)
                     .add(cmbPlaceHolderTarget, 0, 236, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -1101,7 +1087,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
                     .add(cmdAddPlaceHolder)
                     .add(cmbPlaceHolderTarget, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                .add(placeHolderPicker, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1253,19 +1239,25 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
 
     private void cmdAddPlaceHolderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddPlaceHolderActionPerformed
 
-        List selectedList = this.lstPlaceHolders.getSelectedValuesList();
-        String insert = "";
-        for (Object o : selectedList) {
-            insert = insert + o.toString() + " ";
+        List<String> selectedList = this.placeHolderPicker.getSelectedPlaceHolders();
+        if (selectedList.isEmpty()) {
+            return;
         }
+        String insert = String.join(" ", selectedList) + " ";
 
         String target = this.cmbPlaceHolderTarget.getSelectedItem().toString();
 
-        EditorImplementation ed = (EditorImplementation) this.contentPanel.getComponent(0);
         if (EmailTemplatesPanel.PLACEHOLDERTARGET_SUBJECT.equals(target)) {
-            this.txtSubject.setText(PlaceHolders.insertAt(this.txtSubject.getText(), insert, this.txtSubject.getCaretPosition()));
+            this.txtSubject.replaceSelection(insert);
+            this.txtSubject.requestFocus();
         } else if (EmailTemplatesPanel.PLACEHOLDERTARGET_BODY.equals(target)) {
-            ed.setText(PlaceHolders.insertAt(ed.getText(), insert, ed.getCaretPosition()));
+            if (this.contentPanel.getComponent(0) == this.hp) {
+                // inserts at the caret of the HTML editor, the position argument is ignored
+                this.hp.insert(insert, 0);
+            } else {
+                this.tp.insertAtCaret(insert, -1);
+                this.tp.requestFocus();
+            }
         }
     }//GEN-LAST:event_cmdAddPlaceHolderActionPerformed
 
@@ -1395,12 +1387,11 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JSplitPane jSplitPane2;
     protected javax.swing.JLabel lblPanelTitle;
+    private com.jdimension.jlawyer.client.mail.PlaceHolderPickerPanel placeHolderPicker;
     private javax.swing.JList lstMailTemplates;
-    private javax.swing.JList lstPlaceHolders;
     private javax.swing.JTextField txtBcc;
     private javax.swing.JTextField txtCc;
     private javax.swing.JTextField txtSubject;

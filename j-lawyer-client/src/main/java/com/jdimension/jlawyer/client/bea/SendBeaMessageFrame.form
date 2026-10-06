@@ -471,6 +471,20 @@
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdSaveDraftActionPerformed"/>
                   </Events>
                 </Component>
+                <Component class="javax.swing.JButton" name="cmdInsertTextBlock">
+                  <Properties>
+                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                      <Image iconType="3" name="/icons32/material/list_36dp_0E72B5_FILL0_wght400_GRAD0_opsz40.png"/>
+                    </Property>
+                    <Property name="toolTipText" type="java.lang.String" value="Baustein an Cursor-Position einf&#xfc;gen"/>
+                    <Property name="focusable" type="boolean" value="false"/>
+                    <Property name="horizontalTextPosition" type="int" value="0"/>
+                    <Property name="verticalTextPosition" type="int" value="3"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdInsertTextBlockActionPerformed"/>
+                  </Events>
+                </Component>
               </SubComponents>
             </Container>
             <Component class="javax.swing.JButton" name="cmdAttachmentDown">

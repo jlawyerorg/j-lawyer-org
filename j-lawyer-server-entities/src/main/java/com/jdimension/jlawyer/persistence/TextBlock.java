@@ -660,110 +660,265 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.persistence.test;
+package com.jdimension.jlawyer.persistence;
 
-import com.jdimension.jlawyer.persistence.EnforcementFormTemplate;
-import com.jdimension.jlawyer.persistence.TextBlock;
-import java.io.File;
-import java.lang.reflect.Constructor;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
+import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import org.junit.Test;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 
 /**
- * Named queries that build objects with {@code SELECT NEW} need a constructor that matches.
+ * A text block ("Baustein") that can be inserted into e-mails and beA messages while composing
+ * them.
  *
- * A mismatch is not a compile error - the query is a string - and it is not a startup error either
- * on every provider. It surfaces the first time the query runs, which for a listing means the first
- * time a user opens the dialog.
+ * A text block has a plain-text and an HTML variant, at least one of them is filled. The optional
+ * folder is a path of segments separated by {@link #FOLDER_SEPARATOR}; it only serves to structure
+ * the menu the blocks are picked from. Folders have no entity of their own, they exist through the
+ * blocks using them. A block without folder is shown on the top level.
  *
- * These projections exist for a reason worth stating: a listing that loads entities and then clears
- * a field to make them lighter is clearing a <em>managed</em> entity, and the clearing is written to
- * the database when the transaction commits. That is how the enforcement form templates were listed
- * correctly and lost their PDFs at the same time.
+ * Lists and menus read text blocks as summaries (see TextBlock.findAllSummaries): id, name and folder
+ * plus whether each variant is present, but not the content, which is only loaded for the single
+ * block that is inserted or edited. A variant without content is stored as NULL, so its presence can
+ * be determined without reading it.
  *
  * @author jens
  */
-public class NamedQueryProjectionTest {
+@Entity
+@Table(name = "text_blocks")
+@NamedQueries({
+    @NamedQuery(name = "TextBlock.findAllSummaries", query = "SELECT NEW com.jdimension.jlawyer.persistence.TextBlock(t.id, t.name, t.folder, CASE WHEN t.contentText IS NULL THEN 0 ELSE 1 END, CASE WHEN t.contentHtml IS NULL THEN 0 ELSE 1 END) FROM TextBlock t ORDER BY t.folder, t.name"),
+    @NamedQuery(name = "TextBlock.findByName", query = "SELECT t FROM TextBlock t WHERE t.name = :name")
+})
+public class TextBlock implements Serializable {
 
-    private static final Pattern SELECT_NEW = Pattern.compile(
-            "SELECT\\s+NEW\\s+([\\w.]+)\\s*\\(([^)]*)\\)", Pattern.CASE_INSENSITIVE);
+    private static final long serialVersionUID = 1L;
 
-    private List<String> queriesOf(Class<?> entity) throws Exception {
-        List<String> queries = new ArrayList<>();
-        String path = "src/main/java/" + entity.getName().replace('.', '/') + ".java";
-        String base = System.getProperty("basedir");
-        File file = new File(base == null ? "." : base, path);
-        assertTrue("die Quelle von " + entity.getSimpleName() + " fehlt", file.isFile());
+    /**
+     * Separator of the segments of a folder path.
+     */
+    public static final String FOLDER_SEPARATOR = "/";
 
-        String source = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
-        Matcher m = Pattern.compile("query\\s*=\\s*\"([^\"]+)\"").matcher(source);
-        while (m.find()) {
-            queries.add(m.group(1));
-        }
-        return queries;
+    @Id
+    @Column(name = "id")
+    private String id;
+
+    @Column(name = "name", length = 250)
+    private String name;
+
+    @Column(name = "folder", length = 1000)
+    private String folder;
+
+    @Column(name = "content_text", columnDefinition = "MEDIUMTEXT")
+    private String contentText;
+
+    @Column(name = "content_html", columnDefinition = "MEDIUMTEXT")
+    private String contentHtml;
+
+    // set for summaries only, whose content is not loaded; null for a fully loaded text block
+    @Transient
+    private Boolean textAvailable;
+
+    @Transient
+    private Boolean htmlAvailable;
+
+    public TextBlock() {
     }
 
-    @Test
-    public void everyProjectionHasAconstructorThatFitsIt() throws Exception {
-        List<Class<?>> entities = Arrays.asList(EnforcementFormTemplate.class, TextBlock.class);
+    /**
+     * Creates a summary of a text block, without its content. Used by the projection
+     * TextBlock.findAllSummaries.
+     *
+     * @param id the technical identifier
+     * @param name the name
+     * @param folder the folder path
+     * @param textAvailable 1 if the plain-text variant has content, 0 otherwise
+     * @param htmlAvailable 1 if the HTML variant has content, 0 otherwise
+     */
+    public TextBlock(String id, String name, String folder, Integer textAvailable, Integer htmlAvailable) {
+        this.id = id;
+        this.name = name;
+        this.folder = folder;
+        this.textAvailable = textAvailable != null && textAvailable != 0;
+        this.htmlAvailable = htmlAvailable != null && htmlAvailable != 0;
+    }
 
-        List<String> problems = new ArrayList<>();
-        for (Class<?> entity : entities) {
-            for (String query : queriesOf(entity)) {
-                Matcher m = SELECT_NEW.matcher(query);
-                if (!m.find()) {
-                    continue;
-                }
-                String className = m.group(1);
-                int arguments = m.group(2).trim().isEmpty()
-                        ? 0 : m.group(2).split(",").length;
+    /**
+     * Normalises a folder path: every segment is trimmed, empty segments are dropped and the
+     * remaining segments are joined with {@link #FOLDER_SEPARATOR}.
+     *
+     * @param folder the folder path as entered, may be null
+     * @return the normalised path, null if no segment remains (top level)
+     */
+    public static String normalizeFolder(String folder) {
+        List<String> segments = getFolderSegments(folder);
+        if (segments.isEmpty()) {
+            return null;
+        }
+        return String.join(FOLDER_SEPARATOR, segments);
+    }
 
-                Class<?> target = Class.forName(className);
-                boolean found = false;
-                for (Constructor<?> constructor : target.getConstructors()) {
-                    if (constructor.getParameterCount() == arguments) {
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found) {
-                    problems.add(className + " hat keinen Konstruktor mit " + arguments
-                            + " Parametern, den die Abfrage verlangt");
-                }
+    /**
+     * Splits a folder path into its trimmed, non-empty segments.
+     *
+     * @param folder the folder path, may be null
+     * @return the segments, an empty list for the top level
+     */
+    public static List<String> getFolderSegments(String folder) {
+        List<String> segments = new ArrayList<>();
+        if (folder == null) {
+            return segments;
+        }
+        for (String s : folder.split(FOLDER_SEPARATOR)) {
+            String t = s.trim();
+            if (!t.isEmpty()) {
+                segments.add(t);
             }
         }
-        assertEquals("Projektionen ohne passenden Konstruktor: " + problems, 0, problems.size());
+        return segments;
     }
 
-    @Test
-    public void anEntityWithAprojectionKeepsItsNoArgumentConstructor() throws Exception {
-        // Wer einen Konstruktor für die Projektion hinzufügt, nimmt dem Compiler den erzeugten
-        // parameterlosen weg - und JPA braucht ihn. Das fällt sonst erst beim Laden auf.
-        Constructor<?> noArgument = EnforcementFormTemplate.class.getDeclaredConstructor();
-        assertNotNull(noArgument);
+    /**
+     * @param text a plain-text variant
+     * @return true if it has content other than whitespace
+     */
+    public static boolean isTextContent(String text) {
+        return text != null && !text.trim().isEmpty();
     }
 
-    @Test
-    public void theSummaryProjectionLeavesTheContentOut() throws Exception {
-        // Der Zweck der Projektion: die Liste ohne die Dateien - und ohne verwaltete Entities,
-        // deren Abräumen beim Commit in der Datenbank landet.
-        boolean found = false;
-        for (String query : queriesOf(EnforcementFormTemplate.class)) {
-            if (query.contains("findAllSummaries") || query.contains("SELECT NEW")) {
-                found = true;
-                assertTrue("die Projektion darf den Dateiinhalt nicht mitnehmen",
-                        !query.toLowerCase().contains("pdfcontent"));
-            }
+    /**
+     * @param html an HTML variant
+     * @return true if it has visible content; markup without text (as left behind by an emptied HTML
+     * editor) does not count
+     */
+    public static boolean isHtmlContent(String html) {
+        if (html == null) {
+            return false;
         }
-        assertTrue("es wurde keine Projektion gefunden", found);
+        String visible = html.replaceAll("(?is)<(head|style|script)[^>]*>.*?</\\1>", "")
+                .replaceAll("(?s)<[^>]*>", "")
+                .replace("&nbsp;", " ")
+                .trim();
+        return !visible.isEmpty() || html.toLowerCase().contains("<img");
     }
+
+    /**
+     * @return true if the plain-text variant has content; for a summary as determined by the server
+     */
+    public boolean hasText() {
+        if (textAvailable != null) {
+            return textAvailable;
+        }
+        return isTextContent(contentText);
+    }
+
+    /**
+     * @return true if the HTML variant has visible content; for a summary as determined by the server
+     */
+    public boolean hasHtml() {
+        if (htmlAvailable != null) {
+            return htmlAvailable;
+        }
+        return isHtmlContent(contentHtml);
+    }
+
+    /**
+     * @return the technical identifier
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * @param id the technical identifier
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    /**
+     * @return the name shown in the menu
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * @param name the name shown in the menu
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /**
+     * @return the normalised folder path, null for the top level
+     */
+    public String getFolder() {
+        return folder;
+    }
+
+    /**
+     * @param folder the folder path, null for the top level
+     */
+    public void setFolder(String folder) {
+        this.folder = folder;
+    }
+
+    /**
+     * @return the plain-text variant
+     */
+    public String getContentText() {
+        return contentText;
+    }
+
+    /**
+     * @param contentText the plain-text variant
+     */
+    public void setContentText(String contentText) {
+        this.contentText = contentText;
+    }
+
+    /**
+     * @return the HTML variant (body fragment)
+     */
+    public String getContentHtml() {
+        return contentHtml;
+    }
+
+    /**
+     * @param contentHtml the HTML variant (body fragment)
+     */
+    public void setContentHtml(String contentHtml) {
+        this.contentHtml = contentHtml;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 0;
+        hash += (id != null ? id.hashCode() : 0);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (!(object instanceof TextBlock)) {
+            return false;
+        }
+        TextBlock other = (TextBlock) object;
+        return !((this.id == null && other.id != null) || (this.id != null && !this.id.equals(other.id)));
+    }
+
+    @Override
+    public String toString() {
+        if (folder == null) {
+            return name;
+        }
+        return folder + FOLDER_SEPARATOR + name;
+    }
+
 }

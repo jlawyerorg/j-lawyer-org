@@ -660,110 +660,35 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.persistence.test;
+package com.jdimension.jlawyer.persistence;
 
-import com.jdimension.jlawyer.persistence.EnforcementFormTemplate;
-import com.jdimension.jlawyer.persistence.TextBlock;
-import java.io.File;
-import java.lang.reflect.Constructor;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import org.junit.Test;
+import javax.ejb.Local;
 
 /**
- * Named queries that build objects with {@code SELECT NEW} need a constructor that matches.
- *
- * A mismatch is not a compile error - the query is a string - and it is not a startup error either
- * on every provider. It surfaces the first time the query runs, which for a listing means the first
- * time a user opens the dialog.
- *
- * These projections exist for a reason worth stating: a listing that loads entities and then clears
- * a field to make them lighter is clearing a <em>managed</em> entity, and the clearing is written to
- * the database when the transaction commits. That is how the enforcement form templates were listed
- * correctly and lost their PDFs at the same time.
+ * Persistence operations for text blocks.
  *
  * @author jens
  */
-public class NamedQueryProjectionTest {
+@Local
+public interface TextBlockFacadeLocal {
 
-    private static final Pattern SELECT_NEW = Pattern.compile(
-            "SELECT\\s+NEW\\s+([\\w.]+)\\s*\\(([^)]*)\\)", Pattern.CASE_INSENSITIVE);
+    void create(TextBlock textBlock);
 
-    private List<String> queriesOf(Class<?> entity) throws Exception {
-        List<String> queries = new ArrayList<>();
-        String path = "src/main/java/" + entity.getName().replace('.', '/') + ".java";
-        String base = System.getProperty("basedir");
-        File file = new File(base == null ? "." : base, path);
-        assertTrue("die Quelle von " + entity.getSimpleName() + " fehlt", file.isFile());
+    void edit(TextBlock textBlock);
 
-        String source = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
-        Matcher m = Pattern.compile("query\\s*=\\s*\"([^\"]+)\"").matcher(source);
-        while (m.find()) {
-            queries.add(m.group(1));
-        }
-        return queries;
-    }
+    void remove(TextBlock textBlock);
 
-    @Test
-    public void everyProjectionHasAconstructorThatFitsIt() throws Exception {
-        List<Class<?>> entities = Arrays.asList(EnforcementFormTemplate.class, TextBlock.class);
+    TextBlock find(Object id);
 
-        List<String> problems = new ArrayList<>();
-        for (Class<?> entity : entities) {
-            for (String query : queriesOf(entity)) {
-                Matcher m = SELECT_NEW.matcher(query);
-                if (!m.find()) {
-                    continue;
-                }
-                String className = m.group(1);
-                int arguments = m.group(2).trim().isEmpty()
-                        ? 0 : m.group(2).split(",").length;
+    /**
+     * @return all text blocks as summaries without content, ordered by folder and name
+     */
+    List<TextBlock> findAllSummaries();
 
-                Class<?> target = Class.forName(className);
-                boolean found = false;
-                for (Constructor<?> constructor : target.getConstructors()) {
-                    if (constructor.getParameterCount() == arguments) {
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found) {
-                    problems.add(className + " hat keinen Konstruktor mit " + arguments
-                            + " Parametern, den die Abfrage verlangt");
-                }
-            }
-        }
-        assertEquals("Projektionen ohne passenden Konstruktor: " + problems, 0, problems.size());
-    }
-
-    @Test
-    public void anEntityWithAprojectionKeepsItsNoArgumentConstructor() throws Exception {
-        // Wer einen Konstruktor für die Projektion hinzufügt, nimmt dem Compiler den erzeugten
-        // parameterlosen weg - und JPA braucht ihn. Das fällt sonst erst beim Laden auf.
-        Constructor<?> noArgument = EnforcementFormTemplate.class.getDeclaredConstructor();
-        assertNotNull(noArgument);
-    }
-
-    @Test
-    public void theSummaryProjectionLeavesTheContentOut() throws Exception {
-        // Der Zweck der Projektion: die Liste ohne die Dateien - und ohne verwaltete Entities,
-        // deren Abräumen beim Commit in der Datenbank landet.
-        boolean found = false;
-        for (String query : queriesOf(EnforcementFormTemplate.class)) {
-            if (query.contains("findAllSummaries") || query.contains("SELECT NEW")) {
-                found = true;
-                assertTrue("die Projektion darf den Dateiinhalt nicht mitnehmen",
-                        !query.toLowerCase().contains("pdfcontent"));
-            }
-        }
-        assertTrue("es wurde keine Projektion gefunden", found);
-    }
+    /**
+     * @param name the name of the text block
+     * @return all text blocks with this name, in any folder
+     */
+    List<TextBlock> findByName(String name);
 }

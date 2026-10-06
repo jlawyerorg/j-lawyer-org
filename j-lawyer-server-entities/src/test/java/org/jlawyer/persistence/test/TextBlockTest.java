@@ -662,108 +662,64 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.persistence.test;
 
-import com.jdimension.jlawyer.persistence.EnforcementFormTemplate;
 import com.jdimension.jlawyer.persistence.TextBlock;
-import java.io.File;
-import java.lang.reflect.Constructor;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * Named queries that build objects with {@code SELECT NEW} need a constructor that matches.
- *
- * A mismatch is not a compile error - the query is a string - and it is not a startup error either
- * on every provider. It surfaces the first time the query runs, which for a listing means the first
- * time a user opens the dialog.
- *
- * These projections exist for a reason worth stating: a listing that loads entities and then clears
- * a field to make them lighter is clearing a <em>managed</em> entity, and the clearing is written to
- * the database when the transaction commits. That is how the enforcement form templates were listed
- * correctly and lost their PDFs at the same time.
+ * Tests the folder path handling and content checks of text blocks.
  *
  * @author jens
  */
-public class NamedQueryProjectionTest {
+public class TextBlockTest {
 
-    private static final Pattern SELECT_NEW = Pattern.compile(
-            "SELECT\\s+NEW\\s+([\\w.]+)\\s*\\(([^)]*)\\)", Pattern.CASE_INSENSITIVE);
-
-    private List<String> queriesOf(Class<?> entity) throws Exception {
-        List<String> queries = new ArrayList<>();
-        String path = "src/main/java/" + entity.getName().replace('.', '/') + ".java";
-        String base = System.getProperty("basedir");
-        File file = new File(base == null ? "." : base, path);
-        assertTrue("die Quelle von " + entity.getSimpleName() + " fehlt", file.isFile());
-
-        String source = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
-        Matcher m = Pattern.compile("query\\s*=\\s*\"([^\"]+)\"").matcher(source);
-        while (m.find()) {
-            queries.add(m.group(1));
-        }
-        return queries;
+    @Test
+    public void testNormalizeFolder() {
+        Assert.assertNull(TextBlock.normalizeFolder(null));
+        Assert.assertNull(TextBlock.normalizeFolder(""));
+        Assert.assertNull(TextBlock.normalizeFolder("  / // "));
+        Assert.assertEquals("Mandat", TextBlock.normalizeFolder("Mandat"));
+        Assert.assertEquals("Mandat/Beginn", TextBlock.normalizeFolder(" Mandat // Beginn/ "));
+        Assert.assertEquals("Mandat/Erstes Gespräch", TextBlock.normalizeFolder("/Mandat/ Erstes Gespräch "));
     }
 
     @Test
-    public void everyProjectionHasAconstructorThatFitsIt() throws Exception {
-        List<Class<?>> entities = Arrays.asList(EnforcementFormTemplate.class, TextBlock.class);
-
-        List<String> problems = new ArrayList<>();
-        for (Class<?> entity : entities) {
-            for (String query : queriesOf(entity)) {
-                Matcher m = SELECT_NEW.matcher(query);
-                if (!m.find()) {
-                    continue;
-                }
-                String className = m.group(1);
-                int arguments = m.group(2).trim().isEmpty()
-                        ? 0 : m.group(2).split(",").length;
-
-                Class<?> target = Class.forName(className);
-                boolean found = false;
-                for (Constructor<?> constructor : target.getConstructors()) {
-                    if (constructor.getParameterCount() == arguments) {
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found) {
-                    problems.add(className + " hat keinen Konstruktor mit " + arguments
-                            + " Parametern, den die Abfrage verlangt");
-                }
-            }
-        }
-        assertEquals("Projektionen ohne passenden Konstruktor: " + problems, 0, problems.size());
+    public void testFolderSegments() {
+        Assert.assertTrue(TextBlock.getFolderSegments(null).isEmpty());
+        Assert.assertEquals(Arrays.asList("A", "B", "C"), TextBlock.getFolderSegments("A/ B //C/"));
     }
 
     @Test
-    public void anEntityWithAprojectionKeepsItsNoArgumentConstructor() throws Exception {
-        // Wer einen Konstruktor für die Projektion hinzufügt, nimmt dem Compiler den erzeugten
-        // parameterlosen weg - und JPA braucht ihn. Das fällt sonst erst beim Laden auf.
-        Constructor<?> noArgument = EnforcementFormTemplate.class.getDeclaredConstructor();
-        assertNotNull(noArgument);
+    public void testHasContent() {
+        TextBlock tb = new TextBlock();
+        Assert.assertFalse(tb.hasText());
+        Assert.assertFalse(tb.hasHtml());
+
+        tb.setContentText("   \n ");
+        tb.setContentHtml("<html><head><style>p {}</style></head><body><p><br></p><p>&nbsp;</p></body></html>");
+        Assert.assertFalse(tb.hasText());
+        Assert.assertFalse(tb.hasHtml());
+
+        tb.setContentText("Hallo");
+        tb.setContentHtml("<p>Hallo <b>Welt</b></p>");
+        Assert.assertTrue(tb.hasText());
+        Assert.assertTrue(tb.hasHtml());
+
+        tb.setContentHtml("<p><img src=\"data:image/png;base64,AAAA\"></p>");
+        Assert.assertTrue(tb.hasHtml());
     }
 
     @Test
-    public void theSummaryProjectionLeavesTheContentOut() throws Exception {
-        // Der Zweck der Projektion: die Liste ohne die Dateien - und ohne verwaltete Entities,
-        // deren Abräumen beim Commit in der Datenbank landet.
-        boolean found = false;
-        for (String query : queriesOf(EnforcementFormTemplate.class)) {
-            if (query.contains("findAllSummaries") || query.contains("SELECT NEW")) {
-                found = true;
-                assertTrue("die Projektion darf den Dateiinhalt nicht mitnehmen",
-                        !query.toLowerCase().contains("pdfcontent"));
-            }
-        }
-        assertTrue("es wurde keine Projektion gefunden", found);
+    public void testSummaryReportsVariantsWithoutContent() {
+        TextBlock summary = new TextBlock("id", "Gruß", "Allgemein", 1, 0);
+        Assert.assertNull(summary.getContentText());
+        Assert.assertNull(summary.getContentHtml());
+        Assert.assertTrue(summary.hasText());
+        Assert.assertFalse(summary.hasHtml());
+
+        summary = new TextBlock("id", "Gruß", null, 0, 1);
+        Assert.assertFalse(summary.hasText());
+        Assert.assertTrue(summary.hasHtml());
     }
 }

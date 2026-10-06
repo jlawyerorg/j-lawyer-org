@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.email;
 
+import com.jdimension.jlawyer.documents.PlaceHolders;
 import java.io.Serializable;
 import java.io.StringReader;
 import javax.xml.XMLConstants;
@@ -681,7 +682,7 @@ public class EmailTemplate implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    public static final String PLACEHOLDER_CURSOR = "{{CURSOR}}";
+    public static final String PLACEHOLDER_CURSOR = PlaceHolders.CURSOR;
 
     private static final Logger log = Logger.getLogger(EmailTemplate.class.getName());
 

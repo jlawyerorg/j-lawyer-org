@@ -660,110 +660,276 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.persistence.test;
+package com.jdimension.jlawyer.client.mail;
 
-import com.jdimension.jlawyer.persistence.EnforcementFormTemplate;
-import com.jdimension.jlawyer.persistence.TextBlock;
-import java.io.File;
-import java.lang.reflect.Constructor;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
+import com.jdimension.jlawyer.documents.PlaceHolderCategory;
+import com.jdimension.jlawyer.documents.PlaceHolderDescriptor;
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import org.junit.Test;
+import java.util.Locale;
+import javax.swing.JTree;
+import javax.swing.ToolTipManager;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeCellRenderer;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
 
 /**
- * Named queries that build objects with {@code SELECT NEW} need a constructor that matches.
- *
- * A mismatch is not a compile error - the query is a string - and it is not a startup error either
- * on every provider. It surfaces the first time the query runs, which for a listing means the first
- * time a user opens the dialog.
- *
- * These projections exist for a reason worth stating: a listing that loads entities and then clears
- * a field to make them lighter is clearing a <em>managed</em> entity, and the clearing is written to
- * the database when the transaction commits. That is how the enforcement form templates were listed
- * correctly and lost their PDFs at the same time.
+ * Lets users pick placeholders by category or by searching their readable labels. The hosting panel
+ * decides where the picked placeholders are inserted: it registers an insert listener, which is
+ * called on double click or Enter, and reads {@link #getSelectedPlaceHolders()}.
  *
  * @author jens
  */
-public class NamedQueryProjectionTest {
+public class PlaceHolderPickerPanel extends javax.swing.JPanel {
 
-    private static final Pattern SELECT_NEW = Pattern.compile(
-            "SELECT\\s+NEW\\s+([\\w.]+)\\s*\\(([^)]*)\\)", Pattern.CASE_INSENSITIVE);
+    private List<PlaceHolderDescriptor> placeHolders = new ArrayList<>();
+    private Runnable insertListener = null;
+    private String lastInsertedKey = null;
 
-    private List<String> queriesOf(Class<?> entity) throws Exception {
-        List<String> queries = new ArrayList<>();
-        String path = "src/main/java/" + entity.getName().replace('.', '/') + ".java";
-        String base = System.getProperty("basedir");
-        File file = new File(base == null ? "." : base, path);
-        assertTrue("die Quelle von " + entity.getSimpleName() + " fehlt", file.isFile());
+    /**
+     * Creates new form PlaceHolderPickerPanel
+     */
+    public PlaceHolderPickerPanel() {
+        initComponents();
 
-        String source = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
-        Matcher m = Pattern.compile("query\\s*=\\s*\"([^\"]+)\"").matcher(source);
-        while (m.find()) {
-            queries.add(m.group(1));
-        }
-        return queries;
+        this.treePlaceHolders.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
+        this.treePlaceHolders.setCellRenderer(new PlaceHolderRenderer());
+        ToolTipManager.sharedInstance().registerComponent(this.treePlaceHolders);
+        this.txtSearch.putClientProperty("JTextField.placeholderText", "Suche...");
+        this.txtSearch.putClientProperty("JTextField.showClearButton", true);
+        this.txtSearch.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                rebuildTree();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                rebuildTree();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                rebuildTree();
+            }
+        });
+        this.rebuildTree();
     }
 
-    @Test
-    public void everyProjectionHasAconstructorThatFitsIt() throws Exception {
-        List<Class<?>> entities = Arrays.asList(EnforcementFormTemplate.class, TextBlock.class);
+    /**
+     * @param placeHolders the placeholders to offer, in the order they are to be shown
+     */
+    public void setPlaceHolders(List<PlaceHolderDescriptor> placeHolders) {
+        this.placeHolders = placeHolders == null ? new ArrayList<>() : new ArrayList<>(placeHolders);
+        this.rebuildTree();
+    }
 
-        List<String> problems = new ArrayList<>();
-        for (Class<?> entity : entities) {
-            for (String query : queriesOf(entity)) {
-                Matcher m = SELECT_NEW.matcher(query);
-                if (!m.find()) {
-                    continue;
+    /**
+     * @param insertListener called when the user confirms the selection by double click or Enter
+     */
+    public void setInsertListener(Runnable insertListener) {
+        this.insertListener = insertListener;
+    }
+
+    /**
+     * Returns the selected placeholders. The first one is remembered, so its group is opened again
+     * when the tree is rebuilt after a search.
+     *
+     * @return the keys of the selected placeholders (e.g. {{MANDANT_VORNAME}}) in display order;
+     * selected categories are ignored
+     */
+    public List<String> getSelectedPlaceHolders() {
+        List<String> keys = new ArrayList<>();
+        int[] rows = this.treePlaceHolders.getSelectionRows();
+        if (rows == null) {
+            return keys;
+        }
+        Arrays.sort(rows);
+        for (int row : rows) {
+            TreePath path = this.treePlaceHolders.getPathForRow(row);
+            Object o = ((DefaultMutableTreeNode) path.getLastPathComponent()).getUserObject();
+            if (o instanceof PlaceHolderDescriptor) {
+                keys.add(((PlaceHolderDescriptor) o).getKey());
+            }
+        }
+        if (!keys.isEmpty()) {
+            this.lastInsertedKey = keys.get(0);
+        }
+        return keys;
+    }
+
+    private boolean isSearching() {
+        return !this.txtSearch.getText().trim().isEmpty();
+    }
+
+    private static boolean matches(PlaceHolderDescriptor d, String search) {
+        return d.getLabel().toLowerCase(Locale.GERMAN).contains(search)
+                || d.getDisplayName().toLowerCase(Locale.GERMAN).contains(search)
+                || d.getKey().toLowerCase(Locale.GERMAN).contains(search);
+    }
+
+    private void rebuildTree() {
+        DefaultMutableTreeNode root = new DefaultMutableTreeNode();
+        TreePath expand = null;
+        String search = this.txtSearch.getText().trim().toLowerCase(Locale.GERMAN);
+
+        if (!search.isEmpty()) {
+            // flat list of matches, labelled with their context
+            for (PlaceHolderDescriptor d : this.placeHolders) {
+                if (matches(d, search)) {
+                    root.add(new DefaultMutableTreeNode(d, false));
                 }
-                String className = m.group(1);
-                int arguments = m.group(2).trim().isEmpty()
-                        ? 0 : m.group(2).split(",").length;
-
-                Class<?> target = Class.forName(className);
-                boolean found = false;
-                for (Constructor<?> constructor : target.getConstructors()) {
-                    if (constructor.getParameterCount() == arguments) {
-                        found = true;
-                        break;
+            }
+        } else {
+            PlaceHolderCategory currentCategory = null;
+            String currentSub = null;
+            DefaultMutableTreeNode categoryNode = null;
+            DefaultMutableTreeNode subNode = null;
+            for (PlaceHolderDescriptor d : this.placeHolders) {
+                if (d.getCategory() != currentCategory) {
+                    currentCategory = d.getCategory();
+                    currentSub = null;
+                    subNode = null;
+                    categoryNode = new DefaultMutableTreeNode(currentCategory.getDisplayName());
+                    root.add(categoryNode);
+                }
+                DefaultMutableTreeNode parent = categoryNode;
+                if (d.getSubCategory() != null) {
+                    if (!d.getSubCategory().equals(currentSub)) {
+                        currentSub = d.getSubCategory();
+                        subNode = new DefaultMutableTreeNode(currentSub);
+                        categoryNode.add(subNode);
                     }
+                    parent = subNode;
                 }
-                if (!found) {
-                    problems.add(className + " hat keinen Konstruktor mit " + arguments
-                            + " Parametern, den die Abfrage verlangt");
+                DefaultMutableTreeNode leaf = new DefaultMutableTreeNode(d, false);
+                parent.add(leaf);
+                if (d.getKey().equals(this.lastInsertedKey)) {
+                    expand = new TreePath(((DefaultMutableTreeNode) parent).getPath());
                 }
             }
         }
-        assertEquals("Projektionen ohne passenden Konstruktor: " + problems, 0, problems.size());
+
+        this.treePlaceHolders.setModel(new DefaultTreeModel(root));
+        if (expand != null) {
+            // keep the group of the last inserted placeholder open
+            this.treePlaceHolders.expandPath(expand);
+        }
     }
 
-    @Test
-    public void anEntityWithAprojectionKeepsItsNoArgumentConstructor() throws Exception {
-        // Wer einen Konstruktor für die Projektion hinzufügt, nimmt dem Compiler den erzeugten
-        // parameterlosen weg - und JPA braucht ihn. Das fällt sonst erst beim Laden auf.
-        Constructor<?> noArgument = EnforcementFormTemplate.class.getDeclaredConstructor();
-        assertNotNull(noArgument);
+    private void fireInsert() {
+        if (this.insertListener != null && !this.getSelectedPlaceHolders().isEmpty()) {
+            this.insertListener.run();
+        }
     }
 
-    @Test
-    public void theSummaryProjectionLeavesTheContentOut() throws Exception {
-        // Der Zweck der Projektion: die Liste ohne die Dateien - und ohne verwaltete Entities,
-        // deren Abräumen beim Commit in der Datenbank landet.
-        boolean found = false;
-        for (String query : queriesOf(EnforcementFormTemplate.class)) {
-            if (query.contains("findAllSummaries") || query.contains("SELECT NEW")) {
-                found = true;
-                assertTrue("die Projektion darf den Dateiinhalt nicht mitnehmen",
-                        !query.toLowerCase().contains("pdfcontent"));
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        txtSearch = new javax.swing.JTextField();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        treePlaceHolders = new javax.swing.JTree();
+
+        setLayout(new java.awt.BorderLayout(0, 4));
+
+        txtSearch.setToolTipText("Platzhalter suchen, z.B. \"vorname\" oder \"AKTE_ZEI\" - Enter fügt den ersten Treffer ein");
+        txtSearch.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                txtSearchKeyPressed(evt);
+            }
+        });
+        add(txtSearch, java.awt.BorderLayout.NORTH);
+
+        treePlaceHolders.setRootVisible(false);
+        treePlaceHolders.setShowsRootHandles(true);
+        treePlaceHolders.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                treePlaceHoldersMouseClicked(evt);
+            }
+        });
+        treePlaceHolders.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                treePlaceHoldersKeyPressed(evt);
+            }
+        });
+        jScrollPane1.setViewportView(treePlaceHolders);
+
+        add(jScrollPane1, java.awt.BorderLayout.CENTER);
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void txtSearchKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchKeyPressed
+        if (!this.isSearching() || this.treePlaceHolders.getRowCount() == 0) {
+            return;
+        }
+        if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
+            if (this.treePlaceHolders.getSelectionCount() == 0) {
+                this.treePlaceHolders.setSelectionRow(0);
+            }
+            this.fireInsert();
+        } else if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_DOWN) {
+            this.treePlaceHolders.setSelectionRow(0);
+            this.treePlaceHolders.requestFocusInWindow();
+        }
+    }//GEN-LAST:event_txtSearchKeyPressed
+
+    private void treePlaceHoldersMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_treePlaceHoldersMouseClicked
+        if (evt.getClickCount() == 2) {
+            TreePath path = this.treePlaceHolders.getPathForLocation(evt.getX(), evt.getY());
+            if (path != null && ((DefaultMutableTreeNode) path.getLastPathComponent()).getUserObject() instanceof PlaceHolderDescriptor) {
+                this.fireInsert();
             }
         }
-        assertTrue("es wurde keine Projektion gefunden", found);
+    }//GEN-LAST:event_treePlaceHoldersMouseClicked
+
+    private void treePlaceHoldersKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_treePlaceHoldersKeyPressed
+        if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
+            this.fireInsert();
+            evt.consume();
+        }
+    }//GEN-LAST:event_treePlaceHoldersKeyPressed
+
+    /**
+     * Shows a placeholder with its label, followed by its key in small grey letters; in search
+     * results the label includes its context ("Mandant: Vorname").
+     */
+    private class PlaceHolderRenderer extends DefaultTreeCellRenderer {
+
+        @Override
+        public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+            Object o = ((DefaultMutableTreeNode) value).getUserObject();
+            if (o instanceof PlaceHolderDescriptor) {
+                PlaceHolderDescriptor d = (PlaceHolderDescriptor) o;
+                String label = isSearching() ? d.getDisplayName() : d.getLabel();
+                String text = "<html>" + escape(label) + "&nbsp;&nbsp;<font size=\"-2\" color=\"gray\">" + escape(d.getKey()) + "</font></html>";
+                super.getTreeCellRendererComponent(tree, text, sel, expanded, true, row, hasFocus);
+                this.setToolTipText(d.getDisplayName() + " - " + d.getKey());
+                return this;
+            }
+            super.getTreeCellRendererComponent(tree, value, sel, expanded, false, row, hasFocus);
+            this.setToolTipText(null);
+            return this;
+        }
+
+        private String escape(String s) {
+            return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+        }
     }
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JTree treePlaceHolders;
+    private javax.swing.JTextField txtSearch;
+    // End of variables declaration//GEN-END:variables
 }

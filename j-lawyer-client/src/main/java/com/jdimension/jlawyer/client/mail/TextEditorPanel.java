@@ -815,6 +815,20 @@ public class TextEditorPanel extends javax.swing.JPanel implements EditorImpleme
         this.taText.insert(t, pos);
     }
 
+    /**
+     * Inserts text at the caret, replacing the current selection if there is one.
+     *
+     * @param t the text to insert
+     * @param caretOffset offset within the inserted text to place the caret at, -1 to place it
+     * behind the inserted text
+     */
+    public void insertAtCaret(String t, int caretOffset) {
+        int start = this.taText.getSelectionStart();
+        this.taText.replaceSelection(t);
+        int offset = caretOffset < 0 ? t.length() : Math.min(caretOffset, t.length());
+        this.taText.setCaretPosition(Math.min(start + offset, this.taText.getDocument().getLength()));
+    }
+
     public UndoManager getUndoManager() {
         return undoManager;
     }

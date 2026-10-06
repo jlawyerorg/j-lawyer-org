@@ -697,7 +697,9 @@ import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.CalendarEntryTemplate;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
 import com.jdimension.jlawyer.persistence.CaseFolder;
+import com.jdimension.jlawyer.documents.PlaceHolders;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
+import com.jdimension.jlawyer.persistence.TextBlock;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.pojo.PartiesTriplet;
 import java.awt.Color;
@@ -751,7 +753,6 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
     
     private static final Logger log = Logger.getLogger(SendBeaMessageFrame.class.getName());
 
-    private static final String PLACEHOLDER_CURSOR = "{{CURSOR}}";
 
     // column indices of tblAttachments - view index equals model index because
     // neither a row sorter nor column reordering is enabled for this table
@@ -1419,6 +1420,7 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
         cmdAttach = new javax.swing.JButton();
         jSeparator3 = new javax.swing.JToolBar.Separator();
         cmdSaveDraft = new javax.swing.JButton();
+        cmdInsertTextBlock = new javax.swing.JButton();
         cmdAttachmentDown = new javax.swing.JButton();
         jPanel3 = new javax.swing.JPanel();
         chkSaveAsDocument = new javax.swing.JCheckBox();
@@ -1646,6 +1648,18 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
             }
         });
         jToolBar1.add(cmdSaveDraft);
+
+        cmdInsertTextBlock.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/list_36dp_0E72B5_FILL0_wght400_GRAD0_opsz40.png"))); // NOI18N
+        cmdInsertTextBlock.setToolTipText("Baustein an Cursor-Position einfügen");
+        cmdInsertTextBlock.setFocusable(false);
+        cmdInsertTextBlock.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        cmdInsertTextBlock.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        cmdInsertTextBlock.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdInsertTextBlockActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(cmdInsertTextBlock);
 
         cmdAttachmentDown.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_keyboard_arrow_down_blue_36dp.png"))); // NOI18N
         cmdAttachmentDown.addActionListener(new java.awt.event.ActionListener() {
@@ -2549,6 +2563,95 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
         this.requestLegalAuthority();
     }//GEN-LAST:event_chkEebActionPerformed
 
+    /**
+     * Determines the values of the placeholders contained in a text, using the context of this
+     * message: case, selected parties, dictation sign, case lawyer and assistant, and the current
+     * user as author. The cloud link placeholder resolves to an empty text.
+     *
+     * @param locator service locator
+     * @param text the text to scan for placeholders
+     * @return placeholder values, keyed by placeholder
+     * @throws Exception if the values cannot be determined
+     */
+    private HashMap<String, Object> getPlaceHolderValues(JLawyerServiceLocator locator, String text) throws Exception {
+        ArrayList<String> placeHolderNames = TemplatesUtil.getPlaceHoldersInTemplate(text, allPartyTypesPlaceholders, new ArrayList<>());
+        HashMap<String, Object> ht = new HashMap<>();
+        for (String ph : placeHolderNames) {
+            ht.put(ph, "");
+        }
+
+        AppUserBean caseLawyer = null;
+        AppUserBean caseAssistant = null;
+        AppUserBean author = UserSettings.getInstance().getCurrentUser();
+        if (this.contextArchiveFile != null) {
+            try {
+                caseLawyer = locator.lookupSystemManagementRemote().getUser(this.contextArchiveFile.getLawyer());
+            } catch (Exception ex) {
+                log.warn("Unable to load lawyer with id " + this.contextArchiveFile.getLawyer());
+            }
+            try {
+                caseAssistant = locator.lookupSystemManagementRemote().getUser(this.contextArchiveFile.getAssistant());
+            } catch (Exception ex) {
+                log.warn("Unable to load assistant with id " + this.contextArchiveFile.getAssistant());
+            }
+        }
+
+        List<PartiesPanelEntry> selectedParties = this.pnlParties.getSelectedParties(new ArrayList(allPartyTypes));
+        List<PartiesTriplet> partiesTriplets = new ArrayList<>();
+        for (PartiesPanelEntry pe : selectedParties) {
+            PartiesTriplet triplet = new PartiesTriplet(pe.getAddress(), pe.getReferenceType(), pe.getInvolvement());
+            partiesTriplets.add(triplet);
+        }
+        HashMap<String, Object> values = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, this.contextArchiveFile, partiesTriplets, this.contextDictateSign, null, new HashMap<>(), caseLawyer, caseAssistant, author, null, null, null, null, null, null, null);
+        // beA messages have no cloud link
+        values.put(PlaceHolders.CLOUD_LINK, "");
+        return values;
+    }
+
+    /**
+     * Loads a text block and inserts its plain-text variant at the caret, resolving its
+     * placeholders.
+     *
+     * @param summary the text block as listed in the menu, without content
+     */
+    private void insertTextBlock(TextBlock summary) {
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+            TextBlock tb = locator.lookupIntegrationServiceRemote().getTextBlock(summary.getId());
+            if (tb == null) {
+                JOptionPane.showMessageDialog(this, "Der Baustein existiert nicht mehr.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            if (tb.getContentText() == null) {
+                return;
+            }
+            HashMap<String, Object> htValues = this.getPlaceHolderValues(locator, tb.getContentText());
+            String t = TemplatesUtil.replacePlaceHolders(tb.getContentText(), htValues);
+            int cursorIndex = t.indexOf(PlaceHolders.CURSOR);
+            t = t.replace(PlaceHolders.CURSOR, "");
+            this.tp.insertAtCaret(t, cursorIndex);
+            this.tp.requestFocus();
+        } catch (Exception ex) {
+            log.error("Error inserting text block", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Einfügen des Bausteins: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void cmdInsertTextBlockActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdInsertTextBlockActionPerformed
+        List<TextBlock> textBlocks;
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+            textBlocks = locator.lookupIntegrationServiceRemote().getTextBlockSummaries();
+        } catch (Exception ex) {
+            log.error("Error loading text blocks", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Bausteine: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        // beA messages are plain text only
+        JPopupMenu popup = TextBlocksMenuBuilder.buildPopupMenu(textBlocks, false, this::insertTextBlock);
+        popup.show(this.cmdInsertTextBlock, 0, this.cmdInsertTextBlock.getHeight());
+    }//GEN-LAST:event_cmdInsertTextBlockActionPerformed
+
     private void cmbTemplatesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbTemplatesActionPerformed
         Object selected = this.cmbTemplates.getSelectedItem();
         if (selected == null) {
@@ -2563,49 +2666,15 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
 
                 EmailTemplate tpl = locator.lookupIntegrationServiceRemote().getEmailTemplate(tplName);
 
-                List<PartiesPanelEntry> selectedParties = this.pnlParties.getSelectedParties(new ArrayList(allPartyTypes));
-                ArrayList<String> placeHolderNames = TemplatesUtil.getPlaceHoldersInTemplate(tpl.getSubject(), allPartyTypesPlaceholders,new ArrayList<>());
-                HashMap<String, Object> ht = new HashMap<>();
-                for (String ph : placeHolderNames) {
-                    ht.put(ph, "");
-                }
-
-                AppUserBean caseLawyer = null;
-                AppUserBean caseAssistant = null;
-                AppUserBean author = UserSettings.getInstance().getCurrentUser();
-                if (this.contextArchiveFile != null) {
-                    try {
-                        caseLawyer = locator.lookupSystemManagementRemote().getUser(this.contextArchiveFile.getLawyer());
-                    } catch (Exception ex) {
-                        log.warn("Unable to load lawyer with id " + this.contextArchiveFile.getLawyer());
-                    }
-                    try {
-                        caseAssistant = locator.lookupSystemManagementRemote().getUser(this.contextArchiveFile.getAssistant());
-                    } catch (Exception ex) {
-                        log.warn("Unable to load assistant with id " + this.contextArchiveFile.getAssistant());
-                    }
-                }
-
-                List<PartiesTriplet> partiesTriplets=new ArrayList<>();
-                for(PartiesPanelEntry pe: selectedParties) {
-                    PartiesTriplet triplet=new PartiesTriplet(pe.getAddress(), pe.getReferenceType(), pe.getInvolvement());
-                    partiesTriplets.add(triplet);
-                }
-                HashMap<String, Object> htValues = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, this.contextArchiveFile, partiesTriplets, this.contextDictateSign, null, new HashMap<>(), caseLawyer, caseAssistant, author, null, null, null, null, null, null, null);
+                HashMap<String, Object> htValues = this.getPlaceHolderValues(locator, tpl.getSubject());
                 this.txtSubject.setText(TemplatesUtil.replacePlaceHolders(tpl.getSubject(), htValues));
 
-                placeHolderNames = TemplatesUtil.getPlaceHoldersInTemplate(tpl.getBody(), allPartyTypesPlaceholders,new ArrayList<>());
-                ht = new HashMap<>();
-                for (String ph : placeHolderNames) {
-                    ht.put(ph, "");
-                }
-
-                htValues = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, this.contextArchiveFile, partiesTriplets, this.contextDictateSign, null, new HashMap<>(), caseLawyer, caseAssistant, author, null, null, null, null, null, null, null);
+                htValues = this.getPlaceHolderValues(locator, tpl.getBody());
 
                 String t = TemplatesUtil.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator");
-                int cursorIndex = t.indexOf(PLACEHOLDER_CURSOR);
+                int cursorIndex = t.indexOf(PlaceHolders.CURSOR);
                 if (cursorIndex > -1) {
-                    t = t.replace(PLACEHOLDER_CURSOR, "");
+                    t = t.replace(PlaceHolders.CURSOR, "");
                 }
                 this.tp.setText(t);
                 this.tp.setCaretPosition(Math.max(0, cursorIndex));
@@ -2768,6 +2837,7 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
     private javax.swing.JButton cmdAttachmentDown;
     private javax.swing.JButton cmdAttachmentUp;
     private javax.swing.JButton cmdRecipients;
+    private javax.swing.JButton cmdInsertTextBlock;
     private javax.swing.JButton cmdSaveDraft;
     private javax.swing.JButton cmdSend;
     private javax.swing.JButton cmdShowReviewSelector;

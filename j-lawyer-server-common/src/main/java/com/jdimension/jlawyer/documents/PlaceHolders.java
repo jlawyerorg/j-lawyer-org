@@ -673,198 +673,373 @@ import java.util.List;
  */
 public class PlaceHolders {
 
+    @PlaceHolderInfo(category = PlaceHolderCategory.KANZLEI, label = "Name der Kanzlei")
     public static final String PROFIL_FIRMA = "{{PROFIL_FIRMA}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.KANZLEI, label = "Straße")
     public static final String PROFIL_STRASSE = "{{PROFIL_STRASSE}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.KANZLEI, label = "Adresszusatz")
     public static final String PROFIL_STRASSE2 = "{{PROFIL_STRASSE2}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.KANZLEI, label = "PLZ")
     public static final String PROFIL_PLZ = "{{PROFIL_PLZ}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.KANZLEI, label = "Ort")
     public static final String PROFIL_ORT = "{{PROFIL_ORT}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.KANZLEI, label = "Land")
     public static final String PROFIL_LAND = "{{PROFIL_LAND}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.KANZLEI, label = "Telefon")
     public static final String PROFIL_TEL = "{{PROFIL_TEL}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.KANZLEI, label = "Fax")
     public static final String PROFIL_FAX = "{{PROFIL_FAX}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.KANZLEI, label = "Mobil")
     public static final String PROFIL_MOBIL = "{{PROFIL_MOBIL}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.KANZLEI, label = "E-Mail")
     public static final String PROFIL_EMAIL = "{{PROFIL_EMAIL}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.KANZLEI, label = "Homepage")
     public static final String PROFIL_WWW = "{{PROFIL_WWW}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.KANZLEI, label = "Steuernummer")
     public static final String PROFIL_STEUERNR = "{{PROFIL_STNR}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.KANZLEI, label = "USt-IdNr.")
     public static final String PROFIL_USTIDNR = "{{PROFIL_USTIDNR}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.KANZLEI, label = "Bank")
     public static final String PROFIL_BANK = "{{PROFIL_BANK}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.KANZLEI, label = "IBAN")
     public static final String PROFIL_KONTONR = "{{PROFIL_KONTONR}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.KANZLEI, label = "BIC")
     public static final String PROFIL_BLZ = "{{PROFIL_BLZ}}";
 
+    @PlaceHolderInfo(category = PlaceHolderCategory.KANZLEI, label = "Anderkonto: Bank")
     public static final String PROFIL_BANK_AK = "{{PROFIL_BANK_AK}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.KANZLEI, label = "Anderkonto: IBAN")
     public static final String PROFIL_KONTONR_AK = "{{PROFIL_KONTONR_AK}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.KANZLEI, label = "Anderkonto: BIC")
     public static final String PROFIL_BLZ_AK = "{{PROFIL_BLZ_AK}}";
 
+    @PlaceHolderInfo(category = PlaceHolderCategory.DATUM_DOKUMENT, label = "heutiges Datum (TT.MM.JJJJ)")
     public static final String KURZDATUM = "{{KURZDATUM}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.DATUM_DOKUMENT, label = "heutiges Datum mit Wochentag")
     public static final String LANGDATUM = "{{LANGDATUM}}";
 
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Name")
     public static final String _NAME = "{{###_NAME}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Vorname")
     public static final String _VORNAME = "{{###_VORNAME}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "weitere Vornamen")
     public static final String _VORNAME2 = "{{###_VORNAME2}}";
-    public static final String _FIRMA_ALIAS = "{{###_FIRMA}}"; // Alias for UNTERNEHMEN
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Unternehmen")
     public static final String _UNTERNEHMEN = "{{###_UNTERNEHMEN}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Unternehmen", aliasOf = _UNTERNEHMEN)
+    public static final String _FIRMA_ALIAS = "{{###_FIRMA}}"; // Alias for UNTERNEHMEN
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Abteilung")
     public static final String _ABTLG = "{{###_ABTLG}}";
-    public static final String _TITEL_ALIAS = "{{###_TITEL}}";// Alias for ANREDE1
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Anrede")
     public static final String _ANREDE1 = "{{###_ANREDE1}}"; 
-    public static final String _ANREDE_ALIAS = "{{###_ANREDE}}"; // Alias for BEGRUESSUNG
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Anrede", aliasOf = _ANREDE1)
+    public static final String _TITEL_ALIAS = "{{###_TITEL}}";// Alias for ANREDE1
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Begrüßung")
     public static final String _BEGRUESSUNG = "{{###_BEGRUESSUNG}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Begrüßung", aliasOf = _BEGRUESSUNG)
+    public static final String _ANREDE_ALIAS = "{{###_ANREDE}}"; // Alias for BEGRUESSUNG
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Nachtext / Grußformel")
     public static final String _NACHTEXT = "{{###_NACHTEXT}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Straße")
     public static final String _STRASSE = "{{###_STRASSE}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Ort")
     public static final String _ORT = "{{###_ORT}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "PLZ")
     public static final String _PLZ = "{{###_PLZ}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Land")
     public static final String _LAND = "{{###_LAND}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Bundesland")
     public static final String _BLAND = "{{###_BLAND}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Telefon")
     public static final String _TEL = "{{###_TEL}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Mobil")
     public static final String _MOBIL = "{{###_MOBIL}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Fax")
     public static final String _FAX = "{{###_FAX}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "E-Mail")
     public static final String _EMAIL = "{{###_EMAIL}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Homepage")
     public static final String _WWW = "{{###_WWW}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Bank")
     public static final String _BANK = "{{###_BANK}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "BIC")
     public static final String _BLZ = "{{###_BLZ}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "IBAN")
     public static final String _KONTONR = "{{###_KONTONR}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "SEPA-Mandatsreferenz")
     public static final String _SEPAREF = "{{###_SEPAREF}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "SEPA-Mandat vom")
     public static final String _SEPASEIT = "{{###_SEPASEIT}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Rechtsschutz: Versicherungsschein")
     public static final String _RECHTSSCHUTZ = "{{###_RECHTSSCHUTZ}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Verkehrsrechtsschutz: Versicherungsschein")
     public static final String _VRECHTSSCHUTZ = "{{###_VRECHTSSCHUTZ}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Kfz-Versicherung: Versicherungsschein")
     public static final String _KFZVERS = "{{###_KFZVERS}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Eigenes Feld 1")
     public static final String _EIGENE1 = "{{###_EIGENE1}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Eigenes Feld 2")
     public static final String _EIGENE2 = "{{###_EIGENE2}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Eigenes Feld 3")
     public static final String _EIGENE3 = "{{###_EIGENE3}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Geburtsdatum")
     public static final String _GEB = "{{###_GEB}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Zeichen des Beteiligten")
     public static final String _AKTE_ZEICHEN = "{{###_AKTE_ZEICHEN}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Kontakt / Ansprechpartner")
     public static final String _AKTE_KONTAKT = "{{###_AKTE_KONTAKT}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Beteiligung: Eigenes Feld 1")
     public static final String _AKTE_EIGENE1 = "{{###_AKTE_EIGENE1}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Beteiligung: Eigenes Feld 2")
     public static final String _AKTE_EIGENE2 = "{{###_AKTE_EIGENE2}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Beteiligung: Eigenes Feld 3")
     public static final String _AKTE_EIGENE3 = "{{###_AKTE_EIGENE3}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Ortsteil")
     public static final String _ORTSTEIL = "{{###_ORTSTEIL}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Notiz")
     public static final String _NOTIZ = "{{###_NOTIZ}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Staatsangehörigkeit")
     public static final String _STA = "{{###_STA}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Geburtsname")
     public static final String _GEBNAME = "{{###_GEBNAME}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Geburtsort")
     public static final String _GEBORT = "{{###_GEBORT}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Sterbedatum")
     public static final String _GEST = "{{###_GEST}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "USt-ID")
     public static final String _USTIDNR = "{{###_USTIDNR}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Steuernummer")
     public static final String _STEUERNR = "{{###_STEUERNR}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Rechtsform")
     public static final String _RFORM = "{{###_RFORM}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Registernummer")
     public static final String _REGNR = "{{###_REGNR}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Registergericht")
     public static final String _REGGERICHT = "{{###_REGGERICHT}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Geschlecht")
     public static final String _GESCHLECHT = "{{###_GESCHLECHT}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Hausnummer")
     public static final String _HAUSNR = "{{###_HAUSNR}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Initialen")
     public static final String _INITIAL = "{{###_INITIAL}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "akad. Grad vor dem Namen")
     public static final String _AGRAD1 = "{{###_AGRAD1}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "akad. Grad nach dem Namen")
     public static final String _AGRAD2 = "{{###_AGRAD2}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Beruf")
     public static final String _BERUF = "{{###_BERUF}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Funktion")
     public static final String _FKT = "{{###_FKT}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Adresszusatz")
     public static final String _ZUSATZ = "{{###_ZUSATZ}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Anrede Briefkopf")
     public static final String _ANREDE2 = "{{###_ANREDE2}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BETEILIGTE, label = "Alter")
     public static final String _ALTER = "{{###_ALTER}}";
 
+    @PlaceHolderInfo(category = PlaceHolderCategory.AKTE, label = "Aktennummer")
     public static final String AKTE_NR = "{{AKTE_NR}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.AKTE, label = "Aktenzeichen")
     public static final String AKTE_ZEICHEN = "{{AKTE_ZEICHEN}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.AKTE, label = "Kurzrubrum")
     public static final String AKTE_KURZRUBRUM = "{{AKTE_KURZRUBRUM}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.AKTE, label = "Notiz")
     public static final String AKTE_NOTIZ = "{{AKTE_NOTIZ}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.AKTE, label = "Schadennummer")
     public static final String AKTE_SCHADENNR = "{{AKTE_SCHADENNR}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.AKTE, label = "Gegenstandswert")
     public static final String AKTE_GEGENSTANDSWERT = "{{AKTE_GEGENSTANDSWERT}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.AKTE, label = "wegen")
     public static final String AKTE_WEGEN = "{{AKTE_WEGEN}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.AKTE, label = "Sachgebiet")
     public static final String AKTE_SACHGEBIET = "{{AKTE_SACHGEBIET}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.AKTE, label = "angelegt am")
     public static final String AKTE_ERSTELLT = "{{AKTE_ERSTELLT}}";
     
     // Anzeigename
+    @PlaceHolderInfo(category = PlaceHolderCategory.AKTE, label = "Anwalt (Anzeigename)")
     public static final String AKTE_ANWALT_AN = "{{AKTE_ANWALT_AN}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.AKTE, label = "Sachbearbeiter (Anzeigename)")
     public static final String AKTE_SACHBEARBEITER_AN = "{{AKTE_SACHBEARBEITER_AN}}";
     
     //Nutzernamen
+    @PlaceHolderInfo(category = PlaceHolderCategory.AKTE, label = "Sachbearbeiter (Benutzername)")
     public static final String AKTE_SACHBEARBEITER = "{{AKTE_SACHBEARBEITER}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.AKTE, label = "Anwalt (Benutzername)")
     public static final String AKTE_ANWALT = "{{AKTE_ANWALT}}";
     
     // Kürzel
+    @PlaceHolderInfo(category = PlaceHolderCategory.AKTE, label = "Sachbearbeiter (Kürzel)")
     public static final String AKTE_SACHBEARBEITER_KRZ = "{{AKTE_SACHBEARBEITER_KRZ}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.AKTE, label = "Anwalt (Kürzel)")
     public static final String AKTE_ANWALT_KRZ = "{{AKTE_ANWALT_KRZ}}";
     
     
+    @PlaceHolderInfo(category = PlaceHolderCategory.DATUM_DOKUMENT, label = "Diktatzeichen")
     public static final String DOK_DZ = "{{DOK_DZ}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.AKTE, label = "Eigenes Feld 1")
     public static final String AKTE_EIGENE1 = "{{AKTE_EIGENE1}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.AKTE, label = "Eigenes Feld 2")
     public static final String AKTE_EIGENE2 = "{{AKTE_EIGENE2}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.AKTE, label = "Eigenes Feld 3")
     public static final String AKTE_EIGENE3 = "{{AKTE_EIGENE3}}";
     
     // user / author
+    @PlaceHolderInfo(category = PlaceHolderCategory.BENUTZER, label = "Anzeigename")
     public static final String USER_AN = "{{USER_AN}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BENUTZER, label = "E-Mail")
     public static final String USER_EMAIL = "{{USER_EMAIL}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BENUTZER, label = "Kürzel")
     public static final String USER_KRZ = "{{USER_KRZ}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BENUTZER, label = "Vorname")
     public static final String USER_VORNAME = "{{USER_VORNAME}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BENUTZER, label = "Name")
     public static final String USER_NAME = "{{USER_NAME}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BENUTZER, label = "Unternehmen")
     public static final String USER_UNTERNEHMEN = "{{USER_UNTERNEHMEN}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BENUTZER, label = "Funktion")
     public static final String USER_FKT = "{{USER_FKT}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BENUTZER, label = "Straße")
     public static final String USER_STRASSE = "{{USER_STRASSE}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BENUTZER, label = "Adresszusatz")
     public static final String USER_ZUSATZ = "{{USER_ZUSATZ}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BENUTZER, label = "PLZ")
     public static final String USER_PLZ = "{{USER_PLZ}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BENUTZER, label = "Ort")
     public static final String USER_ORT = "{{USER_ORT}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BENUTZER, label = "Land")
     public static final String USER_LAND = "{{USER_LAND}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BENUTZER, label = "Telefon")
     public static final String USER_TEL = "{{USER_TEL}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BENUTZER, label = "Fax")
     public static final String USER_FAX = "{{USER_FAX}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BENUTZER, label = "Mobil")
     public static final String USER_MOBIL = "{{USER_MOBIL}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BENUTZER, label = "Homepage")
     public static final String USER_WWW = "{{USER_WWW}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BENUTZER, label = "Bank")
     public static final String USER_BANK = "{{USER_BANK}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BENUTZER, label = "BIC")
     public static final String USER_BIC = "{{USER_BIC}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BENUTZER, label = "IBAN")
     public static final String USER_IBAN = "{{USER_IBAN}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BENUTZER, label = "Steuernummer")
     public static final String USER_STEUERNR = "{{USER_STEUERNR}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BENUTZER, label = "USt-IdNr.")
     public static final String USER_USTIDNR = "{{USER_USTIDNR}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.BENUTZER, label = "Benutzername")
     public static final String USER_LOGIN = "{{USER_LOGIN}}";
     
 
+    @PlaceHolderInfo(category = PlaceHolderCategory.DATUM_DOKUMENT, label = "Berechnungstabelle")
     public static final String TABELLE_1 = "{{TABELLE_1}}";
     
     // invoices
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "Belegnummer")
     public static final String BEL_NR = "{{BEL_NR}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "Belegart")
     public static final String BEL_TYP = "{{BEL_TYP}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "Bezeichnung")
     public static final String BEL_NAME = "{{BEL_NAME}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "Beschreibung")
     public static final String BEL_BESCHR = "{{BEL_BESCHR}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "fällig am")
     public static final String BEL_DTFAELLIG = "{{BEL_DTFAELLIG}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "Leistungszeitraum von")
     public static final String BEL_DTLZVON = "{{BEL_DTLZVON}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "Leistungszeitraum bis")
     public static final String BEL_DTLZBIS = "{{BEL_DTLZBIS}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "Belegdatum")
     public static final String BEL_DTERSTELLT = "{{BEL_DTERSTELLT}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "Gesamtbetrag (brutto)")
     public static final String BEL_TOTAL = "{{BEL_TOTAL}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "Währung")
     public static final String BEL_WHRG = "{{BEL_WHRG}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "Positionstabelle")
     public static final String BEL_TABELLE = "{{BEL_TABELLE}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "GiroCode")
     public static final String BEL_GIROCODE = "{{BEL_GIROCODE}}";
     // invoice sender
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "Absender: Anzeigename")
     public static final String BEL_ABSAN = "{{BEL_ABSAN}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "Absender: E-Mail")
     public static final String BEL_ABSEMAIL = "{{BEL_ABSEMAIL}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "Absender: Kürzel")
     public static final String BEL_ABSKRZ = "{{BEL_ABSKRZ}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "Absender: Vorname")
     public static final String BEL_ABSVORNAME = "{{BEL_ABSVORNAME}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "Absender: Name")
     public static final String BEL_ABSNAME = "{{BEL_ABSNAME}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "Absender: Unternehmen")
     public static final String BEL_ABSUNTERNEHMEN = "{{BEL_ABSUNTERNEHMEN}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "Absender: Funktion")
     public static final String BEL_ABSFKT = "{{BEL_ABSFKT}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "Absender: Straße")
     public static final String BEL_ABSSTRASSE = "{{BEL_ABSSTRASSE}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "Absender: Adresszusatz")
     public static final String BEL_ABSZUSATZ = "{{BEL_ABSZUSATZ}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "Absender: PLZ")
     public static final String BEL_ABSPLZ = "{{BEL_ABSPLZ}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "Absender: Ort")
     public static final String BEL_ABSORT = "{{BEL_ABSORT}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "Absender: Land")
     public static final String BEL_ABSLAND = "{{BEL_ABSLAND}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "Absender: Telefon")
     public static final String BEL_ABSTEL = "{{BEL_ABSTEL}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "Absender: Fax")
     public static final String BEL_ABSFAX = "{{BEL_ABSFAX}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "Absender: Mobil")
     public static final String BEL_ABSMOBIL = "{{BEL_ABSMOBIL}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "Absender: Homepage")
     public static final String BEL_ABSWWW = "{{BEL_ABSWWW}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "Absender: Bank")
     public static final String BEL_ABSBANK = "{{BEL_ABSBANK}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "Absender: BIC")
     public static final String BEL_ABSBIC = "{{BEL_ABSBIC}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "Absender: IBAN")
     public static final String BEL_ABSIBAN = "{{BEL_ABSIBAN}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "Absender: Steuernummer")
     public static final String BEL_ABSSTEUERNR = "{{BEL_ABSSTEUERNR}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "Absender: USt-IdNr.")
     public static final String BEL_ABSUSTIDNR = "{{BEL_ABSUSTIDNR}}";
     
     // flexible invoice position placeholders
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNGSPOSITION, label = "Positionsnummer")
     public static final String BELP_NR = "{{BELP_NR}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNGSPOSITION, label = "Bezeichnung")
     public static final String BELP_NAME = "{{BELP_NAME}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNGSPOSITION, label = "Beschreibung")
     public static final String BELP_BESCHR = "{{BELP_BESCHR}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNGSPOSITION, label = "Menge")
     public static final String BELP_MENGE = "{{BELP_MENGE}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNGSPOSITION, label = "Einzelpreis")
     public static final String BELP_EINZEL = "{{BELP_EINZEL}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNGSPOSITION, label = "USt-Satz")
     public static final String BELP_UST = "{{BELP_UST}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNGSPOSITION, label = "Gesamt netto")
     public static final String BELP_NETTO = "{{BELP_NETTO}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "Summe netto")
     public static final String BEL_SUM_NETTO = "{{BEL_SUM_NETTO}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "USt-Satz")
     public static final String BEL_UST_SATZ = "{{BEL_UST_SATZ}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.RECHNUNG, label = "USt-Betrag")
     public static final String BEL_UST_BETRAG = "{{BEL_UST_BETRAG}}";
 
+    @PlaceHolderInfo(category = PlaceHolderCategory.ZEITERFASSUNG, label = "Tabelle der Zeiteinträge")
     public static final String ZE_TABELLE = "{{ZE_TABELLE}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.ZEITERFASSUNG, label = "Summentabelle")
     public static final String ZE_SUMMEN = "{{ZE_SUMMEN}}";
     
+    @PlaceHolderInfo(category = PlaceHolderCategory.INGO, label = "von Ingo erzeugter Text")
     public static final String INGO_TEXT = "{{INGO_TEXT}}";
     
+
+    // only used in post templates and text blocks for e-mails and beA messages, not part of
+    // getAllPlaceHolders and therefore not offered for documents
+    @PlaceHolderInfo(category = PlaceHolderCategory.EMAIL, label = "Cursorposition nach dem Einfügen")
+    public static final String CURSOR = "{{CURSOR}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.EMAIL, label = "Cloud-Link (nur E-Mail)")
+    public static final String CLOUD_LINK = "{{CLOUD_LINK}}";
 
     public static final ArrayList<String> ALLTABLEPLACEHOLDERS = new ArrayList<>();
     

@@ -665,6 +665,7 @@ package org.jlawyer.io.rest.v6;
 import org.jlawyer.io.rest.tools.RestErrorResponses;
 
 import com.jdimension.jlawyer.documents.CommonTemplatesUtil;
+import com.jdimension.jlawyer.documents.PlaceHolders;
 import com.jdimension.jlawyer.email.EmailTemplate;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
@@ -1077,7 +1078,7 @@ public class TemplatesEndpointV6 implements TemplatesEndpointLocalV6 {
             }
             htValues = system.getPlaceHolderValues(ht, aFile, parties, "", null, formPlaceHolderValues, caseLawyer, caseAssistant, author, null, null, null, null, null, null, null);
 
-            htValues.put("{{CLOUD_LINK}}", "");
+            htValues.put(PlaceHolders.CLOUD_LINK, "");
             
             
 

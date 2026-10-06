@@ -1,4 +1,4 @@
-    /*
+/*
  *                     GNU AFFERO GENERAL PUBLIC LICENSE
  *                        Version 3, 19 November 2007
  *
@@ -661,485 +661,594 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client;
+package com.jdimension.jlawyer.client.mail;
 
-import com.formdev.flatlaf.FlatIntelliJLaf;
-import com.formdev.flatlaf.FlatLaf;
-import com.formdev.flatlaf.fonts.inter.FlatInterFont;
-import com.jdimension.jlawyer.client.events.Event;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.ThemeableEditor;
+import com.jdimension.jlawyer.client.editors.webview.WebViewHtmlEditorPanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.utils.FontUtils;
-import com.jdimension.jlawyer.client.utils.SystemUtils;
-import com.jdimension.jlawyer.client.utils.VersionUtils;
-import com.jdimension.jlawyer.server.modules.ModuleMetadata;
-import java.awt.Toolkit;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.io.File;
-import javax.swing.KeyStroke;
-
-import javax.swing.ToolTipManager;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.documents.PlaceHolderCatalog;
+import com.jdimension.jlawyer.documents.PlaceHolderContext;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
+import com.jdimension.jlawyer.persistence.TextBlock;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.BorderLayout;
+import java.awt.Graphics;
+import java.awt.Image;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.List;
+import java.util.TreeSet;
+import javax.swing.*;
+import org.apache.log4j.Logger;
 
 /**
+ * Maintenance of the text blocks ("Bausteine") that can be inserted into e-mails and beA messages
+ * while composing them.
  *
  * @author jens
  */
-public class Main {
+public class EmailTextBlocksPanel extends javax.swing.JPanel implements ThemeableEditor {
 
-    private static final String USER_HOME="user.home";
-    private static final String FILE_SEPARATOR="file.separator";
-    
-    private static Logger log=null;
+    private static final Logger log = Logger.getLogger(EmailTextBlocksPanel.class.getName());
+    private Image backgroundImage = null;
+
+    private static final int TAB_TEXT = 0;
+    private static final int TAB_HTML = 1;
+
+    private final TextEditorPanel tp;
+    private final WebViewHtmlEditorPanel hp;
+
+    // the list holds summaries without content; the text block shown in the form is fully loaded,
+    // null while a new one is being entered
+    private TextBlock currentBlock = null;
+    private boolean ignoreSelectionEvents = false;
 
     /**
-     * Creates a new instance of Main
+     * Creates new form EmailTextBlocksPanel
      */
-    public Main() {
+    public EmailTextBlocksPanel() {
 
-    }
-    
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String[] args) {
-        
-        ClientSettings.migrateClientSettingsDirectory();
-        
-        String userHomeConfLogParent = System.getProperty(USER_HOME) + System.getProperty(FILE_SEPARATOR) + ClientSettings.JLAWYERCLIENT_SETTINGDIR + System.getProperty(FILE_SEPARATOR) + "log";
-        new File(userHomeConfLogParent).mkdirs();
-        log = LogManager.getLogger();
-        
-        String cmdLineSwitch = "rapait";
+        initComponents();
 
-        String cmdUser = null;
-        String cmdPassword = null;
-        String cmdHost = null;
-        String cmdPort = null;
-        String cmdSecMode = "standard";
+        ComponentUtils.decorateSplitPane(jSplitPane1);
+        ComponentUtils.decorateSplitPane(jSplitPane2);
 
-        String cmdSshHost = null;
-        String cmdSshPort = null;
-        String cmdSshUser = null;
-        String cmdSshPwd = null;
-        String cmdSshTargetPort = null;
+        tp = new TextEditorPanel();
+        hp = new WebViewHtmlEditorPanel();
+        hp.setOnLinkClickedCallback(href -> {
+            com.jdimension.jlawyer.client.utils.DesktopUtils.openBrowser(href);
+        });
+        this.pnlText.add(tp, BorderLayout.CENTER);
+        this.pnlHtml.add(hp, BorderLayout.CENTER);
 
-        if (args.length == 4) {
-            // standard security
-            cmdHost = args[0];
-            cmdPort = args[1];
-            cmdUser = args[2];
-            cmdPassword = args[3];
-            cmdSecMode = "standard";
-        } else if (args.length == 5) {
-            // ssl
-            cmdHost = args[0];
-            cmdPort = args[1];
-            cmdUser = args[2];
-            cmdPassword = args[3];
-            // should be "ssl"
-            cmdSecMode = args[4];
-        } else if (args.length == 10) {
-            cmdHost = args[0];
-            cmdPort = args[1];
-            cmdUser = args[2];
-            cmdPassword = args[3];
-            // should be "ssh"
-            cmdSecMode = args[4];
-            cmdSshHost = args[5];
-            cmdSshPort = args[6];
-            cmdSshUser = args[7];
-            cmdSshPwd = args[8];
-            cmdSshTargetPort = args[9];
-        } else if (args.length == 0) {
-            // this is the default
-        } else {
-            // invalid arguments
-            System.out.println("Invalid arguments! Launch with");
-            System.out.println("  (1) zero arguments to bring up a login dialog");
-            System.out.println("  (2) five arguments to bring launch directly into the desktop view:");
-            System.out.println("      <host> <port> <http-port> <user> <password> <standard|ssl>");
-            System.out.println("      e.g. \"localhost 8080 admin a\" for standard security");
-            System.out.println("      e.g. \"localhost 8080 admin a ssl\" if the server supports SSL encryption");
-            System.out.println("      e.g. \"localhost 8080 admin a ssh 84.2.3.4 22 root rootpasswort 8080\" when using an SSH tunnel");
-            System.exit(1);
+        this.placeHolderPicker.setInsertListener(() -> this.cmdAddPlaceHolderActionPerformed(null));
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+            List<PartyTypeBean> allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
+            Map<String, String> partyTypes = new LinkedHashMap<>();
+            for (PartyTypeBean ptb : allPartyTypes) {
+                partyTypes.put(ptb.getPlaceHolder(), ptb.getName());
+            }
+            this.placeHolderPicker.setPlaceHolders(PlaceHolderCatalog.getPlaceHolders(PlaceHolderContext.EMAIL, partyTypes, null));
+        } catch (Exception ex) {
+            log.error("Error getting all party types", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Beteiligtentypen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            EditorsRegistry.getInstance().clearStatus();
         }
 
-        ClientSettings cs=ClientSettings.getInstance();
-        String uiScale=cs.getConfiguration(ClientSettings.CONF_UI_SCALING, "none");
-        if(!("none".equalsIgnoreCase(uiScale))) {
-            try {
-                float factor=Float.parseFloat(uiScale);
-                // must be a valid float
-                
-                // only set in case of !=1
-                if(factor!=1f) {
-                    System.setProperty("sun.java2d.uiScale", uiScale);
-                    //System.setProperty("sun.java2d.uiScale.enabled", "true");
+        this.refreshList(null);
+        this.showTextBlock(null);
+
+        ComponentUtils.restoreSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
+        ComponentUtils.restoreSplitPane(this.jSplitPane2, this.getClass(), "jSplitPane2");
+
+        ComponentUtils.persistSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
+        ComponentUtils.persistSplitPane(this.jSplitPane2, this.getClass(), "jSplitPane2");
+
+    }
+
+    /**
+     * Reloads all text blocks and the folders offered in the folder combo box.
+     *
+     * @param selectId id of the text block to select afterwards, may be null
+     */
+    private void refreshList(String selectId) {
+        DefaultListModel<TextBlock> model = new DefaultListModel<>();
+        TreeSet<String> folders = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        TextBlock select = null;
+
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+            for (TextBlock tb : locator.lookupIntegrationServiceRemote().getTextBlockSummaries()) {
+                model.addElement(tb);
+                if (tb.getFolder() != null) {
+                    folders.add(tb.getFolder());
                 }
-            } catch (Throwable t) {
-                System.out.println("invalid UI scaling factor: " +uiScale);
+                if (tb.getId().equals(selectId)) {
+                    select = tb;
+                }
+            }
+        } catch (Exception ex) {
+            log.error(ex);
+            ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Bausteine: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+        }
+
+        this.ignoreSelectionEvents = true;
+        try {
+            this.lstTextBlocks.setModel(model);
+            if (select != null) {
+                this.lstTextBlocks.setSelectedValue(select, true);
+            }
+
+            Object folderText = this.cmbFolder.getEditor().getItem();
+            DefaultComboBoxModel<String> folderModel = new DefaultComboBoxModel<>();
+            folderModel.addElement("");
+            for (String f : folders) {
+                folderModel.addElement(f);
+            }
+            this.cmbFolder.setModel(folderModel);
+            this.cmbFolder.setSelectedItem(folderText == null ? "" : folderText.toString());
+        } finally {
+            this.ignoreSelectionEvents = false;
+        }
+    }
+
+    /**
+     * Shows a text block in the form.
+     *
+     * @param tb the text block, null to clear the form for a new text block
+     */
+    private void showTextBlock(TextBlock tb) {
+        this.currentBlock = tb;
+        if (tb == null) {
+            this.txtName.setText("");
+            this.tp.setText("");
+            this.hp.setText("");
+            this.tabsContent.setSelectedIndex(TAB_TEXT);
+            return;
+        }
+
+        this.txtName.setText(tb.getName());
+        this.cmbFolder.setSelectedItem(tb.getFolder() == null ? "" : tb.getFolder());
+        this.tp.setText(tb.getContentText() == null ? "" : tb.getContentText());
+        this.tp.setCaretPosition(0);
+        this.hp.setText(tb.getContentHtml() == null ? "" : tb.getContentHtml());
+        if (!tb.hasText() && tb.hasHtml()) {
+            this.tabsContent.setSelectedIndex(TAB_HTML);
+        } else {
+            this.tabsContent.setSelectedIndex(TAB_TEXT);
+        }
+    }
+
+    private String getFolderInput() {
+        Object folder = this.cmbFolder.getEditor().getItem();
+        return folder == null ? null : folder.toString();
+    }
+
+    @Override
+    public void setBackgroundImage(Image image) {
+        this.backgroundImage = image;
+
+    }
+
+    @Override
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        if (this.backgroundImage != null) {
+            g.drawImage(this.backgroundImage, 0, 0, this.getWidth(), this.getHeight(), this);
+        }
+    }
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        jLabel18 = new javax.swing.JLabel();
+        lblPanelTitle = new javax.swing.JLabel();
+        cmdRefresh = new javax.swing.JButton();
+        jSplitPane2 = new javax.swing.JSplitPane();
+        jPanel3 = new javax.swing.JPanel();
+        cmdSave = new javax.swing.JButton();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        lstTextBlocks = new javax.swing.JList();
+        cmdNew = new javax.swing.JButton();
+        cmdDelete = new javax.swing.JButton();
+        cmdDuplicate = new javax.swing.JButton();
+        jSplitPane1 = new javax.swing.JSplitPane();
+        jPanel1 = new javax.swing.JPanel();
+        jLabel1 = new javax.swing.JLabel();
+        txtName = new javax.swing.JTextField();
+        jLabel2 = new javax.swing.JLabel();
+        cmbFolder = new javax.swing.JComboBox<>();
+        jLabel3 = new javax.swing.JLabel();
+        tabsContent = new javax.swing.JTabbedPane();
+        pnlText = new javax.swing.JPanel();
+        pnlHtml = new javax.swing.JPanel();
+        jPanel2 = new javax.swing.JPanel();
+        cmdAddPlaceHolder = new javax.swing.JButton();
+        placeHolderPicker = new com.jdimension.jlawyer.client.mail.PlaceHolderPickerPanel();
+
+        jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/message_big.png"))); // NOI18N
+
+        lblPanelTitle.setFont(lblPanelTitle.getFont().deriveFont(lblPanelTitle.getFont().getStyle() | java.awt.Font.BOLD, lblPanelTitle.getFont().getSize()+12));
+        lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
+        lblPanelTitle.setText("E-Mail- und beA-Bausteine");
+
+        cmdRefresh.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_refresh_blue_36dp.png"))); // NOI18N
+        cmdRefresh.setToolTipText("Aktualisieren");
+        cmdRefresh.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRefreshActionPerformed(evt);
+            }
+        });
+
+        jSplitPane2.setDividerLocation(200);
+        jSplitPane2.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+        jSplitPane2.setResizeWeight(0.5);
+
+        cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
+        cmdSave.setText("Speichern");
+        cmdSave.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSaveActionPerformed(evt);
+            }
+        });
+
+        lstTextBlocks.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
+            public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
+                lstTextBlocksValueChanged(evt);
+            }
+        });
+        jScrollPane1.setViewportView(lstTextBlocks);
+
+        cmdNew.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
+        cmdNew.setText("Neu");
+        cmdNew.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdNewActionPerformed(evt);
+            }
+        });
+
+        cmdDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        cmdDelete.setText("Löschen");
+        cmdDelete.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdDeleteActionPerformed(evt);
+            }
+        });
+
+        cmdDuplicate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png"))); // NOI18N
+        cmdDuplicate.setText("Duplizieren");
+        cmdDuplicate.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdDuplicateActionPerformed(evt);
+            }
+        });
+
+        org.jdesktop.layout.GroupLayout jPanel3Layout = new org.jdesktop.layout.GroupLayout(jPanel3);
+        jPanel3.setLayout(jPanel3Layout);
+        jPanel3Layout.setHorizontalGroup(
+            jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jScrollPane1)
+            .add(jPanel3Layout.createSequentialGroup()
+                .addContainerGap(295, Short.MAX_VALUE)
+                .add(cmdNew)
+                .add(18, 18, 18)
+                .add(cmdDuplicate)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(cmdSave)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(cmdDelete))
+        );
+        jPanel3Layout.setVerticalGroup(
+            jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel3Layout.createSequentialGroup()
+                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 254, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(cmdSave)
+                    .add(cmdNew)
+                    .add(cmdDelete)
+                    .add(cmdDuplicate))
+                .add(6, 6, 6))
+        );
+
+        jSplitPane2.setLeftComponent(jPanel3);
+
+        jSplitPane1.setDividerLocation(600);
+        jSplitPane1.setResizeWeight(1.0);
+
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Baustein"));
+
+        jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel1.setText("Name:");
+
+        jLabel2.setText("Ordner:");
+
+        cmbFolder.setEditable(true);
+        cmbFolder.setToolTipText("optional, Unterordner mit / trennen, z.B. Mandat/Beginn - ohne Ordner erscheint der Baustein auf oberster Ebene");
+
+        jLabel3.setFont(jLabel3.getFont().deriveFont(jLabel3.getFont().getStyle() | java.awt.Font.BOLD));
+        jLabel3.setText("Inhalt:");
+
+        pnlText.setLayout(new java.awt.BorderLayout());
+        tabsContent.addTab("Text", pnlText);
+
+        pnlHtml.setLayout(new java.awt.BorderLayout());
+        tabsContent.addTab("HTML", pnlHtml);
+
+        org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jLabel1)
+                    .add(jLabel2)
+                    .add(jLabel3))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(txtName)
+                    .add(cmbFolder, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(tabsContent, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 505, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel1)
+                    .add(txtName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel2)
+                    .add(cmbFolder, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(tabsContent)
+                    .add(jPanel1Layout.createSequentialGroup()
+                        .add(jLabel3)
+                        .add(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
+        );
+
+        jSplitPane1.setLeftComponent(jPanel1);
+
+        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Platzhalter"));
+
+        cmdAddPlaceHolder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/1leftarrow.png"))); // NOI18N
+        cmdAddPlaceHolder.setToolTipText("Platzhalter an Cursor-Position im aktiven Reiter einfügen");
+        cmdAddPlaceHolder.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdAddPlaceHolderActionPerformed(evt);
+            }
+        });
+
+        org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(cmdAddPlaceHolder)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(placeHolderPicker, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 236, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(cmdAddPlaceHolder)
+                    .add(placeHolderPicker, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+
+        jSplitPane1.setRightComponent(jPanel2);
+
+        jSplitPane2.setRightComponent(jSplitPane1);
+
+        org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(layout.createSequentialGroup()
+                .addContainerGap()
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                        .add(cmdRefresh)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(jLabel18)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(lblPanelTitle)
+                        .add(0, 0, Short.MAX_VALUE))
+                    .add(jSplitPane2))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(layout.createSequentialGroup()
+                .addContainerGap()
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(cmdRefresh))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jSplitPane2)
+                .addContainerGap())
+        );
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
+        this.refreshList(this.currentBlock == null ? null : this.currentBlock.getId());
+    }//GEN-LAST:event_cmdRefreshActionPerformed
+
+    private void lstTextBlocksValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_lstTextBlocksValueChanged
+        if (evt.getValueIsAdjusting() || this.ignoreSelectionEvents) {
+            return;
+        }
+        Object selected = this.lstTextBlocks.getSelectedValue();
+        if (selected instanceof TextBlock) {
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+                TextBlock tb = locator.lookupIntegrationServiceRemote().getTextBlock(((TextBlock) selected).getId());
+                if (tb == null) {
+                    JOptionPane.showMessageDialog(this, "Der Baustein existiert nicht mehr.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    this.refreshList(null);
+                    this.showTextBlock(null);
+                    return;
+                }
+                this.showTextBlock(tb);
+            } catch (Exception ex) {
+                log.error("Error loading text block", ex);
+                JOptionPane.showMessageDialog(this, "Fehler beim Laden des Bausteins: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
         }
-        
-        System.setProperty("http.agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
-        System.setProperty("javax.net.ssl.keyStorePassword", cmdLineSwitch);
-        
-        com.jdimension.jlawyer.client.editors.documents.viewer.html.data.Handler.install();
-        com.jdimension.jlawyer.client.editors.documents.viewer.html.cid.Handler.install();
-        
-        Main main = new Main();
-        main.showSplash(cmdHost, cmdPort, cmdUser, cmdPassword, cmdSecMode, cmdSshHost, cmdSshPort, cmdSshUser, cmdSshPwd, cmdSshTargetPort);
+    }//GEN-LAST:event_lstTextBlocksValueChanged
 
-    }
+    private void cmdNewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewActionPerformed
+        // keep the folder of the block shown before, new blocks are often created next to it
+        this.ignoreSelectionEvents = true;
+        this.lstTextBlocks.clearSelection();
+        this.ignoreSelectionEvents = false;
+        this.showTextBlock(null);
+        this.txtName.requestFocus();
+    }//GEN-LAST:event_cmdNewActionPerformed
 
-    private void showSplash(String cmdHost, String cmdPort, String cmdUser, String cmdPassword, String cmdSecMode, String cmdSshHost, String cmdSshPort, String cmdSshUser, String cmdSshPwd, String cmdSshTargetPort) {
-
-        System.setProperty("apple.laf.useScreenMenuBar", "true");
-
-        // common approach, in addition to command line parameter 
-        System.setProperty("com.apple.mrj.application.apple.menu.about.name", "j-lawyer.org");
-        // for newer JDK versions
-        System.setProperty("apple.awt.application.name", "j-lawyer.org");
-
-        ToolTipManager.sharedInstance().setDismissDelay(30000);
-        ToolTipManager.sharedInstance().setInitialDelay(200);
-
-        FlatLaf.registerCustomDefaultsSource( "themes" );
-
-        FlatInterFont.install();
-        FlatLaf.setPreferredFontFamily(FlatInterFont.FAMILY);
-        FlatLaf.setPreferredLightFontFamily(FlatInterFont.FAMILY_LIGHT);
-        FlatLaf.setPreferredSemiboldFontFamily( FlatInterFont.FAMILY_SEMIBOLD );
-
-        FlatIntelliJLaf.setup();
-        //FlatDarkLaf.setup();
-
-        String userHomeConf = System.getProperty(USER_HOME) + System.getProperty(FILE_SEPARATOR) + ClientSettings.JLAWYERCLIENT_SETTINGDIR;
-        File userHomeConfDir = new File(userHomeConf);
-        if (!userHomeConfDir.exists()) {
-            userHomeConfDir.mkdirs();
+    private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
+        TextBlock tb = new TextBlock();
+        if (this.currentBlock != null) {
+            tb.setId(this.currentBlock.getId());
         }
-        String userHomeConfLogParent = System.getProperty(USER_HOME) + System.getProperty(FILE_SEPARATOR) + ClientSettings.JLAWYERCLIENT_SETTINGDIR + System.getProperty(FILE_SEPARATOR) + "log";
-        new File(userHomeConfLogParent).mkdirs();
+        tb.setName(this.txtName.getText());
+        tb.setFolder(this.getFolderInput());
+        tb.setContentText(this.tp.getText());
+        // an emptied editor leaves whitespace or markup without text, the server stores that as "no variant"
+        tb.setContentHtml(this.hp.getText());
 
-        log.info("Java: " + System.getProperty("java.version"));
-
-        ClientSettings settings = ClientSettings.getInstance();
-        
-        String themeName = settings.getConfiguration(ClientSettings.CONF_THEME, "default");
-        settings.setConfiguration(ClientSettings.CONF_THEME, themeName);
-
-        FontUtils fontUtils = FontUtils.getInstance();
-        String fontSizeOffset = settings.getConfiguration(ClientSettings.CONF_UI_FONTSIZEOFFSET, "0");
         try {
-            int offset = Integer.parseInt(fontSizeOffset);
-            fontUtils.updateDefaults(offset);
-        } catch (Throwable t) {
-            log.error("Could not set font size", t);
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+            TextBlock saved;
+            if (tb.getId() == null) {
+                saved = locator.lookupIntegrationServiceRemote().addTextBlock(tb);
+            } else {
+                saved = locator.lookupIntegrationServiceRemote().updateTextBlock(tb);
+            }
+            this.currentBlock = saved;
+            this.refreshList(saved.getId());
+            this.cmbFolder.setSelectedItem(saved.getFolder() == null ? "" : saved.getFolder());
+        } catch (Exception ex) {
+            log.error("Error saving text block", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Bausteins: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdSaveActionPerformed
+
+    private void cmdDuplicateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDuplicateActionPerformed
+        if (this.currentBlock == null) {
+            return;
         }
 
-        // todo: load this from the server
-        ModuleMetadata root = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.mydesktop"));
+        Object newName = JOptionPane.showInputDialog(this, "Name des neuen Bausteins: ", "Baustein duplizieren", JOptionPane.QUESTION_MESSAGE, null, null, this.currentBlock.getName() + " (Kopie)");
+        if (newName == null) {
+            return;
+        }
 
-        final String moduleNameCalendar="Kalender";
-        
-        boolean isMacOs=SystemUtils.isMacOs();
-        
-        root.setEditorClass("com.jdimension.jlawyer.client.desktop.DesktopPanel");
-        root.setFullName("Mein Desktop");
-        root.setEditorName("Desktop");
-        root.setModuleName("");
-        root.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_desktop_windows_blue_36dp.png")));
-        root.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_desktop_windows_green_36dp.png")));
-        if(isMacOs) {
-            root.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_1, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()), "⌘+1");
+        TextBlock dup = new TextBlock();
+        dup.setName(newName.toString());
+        dup.setFolder(this.currentBlock.getFolder());
+        dup.setContentText(this.currentBlock.getContentText());
+        dup.setContentHtml(this.currentBlock.getContentHtml());
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+            TextBlock saved = locator.lookupIntegrationServiceRemote().addTextBlock(dup);
+            this.refreshList(saved.getId());
+            this.showTextBlock(saved);
+        } catch (Exception ex) {
+            log.error("Error duplicating text block", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Duplizieren des Bausteins: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdDuplicateActionPerformed
+
+    private void cmdDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeleteActionPerformed
+        List selectedValues = this.lstTextBlocks.getSelectedValuesList();
+        if (selectedValues.isEmpty()) {
+            return;
+        }
+
+        int response = JOptionPane.showConfirmDialog(this, selectedValues.size() + " Baustein(e) löschen?", "Bausteine löschen", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+        if (response != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+            for (Object selectedValue : selectedValues) {
+                locator.lookupIntegrationServiceRemote().removeTextBlock(((TextBlock) selectedValue).getId());
+            }
+        } catch (Exception ex) {
+            log.error("Error deleting text block", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Löschen des Bausteins: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+        this.refreshList(null);
+        this.showTextBlock(null);
+    }//GEN-LAST:event_cmdDeleteActionPerformed
+
+    private void cmdAddPlaceHolderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddPlaceHolderActionPerformed
+        List<String> selectedList = this.placeHolderPicker.getSelectedPlaceHolders();
+        if (selectedList.isEmpty()) {
+            return;
+        }
+        String insert = String.join(" ", selectedList) + " ";
+
+        if (this.tabsContent.getSelectedIndex() == TAB_HTML) {
+            // inserts at the caret of the HTML editor, the position argument is ignored
+            this.hp.insert(insert, 0);
         } else {
-            root.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F1, InputEvent.SHIFT_DOWN_MASK), "Shift+F1");
+            this.tp.insertAtCaret(insert, -1);
+            this.tp.requestFocus();
         }
-        
-        ModuleMetadata files = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.cases"));
-        files.setFullName("Akten");
-        root.addChildModule(files);
-        ModuleMetadata filesNew = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.cases.new"));
-        filesNew.setEditorClass("com.jdimension.jlawyer.client.editors.files.NewArchiveFilePanel");
-        filesNew.setBackgroundImage("mydesktop.jpg");
-        files.addChildModule(filesNew);
-        filesNew.setFullName("neue Akte anlegen");
-        filesNew.setEditorName("neu");
-        filesNew.setModuleName("Akten");
-        filesNew.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-12-blue.png")));
-        filesNew.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-12-green.png")));
-        if(isMacOs) {
-            filesNew.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_2, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()), "⌘+2");
-        } else {
-            filesNew.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F2, InputEvent.SHIFT_DOWN_MASK), "Shift+F2");
-        }
-        
-        ModuleMetadata filesEdit = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.cases.edit"));
-        filesEdit.setEditorClass("com.jdimension.jlawyer.client.editors.files.EditArchiveFilePanel");
-        filesEdit.setBackgroundImage("mydesktop.jpg");
-        filesEdit.setFullName("vorhandene Akte suchen");
-        filesEdit.setEditorName("suchen");
-        filesEdit.setModuleName("Akten");
-        filesEdit.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-13-blue.png")));
-        filesEdit.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-13-green.png")));
-        if(isMacOs) {
-            filesEdit.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_3, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()), "⌘+3");
-        } else {
-            filesEdit.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F3, InputEvent.SHIFT_DOWN_MASK), "Shift+F3");
-        }
-        files.addChildModule(filesEdit);
+    }//GEN-LAST:event_cmdAddPlaceHolderActionPerformed
 
-        ModuleMetadata addresses = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.contacts"));
-        addresses.setFullName("Adressen");
-        root.addChildModule(addresses);
-        ModuleMetadata addressesNew = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.contacts.new"));
-        addressesNew.setEditorClass("com.jdimension.jlawyer.client.editors.addresses.NewAddressPanel");
-        addressesNew.setBackgroundImage("addresses.jpg");
-        addressesNew.setFullName("neue Adresse anlegen");
-        addressesNew.setEditorName("neu");
-        addressesNew.setModuleName("Adressen");
-        addressesNew.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-19-blue.png")));
-        addressesNew.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-19-green.png")));
-        if(isMacOs) {
-            addressesNew.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_4, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()), "⌘+4");
-        } else {
-            addressesNew.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F4, InputEvent.SHIFT_DOWN_MASK), "Shift+F4");
-        }
-        addresses.addChildModule(addressesNew);
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JComboBox<String> cmbFolder;
+    private javax.swing.JButton cmdAddPlaceHolder;
+    private javax.swing.JButton cmdDelete;
+    private javax.swing.JButton cmdDuplicate;
+    private javax.swing.JButton cmdNew;
+    private javax.swing.JButton cmdRefresh;
+    private javax.swing.JButton cmdSave;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel18;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
+    private javax.swing.JPanel jPanel3;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JSplitPane jSplitPane1;
+    private javax.swing.JSplitPane jSplitPane2;
+    protected javax.swing.JLabel lblPanelTitle;
+    private com.jdimension.jlawyer.client.mail.PlaceHolderPickerPanel placeHolderPicker;
+    private javax.swing.JList lstTextBlocks;
+    private javax.swing.JPanel pnlHtml;
+    private javax.swing.JPanel pnlText;
+    private javax.swing.JTabbedPane tabsContent;
+    private javax.swing.JTextField txtName;
+    // End of variables declaration//GEN-END:variables
 
-        ModuleMetadata addressesEdit = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.contacts.edit"));
-        addressesEdit.setEditorClass("com.jdimension.jlawyer.client.editors.addresses.EditAddressPanel");
-        addressesEdit.setBackgroundImage("addresses.jpg");
-        addressesEdit.setFullName("vorhandene Adresse suchen");
-        addressesEdit.setEditorName("suchen");
-        addressesEdit.setModuleName("Adressen");
-        addressesEdit.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-20-blue.png")));
-        addressesEdit.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-20-green.png")));
-        if(isMacOs) {
-            addressesEdit.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_5, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()), "⌘+5");
-        } else {
-            addressesEdit.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F5, InputEvent.SHIFT_DOWN_MASK), "Shift+F5");
-        }
-        addresses.addChildModule(addressesEdit);
-
-        ModuleMetadata reviews = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.fup"));
-        reviews.setFullName("Wiedervorlagen und Fristen");
-        root.addChildModule(reviews);
-        ModuleMetadata reviewsDue = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.fup.byduedate"));
-        reviewsDue.setEditorClass("com.jdimension.jlawyer.client.editors.files.ArchiveFileReviewsOverviewPanel");
-        reviewsDue.setBackgroundImage("reviews.jpg");
-        reviewsDue.setFullName("Wiedervorlagen, Fristen und Termine: Liste, Kalenderblatt und Suche");
-        reviewsDue.setEditorName("Übersicht");
-        reviewsDue.setModuleName(moduleNameCalendar);
-        reviewsDue.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-22-blue.png")));
-        reviewsDue.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-22-green.png")));
-        if(isMacOs) {
-            reviewsDue.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_6, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()), "⌘+6");
-        } else {
-            reviewsDue.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F6, InputEvent.SHIFT_DOWN_MASK), "Shift+F6");
-        }
-        reviews.addChildModule(reviewsDue);
-        ModuleMetadata reviewsMissing = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.fup.missing"));
-        reviewsMissing.setEditorClass("com.jdimension.jlawyer.client.editors.files.ArchiveFileReviewsMissingPanel");
-        reviewsMissing.setBackgroundImage("reviews.jpg");
-        reviewsMissing.setFullName("fehlende Wiedervorlagen / Fristen");
-        reviewsMissing.setEditorName("fehlende");
-        reviewsMissing.setModuleName(moduleNameCalendar);
-        reviewsMissing.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-14-blue.png")));
-        reviewsMissing.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-14-green.png")));
-        reviewsMissing.setStatusEventType(Event.TYPE_CASESMISSINGEVENT);
-        reviews.addChildModule(reviewsMissing);
-
-        ModuleMetadata mail = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm"));
-        mail.setFullName("Kommunikation");
-        root.addChildModule(mail);
-        
-        ModuleMetadata instantMessages = new ModuleMetadata("Nachrichten");
-        instantMessages.setEditorClass("com.jdimension.jlawyer.client.messenger.MessagingCenterPanel");
-        instantMessages.setBackgroundImage("messaging.jpg");
-        instantMessages.setFullName("Instant Messaging Center");
-        instantMessages.setEditorName("Messaging");
-        instantMessages.setModuleName("Post");
-        instantMessages.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_chat_blue_48dp.png")));
-        instantMessages.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_chat_green_48dp.png")));
-        instantMessages.setStatusEventType(Event.TYPE_INSTANTMESSAGING_OPENMENTIONS);
-        instantMessages.setResetIndicatorOnClick(false);
-        mail.addChildModule(instantMessages);
-        
-        ModuleMetadata mailInbox = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.inbox"));
-        mailInbox.setEditorClass("com.jdimension.jlawyer.client.mail.EmailInboxPanel");
-        mailInbox.setBackgroundImage("emails.jpg");
-        mailInbox.setFullName("E-Mail-Posteingang");
-        mailInbox.setEditorName("E-Mail");
-        mailInbox.setModuleName("Post");
-        mailInbox.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-30-blue.png")));
-        mailInbox.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-30-green.png")));
-        mailInbox.setStatusEventType(Event.TYPE_MAILSTATUS);
-        if(isMacOs) {
-            mailInbox.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_7, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()), "⌘+7");
-        } else {
-            mailInbox.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F7, InputEvent.SHIFT_DOWN_MASK), "Shift+F7");
-        }
-        mail.addChildModule(mailInbox);
-        ModuleMetadata bea = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.bea"));
-        bea.setEditorClass("com.jdimension.jlawyer.client.bea.BeaInboxPanel");
-        bea.setBackgroundImage("emails.jpg");
-        bea.setFullName("beA-Posteingang");
-        bea.setEditorName("beA");
-        bea.setModuleName("Post");
-        bea.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-16-blue.png")));
-        bea.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-16-green.png")));
-        bea.setStatusEventType(Event.TYPE_BEASTATUS);
-        if(isMacOs) {
-            bea.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_8, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()), "⌘+8");
-        } else {
-            bea.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F8, InputEvent.SHIFT_DOWN_MASK), "Shift+F8");
-        }
-        mail.addChildModule(bea);
-        ModuleMetadata mailingStatus = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.fax"));
-        mailingStatus.setEditorClass("com.jdimension.jlawyer.client.voip.MailingStatusPanel");
-        mailingStatus.setBackgroundImage("emails.jpg");
-        mailingStatus.setFullName("Mailingstatus");
-        mailingStatus.setEditorName("Brief / Fax");
-        mailingStatus.setModuleName("Post");
-        mailingStatus.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_print_blue_36dp.png")));
-        mailingStatus.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_print_green_36dp.png")));
-        mailingStatus.setStatusEventType(Event.TYPE_MAILINGSTATUS);
-        mail.addChildModule(mailingStatus);
-        ModuleMetadata mailTpl = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.templates"));
-        mailTpl.setEditorClass("com.jdimension.jlawyer.client.mail.EmailTemplatesPanel");
-        mailTpl.setBackgroundImage("emails.jpg");
-        mailTpl.setFullName("E-Mail- und beA-Vorlagen");
-        mailTpl.setEditorName("Vorlagen");
-        mailTpl.setModuleName("Post");
-        mailTpl.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_email_blue_36dp.png")));
-        mailTpl.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_email_green_36dp.png")));
-        mailTpl.setSettingsEntry(true);
-        mail.addChildModule(mailTpl);
-        ModuleMetadata mailTextBlocks = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.textblocks"));
-        mailTextBlocks.setEditorClass("com.jdimension.jlawyer.client.mail.EmailTextBlocksPanel");
-        mailTextBlocks.setBackgroundImage("emails.jpg");
-        mailTextBlocks.setFullName("E-Mail- und beA-Bausteine");
-        mailTextBlocks.setEditorName("Bausteine");
-        mailTextBlocks.setModuleName("Post");
-        mailTextBlocks.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_email_blue_36dp.png")));
-        mailTextBlocks.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_email_green_36dp.png")));
-        mailTextBlocks.setSettingsEntry(true);
-        mail.addChildModule(mailTextBlocks);
-        ModuleMetadata massmail = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.massmail"));
-        massmail.setEditorClass("com.jdimension.jlawyer.client.massmail.MassMailPanel");
-        massmail.setBackgroundImage("emails.jpg");
-        massmail.setFullName("Serienschreiben erstellen");
-        massmail.setEditorName("Serie");
-        massmail.setModuleName("Post");
-        massmail.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_email_blue_36dp.png")));
-        massmail.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_email_green_36dp.png")));
-        massmail.setSettingsEntry(true);
-        mail.addChildModule(massmail);
-        ModuleMetadata scans = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.docs.scans"));
-        scans.setEditorClass("com.jdimension.jlawyer.client.editors.documents.ScannerPanel");
-        scans.setBackgroundImage("templates.jpg");
-        scans.setFullName("Scaneingang");
-        scans.setEditorName("Scans");
-        scans.setModuleName("Post");
-        scans.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_scanner_blue_36dp.png")));
-        scans.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_scanner_green_36dp.png")));
-        scans.setStatusEventType(Event.TYPE_SCANNERSTATUS);
-        scans.addAdditionalEventType(Event.TYPE_DROPSCANSTATUS);
-        if(isMacOs) {
-            scans.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_9, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()), "⌘+9");
-        } else {
-            scans.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F9, InputEvent.SHIFT_DOWN_MASK), "Shift+F9");
-        }
-        mail.addChildModule(scans);
-
-        ModuleMetadata templates = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.docs"));
-        templates.setFullName("Dokumente");
-        root.addChildModule(templates);
-        ModuleMetadata allTpl = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.docs.templates"));
-        allTpl.setEditorClass("com.jdimension.jlawyer.client.templates.LetterTemplatesTreePanel");
-        allTpl.setBackgroundImage("templates.jpg");
-        allTpl.setFullName("Dokumentvorlagen");
-        allTpl.setEditorName("Dokumentvorlagen");
-        allTpl.setModuleName("Akten");
-        allTpl.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_insert_drive_file_blue_36dp.png")));
-        allTpl.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_insert_drive_file_green_36dp.png")));
-        allTpl.setSettingsEntry(true);
-        templates.addChildModule(allTpl);
-        
-        final String modLetterHeads="Briefköpfe";
-        ModuleMetadata allTplHeads = new ModuleMetadata(modLetterHeads);
-        allTplHeads.setEditorClass("com.jdimension.jlawyer.client.templates.LetterHeadsTreePanel");
-        allTplHeads.setBackgroundImage("templates.jpg");
-        allTplHeads.setFullName(modLetterHeads);
-        allTplHeads.setEditorName(modLetterHeads);
-        allTplHeads.setModuleName("Akten");
-        allTplHeads.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_insert_drive_file_blue_36dp.png")));
-        allTplHeads.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_insert_drive_file_green_36dp.png")));
-        allTplHeads.setSettingsEntry(true);
-        templates.addChildModule(allTplHeads);
-
-        ModuleMetadata docSearch = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.docs.search"));
-        docSearch.setEditorClass("com.jdimension.jlawyer.client.editors.search.DocumentSearchPanel");
-        docSearch.setBackgroundImage("templates.jpg");
-        docSearch.setFullName("Suchmaschine");
-        docSearch.setEditorName("Volltext");
-        docSearch.setModuleName("Recherche");
-        docSearch.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-21-blue.png")));
-        docSearch.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-21-green.png")));
-        templates.addChildModule(docSearch);
-
-        ModuleMetadata history = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.history"));
-        history.setFullName("Historie");
-        root.addChildModule(history);
-        
-        ModuleMetadata reporting = new ModuleMetadata("Auswertungen");
-        reporting.setEditorClass("com.jdimension.jlawyer.client.editors.reporting.ReportingPanel");
-        reporting.setBackgroundImage("history.jpg");
-        reporting.setFullName("Auswertungen");
-        reporting.setEditorName("Auswertungen");
-        reporting.setModuleName("Recherche");
-        reporting.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_insert_chart_blue_48dp.png")));
-        reporting.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_insert_chart_green_48dp.png")));
-        history.addChildModule(reporting);
-
-        ModuleMetadata aiChats = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.history.aichats"));
-        aiChats.setEditorClass("com.jdimension.jlawyer.client.assistant.AiChatsEditorPanel");
-        aiChats.setBackgroundImage("research.jpg");
-        aiChats.setFullName("AI-Chats");
-        aiChats.setEditorName("AI");
-        aiChats.setModuleName("Recherche");
-        aiChats.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/j-lawyer-ai.png")));
-        aiChats.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/j-lawyer-ai-green.png")));
-        history.addChildModule(aiChats);
-
-        ModuleMetadata knowledge = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.knowledge"));
-        knowledge.setFullName("Historie");
-        root.addChildModule(knowledge);
-//        ModuleMetadata ug = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.knowledge.ug"));
-//        ug.setEditorClass("com.jdimension.jlawyer.client.editors.research.urteilegesetze.UgDocumentSearchPanel");
-//        ug.setBackgroundImage("research.jpg");
-//        ug.setIcon("urteile-gesetze.png");
-//        ug.setFullName("Urteile & Gesetze");
-//        ug.setEditorName("U&G");
-//        ug.setModuleName("Recherche");
-//        ug.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-18-blue.png")));
-//        ug.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-18-green.png")));
-//        knowledge.addChildModule(ug);
-
-        settings.setRootModule(root);
-
-        log.debug(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Main").getString("status.starting"));
-
-        LoginDialog login = new LoginDialog(cmdHost, cmdPort, cmdUser, cmdPassword, cmdSecMode, cmdSshHost, cmdSshPort, cmdSshUser, cmdSshPwd, cmdSshTargetPort);
-
-        if (cmdHost == null && cmdPort == null && cmdUser == null && cmdPassword == null) {
-            login.setVisible(true);
-            login.setFocusToPasswordField();
-        }
-
+    @Override
+    public Image getBackgroundImage() {
+        return this.backgroundImage;
     }
 }

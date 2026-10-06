@@ -693,6 +693,8 @@ import com.jdimension.jlawyer.persistence.IntegrationHook;
 import com.jdimension.jlawyer.persistence.IntegrationHookFacadeLocal;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.TextBlock;
+import com.jdimension.jlawyer.persistence.TextBlockFacadeLocal;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.pojo.FileMetadata;
 import com.jdimension.jlawyer.security.CachingCrypto;
@@ -725,6 +727,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Resource;
 import javax.annotation.security.DeclareRoles;
@@ -770,6 +773,8 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     private AssistantPromptFacadeLocal assistantPromptFacade;
     @EJB
     private AssistantReplacementFacadeLocal assistantReplacementFacade;
+    @EJB
+    private TextBlockFacadeLocal textBlockFacade;
 
     @Inject
     @JMSConnectionFactory("java:/JmsXA")
@@ -1062,6 +1067,81 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             return tpl;
         }
         return null;
+    }
+
+    @Override
+    @RolesAllowed(value = {"loginRole"})
+    public List<TextBlock> getTextBlockSummaries() throws Exception {
+        return this.textBlockFacade.findAllSummaries();
+    }
+
+    @Override
+    @RolesAllowed(value = {"loginRole"})
+    public TextBlock getTextBlock(String id) throws Exception {
+        return this.textBlockFacade.find(id);
+    }
+
+    @Override
+    @RolesAllowed(value = {"loginRole"})
+    public TextBlock addTextBlock(TextBlock textBlock) throws Exception {
+        StringGenerator idGen = new StringGenerator();
+        String id = idGen.getID().toString();
+        textBlock.setId(id);
+        this.validateTextBlock(textBlock);
+        this.textBlockFacade.create(textBlock);
+        return this.textBlockFacade.find(id);
+    }
+
+    @Override
+    @RolesAllowed(value = {"loginRole"})
+    public TextBlock updateTextBlock(TextBlock textBlock) throws Exception {
+        if (textBlock.getId() == null || this.textBlockFacade.find(textBlock.getId()) == null) {
+            throw new Exception("Baustein existiert nicht (mehr).");
+        }
+        this.validateTextBlock(textBlock);
+        this.textBlockFacade.edit(textBlock);
+        return this.textBlockFacade.find(textBlock.getId());
+    }
+
+    @Override
+    @RolesAllowed(value = {"loginRole"})
+    public void removeTextBlock(String id) throws Exception {
+        TextBlock tb = this.textBlockFacade.find(id);
+        if (tb != null) {
+            this.textBlockFacade.remove(tb);
+        }
+    }
+
+    /**
+     * Normalises name, folder and content of a text block and checks it can be stored. A variant
+     * without content is stored as null, which the summaries rely on to tell which variants exist.
+     *
+     * @param textBlock the text block, with its id set
+     * @throws Exception if the name is empty, both variants are empty or the name is already used
+     * by another text block in the same folder
+     */
+    private void validateTextBlock(TextBlock textBlock) throws Exception {
+        String name = textBlock.getName() == null ? "" : textBlock.getName().trim();
+        if (name.isEmpty()) {
+            throw new Exception("Der Name des Bausteins darf nicht leer sein.");
+        }
+        textBlock.setName(name);
+        textBlock.setFolder(TextBlock.normalizeFolder(textBlock.getFolder()));
+        if (!TextBlock.isTextContent(textBlock.getContentText())) {
+            textBlock.setContentText(null);
+        }
+        if (!TextBlock.isHtmlContent(textBlock.getContentHtml())) {
+            textBlock.setContentHtml(null);
+        }
+        if (textBlock.getContentText() == null && textBlock.getContentHtml() == null) {
+            throw new Exception("Der Baustein muss einen Text- oder HTML-Inhalt haben.");
+        }
+        for (TextBlock other : this.textBlockFacade.findByName(name)) {
+            if (!other.getId().equals(textBlock.getId())
+                    && Objects.equals(textBlock.getFolder(), TextBlock.normalizeFolder(other.getFolder()))) {
+                throw new Exception("Es existiert bereits ein Baustein '" + name + "' in diesem Ordner.");
+            }
+        }
     }
 
     @Override

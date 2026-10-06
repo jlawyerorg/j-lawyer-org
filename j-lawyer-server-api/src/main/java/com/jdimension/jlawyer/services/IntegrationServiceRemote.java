@@ -680,6 +680,7 @@ import com.jdimension.jlawyer.persistence.AssistantConfig;
 import com.jdimension.jlawyer.persistence.AssistantPrompt;
 import com.jdimension.jlawyer.persistence.AssistantReplacement;
 import com.jdimension.jlawyer.persistence.IntegrationHook;
+import com.jdimension.jlawyer.persistence.TextBlock;
 import com.jdimension.jlawyer.pojo.FileMetadata;
 import java.util.Collection;
 import java.util.Date;
@@ -725,6 +726,56 @@ public interface IntegrationServiceRemote {
     void deleteEmailTemplate(String fileName) throws Exception;
 
     EmailTemplate getEmailTemplate(String fileName) throws Exception;
+
+    /**
+     * Returns all text blocks that can be inserted into e-mails and beA messages as summaries, to
+     * build lists and menus without transferring the content. A summary carries id, name and folder;
+     * its content is null, while {@link TextBlock#hasText()} and {@link TextBlock#hasHtml()} still
+     * tell which variants exist. Text blocks are shared by all users.
+     *
+     * @return all text blocks without content, ordered by folder and name
+     * @throws Exception if the text blocks cannot be loaded
+     */
+    List<TextBlock> getTextBlockSummaries() throws Exception;
+
+    /**
+     * Returns a single text block including its content.
+     *
+     * @param id the id of the text block
+     * @return the text block, or null if it does not exist
+     * @throws Exception if the text block cannot be loaded
+     */
+    TextBlock getTextBlock(String id) throws Exception;
+
+    /**
+     * Creates a new text block. The folder path is normalised (segments trimmed, empty segments
+     * removed, null for the top level).
+     *
+     * @param textBlock the text block to create; its id is assigned by the server
+     * @return the stored text block including its id
+     * @throws Exception if the name is empty, both the plain-text and the HTML variant are empty,
+     * or another text block with the same name exists in the same folder
+     */
+    TextBlock addTextBlock(TextBlock textBlock) throws Exception;
+
+    /**
+     * Updates an existing text block, including its name, folder and both variants. The folder
+     * path is normalised as for {@link #addTextBlock(TextBlock)}.
+     *
+     * @param textBlock the text block with the id of an existing text block
+     * @return the stored text block
+     * @throws Exception if the text block does not exist, the name is empty, both variants are
+     * empty, or another text block with the same name exists in the same folder
+     */
+    TextBlock updateTextBlock(TextBlock textBlock) throws Exception;
+
+    /**
+     * Deletes a text block. Deleting a text block that does not exist has no effect.
+     *
+     * @param id the id of the text block
+     * @throws Exception if the text block cannot be deleted
+     */
+    void removeTextBlock(String id) throws Exception;
 
     DocumentPreview getObservedFilePreview(String fileName) throws Exception;
 

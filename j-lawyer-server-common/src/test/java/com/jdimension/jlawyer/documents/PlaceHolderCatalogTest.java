@@ -1,4 +1,4 @@
-    /*
+/*
  *                     GNU AFFERO GENERAL PUBLIC LICENSE
  *                        Version 3, 19 November 2007
  *
@@ -661,485 +661,151 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client;
+package com.jdimension.jlawyer.documents;
 
-import com.formdev.flatlaf.FlatIntelliJLaf;
-import com.formdev.flatlaf.FlatLaf;
-import com.formdev.flatlaf.fonts.inter.FlatInterFont;
-import com.jdimension.jlawyer.client.events.Event;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.utils.FontUtils;
-import com.jdimension.jlawyer.client.utils.SystemUtils;
-import com.jdimension.jlawyer.client.utils.VersionUtils;
-import com.jdimension.jlawyer.server.modules.ModuleMetadata;
-import java.awt.Toolkit;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.io.File;
-import javax.swing.KeyStroke;
-
-import javax.swing.ToolTipManager;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
+ * Tests the placeholder catalog and that every placeholder constant is described.
  *
  * @author jens
  */
-public class Main {
+public class PlaceHolderCatalogTest {
 
-    private static final String USER_HOME="user.home";
-    private static final String FILE_SEPARATOR="file.separator";
-    
-    private static Logger log=null;
-
-    /**
-     * Creates a new instance of Main
-     */
-    public Main() {
-
+    private static Map<String, String> partyTypes() {
+        Map<String, String> pt = new LinkedHashMap<>();
+        pt.put("MANDANT", "Mandant");
+        pt.put("GEGNER", "Gegner");
+        return pt;
     }
-    
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String[] args) {
-        
-        ClientSettings.migrateClientSettingsDirectory();
-        
-        String userHomeConfLogParent = System.getProperty(USER_HOME) + System.getProperty(FILE_SEPARATOR) + ClientSettings.JLAWYERCLIENT_SETTINGDIR + System.getProperty(FILE_SEPARATOR) + "log";
-        new File(userHomeConfLogParent).mkdirs();
-        log = LogManager.getLogger();
-        
-        String cmdLineSwitch = "rapait";
 
-        String cmdUser = null;
-        String cmdPassword = null;
-        String cmdHost = null;
-        String cmdPort = null;
-        String cmdSecMode = "standard";
-
-        String cmdSshHost = null;
-        String cmdSshPort = null;
-        String cmdSshUser = null;
-        String cmdSshPwd = null;
-        String cmdSshTargetPort = null;
-
-        if (args.length == 4) {
-            // standard security
-            cmdHost = args[0];
-            cmdPort = args[1];
-            cmdUser = args[2];
-            cmdPassword = args[3];
-            cmdSecMode = "standard";
-        } else if (args.length == 5) {
-            // ssl
-            cmdHost = args[0];
-            cmdPort = args[1];
-            cmdUser = args[2];
-            cmdPassword = args[3];
-            // should be "ssl"
-            cmdSecMode = args[4];
-        } else if (args.length == 10) {
-            cmdHost = args[0];
-            cmdPort = args[1];
-            cmdUser = args[2];
-            cmdPassword = args[3];
-            // should be "ssh"
-            cmdSecMode = args[4];
-            cmdSshHost = args[5];
-            cmdSshPort = args[6];
-            cmdSshUser = args[7];
-            cmdSshPwd = args[8];
-            cmdSshTargetPort = args[9];
-        } else if (args.length == 0) {
-            // this is the default
-        } else {
-            // invalid arguments
-            System.out.println("Invalid arguments! Launch with");
-            System.out.println("  (1) zero arguments to bring up a login dialog");
-            System.out.println("  (2) five arguments to bring launch directly into the desktop view:");
-            System.out.println("      <host> <port> <http-port> <user> <password> <standard|ssl>");
-            System.out.println("      e.g. \"localhost 8080 admin a\" for standard security");
-            System.out.println("      e.g. \"localhost 8080 admin a ssl\" if the server supports SSL encryption");
-            System.out.println("      e.g. \"localhost 8080 admin a ssh 84.2.3.4 22 root rootpasswort 8080\" when using an SSH tunnel");
-            System.exit(1);
+    private static Map<String, PlaceHolderDescriptor> byKey(List<PlaceHolderDescriptor> list) {
+        Map<String, PlaceHolderDescriptor> m = new HashMap<>();
+        for (PlaceHolderDescriptor d : list) {
+            m.put(d.getKey(), d);
         }
+        return m;
+    }
 
-        ClientSettings cs=ClientSettings.getInstance();
-        String uiScale=cs.getConfiguration(ClientSettings.CONF_UI_SCALING, "none");
-        if(!("none".equalsIgnoreCase(uiScale))) {
-            try {
-                float factor=Float.parseFloat(uiScale);
-                // must be a valid float
-                
-                // only set in case of !=1
-                if(factor!=1f) {
-                    System.setProperty("sun.java2d.uiScale", uiScale);
-                    //System.setProperty("sun.java2d.uiScale.enabled", "true");
-                }
-            } catch (Throwable t) {
-                System.out.println("invalid UI scaling factor: " +uiScale);
+    @Test
+    public void everyPlaceHolderConstantIsAnnotated() {
+        List<String> missing = new ArrayList<>();
+        for (Field f : PlaceHolders.class.getFields()) {
+            if (PlaceHolderCatalog.isPlaceHolderConstant(f) && f.getAnnotation(PlaceHolderInfo.class) == null) {
+                missing.add(f.getName());
             }
         }
-        
-        System.setProperty("http.agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
-        System.setProperty("javax.net.ssl.keyStorePassword", cmdLineSwitch);
-        
-        com.jdimension.jlawyer.client.editors.documents.viewer.html.data.Handler.install();
-        com.jdimension.jlawyer.client.editors.documents.viewer.html.cid.Handler.install();
-        
-        Main main = new Main();
-        main.showSplash(cmdHost, cmdPort, cmdUser, cmdPassword, cmdSecMode, cmdSshHost, cmdSshPort, cmdSshUser, cmdSshPwd, cmdSshTargetPort);
-
+        Assert.assertTrue("Platzhalter ohne @PlaceHolderInfo: " + missing, missing.isEmpty());
     }
 
-    private void showSplash(String cmdHost, String cmdPort, String cmdUser, String cmdPassword, String cmdSecMode, String cmdSshHost, String cmdSshPort, String cmdSshUser, String cmdSshPwd, String cmdSshTargetPort) {
-
-        System.setProperty("apple.laf.useScreenMenuBar", "true");
-
-        // common approach, in addition to command line parameter 
-        System.setProperty("com.apple.mrj.application.apple.menu.about.name", "j-lawyer.org");
-        // for newer JDK versions
-        System.setProperty("apple.awt.application.name", "j-lawyer.org");
-
-        ToolTipManager.sharedInstance().setDismissDelay(30000);
-        ToolTipManager.sharedInstance().setInitialDelay(200);
-
-        FlatLaf.registerCustomDefaultsSource( "themes" );
-
-        FlatInterFont.install();
-        FlatLaf.setPreferredFontFamily(FlatInterFont.FAMILY);
-        FlatLaf.setPreferredLightFontFamily(FlatInterFont.FAMILY_LIGHT);
-        FlatLaf.setPreferredSemiboldFontFamily( FlatInterFont.FAMILY_SEMIBOLD );
-
-        FlatIntelliJLaf.setup();
-        //FlatDarkLaf.setup();
-
-        String userHomeConf = System.getProperty(USER_HOME) + System.getProperty(FILE_SEPARATOR) + ClientSettings.JLAWYERCLIENT_SETTINGDIR;
-        File userHomeConfDir = new File(userHomeConf);
-        if (!userHomeConfDir.exists()) {
-            userHomeConfDir.mkdirs();
+    @Test
+    public void everyAliasNamesAnotherPlaceHolder() {
+        Set<String> regular = new HashSet<>();
+        List<PlaceHolderInfo> aliases = new ArrayList<>();
+        for (Field f : PlaceHolders.class.getFields()) {
+            PlaceHolderInfo info = f.getAnnotation(PlaceHolderInfo.class);
+            if (info == null || !PlaceHolderCatalog.isPlaceHolderConstant(f)) {
+                continue;
+            }
+            if (info.aliasOf().isEmpty()) {
+                try {
+                    regular.add((String) f.get(null));
+                } catch (IllegalAccessException ex) {
+                    Assert.fail(ex.getMessage());
+                }
+            } else {
+                aliases.add(info);
+            }
         }
-        String userHomeConfLogParent = System.getProperty(USER_HOME) + System.getProperty(FILE_SEPARATOR) + ClientSettings.JLAWYERCLIENT_SETTINGDIR + System.getProperty(FILE_SEPARATOR) + "log";
-        new File(userHomeConfLogParent).mkdirs();
-
-        log.info("Java: " + System.getProperty("java.version"));
-
-        ClientSettings settings = ClientSettings.getInstance();
-        
-        String themeName = settings.getConfiguration(ClientSettings.CONF_THEME, "default");
-        settings.setConfiguration(ClientSettings.CONF_THEME, themeName);
-
-        FontUtils fontUtils = FontUtils.getInstance();
-        String fontSizeOffset = settings.getConfiguration(ClientSettings.CONF_UI_FONTSIZEOFFSET, "0");
-        try {
-            int offset = Integer.parseInt(fontSizeOffset);
-            fontUtils.updateDefaults(offset);
-        } catch (Throwable t) {
-            log.error("Could not set font size", t);
+        Assert.assertFalse(aliases.isEmpty());
+        for (PlaceHolderInfo alias : aliases) {
+            Assert.assertTrue("aliasOf zeigt auf keinen Platzhalter: " + alias.aliasOf(), regular.contains(alias.aliasOf()));
         }
+    }
 
-        // todo: load this from the server
-        ModuleMetadata root = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.mydesktop"));
-
-        final String moduleNameCalendar="Kalender";
-        
-        boolean isMacOs=SystemUtils.isMacOs();
-        
-        root.setEditorClass("com.jdimension.jlawyer.client.desktop.DesktopPanel");
-        root.setFullName("Mein Desktop");
-        root.setEditorName("Desktop");
-        root.setModuleName("");
-        root.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_desktop_windows_blue_36dp.png")));
-        root.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_desktop_windows_green_36dp.png")));
-        if(isMacOs) {
-            root.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_1, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()), "⌘+1");
-        } else {
-            root.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F1, InputEvent.SHIFT_DOWN_MASK), "Shift+F1");
+    @Test
+    public void documentContextCoversAllPlaceHoldersOfGetAllPlaceHolders() {
+        Map<String, PlaceHolderDescriptor> catalog = byKey(PlaceHolderCatalog.getPlaceHolders(PlaceHolderContext.DOCUMENT, partyTypes(), null));
+        Set<String> aliases = new HashSet<>(Arrays.asList("{{MANDANT_FIRMA}}", "{{MANDANT_TITEL}}", "{{MANDANT_ANREDE}}",
+                "{{GEGNER_FIRMA}}", "{{GEGNER_TITEL}}", "{{GEGNER_ANREDE}}"));
+        for (String ph : PlaceHolders.getAllPlaceHolders(new ArrayList<>(partyTypes().keySet()), null)) {
+            if (aliases.contains(ph)) {
+                Assert.assertFalse("Alias wird angeboten: " + ph, catalog.containsKey(ph));
+            } else {
+                Assert.assertTrue("fehlt im Katalog: " + ph, catalog.containsKey(ph));
+                Assert.assertNotEquals(PlaceHolderCategory.SONSTIGE, catalog.get(ph).getCategory());
+            }
         }
-        
-        ModuleMetadata files = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.cases"));
-        files.setFullName("Akten");
-        root.addChildModule(files);
-        ModuleMetadata filesNew = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.cases.new"));
-        filesNew.setEditorClass("com.jdimension.jlawyer.client.editors.files.NewArchiveFilePanel");
-        filesNew.setBackgroundImage("mydesktop.jpg");
-        files.addChildModule(filesNew);
-        filesNew.setFullName("neue Akte anlegen");
-        filesNew.setEditorName("neu");
-        filesNew.setModuleName("Akten");
-        filesNew.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-12-blue.png")));
-        filesNew.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-12-green.png")));
-        if(isMacOs) {
-            filesNew.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_2, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()), "⌘+2");
-        } else {
-            filesNew.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F2, InputEvent.SHIFT_DOWN_MASK), "Shift+F2");
+        Assert.assertFalse(catalog.containsKey(PlaceHolders.CURSOR));
+        Assert.assertFalse(catalog.containsKey(PlaceHolders.CLOUD_LINK));
+    }
+
+    @Test
+    public void emailContextLeavesOutInvoiceTimesheetAndTables() {
+        List<PlaceHolderDescriptor> catalog = PlaceHolderCatalog.getPlaceHolders(PlaceHolderContext.EMAIL, partyTypes(), null);
+        for (PlaceHolderDescriptor d : catalog) {
+            Assert.assertNotEquals(d.getKey(), PlaceHolderCategory.RECHNUNG, d.getCategory());
+            Assert.assertNotEquals(d.getKey(), PlaceHolderCategory.RECHNUNGSPOSITION, d.getCategory());
+            Assert.assertNotEquals(d.getKey(), PlaceHolderCategory.ZEITERFASSUNG, d.getCategory());
+            Assert.assertFalse(d.getKey(), PlaceHolders.ALLTABLEPLACEHOLDERS.contains(d.getKey()));
+            Assert.assertFalse(d.getKey(), d.getKey().contains("###"));
         }
-        
-        ModuleMetadata filesEdit = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.cases.edit"));
-        filesEdit.setEditorClass("com.jdimension.jlawyer.client.editors.files.EditArchiveFilePanel");
-        filesEdit.setBackgroundImage("mydesktop.jpg");
-        filesEdit.setFullName("vorhandene Akte suchen");
-        filesEdit.setEditorName("suchen");
-        filesEdit.setModuleName("Akten");
-        filesEdit.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-13-blue.png")));
-        filesEdit.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-13-green.png")));
-        if(isMacOs) {
-            filesEdit.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_3, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()), "⌘+3");
-        } else {
-            filesEdit.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F3, InputEvent.SHIFT_DOWN_MASK), "Shift+F3");
+        Map<String, PlaceHolderDescriptor> m = byKey(catalog);
+        Assert.assertEquals(PlaceHolderCategory.EMAIL, m.get(PlaceHolders.CURSOR).getCategory());
+        Assert.assertEquals(PlaceHolderCategory.EMAIL, m.get(PlaceHolders.CLOUD_LINK).getCategory());
+        Assert.assertTrue(m.containsKey(PlaceHolders.AKTE_ZEICHEN));
+        Assert.assertFalse(m.containsKey(PlaceHolders.TABELLE_1));
+    }
+
+    @Test
+    public void labelsAndSubCategories() {
+        Map<String, String> forms = new HashMap<>();
+        forms.put("{{UNFALL_DATUM}}", "Verkehrsunfall");
+        Map<String, PlaceHolderDescriptor> m = byKey(PlaceHolderCatalog.getPlaceHolders(PlaceHolderContext.EMAIL, partyTypes(), forms));
+
+        PlaceHolderDescriptor vorname = m.get("{{MANDANT_VORNAME}}");
+        Assert.assertEquals(PlaceHolderCategory.BETEILIGTE, vorname.getCategory());
+        Assert.assertEquals("Mandant", vorname.getSubCategory());
+        Assert.assertEquals("Mandant: Vorname", vorname.getDisplayName());
+        Assert.assertEquals("Gegner: Vorname", m.get("{{GEGNER_VORNAME}}").getDisplayName());
+        Assert.assertFalse(m.containsKey("{{MANDANT_FIRMA}}"));
+        Assert.assertTrue(m.containsKey("{{MANDANT_UNTERNEHMEN}}"));
+
+        Assert.assertEquals("Akte: Aktenzeichen", m.get(PlaceHolders.AKTE_ZEICHEN).getDisplayName());
+
+        PlaceHolderDescriptor form = m.get("{{UNFALL_DATUM}}");
+        Assert.assertEquals(PlaceHolderCategory.FALLDATEN, form.getCategory());
+        Assert.assertEquals("Verkehrsunfall: UNFALL_DATUM", form.getDisplayName());
+    }
+
+    @Test
+    public void sortedByCategoryPartyTypeOrderAndLabel() {
+        List<PlaceHolderDescriptor> catalog = PlaceHolderCatalog.getPlaceHolders(PlaceHolderContext.EMAIL, partyTypes(), null);
+        int lastCategory = -1;
+        for (PlaceHolderDescriptor d : catalog) {
+            Assert.assertTrue(d.getCategory().ordinal() >= lastCategory);
+            lastCategory = d.getCategory().ordinal();
         }
-        files.addChildModule(filesEdit);
-
-        ModuleMetadata addresses = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.contacts"));
-        addresses.setFullName("Adressen");
-        root.addChildModule(addresses);
-        ModuleMetadata addressesNew = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.contacts.new"));
-        addressesNew.setEditorClass("com.jdimension.jlawyer.client.editors.addresses.NewAddressPanel");
-        addressesNew.setBackgroundImage("addresses.jpg");
-        addressesNew.setFullName("neue Adresse anlegen");
-        addressesNew.setEditorName("neu");
-        addressesNew.setModuleName("Adressen");
-        addressesNew.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-19-blue.png")));
-        addressesNew.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-19-green.png")));
-        if(isMacOs) {
-            addressesNew.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_4, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()), "⌘+4");
-        } else {
-            addressesNew.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F4, InputEvent.SHIFT_DOWN_MASK), "Shift+F4");
+        int firstGegner = -1;
+        int lastMandant = -1;
+        for (int i = 0; i < catalog.size(); i++) {
+            if ("Mandant".equals(catalog.get(i).getSubCategory())) {
+                lastMandant = i;
+            }
+            if ("Gegner".equals(catalog.get(i).getSubCategory()) && firstGegner < 0) {
+                firstGegner = i;
+            }
         }
-        addresses.addChildModule(addressesNew);
-
-        ModuleMetadata addressesEdit = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.contacts.edit"));
-        addressesEdit.setEditorClass("com.jdimension.jlawyer.client.editors.addresses.EditAddressPanel");
-        addressesEdit.setBackgroundImage("addresses.jpg");
-        addressesEdit.setFullName("vorhandene Adresse suchen");
-        addressesEdit.setEditorName("suchen");
-        addressesEdit.setModuleName("Adressen");
-        addressesEdit.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-20-blue.png")));
-        addressesEdit.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-20-green.png")));
-        if(isMacOs) {
-            addressesEdit.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_5, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()), "⌘+5");
-        } else {
-            addressesEdit.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F5, InputEvent.SHIFT_DOWN_MASK), "Shift+F5");
-        }
-        addresses.addChildModule(addressesEdit);
-
-        ModuleMetadata reviews = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.fup"));
-        reviews.setFullName("Wiedervorlagen und Fristen");
-        root.addChildModule(reviews);
-        ModuleMetadata reviewsDue = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.fup.byduedate"));
-        reviewsDue.setEditorClass("com.jdimension.jlawyer.client.editors.files.ArchiveFileReviewsOverviewPanel");
-        reviewsDue.setBackgroundImage("reviews.jpg");
-        reviewsDue.setFullName("Wiedervorlagen, Fristen und Termine: Liste, Kalenderblatt und Suche");
-        reviewsDue.setEditorName("Übersicht");
-        reviewsDue.setModuleName(moduleNameCalendar);
-        reviewsDue.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-22-blue.png")));
-        reviewsDue.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-22-green.png")));
-        if(isMacOs) {
-            reviewsDue.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_6, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()), "⌘+6");
-        } else {
-            reviewsDue.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F6, InputEvent.SHIFT_DOWN_MASK), "Shift+F6");
-        }
-        reviews.addChildModule(reviewsDue);
-        ModuleMetadata reviewsMissing = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.fup.missing"));
-        reviewsMissing.setEditorClass("com.jdimension.jlawyer.client.editors.files.ArchiveFileReviewsMissingPanel");
-        reviewsMissing.setBackgroundImage("reviews.jpg");
-        reviewsMissing.setFullName("fehlende Wiedervorlagen / Fristen");
-        reviewsMissing.setEditorName("fehlende");
-        reviewsMissing.setModuleName(moduleNameCalendar);
-        reviewsMissing.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-14-blue.png")));
-        reviewsMissing.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-14-green.png")));
-        reviewsMissing.setStatusEventType(Event.TYPE_CASESMISSINGEVENT);
-        reviews.addChildModule(reviewsMissing);
-
-        ModuleMetadata mail = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm"));
-        mail.setFullName("Kommunikation");
-        root.addChildModule(mail);
-        
-        ModuleMetadata instantMessages = new ModuleMetadata("Nachrichten");
-        instantMessages.setEditorClass("com.jdimension.jlawyer.client.messenger.MessagingCenterPanel");
-        instantMessages.setBackgroundImage("messaging.jpg");
-        instantMessages.setFullName("Instant Messaging Center");
-        instantMessages.setEditorName("Messaging");
-        instantMessages.setModuleName("Post");
-        instantMessages.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_chat_blue_48dp.png")));
-        instantMessages.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_chat_green_48dp.png")));
-        instantMessages.setStatusEventType(Event.TYPE_INSTANTMESSAGING_OPENMENTIONS);
-        instantMessages.setResetIndicatorOnClick(false);
-        mail.addChildModule(instantMessages);
-        
-        ModuleMetadata mailInbox = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.inbox"));
-        mailInbox.setEditorClass("com.jdimension.jlawyer.client.mail.EmailInboxPanel");
-        mailInbox.setBackgroundImage("emails.jpg");
-        mailInbox.setFullName("E-Mail-Posteingang");
-        mailInbox.setEditorName("E-Mail");
-        mailInbox.setModuleName("Post");
-        mailInbox.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-30-blue.png")));
-        mailInbox.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-30-green.png")));
-        mailInbox.setStatusEventType(Event.TYPE_MAILSTATUS);
-        if(isMacOs) {
-            mailInbox.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_7, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()), "⌘+7");
-        } else {
-            mailInbox.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F7, InputEvent.SHIFT_DOWN_MASK), "Shift+F7");
-        }
-        mail.addChildModule(mailInbox);
-        ModuleMetadata bea = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.bea"));
-        bea.setEditorClass("com.jdimension.jlawyer.client.bea.BeaInboxPanel");
-        bea.setBackgroundImage("emails.jpg");
-        bea.setFullName("beA-Posteingang");
-        bea.setEditorName("beA");
-        bea.setModuleName("Post");
-        bea.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-16-blue.png")));
-        bea.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-16-green.png")));
-        bea.setStatusEventType(Event.TYPE_BEASTATUS);
-        if(isMacOs) {
-            bea.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_8, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()), "⌘+8");
-        } else {
-            bea.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F8, InputEvent.SHIFT_DOWN_MASK), "Shift+F8");
-        }
-        mail.addChildModule(bea);
-        ModuleMetadata mailingStatus = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.fax"));
-        mailingStatus.setEditorClass("com.jdimension.jlawyer.client.voip.MailingStatusPanel");
-        mailingStatus.setBackgroundImage("emails.jpg");
-        mailingStatus.setFullName("Mailingstatus");
-        mailingStatus.setEditorName("Brief / Fax");
-        mailingStatus.setModuleName("Post");
-        mailingStatus.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_print_blue_36dp.png")));
-        mailingStatus.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_print_green_36dp.png")));
-        mailingStatus.setStatusEventType(Event.TYPE_MAILINGSTATUS);
-        mail.addChildModule(mailingStatus);
-        ModuleMetadata mailTpl = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.templates"));
-        mailTpl.setEditorClass("com.jdimension.jlawyer.client.mail.EmailTemplatesPanel");
-        mailTpl.setBackgroundImage("emails.jpg");
-        mailTpl.setFullName("E-Mail- und beA-Vorlagen");
-        mailTpl.setEditorName("Vorlagen");
-        mailTpl.setModuleName("Post");
-        mailTpl.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_email_blue_36dp.png")));
-        mailTpl.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_email_green_36dp.png")));
-        mailTpl.setSettingsEntry(true);
-        mail.addChildModule(mailTpl);
-        ModuleMetadata mailTextBlocks = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.textblocks"));
-        mailTextBlocks.setEditorClass("com.jdimension.jlawyer.client.mail.EmailTextBlocksPanel");
-        mailTextBlocks.setBackgroundImage("emails.jpg");
-        mailTextBlocks.setFullName("E-Mail- und beA-Bausteine");
-        mailTextBlocks.setEditorName("Bausteine");
-        mailTextBlocks.setModuleName("Post");
-        mailTextBlocks.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_email_blue_36dp.png")));
-        mailTextBlocks.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_email_green_36dp.png")));
-        mailTextBlocks.setSettingsEntry(true);
-        mail.addChildModule(mailTextBlocks);
-        ModuleMetadata massmail = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.massmail"));
-        massmail.setEditorClass("com.jdimension.jlawyer.client.massmail.MassMailPanel");
-        massmail.setBackgroundImage("emails.jpg");
-        massmail.setFullName("Serienschreiben erstellen");
-        massmail.setEditorName("Serie");
-        massmail.setModuleName("Post");
-        massmail.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_email_blue_36dp.png")));
-        massmail.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_email_green_36dp.png")));
-        massmail.setSettingsEntry(true);
-        mail.addChildModule(massmail);
-        ModuleMetadata scans = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.docs.scans"));
-        scans.setEditorClass("com.jdimension.jlawyer.client.editors.documents.ScannerPanel");
-        scans.setBackgroundImage("templates.jpg");
-        scans.setFullName("Scaneingang");
-        scans.setEditorName("Scans");
-        scans.setModuleName("Post");
-        scans.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_scanner_blue_36dp.png")));
-        scans.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_scanner_green_36dp.png")));
-        scans.setStatusEventType(Event.TYPE_SCANNERSTATUS);
-        scans.addAdditionalEventType(Event.TYPE_DROPSCANSTATUS);
-        if(isMacOs) {
-            scans.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_9, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()), "⌘+9");
-        } else {
-            scans.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F9, InputEvent.SHIFT_DOWN_MASK), "Shift+F9");
-        }
-        mail.addChildModule(scans);
-
-        ModuleMetadata templates = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.docs"));
-        templates.setFullName("Dokumente");
-        root.addChildModule(templates);
-        ModuleMetadata allTpl = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.docs.templates"));
-        allTpl.setEditorClass("com.jdimension.jlawyer.client.templates.LetterTemplatesTreePanel");
-        allTpl.setBackgroundImage("templates.jpg");
-        allTpl.setFullName("Dokumentvorlagen");
-        allTpl.setEditorName("Dokumentvorlagen");
-        allTpl.setModuleName("Akten");
-        allTpl.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_insert_drive_file_blue_36dp.png")));
-        allTpl.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_insert_drive_file_green_36dp.png")));
-        allTpl.setSettingsEntry(true);
-        templates.addChildModule(allTpl);
-        
-        final String modLetterHeads="Briefköpfe";
-        ModuleMetadata allTplHeads = new ModuleMetadata(modLetterHeads);
-        allTplHeads.setEditorClass("com.jdimension.jlawyer.client.templates.LetterHeadsTreePanel");
-        allTplHeads.setBackgroundImage("templates.jpg");
-        allTplHeads.setFullName(modLetterHeads);
-        allTplHeads.setEditorName(modLetterHeads);
-        allTplHeads.setModuleName("Akten");
-        allTplHeads.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_insert_drive_file_blue_36dp.png")));
-        allTplHeads.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_insert_drive_file_green_36dp.png")));
-        allTplHeads.setSettingsEntry(true);
-        templates.addChildModule(allTplHeads);
-
-        ModuleMetadata docSearch = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.docs.search"));
-        docSearch.setEditorClass("com.jdimension.jlawyer.client.editors.search.DocumentSearchPanel");
-        docSearch.setBackgroundImage("templates.jpg");
-        docSearch.setFullName("Suchmaschine");
-        docSearch.setEditorName("Volltext");
-        docSearch.setModuleName("Recherche");
-        docSearch.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-21-blue.png")));
-        docSearch.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-21-green.png")));
-        templates.addChildModule(docSearch);
-
-        ModuleMetadata history = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.history"));
-        history.setFullName("Historie");
-        root.addChildModule(history);
-        
-        ModuleMetadata reporting = new ModuleMetadata("Auswertungen");
-        reporting.setEditorClass("com.jdimension.jlawyer.client.editors.reporting.ReportingPanel");
-        reporting.setBackgroundImage("history.jpg");
-        reporting.setFullName("Auswertungen");
-        reporting.setEditorName("Auswertungen");
-        reporting.setModuleName("Recherche");
-        reporting.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_insert_chart_blue_48dp.png")));
-        reporting.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_insert_chart_green_48dp.png")));
-        history.addChildModule(reporting);
-
-        ModuleMetadata aiChats = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.history.aichats"));
-        aiChats.setEditorClass("com.jdimension.jlawyer.client.assistant.AiChatsEditorPanel");
-        aiChats.setBackgroundImage("research.jpg");
-        aiChats.setFullName("AI-Chats");
-        aiChats.setEditorName("AI");
-        aiChats.setModuleName("Recherche");
-        aiChats.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/j-lawyer-ai.png")));
-        aiChats.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/j-lawyer-ai-green.png")));
-        history.addChildModule(aiChats);
-
-        ModuleMetadata knowledge = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.knowledge"));
-        knowledge.setFullName("Historie");
-        root.addChildModule(knowledge);
-//        ModuleMetadata ug = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.knowledge.ug"));
-//        ug.setEditorClass("com.jdimension.jlawyer.client.editors.research.urteilegesetze.UgDocumentSearchPanel");
-//        ug.setBackgroundImage("research.jpg");
-//        ug.setIcon("urteile-gesetze.png");
-//        ug.setFullName("Urteile & Gesetze");
-//        ug.setEditorName("U&G");
-//        ug.setModuleName("Recherche");
-//        ug.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-18-blue.png")));
-//        ug.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-18-green.png")));
-//        knowledge.addChildModule(ug);
-
-        settings.setRootModule(root);
-
-        log.debug(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Main").getString("status.starting"));
-
-        LoginDialog login = new LoginDialog(cmdHost, cmdPort, cmdUser, cmdPassword, cmdSecMode, cmdSshHost, cmdSshPort, cmdSshUser, cmdSshPwd, cmdSshTargetPort);
-
-        if (cmdHost == null && cmdPort == null && cmdUser == null && cmdPassword == null) {
-            login.setVisible(true);
-            login.setFocusToPasswordField();
-        }
-
+        Assert.assertTrue("Beteiligtentypen in konfigurierter Reihenfolge", lastMandant < firstGegner);
     }
 }

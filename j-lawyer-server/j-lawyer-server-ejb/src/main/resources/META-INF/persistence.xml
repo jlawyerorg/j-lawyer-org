@@ -102,6 +102,7 @@
     <class>com.jdimension.jlawyer.persistence.ContactRelation</class>
     <class>com.jdimension.jlawyer.persistence.AiChat</class>
     <class>com.jdimension.jlawyer.persistence.AiChatMessage</class>
+    <class>com.jdimension.jlawyer.persistence.TextBlock</class>
     <exclude-unlisted-classes>true</exclude-unlisted-classes>
     <properties>
       <!-- changed from update to validate to avoid deployment during an update installer run to create columns that will be added by a sql script later in the process -->
