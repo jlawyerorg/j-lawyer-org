@@ -697,6 +697,7 @@ import org.odftoolkit.odfdom.dom.element.style.StyleStyleElement;
 import org.odftoolkit.odfdom.dom.element.style.StyleTextPropertiesElement;
 import org.odftoolkit.odfdom.dom.element.table.TableTableCellElement;
 import org.odftoolkit.odfdom.dom.element.table.TableTableCellElementBase;
+import org.odftoolkit.odfdom.dom.element.table.TableTableColumnElement;
 import org.odftoolkit.odfdom.dom.element.table.TableTableElement;
 import org.odftoolkit.odfdom.dom.element.table.TableTableRowElement;
 import org.odftoolkit.odfdom.dom.element.text.TextLineBreakElement;
@@ -704,6 +705,7 @@ import org.odftoolkit.odfdom.dom.element.text.TextListElement;
 import org.odftoolkit.odfdom.dom.element.text.TextListItemElement;
 import org.odftoolkit.odfdom.dom.element.text.TextPElement;
 import org.odftoolkit.odfdom.dom.element.text.TextTabElement;
+import org.odftoolkit.odfdom.dom.style.props.OdfTableColumnProperties;
 import org.odftoolkit.odfdom.incubator.doc.draw.OdfDrawFrame;
 import org.odftoolkit.odfdom.pkg.OdfElement;
 import org.odftoolkit.odfdom.pkg.OdfPackage;
@@ -1782,25 +1784,29 @@ public class LibreOfficeAccess {
 //                                        t.getColumnByIndex(i).setUseOptimalWidth(true);
 //                                    }
 //                                }
-                                int numColumns = t.getColumnCount();
-                                for (int col = 0; col < numColumns; col++) {
-                                    double maxColumnWidth = 0;
+                                if (PlaceHolders.ZE_TABELLE.equals(key)) {
+                                    setTimesheetTableColumnWidths(outputOdt, t);
+                                } else {
+                                    int numColumns = t.getColumnCount();
+                                    for (int col = 0; col < numColumns; col++) {
+                                        double maxColumnWidth = 0;
 
-                                    // Iterate through all rows in the column
-                                    for (int row = 0; row < t.getRowCount(); row++) {
-                                        org.odftoolkit.simple.table.Cell cell = t.getCellByPosition(col, row);
-                                        //double cellWidth = cellText.length()*10.0;
-                                        double cellWidth = calculateTextWidth(cell);
-                                        // Add some padding to the width (adjust as needed)
-                                        cellWidth += 2.0; // 2 units of padding
+                                        // Iterate through all rows in the column
+                                        for (int row = 0; row < t.getRowCount(); row++) {
+                                            org.odftoolkit.simple.table.Cell cell = t.getCellByPosition(col, row);
+                                            //double cellWidth = cellText.length()*10.0;
+                                            double cellWidth = calculateTextWidth(cell);
+                                            // Add some padding to the width (adjust as needed)
+                                            cellWidth += 2.0; // 2 units of padding
 
-                                        if (cellWidth > maxColumnWidth) {
-                                            maxColumnWidth = cellWidth;
+                                            if (cellWidth > maxColumnWidth) {
+                                                maxColumnWidth = cellWidth;
+                                            }
                                         }
-                                    }
 
-                                    // Set the column width to the calculated maximum width
-                                    t.getColumnByIndex(col).setWidth(maxColumnWidth);
+                                        // Set the column width to the calculated maximum width
+                                        t.getColumnByIndex(col).setWidth(maxColumnWidth);
+                                    }
                                 }
                             }
                         } else {
@@ -2224,6 +2230,130 @@ public class LibreOfficeAccess {
             }
         }
         return false;
+    }
+
+    /**
+     * Sets the column widths of the timesheet table ({{ZE_TABELLE}}) so that
+     * the table fits into the available width. All columns but the last one
+     * get the width of their widest text, the last column (activity) receives
+     * the remaining width and wraps its text.
+     *
+     * Column.setWidth() of simple-odf is not used here: it compensates the
+     * width change on a neighbouring column, which may shrink that column to
+     * zero width. LibreOffice then drops that column definition when saving the
+     * document and the last column disappears when the document is reopened.
+     *
+     * @param doc the document containing the table
+     * @param t the table to adjust
+     */
+    private static void setTimesheetTableColumnWidths(TextDocument doc, Table t) {
+        int numColumns = t.getColumnCount();
+        if (numColumns < 1) {
+            return;
+        }
+
+        double availableWidth = t.getWidth();
+        if (availableWidth <= 0) {
+            availableWidth = getTextAreaWidthMm(doc);
+        }
+
+        double[] widths = new double[numColumns];
+        double fixedWidth = 0;
+        for (int col = 0; col < numColumns - 1; col++) {
+            for (int row = 0; row < t.getRowCount(); row++) {
+                widths[col] = Math.max(widths[col], calculateTextWidthMm(t.getCellByPosition(col, row)));
+            }
+            fixedWidth += widths[col];
+        }
+
+        // the activity column should get at least a quarter of the table width
+        double minLastColumnWidth = availableWidth * 0.25d;
+        if (numColumns > 1 && fixedWidth > availableWidth - minLastColumnWidth) {
+            double factor = (availableWidth - minLastColumnWidth) / fixedWidth;
+            fixedWidth = 0;
+            for (int col = 0; col < numColumns - 1; col++) {
+                widths[col] = widths[col] * factor;
+                fixedWidth += widths[col];
+            }
+        }
+        widths[numColumns - 1] = availableWidth - fixedWidth;
+
+        for (int col = 0; col < numColumns; col++) {
+            TableTableColumnElement columnElement = t.getColumnByIndex(col).getOdfElement();
+            columnElement.setProperty(OdfTableColumnProperties.ColumnWidth, String.format(Locale.US, "%.2fmm", widths[col]));
+            columnElement.setProperty(OdfTableColumnProperties.RelColumnWidth, Math.max(1, Math.round(65535d * widths[col] / availableWidth)) + "*");
+        }
+    }
+
+    /**
+     * Calculates the width a cell needs to display its text in a single line,
+     * including cell padding.
+     *
+     * @param cell the table cell
+     * @return the required width in millimeters
+     */
+    private static double calculateTextWidthMm(org.odftoolkit.simple.table.Cell cell) {
+        // cell padding and borders on both sides
+        final double paddingMm = 3.0d;
+        String text = cell.getStringValue();
+        if (text == null || text.isEmpty()) {
+            return paddingMm;
+        }
+        Font cellFont = cell.getFont();
+        double fontSize = cellFont.getSize() > 0 ? cellFont.getSize() : 12d;
+        double widthPt;
+        try {
+            int style = java.awt.Font.PLAIN;
+            if (cellFont.getFontStyle() == StyleTypeDefinitions.FontStyle.BOLD || cellFont.getFontStyle() == StyleTypeDefinitions.FontStyle.BOLDITALIC) {
+                style = java.awt.Font.BOLD;
+            }
+            BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+            Graphics graphics = image.getGraphics();
+            FontMetrics fontMetrics = graphics.getFontMetrics(new java.awt.Font(cellFont.getFamilyName(), style, (int) Math.round(fontSize)));
+            widthPt = fontMetrics.stringWidth(text);
+            graphics.dispose();
+        } catch (Throwable thr) {
+            log.warn("Unable to measure text width, using an estimate: " + thr.getMessage());
+            widthPt = text.length() * fontSize * 0.6d;
+        }
+        // font metrics are measured in points (1/72 inch)
+        return widthPt * 25.4d / 72d + paddingMm;
+    }
+
+    /**
+     * Determines the width of the text area (page width minus left and right
+     * margins) of the first page layout of a document.
+     *
+     * @param doc the document
+     * @return the text area width in millimeters, defaults to 170mm (A4 with
+     * 2cm margins)
+     */
+    private static double getTextAreaWidthMm(TextDocument doc) {
+        final String foNs = "urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0";
+        try {
+            NodeList props = doc.getStylesDom().getElementsByTagNameNS("urn:oasis:names:tc:opendocument:xmlns:style:1.0", "page-layout-properties");
+            if (props.getLength() > 0) {
+                org.w3c.dom.Element layoutProps = (org.w3c.dom.Element) props.item(0);
+                String pageWidth = layoutProps.getAttributeNS(foNs, "page-width");
+                if (!pageWidth.isEmpty()) {
+                    double widthCm = parseDimension(pageWidth);
+                    String marginLeft = layoutProps.getAttributeNS(foNs, "margin-left");
+                    String marginRight = layoutProps.getAttributeNS(foNs, "margin-right");
+                    if (!marginLeft.isEmpty()) {
+                        widthCm -= parseDimension(marginLeft);
+                    }
+                    if (!marginRight.isEmpty()) {
+                        widthCm -= parseDimension(marginRight);
+                    }
+                    if (widthCm > 0) {
+                        return widthCm * 10d;
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            log.warn("Could not determine text area width, using default: " + ex.getMessage());
+        }
+        return 170d;
     }
 
     private static double calculateTextWidth(org.odftoolkit.simple.table.Cell cell) {
