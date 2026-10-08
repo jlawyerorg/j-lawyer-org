@@ -1506,8 +1506,8 @@ public class LibreOfficeAccess {
                     // if the placeholder is followed by one of these characters, do not append a space
                     //String[] trailingCharsRegex = new String[]{"\\.", ",", ";", ":", "!", "\\?", "'", "\"", " ", "\\n"};
                     //String[] trailingChars = new String[]{".", ",", ";", ":", "!", "?", "'", "\"", " ", "\n"};
-                    String[] trailingCharsRegex = new String[]{"\\.", ",", ";", ":", "!", "\\?", "'", "\"", " "};
-                    String[] trailingChars = new String[]{".", ",", ";", ":", "!", "?", "'", "\"", " "};
+                    String[] trailingCharsRegex = new String[]{"\\.", ",", ";", ":", "!", "\\?", "'", "\"", " ", "/", "\\)", "\\]", "-"};
+                    String[] trailingChars = new String[]{".", ",", ";", ":", "!", "?", "'", "\"", " ", "/", ")", "]", "-"};
 
                     String value = (String) values.get(key);
                     if (PlaceHolders.INGO_TEXT.equals(key) && isMultiParagraphText(value)) {
@@ -2098,8 +2098,8 @@ public class LibreOfficeAccess {
             for (String key : values.keySet()) {
 
                 // if the placeholder is followed by one of these characters, do not append a space
-                String[] trailingCharsRegex = new String[]{"\\.", ",", ";", ":", "!", "\\?", "'", "\"", " "};
-                String[] trailingChars = new String[]{".", ",", ";", ":", "!", "?", "'", "\"", " "};
+                String[] trailingCharsRegex = new String[]{"\\.", ",", ";", ":", "!", "\\?", "'", "\"", " ", "/", "\\)", "\\]", "-"};
+                String[] trailingChars = new String[]{".", ",", ";", ":", "!", "?", "'", "\"", " ", "/", ")", "]", "-"};
                 for (int i = 0; i < trailingCharsRegex.length; i++) {
                     String trailCharRegex = trailingCharsRegex[i];
                     String trailChar = trailingChars[i];

@@ -736,7 +736,7 @@ public class MicrosoftOfficeAccess {
 
                 if (values.get(key) instanceof String) {
 
-                    String[] trailingChars = new String[]{".", ",", ";", ":", "!", "?", "'", "\"", " "};
+                    String[] trailingChars = new String[]{".", ",", ";", ":", "!", "?", "'", "\"", " ", "/", ")", "]", "-"};
 
                     for (int i = 0; i < trailingChars.length; i++) {
                         String trailChar = trailingChars[i];
