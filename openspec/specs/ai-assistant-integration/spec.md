@@ -88,7 +88,7 @@ The system SHALL allow administrators to manage the `aiAgentRole` via the existi
 - **THEN** the `chkIntegrationsIngo` checkbox SHALL be selected if the user has `aiAgentRole`, and deselected otherwise
 
 ### Requirement: E-Mail Mailbox Tools
-The client-side `ToolRegistry` SHALL provide read-only tools that let the AI assistant list the user's e-mail mailboxes, search them, and read a single message. The tools SHALL resolve mailboxes exclusively through the mailbox list of the logged-in user, so that the per-user mailbox ACL is enforced without a separate permission check. They SHALL be registered with risk level `RISK_LOW` and therefore SHALL NOT require an approval dialog, consistent with all other read-only tools.
+The client-side `ToolRegistry` SHALL provide read-only tools that let the AI assistant list the user's e-mail mailboxes, search them, list their newest messages, and read a single message. The tools SHALL resolve mailboxes exclusively through the mailbox list of the logged-in user, so that the per-user mailbox ACL is enforced without a separate permission check. They SHALL be registered with risk level `RISK_LOW` and therefore SHALL NOT require an approval dialog, consistent with all other read-only tools.
 
 #### Scenario: List accessible mailboxes
 - **WHEN** the LLM calls `list_mailboxes`
@@ -101,8 +101,28 @@ The client-side `ToolRegistry` SHALL provide read-only tools that let the AI ass
 - **AND** return hit metadata (mailbox, folder, message reference, subject, sender, recipients, date, read flag, attachment flag) without message bodies
 - **AND** sort the hits by date descending and cap them at 50, setting `truncated` when more hits exist
 
+#### Scenario: List the newest messages without a search term
+- **WHEN** the LLM calls `search_emails` without `query` or with a blank `query`
+- **THEN** the client SHALL NOT reject the call
+- **AND** SHALL return the newest messages of the selected folders, sorted by date descending and capped by `maxResults` (at most 50)
+- **AND** the tool description SHALL state that `query` can be omitted to list the newest messages
+
+#### Scenario: Restrict the search to a date range
+- **WHEN** the LLM calls `search_emails` with `fromDate` and/or `toDate` in the format `yyyy-MM-dd`
+- **THEN** only messages dated from `fromDate` 00:00 up to and including `toDate` 23:59:59 SHALL be returned, with or without a search term
+- **AND** messages dated on `fromDate` itself SHALL be included for every mailbox backend
+- **AND** messages without a date SHALL be excluded
+- **AND** a `toDate` before `fromDate` SHALL be rejected with an error
+- **AND** the tool description SHALL explain how to express a calendar range, e.g. a whole month
+
+#### Scenario: Date range in the past is reached by paging
+- **WHEN** the newest messages of a folder are all newer than `toDate`
+- **THEN** the client SHALL page backwards through the folder until `maxResults` matching messages were collected, a page contains messages older than `fromDate`, the folder is exhausted, or 10 pages of 50 messages were read
+- **AND** `scanLimitReached` SHALL be set when the page cap ended the paging
+- **AND** when the backend returns the same messages again instead of the next page, paging SHALL stop and a warning SHALL be added
+
 #### Scenario: Search terms are matched literally
-- **WHEN** the LLM calls `search_emails`
+- **WHEN** the LLM calls `search_emails` with a search term
 - **THEN** the search term SHALL be matched as a literal, case-insensitive substring, because the IMAP backend passes it unchanged into `SubjectTerm`, `FromStringTerm`, `RecipientStringTerm` and `BodyTerm`
 - **AND** the tool description SHALL state that boolean operators, quotes and wildcards are not supported and would be searched for literally
 - **AND** the tool description SHALL instruct the model to issue one call per synonym or word variant instead of combining them into one term

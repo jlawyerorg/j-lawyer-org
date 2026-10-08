@@ -118,6 +118,7 @@ public class ToolRegistry {
 
     private static final int MAX_MAIL_RESULTS = 50;
     private static final int MAX_SEARCH_FOLDERS = 15;
+    private static final int MAX_MAIL_PAGES = 10;
     private static final int MAX_MAIL_BODY_CHARS = 30000;
     private static final int MAX_DOCUMENT_NAME_CHARS = 250;
     private static final int MAX_NAME_CLASH_RETRIES = 5;
@@ -646,13 +647,14 @@ public class ToolRegistry {
                 Arrays.asList()));
 
         TOOLS.add(new ToolDefinition("search_emails",
-                "Durchsucht E-Mail-Postfächer. Der Suchbegriff wird in Betreff, Absender, Empfänger und Nachrichtentext gesucht. WICHTIG: Es wird ausschließlich wörtlich nach der übergebenen Zeichenfolge gesucht (Teilübereinstimmung, Groß-/Kleinschreibung wird ignoriert). Der Suchtext darf Leerzeichen enthalten und wird dann als zusammenhängende Zeichenfolge gesucht ('jens müller' findet 'Jens Müller'). Suchoperatoren wie OR/AND/NOT, Anführungszeichen und Platzhalter werden NICHT unterstützt, sondern als Teil des Suchtexts gesucht - 'rechnung OR invoice' liefert deshalb keine Treffer. Für Synonyme oder Wortvarianten sind mehrere getrennte Aufrufe nötig; ein kurzer Wortstamm ('Rechnung') findet auch längere Formen ('Rechnungen'). Standardmäßig wird nur der Posteingang aller zugänglichen Postfächer durchsucht. Gibt eine Trefferliste ohne Nachrichtentext zurück (max. 50 Treffer); den Volltext einer Nachricht liefert get_email.",
+                "Durchsucht E-Mail-Postfächer. Der Suchbegriff wird in Betreff, Absender, Empfänger und Nachrichtentext gesucht. WICHTIG: Es wird ausschließlich wörtlich nach der übergebenen Zeichenfolge gesucht (Teilübereinstimmung, Groß-/Kleinschreibung wird ignoriert). Der Suchtext darf Leerzeichen enthalten und wird dann als zusammenhängende Zeichenfolge gesucht ('jens müller' findet 'Jens Müller'). Suchoperatoren wie OR/AND/NOT, Anführungszeichen und Platzhalter werden NICHT unterstützt, sondern als Teil des Suchtexts gesucht - 'rechnung OR invoice' liefert deshalb keine Treffer. Für Synonyme oder Wortvarianten sind mehrere getrennte Aufrufe nötig; ein kurzer Wortstamm ('Rechnung') findet auch längere Formen ('Rechnungen'). Ohne Suchbegriff (query weglassen) werden einfach die neuesten Nachrichten aufgelistet, z. B. für 'die neuesten 5 E-Mails' (maxResults=5). Mit fromDate/toDate lässt sich auf einen Zeitraum einschränken, beide Grenzen einschließlich - z. B. alle E-Mails aus Oktober 2026: fromDate=2026-10-01, toDate=2026-10-31. Standardmäßig wird nur der Posteingang aller zugänglichen Postfächer durchsucht. Gibt eine Trefferliste ohne Nachrichtentext zurück, neueste zuerst (max. 50 Treffer); den Volltext einer Nachricht liefert get_email.",
                 Arrays.asList(
-                        new ToolParameter("query", "string", "Suchtext, der wörtlich in Betreff, Absender, Empfänger und Nachrichtentext gesucht wird. Darf Leerzeichen enthalten und wird dann als zusammenhängende Zeichenfolge gesucht. Keine Suchoperatoren, keine Platzhalter, keine Anführungszeichen.", true),
+                        new ToolParameter("query", "string", "Suchtext, der wörtlich in Betreff, Absender, Empfänger und Nachrichtentext gesucht wird. Darf Leerzeichen enthalten und wird dann als zusammenhängende Zeichenfolge gesucht. Keine Suchoperatoren, keine Platzhalter, keine Anführungszeichen. Optional: weglassen, um die neuesten Nachrichten aufzulisten.", false),
                         new ToolParameter("mailboxId", "string", "ID des zu durchsuchenden Postfachs (aus list_mailboxes). Optional, Standard: alle zugänglichen Postfächer", false),
                         new ToolParameter("folder", "string", "Anzeigename des zu durchsuchenden Ordners, z. B. 'Gesendet'. Optional, Standard: Posteingang", false),
                         new ToolParameter("scope", "string", "'inbox' (Standard) oder 'all', um alle Ordner zu durchsuchen. 'all' ist deutlich langsamer.", false),
-                        new ToolParameter("fromDate", "string", "Nur Nachrichten ab diesem Datum, Format yyyy-MM-dd (optional)", false),
+                        new ToolParameter("fromDate", "string", "Nur Nachrichten ab diesem Datum (einschließlich), Format yyyy-MM-dd (optional)", false),
+                        new ToolParameter("toDate", "string", "Nur Nachrichten bis zu diesem Datum (einschließlich), Format yyyy-MM-dd (optional)", false),
                         new ToolParameter("unreadOnly", "string", "'true', um nur ungelesene Nachrichten zu berücksichtigen (optional)", false),
                         new ToolParameter("maxResults", "integer", "Maximale Trefferzahl. Standard und Obergrenze: 50", false))));
 
@@ -1096,7 +1098,10 @@ public class ToolRegistry {
                 case "list_mailboxes":
                     return "E-Mail-Postfächer auflisten";
                 case "search_emails":
-                    return "E-Mails durchsuchen: '" + args.getOrDefault("query", "") + "'"
+                    String mailQuery = String.valueOf(args.getOrDefault("query", "")).trim();
+                    return (mailQuery.isEmpty() ? "Neueste E-Mails auflisten" : "E-Mails durchsuchen: '" + mailQuery + "'")
+                            + (args.containsKey("fromDate") ? " ab " + args.get("fromDate") : "")
+                            + (args.containsKey("toDate") ? " bis " + args.get("toDate") : "")
                             + (args.containsKey("folder") ? " (Ordner: " + args.get("folder") + ")" : "")
                             + ("all".equalsIgnoreCase(String.valueOf(args.getOrDefault("scope", ""))) ? " (alle Ordner)" : "");
                 case "get_email":
@@ -5488,11 +5493,14 @@ public class ToolRegistry {
     }
 
     private String executeSearchEmails(JsonObject args) throws Exception {
+        // without a search term the newest messages of the selected folders are listed
         String query = (String) args.get("query");
-        if (query == null || query.trim().isEmpty()) {
-            return ToolJsonUtils.error("Suchbegriff fehlt");
+        if (query != null) {
+            query = query.trim();
+            if (query.isEmpty()) {
+                query = null;
+            }
         }
-        query = query.trim();
 
         int maxResults = MAX_MAIL_RESULTS;
         Integer requestedMax = ToolJsonUtils.toInteger(args.get("maxResults"));
@@ -5511,6 +5519,41 @@ public class ToolRegistry {
                 return ToolJsonUtils.error("fromDate konnte nicht geparst werden: " + fromDateStr);
             }
         }
+
+        String toDateStr = (String) args.get("toDate");
+        Date toDate = null;
+        if (toDateStr != null && !toDateStr.trim().isEmpty()) {
+            toDate = ToolJsonUtils.parseIsoDate(toDateStr);
+            if (toDate == null) {
+                return ToolJsonUtils.error("toDate konnte nicht geparst werden: " + toDateStr);
+            }
+            // set toDate to end of day
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(toDate);
+            cal.set(Calendar.HOUR_OF_DAY, 23);
+            cal.set(Calendar.MINUTE, 59);
+            cal.set(Calendar.SECOND, 59);
+            cal.set(Calendar.MILLISECOND, 999);
+            toDate = cal.getTime();
+            if (fromDate != null && toDate.before(fromDate)) {
+                return ToolJsonUtils.error("toDate darf nicht vor fromDate liegen: " + fromDateStr + " / " + toDateStr);
+            }
+        }
+        boolean dateFiltered = fromDate != null || toDate != null;
+
+        // IMAP maps sinceDate to SentDateTerm(GT), which JavaMail sends as
+        // "SENTSINCE d NOT SENTON d" and thereby drops messages of fromDate itself.
+        // Ask the server for one day more and filter exactly on the client.
+        Date serverSinceDate = null;
+        if (fromDate != null) {
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(fromDate);
+            cal.add(Calendar.DAY_OF_MONTH, -1);
+            serverSinceDate = cal.getTime();
+        }
+        // the backend always returns the newest messages first - with an upper
+        // date bound, the folder has to be paged back until the range is reached
+        int pageSize = (toDate != null) ? MAX_MAIL_RESULTS : maxResults;
 
         boolean unreadOnly = args.get("unreadOnly") != null
                 && Boolean.parseBoolean(String.valueOf(args.get("unreadOnly")).trim());
@@ -5539,6 +5582,7 @@ public class ToolRegistry {
         }
         int searchedFolders = 0;
         boolean foldersTruncated = false;
+        boolean scanLimitReached = false;
 
         for (MailboxSetup mb : mailboxes) {
             List<MailFolderDTO> folders;
@@ -5562,13 +5606,50 @@ public class ToolRegistry {
 
             for (MailFolderDTO folder : selected) {
                 try {
-                    List<MailMessageDTO> messages = svc.listMessages(mb.getId(), folder.getFolderId(), maxResults, 0, fromDate, unreadOnly, query);
-                    searchedFolders++;
-                    if (messages == null) {
-                        continue;
-                    }
-                    for (MailMessageDTO m : messages) {
-                        hits.add(new MailHit(mb, folder.getDisplayName(), m));
+                    Set<String> seenRefs = new HashSet<>();
+                    int folderHits = 0;
+                    for (int page = 0; page < MAX_MAIL_PAGES && folderHits < maxResults; page++) {
+                        List<MailMessageDTO> messages = svc.listMessages(mb.getId(), folder.getFolderId(), pageSize, page * pageSize, serverSinceDate, unreadOnly, query);
+                        if (page == 0) {
+                            searchedFolders++;
+                        }
+                        if (messages == null || messages.isEmpty()) {
+                            break;
+                        }
+                        boolean newMessages = false;
+                        boolean olderThanRange = false;
+                        for (MailMessageDTO m : messages) {
+                            if (m.getMessageRef() != null && !seenRefs.add(m.getMessageRef())) {
+                                continue;
+                            }
+                            newMessages = true;
+                            if (dateFiltered) {
+                                Date d = m.getDate();
+                                if (d == null) {
+                                    continue;
+                                }
+                                if (fromDate != null && d.before(fromDate)) {
+                                    olderThanRange = true;
+                                    continue;
+                                }
+                                if (toDate != null && d.after(toDate)) {
+                                    continue;
+                                }
+                            }
+                            hits.add(new MailHit(mb, folder.getDisplayName(), m));
+                            folderHits++;
+                        }
+                        if (!newMessages) {
+                            // e.g. Graph $search ignores the offset and returns the first page again
+                            warnings.add("Ordner '" + folder.getDisplayName() + "' im Postfach " + mb.getEmailAddress() + " konnte nicht weiter zurückgeblättert werden; ältere Treffer fehlen möglicherweise.");
+                            break;
+                        }
+                        if (olderThanRange || messages.size() < pageSize) {
+                            break;
+                        }
+                        if (page == MAX_MAIL_PAGES - 1 && folderHits < maxResults) {
+                            scanLimitReached = true;
+                        }
                     }
                 } catch (Exception ex) {
                     // a single unreachable folder must not abort the entire search
@@ -5625,6 +5706,9 @@ public class ToolRegistry {
         }
         if (foldersTruncated) {
             sb.append(", \"foldersTruncated\": true");
+        }
+        if (scanLimitReached) {
+            sb.append(", \"scanLimitReached\": true");
         }
         if (!warnings.isEmpty()) {
             sb.append(", \"warnings\": [");
