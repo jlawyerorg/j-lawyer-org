@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.calendar.CalendarUtils;
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
+import com.jdimension.jlawyer.client.components.QuickDateSelectionListener;
 import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.events.CasesChangedEvent;
@@ -678,9 +679,12 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import org.apache.log4j.Logger;
@@ -689,7 +693,7 @@ import org.apache.log4j.Logger;
  *
  * @author jens
  */
-public class EditOrDuplicateEventDialog extends javax.swing.JDialog {
+public class EditOrDuplicateEventDialog extends javax.swing.JDialog implements QuickDateSelectionListener {
 
     public static final int MODE_DUPLICATE = 10;
     public static final int MODE_EDIT = 20;
@@ -704,6 +708,9 @@ public class EditOrDuplicateEventDialog extends javax.swing.JDialog {
 
     private Date oldBegin=null;
     private Date oldEnd=null;
+    
+    // begin date before the last quick date selection, used to shift the end date by the same amount
+    private String lastBeginDateText="";
 
     private int mode = MODE_DUPLICATE;
 
@@ -732,6 +739,7 @@ public class EditOrDuplicateEventDialog extends javax.swing.JDialog {
         this.cmbReviewReason.requestFocus();
 
         this.quickDateSelectionPanel.setTarget(this.txtEventBeginDateField);
+        this.quickDateSelectionPanel.setListener(this);
 
         List<AppUserBean> allUsers = UserSettings.getInstance().getLoginEnabledUsers();
         Object[] allUserItems = new Object[allUsers.size() + 1];
@@ -751,6 +759,7 @@ public class EditOrDuplicateEventDialog extends javax.swing.JDialog {
             this.txtEventBeginDateField.setText(df.format(rev.getBeginDate()));
             this.cmbEventBeginTime.setSelectedItem(df2.format(rev.getBeginDate()));
         }
+        this.lastBeginDateText = this.txtEventBeginDateField.getText();
         if (rev.getEndDate() != null) {
             this.txtEventEndDateField.setText(df.format(rev.getEndDate()));
             this.cmbEventEndTime.setSelectedItem(df2.format(rev.getEndDate()));
@@ -1189,7 +1198,29 @@ public class EditOrDuplicateEventDialog extends javax.swing.JDialog {
         MultiCalDialog dlg = new MultiCalDialog(this.txtEventBeginDateField, this, true);
         dlg.setVisible(true);
         this.txtEventEndDateField.setText(this.txtEventBeginDateField.getText());
+        this.lastBeginDateText = this.txtEventBeginDateField.getText();
     }//GEN-LAST:event_cmdEventBeginDateSelectorActionPerformed
+
+    @Override
+    public void dateSelectionChanged(Date d, String s) {
+        if (d == null) {
+            // quick selection has been deselected - leave the end date untouched
+            return;
+        }
+        try {
+            // keep the number of days between begin and end, e.g. for multi-day events
+            Date previousBegin = df.parse(this.lastBeginDateText);
+            Date previousEnd = df.parse(this.txtEventEndDateField.getText());
+            long dayDiff = Math.max(0, Math.round((double) (previousEnd.getTime() - previousBegin.getTime()) / TimeUnit.DAYS.toMillis(1)));
+            Calendar c = Calendar.getInstance();
+            c.setTime(df.parse(s));
+            c.add(Calendar.DAY_OF_YEAR, (int) dayDiff);
+            this.txtEventEndDateField.setText(df.format(c.getTime()));
+        } catch (ParseException ex) {
+            this.txtEventEndDateField.setText(s);
+        }
+        this.lastBeginDateText = s;
+    }
 
     private void cmdEventEndDateSelectorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEventEndDateSelectorActionPerformed
         MultiCalDialog dlg = new MultiCalDialog(this.txtEventEndDateField, this, true);
