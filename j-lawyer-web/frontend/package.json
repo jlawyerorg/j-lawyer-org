@@ -17,13 +17,13 @@
     "seed:cache": "bash scripts/seed-npm-cache.sh"
   },
   "dependencies": {
-    "@angular/animations": "21.2.21",
-    "@angular/common": "21.2.21",
-    "@angular/compiler": "21.2.21",
-    "@angular/core": "21.2.21",
-    "@angular/forms": "21.2.21",
-    "@angular/platform-browser": "21.2.21",
-    "@angular/router": "21.2.21",
+    "@angular/animations": "21.2.25",
+    "@angular/common": "21.2.25",
+    "@angular/compiler": "21.2.25",
+    "@angular/core": "21.2.25",
+    "@angular/forms": "21.2.25",
+    "@angular/platform-browser": "21.2.25",
+    "@angular/router": "21.2.25",
     "@jsverse/transloco": "8.4.0",
     "@tiptap/core": "2.27.2",
     "@tiptap/extension-color": "2.27.2",
@@ -47,7 +47,7 @@
   "devDependencies": {
     "@angular/build": "21.2.26",
     "@angular/cli": "21.2.26",
-    "@angular/compiler-cli": "21.2.21",
+    "@angular/compiler-cli": "21.2.25",
     "typescript": "5.9.3"
   }
 }
