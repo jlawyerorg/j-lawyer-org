@@ -21,7 +21,6 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
-import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
@@ -32,12 +31,12 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import javax.mail.Address;
 import javax.mail.Folder;
 import javax.mail.Message;
 import javax.mail.internet.MimeUtility;
 import org.apache.log4j.Logger;
-import org.simplejavamail.outlookmessageparser.model.OutlookFileAttachment;
 import org.simplejavamail.outlookmessageparser.model.OutlookMessage;
 
 /**
@@ -374,14 +373,11 @@ public class EmailActionHandler {
                 }
 
                 try {
-                    List<OutlookFileAttachment> attachments = outlookMsg.fetchTrueAttachments();
-                    for (OutlookFileAttachment ofa : attachments) {
-                        byte[] data = ofa.getData();
+                    Map<String, byte[]> attachments = EmailUtils.getOutlookAttachments(outlookMsg);
+                    for (Map.Entry<String, byte[]> att : attachments.entrySet()) {
+                        byte[] data = att.getValue();
                         if (data != null) {
-                            String fileName = ofa.getFilename();
-                            if (StringUtils.isEmpty(fileName)) {
-                                fileName = ofa.getLongFilename();
-                            }
+                            String fileName = att.getKey();
                             String attachmentUrl = FileUtils.createTempFile(fileName, data);
                             new File(attachmentUrl).deleteOnExit();
                             dlg.addAttachment(attachmentUrl, "");
@@ -556,14 +552,11 @@ public class EmailActionHandler {
                 dlg.setBody("", content.getBody(), ContentTypes.TEXT_HTML, false);
 
                 try {
-                    List<OutlookFileAttachment> attachments = outlookMsg.fetchTrueAttachments();
-                    for (OutlookFileAttachment ofa : attachments) {
-                        byte[] data = ofa.getData();
+                    Map<String, byte[]> attachments = EmailUtils.getOutlookAttachments(outlookMsg);
+                    for (Map.Entry<String, byte[]> att : attachments.entrySet()) {
+                        byte[] data = att.getValue();
                         if (data != null) {
-                            String fileName = ofa.getFilename();
-                            if (StringUtils.isEmpty(fileName)) {
-                                fileName = ofa.getLongFilename();
-                            }
+                            String fileName = att.getKey();
                             String attachmentUrl = FileUtils.createTempFile(fileName, data);
                             new File(attachmentUrl).deleteOnExit();
                             dlg.addAttachment(attachmentUrl, "");

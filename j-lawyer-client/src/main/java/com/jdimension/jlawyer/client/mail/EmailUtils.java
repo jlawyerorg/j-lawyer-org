@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.HtmlUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.email.AttachmentInfo;
 import com.jdimension.jlawyer.email.CommonMailUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
@@ -676,6 +677,7 @@ import com.jdimension.jlawyer.security.CachingCrypto;
 import com.jdimension.jlawyer.security.CryptoProvider;
 import com.jdimension.jlawyer.server.utils.ContentTypes;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -688,6 +690,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Properties;
 import java.util.regex.Matcher;
@@ -700,6 +703,7 @@ import org.apache.log4j.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.simplejavamail.outlookmessageparser.model.OutlookFileAttachment;
 import org.simplejavamail.outlookmessageparser.model.OutlookMessage;
 import org.simplejavamail.outlookmessageparser.model.OutlookRecipient;
 
@@ -907,6 +911,69 @@ public class EmailUtils extends CommonMailUtils {
             log.error("Error determining mailbox for message", ex);
             return null;
         }
+    }
+
+    /**
+     * Returns the attachments of an Outlook message as file name to content,
+     * in the order of the message.
+     *
+     * Outlook stores a signed message (IPM.Note.SMIME.MultipartSigned) as a
+     * single attachment "smime.p7m" whose data is the complete
+     * multipart/signed MIME message. Such an attachment is unpacked and its
+     * children are returned instead, the same way CommonMailUtils treats
+     * gateways wrapping a signed message as "smime.p7m" (see
+     * CommonMailUtils.getWrappedMultipart). If unpacking fails or yields no
+     * attachments, the wrapper itself is returned.
+     *
+     * @param msg the Outlook message
+     * @return file name to content, never null
+     */
+    public static LinkedHashMap<String, byte[]> getOutlookAttachments(OutlookMessage msg) {
+        LinkedHashMap<String, byte[]> result = new LinkedHashMap<>();
+        for (OutlookFileAttachment ofa : msg.fetchTrueAttachments()) {
+            String fileName = ofa.getLongFilename();
+            if (StringUtils.isEmpty(fileName)) {
+                fileName = ofa.getFilename();
+            }
+            if (StringUtils.isEmpty(fileName)) {
+                continue;
+            }
+
+            byte[] data = ofa.getData();
+            if (data != null && isWrappedMimeAttachment(ofa, fileName)) {
+                try {
+                    MimeMessage wrapped = new MimeMessage(Session.getInstance(new Properties()), new ByteArrayInputStream(data));
+                    Multipart wrappedContent = getWrappedMultipart(wrapped);
+                    if (wrappedContent != null) {
+                        LinkedHashMap<String, byte[]> children = new LinkedHashMap<>();
+                        for (AttachmentInfo ai : getAttachmentInfo(wrappedContent)) {
+                            byte[] childData = getAttachmentBytes(ai.getFileName(), wrapped);
+                            if (childData != null) {
+                                children.putIfAbsent(ai.getFileName(), childData);
+                            }
+                        }
+                        if (!children.isEmpty()) {
+                            for (String childName : children.keySet()) {
+                                result.putIfAbsent(childName, children.get(childName));
+                            }
+                            continue;
+                        }
+                    }
+                } catch (Exception ex) {
+                    log.warn("Unable to unpack wrapped MIME attachment " + fileName + " of Outlook message: " + ex.getMessage());
+                }
+            }
+            result.putIfAbsent(fileName, data);
+        }
+        return result;
+    }
+
+    private static boolean isWrappedMimeAttachment(OutlookFileAttachment ofa, String fileName) {
+        String mimeTag = ofa.getMimeTag();
+        if (mimeTag != null && mimeTag.toLowerCase().startsWith("multipart/")) {
+            return true;
+        }
+        return fileName.toLowerCase().endsWith(".p7m");
     }
 
     public static MailboxSetup getMailboxSetup(OutlookMessage msg) throws Exception {

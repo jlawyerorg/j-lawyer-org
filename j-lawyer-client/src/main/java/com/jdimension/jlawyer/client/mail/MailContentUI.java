@@ -1051,12 +1051,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             } else if (this.emlMsgContainer != null) {
                 data = EmailUtils.getAttachmentBytes(icsAttachmentName, this.emlMsgContainer);
             } else if (this.outlookMsgContainer != null) {
-                for (OutlookFileAttachment ofa : this.outlookMsgContainer.fetchTrueAttachments()) {
-                    if ((ofa.getFilename() != null && ofa.getFilename().equals(icsAttachmentName)) || ((ofa.getLongFilename() != null && ofa.getLongFilename().equals(icsAttachmentName)))) {
-                        data = ofa.getData();
-                        break;
-                    }
-                }
+                data = EmailUtils.getOutlookAttachments(this.outlookMsgContainer).get(icsAttachmentName);
             }
 
             if (data == null || data.length == 0) {
@@ -1623,15 +1618,8 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
         ((DefaultListModel) lstAttachments.getModel()).removeAllElements();
 
-        List<OutlookFileAttachment> attachments = msg.fetchTrueAttachments();
-        for (OutlookFileAttachment att : attachments) {
-            String attFileName = att.getLongFilename();
-            if (StringUtils.isEmpty(attFileName)) {
-                attFileName = att.getFilename();
-            }
-            if (!StringUtils.isEmpty(attFileName)) {
-                ((DefaultListModel) lstAttachments.getModel()).addElement(attFileName);
-            }
+        for (String attFileName : EmailUtils.getOutlookAttachments(msg).keySet()) {
+            ((DefaultListModel) lstAttachments.getModel()).addElement(attFileName);
         }
 
         String htmlContent = msg.getBodyHTML();
@@ -2121,12 +2109,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 } else if (this.emlMsgContainer != null) {
                     data = EmailUtils.getAttachmentBytes(this.lstAttachments.getSelectedValue().toString(), this.emlMsgContainer);
                 } else {
-                    for (OutlookFileAttachment ofa : this.outlookMsgContainer.fetchTrueAttachments()) {
-                        if ((ofa.getFilename() != null && ofa.getFilename().equals(this.lstAttachments.getSelectedValue().toString())) || ((ofa.getLongFilename() != null && ofa.getLongFilename().equals(this.lstAttachments.getSelectedValue().toString())))) {
-                            data = ofa.getData();
-                            break;
-                        }
-                    }
+                    data = EmailUtils.getOutlookAttachments(this.outlookMsgContainer).get(this.lstAttachments.getSelectedValue().toString());
                 }
 
                 ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("mailattachment-" + this.lstAttachments.getSelectedValue().toString(), this.lstAttachments.getSelectedValue().toString());
@@ -2162,12 +2145,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 } else if (this.emlMsgContainer != null) {
                     data = EmailUtils.getAttachmentBytes(selected.toString(), this.emlMsgContainer);
                 } else {
-                    for (OutlookFileAttachment ofa : this.outlookMsgContainer.fetchTrueAttachments()) {
-                        if ((ofa.getFilename() != null && ofa.getFilename().equals(selected.toString())) || ((ofa.getLongFilename() != null && ofa.getLongFilename().equals(selected.toString())))) {
-                            data = ofa.getData();
-                            break;
-                        }
-                    }
+                    data = EmailUtils.getOutlookAttachments(this.outlookMsgContainer).get(selected.toString());
                 }
 
                 boolean validName = false;
@@ -2257,12 +2235,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                     } else if (this.emlMsgContainer != null) {
                         data = EmailUtils.getAttachmentBytes(selected.toString(), this.emlMsgContainer);
                     } else {
-                        for (OutlookFileAttachment ofa : this.outlookMsgContainer.fetchTrueAttachments()) {
-                            if ((ofa.getFilename() != null && ofa.getFilename().equals(selected.toString())) || ((ofa.getLongFilename() != null && ofa.getLongFilename().equals(selected.toString())))) {
-                                data = ofa.getData();
-                                break;
-                            }
-                        }
+                        data = EmailUtils.getOutlookAttachments(this.outlookMsgContainer).get(selected.toString());
                     }
 
                     String newName = FileUtils.getNewFileName(sel, selected.toString(), true);
