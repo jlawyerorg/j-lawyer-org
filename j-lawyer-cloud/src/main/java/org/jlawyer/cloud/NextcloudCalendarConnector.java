@@ -746,14 +746,14 @@ public class NextcloudCalendarConnector {
     public List<CloudCalendar> getAllCalendars() throws Exception {
         ArrayList<CloudCalendar> calendars = new ArrayList<>();
         try {
-            
+
             org.osaf.caldav4j.methods.HttpClient client = new org.osaf.caldav4j.methods.HttpClient();
             Credentials creds = new UsernamePasswordCredentials(this.userName, this.password);
             client.getState().setCredentials(AuthScope.ANY, creds);
-            
+
             client.getHostConfiguration().setHost(this.serverName, this.port, this.useHTTPS ? "https" : "http");
             client.getParams().setAuthenticationPreemptive(true);
-            
+
             PropFindMethod method = new PropFindMethod(this.getBaseUrl(), DavConstants.PROPFIND_ALL_PROP, DavConstants.DEPTH_1);
             method.setRequestBody("<d:propfind xmlns:d=\"DAV:\" xmlns:cs=\"http://calendarserver.org/ns/\">\n"
                     + "  <d:prop>\n"
@@ -763,7 +763,7 @@ public class NextcloudCalendarConnector {
                     + "</d:propfind>");
             client.getHttpConnectionManager().getParams().setSoTimeout(15000);
             client.getHttpConnectionManager().getParams().setConnectionTimeout(15000);
-            
+
             client.executeMethod(method);
 
             MultiStatus multiStatus = method.getResponseBodyAsMultiStatus();
@@ -880,7 +880,7 @@ public class NextcloudCalendarConnector {
         client.getParams().setAuthenticationPreemptive(true);
 
         String href=calendarHref + uid + ".ics";
-        
+
         CalDAVReportMethod reportMethod = new CalDAV4JMethodFactory().createCalDAVReportMethod(href);
         reportMethod.setPath(href);
         reportMethod.setReportRequest(query);
@@ -918,11 +918,11 @@ public class NextcloudCalendarConnector {
 //            client.getHostConfiguration().setHost(this.serverName, this.port, this.useHTTPS ? "https" : "http");
 //
 //            client.getParams().setAuthenticationPreemptive(true);
-//            
+//
 //            HttpHead headMethod = new HttpHead(calendarHref + uid + ".ics");
 //            Head head;
 //
-//        
+//
 //            HttpResponse response =
 //                    client.execute(headMethod);
 ////            int statusCode = response.getStatusLine().getStatusCode();
@@ -935,7 +935,7 @@ public class NextcloudCalendarConnector {
 ////            if (statusCode != CalDAVStatus.SC_OK) {
 ////                throw new BadStatusException(headMethod, response);
 ////            }
-//        
+//
 //
 //        Header h = headMethod.getFirstHeader(CalDAVConstants.HEADER_ETAG);
 //        String etag = nul                            l;
@@ -1101,42 +1101,7 @@ public class NextcloudCalendarConnector {
         client.getParams().setAuthenticationPreemptive(true);
         PutMethod put = null;
         try {
-            CalendarBuilder builder = new CalendarBuilder();
-            net.fortuna.ical4j.model.Calendar c = new net.fortuna.ical4j.model.Calendar();
-            c.getProperties().add(new ProdId("-//j-lawyer.org//iCal4j 1.0//EN"));
-            c.getProperties().add(Version.VERSION_2_0);
-            c.getProperties().add(CalScale.GREGORIAN);
-            TimeZoneRegistry registry = builder.getRegistry();
-            VTimeZone tz = registry.getTimeZone("Europe/Berlin").getVTimeZone();
-            c.getComponents().add(tz);
-//            VEvent vevent = new VEvent(new net.fortuna.ical4j.model.Date(),
-//                    new Dur(0, 1, 0, 0), summary);
-            VEvent vevent = null;
-            if (allDayEvent) {
-                // required to use a string as input, because due to the timezones it might be added for one day earlier
-                String dateString = dateFormat.format(start);
-                vevent = new VEvent(new net.fortuna.ical4j.model.Date(dateString), summary);
-            } else {
-                vevent = new VEvent(new net.fortuna.ical4j.model.DateTime(start), new net.fortuna.ical4j.model.DateTime(end), summary);
-            }
-
-            vevent.getProperties().add(new Location(location));
-            vevent.getProperties().add(new Description(description));
-            vevent.getProperties().add(new Uid(uid));
-
-            XProperty jlp = new XProperty("X-ALT-JLAWYERORG");
-            jlp.setValue("1");
-            vevent.getProperties().add(jlp);
-
-            if (reminderMinutes >= 0) {
-                VAlarm alarm = new VAlarm(new Dur(0, 0, -reminderMinutes, 0));
-                alarm.getProperties().add(Action.DISPLAY);
-                alarm.getProperties().add(new Description("Reminder"));
-                vevent.getAlarms().add(alarm);
-            }
-
-            //vevent.getProperties().add(new Uid(uid));
-            c.getComponents().add(vevent);
+            String calendarData = buildEventCalendar(uid, summary, description, location, start, end, allDayEvent, reminderMinutes);
             String href = calendarHref + uid + ".ics";
             put = new PutMethod(href);
             if (etag==null) {
@@ -1144,7 +1109,7 @@ public class NextcloudCalendarConnector {
             } else {
                 put.addRequestHeader("If-Match", etag);
             }
-            put.setRequestEntity(new StringRequestEntity(c.toString(), "text/calendar", "UTF-8"));
+            put.setRequestEntity(new StringRequestEntity(calendarData, "text/calendar", "UTF-8"));
             int httpStatus = client.executeMethod(put);
             //etag: put.getResponseHeader("ETag").getValue();
             log.info("   HTTP " + httpStatus);
@@ -1157,6 +1122,50 @@ public class NextcloudCalendarConnector {
             }
         }
         return null;
+    }
+
+    static String buildEventCalendar(String uid, String summary, String description, String location, Date start, Date end, boolean allDayEvent, int reminderMinutes) throws Exception {
+        CalendarBuilder builder = new CalendarBuilder();
+        net.fortuna.ical4j.model.Calendar c = new net.fortuna.ical4j.model.Calendar();
+        c.getProperties().add(new ProdId("-//j-lawyer.org//iCal4j 1.0//EN"));
+        c.getProperties().add(Version.VERSION_2_0);
+        c.getProperties().add(CalScale.GREGORIAN);
+        TimeZoneRegistry registry = builder.getRegistry();
+        net.fortuna.ical4j.model.TimeZone berlin = registry.getTimeZone("Europe/Berlin");
+        VTimeZone tz = berlin.getVTimeZone();
+        c.getComponents().add(tz);
+        VEvent vevent = null;
+        if (allDayEvent) {
+            // required to use a string as input, because due to the timezones it might be added for one day earlier
+            String dateString = new SimpleDateFormat("yyyyMMdd").format(start);
+            vevent = new VEvent(new net.fortuna.ical4j.model.Date(dateString), summary);
+        } else {
+            // without a TZID the times are "floating" and Nextcloud reads them as UTC, which shifts the event
+            // in the server-side free/busy and appointment conflict checks
+            net.fortuna.ical4j.model.DateTime startWithZone = new net.fortuna.ical4j.model.DateTime(start);
+            startWithZone.setTimeZone(berlin);
+            net.fortuna.ical4j.model.DateTime endWithZone = new net.fortuna.ical4j.model.DateTime(end);
+            endWithZone.setTimeZone(berlin);
+            vevent = new VEvent(startWithZone, endWithZone, summary);
+        }
+
+        vevent.getProperties().add(new Location(location));
+        vevent.getProperties().add(new Description(description));
+        vevent.getProperties().add(new Uid(uid));
+
+        XProperty jlp = new XProperty("X-ALT-JLAWYERORG");
+        jlp.setValue("1");
+        vevent.getProperties().add(jlp);
+
+        if (reminderMinutes >= 0) {
+            VAlarm alarm = new VAlarm(new Dur(0, 0, -reminderMinutes, 0));
+            alarm.getProperties().add(Action.DISPLAY);
+            alarm.getProperties().add(new Description("Reminder"));
+            vevent.getAlarms().add(alarm);
+        }
+
+        c.getComponents().add(vevent);
+        return c.toString();
     }
 
     public void deleteEvent(String uid, String calendarHref) throws Exception {
