@@ -814,6 +814,9 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
     private boolean replyOrForward = false;
     private boolean initializing = false;
 
+    private String lastProgrammaticBody = "";
+    private String lastAppliedTemplateName = "";
+
     // can be set by code that constructs the SendEmailFrame to "inject" a recently created link to a Nextcloud share
     // will be made available as a placeholder
     private String cloudLink = null;
@@ -846,6 +849,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         this.replyOrForward = replyOrForward;
         this.initialize();
         this.initializing = false;
+        this.lastProgrammaticBody = this.currentBodyText();
     }
 
     private void initialize() {
@@ -1510,6 +1514,12 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         return null;
     }
 
+    private String currentBodyText() {
+        String textBody = this.tp != null ? this.tp.getText() : "";
+        String htmlBody = this.hp != null ? this.hp.getText() : "";
+        return StringUtils.nonEmpty(textBody) + "\n" + StringUtils.nonEmpty(htmlBody);
+    }
+
     public void setBody(String preSignature, String postSignature, String contentType) {
         this.setBody(preSignature, postSignature, contentType, true);
     }
@@ -1573,6 +1583,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                 this.hp.setCaretPosition(0);
             }
         }
+        this.lastProgrammaticBody = this.currentBodyText();
     }
 
     /**
@@ -3590,6 +3601,15 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
 
         String tplName = selected.toString();
         if (!"".equals(tplName)) {
+            if (!this.currentBodyText().trim().isEmpty() && !this.currentBodyText().equals(this.lastProgrammaticBody)) {
+                int overwriteResponse = JOptionPane.showConfirmDialog(this, "Der bisherige Nachrichtentext wird durch die Vorlage ersetzt - fortfahren?", "Vorlage anwenden", JOptionPane.YES_NO_OPTION);
+                if (overwriteResponse != JOptionPane.YES_OPTION) {
+                    ignoreTemplateSelectionEvent = true;
+                    this.cmbTemplates.setSelectedItem(this.lastAppliedTemplateName);
+                    ignoreTemplateSelectionEvent = false;
+                    return;
+                }
+            }
             try {
                 ClientSettings settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -3723,6 +3743,8 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                         }
                     }
                 }
+                this.lastAppliedTemplateName = tplName;
+                this.lastProgrammaticBody = this.currentBodyText();
 
             } catch (Exception ex) {
                 log.error("Error initiating template", ex);
