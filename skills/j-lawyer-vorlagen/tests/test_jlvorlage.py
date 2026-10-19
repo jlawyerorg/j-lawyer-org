@@ -123,6 +123,43 @@ class ReplaceTest(Base):
         self.assertIn("GEGNER_VORNAME", names)
 
 
+class MultiLineTest(Base):
+    def test_multiline_replacement_gets_one_run_per_line(self):
+        out = self.path("out.docx")
+        run("replace", fixture("template.docx"), out, "--ersetze", "{{MANDANT_ANREDE}}",
+            "{{MANDANT_VORNAME}}\n{{MANDANT_NAME}}\t{{MANDANT_ORT}}")
+        rep, _ = validate(out)
+        self.assertFalse([w for w in rep.warnings if "mehreren Textelementen" in w])
+        p = [p for p in jlvorlage.Package(out).paragraphs() if "{{MANDANT_ORT}}" in p.text][0]
+        self.assertEqual("{{MANDANT_VORNAME}}\n{{MANDANT_NAME}}\t{{MANDANT_ORT}}", p.text)
+        for r in {id(a.container): a.container for a in p.atoms}.values():
+            self.assertEqual(1, len([c for c in jlvorlage.element_children(r) if c.localName != "rPr"]))
+
+
+class FieldTest(Base):
+    def test_replacing_field_result_removes_field(self):
+        src = self.build("Ort, Datum\n", "docx")
+        with zipfile.ZipFile(src) as z:
+            files = {n: z.read(n) for n in z.namelist()}
+        field = ('<w:r><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:instrText> CREATEDATE </w:instrText></w:r>'
+                 '<w:r><w:fldChar w:fldCharType="separate"/></w:r><w:r><w:t>Datum</w:t></w:r>'
+                 '<w:r><w:fldChar w:fldCharType="end"/></w:r>')
+        xml = files["word/document.xml"].decode("utf-8")
+        files["word/document.xml"] = xml.replace('<w:t xml:space="preserve">Ort, Datum</w:t></w:r>',
+                                                 '<w:t xml:space="preserve">Ort, </w:t></w:r>' + field).encode("utf-8")
+        with_field = self.path("field.docx")
+        with zipfile.ZipFile(with_field, "w") as z:
+            for n, d in files.items():
+                z.writestr(n, d)
+        rep, _ = validate(with_field)
+        out = self.path("out.docx")
+        run("replace", with_field, out, "--ersetze", "Ort, Datum", "{{PROFIL_ORT}}, {{KURZDATUM}}")
+        xml = zipfile.ZipFile(out).read("word/document.xml").decode("utf-8")
+        self.assertNotIn("fldChar", xml)
+        self.assertNotIn("CREATEDATE", xml)
+        self.assertIn("{{PROFIL_ORT}}, {{KURZDATUM}}", xml)
+
+
 class NormalizeTest(Base):
     def test_merges_split_placeholders(self):
         for name in ("template.docx", "template-scripts-run.odt"):

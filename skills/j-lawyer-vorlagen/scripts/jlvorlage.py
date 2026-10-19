@@ -79,6 +79,7 @@ class Atom:
         self.node = node            # DOCX: w:t element / fixed element; ODT: Text node / fixed element
         self.container = container  # DOCX: w:r, ODT: parent element of the text node
         self.context = context      # set of wrapper element names between paragraph and atom
+        self.field = None           # DOCX: complex field (fldChar begin..end) whose result holds this atom
 
 
 class Paragraph:
@@ -91,6 +92,7 @@ class Paragraph:
 
     def rebuild(self):
         self.atoms = []
+        self._fields = []  # open complex fields: {"runs": [...], "result": bool}
         if self.pkg.kind == "docx":
             self._collect_docx(self.element, frozenset())
         else:
@@ -116,13 +118,28 @@ class Paragraph:
             self._collect_docx(c, ctx)
 
     def _collect_docx_run(self, run, ctx):
+        for f in self._fields:
+            f["runs"].append(run)
+        field = self._fields[-1] if self._fields and self._fields[-1]["result"] else None
+        if field:
+            ctx = ctx | {"field"}
         for c in run.childNodes:
             if c.nodeType != c.ELEMENT_NODE or c.namespaceURI != W:
                 continue
-            if c.localName == "t":
+            if c.localName == "fldChar":
+                kind = c.getAttributeNS(W, "fldCharType")
+                if kind == "begin":
+                    self._fields.append({"runs": [run], "result": False})
+                elif kind == "separate" and self._fields:
+                    self._fields[-1]["result"] = True
+                elif kind == "end" and self._fields:
+                    self._fields.pop()
+            elif c.localName == "t":
                 txt = "".join(t.data for t in c.childNodes if t.nodeType == t.TEXT_NODE)
                 if txt:
-                    self.atoms.append(Atom("text", txt, c, run, ctx))
+                    atom = Atom("text", txt, c, run, ctx)
+                    atom.field = field
+                    self.atoms.append(atom)
             elif c.localName == "tab":
                 self.atoms.append(Atom("fixed", "\t", c, run, ctx))
             elif c.localName in ("br", "cr"):
@@ -217,6 +234,7 @@ class Paragraph:
                 break
             self._remove_atom(b)
         self._set_text(a, prefix + new + suffix)
+        fields = [b.field for b, _, _ in hit if b.field is not None and b.field is not a.field]
         after = False
         for b, b0, b1 in hit:
             if b is a:
@@ -228,6 +246,11 @@ class Paragraph:
                 self._set_text(b, b.text[e - b0:])
             else:
                 self._remove_atom(b)
+        # a replaced field result would be recalculated by Word/LibreOffice - drop the whole field
+        for f in fields:
+            for r in f["runs"]:
+                if r.parentNode is not None:
+                    r.parentNode.removeChild(r)
         self.rebuild()
         return True
 
@@ -258,6 +281,8 @@ class Paragraph:
         for n in nodes:
             parent.insertBefore(n, atom.node)
         parent.removeChild(atom.node)
+        if len(nodes) > 1 and is_el(parent, W, "r"):
+            split_run(parent)
 
     def _set_odt_text(self, atom, value):
         doc = atom.node.ownerDocument
@@ -294,6 +319,25 @@ class Paragraph:
             rest = [c for c in element_children(parent) if not is_el(c, W, "rPr")]
             if not rest and parent.parentNode is not None:
                 parent.parentNode.removeChild(parent)
+
+
+def split_run(run):
+    """Splits a w:r with several content elements (w:t, w:tab, w:br, ...) into one run per element,
+    each with a copy of the run properties - the server (POI) reads and writes only the first text
+    element of a run, so a placeholder must not share its run with other text elements."""
+    content = [c for c in element_children(run) if not is_el(c, W, "rPr")]
+    if len(content) <= 1:
+        return False
+    rpr = element_children(run, W, "rPr")
+    parent = run.parentNode
+    for c in content:
+        r = run.cloneNode(False)
+        if rpr:
+            r.appendChild(rpr[0].cloneNode(True))
+        r.appendChild(c)
+        parent.insertBefore(r, run)
+    parent.removeChild(run)
+    return True
 
 
 class Package:
@@ -562,7 +606,7 @@ def unwrap(el):
 
 
 def normalize_pkg(pkg, accept_changes=False, unwrap_controls=False):
-    stats = {"zusammengeführt": 0, "proofErr entfernt": 0, "Änderungen angenommen": 0, "Steuerelemente aufgelöst": 0}
+    stats = {"zusammengeführt": 0, "Runs aufgeteilt": 0, "proofErr entfernt": 0, "Änderungen angenommen": 0, "Steuerelemente aufgelöst": 0}
     if pkg.kind == "docx":
         for part in pkg.text_parts():
             doc = pkg.dom(part)
@@ -604,6 +648,12 @@ def normalize_pkg(pkg, accept_changes=False, unwrap_controls=False):
             if p.containers_in(m.start(), m.end()) > 1:
                 p.replace_range(m.start(), m.end(), m.group())
                 stats["zusammengeführt"] += 1
+            if pkg.kind == "docx":
+                runs = {id(a.container): a.container for a in p.atoms_in(m.start(), m.end())
+                        if is_el(a.container, W, "r")}
+                if any(split_run(r) for r in list(runs.values())):
+                    stats["Runs aufgeteilt"] += 1
+                    p.rebuild()
             pos = m.start() + len(m.group())
     return stats
 
@@ -841,7 +891,7 @@ def validate_pkg(pkg, cat, check_pii=True):
                     rep.warn(where, f"{token} steht in einem Run mit mehreren Textelementen - normalize empfohlen")
                 for wrapper, label in (("hyperlink", "einem Hyperlink"), ("sdt", "einem Inhaltssteuerelement"),
                                        ("ins", "einer nachverfolgten Änderung"), ("moveTo", "einer nachverfolgten Änderung"),
-                                       ("fldSimple", "einem Feld")):
+                                       ("fldSimple", "einem Feld"), ("field", "einem Feld (Feldergebnis)")):
                     if wrapper in ctx:
                         rep.error(where, f"{token} steht in {label} - wird vom Server nicht gefunden")
             elif "a" in ctx:
