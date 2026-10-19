@@ -6,6 +6,7 @@ package org.jlawyer.invoicing;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  *
@@ -271,6 +272,33 @@ public class CountryCodes {
         countries.add(new CountryCode("ZW", "Simbabwe"));
 
         return countries;
+    }
+
+    /**
+     * Maps a free text country (e.g. "Deutschland", "Austria" or "AT") to an
+     * ISO 3166-1 alpha-2 country code.
+     *
+     * @param country country as entered by the user
+     * @return two letter country code, or null if the value is empty or cannot
+     * be resolved
+     */
+    public static String getCountryCode(String country) {
+        if (country == null || country.trim().isEmpty()) {
+            return null;
+        }
+        String c = country.trim();
+        for (CountryCode cc : getCountryCodes()) {
+            if (cc.getCode().equalsIgnoreCase(c) || cc.getName().equalsIgnoreCase(c)) {
+                return cc.getCode();
+            }
+        }
+        for (String iso : Locale.getISOCountries()) {
+            Locale l = new Locale("", iso);
+            if (l.getDisplayCountry(Locale.GERMAN).equalsIgnoreCase(c) || l.getDisplayCountry(Locale.ENGLISH).equalsIgnoreCase(c)) {
+                return iso;
+            }
+        }
+        return null;
     }
 
 }

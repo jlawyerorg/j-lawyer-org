@@ -677,6 +677,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.log4j.Logger;
+import org.jlawyer.invoicing.CountryCodes;
 import org.mustangproject.BankDetails;
 import org.mustangproject.Contact;
 import org.mustangproject.Invoice;
@@ -768,6 +769,8 @@ public class EInvoiceUtils {
             throw new Exception("Informationen des Rechnungssenders unvollständig: Anzeigename/Telefon/E-Mail. Bitte im Menü 'Administration' - 'Nutzerverwaltung' ergänzen");
         }
         sender.setContact(new Contact(senderUser.getDisplayName(), senderUser.getPhone(), senderUser.getEmail()));
+        // electronic address of the seller (BT-34)
+        sender.setEmail(senderUser.getEmail());
 
         i.setSender(sender);
 
@@ -780,7 +783,33 @@ public class EInvoiceUtils {
                 || StringUtils.isEmpty(caseInvoice.getContact().getCity())) {
             throw new Exception("Informationen des Rechnungsempfängers unvollständig: Adresse.");
         }
-        i.setRecipient(new TradeParty(caseInvoice.getContact().toDisplayName(), caseInvoice.getContact().getStreet() + " " + caseInvoice.getContact().getStreetNumber(), caseInvoice.getContact().getZipCode(), caseInvoice.getContact().getCity(), "DE"));
+        String recipientStreet = caseInvoice.getContact().getStreet().trim();
+        if (!StringUtils.isEmpty(caseInvoice.getContact().getStreetNumber())) {
+            recipientStreet = recipientStreet + " " + caseInvoice.getContact().getStreetNumber().trim();
+        }
+        String recipientCountry = CountryCodes.getCountryCode(caseInvoice.getContact().getCountry());
+        if (recipientCountry == null) {
+            if (!StringUtils.isEmpty(caseInvoice.getContact().getCountry())) {
+                log.warn("Unable to map country '" + caseInvoice.getContact().getCountry() + "' to a country code - using default country for electronic invoice");
+            }
+            recipientCountry = CountryCodes.getDefaultCountry().getCode();
+        }
+        TradeParty recipient = new TradeParty(caseInvoice.getContact().toDisplayName(), recipientStreet, caseInvoice.getContact().getZipCode(), caseInvoice.getContact().getCity(), recipientCountry);
+        // electronic address of the buyer (BT-49)
+        String recipientEmail = null;
+        if (!StringUtils.isEmpty(caseInvoice.getContact().getEmail())) {
+            recipientEmail = caseInvoice.getContact().getEmail().trim();
+        } else if (!StringUtils.isEmpty(caseInvoice.getContact().getEmailHome())) {
+            recipientEmail = caseInvoice.getContact().getEmailHome().trim();
+        } else if (!StringUtils.isEmpty(caseInvoice.getContact().getEmailMisc())) {
+            recipientEmail = caseInvoice.getContact().getEmailMisc().trim();
+        }
+        if (recipientEmail != null) {
+            recipient.setEmail(recipientEmail);
+        } else {
+            log.warn("Invoice recipient " + caseInvoice.getContact().toDisplayName() + " has no email address - electronic address of the buyer (BT-49) will be missing");
+        }
+        i.setRecipient(recipient);
 
         if (!StringUtils.isEmpty(caseInvoice.getContact().getLeitwegId())) {
             i.setReferenceNumber(caseInvoice.getContact().getLeitwegId());
