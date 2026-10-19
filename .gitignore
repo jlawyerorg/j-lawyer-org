@@ -95,3 +95,7 @@
 
 # built EAR artifacts must never be committed
 *.ear
+
+# Claude skill archives (skills/build-skills.sh)
+/skills/dist/
+/skills/**/__pycache__/

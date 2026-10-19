@@ -1,0 +1,1385 @@
+{
+ "_comment": "GENERIERT von skills/tools/generate_catalog.py - nicht von Hand bearbeiten",
+ "fixed": [
+  {
+   "name": "PROFIL_FIRMA",
+   "category": "Kanzlei",
+   "label": "Name der Kanzlei",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "PROFIL_STRASSE",
+   "category": "Kanzlei",
+   "label": "Straße",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "PROFIL_STRASSE2",
+   "category": "Kanzlei",
+   "label": "Adresszusatz",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "PROFIL_PLZ",
+   "category": "Kanzlei",
+   "label": "PLZ",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "PROFIL_ORT",
+   "category": "Kanzlei",
+   "label": "Ort",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "PROFIL_LAND",
+   "category": "Kanzlei",
+   "label": "Land",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "PROFIL_TEL",
+   "category": "Kanzlei",
+   "label": "Telefon",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "PROFIL_FAX",
+   "category": "Kanzlei",
+   "label": "Fax",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "PROFIL_MOBIL",
+   "category": "Kanzlei",
+   "label": "Mobil",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "PROFIL_EMAIL",
+   "category": "Kanzlei",
+   "label": "E-Mail",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "PROFIL_WWW",
+   "category": "Kanzlei",
+   "label": "Homepage",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "PROFIL_STNR",
+   "category": "Kanzlei",
+   "label": "Steuernummer",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "PROFIL_USTIDNR",
+   "category": "Kanzlei",
+   "label": "USt-IdNr.",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "PROFIL_BANK",
+   "category": "Kanzlei",
+   "label": "Bank",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "PROFIL_KONTONR",
+   "category": "Kanzlei",
+   "label": "IBAN",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "PROFIL_BLZ",
+   "category": "Kanzlei",
+   "label": "BIC",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "PROFIL_BANK_AK",
+   "category": "Kanzlei",
+   "label": "Anderkonto: Bank",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "PROFIL_KONTONR_AK",
+   "category": "Kanzlei",
+   "label": "Anderkonto: IBAN",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "PROFIL_BLZ_AK",
+   "category": "Kanzlei",
+   "label": "Anderkonto: BIC",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "KURZDATUM",
+   "category": "Datum und Dokument",
+   "label": "heutiges Datum (TT.MM.JJJJ)",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "LANGDATUM",
+   "category": "Datum und Dokument",
+   "label": "heutiges Datum mit Wochentag",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "AKTE_NR",
+   "category": "Akte",
+   "label": "Aktennummer",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "AKTE_ZEICHEN",
+   "category": "Akte",
+   "label": "Aktenzeichen",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "AKTE_KURZRUBRUM",
+   "category": "Akte",
+   "label": "Kurzrubrum",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "AKTE_NOTIZ",
+   "category": "Akte",
+   "label": "Notiz",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "AKTE_SCHADENNR",
+   "category": "Akte",
+   "label": "Schadennummer",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "AKTE_GEGENSTANDSWERT",
+   "category": "Akte",
+   "label": "Gegenstandswert",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "AKTE_WEGEN",
+   "category": "Akte",
+   "label": "wegen",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "AKTE_SACHGEBIET",
+   "category": "Akte",
+   "label": "Sachgebiet",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "AKTE_ERSTELLT",
+   "category": "Akte",
+   "label": "angelegt am",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "AKTE_ANWALT_AN",
+   "category": "Akte",
+   "label": "Anwalt (Anzeigename)",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "AKTE_SACHBEARBEITER_AN",
+   "category": "Akte",
+   "label": "Sachbearbeiter (Anzeigename)",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "AKTE_SACHBEARBEITER",
+   "category": "Akte",
+   "label": "Sachbearbeiter (Benutzername)",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "AKTE_ANWALT",
+   "category": "Akte",
+   "label": "Anwalt (Benutzername)",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "AKTE_SACHBEARBEITER_KRZ",
+   "category": "Akte",
+   "label": "Sachbearbeiter (Kürzel)",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "AKTE_ANWALT_KRZ",
+   "category": "Akte",
+   "label": "Anwalt (Kürzel)",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "DOK_DZ",
+   "category": "Datum und Dokument",
+   "label": "Diktatzeichen",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "AKTE_EIGENE1",
+   "category": "Akte",
+   "label": "Eigenes Feld 1",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "AKTE_EIGENE2",
+   "category": "Akte",
+   "label": "Eigenes Feld 2",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "AKTE_EIGENE3",
+   "category": "Akte",
+   "label": "Eigenes Feld 3",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "USER_AN",
+   "category": "Benutzer",
+   "label": "Anzeigename",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "USER_EMAIL",
+   "category": "Benutzer",
+   "label": "E-Mail",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "USER_KRZ",
+   "category": "Benutzer",
+   "label": "Kürzel",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "USER_VORNAME",
+   "category": "Benutzer",
+   "label": "Vorname",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "USER_NAME",
+   "category": "Benutzer",
+   "label": "Name",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "USER_UNTERNEHMEN",
+   "category": "Benutzer",
+   "label": "Unternehmen",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "USER_FKT",
+   "category": "Benutzer",
+   "label": "Funktion",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "USER_STRASSE",
+   "category": "Benutzer",
+   "label": "Straße",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "USER_ZUSATZ",
+   "category": "Benutzer",
+   "label": "Adresszusatz",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "USER_PLZ",
+   "category": "Benutzer",
+   "label": "PLZ",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "USER_ORT",
+   "category": "Benutzer",
+   "label": "Ort",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "USER_LAND",
+   "category": "Benutzer",
+   "label": "Land",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "USER_TEL",
+   "category": "Benutzer",
+   "label": "Telefon",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "USER_FAX",
+   "category": "Benutzer",
+   "label": "Fax",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "USER_MOBIL",
+   "category": "Benutzer",
+   "label": "Mobil",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "USER_WWW",
+   "category": "Benutzer",
+   "label": "Homepage",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "USER_BANK",
+   "category": "Benutzer",
+   "label": "Bank",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "USER_BIC",
+   "category": "Benutzer",
+   "label": "BIC",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "USER_IBAN",
+   "category": "Benutzer",
+   "label": "IBAN",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "USER_STEUERNR",
+   "category": "Benutzer",
+   "label": "Steuernummer",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "USER_USTIDNR",
+   "category": "Benutzer",
+   "label": "USt-IdNr.",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "USER_LOGIN",
+   "category": "Benutzer",
+   "label": "Benutzername",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "TABELLE_1",
+   "category": "Datum und Dokument",
+   "label": "Berechnungstabelle",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_NR",
+   "category": "Rechnung",
+   "label": "Belegnummer",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_TYP",
+   "category": "Rechnung",
+   "label": "Belegart",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_NAME",
+   "category": "Rechnung",
+   "label": "Bezeichnung",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_BESCHR",
+   "category": "Rechnung",
+   "label": "Beschreibung",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_DTFAELLIG",
+   "category": "Rechnung",
+   "label": "fällig am",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_DTLZVON",
+   "category": "Rechnung",
+   "label": "Leistungszeitraum von",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_DTLZBIS",
+   "category": "Rechnung",
+   "label": "Leistungszeitraum bis",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_DTERSTELLT",
+   "category": "Rechnung",
+   "label": "Belegdatum",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_TOTAL",
+   "category": "Rechnung",
+   "label": "Gesamtbetrag (brutto)",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_WHRG",
+   "category": "Rechnung",
+   "label": "Währung",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_TABELLE",
+   "category": "Rechnung",
+   "label": "Positionstabelle",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_GIROCODE",
+   "category": "Rechnung",
+   "label": "GiroCode",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_ABSAN",
+   "category": "Rechnung",
+   "label": "Absender: Anzeigename",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_ABSEMAIL",
+   "category": "Rechnung",
+   "label": "Absender: E-Mail",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_ABSKRZ",
+   "category": "Rechnung",
+   "label": "Absender: Kürzel",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_ABSVORNAME",
+   "category": "Rechnung",
+   "label": "Absender: Vorname",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_ABSNAME",
+   "category": "Rechnung",
+   "label": "Absender: Name",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_ABSUNTERNEHMEN",
+   "category": "Rechnung",
+   "label": "Absender: Unternehmen",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_ABSFKT",
+   "category": "Rechnung",
+   "label": "Absender: Funktion",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_ABSSTRASSE",
+   "category": "Rechnung",
+   "label": "Absender: Straße",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_ABSZUSATZ",
+   "category": "Rechnung",
+   "label": "Absender: Adresszusatz",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_ABSPLZ",
+   "category": "Rechnung",
+   "label": "Absender: PLZ",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_ABSORT",
+   "category": "Rechnung",
+   "label": "Absender: Ort",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_ABSLAND",
+   "category": "Rechnung",
+   "label": "Absender: Land",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_ABSTEL",
+   "category": "Rechnung",
+   "label": "Absender: Telefon",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_ABSFAX",
+   "category": "Rechnung",
+   "label": "Absender: Fax",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_ABSMOBIL",
+   "category": "Rechnung",
+   "label": "Absender: Mobil",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_ABSWWW",
+   "category": "Rechnung",
+   "label": "Absender: Homepage",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_ABSBANK",
+   "category": "Rechnung",
+   "label": "Absender: Bank",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_ABSBIC",
+   "category": "Rechnung",
+   "label": "Absender: BIC",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_ABSIBAN",
+   "category": "Rechnung",
+   "label": "Absender: IBAN",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_ABSSTEUERNR",
+   "category": "Rechnung",
+   "label": "Absender: Steuernummer",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_ABSUSTIDNR",
+   "category": "Rechnung",
+   "label": "Absender: USt-IdNr.",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BELP_NR",
+   "category": "Rechnungsposition",
+   "label": "Positionsnummer",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BELP_NAME",
+   "category": "Rechnungsposition",
+   "label": "Bezeichnung",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BELP_BESCHR",
+   "category": "Rechnungsposition",
+   "label": "Beschreibung",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BELP_MENGE",
+   "category": "Rechnungsposition",
+   "label": "Menge",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BELP_EINZEL",
+   "category": "Rechnungsposition",
+   "label": "Einzelpreis",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BELP_UST",
+   "category": "Rechnungsposition",
+   "label": "USt-Satz",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BELP_NETTO",
+   "category": "Rechnungsposition",
+   "label": "Gesamt netto",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_SUM_NETTO",
+   "category": "Rechnung",
+   "label": "Summe netto",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_UST_SATZ",
+   "category": "Rechnung",
+   "label": "USt-Satz",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "BEL_UST_BETRAG",
+   "category": "Rechnung",
+   "label": "USt-Betrag",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "ZE_TABELLE",
+   "category": "Zeiterfassung",
+   "label": "Tabelle der Zeiteinträge",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "ZE_SUMMEN",
+   "category": "Zeiterfassung",
+   "label": "Summentabelle",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "INGO_TEXT",
+   "category": "Ingo",
+   "label": "von Ingo erzeugter Text",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "CURSOR",
+   "category": "E-Mail",
+   "label": "Cursorposition nach dem Einfügen",
+   "alias_of": null,
+   "in_documents": false
+  },
+  {
+   "name": "CLOUD_LINK",
+   "category": "E-Mail",
+   "label": "Cloud-Link (nur E-Mail)",
+   "alias_of": null,
+   "in_documents": false
+  }
+ ],
+ "party_suffixes": [
+  {
+   "suffix": "NAME",
+   "label": "Name",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "VORNAME",
+   "label": "Vorname",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "VORNAME2",
+   "label": "weitere Vornamen",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "UNTERNEHMEN",
+   "label": "Unternehmen",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "FIRMA",
+   "label": "Unternehmen",
+   "alias_of": "UNTERNEHMEN",
+   "in_documents": true
+  },
+  {
+   "suffix": "ABTLG",
+   "label": "Abteilung",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "ANREDE1",
+   "label": "Anrede",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "TITEL",
+   "label": "Anrede",
+   "alias_of": "ANREDE1",
+   "in_documents": true
+  },
+  {
+   "suffix": "BEGRUESSUNG",
+   "label": "Begrüßung",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "ANREDE",
+   "label": "Begrüßung",
+   "alias_of": "BEGRUESSUNG",
+   "in_documents": true
+  },
+  {
+   "suffix": "NACHTEXT",
+   "label": "Nachtext / Grußformel",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "STRASSE",
+   "label": "Straße",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "ORT",
+   "label": "Ort",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "PLZ",
+   "label": "PLZ",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "LAND",
+   "label": "Land",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "BLAND",
+   "label": "Bundesland",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "TEL",
+   "label": "Telefon",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "MOBIL",
+   "label": "Mobil",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "FAX",
+   "label": "Fax",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "EMAIL",
+   "label": "E-Mail",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "WWW",
+   "label": "Homepage",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "BANK",
+   "label": "Bank",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "BLZ",
+   "label": "BIC",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "KONTONR",
+   "label": "IBAN",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "SEPAREF",
+   "label": "SEPA-Mandatsreferenz",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "SEPASEIT",
+   "label": "SEPA-Mandat vom",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "RECHTSSCHUTZ",
+   "label": "Rechtsschutz: Versicherungsschein",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "VRECHTSSCHUTZ",
+   "label": "Verkehrsrechtsschutz: Versicherungsschein",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "KFZVERS",
+   "label": "Kfz-Versicherung: Versicherungsschein",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "EIGENE1",
+   "label": "Eigenes Feld 1",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "EIGENE2",
+   "label": "Eigenes Feld 2",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "EIGENE3",
+   "label": "Eigenes Feld 3",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "GEB",
+   "label": "Geburtsdatum",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "AKTE_ZEICHEN",
+   "label": "Zeichen des Beteiligten",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "AKTE_KONTAKT",
+   "label": "Kontakt / Ansprechpartner",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "AKTE_EIGENE1",
+   "label": "Beteiligung: Eigenes Feld 1",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "AKTE_EIGENE2",
+   "label": "Beteiligung: Eigenes Feld 2",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "AKTE_EIGENE3",
+   "label": "Beteiligung: Eigenes Feld 3",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "ORTSTEIL",
+   "label": "Ortsteil",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "NOTIZ",
+   "label": "Notiz",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "STA",
+   "label": "Staatsangehörigkeit",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "GEBNAME",
+   "label": "Geburtsname",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "GEBORT",
+   "label": "Geburtsort",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "GEST",
+   "label": "Sterbedatum",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "USTIDNR",
+   "label": "USt-ID",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "STEUERNR",
+   "label": "Steuernummer",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "RFORM",
+   "label": "Rechtsform",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "REGNR",
+   "label": "Registernummer",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "REGGERICHT",
+   "label": "Registergericht",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "GESCHLECHT",
+   "label": "Geschlecht",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "HAUSNR",
+   "label": "Hausnummer",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "INITIAL",
+   "label": "Initialen",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "AGRAD1",
+   "label": "akad. Grad vor dem Namen",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "AGRAD2",
+   "label": "akad. Grad nach dem Namen",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "BERUF",
+   "label": "Beruf",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "FKT",
+   "label": "Funktion",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "ZUSATZ",
+   "label": "Adresszusatz",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "ANREDE2",
+   "label": "Anrede Briefkopf",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "suffix": "ALTER",
+   "label": "Alter",
+   "alias_of": null,
+   "in_documents": true
+  }
+ ],
+ "default_party_prefixes": [
+  "MANDANT",
+  "GEGNER",
+  "DRITTE"
+ ],
+ "table_placeholders": {
+  "TABELLE_1": {
+   "columns": [
+    1
+   ],
+   "note": "Ergebnistabelle aus Berechnungs-Plugins (z.B. RVG)"
+  },
+  "BEL_GIROCODE": {
+   "columns": [
+    1
+   ],
+   "note": "GiroCode-Grafik des Belegs"
+  },
+  "BEL_TABELLE": {
+   "columns": [
+    1,
+    6
+   ],
+   "note": "Positionstabelle, 1x1 oder exakt 6 Spalten"
+  },
+  "ZE_TABELLE": {
+   "columns": [
+    1,
+    6
+   ],
+   "note": "Leistungsnachweis, 1x1 oder exakt 6 Spalten"
+  },
+  "ZE_SUMMEN": {
+   "columns": [
+    1,
+    3
+   ],
+   "note": "Zeitsummen pro Person, 1x1 oder exakt 3 Spalten"
+  }
+ },
+ "row_placeholder_prefixes": [
+  "BELP_",
+  "BEL_UST_"
+ ],
+ "documented_unsupported": {
+  "AUTOR_AN": "im Handbuch genannt, wird vom Server aber nicht ersetzt",
+  "AUTOR_KRZ": "im Handbuch genannt, wird vom Server aber nicht ersetzt",
+  "AUTOR_EMAIL": "im Handbuch genannt, wird vom Server aber nicht ersetzt"
+ },
+ "functions": [
+  {
+   "name": "DATUMZEIT",
+   "arities": [
+    1
+   ],
+   "params": [
+    "format"
+   ]
+  },
+  {
+   "name": "FRIST",
+   "arities": [
+    2,
+    3
+   ],
+   "params": [
+    "fromDate",
+    "addDays",
+    "format"
+   ]
+  },
+  {
+   "name": "FRISTBANKTAG",
+   "arities": [
+    2,
+    3
+   ],
+   "params": [
+    "fromDate",
+    "addDays",
+    "format"
+   ]
+  },
+  {
+   "name": "GENDERN",
+   "arities": [
+    3
+   ],
+   "params": [
+    "word",
+    "gender",
+    "inCase"
+   ]
+  },
+  {
+   "name": "GROSS",
+   "arities": [
+    1
+   ],
+   "params": [
+    "s1"
+   ]
+  },
+  {
+   "name": "KLEIN",
+   "arities": [
+    1
+   ],
+   "params": [
+    "s1"
+   ]
+  },
+  {
+   "name": "LETIKETTWERT",
+   "arities": [
+    1
+   ],
+   "params": [
+    "etikett"
+   ]
+  },
+  {
+   "name": "MWDJU",
+   "arities": [
+    6
+   ],
+   "params": [
+    "gender",
+    "male",
+    "female",
+    "other",
+    "org",
+    "undef"
+   ]
+  },
+  {
+   "name": "TEXT",
+   "arities": [
+    1
+   ],
+   "params": [
+    "s1"
+   ]
+  },
+  {
+   "name": "WENNENTHAELT",
+   "arities": [
+    3,
+    4
+   ],
+   "params": [
+    "s1",
+    "s2",
+    "then",
+    "otherwise"
+   ]
+  },
+  {
+   "name": "WENNETIKETT",
+   "arities": [
+    2,
+    3
+   ],
+   "params": [
+    "etikett",
+    "then",
+    "otherwise"
+   ]
+  },
+  {
+   "name": "WENNFALLDATEN",
+   "arities": [
+    2,
+    3
+   ],
+   "params": [
+    "s1",
+    "then",
+    "otherwise"
+   ]
+  },
+  {
+   "name": "WENNGLEICH",
+   "arities": [
+    3,
+    4
+   ],
+   "params": [
+    "s1",
+    "s2",
+    "then",
+    "otherwise"
+   ]
+  },
+  {
+   "name": "WENNGROESSER",
+   "arities": [
+    3,
+    4
+   ],
+   "params": [
+    "s1",
+    "s2",
+    "then",
+    "otherwise"
+   ]
+  },
+  {
+   "name": "WENNLEER",
+   "arities": [
+    2,
+    3
+   ],
+   "params": [
+    "s1",
+    "then",
+    "otherwise"
+   ]
+  },
+  {
+   "name": "WENNLETIKETT",
+   "arities": [
+    3,
+    4
+   ],
+   "params": [
+    "etikett",
+    "wert",
+    "then",
+    "otherwise"
+   ]
+  },
+  {
+   "name": "ZUORDNEN",
+   "arities": [
+    2,
+    3,
+    4
+   ],
+   "params": [
+    "table",
+    "key1",
+    "key2",
+    "key3"
+   ]
+  }
+ ]
+}
