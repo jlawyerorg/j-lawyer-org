@@ -47,6 +47,7 @@ public class AiCapability implements Serializable {
     private String configurationValues;
     private String systemPrompt;
     private String subMenu;
+    private boolean anonymize=false;
 
     private Prompt defaultPrompt=null;
 
@@ -95,6 +96,7 @@ public class AiCapability implements Serializable {
         clone.configurationValues=configurationValues;
         clone.systemPrompt=systemPrompt;
         clone.subMenu=subMenu;
+        clone.anonymize=anonymize;
         return clone;
     }
     
@@ -353,6 +355,38 @@ public class AiCapability implements Serializable {
      */
     public void setSubMenu(String subMenu) {
         this.subMenu = subMenu;
+    }
+
+    /**
+     * @return true if personal data is to be anonymized before a request of this capability is
+     * sent to the AI provider. Only set for entries derived from a custom prompt.
+     */
+    public boolean isAnonymize() {
+        return anonymize;
+    }
+
+    /**
+     * @param anonymize the anonymize to set
+     */
+    public void setAnonymize(boolean anonymize) {
+        this.anonymize = anonymize;
+    }
+
+    /**
+     * Returns true if this capability takes file inputs (audio, images, PDF documents). File
+     * inputs cannot be anonymized.
+     * @return true if one of the inputs is of type FILE
+     */
+    public boolean hasFileInput() {
+        if (input == null) {
+            return false;
+        }
+        for (Input i : input) {
+            if (i != null && i.getId() != null && i.getId().contains(INPUTTYPE_FILE)) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

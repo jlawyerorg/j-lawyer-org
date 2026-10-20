@@ -154,6 +154,7 @@ public class AssistantGenericPanel extends JDialog {
     private JButton cmdProcessOutput;
     private JButton cmdCopy;
     private JLabel lblSupportsTools;
+    private AnonymizationStatusLabel lblAnonymization;
     private JPanel pnlPlaceholder;
     private JPanel bottomPanel;
     private JPopupMenu popInputText;
@@ -273,18 +274,18 @@ public class AssistantGenericPanel extends JDialog {
         this.lblRequestType.setText(c.getName() + " (" + c.getDescription() + ")");
 
         this.lblSupportsTools.setIcon(new ImageIcon(getClass().getResource("/icons16/material/smart_toy_20dp_DE313B_FILL0_wght400_GRAD0_opsz20.png")));
-        this.lblSupportsTools.setText("nicht agentenfähig");
-        this.lblSupportsTools.setToolTipText("keine Werkzeugunterstützung");
+        this.lblSupportsTools.setToolTipText("nicht agentenfähig - keine Werkzeugunterstützung");
 
         if (AiCapability.REQUESTTYPE_CHAT.equals(c.getRequestType()) && c.getModelRef() != null) {
             if (this.modelSupportsTools) {
                 this.lblSupportsTools.setIcon(new ImageIcon(getClass().getResource("/icons16/material/smart_toy_20dp_97BF0D_FILL0_wght400_GRAD0_opsz20.png")));
-                this.lblSupportsTools.setText("agentenfähig");
-                this.lblSupportsTools.setToolTipText("unterstützt Werkzeuge");
+                this.lblSupportsTools.setToolTipText("agentenfähig - unterstützt Werkzeuge");
             }
         }
         this.lblSupportsTools.revalidate();
         this.lblSupportsTools.repaint();
+
+        this.lblAnonymization.setup(config, c.isAnonymize());
 
         if (this.modelSupportsTools) {
             pnlPlaceholder = new JPanel(new GridBagLayout());
@@ -461,6 +462,8 @@ public class AssistantGenericPanel extends JDialog {
         pnlCenterTitle.setLayout(new BoxLayout(pnlCenterTitle, BoxLayout.X_AXIS));
         pnlCenterTitle.add(lblRequestType);
         pnlCenterTitle.add(lblSupportsTools);
+        lblAnonymization = new AnonymizationStatusLabel();
+        pnlCenterTitle.add(lblAnonymization);
         pnlCenterTitle.add(Box.createHorizontalGlue());
         pnlTitle.add(pnlCenterTitle, BorderLayout.CENTER);
 
@@ -833,13 +836,22 @@ public class AssistantGenericPanel extends JDialog {
                     if (capability.getConfigurationValues() != null && !capability.getConfigurationValues().isEmpty()) {
                         promptConfigs = ConfigurationUtils.fromProperties(capability.getConfigurationValues());
                     }
-                    AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getActionId(), capability.getModelRef(), taPrompt.getText(), capability.getSystemPrompt(), capability.isAsyncRecommended(), fParams, inputs, null, promptConfigs, null);
+                    boolean anonymize = capability.isAnonymize();
+                    if (anonymize && AssistantAccess.containsFileInputs(inputs)) {
+                        throw new Exception(AssistantAccess.MSG_ANONYMIZE_FILES);
+                    }
+                    // single request: a new conversation for each request
+                    String conversationId = anonymize ? AssistantAccess.newConversationId() : null;
+                    lblAnonymization.requestStarted(conversationId);
+                    AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getActionId(), capability.getModelRef(), taPrompt.getText(), capability.getSystemPrompt(), capability.isAsyncRecommended(), fParams, inputs, null, promptConfigs, null, anonymize, conversationId);
                     if (status.isAsync()) {
                         Thread.sleep(1000);
                         AiResponse res = locator.lookupIntegrationServiceRemote().getAssistantRequestStatus(config, status.getRequestId());
+                        lblAnonymization.updateProgress(res, progress);
                         while (res.getStatus().equals(AiResponse.STATUS_EXECUTING)) {
                             Thread.sleep(1000);
                             res = locator.lookupIntegrationServiceRemote().getAssistantRequestStatus(config, status.getRequestId());
+                            lblAnonymization.updateProgress(res, progress);
                             StringBuilder resultString = new StringBuilder();
                             for (OutputData o : res.getOutputData()) {
                                 if (o.getType().equalsIgnoreCase(OutputData.TYPE_STRING)) {
@@ -910,7 +922,7 @@ public class AssistantGenericPanel extends JDialog {
                         int savedScrollPosition = currentValue;
 
                         AiChatMessageMarkdownPanel incomingMsgPanel = incomingMessageRef.get();
-                        incomingMsgPanel.getMessage().setContent(status.getStatus() + ": " + status.getStatusDetails());
+                        incomingMsgPanel.getMessage().setContent(AssistantAccess.getErrorMessage(status, capability.isAnonymize()));
                         incomingMsgPanel.setMessage(incomingMsgPanel.getMessage(), owner);
                         incomingMsgPanel.repaint();
                         incomingMsgPanel.updateUI();
@@ -956,6 +968,7 @@ public class AssistantGenericPanel extends JDialog {
                     }
                 }
 
+                lblAnonymization.requestFinished(status == null || status.isError());
                 progress.setIndeterminate(false);
                 progress.setVisible(false);
                 taPrompt.setText("");

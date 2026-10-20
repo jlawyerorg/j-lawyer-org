@@ -697,6 +697,8 @@ public class AssistantPrompt implements Serializable {
     private String systemPrompt;
     @Column(name = "sub_menu")
     private String subMenu;
+    @Column(name = "anonymize")
+    private boolean anonymize = false;
 
     public AssistantPrompt() {
     }
@@ -837,6 +839,21 @@ public class AssistantPrompt implements Serializable {
      */
     public void setSubMenu(String subMenu) {
         this.subMenu = subMenu;
+    }
+
+    /**
+     * @return true if personal data is to be anonymized before the request is sent to the AI
+     * provider
+     */
+    public boolean isAnonymize() {
+        return anonymize;
+    }
+
+    /**
+     * @param anonymize whether personal data is to be anonymized before sending
+     */
+    public void setAnonymize(boolean anonymize) {
+        this.anonymize = anonymize;
     }
 
 }

@@ -950,6 +950,9 @@ public class MetadataSuggester {
         }
 
         IntegrationServiceRemote integration = locator.lookupIntegrationServiceRemote();
+        // single request: a new conversation for each request
+        boolean anonymize = capability.isAnonymize();
+        String conversationId = anonymize ? AssistantAccess.newConversationId() : null;
         AiRequestStatus status;
         if (AiCapability.REQUESTTYPE_EXTRACT.equals(requestType)) {
             List<InputData> inputs = new ArrayList<>();
@@ -957,14 +960,14 @@ public class MetadataSuggester {
             input.setType(InputData.TYPE_STRING);
             input.setStringData(context.toString());
             inputs.add(input);
-            status = integration.submitAssistantRequest(config, capability.getRequestType(), capability.getActionId(), capability.getModelRef(), promptText, capability.getSystemPrompt(), capability.isAsyncRecommended(), null, inputs, null, promptConfigs, null);
+            status = integration.submitAssistantRequest(config, capability.getRequestType(), capability.getActionId(), capability.getModelRef(), promptText, capability.getSystemPrompt(), capability.isAsyncRecommended(), null, inputs, null, promptConfigs, null, anonymize, conversationId);
         } else {
             List<Message> messages = new ArrayList<>();
             Message m = new Message();
             m.setRole(Message.ROLE_USER);
             m.setContent(promptText + System.lineSeparator() + System.lineSeparator() + context);
             messages.add(m);
-            status = integration.submitAssistantRequest(config, capability.getRequestType(), capability.getActionId(), capability.getModelRef(), m.getContent(), capability.getSystemPrompt(), capability.isAsyncRecommended(), null, null, messages, promptConfigs, null);
+            status = integration.submitAssistantRequest(config, capability.getRequestType(), capability.getActionId(), capability.getModelRef(), m.getContent(), capability.getSystemPrompt(), capability.isAsyncRecommended(), null, null, messages, promptConfigs, null, anonymize, conversationId);
         }
 
         AiResponse response = status.getResponse();
@@ -974,8 +977,11 @@ public class MetadataSuggester {
                 Thread.sleep(1000);
                 response = integration.getAssistantRequestStatus(config, status.getRequestId());
             }
+            if (anonymize && AiResponse.STATUS_FAILED.equals(response.getStatus())) {
+                throw new Exception(AssistantAccess.getErrorMessage(AssistantAccess.errorStatus(response.getStatusMessage()), true));
+            }
         } else if (status.isError()) {
-            throw new Exception(status.getStatus() + ": " + status.getStatusDetails());
+            throw new Exception(AssistantAccess.getErrorMessage(status, anonymize));
         }
         if (response == null) {
             return "";

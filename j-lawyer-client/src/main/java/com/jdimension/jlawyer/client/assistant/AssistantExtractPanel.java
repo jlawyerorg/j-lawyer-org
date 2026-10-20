@@ -55,6 +55,7 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JProgressBar;
@@ -110,6 +111,7 @@ public class AssistantExtractPanel extends JDialog {
     // UI components
     private JPanel pnlTitle;
     private JLabel lblRequestType;
+    private AnonymizationStatusLabel lblAnonymization;
     private JComboBox<String> cmbDevices;
     private JLabel lblContextToggle;
     private JPanel pnlContextContent;
@@ -166,6 +168,7 @@ public class AssistantExtractPanel extends JDialog {
         }
 
         this.lblRequestType.setText(c.getName() + " (" + c.getDescription() + ")");
+        this.lblAnonymization.setup(config, c.isAnonymize());
 
         this.taInputString.setText("");
 
@@ -266,7 +269,14 @@ public class AssistantExtractPanel extends JDialog {
         lblRequestType.setFont(lblRequestType.getFont().deriveFont(lblRequestType.getFont().getStyle() | java.awt.Font.BOLD, lblRequestType.getFont().getSize() + 2));
         lblRequestType.setForeground(Color.WHITE);
         lblRequestType.setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 0));
-        pnlTitle.add(lblRequestType, BorderLayout.CENTER);
+        lblAnonymization = new AnonymizationStatusLabel();
+        JPanel pnlCenterTitle = new JPanel();
+        pnlCenterTitle.setOpaque(false);
+        pnlCenterTitle.setLayout(new BoxLayout(pnlCenterTitle, BoxLayout.X_AXIS));
+        pnlCenterTitle.add(lblRequestType);
+        pnlCenterTitle.add(lblAnonymization);
+        pnlCenterTitle.add(Box.createHorizontalGlue());
+        pnlTitle.add(pnlCenterTitle, BorderLayout.CENTER);
 
         JPanel pnlTitleButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 4, 0));
         pnlTitleButtons.setOpaque(false);
@@ -574,13 +584,22 @@ public class AssistantExtractPanel extends JDialog {
                     if (capability.getConfigurationValues() != null && !capability.getConfigurationValues().isEmpty()) {
                         promptConfigs = ConfigurationUtils.fromProperties(capability.getConfigurationValues());
                     }
-                    AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getActionId(), capability.getModelRef(), taPrompt.getText(), capability.getSystemPrompt(), capability.isAsyncRecommended(), fParams, inputs, null, promptConfigs, null);
+                    boolean anonymize = capability.isAnonymize();
+                    if (anonymize && AssistantAccess.containsFileInputs(inputs)) {
+                        throw new Exception(AssistantAccess.MSG_ANONYMIZE_FILES);
+                    }
+                    // single request: a new conversation for each request
+                    String conversationId = anonymize ? AssistantAccess.newConversationId() : null;
+                    lblAnonymization.requestStarted(conversationId);
+                    AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getActionId(), capability.getModelRef(), taPrompt.getText(), capability.getSystemPrompt(), capability.isAsyncRecommended(), fParams, inputs, null, promptConfigs, null, anonymize, conversationId);
                     if (status.isAsync()) {
                         Thread.sleep(1000);
                         AiResponse res = locator.lookupIntegrationServiceRemote().getAssistantRequestStatus(config, status.getRequestId());
+                        lblAnonymization.updateProgress(res, progress);
                         while (res.getStatus().equals(AiResponse.STATUS_EXECUTING)) {
                             Thread.sleep(1000);
                             res = locator.lookupIntegrationServiceRemote().getAssistantRequestStatus(config, status.getRequestId());
+                            lblAnonymization.updateProgress(res, progress);
 
                             if (interrupted) {
                                 break;
@@ -610,7 +629,11 @@ public class AssistantExtractPanel extends JDialog {
                 result = status;
                 if (status != null) {
                     if (status.isError()) {
-                        // error is silently ignored as in the original dialog
+                        // error is silently ignored as in the original dialog - except for anonymized
+                        // requests, where the user must learn that nothing has been processed
+                        if (capability.isAnonymize()) {
+                            JOptionPane.showMessageDialog(AssistantExtractPanel.this, AssistantAccess.getErrorMessage(status, true), DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                        }
                     } else {
                         StringBuilder resultString = new StringBuilder();
                         for (OutputData o : status.getResponse().getOutputData()) {
@@ -643,6 +666,7 @@ public class AssistantExtractPanel extends JDialog {
                     }
                 }
 
+                lblAnonymization.requestFinished(status == null || status.isError());
                 progress.setIndeterminate(false);
                 progress.setVisible(false);
 

@@ -69,6 +69,7 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
     private JPanel pnlConfig;
     private JLabel lblDeductTokens;
     private JLabel lblSupportsTools;
+    private JCheckBox chkAnonymize;
     private JTextArea taModelDescription;
     private JButton cmdAdd;
     private JButton cmdRemove;
@@ -153,6 +154,7 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
         ComponentUtils.autoSizeColumns(tblPrompts);
 
         this.cmbRequestType.addActionListener(e -> {
+            updateAnonymizeCheckBox();
             if (!updatingUI) {
                 updateModelComboBox();
             }
@@ -210,6 +212,26 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
         return subMenu.isEmpty() ? null : subMenu;
     }
 
+    /**
+     * Request types that always work on files (audio, images, PDF documents). Files cannot be
+     * anonymized, so the option is not offered for these.
+     */
+    private static boolean isFileRequestType(Object requestType) {
+        return AiCapability.REQUESTTYPE_TRANSCRIBE.equals(requestType) || AiCapability.REQUESTTYPE_VISION.equals(requestType);
+    }
+
+    private void updateAnonymizeCheckBox() {
+        boolean fileBased = isFileRequestType(this.cmbRequestType.getSelectedItem());
+        this.chkAnonymize.setEnabled(!fileBased);
+        if (fileBased) {
+            this.chkAnonymize.setSelected(false);
+        }
+    }
+
+    private boolean isAnonymizeSelected() {
+        return this.chkAnonymize.isSelected() && !isFileRequestType(this.cmbRequestType.getSelectedItem());
+    }
+
     private void resetDetails() {
         updatingUI = true;
         this.txtName.setText("");
@@ -221,6 +243,8 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
         this.cmbModel.addItem(MODEL_DEFAULT);
         this.taPrompt.setText("");
         this.taSystemPrompt.setText("");
+        this.chkAnonymize.setSelected(false);
+        updateAnonymizeCheckBox();
         clearConfigPanel();
         updateDeductTokensLabel();
         updatingUI = false;
@@ -404,6 +428,8 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
         this.cmbRequestType.setSelectedItem(ap.getRequestType());
         this.taPrompt.setText(ap.getPrompt());
         this.taSystemPrompt.setText(ap.getSystemPrompt() != null ? ap.getSystemPrompt() : "");
+        this.chkAnonymize.setSelected(ap.isAnonymize());
+        updateAnonymizeCheckBox();
         updatingUI = false;
 
         // Update model combo for this request type
@@ -602,6 +628,9 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
         lblSupportsTools.setFont(lblSupportsTools.getFont().deriveFont(lblSupportsTools.getFont().getSize() - 2f));
         lblSupportsTools.setForeground(new java.awt.Color(153, 153, 153));
 
+        chkAnonymize = new JCheckBox("Anonymisieren");
+        chkAnonymize.setToolTipText("<html>Personenbezogene Daten werden vor dem Versand an das KI-Modell durch Platzhalter ersetzt<br/>und in der Antwort wiederhergestellt. Sinnvoll vor allem f\u00fcr externe Modelle;<br/>bei lokalen Modellen kostet die Option nur Laufzeit. Die Erkennung verbraucht Tokens.<br/>Nicht verf\u00fcgbar f\u00fcr Funktionen mit Dateien (Audio, Bild, PDF).</html>");
+
         JLabel jLabelModelDesc = new JLabel();
         taModelDescription = new JTextArea();
         taModelDescription.setColumns(20);
@@ -658,6 +687,7 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
                                                                 .addComponent(lblDeductTokens)
                                                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                                                 .addComponent(lblSupportsTools))
+                                                        .addComponent(chkAnonymize)
                                                         .addComponent(jScrollPaneModelDesc)))
                                         .addComponent(configScrollPane)
                                         .addGroup(layout.createSequentialGroup()
@@ -698,6 +728,8 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
                                                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
                                                         .addComponent(lblDeductTokens)
                                                         .addComponent(lblSupportsTools))
+                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(chkAnonymize)
                                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                                                         .addComponent(jScrollPaneModelDesc, GroupLayout.PREFERRED_SIZE, 80, GroupLayout.PREFERRED_SIZE)
@@ -773,6 +805,7 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
                 ap.setModelRef(selectedModel);
             }
             ap.setConfiguration(collectConfigValues());
+            ap.setAnonymize(isAnonymizeSelected());
 
             AssistantPrompt savedPrompt = locator.lookupIntegrationServiceRemote().addAssistantPrompt(ap);
             AssistantAccess.getInstance().flushCustomPrompts();
@@ -812,6 +845,7 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
             // Configuration
             String configStr = collectConfigValues();
             ap.setConfiguration(configStr.isEmpty() ? null : configStr);
+            ap.setAnonymize(isAnonymizeSelected());
 
             ClientSettings settings = ClientSettings.getInstance();
             try {
@@ -874,6 +908,7 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
             ap.setSystemPrompt(source.getSystemPrompt());
             ap.setModelRef(source.getModelRef());
             ap.setConfiguration(source.getConfiguration());
+            ap.setAnonymize(source.isAnonymize());
 
             AssistantPrompt savedPrompt = locator.lookupIntegrationServiceRemote().addAssistantPrompt(ap);
             AssistantAccess.getInstance().flushCustomPrompts();
@@ -906,6 +941,7 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
         json.put("prompt", ap.getPrompt());
         json.put("systemPrompt", ap.getSystemPrompt());
         json.put("modelRef", ap.getModelRef());
+        json.put("anonymize", ap.isAnonymize());
 
         String configuration = ap.getConfiguration();
         if (configuration != null && !configuration.isEmpty()) {
@@ -1013,6 +1049,9 @@ public class AssistantPromptV2SetupDialog extends javax.swing.JDialog {
             if (configuration != null && !configuration.isEmpty()) {
                 ap.setConfiguration(configuration);
             }
+
+            Object anonymize = json.get("anonymize");
+            ap.setAnonymize(Boolean.TRUE.equals(anonymize) && !isFileRequestType(requestType));
 
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());

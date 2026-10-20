@@ -1255,7 +1255,9 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
                         if (generateCapability.getConfigurationValues() != null && !generateCapability.getConfigurationValues().isEmpty()) {
                             promptConfigs = ConfigurationUtils.fromProperties(generateCapability.getConfigurationValues());
                         }
-                        AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(generateConfig, generateCapability.getRequestType(), generateCapability.getActionId(), generateCapability.getModelRef(), taPrompt.getText(), generateCapability.getSystemPrompt(), generateCapability.isAsyncRecommended(), fParams, inputs, null, promptConfigs, null);
+                        // single request: a new conversation for each request
+                        String conversationId = generateCapability.isAnonymize() ? AssistantAccess.newConversationId() : null;
+                        AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(generateConfig, generateCapability.getRequestType(), generateCapability.getActionId(), generateCapability.getModelRef(), taPrompt.getText(), generateCapability.getSystemPrompt(), generateCapability.isAsyncRecommended(), fParams, inputs, null, promptConfigs, null, generateCapability.isAnonymize(), conversationId);
                         if (status.isAsync()) {
                             Thread.sleep(1000);
                             // poll until final result is available
@@ -1279,6 +1281,10 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
                             status.setStatus(res.getStatus());
                             status.setStatusDetails(res.getStatusMessage());
                             status.setResponse(res);
+                            if (status.isError()) {
+                                // the output has already been streamed into the result, only errors are left to show
+                                resultRef.set(status);
+                            }
                         } else {
                             resultRef.set(status);
                         }
@@ -1301,7 +1307,7 @@ public class AssistantGenerateDialog extends javax.swing.JDialog implements Assi
                     AiRequestStatus status = resultRef.get();
                     if (status != null) {
                         if (status.isError()) {
-                            taResult.insert(status.getStatus() + ": " + status.getStatusDetails(), taResult.getCaretPosition());
+                            taResult.insert(AssistantAccess.getErrorMessage(status, generateCapability.isAnonymize()), taResult.getCaretPosition());
                         } else {
                             StringBuilder resultString = new StringBuilder();
                             for (OutputData o : status.getResponse().getOutputData()) {

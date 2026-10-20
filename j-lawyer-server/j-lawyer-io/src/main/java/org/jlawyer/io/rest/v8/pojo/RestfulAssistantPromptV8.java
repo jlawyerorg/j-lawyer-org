@@ -25,6 +25,8 @@ import com.jdimension.jlawyer.persistence.AssistantPrompt;
  * "eigene Prompts" dialog. Global (not per-user). {@code requestType} is one of the assistant
  * capabilities (transcribe / translate / summarize / explain / chat / vision / generate / extract);
  * {@code configuration} carries opaque per-model parameters (JSON, round-tripped verbatim).
+ * {@code anonymize} replaces personal data by placeholders before the request leaves for the AI
+ * provider; omitted (null) on create/update keeps the stored value (default: off).
  */
 public class RestfulAssistantPromptV8 {
 
@@ -35,6 +37,7 @@ public class RestfulAssistantPromptV8 {
     private String systemPrompt;
     private String modelRef;
     private String configuration;
+    private Boolean anonymize;
 
     public RestfulAssistantPromptV8() {
     }
@@ -48,6 +51,7 @@ public class RestfulAssistantPromptV8 {
         dto.systemPrompt = ap.getSystemPrompt();
         dto.modelRef = ap.getModelRef();
         dto.configuration = ap.getConfiguration();
+        dto.anonymize = ap.isAnonymize();
         return dto;
     }
 
@@ -59,6 +63,9 @@ public class RestfulAssistantPromptV8 {
         ap.setSystemPrompt(this.systemPrompt);
         ap.setModelRef(this.modelRef);
         ap.setConfiguration(this.configuration);
+        if (this.anonymize != null) {
+            ap.setAnonymize(this.anonymize);
+        }
     }
 
     public String getId() {
@@ -115,6 +122,14 @@ public class RestfulAssistantPromptV8 {
 
     public void setConfiguration(String configuration) {
         this.configuration = configuration;
+    }
+
+    public Boolean getAnonymize() {
+        return anonymize;
+    }
+
+    public void setAnonymize(Boolean anonymize) {
+        this.anonymize = anonymize;
     }
 
 }

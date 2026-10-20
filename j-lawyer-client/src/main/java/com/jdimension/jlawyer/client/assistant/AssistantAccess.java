@@ -690,6 +690,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import javax.json.Json;
@@ -789,6 +790,78 @@ public class AssistantAccess {
             Icon providerIcon = getProviderIcon(modelRef);
             return new CompoundIcon(typeIcon, providerIcon);
         });
+    }
+
+    public static final String MSG_ANONYMIZE_FILES = "Dateien (Audio, Bild, PDF) können nicht anonymisiert werden. Die Anfrage wurde nicht gesendet.";
+
+    /**
+     * Creates a new conversation id for anonymized requests. Chats use one id for the whole
+     * session, single requests a new one per request.
+     *
+     * @return a random UUID
+     */
+    public static String newConversationId() {
+        return UUID.randomUUID().toString();
+    }
+
+    /**
+     * @param inputs request inputs, may be null
+     * @return true if any of the inputs is a file
+     */
+    public static boolean containsFileInputs(List<InputData> inputs) {
+        if (inputs == null) {
+            return false;
+        }
+        for (InputData in : inputs) {
+            if (in != null && InputData.TYPE_FILE.equalsIgnoreCase(in.getType())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @param details error message
+     * @return a request status in state ERROR
+     */
+    public static AiRequestStatus errorStatus(String details) {
+        AiRequestStatus status = new AiRequestStatus();
+        status.setStatus("ERROR");
+        status.setStatusDetails(details);
+        return status;
+    }
+
+    /**
+     * Returns a user facing error message for a failed request. For anonymized requests, the
+     * typical failures (anonymization not available, anonymization failed, AI server too old)
+     * are explained - in neither case was any data sent to the AI provider.
+     *
+     * @param status the failed request status
+     * @param anonymize whether the request was to be anonymized
+     * @return the message to display
+     */
+    public static String getErrorMessage(AiRequestStatus status, boolean anonymize) {
+        String details = status.getStatusDetails() != null ? status.getStatusDetails() : "";
+        String defaultMessage = status.getStatus() + ": " + details;
+        if (!anonymize) {
+            return defaultMessage;
+        }
+        if (status.getHttpStatus() == 503 || details.startsWith("Anonymization is not available") || details.startsWith("Anonymisierung ist nicht verfügbar")) {
+            return "Die Anonymisierung ist auf dem KI-Server nicht verfügbar. Die Anfrage wurde nicht gesendet.\n\n(" + details + ")";
+        }
+        if (details.startsWith("Anonymisierung fehlgeschlagen")) {
+            return "Die Anonymisierung ist fehlgeschlagen - es wurden keine Daten an den KI-Anbieter übermittelt. Ein häufiger Grund ist ein zu geringes Token-Budget, da die Erkennung personenbezogener Daten Tokens verbraucht.\n\n(" + details + ")";
+        }
+        if (details.startsWith("De-Anonymisierung fehlgeschlagen")) {
+            return "Die Antwort des KI-Anbieters konnte nicht de-anonymisiert werden.\n\n(" + details + ")";
+        }
+        if (status.getHttpStatus() == 400 && !details.contains("anonymi") && !details.contains("File inputs")) {
+            return "Der KI-Server hat die Anfrage abgelehnt. Möglicherweise unterstützt er noch keine Anonymisierung (Version zu alt). Die Anfrage wurde nicht gesendet.\n\n(" + details + ")";
+        }
+        if (details.startsWith("File inputs cannot be anonymized")) {
+            return MSG_ANONYMIZE_FILES;
+        }
+        return defaultMessage;
     }
 
     public void flushCustomPrompts() {
@@ -922,6 +995,8 @@ public class AssistantAccess {
                             clone.setSystemPrompt(p.getSystemPrompt());
                         }
                         clone.setSubMenu(p.getSubMenu());
+                        // files (audio, images, PDF) cannot be anonymized
+                        clone.setAnonymize(p.isAnonymize() && !clone.hasFileInput());
                         filtered.get(config).add(clone);
                     }
                 }
@@ -1121,6 +1196,13 @@ public class AssistantAccess {
         resolved.setConfigurationValues(chat.getConfigurationValues());
         if (chat.getCapabilityName() != null) {
             resolved.setName(chat.getCapabilityName());
+            // chats started from a custom prompt keep its anonymization setting
+            for (AssistantPrompt p : this.getCustomPrompts(chat.getRequestType())) {
+                if (chat.getCapabilityName().equals(p.getName())) {
+                    resolved.setAnonymize(p.isAnonymize() && !resolved.hasFileInput());
+                    break;
+                }
+            }
         }
         return resolved;
     }
@@ -1277,15 +1359,28 @@ public class AssistantAccess {
                         if (c.getConfigurationValues() != null && !c.getConfigurationValues().isEmpty()) {
                             promptConfigs = ConfigurationUtils.fromProperties(c.getConfigurationValues());
                         }
-                        AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, c.getRequestType(), c.getActionId(), c.getModelRef(), adapter.getPrompt(c), c.getSystemPrompt(), c.isAsyncRecommended(), params, adapter.getInputs(c), adapter.getMessages(c), promptConfigs, null);
+                        List<InputData> inputs = adapter.getInputs(c);
+                        if (c.isAnonymize() && containsFileInputs(inputs)) {
+                            adapter.processError(c, errorStatus(MSG_ANONYMIZE_FILES));
+                            return;
+                        }
+                        // single request: a new conversation for each request
+                        String conversationId = c.isAnonymize() ? newConversationId() : null;
+                        AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, c.getRequestType(), c.getActionId(), c.getModelRef(), adapter.getPrompt(c), c.getSystemPrompt(), c.isAsyncRecommended(), params, inputs, adapter.getMessages(c), promptConfigs, null, c.isAnonymize(), conversationId);
                         if (status.isError()) {
+                            if (c.isAnonymize()) {
+                                status.setStatusDetails(getErrorMessage(status, true));
+                            }
                             adapter.processError(c, status);
                         } else {
                             adapter.processOutput(c, status);
                         }
                     } catch (Exception ex) {
                         log.error("Error getting AI capabilities", ex);
-
+                        if (c.isAnonymize()) {
+                            // never fail silently when anonymization was requested
+                            adapter.processError(c, errorStatus(ex.getMessage()));
+                        }
                     }
                 });
                 return mi;

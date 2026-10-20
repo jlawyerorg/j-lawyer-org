@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.ai.AiRequestLog;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
 import com.jdimension.jlawyer.ai.AiResponse;
 import com.jdimension.jlawyer.ai.AiUser;
+import com.jdimension.jlawyer.ai.AnonymizationMapping;
 import com.jdimension.jlawyer.ai.AssistantAPI;
 import com.jdimension.jlawyer.ai.AssistantException;
 import com.jdimension.jlawyer.ai.ConfigurationData;
@@ -728,6 +729,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Resource;
 import javax.annotation.security.DeclareRoles;
@@ -1655,6 +1657,25 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     @RolesAllowed(value = {"loginRole"})
     @TransactionTimeout(value = 60, unit = TimeUnit.MINUTES)
     public AiRequestStatus submitAssistantRequest(AssistantConfig config, String requestType, String actionId, String model, String prompt, String systemPrompt, boolean asyncRecommended, List<ParameterData> params, List<InputData> inputs, List<Message> messages, List<ConfigurationData> promptConfigurations, List<ToolDefinition> tools) throws Exception {
+        return this.submitAssistantRequest(config, requestType, actionId, model, prompt, systemPrompt, asyncRecommended, params, inputs, messages, promptConfigurations, tools, false, null);
+    }
+
+    @Override
+    @RolesAllowed(value = {"loginRole"})
+    @TransactionTimeout(value = 60, unit = TimeUnit.MINUTES)
+    public AiRequestStatus submitAssistantRequest(AssistantConfig config, String requestType, String actionId, String model, String prompt, String systemPrompt, boolean asyncRecommended, List<ParameterData> params, List<InputData> inputs, List<Message> messages, List<ConfigurationData> promptConfigurations, List<ToolDefinition> tools, boolean anonymize, String conversationId) throws Exception {
+        if (anonymize) {
+            if (inputs != null) {
+                for (InputData in : inputs) {
+                    if (InputData.TYPE_FILE.equalsIgnoreCase(in.getType())) {
+                        throw new AssistantException("Dateien können nicht anonymisiert werden. Bitte die Anonymisierung für diesen Prompt deaktivieren oder Text statt einer Datei verwenden.");
+                    }
+                }
+            }
+            if (ServerStringUtils.isEmpty(conversationId)) {
+                conversationId = UUID.randomUUID().toString();
+            }
+        }
         List<AssistantConfig> configs = this.assistantFacade.findAll();
         CachingCrypto crypto = CryptoProvider.newCrypto();
         for (AssistantConfig c : configs) {
@@ -1683,7 +1704,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
                 }
                 configurations = new ArrayList<>(merged.values());
             }
-            AiRequestStatus status = api.submitRequest(requestType, actionId, model, prompt, systemPrompt, asyncRecommended, configurations, params, inputs, messages, tools);
+            AiRequestStatus status = api.submitRequest(requestType, actionId, model, prompt, systemPrompt, asyncRecommended, configurations, params, inputs, messages, tools, anonymize, conversationId);
 
             // perform replacements in case of transcription requests
             if (status.getResponse() != null && AiCapability.REQUESTTYPE_TRANSCRIBE.equals(status.getResponse().getRequestType()) && !status.getResponse().getOutputData().isEmpty()) {
@@ -1749,6 +1770,29 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         }
         throw new AssistantException("Kein Assistent für diese Anfrage gefunden.");
 
+    }
+
+    @Override
+    @RolesAllowed(value = {"loginRole"})
+    public List<AnonymizationMapping> getAssistantAnonymizationMappings(AssistantConfig config, String conversationId) throws Exception {
+        if (ServerStringUtils.isEmpty(conversationId)) {
+            return new ArrayList<>();
+        }
+        List<AssistantConfig> configs = this.assistantFacade.findAll();
+        CachingCrypto crypto = CryptoProvider.newCrypto();
+        for (AssistantConfig c : configs) {
+            if (!(c.getId().equals(config.getId()))) {
+                continue;
+            }
+            String pwd = c.getPassword();
+            if (pwd != null) {
+                pwd = crypto.decrypt(c.getPassword());
+            }
+
+            AssistantAPI api = new AssistantAPI(c.getUrl(), c.getUserName(), pwd, c.getConnectionTimeout(), c.getReadTimeout());
+            return api.getAnonymizationMappings(conversationId);
+        }
+        throw new AssistantException("Kein Assistent für diese Anfrage gefunden.");
     }
 
     @Override

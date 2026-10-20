@@ -664,6 +664,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.ai;
 
 import com.jdimension.jlawyer.fax.utils.Base64;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -721,7 +723,17 @@ public class AssistantAPI {
         return encoder.encode(authString.getBytes());
     }
 
-    public AiRequestStatus submitRequest(String requestType, String actionId, String model, String prompt, String systemPrompt, boolean asyncRecommended, List<ConfigurationData> configurations, List<ParameterData> params, List<InputData> inputs, List<Message> messages, List<ToolDefinition> tools) throws AssistantException {
+    /**
+     * Submits a request to j-lawyer.AI.
+     *
+     * @param anonymize true to have j-lawyer.AI replace personal data by placeholders before the
+     * request is forwarded to the AI provider. When false, neither "anonymize" nor
+     * "conversationId" is sent, so that older j-lawyer.AI versions (which reject unknown fields)
+     * keep working.
+     * @param conversationId identifies the conversation the anonymization mappings belong to;
+     * required when anonymize is true
+     */
+    public AiRequestStatus submitRequest(String requestType, String actionId, String model, String prompt, String systemPrompt, boolean asyncRecommended, List<ConfigurationData> configurations, List<ParameterData> params, List<InputData> inputs, List<Message> messages, List<ToolDefinition> tools, boolean anonymize, String conversationId) throws AssistantException {
         log.info("submitting j-lawyer.AI request");
 
         String authStringEnc = this.getAuthString();
@@ -829,6 +841,11 @@ public class AssistantAPI {
             jsonQuery.put("inputData", inputsArray);
         }
 
+        if (anonymize) {
+            jsonQuery.put("anonymize", true);
+            jsonQuery.put("conversationId", conversationId);
+        }
+
         String jsonBody = Jsoner.serialize(jsonQuery);
 
         try {
@@ -859,13 +876,26 @@ public class AssistantAPI {
                 key = Jsoner.mintJsonKey("async", null);
                 status.setAsync(result.getBooleanOrDefault(key));
 
-                key = Jsoner.mintJsonKey("status", null);
-                status.setStatus(result.getString(key));
-
-                key = Jsoner.mintJsonKey("statusDetails", null);
-                status.setStatusDetails(result.getString(key));
+                Object statusValue = result.get("status");
+                if (statusValue instanceof String) {
+                    status.setStatus((String) statusValue);
+                    key = Jsoner.mintJsonKey("statusDetails", null);
+                    status.setStatusDetails(result.getString(key));
+                } else {
+                    // not an AiRequestStatus, but a generic error body (e.g. Spring's default error JSON with a numeric status)
+                    status.setStatus("ERROR");
+                    Object details = result.get("message");
+                    if (details == null || details.toString().isEmpty()) {
+                        details = result.get("error");
+                    }
+                    status.setStatusDetails(details != null ? details.toString() : ("HTTP " + httpStatus));
+                }
 
                 if (httpStatus != 200 && httpStatus != 202) {
+                    status.setHttpStatus(httpStatus);
+                    if (status.getStatus() == null) {
+                        status.setStatus("ERROR");
+                    }
                     log.error("j-lawyer.AI request failed: " + status.getStatusDetails() + " [" + httpStatus + "]");
                     response.close();
                     return status;
@@ -1368,6 +1398,50 @@ public class AssistantAPI {
         }
         return resp;
 
+    }
+
+    /**
+     * Returns the replacements the anonymization made within a conversation. j-lawyer.AI only
+     * returns mappings of the authenticated user; unknown conversations yield an empty list.
+     *
+     * @param conversationId the conversation id sent with the anonymized requests
+     * @return list of mappings, sorted by entity type and placeholder
+     * @throws AssistantException if the mappings could not be retrieved
+     */
+    public List<AnonymizationMapping> getAnonymizationMappings(String conversationId) throws AssistantException {
+        List<AnonymizationMapping> resultList = new ArrayList<>();
+        try {
+            JerseyWebTarget webTarget = this.restClient.target(baseUri + "j-lawyer-ai/v2/anonymization/" + URLEncoder.encode(conversationId, StandardCharsets.UTF_8.name()).replace("+", "%20") + "/mappings");
+            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + this.getAuthString()).accept(MIMETYPE_JSON).get();
+            String returnValue = response.readEntity(String.class);
+            if (response.getStatus() != 200) {
+                log.error("Could not determine anonymization mappings: " + returnValue + " [" + response.getStatus() + "]");
+                throw new AssistantException("Could not determine anonymization mappings: " + returnValue + " [" + response.getStatus() + "]");
+            }
+
+            Object jsonOutput = Jsoner.deserialize(returnValue);
+            if (jsonOutput instanceof JsonArray) {
+                for (Object entryObject : (JsonArray) jsonOutput) {
+                    JsonObject entry = (JsonObject) entryObject;
+                    AnonymizationMapping m = new AnonymizationMapping();
+                    m.setPlaceholder(entry.getString(Jsoner.mintJsonKey("placeholder", null)));
+                    m.setOriginalValue(entry.getString(Jsoner.mintJsonKey("originalValue", null)));
+                    m.setEntityType(entry.getString(Jsoner.mintJsonKey("entityType", null)));
+                    resultList.add(m);
+                }
+            }
+
+            response.close();
+
+        } catch (AssistantException ae) {
+            throw ae;
+        } catch (Exception ex) {
+            log.error("Could not determine anonymization mappings", ex);
+            throw new AssistantException(ex);
+        } finally {
+            restClient.close();
+        }
+        return resultList;
     }
 
 }

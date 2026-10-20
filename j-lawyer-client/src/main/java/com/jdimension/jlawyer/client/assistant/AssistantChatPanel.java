@@ -181,6 +181,9 @@ public class AssistantChatPanel extends JDialog {
     private static final class StoredChatRef {
 
         private volatile AiChatSummary chat = null;
+        // conversation id for anonymized requests: the same for all rounds of a chat session, so
+        // the server reuses its cache and does not anonymize the history again
+        private final String conversationId = AssistantAccess.newConversationId();
     }
 
     // UI components
@@ -206,6 +209,7 @@ public class AssistantChatPanel extends JDialog {
     private JButton cmdNewDocument;
     private JButton cmdCopy;
     private JLabel lblSupportsTools;
+    private AnonymizationStatusLabel lblAnonymization;
     private JLabel lblWordCount;
     private JLabel lblIcon;
     private JPanel pnlPlaceholder;
@@ -332,19 +336,19 @@ public class AssistantChatPanel extends JDialog {
         this.lblRequestType.setText(c.getName() + " (" + c.getDescription() + ")");
 
         this.lblSupportsTools.setIcon(new ImageIcon(getClass().getResource("/icons16/material/smart_toy_20dp_DE313B_FILL0_wght400_GRAD0_opsz20.png")));
-        this.lblSupportsTools.setText("nicht agentenfähig");
-        this.lblSupportsTools.setToolTipText("keine Werkzeugunterstützung");
+        this.lblSupportsTools.setToolTipText("nicht agentenfähig - keine Werkzeugunterstützung");
         
         if (AiCapability.REQUESTTYPE_CHAT.equals(c.getRequestType()) && c.getModelRef() != null) {
             if (this.modelSupportsTools) {
                 this.lblSupportsTools.setIcon(new ImageIcon(getClass().getResource("/icons16/material/smart_toy_20dp_97BF0D_FILL0_wght400_GRAD0_opsz20.png")));
-                this.lblSupportsTools.setText("agentenfähig");
-                this.lblSupportsTools.setToolTipText("unterstützt Werkzeuge");
+                this.lblSupportsTools.setToolTipText("agentenfähig - unterstützt Werkzeuge");
             }
             
         }
         this.lblSupportsTools.revalidate();
         this.lblSupportsTools.repaint();
+
+        this.lblAnonymization.setup(config, c.isAnonymize());
 
         if (this.modelSupportsTools) {
             pnlPlaceholder = new JPanel(new GridBagLayout());
@@ -483,6 +487,7 @@ public class AssistantChatPanel extends JDialog {
         lblWordCount.setFont(lblWordCount.getFont().deriveFont(lblWordCount.getFont().getSize() - 2f));
         lblWordCount.setForeground(new Color(153, 153, 153));
         lblWordCount.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
+        lblWordCount.setIcon(new ImageIcon(getClass().getResource("/icons16/material/functions_20dp_97BF0D_FILL0_wght400_GRAD0_opsz20.png")));
         lblWordCount.setToolTipText("Anzahl der Wörter im gesamten Chat - wird bei jeder Fortsetzung erneut an das Modell gesendet");
 
         JPanel pnlCenterTitle = new JPanel();
@@ -490,6 +495,8 @@ public class AssistantChatPanel extends JDialog {
         pnlCenterTitle.setLayout(new BoxLayout(pnlCenterTitle, BoxLayout.X_AXIS));
         pnlCenterTitle.add(lblRequestType);
         pnlCenterTitle.add(lblSupportsTools);
+        lblAnonymization = new AnonymizationStatusLabel();
+        pnlCenterTitle.add(lblAnonymization);
         pnlCenterTitle.add(lblWordCount);
         pnlCenterTitle.add(Box.createHorizontalGlue());
         pnlTitle.add(pnlCenterTitle, BorderLayout.CENTER);
@@ -786,6 +793,10 @@ public class AssistantChatPanel extends JDialog {
         this.progress.setIndeterminate(true);
         this.progress.setVisible(true);
 
+        final boolean anonymize = capability.isAnonymize();
+        final String conversationId = anonymize ? this.storedChat.conversationId : null;
+        this.lblAnonymization.requestStarted(conversationId);
+
         AtomicReference<AiRequestStatus> resultRef = new AtomicReference<>();
         AtomicReference<AiChatMessageMarkdownPanel> incomingMessageRef = new AtomicReference<>();
 
@@ -870,7 +881,7 @@ public class AssistantChatPanel extends JDialog {
                     if (AiCapability.REQUESTTYPE_CHAT.equals(capability.getRequestType())) {
                         tools = toolRegistry.getToolDefinitions();
                     }
-                    AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getActionId(), capability.getModelRef(), fullPrompt, capability.getSystemPrompt(), capability.isAsyncRecommended(), fParams, null, messages, promptConfigs, tools);
+                    AiRequestStatus status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getActionId(), capability.getModelRef(), fullPrompt, capability.getSystemPrompt(), capability.isAsyncRecommended(), fParams, null, messages, promptConfigs, tools, anonymize, conversationId);
                     taInputString.setCaretPosition(0);
 
                     // Tool calling loop: handle TOOL_CALL_PENDING responses
@@ -1019,15 +1030,17 @@ public class AssistantChatPanel extends JDialog {
                         messages.addAll(toolResultMessages);
 
                         // Send follow-up request with tool results
-                        status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getActionId(), capability.getModelRef(), null, capability.getSystemPrompt(), capability.isAsyncRecommended(), fParams, null, messages, fPromptConfigs, fTools);
+                        status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getActionId(), capability.getModelRef(), null, capability.getSystemPrompt(), capability.isAsyncRecommended(), fParams, null, messages, fPromptConfigs, fTools, anonymize, conversationId);
                     }
 
                     if (status.isAsync()) {
                         Thread.sleep(1000);
                         AiResponse res = locator.lookupIntegrationServiceRemote().getAssistantRequestStatus(config, status.getRequestId());
+                        lblAnonymization.updateProgress(res, progress);
                         while (res.getStatus().equals(AiResponse.STATUS_EXECUTING)) {
                             Thread.sleep(1000);
                             res = locator.lookupIntegrationServiceRemote().getAssistantRequestStatus(config, status.getRequestId());
+                            lblAnonymization.updateProgress(res, progress);
                             StringBuilder resultString = new StringBuilder();
                             for (OutputData o : res.getOutputData()) {
                                 if (o.getType().equalsIgnoreCase(OutputData.TYPE_STRING)) {
@@ -1098,7 +1111,7 @@ public class AssistantChatPanel extends JDialog {
                         int savedScrollPosition = currentValue;
 
                         Message errorMsg = new Message();
-                        errorMsg.setContent(status.getStatus() + ": " + status.getStatusDetails());
+                        errorMsg.setContent(AssistantAccess.getErrorMessage(status, anonymize));
                         errorMsg.setRole(Message.ROLE_ASSISTANT);
                         errorMsg.setModelRef(capability.getModelRef());
                         AiChatMessageMarkdownPanel msgPanel = createStyledMessagePanel(errorMsg, owner);
@@ -1153,6 +1166,7 @@ public class AssistantChatPanel extends JDialog {
                     }
                 }
 
+                lblAnonymization.requestFinished(status == null || status.isError());
                 progress.setIndeterminate(false);
                 progress.setVisible(false);
                 taPrompt.setText("");
@@ -1230,7 +1244,9 @@ public class AssistantChatPanel extends JDialog {
 
     private void updateWordCount() {
         int words = ChatWordCounter.countWords(this.messages);
-        this.lblWordCount.setText(NumberFormat.getIntegerInstance(Locale.GERMANY).format(words) + " Wörter");
+        String formatted = NumberFormat.getIntegerInstance(Locale.GERMANY).format(words);
+        this.lblWordCount.setText(formatted);
+        this.lblWordCount.setToolTipText(formatted + " Wörter im gesamten Chat - werden bei jeder Fortsetzung erneut an das Modell gesendet");
     }
 
     /**
@@ -1457,6 +1473,7 @@ public class AssistantChatPanel extends JDialog {
     private void cmdResetChatActionPerformed(java.awt.event.ActionEvent evt) {
         // the next message starts a new stored chat, the previous one stays stored
         this.storedChat = new StoredChatRef();
+        this.lblAnonymization.setup(this.config, this.capability.isAnonymize());
         this.messages = new ArrayList<>();
         this.pnlMessages.removeAll();
         this.pnlMessages.revalidate();

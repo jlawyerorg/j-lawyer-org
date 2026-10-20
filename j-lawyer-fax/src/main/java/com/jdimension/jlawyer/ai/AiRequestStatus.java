@@ -19,6 +19,7 @@ public class AiRequestStatus implements Serializable {
     private String statusDetails="";
     private boolean async=false;
     private AiResponse response=null;
+    private int httpStatus=0;
 
     /**
      * @return the requestId
@@ -96,6 +97,20 @@ public class AiRequestStatus implements Serializable {
      */
     public boolean isError() {
         return status != null && (status.equalsIgnoreCase("error") || status.equalsIgnoreCase("failed"));
+    }
+
+    /**
+     * @return the HTTP status code of a failed submission, or 0 if unknown / not applicable
+     */
+    public int getHttpStatus() {
+        return httpStatus;
+    }
+
+    /**
+     * @param httpStatus the HTTP status code to set
+     */
+    public void setHttpStatus(int httpStatus) {
+        this.httpStatus = httpStatus;
     }
 
 }

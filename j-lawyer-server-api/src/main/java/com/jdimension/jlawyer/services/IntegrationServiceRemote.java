@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.ai.AiRequestLog;
 import com.jdimension.jlawyer.ai.AiRequestStatus;
 import com.jdimension.jlawyer.ai.AiResponse;
 import com.jdimension.jlawyer.ai.AiUser;
+import com.jdimension.jlawyer.ai.AnonymizationMapping;
 import com.jdimension.jlawyer.ai.ConfigurationData;
 import com.jdimension.jlawyer.ai.InputData;
 import com.jdimension.jlawyer.ai.Message;
@@ -845,6 +846,57 @@ public interface IntegrationServiceRemote {
      * @throws Exception if the request fails
      */
     AiRequestStatus submitAssistantRequest(AssistantConfig config, String requestType, String actionId, String model, String prompt, String systemPrompt, boolean asyncRecommended, List<ParameterData> params, List<InputData> inputs, List<Message> messages, List<ConfigurationData> promptConfigurations, List<ToolDefinition> tools) throws Exception;
+
+    /**
+     * Submits an AI assistant request to the configured j-lawyer-ai v2 REST API, optionally
+     * anonymizing personal data before it is forwarded to the AI provider.
+     *
+     * When anonymize is false, the request is identical to the one sent by
+     * {@link #submitAssistantRequest(AssistantConfig, String, String, String, String, String, boolean, List, List, List, List, List)}:
+     * neither "anonymize" nor "conversationId" is transmitted, which keeps compatibility with
+     * j-lawyer-ai versions that do not support anonymization.
+     *
+     * When anonymize is true, the j-lawyer-ai server replaces personal data in the prompt, the
+     * input data and the message history by placeholders and restores the original values in
+     * the response. File inputs cannot be anonymized and are rejected. If anonymization is not
+     * available or fails, the request is not forwarded to the AI provider; the returned status
+     * then indicates an error (see {@link AiRequestStatus#getHttpStatus()}: 503 if anonymization
+     * is not available on the AI server, 500 if it failed, 400 for invalid requests).
+     *
+     * @param config the assistant server configuration to use
+     * @param requestType the type of request (e.g. summarize, chat, extract)
+     * @param actionId the v2 action identifier on the server, may be null to use the default action
+     * @param model the model name to override the action's default model, may be null
+     * @param prompt the prompt text, may be null
+     * @param systemPrompt the system prompt text, may be null
+     * @param asyncRecommended whether the server recommends asynchronous processing for this action
+     * @param params parameter data for the request, may be null
+     * @param inputs input data for the request, may be null; must not contain file inputs when
+     * anonymizing
+     * @param messages chat messages for conversational requests, may be null. The history is sent
+     * in clear text; the server recognizes its own (de-anonymized) answers.
+     * @param promptConfigurations prompt-specific configuration overrides, may be null
+     * @param tools tool definitions for tool calling support, may be null
+     * @param anonymize true to anonymize personal data before the request is sent to the provider
+     * @param conversationId identifier of the conversation the anonymization belongs to. Use one
+     * id for all rounds of a chat session and a new id for each single request. If null or empty
+     * while anonymize is true, a random id is generated.
+     * @return the request status including the response for synchronous requests
+     * @throws Exception if the request fails or file inputs are to be anonymized
+     */
+    AiRequestStatus submitAssistantRequest(AssistantConfig config, String requestType, String actionId, String model, String prompt, String systemPrompt, boolean asyncRecommended, List<ParameterData> params, List<InputData> inputs, List<Message> messages, List<ConfigurationData> promptConfigurations, List<ToolDefinition> tools, boolean anonymize, String conversationId) throws Exception;
+
+    /**
+     * Returns the replacements made by the anonymization within a conversation, i.e. which
+     * placeholder (e.g. [PERSON_1]) stands for which original value. Only mappings of the
+     * current user are returned; they are kept on the j-lawyer-ai server for about one day.
+     *
+     * @param config the assistant server configuration the anonymized requests were sent to
+     * @param conversationId the conversation id used when submitting the anonymized requests
+     * @return list of mappings, empty if there are none or the conversation is unknown
+     * @throws Exception if the mappings could not be retrieved
+     */
+    List<AnonymizationMapping> getAssistantAnonymizationMappings(AssistantConfig config, String conversationId) throws Exception;
     
     AiResponse getAssistantRequestStatus(AssistantConfig config, String requestId) throws Exception;
 
