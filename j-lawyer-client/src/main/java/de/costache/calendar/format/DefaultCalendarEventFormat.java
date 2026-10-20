@@ -64,6 +64,10 @@ public class DefaultCalendarEventFormat implements CalendarEventFormat {
         formatted.append("<td><b>verantwortlich: </b></td>");
         formatted.append("<td>").append(calendarEvent.getAssignee()).append("</td>");
         formatted.append("</tr>");
+        formatted.append("<tr>");
+        formatted.append("<td><b>erstellt von: </b></td>");
+        formatted.append("<td>").append(calendarEvent.getCreatedBy() == null ? "" : calendarEvent.getCreatedBy()).append("</td>");
+        formatted.append("</tr>");
 
         if (calendarEvent.getDescription() != null) {
             formatted.append("<tr>");

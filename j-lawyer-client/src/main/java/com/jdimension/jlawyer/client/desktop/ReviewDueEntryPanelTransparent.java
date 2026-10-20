@@ -904,7 +904,9 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel implement
         tooltip.append(HTML_BR).append(caseCaption).append(": ").append(caseNumber).append(" ").append(e.getArchiveFileName());
         String responsibleCaption = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("caption.responsible");
         tooltip.append(HTML_BR).append(responsibleCaption).append(": ").append(StringUtils.nonEmpty(e.getResponsible()));
-        tooltip.append("<html>");
+        String creatorCaption = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("caption.creator");
+        tooltip.append(HTML_BR).append(creatorCaption).append(": ").append(StringUtils.nonEmpty(e.getReview().getCreatedBy()));
+        tooltip.append("</html>");
         this.lblDescription.setToolTipText(tooltip.toString());
 
         // Case info (number, name, reason) and tags are now shown in the group header

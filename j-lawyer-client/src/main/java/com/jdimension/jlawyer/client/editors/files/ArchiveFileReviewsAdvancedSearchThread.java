@@ -744,6 +744,9 @@ public class ArchiveFileReviewsAdvancedSearchThread implements Runnable {
         if(dto.getAssignee()!=null && dto.getAssignee().toLowerCase().contains(searchText))
             return true;
         
+        if(dto.getCreatedBy()!=null && dto.getCreatedBy().toLowerCase().contains(searchText))
+            return true;
+        
         if(dto.getEventTypeName()!=null && dto.getEventTypeName().toLowerCase().contains(searchText))
             return true;
         
@@ -783,7 +786,7 @@ public class ArchiveFileReviewsAdvancedSearchThread implements Runnable {
             return;
         }
 
-        String[] colNames = new String[]{"Datum / Zeit", "Typ", "Aktenzeichen", "Kurzrubrum", "Grund", "Beschreibung", "erledigt", "Anwalt", "verantwortlich", "Kalender"};
+        String[] colNames = new String[]{"Datum / Zeit", "Typ", "Aktenzeichen", "Kurzrubrum", "Grund", "Beschreibung", "erledigt", "Anwalt", "verantwortlich", "erstellt von", "Kalender"};
         ArchiveFileReviewsFindTableModel model = new ArchiveFileReviewsFindTableModel(colNames, 0);
         // adding the model and then adding rows is problematic - addRow on a table with model causes issues when addRow is not performed in the EDT
         for (ArchiveFileReviewsBean b : filteredDtos) {
@@ -792,7 +795,7 @@ public class ArchiveFileReviewsAdvancedSearchThread implements Runnable {
             if (b.getCalendarSetup() != null) {
                 calendar = b.getCalendarSetup().getDisplayName();
             }
-            Object[] row = new Object[]{new ArchiveFileReviewsRowIdentifier(b.getArchiveFileKey(), b, reviewDateString), b.getEventTypeName(), b.getArchiveFileKey().getFileNumber(), b.getArchiveFileKey().getName(), b.getSummary(), b.getDescription(), b.isDone(), b.getArchiveFileKey().getLawyer(), b.getAssignee(), calendar};
+            Object[] row = new Object[]{new ArchiveFileReviewsRowIdentifier(b.getArchiveFileKey(), b, reviewDateString), b.getEventTypeName(), b.getArchiveFileKey().getFileNumber(), b.getArchiveFileKey().getName(), b.getSummary(), b.getDescription(), b.isDone(), b.getArchiveFileKey().getLawyer(), b.getAssignee(), b.getCreatedBy(), calendar};
             model.addRow(row);
         }
         TableRowSorter<TableModel> sorter = new TableRowSorter<>(model);
@@ -808,6 +811,7 @@ public class ArchiveFileReviewsAdvancedSearchThread implements Runnable {
         }
         ThreadUtils.setCellRenderer(target, new UserTableCellRenderer(), 7);
         ThreadUtils.setCellRenderer(target, new UserTableCellRenderer(), 8);
+        ThreadUtils.setCellRenderer(target, new UserTableCellRenderer(), 9);
         ThreadUtils.repaintComponent(target);
 
     }

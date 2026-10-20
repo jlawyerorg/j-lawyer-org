@@ -695,7 +695,7 @@ public class ArchiveFileReviewsBeanFacade extends AbstractFacade<ArchiveFileRevi
      */
     private static final String DTO_SELECT = "SELECT NEW com.jdimension.jlawyer.services.CalendarEntryDTO("
             + "e.id, e.eventType, e.summary, e.description, e.location, e.beginDate, e.endDate, e.done, e.assignee, "
-            + "c.id, c.fileNumberMain, c.fileNumberExtension, c.name, c.reason, c.lawyer, "
+            + "e.createdBy, c.id, c.fileNumberMain, c.fileNumberExtension, c.name, c.reason, c.lawyer, "
             + "cal.id, cal.displayName, cal.background) "
             + "FROM ArchiveFileReviewsBean e "
             + "JOIN e.archiveFileKey c "

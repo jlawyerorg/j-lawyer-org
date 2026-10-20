@@ -690,26 +690,32 @@ public class ArchiveFileReviewReasonsTableModel extends DefaultTableModel {
     public static final int COLUMN_ASSIGNEE = 3;
 
     /**
+     * column index of the user who created the event
+     */
+    public static final int COLUMN_CREATOR = 4;
+
+    /**
      * column index of the "done" checkbox
      */
-    public static final int COLUMN_DONE = 4;
+    public static final int COLUMN_DONE = 5;
 
-    private static String[] columnNames=new String[]{"", "Datum / Zeit", "Typ", "verantwortlich", "erledigt", "Grund", "Ort", "Beschreibung"};
+    private static String[] columnNames=new String[]{"", "Datum / Zeit", "Typ", "verantwortlich", "erstellt von", "erledigt", "Grund", "Ort", "Beschreibung"};
 
     public static String[] getColumnNames() {
         return columnNames;
     }
     
     public static Object[] eventToRow(ArchiveFileReviewsBean event) {
-        Object[] row = new Object[8];
+        Object[] row = new Object[9];
         row[0] = event.getCalendarSetup();
         row[1] = event;
         row[2] = event.getEventTypeName();
         row[3] = event.getAssignee();
-        row[4] = event.isDone();
-        row[5] = event.getSummary();
-        row[6] = event.getLocation();
-        row[7] = event.getDescription();
+        row[4] = event.getCreatedBy();
+        row[5] = event.isDone();
+        row[6] = event.getSummary();
+        row[7] = event.getLocation();
+        row[8] = event.getDescription();
         return row;
     }
     

@@ -29,6 +29,7 @@ public class CalendarEvent extends Observable implements Comparable<CalendarEven
     private String description;
     private String location;
     protected String assignee;
+    protected String createdBy;
     private Date start;
     private Date end;
     private EventType type;
@@ -409,6 +410,20 @@ public class CalendarEvent extends Observable implements Comparable<CalendarEven
      */
     public void setAssignee(String assignee) {
         this.assignee = assignee;
+    }
+
+    /**
+     * @return principal id of the user who created the event, may be null
+     */
+    public String getCreatedBy() {
+        return this.createdBy;
+    }
+
+    /**
+     * @param createdBy principal id of the user who created the event
+     */
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
     }
 
     /**

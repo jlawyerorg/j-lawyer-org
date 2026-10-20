@@ -702,7 +702,7 @@ public class ArchiveFileReviewsSearchThread implements Runnable {
      */
     public static final int MAX_ENTRIES = 5000;
 
-    private static final String[] COL_NAMES = new String[]{"Datum / Zeit", "Typ", "Aktenzeichen", "Kurzrubrum", "Grund", "Beschreibung", "Anwalt", "verantwortlich", "Kalender"};
+    private static final String[] COL_NAMES = new String[]{"Datum / Zeit", "Typ", "Aktenzeichen", "Kurzrubrum", "Grund", "Beschreibung", "Anwalt", "verantwortlich", "erstellt von", "Kalender"};
 
     private Component owner;
     private JTable target;
@@ -792,6 +792,7 @@ public class ArchiveFileReviewsSearchThread implements Runnable {
                     b.getDescription(),
                     b.getCaseLawyer(),
                     b.getAssignee(),
+                    b.getCreatedBy(),
                     b.getCalendarName() == null ? "" : b.getCalendarName()};
                 model.addRow(row);
             } catch (Throwable t) {
@@ -813,6 +814,7 @@ public class ArchiveFileReviewsSearchThread implements Runnable {
             this.target.setRowSorter(sorter);
             this.target.getColumnModel().getColumn(6).setCellRenderer(new UserTableCellRenderer());
             this.target.getColumnModel().getColumn(7).setCellRenderer(new UserTableCellRenderer());
+            this.target.getColumnModel().getColumn(8).setCellRenderer(new UserTableCellRenderer());
 
             restoreSelection(selectedEntryId);
             restoreViewPosition(viewPosition);

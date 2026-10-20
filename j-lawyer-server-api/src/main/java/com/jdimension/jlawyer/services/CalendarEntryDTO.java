@@ -698,6 +698,7 @@ public class CalendarEntryDTO implements Serializable {
     private Date endDate;
     private boolean done;
     private String assignee;
+    private String createdBy;
     private String caseId;
     private String caseFileNumber;
     private String caseName;
@@ -727,6 +728,8 @@ public class CalendarEntryDTO implements Serializable {
      * @param endDate end of the entry, may be null and only meaningful for appointments
      * @param done whether the entry has been marked as done
      * @param assignee principal id of the user responsible for the entry, may be null
+     * @param createdBy principal id of the user who created the entry, null for entries created
+     * before the creator was tracked
      * @param caseId id of the case the entry belongs to
      * @param caseFileNumberMain main part of the case's file number
      * @param caseFileNumberExtension extension of the case's file number, may be null
@@ -739,7 +742,7 @@ public class CalendarEntryDTO implements Serializable {
      */
     public CalendarEntryDTO(String id, int eventType, String summary, String description,
             String location, Date beginDate, Date endDate, boolean done, String assignee,
-            String caseId, String caseFileNumberMain, String caseFileNumberExtension,
+            String createdBy, String caseId, String caseFileNumberMain, String caseFileNumberExtension,
             String caseName, String caseReason, String caseLawyer,
             String calendarId, String calendarName, Integer calendarColor) {
         this.id = id;
@@ -751,6 +754,7 @@ public class CalendarEntryDTO implements Serializable {
         this.endDate = endDate;
         this.done = done;
         this.assignee = assignee;
+        this.createdBy = createdBy;
         this.caseId = caseId;
         this.caseFileNumber = ArchiveFileBean.composeFileNumber(caseFileNumberMain, caseFileNumberExtension);
         this.caseName = caseName;
@@ -783,6 +787,7 @@ public class CalendarEntryDTO implements Serializable {
         dto.endDate = rev.getEndDate();
         dto.done = rev.isDone();
         dto.assignee = rev.getAssignee();
+        dto.createdBy = rev.getCreatedBy();
 
         ArchiveFileBean aCase = rev.getArchiveFileKey();
         if (aCase != null) {
@@ -900,6 +905,21 @@ public class CalendarEntryDTO implements Serializable {
 
     public void setAssignee(String assignee) {
         this.assignee = assignee;
+    }
+
+    /**
+     * @return principal id of the user who created the entry, null for entries created before the
+     * creator was tracked
+     */
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    /**
+     * @param createdBy principal id of the user who created the entry
+     */
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
     }
 
     public String getCaseId() {

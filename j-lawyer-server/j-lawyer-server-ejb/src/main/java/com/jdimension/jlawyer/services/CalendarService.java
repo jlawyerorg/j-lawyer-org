@@ -916,7 +916,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
                         omr.setMainCaption("Es wurde ein(e) neue(r) " + review.getEventTypeName() + " für Dich erstellt");
                         omr.setSubCaption(review.toString() + " " + review.getSummary());
                         StringBuilder body = new StringBuilder();
-                        body.append(ServerStringUtils.nonEmpty(review.getSummary())).append("\n").append(ServerStringUtils.nonEmpty(review.getDescription())).append("\nOrt: ").append(ServerStringUtils.nonEmpty(review.getLocation())).append("\nverantwortlich: ").append(ServerStringUtils.nonEmpty(review.getAssignee())).append("\neingetragen von: ").append(context.getCallerPrincipal().getName());
+                        body.append(ServerStringUtils.nonEmpty(review.getSummary())).append("\n").append(ServerStringUtils.nonEmpty(review.getDescription())).append("\nOrt: ").append(ServerStringUtils.nonEmpty(review.getLocation())).append("\nverantwortlich: ").append(ServerStringUtils.nonEmpty(review.getAssignee())).append("\nerstellt von: ").append(ServerStringUtils.nonEmpty(review.getCreatedBy()));
                         body.append("\nAkte: ").append(aFile.getFileNumber()).append(" ").append(aFile.getName());
                         omr.setBodyContent(body.toString());
                         this.publishOutgoingMailRequest(omr);
@@ -1398,10 +1398,10 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
                         OutgoingMailRequest omr = new OutgoingMailRequest();
                         omr.setTo(assignee.getEmail());
                         omr.setSubject("Geänderter Kalendereintrag für Dich");
-                        omr.setMainCaption("Es wurde ein(e) neue(r) " + review.getEventTypeName() + " geändert, für den Du verantwortlich bist");
+                        omr.setMainCaption("Es wurde ein(e) " + review.getEventTypeName() + " geändert, für den Du verantwortlich bist");
                         omr.setSubCaption(review.toString() + " " + review.getSummary());
                         StringBuilder body = new StringBuilder();
-                        body.append(ServerStringUtils.nonEmpty(review.getSummary())).append("\n").append(ServerStringUtils.nonEmpty(review.getDescription())).append("\nOrt: ").append(ServerStringUtils.nonEmpty(review.getLocation())).append("\nverantwortlich: ").append(ServerStringUtils.nonEmpty(review.getAssignee())).append("\neingetragen von: ").append(context.getCallerPrincipal().getName());
+                        body.append(ServerStringUtils.nonEmpty(review.getSummary())).append("\n").append(ServerStringUtils.nonEmpty(review.getDescription())).append("\nOrt: ").append(ServerStringUtils.nonEmpty(review.getLocation())).append("\nverantwortlich: ").append(ServerStringUtils.nonEmpty(review.getAssignee())).append("\nerstellt von: ").append(ServerStringUtils.nonEmpty(review.getCreatedBy())).append("\ngeändert von: ").append(context.getCallerPrincipal().getName());
                         body.append("\nAkte: ").append(aFile.getFileNumber()).append(" ").append(aFile.getName());
                         omr.setBodyContent(body.toString());
                         this.publishOutgoingMailRequest(omr);

@@ -1668,6 +1668,7 @@ public class CalendarPanel extends javax.swing.JPanel implements NewEventEntryCa
         calendarEvent.setCaseLawyer(rev.getCaseLawyer());
 
         calendarEvent.setAssignee(rev.getAssignee());
+        calendarEvent.setCreatedBy(rev.getCreatedBy());
 
         calendarEvent.setAllDay(allDay);
         jCalendar.addCalendarEvent(calendarEvent);

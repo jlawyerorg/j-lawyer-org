@@ -718,7 +718,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
             this.detailsEditorClass = ViewArchiveFileDetailsPanel.class.getName();
         }
         
-        String[] colNames=new String[] {"Datum / Zeit" , "Typ", "Aktenzeichen", "Kurzrubrum", "Grund", "Beschreibung", "erledigt", "Anwalt", "verantwortlich", "Kalender"};
+        String[] colNames=new String[] {"Datum / Zeit" , "Typ", "Aktenzeichen", "Kurzrubrum", "Grund", "Beschreibung", "erledigt", "Anwalt", "verantwortlich", "erstellt von", "Kalender"};
         QuickArchiveFileSearchTableModel model=new QuickArchiveFileSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
 

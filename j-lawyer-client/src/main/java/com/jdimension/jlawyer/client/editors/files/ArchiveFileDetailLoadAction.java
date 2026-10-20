@@ -1096,6 +1096,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         this.tblReviews.setRowSorter(rtrs);
         CalendarColorTableCellRenderer.install(this.tblReviews, ArchiveFileReviewReasonsTableModel.COLUMN_CALENDARCOLOR);
         this.tblReviews.getColumnModel().getColumn(ArchiveFileReviewReasonsTableModel.COLUMN_ASSIGNEE).setCellRenderer(new UserTableCellRenderer());
+        this.tblReviews.getColumnModel().getColumn(ArchiveFileReviewReasonsTableModel.COLUMN_CREATOR).setCellRenderer(new UserTableCellRenderer());
         if (events != null) {
             for (Object reviewObject : events) {
                 ArchiveFileReviewsBean reviewDto = (ArchiveFileReviewsBean) reviewObject;

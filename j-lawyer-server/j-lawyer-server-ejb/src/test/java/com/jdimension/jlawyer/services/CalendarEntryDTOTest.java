@@ -128,12 +128,20 @@ public class CalendarEntryDTOTest {
     }
 
     @Test
+    public void fromEntityCopiesCreator() {
+        ArchiveFileReviewsBean rev = entry(EventTypes.EVENTTYPE_FOLLOWUP, date(2026, 3, 17, 9, 30), null);
+        rev.setCreatedBy("creator");
+        Assert.assertEquals("creator", CalendarEntryDTO.fromEntity(rev).getCreatedBy());
+    }
+
+    @Test
     public void fileNumberIsComposedFromItsTwoColumns() {
         CalendarEntryDTO dto = new CalendarEntryDTO("id", EventTypes.EVENTTYPE_FOLLOWUP, "s", "d", "l",
                 date(2026, 3, 17, 9, 30), null, false, "assignee",
-                "case-1", "0001/26", "-B", "Kurzrubrum", "wegen", "lawyer",
+                "creator", "case-1", "0001/26", "-B", "Kurzrubrum", "wegen", "lawyer",
                 "cal-1", "Kalender", 255);
         Assert.assertEquals("0001/26-B", dto.getCaseFileNumber());
+        Assert.assertEquals("creator", dto.getCreatedBy());
     }
 
     @Test
@@ -141,7 +149,7 @@ public class CalendarEntryDTOTest {
         // the calendar is an outer join: for an entry without one the colour column comes back null
         CalendarEntryDTO dto = new CalendarEntryDTO("id", EventTypes.EVENTTYPE_FOLLOWUP, "s", "d", "l",
                 date(2026, 3, 17, 9, 30), null, false, null,
-                "case-1", "0001/26", null, "Kurzrubrum", "wegen", null,
+                null, "case-1", "0001/26", null, "Kurzrubrum", "wegen", null,
                 null, null, null);
         Assert.assertEquals(0, dto.getCalendarColor());
         Assert.assertEquals("0001/26", dto.getCaseFileNumber());

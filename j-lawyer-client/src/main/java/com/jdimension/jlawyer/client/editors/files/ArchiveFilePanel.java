@@ -5569,17 +5569,19 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             // ignore if column not available yet
             log.error(t);
         }
-        // the responsible user column has a custom renderer: wrap it to keep user rendering + conflict style
-        try {
-            TableColumn col = this.tblReviewReasons.getColumnModel().getColumn(ArchiveFileReviewReasonsTableModel.COLUMN_ASSIGNEE);
-            TableCellRenderer base = col.getCellRenderer();
-            if (!(base instanceof ConflictAwareUserRenderer)) {
-                base = new UserTableCellRenderer();
-                col.setCellRenderer(new ConflictAwareUserRenderer(base));
+        // the responsible user and creator columns have a custom renderer: wrap it to keep user rendering + conflict style
+        for (int userColumn : new int[]{ArchiveFileReviewReasonsTableModel.COLUMN_ASSIGNEE, ArchiveFileReviewReasonsTableModel.COLUMN_CREATOR}) {
+            try {
+                TableColumn col = this.tblReviewReasons.getColumnModel().getColumn(userColumn);
+                TableCellRenderer base = col.getCellRenderer();
+                if (!(base instanceof ConflictAwareUserRenderer)) {
+                    base = new UserTableCellRenderer();
+                    col.setCellRenderer(new ConflictAwareUserRenderer(base));
+                }
+            } catch (Throwable t) {
+                // ignore if column not available yet
+                log.error(t);
             }
-        } catch (Throwable t) {
-            // ignore if column not available yet
-            log.error(t);
         }
     }
 
@@ -11417,8 +11419,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 rtrs.setSortable(ArchiveFileReviewReasonsTableModel.COLUMN_CALENDARCOLOR, false);
                 this.tblReviewReasons.setRowSorter(rtrs);
                 CalendarColorTableCellRenderer.install(this.tblReviewReasons, ArchiveFileReviewReasonsTableModel.COLUMN_CALENDARCOLOR);
-                // ensure conflict-aware rendering on the responsible-user column as well
+                // ensure conflict-aware rendering on the responsible-user and creator columns as well
                 this.tblReviewReasons.getColumnModel().getColumn(ArchiveFileReviewReasonsTableModel.COLUMN_ASSIGNEE).setCellRenderer(new ConflictAwareUserRenderer(new UserTableCellRenderer()));
+                this.tblReviewReasons.getColumnModel().getColumn(ArchiveFileReviewReasonsTableModel.COLUMN_CREATOR).setCellRenderer(new ConflictAwareUserRenderer(new UserTableCellRenderer()));
                 if (reviews != null) {
                     for (Object reviewObject : reviews) {
                         ArchiveFileReviewsBean reviewDto = (ArchiveFileReviewsBean) reviewObject;
