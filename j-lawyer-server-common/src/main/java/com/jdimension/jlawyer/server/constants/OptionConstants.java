@@ -697,6 +697,7 @@ public interface OptionConstants {
     public static final String OPTIONGROUP_INVOICETAXRATES="invoice.taxrates";
     
     public static final String OPTIONGROUP_TIMESHEETINTERVALMINUTES="timesheet.intervalminutes";
+    public static final String OPTIONGROUP_TIMESHEETDESCRIPTIONS="timesheet.descriptions";
     
     public static final String OPTIONGROUP_PDFSTAMPS="document.pdfstamps";
     

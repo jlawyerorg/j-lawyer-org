@@ -711,6 +711,9 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
     private Date snapshotStart = null;
     private Date snapshotEnd = null;
 
+    // true while a new entry is being captured manually with start and end, until it is saved
+    private boolean manualRangeMode = false;
+
     /**
      * Creates new form TimesheetLogEntryPanel
      *
@@ -749,6 +752,9 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
 
         ComponentUtils.addAutoComplete(cmbTemplate);
 
+        TimesheetDescriptionSuggestions.bindButton(this.cmdDescriptionSuggestions, this.taDescription);
+        TimesheetDescriptionSuggestions.installContextMenu(this.taDescription);
+
         this.taDescription.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
@@ -779,7 +785,9 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
             return;
         }
         Color borderColor;
-        if (this.entry.getStarted() == null) {
+        if (this.manualRangeMode) {
+            borderColor = DefaultColorTheme.COLOR_LOGO_BLUE;
+        } else if (this.entry.getStarted() == null) {
             borderColor = DefaultColorTheme.COLOR_DARK_GREY;
         } else if (this.entry.getStopped() == null) {
             borderColor = DefaultColorTheme.COLOR_LOGO_RED;
@@ -818,17 +826,8 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
             this.cmbTemplate.setSelectedItem(tsp.getName());
         }
         this.taDescription.setText(tsp.getDescription());
-        if (this.entry.getStarted() != null) {
-            this.txtStart.setValue(this.entry.getStarted());
-        } else {
-            this.txtStart.setValue(null);
-        }
-
-        if (this.entry.getStopped() != null) {
-            this.txtEnd.setValue(this.entry.getStopped());
-        } else {
-            this.txtEnd.setValue(null);
-        }
+        this.txtStart.setDate(this.entry.getStarted());
+        this.txtEnd.setDate(this.entry.getStopped());
 
         Date started = this.entry.getStarted();
         Date stopped = this.entry.getStopped();
@@ -880,6 +879,8 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
      * Stopped+saved    | disabled        | not editable | disabled | visible | green
      * After cmdEdit    | enabled         | editable     | enabled  | hidden  | blue
      * After manual time| enabled         | editable     | enabled  | hidden  | blue
+     * Manual range     | enabled         | editable     | enabled  | hidden  | blue
+     *   (unsaved; new entry, or copy of the shown entry)
      * Save (running)   | desc enabled    | not editable | enabled  | hidden  | red
      * Save (stopped)   | disabled        | not editable | disabled | visible | green
      */
@@ -893,6 +894,11 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         this.txtEnd.setEditable(!stopped && !running);
         this.cmdSave.setEnabled(editable && this.entry.getStarted() != null);
         this.cmdEdit.setVisible(stopped && !running);
+
+        this.cmdStartStop.setEnabled(true);
+        this.txtManualEntry.setEnabled(true);
+        // a running entry must stay visible in this panel, so no new entry may replace it
+        this.cmdManualRange.setEnabled(!running);
     }
 
     public void timerTick() {
@@ -920,11 +926,12 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
 
         jLabel1 = new javax.swing.JLabel();
         cmbTemplate = new javax.swing.JComboBox<>();
+        cmdDescriptionSuggestions = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         taDescription = new javax.swing.JTextArea();
-        txtStart = new javax.swing.JFormattedTextField();
+        txtStart = new com.jdimension.jlawyer.client.components.DateTimeEditPanel();
         jLabel2 = new javax.swing.JLabel();
-        txtEnd = new javax.swing.JFormattedTextField();
+        txtEnd = new com.jdimension.jlawyer.client.components.DateTimeEditPanel();
         cmdStartStop = new javax.swing.JButton();
         lblDuration = new javax.swing.JLabel();
         lblProject = new javax.swing.JLabel();
@@ -933,6 +940,8 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         jLabel3 = new javax.swing.JLabel();
         txtManualEntry = new javax.swing.JFormattedTextField();
         cmdEdit = new javax.swing.JButton();
+        jLabel4 = new javax.swing.JLabel();
+        cmdManualRange = new javax.swing.JButton();
 
         jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
 
@@ -944,21 +953,16 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
             }
         });
 
+        cmdDescriptionSuggestions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/format_list_bulleted_20dp_0E72B5.png"))); // NOI18N
+        cmdDescriptionSuggestions.setToolTipText("Tätigkeit in Beschreibung einfügen");
+
         taDescription.setColumns(20);
         taDescription.setFont(taDescription.getFont());
         taDescription.setRows(5);
         jScrollPane1.setViewportView(taDescription);
 
-        txtStart.setEditable(false);
-        txtStart.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.DateFormatter(new java.text.SimpleDateFormat("dd.MM.yy HH:mm"))));
-        txtStart.setFont(txtStart.getFont());
-
         jLabel2.setFont(jLabel2.getFont());
         jLabel2.setText("-");
-
-        txtEnd.setEditable(false);
-        txtEnd.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.DateFormatter(new java.text.SimpleDateFormat("dd.MM.yy HH:mm"))));
-        txtEnd.setFont(txtEnd.getFont());
 
         cmdStartStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_play_circle_black_48dp.png"))); // NOI18N
         cmdStartStop.setToolTipText("Stoppuhr starten / stoppen");
@@ -1002,6 +1006,17 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
             }
         });
 
+        jLabel4.setFont(jLabel4.getFont());
+        jLabel4.setText("oder");
+
+        cmdManualRange.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/more_time_32dp_0E72B5_FILL0_wght400_GRAD0_opsz40.png"))); // NOI18N
+        cmdManualRange.setToolTipText("Zeit manuell mit Beginn und Ende erfassen");
+        cmdManualRange.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdManualRangeActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -1009,7 +1024,10 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(cmbTemplate, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(cmbTemplate, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdDescriptionSuggestions))
                     .addComponent(jSeparator1)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(cmdStartStop)
@@ -1017,6 +1035,10 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
                         .addComponent(jLabel3)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(txtManualEntry, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel4)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdManualRange)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabel1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1027,11 +1049,11 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
                         .addComponent(cmdSave))
                     .addComponent(jScrollPane1)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(txtStart, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(txtStart, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(2, 2, 2)
                         .addComponent(jLabel2)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txtEnd, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(txtEnd, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(lblDuration)))
                 .addContainerGap())
@@ -1045,6 +1067,8 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
                         .addComponent(cmdSave)
                         .addComponent(txtManualEntry)
                         .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jLabel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(cmdManualRange, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(cmdStartStop, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(lblProject, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -1052,7 +1076,9 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
                         .addComponent(cmdEdit)
                         .addGap(12, 12, 12)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmbTemplate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmbTemplate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cmdDescriptionSuggestions))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1153,16 +1179,23 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         if (!Objects.equals(this.cmbTemplate.getEditor().getItem().toString(), this.snapshotTemplateName)) {
             return true;
         }
-        if (!Objects.equals((Date) this.txtStart.getValue(), this.snapshotStart)) {
+        if (!Objects.equals(this.txtStart.getDate(), this.snapshotStart)) {
             return true;
         }
-        if (!Objects.equals((Date) this.txtEnd.getValue(), this.snapshotEnd)) {
+        if (!Objects.equals(this.txtEnd.getDate(), this.snapshotEnd)) {
             return true;
         }
         return false;
     }
 
     public void save() {
+        if (this.manualRangeMode) {
+            Date dStart = this.txtStart.getDate();
+            if (dStart != null && dStart.equals(this.txtEnd.getDate())) {
+                // manual capture started, but no time entered - discard silently
+                return;
+            }
+        }
         if (isDirty()) {
             this.cmdSaveActionPerformed(null);
         }
@@ -1206,19 +1239,10 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         cal.set(Calendar.SECOND, 0);
         cal.set(Calendar.MILLISECOND, 0);
 
-        Date start = cal.getTime();
-
-        this.txtEnd.setValue(start);
-        this.txtStart.setValue(new Date(start.getTime() - minutes * 60l * 1000l));
-
-        Date dEnd = (Date) this.txtEnd.getValue();
-        Date dStart = (Date) this.txtStart.getValue();
-        if (dStart != null && dEnd != null) {
-            if (dEnd.after(dStart) || dEnd.equals(dStart)) {
-                this.entry.setStarted(dStart);
-                this.entry.setStopped(dEnd);
-            }
-        }
+        Date dEnd = cal.getTime();
+        Date dStart = new Date(dEnd.getTime() - minutes * 60l * 1000l);
+        this.entry.setStarted(dStart);
+        this.entry.setStopped(dEnd);
 
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -1248,29 +1272,51 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         ClientSettings settings = ClientSettings.getInstance();
 
         this.entry.setDescription(this.taDescription.getText());
-        this.entry.setName(this.cmbTemplate.getEditor().getItem().toString());
-        if (this.templates.containsKey(this.cmbTemplate.getEditor().getItem().toString())) {
-            this.entry.setTaxRate(this.templates.get(this.cmbTemplate.getEditor().getItem().toString()).getTaxRate());
-            this.entry.setUnitPrice(this.templates.get(this.cmbTemplate.getEditor().getItem().toString()).getUnitPrice());
+        String selectedName = this.cmbTemplate.getEditor().getItem().toString();
+        // a manually captured entry keeps tax rate and unit price of the entry it was copied from, unless another template was chosen
+        boolean keepRates = this.manualRangeMode && this.entry.getUnitPrice() != null && selectedName.equals(this.entry.getName());
+        this.entry.setName(selectedName);
+        if (keepRates) {
+            // keep copied values
+        } else if (this.templates.containsKey(selectedName)) {
+            this.entry.setTaxRate(this.templates.get(selectedName).getTaxRate());
+            this.entry.setUnitPrice(this.templates.get(selectedName).getUnitPrice());
         } else {
             // should not happen, because the combobox is not editable
             this.entry.setTaxRate(BigDecimal.valueOf(19f));
             this.entry.setUnitPrice(BigDecimal.ZERO);
         }
 
-        Date dStart = (Date) this.txtStart.getValue();
-        Date dEnd = (Date) this.txtEnd.getValue();
+        if (!this.txtStart.isValidInput() || !this.txtEnd.isValidInput()) {
+            JOptionPane.showMessageDialog(this, "Ungültiges Datum für Beginn oder Ende.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        Date dStart = this.txtStart.getDate();
+        Date dEnd = this.txtEnd.getDate();
         if (dStart != null && dEnd != null) {
-            if (dEnd.after(dStart)) {
-                this.entry.setStarted(dStart);
-                this.entry.setStopped(dEnd);
+            if (!dEnd.after(dStart)) {
+                JOptionPane.showMessageDialog(this, "Das Ende muss nach dem Beginn liegen.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
+                return;
             }
+            this.entry.setStarted(dStart);
+            this.entry.setStopped(dEnd);
+        }
+
+        if (this.entry.getId() == null && this.entry.getStarted() == null) {
+            // entry has never been started or captured - nothing to persist
+            return;
         }
 
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
-            TimesheetPosition updated = afs.timesheetPositionSave(this.entry.getTimesheet().getId(), entry);
+            TimesheetPosition updated;
+            if (this.entry.getId() == null) {
+                updated = afs.timesheetPositionAdd(this.entry.getTimesheet().getId(), entry);
+            } else {
+                updated = afs.timesheetPositionSave(this.entry.getTimesheet().getId(), entry);
+            }
+            this.manualRangeMode = false;
             this.setEntry(entryCase, entrySheet, updated);
             this.containingParent.updatePercentageDone(entrySheet);
             if (this.entry.isRunning()) {
@@ -1365,22 +1411,63 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         this.setBorder(new javax.swing.border.MatteBorder(0, 4, 0, 0, DefaultColorTheme.COLOR_LOGO_BLUE));
     }//GEN-LAST:event_cmdEditActionPerformed
 
+    private void cmdManualRangeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdManualRangeActionPerformed
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        Date now = cal.getTime();
+
+        if (this.entry.getId() != null) {
+            // based on an existing entry: capture a new entry with its name, description and rates
+            TimesheetPosition copy = new TimesheetPosition();
+            copy.setTimesheet(this.entry.getTimesheet());
+            copy.setName(this.entry.getName());
+            copy.setDescription(this.taDescription.getText());
+            copy.setPrincipal(this.entry.getPrincipal());
+            copy.setTaxRate(this.entry.getTaxRate());
+            copy.setUnitPrice(this.entry.getUnitPrice());
+            copy.setTotal(BigDecimal.ZERO);
+            this.entry = copy;
+        }
+
+        this.manualRangeMode = true;
+        this.txtStart.setDate(now);
+        this.txtEnd.setDate(now);
+        this.txtStart.setEditable(true);
+        this.txtEnd.setEditable(true);
+        this.taDescription.setEnabled(true);
+        this.cmdSave.setEnabled(true);
+        this.cmdEdit.setVisible(false);
+        this.cmbTemplate.setEnabled(true);
+
+        // switching the capture option is no longer possible for this entry
+        this.cmdStartStop.setEnabled(false);
+        this.txtManualEntry.setEnabled(false);
+        this.cmdManualRange.setEnabled(false);
+
+        this.setStatusColor(DefaultColorTheme.COLOR_LOGO_BLUE);
+        this.setBorder(new javax.swing.border.MatteBorder(0, 4, 0, 0, DefaultColorTheme.COLOR_LOGO_BLUE));
+    }//GEN-LAST:event_cmdManualRangeActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<String> cmbTemplate;
+    private javax.swing.JButton cmdDescriptionSuggestions;
     private javax.swing.JButton cmdEdit;
+    private javax.swing.JButton cmdManualRange;
     private javax.swing.JButton cmdSave;
     private javax.swing.JButton cmdStartStop;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JLabel lblDuration;
     private javax.swing.JLabel lblProject;
     private javax.swing.JTextArea taDescription;
-    private javax.swing.JFormattedTextField txtEnd;
+    private com.jdimension.jlawyer.client.components.DateTimeEditPanel txtEnd;
     private javax.swing.JFormattedTextField txtManualEntry;
-    private javax.swing.JFormattedTextField txtStart;
+    private com.jdimension.jlawyer.client.components.DateTimeEditPanel txtStart;
     // End of variables declaration//GEN-END:variables
 }

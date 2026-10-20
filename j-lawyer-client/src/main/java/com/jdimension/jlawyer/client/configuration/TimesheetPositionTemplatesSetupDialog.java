@@ -772,7 +772,7 @@ public class TimesheetPositionTemplatesSetupDialog extends javax.swing.JDialog {
         taDescription = new javax.swing.JTextArea();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("Zeiterfassungspositionen");
+        setTitle("Stundensätze");
 
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Zeiterfassungspositionen als Vorlagen"));
 
@@ -870,7 +870,7 @@ public class TimesheetPositionTemplatesSetupDialog extends javax.swing.JDialog {
 
         jLabel5.setFont(jLabel5.getFont().deriveFont(jLabel5.getFont().getStyle() | java.awt.Font.BOLD, jLabel5.getFont().getSize()-2));
         jLabel5.setForeground(new java.awt.Color(153, 153, 153));
-        jLabel5.setText("Einstellungen Positionsvorlage");
+        jLabel5.setText("Einstellungen Stundensatz");
 
         jLabel2.setFont(jLabel2.getFont());
         jLabel2.setText("Positionstext:");

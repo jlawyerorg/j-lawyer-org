@@ -19,7 +19,11 @@
           <Group type="102" alignment="1" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="1" attributes="0">
-                  <Component id="cmbTemplate" max="32767" attributes="0"/>
+                  <Group type="102" alignment="1" attributes="0">
+                      <Component id="cmbTemplate" max="32767" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="cmdDescriptionSuggestions" min="-2" max="-2" attributes="0"/>
+                  </Group>
                   <Component id="jSeparator1" max="32767" attributes="0"/>
                   <Group type="102" alignment="1" attributes="0">
                       <Component id="cmdStartStop" min="-2" max="-2" attributes="0"/>
@@ -27,6 +31,10 @@
                       <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="txtManualEntry" min="-2" pref="100" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="jLabel4" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="cmdManualRange" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
@@ -38,11 +46,11 @@
                   </Group>
                   <Component id="jScrollPane1" alignment="1" max="32767" attributes="0"/>
                   <Group type="102" attributes="0">
-                      <Component id="txtStart" min="-2" pref="160" max="-2" attributes="0"/>
+                      <Component id="txtStart" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
                       <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="txtEnd" min="-2" pref="160" max="-2" attributes="0"/>
+                      <Component id="txtEnd" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="32767" attributes="0"/>
                       <Component id="lblDuration" min="-2" max="-2" attributes="0"/>
                   </Group>
@@ -60,6 +68,8 @@
                       <Component id="cmdSave" min="-2" max="-2" attributes="0"/>
                       <Component id="txtManualEntry" alignment="0" max="32767" attributes="0"/>
                       <Component id="jLabel3" alignment="0" max="32767" attributes="0"/>
+                      <Component id="jLabel4" alignment="0" max="32767" attributes="0"/>
+                      <Component id="cmdManualRange" alignment="0" max="32767" attributes="0"/>
                       <Component id="cmdStartStop" alignment="0" max="32767" attributes="0"/>
                       <Component id="jLabel1" alignment="0" max="32767" attributes="0"/>
                       <Component id="lblProject" max="32767" attributes="0"/>
@@ -70,7 +80,10 @@
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="cmbTemplate" min="-2" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="cmbTemplate" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmdDescriptionSuggestions" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jScrollPane1" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
@@ -138,18 +151,7 @@
         </Component>
       </SubComponents>
     </Container>
-    <Component class="javax.swing.JFormattedTextField" name="txtStart">
-      <Properties>
-        <Property name="editable" type="boolean" value="false"/>
-        <Property name="formatterFactory" type="javax.swing.JFormattedTextField$AbstractFormatterFactory" editor="org.netbeans.modules.form.editors.AbstractFormatterFactoryEditor">
-          <Format format="dd.MM.yy HH:mm" subtype="-1" type="2"/>
-        </Property>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-          <FontInfo relative="true">
-            <Font component="txtStart" property="font" relativeSize="true" size="0"/>
-          </FontInfo>
-        </Property>
-      </Properties>
+    <Component class="com.jdimension.jlawyer.client.components.DateTimeEditPanel" name="txtStart">
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel2">
       <Properties>
@@ -161,18 +163,7 @@
         <Property name="text" type="java.lang.String" value="-"/>
       </Properties>
     </Component>
-    <Component class="javax.swing.JFormattedTextField" name="txtEnd">
-      <Properties>
-        <Property name="editable" type="boolean" value="false"/>
-        <Property name="formatterFactory" type="javax.swing.JFormattedTextField$AbstractFormatterFactory" editor="org.netbeans.modules.form.editors.AbstractFormatterFactoryEditor">
-          <Format format="dd.MM.yy HH:mm" subtype="-1" type="2"/>
-        </Property>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-          <FontInfo relative="true">
-            <Font component="txtEnd" property="font" relativeSize="true" size="0"/>
-          </FontInfo>
-        </Property>
-      </Properties>
+    <Component class="com.jdimension.jlawyer.client.components.DateTimeEditPanel" name="txtEnd">
     </Component>
     <Component class="javax.swing.JButton" name="cmdStartStop">
       <Properties>
@@ -258,6 +249,35 @@
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdEditActionPerformed"/>
       </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="jLabel4">
+      <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font component="jLabel4" property="font" relativeSize="true" size="0"/>
+          </FontInfo>
+        </Property>
+        <Property name="text" type="java.lang.String" value="oder"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdManualRange">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons32/material/more_time_32dp_0E72B5_FILL0_wght400_GRAD0_opsz40.png"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="Zeit manuell mit Beginn und Ende erfassen"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdManualRangeActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdDescriptionSuggestions">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons16/material/format_list_bulleted_20dp_0E72B5.png"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="T&#xe4;tigkeit in Beschreibung einf&#xfc;gen"/>
+      </Properties>
     </Component>
   </SubComponents>
 </Form>

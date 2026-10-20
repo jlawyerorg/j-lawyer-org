@@ -844,6 +844,7 @@ public class ClientSettings {
     private AppOptionGroupBean[] professions=null;
     private AppOptionGroupBean[] roles=null; // "Funktion" an einer Adresse
     protected AppOptionGroupBean[] timesheetIntervals=null;
+    protected AppOptionGroupBean[] timesheetDescriptions=null;
     
     private List<CalendarEntryTemplate> calendarEntryTemplates=null;
     
@@ -1320,6 +1321,20 @@ public class ClientSettings {
      */
     public AppOptionGroupBean[] getTimesheetIntervals() {
         return timesheetIntervals;
+    }
+
+    /**
+     * @param timesheetDescriptions predefined descriptions for timesheet positions
+     */
+    public void setTimesheetDescriptions(AppOptionGroupBean[] timesheetDescriptions) {
+        this.timesheetDescriptions = timesheetDescriptions;
+    }
+
+    /**
+     * @return predefined descriptions for timesheet positions, may be null
+     */
+    public AppOptionGroupBean[] getTimesheetDescriptions() {
+        return timesheetDescriptions;
     }
 
     /**

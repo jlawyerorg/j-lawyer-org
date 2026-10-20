@@ -1323,6 +1323,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuTimesheet = new javax.swing.JMenu();
         mnuTimesheetIntervals = new javax.swing.JMenuItem();
         mnuTimesheetPositions = new javax.swing.JMenuItem();
+        mnuTimesheetDescriptions = new javax.swing.JMenuItem();
         mnuParallelTimesheetLogs = new javax.swing.JMenuItem();
         mnuTimesheetInput = new javax.swing.JMenuItem();
         jSeparator2 = new javax.swing.JSeparator();
@@ -2119,13 +2120,23 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
         mnuTimesheetPositions.setFont(mnuTimesheetPositions.getFont());
         mnuTimesheetPositions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_timer_black_48dp.png"))); // NOI18N
-        mnuTimesheetPositions.setText("Zeiterfassungspositionen (Vorlagen)");
+        mnuTimesheetPositions.setText("Stundensätze");
         mnuTimesheetPositions.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuTimesheetPositionsActionPerformed(evt);
             }
         });
         mnuTimesheet.add(mnuTimesheetPositions);
+
+        mnuTimesheetDescriptions.setFont(mnuTimesheetDescriptions.getFont());
+        mnuTimesheetDescriptions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_timer_black_48dp.png"))); // NOI18N
+        mnuTimesheetDescriptions.setText("Tätigkeiten");
+        mnuTimesheetDescriptions.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuTimesheetDescriptionsActionPerformed(evt);
+            }
+        });
+        mnuTimesheet.add(mnuTimesheetDescriptions);
 
         mnuParallelTimesheetLogs.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_timer_black_48dp.png"))); // NOI18N
         mnuParallelTimesheetLogs.setText("parallele Zeiterfassungen");
@@ -3133,6 +3144,25 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         
     }//GEN-LAST:event_mnuTimesheetPositionsActionPerformed
 
+    private void mnuTimesheetDescriptionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuTimesheetDescriptionsActionPerformed
+        if (checkAdmin()) {
+            OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, true);
+            dlg.setTitle("Zeiterfassung: Tätigkeiten");
+            dlg.setOptionGroup(OptionConstants.OPTIONGROUP_TIMESHEETDESCRIPTIONS);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+
+            // the dialog does not update the client side cache
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                settings.setTimesheetDescriptions(locator.lookupSystemManagementRemote().getOptionGroup(OptionConstants.OPTIONGROUP_TIMESHEETDESCRIPTIONS));
+            } catch (Exception ex) {
+                log.error("Error reloading timesheet descriptions", ex);
+            }
+        }
+    }//GEN-LAST:event_mnuTimesheetDescriptionsActionPerformed
+
     private void mnuParallelTimesheetLogsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuParallelTimesheetLogsActionPerformed
         if (checkAdmin()) {
             TimesheetParallelConfigurationDialog dlg = new TimesheetParallelConfigurationDialog(this, true);
@@ -3463,6 +3493,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenu mnuTimesheet;
     private javax.swing.JMenuItem mnuTimesheetInput;
     private javax.swing.JMenuItem mnuTimesheetIntervals;
+    private javax.swing.JMenuItem mnuTimesheetDescriptions;
     private javax.swing.JMenuItem mnuTimesheetPositions;
     private javax.swing.JMenuItem mnuUserProfile;
     private javax.swing.JMenuItem mnuUsers;

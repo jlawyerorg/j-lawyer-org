@@ -1269,6 +1269,16 @@ public class TimesheetDialog extends javax.swing.JDialog implements NewEventEntr
 
     private boolean save() {
 
+        for (Component c : this.pnlTimesheetPositions.getComponents()) {
+            if (c instanceof TimesheetPositionEntryPanel) {
+                String error = ((TimesheetPositionEntryPanel) c).validateTimes();
+                if (error != null) {
+                    JOptionPane.showMessageDialog(this, error, com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
+                    return false;
+                }
+            }
+        }
+
         if (this.currentEntry == null) {
             // creation
             ClientSettings settings = ClientSettings.getInstance();

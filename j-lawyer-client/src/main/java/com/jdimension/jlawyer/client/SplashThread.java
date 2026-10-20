@@ -794,6 +794,7 @@ public class SplashThread implements Runnable {
         AppOptionGroupBean[] professions = null;
         AppOptionGroupBean[] roles = null;
         AppOptionGroupBean[] timesheetIntervals = null;
+        AppOptionGroupBean[] timesheetDescriptions = null;
 
         AppUserBean[] lawyerUsers = null;
         AppUserBean[] assistUsers = null;
@@ -816,6 +817,7 @@ public class SplashThread implements Runnable {
             optionGroupNames.add(OptionConstants.OPTIONGROUP_SALUTATIONS);
             optionGroupNames.add(OptionConstants.OPTIONGROUP_DICTATESIGNS);
             optionGroupNames.add(OptionConstants.OPTIONGROUP_TIMESHEETINTERVALMINUTES);
+            optionGroupNames.add(OptionConstants.OPTIONGROUP_TIMESHEETDESCRIPTIONS);
             optionGroupNames.add(OptionConstants.OPTIONGROUP_SUBJECTFIELDS);
             optionGroupNames.add(OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS);
             optionGroupNames.add(OptionConstants.OPTIONGROUP_ADDRESSTAGS);
@@ -837,6 +839,7 @@ public class SplashThread implements Runnable {
             salutationDtos = optionGroups.get(OptionConstants.OPTIONGROUP_SALUTATIONS);
             dictateSignDtos = optionGroups.get(OptionConstants.OPTIONGROUP_DICTATESIGNS);
             timesheetIntervals = optionGroups.get(OptionConstants.OPTIONGROUP_TIMESHEETINTERVALMINUTES);
+            timesheetDescriptions = optionGroups.get(OptionConstants.OPTIONGROUP_TIMESHEETDESCRIPTIONS);
             subjectFieldDtos = optionGroups.get(OptionConstants.OPTIONGROUP_SUBJECTFIELDS);
             afTagDtos = optionGroups.get(OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS);
             adrTagDtos = optionGroups.get(OptionConstants.OPTIONGROUP_ADDRESSTAGS);
@@ -900,6 +903,7 @@ public class SplashThread implements Runnable {
         settings.setDocumentMvTagDefs(docMvTagDefs);
         settings.setAddressMvTagDefs(adrMvTagDefs);
         settings.setTimesheetIntervals(timesheetIntervals);
+        settings.setTimesheetDescriptions(timesheetDescriptions);
         UserSettings.getInstance().setLawyerUsers(lawyerUsers);
         UserSettings.getInstance().setAssistantUsers(assistUsers);
         UserSettings.getInstance().setAllUsers(allUsers);

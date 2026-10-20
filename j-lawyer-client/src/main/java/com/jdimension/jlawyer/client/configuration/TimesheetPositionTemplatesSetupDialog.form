@@ -3,7 +3,7 @@
 <Form version="1.6" maxVersion="1.9" type="org.netbeans.modules.form.forminfo.JDialogFormInfo">
   <Properties>
     <Property name="defaultCloseOperation" type="int" value="2"/>
-    <Property name="title" type="java.lang.String" value="Zeiterfassungspositionen"/>
+    <Property name="title" type="java.lang.String" value="Stundens&#xe4;tze"/>
   </Properties>
   <SyntheticProperties>
     <SyntheticProperty name="formSizePolicy" type="int" value="1"/>
@@ -278,7 +278,7 @@
         <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
           <Color blue="99" green="99" red="99" type="rgb"/>
         </Property>
-        <Property name="text" type="java.lang.String" value="Einstellungen Positionsvorlage"/>
+        <Property name="text" type="java.lang.String" value="Einstellungen Stundensatz"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel2">

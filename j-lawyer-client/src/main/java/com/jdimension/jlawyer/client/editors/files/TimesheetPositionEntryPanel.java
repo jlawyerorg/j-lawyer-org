@@ -739,39 +739,11 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
             }
         });
 
-        this.txtStarted.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                updateParentTotal();
-            }
+        this.txtStarted.addChangeListener(e -> updateParentTotal());
+        this.txtStopped.addChangeListener(e -> updateParentTotal());
 
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                updateParentTotal();
-            }
-
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                updateParentTotal();
-            }
-        });
-
-        this.txtStopped.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                updateParentTotal();
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                updateParentTotal();
-            }
-
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                updateParentTotal();
-            }
-        });
+        TimesheetDescriptionSuggestions.bindButton(this.cmdDescriptionSuggestions, this.taDescription);
+        TimesheetDescriptionSuggestions.installContextMenu(this.taDescription);
 
         this.cmbTaxRate.removeAllItems();
         taxRates.forEach(tr -> {
@@ -789,8 +761,8 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
         this.taDescription.setText(pos.getDescription());
         this.cmbTaxRate.setSelectedItem(pos.getTaxRate());
         this.txtUnitPrice.setValue(pos.getUnitPrice());
-        this.txtStarted.setValue(pos.getStarted());
-        this.txtStopped.setValue(pos.getStopped());
+        this.txtStarted.setDate(pos.getStarted());
+        this.txtStopped.setDate(pos.getStopped());
         
         this.lblDuration.setText(TimesheetUtils.formatDuration(pos.getStarted(), pos.getStopped()));
 
@@ -858,6 +830,23 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
         return null;
     }
     
+    /**
+     * Checks the entered start and end of the position.
+     *
+     * @return an error message, or null if start and end are valid
+     */
+    public String validateTimes() {
+        if (!this.txtStarted.isValidInput() || !this.txtStopped.isValidInput()) {
+            return "Position '" + this.txtName.getText() + "': ungültiges Datum für Beginn oder Ende";
+        }
+        Date started = this.txtStarted.getDate();
+        Date stopped = this.txtStopped.getDate();
+        if (started != null && stopped != null && stopped.before(started)) {
+            return "Position '" + this.txtName.getText() + "': das Ende liegt vor dem Beginn";
+        }
+        return null;
+    }
+
     public TimesheetPosition getEntry() {
 
         if (this.position == null) {
@@ -867,8 +856,8 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
         TimesheetPosition clone = new TimesheetPosition();
         clone.setId(this.position.getId());
         clone.setTimesheet(this.position.getTimesheet());
-        clone.setStarted((Date) this.txtStarted.getValue());
-        clone.setStopped((Date) this.txtStopped.getValue());
+        clone.setStarted(this.txtStarted.getDate());
+        clone.setStopped(this.txtStopped.getDate());
         clone.setPrincipal(null);
         if(this.cmbPrincipal.getSelectedItem()!=null)
             clone.setPrincipal(this.cmbPrincipal.getSelectedItem().toString());
@@ -911,14 +900,15 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
         cmbTaxRate = new javax.swing.JComboBox<>();
         cmdRemovePosition = new javax.swing.JButton();
         jSeparator1 = new javax.swing.JSeparator();
-        txtStarted = new javax.swing.JFormattedTextField();
+        txtStarted = new com.jdimension.jlawyer.client.components.DateTimeEditPanel();
         jLabel4 = new javax.swing.JLabel();
-        txtStopped = new javax.swing.JFormattedTextField();
+        txtStopped = new com.jdimension.jlawyer.client.components.DateTimeEditPanel();
         lblBilled = new javax.swing.JLabel();
         cmbPrincipal = new javax.swing.JComboBox<>();
         lblIndicator = new javax.swing.JLabel();
         cmdDuplicateEntry = new javax.swing.JButton();
         lblDuration = new javax.swing.JLabel();
+        cmdDescriptionSuggestions = new javax.swing.JButton();
 
         txtName.setFont(txtName.getFont().deriveFont(txtName.getFont().getStyle() | java.awt.Font.BOLD, txtName.getFont().getSize()-2));
         txtName.setText("jTextField1");
@@ -963,14 +953,10 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
             }
         });
 
-        txtStarted.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.DateFormatter(new java.text.SimpleDateFormat("dd.MM.yy HH:mm"))));
-        txtStarted.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         txtStarted.setFont(txtStarted.getFont().deriveFont(txtStarted.getFont().getSize()-2f));
 
         jLabel4.setText("bis");
 
-        txtStopped.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.DateFormatter(new java.text.SimpleDateFormat("dd.MM.yy HH:mm"))));
-        txtStopped.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         txtStopped.setFont(txtStopped.getFont().deriveFont(txtStopped.getFont().getSize()-2f));
 
         lblBilled.setFont(lblBilled.getFont().deriveFont(lblBilled.getFont().getStyle() | java.awt.Font.BOLD));
@@ -993,6 +979,9 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
         lblDuration.setFont(lblDuration.getFont().deriveFont(lblDuration.getFont().getStyle() | java.awt.Font.BOLD, lblDuration.getFont().getSize()-2));
         lblDuration.setText("2h45m");
 
+        cmdDescriptionSuggestions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/format_list_bulleted_20dp_0E72B5.png"))); // NOI18N
+        cmdDescriptionSuggestions.setToolTipText("Tätigkeit in Beschreibung einfügen");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -1010,15 +999,17 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmbTaxRate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdDescriptionSuggestions)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdDuplicateEntry)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdRemovePosition))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(txtStarted, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(txtStarted, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabel4)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txtStopped, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(txtStopped, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblDuration)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -1042,7 +1033,8 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
                     .addComponent(cmbTaxRate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(cmdRemovePosition)
                     .addComponent(cmbPrincipal, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(cmdDuplicateEntry))
+                    .addComponent(cmdDuplicateEntry)
+                    .addComponent(cmdDescriptionSuggestions))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1065,7 +1057,7 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
 
     private void cmdRemovePositionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemovePositionActionPerformed
 
-        int response = JOptionPane.showConfirmDialog(this, "Position '" + txtName.getText() + "' (" + txtStarted.getText() + ") löschen?", "erfasste Zeit löschen", JOptionPane.YES_NO_OPTION);
+        int response = JOptionPane.showConfirmDialog(this, "Position '" + txtName.getText() + "' (" + txtStarted.getDisplayText() + ") löschen?", "erfasste Zeit löschen", JOptionPane.YES_NO_OPTION);
         if (response == JOptionPane.YES_OPTION) {
 
             ClientSettings settings = ClientSettings.getInstance();
@@ -1113,11 +1105,11 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
         try {
             unitPrice = (Number) this.txtUnitPrice.getValue();
 
-            if (this.txtStarted.getValue() != null && this.txtStopped.getValue() != null && unitPrice != null) {
+            if (this.txtStarted.getDate() != null && this.txtStopped.getDate() != null && unitPrice != null) {
                 this.txtUnitPrice.putClientProperty(FlatClientProperties.OUTLINE, null);
                 this.txtTotal.putClientProperty(FlatClientProperties.OUTLINE, null);
-                Date started = (Date) this.txtStarted.getValue();
-                Date stopped = (Date) this.txtStopped.getValue();
+                Date started = this.txtStarted.getDate();
+                Date stopped = this.txtStopped.getDate();
                 this.lblDuration.setText(TimesheetUtils.formatDuration(started, stopped));
                 float totalMinutes = ((float) (stopped.getTime() - started.getTime())) / 1000f / 60f;
                 double roundedMinutes = Math.ceil(totalMinutes / intervalMinutes) * intervalMinutes;
@@ -1141,6 +1133,7 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<String> cmbPrincipal;
     private javax.swing.JComboBox<String> cmbTaxRate;
+    private javax.swing.JButton cmdDescriptionSuggestions;
     private javax.swing.JButton cmdDuplicateEntry;
     private javax.swing.JButton cmdRemovePosition;
     private javax.swing.JLabel jLabel2;
@@ -1153,8 +1146,8 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
     private javax.swing.JLabel lblIndicator;
     private javax.swing.JTextArea taDescription;
     private javax.swing.JTextField txtName;
-    private javax.swing.JFormattedTextField txtStarted;
-    private javax.swing.JFormattedTextField txtStopped;
+    private com.jdimension.jlawyer.client.components.DateTimeEditPanel txtStarted;
+    private com.jdimension.jlawyer.client.components.DateTimeEditPanel txtStopped;
     private javax.swing.JFormattedTextField txtTotal;
     private javax.swing.JFormattedTextField txtUnitPrice;
     // End of variables declaration//GEN-END:variables
