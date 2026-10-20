@@ -43,8 +43,10 @@ before handing it over and fix all FEHLER; explain remaining WARNUNGEN to the us
 1. Use only placeholders from the catalog. Party placeholders are `<PREFIX>_<FIELD>`; default prefixes
    are MANDANT, GEGNER, DRITTE – other party types (e.g. VERSICHERUNG) and case-form (Falldatenblatt)
    prefixes exist only if the firm created them: ask the user, then pass them to `validate`.
-2. Write adjacent placeholders **without** a space: `{{MANDANT_VORNAME}}{{MANDANT_NAME}}`. The server
-   inserts a space after each value unless followed by `. , ; : ! ? ' " / ) ] -` or a space.
+2. The server inserts a space after each value unless followed by `. , ; : ! ? ' " / ) ] -` or a
+   space, so `{{MANDANT_VORNAME}}{{MANDANT_NAME}}` and `{{MANDANT_VORNAME}} {{MANDANT_NAME}}` both
+   work. Never put a placeholder that may be empty between two spaces (double space): write
+   `{{MANDANT_AGRAD1}}{{MANDANT_NAME}}`, not `{{MANDANT_AGRAD1}} {{MANDANT_NAME}}` after a space.
 3. Prefer current names over aliases: `_BEGRUESSUNG` (not `_ANREDE`), `_ANREDE1` (not `_TITEL`),
    `_UNTERNEHMEN` (not `_FIRMA`).
 4. Table placeholders (`TABELLE_1`, `BEL_TABELLE`, `ZE_TABELLE`, `ZE_SUMMEN`, `BEL_GIROCODE`) stand
@@ -71,7 +73,8 @@ before handing it over and fix all FEHLER; explain remaining WARNUNGEN to the us
    details, insurance numbers, signatory, dictation mark.
 2. Present a mapping table to the user **before changing anything**:
    `Fundstelle | Wert im Beispiel | vorgeschlagener Platzhalter / Skript`. Include proposals such as
-   the salutation via `{{MANDANT_BEGRUESSUNG}}` or `MWDJU`, today's date via `{{KURZDATUM}}`,
+   the salutation via `{{MANDANT_BEGRUESSUNG}} {{MANDANT_NAME}},` (BEGRUESSUNG holds only
+   "Sehr geehrter Herr" without the name) or `MWDJU`, today's date via `{{KURZDATUM}}`,
    deadlines via `FRIST`/`FRISTBANKTAG`, gendered terms via `GENDERN`. Mark values with no matching
    placeholder (they stay as text or become a case-form field) and ask which party type each person is.
 3. After confirmation write `map.json` and run `replace`. Order rules from long to short
@@ -83,7 +86,7 @@ before handing it over and fix all FEHLER; explain remaining WARNUNGEN to the us
 `map.json` format:
 ```json
 [{"find": "Max Mustermann", "replace": "{{MANDANT_VORNAME}}{{MANDANT_NAME}}"},
- {"find": "Sehr geehrter Herr Mustermann,", "replace": "{{MANDANT_BEGRUESSUNG}}"},
+ {"find": "Sehr geehrter Herr Mustermann,", "replace": "{{MANDANT_BEGRUESSUNG}} {{MANDANT_NAME}},"},
  {"find": "\\d{2}\\.\\d{2}\\.\\d{4}", "replace": "{{KURZDATUM}}", "regex": true, "vorkommen": [1]},
  {"find": "Mustermann", "replace": "{{MANDANT_NAME}}", "bereich": "text"}]
 ```

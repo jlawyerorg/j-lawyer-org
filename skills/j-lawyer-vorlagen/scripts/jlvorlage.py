@@ -949,11 +949,9 @@ def validate_pkg(pkg, cat, check_pii=True):
             if nxt and nxt not in NO_SPACE_AFTER and not nxt.isspace() and not text.startswith("{{", m.end()) \
                     and not text.startswith("[[", m.end()):
                 rep.warn(where, f"Nach {token} folgt direkt '{nxt}' - der Server fügt dazwischen ein Leerzeichen ein")
-            after = text[m.end():]
-            sp = re.match(r" +(\{\{[^{}]*\}\})", after)
-            if sp:
-                rep.warn(where, f"Leerzeichen zwischen {token} und {sp.group(1)} - ist ein Wert leer, entsteht ein doppeltes "
-                                f"Leerzeichen. Besser ohne Leerzeichen schreiben: {token}{sp.group(1)} (Leerzeichen kommt automatisch)")
+            if text[m.start() - 1:m.start()] == " " and nxt == " ":
+                rep.warn(where, f"{token} steht zwischen zwei Leerzeichen - ist der Wert leer, entsteht ein doppeltes "
+                                f"Leerzeichen. Das Leerzeichen danach weglassen (es kommt automatisch)")
 
         if check_pii and loc["area"] == "Text":
             plain = TOKEN_RE.sub(" ", text)

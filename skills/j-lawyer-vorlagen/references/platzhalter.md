@@ -19,7 +19,9 @@ diese Datei vollständig zu lesen.
 - Anrede-Felder (häufig verwechselt):
   - `_ANREDE1` = Anrede („Herr", „Frau")
   - `_ANREDE2` = Anrede in der Anschrift („Herrn")
-  - `_BEGRUESSUNG` = komplette Briefanrede aus den Kontaktdaten („Sehr geehrter Herr Müller,")
+  - `_BEGRUESSUNG` = Briefanrede aus den Kontaktdaten **ohne Namen** („Sehr geehrter Herr",
+    „Sehr geehrte Frau Kollegin"). Briefanrede daher immer als
+    `{{MANDANT_BEGRUESSUNG}} {{MANDANT_NAME}},` schreiben.
   - `_NACHTEXT` = Grußformel („Mit freundlichen Grüßen")
   - Die Aliasse `_ANREDE` (= `_BEGRUESSUNG`), `_TITEL` (= `_ANREDE1`) und `_FIRMA` (= `_UNTERNEHMEN`)
     funktionieren noch, werden aber nicht mehr verwendet.

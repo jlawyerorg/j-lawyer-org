@@ -35,9 +35,12 @@ Diese Regeln stammen aus dem Server-Code (DOCX: `MicrosoftOfficeAccess`, Apache 
 
 - Nach jedem eingesetzten Wert fügt der Server ein Leerzeichen an. Das gilt nicht, wenn direkt danach
   eines dieser Zeichen folgt: `. , ; : ! ? ' "` Leerzeichen `/ ) ] -`
-- Deshalb Platzhalter **ohne** Leerzeichen aneinanderreihen: `{{MANDANT_PLZ}}{{MANDANT_ORT}}` ergibt
-  „12345 Berlin“.
-- Mit Leerzeichen (`{{A}} {{B}}`) entsteht bei leerem A in DOCX ein doppeltes Leerzeichen.
+- `{{MANDANT_PLZ}}{{MANDANT_ORT}}` und `{{MANDANT_PLZ}} {{MANDANT_ORT}}` ergeben beide
+  „12345 Berlin“: Folgt bereits ein Leerzeichen, hängt der Server keines an.
+- **Doppeltes Leerzeichen** entsteht, wenn ein leerer Platzhalter **zwischen zwei Leerzeichen** steht:
+  `{{MANDANT_ANREDE1}} {{MANDANT_AGRAD1}} {{MANDANT_NAME}}` ergibt ohne akademischen Grad
+  „Herr  Müller“. Solche optionalen Platzhalter ohne Leerzeichen anhängen:
+  `{{MANDANT_ANREDE1}} {{MANDANT_AGRAD1}}{{MANDANT_NAME}}`.
 - Folgt direkt ein Buchstabe oder eine Ziffer (`{{MANDANT_NAME}}s`), wird ein Leerzeichen
   eingeschoben („Müller s“). Für solche Fälle ein Skript verwenden:
   `[[SCRIPT:MANDANT_NAME + "s";]]`

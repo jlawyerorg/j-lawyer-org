@@ -82,7 +82,7 @@ Unser Zeichen: {{AKTE_ZEICHEN}}
 ### Briefanrede und Grußformel
 
 ```
-{{MANDANT_BEGRUESSUNG}}
+{{MANDANT_BEGRUESSUNG}} {{MANDANT_NAME}},
 …
 {{MANDANT_NACHTEXT}}
 
@@ -90,6 +90,8 @@ Unser Zeichen: {{AKTE_ZEICHEN}}
 Rechtsanwalt
 ```
 - `{{MANDANT_BEGRUESSUNG}}` und `{{MANDANT_NACHTEXT}}` kommen aus den Kontaktdaten.
+  `{{MANDANT_BEGRUESSUNG}}` enthält nur die Anrede ohne Namen („Sehr geehrter Herr“); Name und
+  Komma ergänzt die Vorlage.
 - Ist nicht sicher, dass diese gepflegt sind, die Anrede per `MWDJU` bilden (siehe skripte.md).
 - Die Signatur kann auch `{{USER_AN}}` (angemeldete Person) verwenden. `{{AKTE_ANWALT_AN}}` ist
   der verantwortliche Anwalt.

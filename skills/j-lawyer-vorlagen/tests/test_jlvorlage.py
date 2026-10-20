@@ -178,8 +178,16 @@ class ValidateTest(Base):
         rep, _ = validate(fixture("template.docx"))
         msg = self.messages(rep)
         self.assertIn("{{MANDANT_ANREDE}} ist ein veralteter Alias", msg)
-        self.assertIn("Leerzeichen zwischen {{MANDANT_VORNAME}} und {{MANDANT_NAME}}", msg)
+        self.assertNotIn("zwischen zwei Leerzeichen", msg)  # {{A}} {{B}} is fine
         self.assertFalse(rep.errors)
+
+    def test_optional_placeholder_between_spaces(self):
+        spec = ("{{MANDANT_ANREDE1}} {{MANDANT_AGRAD1}} {{MANDANT_NAME}}\n\n"
+                "{{MANDANT_BEGRUESSUNG}} {{MANDANT_NAME}},\n")
+        rep, _ = validate(self.build(spec, "docx"))
+        warnings = [w for w in rep.warnings if "zwischen zwei Leerzeichen" in w]
+        self.assertEqual(1, len(warnings))
+        self.assertIn("{{MANDANT_AGRAD1}}", warnings[0])
 
     def test_table_placeholder_ok(self):
         rep, _ = validate(fixture("template-table.docx"))
