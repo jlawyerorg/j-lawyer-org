@@ -139,16 +139,40 @@
                 <groupId>com.formdev</groupId>
                 <artifactId>flatlaf-extras</artifactId>
                 <version>3.5.4</version>
+                <exclusions>
+                    <!-- pulls com.formdev:flatlaf WITH native libs (unsigned dylibs break macOS notarization);
+                         the client uses jlawyer.thirdparty:flatlaf:3.5.4-no-natives instead -->
+                    <exclusion>
+                        <groupId>com.formdev</groupId>
+                        <artifactId>flatlaf</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>com.formdev</groupId>
                 <artifactId>flatlaf-fonts-inter</artifactId>
                 <version>3.19</version>
+                <exclusions>
+                    <!-- pulls com.formdev:flatlaf WITH native libs (unsigned dylibs break macOS notarization);
+                         the client uses jlawyer.thirdparty:flatlaf:3.5.4-no-natives instead -->
+                    <exclusion>
+                        <groupId>com.formdev</groupId>
+                        <artifactId>flatlaf</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>com.formdev</groupId>
                 <artifactId>flatlaf-fonts-roboto</artifactId>
                 <version>2.137</version>
+                <exclusions>
+                    <!-- pulls com.formdev:flatlaf WITH native libs (unsigned dylibs break macOS notarization);
+                         the client uses jlawyer.thirdparty:flatlaf:3.5.4-no-natives instead -->
+                    <exclusion>
+                        <groupId>com.formdev</groupId>
+                        <artifactId>flatlaf</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>com.github.bbottema</groupId>
@@ -304,6 +328,14 @@
                 <groupId>com.jcabi</groupId>
                 <artifactId>jcabi-ssh</artifactId>
                 <version>1.5.2</version>
+                <exclusions>
+                    <!-- pulls com.jcraft:jsch:0.1.51, which shadows jlawyer.thirdparty:jsch:0.1.54 on the
+                         client classpath and fails against current OpenSSH ("Algorithm negotiation fail") -->
+                    <exclusion>
+                        <groupId>com.jcraft</groupId>
+                        <artifactId>jsch</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>com.mysql</groupId>
