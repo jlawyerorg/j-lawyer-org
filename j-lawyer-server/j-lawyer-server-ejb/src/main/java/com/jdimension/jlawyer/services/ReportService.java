@@ -1464,24 +1464,34 @@ public class ReportService implements ReportServiceRemote, ReportServiceLocal {
             String queryLawyers = "SELECT distinct(lawyer) FROM cases c, case_account_entries ca WHERE ca.entry_date >= ? AND ca.entry_date <= ? and c.id=ca.case_id order by upper(lawyer) asc";
             ReportResultTable lawyerTable = getTable(false, "lawyers", queryLawyers, null, params);
 
-            StringBuilder casesByLawyerQuery = new StringBuilder();
-            casesByLawyerQuery.append("SELECT DATE_FORMAT(entry_date, '%Y-%m') AS Monat, ");
+            // per-lawyer earnings columns, shared by the monthly and yearly pivot tables
+            StringBuilder earningsByLawyerColumns = new StringBuilder();
             ArrayList<Object[]> lawyerRows = lawyerTable.getValues();
             for (Object[] lawyerRow : lawyerRows) {
                 String lawyer = (String) lawyerRow[0];
                 if (lawyer != null && !("".equalsIgnoreCase(lawyer))) {
-                    casesByLawyerQuery.append("SUM(CASE WHEN c.lawyer = '").append(lawyer).append("' THEN ca.in_earnings ELSE 0 END) AS '").append(lawyer).append("',");
+                    earningsByLawyerColumns.append("SUM(CASE WHEN c.lawyer = '").append(lawyer).append("' THEN ca.in_earnings ELSE 0 END) AS '").append(lawyer).append("',");
                 }
             }
-            casesByLawyerQuery.append("SUM(CASE WHEN c.lawyer IS NULL OR c.lawyer = '' THEN ca.in_earnings ELSE 0 END) AS unbekannt\n"
+            earningsByLawyerColumns.append("SUM(CASE WHEN c.lawyer IS NULL OR c.lawyer = '' THEN ca.in_earnings ELSE 0 END) AS unbekannt\n"
                     + "FROM cases c, case_account_entries ca\n"
-                    + "WHERE ca.entry_date >= ? AND ca.entry_date <= ? and ca.case_id = c.id\n"
+                    + "WHERE ca.entry_date >= ? AND ca.entry_date <= ? and ca.case_id = c.id\n");
+
+            String casesByLawyerQuery = "SELECT DATE_FORMAT(entry_date, '%Y-%m') AS Monat, " + earningsByLawyerColumns
                     + "GROUP BY Monat\n"
-                    + "ORDER BY Monat ASC");
-            result.getTables().add(getTable(false, "Einnahmen pro Monat", casesByLawyerQuery.toString(), null, params));
+                    + "ORDER BY Monat ASC";
+            result.getTables().add(getTable(false, "Einnahmen pro Monat", casesByLawyerQuery, null, params));
+
+            String casesByLawyerYearQuery = "SELECT YEAR(entry_date) AS Jahr, " + earningsByLawyerColumns
+                    + "GROUP BY Jahr\n"
+                    + "ORDER BY Jahr ASC";
+            result.getTables().add(getTable(false, "Einnahmen pro Jahr", casesByLawyerYearQuery, null, params));
 
             String queryEarningsByLawyerChart = "select IFNULL(NULLIF(c.lawyer, ''), 'unbekannt') as Anwalt, DATE_FORMAT(ca.entry_date, '%Y-%m') as Monat, SUM(ca.in_earnings) as Einnahmen from cases c, case_account_entries ca where ca.entry_date>=? and ca.entry_date<=? and ca.case_id=c.id group by Anwalt, Monat order by Monat asc";
             result.getBarCharts().add(getLineChart(false, "Einnahmen pro Monat", "Monat", "Einnahmen", queryEarningsByLawyerChart, 1, 2, 3, params));
+
+            String queryEarningsByLawyerYearChart = "select IFNULL(NULLIF(c.lawyer, ''), 'unbekannt') as Anwalt, YEAR(ca.entry_date) as Jahr, SUM(ca.in_earnings) as Einnahmen from cases c, case_account_entries ca where ca.entry_date>=? and ca.entry_date<=? and ca.case_id=c.id group by Anwalt, Jahr order by Jahr asc";
+            result.getBarCharts().add(getBarChart(false, "Einnahmen pro Jahr", "Jahr", "Einnahmen", queryEarningsByLawyerYearChart, 1, 2, 3, params));
 
             String query = "\n"
                     + "select case_account_entries.case_id, fileNumber as Aktenzeichen, cases.name as Rubrum, reason as wegen, lawyer as Anwalt, assistant as Sachbearbeiter, DATE_FORMAT(entry_date,'%Y-%m-%d') as Buchungsdatum, case_account_entries.description as Kommentar, in_earnings as Einnahmen, out_spendings as Ausgaben, in_expenditure as AuslagenEin, out_expenditure as AuslagenAus, in_escrow as FremdgeldEin, out_escrow as FremdgeldAus, invoice_no as BelegNr, invoices.name as Bezeichung, round(invoices.total_gross, 2) Bruttobetrag from case_account_entries\n"
