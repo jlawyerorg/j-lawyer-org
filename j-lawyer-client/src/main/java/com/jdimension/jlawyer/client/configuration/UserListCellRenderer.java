@@ -665,16 +665,23 @@ package com.jdimension.jlawyer.client.configuration;
 
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.persistence.AppUserBean;
+import java.awt.Color;
 import java.awt.Component;
+import java.awt.image.BufferedImage;
 import javax.swing.DefaultListCellRenderer;
+import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.UIManager;
 
 /**
  *
  * @author jens
  */
 public class UserListCellRenderer extends DefaultListCellRenderer {
+
+    // transparent placeholder with the size of the small user avatars, keeps the empty entry as high as user entries
+    private static final ImageIcon EMPTY_ICON = new ImageIcon(new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB));
 
     public UserListCellRenderer() {
         super();
@@ -685,7 +692,21 @@ public class UserListCellRenderer extends DefaultListCellRenderer {
     @Override
     public Component getListCellRendererComponent(JList jlist, Object o, int i, boolean bln, boolean bln1) {
         Component ret = super.getListCellRendererComponent(jlist, o, i, bln, bln1);
-        if (o instanceof String) {
+        if (o == null || "".equals(o) || (o instanceof AppUserBean && (((AppUserBean) o).getPrincipalId() == null || "".equals(((AppUserBean) o).getPrincipalId())))) {
+            JLabel label = (JLabel) ret;
+            label.setIcon(EMPTY_ICON);
+            if (i >= 0) {
+                // entry in the popup list
+                label.setText("(niemand)");
+                if (!bln) {
+                    Color c = UIManager.getColor("Label.disabledForeground");
+                    label.setForeground(c != null ? c : Color.GRAY);
+                }
+            } else {
+                // closed combo box: blank, but with regular height
+                label.setText(" ");
+            }
+        } else if (o instanceof String) {
             this.setUserIcon((JLabel)ret, o.toString());
         } else if (o instanceof AppUserBean) {
             AppUserBean b = (AppUserBean) o;
