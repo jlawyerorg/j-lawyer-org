@@ -107,6 +107,8 @@
     <properties>
       <!-- changed from update to validate to avoid deployment during an update installer run to create columns that will be added by a sql script later in the process -->
       <property name="hibernate.hbm2ddl.auto" value="validate"/>
+      <!-- load eagerly fetched associations and collections (e.g. the recursive case folder tree) for several owners per select instead of one select per owner -->
+      <property name="hibernate.default_batch_fetch_size" value="25"/>
       <!-- property name="hibernate.session.events.log.LOG_QUERIES_SLOWER_THAN_MS" value="25"/ -->
     </properties>
   </persistence-unit>
