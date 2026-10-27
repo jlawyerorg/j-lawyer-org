@@ -761,7 +761,9 @@ public class MicrosoftOfficeDocxTest {
             allPartyTypesPlaceholders.add("GEGNER");
             allPartyTypesPlaceholders.add("DRITTE");
             ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders(testFile("template-scripts.docx").getPath(), allPartyTypesPlaceholders, new ArrayList<>()));
-            Assert.assertEquals(6, l.size());
+            // 3 placeholders and 7 scripts - scripts are listed per occurrence, and the script whose
+            // lines are separate paragraphs ("not working" in the template) is not detected
+            Assert.assertEquals(10, l.size());
         } catch (Throwable t) {
             Assert.fail(t.getMessage());
         }

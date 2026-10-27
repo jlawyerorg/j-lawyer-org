@@ -782,7 +782,8 @@ public class LibreOfficeODFTest {
             allPartyTypesPlaceholders.add("GEGNER");
             allPartyTypesPlaceholders.add("DRITTE");
             ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders(testFile("template-scripts.odt").getPath(), allPartyTypesPlaceholders, new ArrayList<>()));
-            Assert.assertEquals(5, l.size());
+            // 3 placeholders and 3 scripts - the script whose lines are separate paragraphs is not detected
+            Assert.assertEquals(6, l.size());
         } catch (Throwable t) {
             Assert.fail(t.getMessage());
         }
@@ -849,7 +850,8 @@ public class LibreOfficeODFTest {
         Assert.assertEquals(77, content.indexOf("otto\" test"));
         Assert.assertEquals(88, content.indexOf("otto test"));
         Assert.assertEquals(98, content.indexOf("hans otto"));
-        Assert.assertEquals(109, content.indexOf("hans otto 2"));
+        // no space is appended to a placeholder that ends a paragraph
+        Assert.assertEquals(108, content.indexOf("hans otto 2"));
         Assert.assertTrue(!content.contains("MANDANT_ANREDE"));
 
     }
@@ -1476,7 +1478,8 @@ public class LibreOfficeODFTest {
         Assert.assertEquals(92, content.indexOf("otto\" test"));
         Assert.assertEquals(105, content.indexOf("otto test"));
         Assert.assertEquals(117, content.indexOf("hans otto"));
-        Assert.assertEquals(130, content.indexOf("hans otto 2"));
+        // no space is appended to a placeholder that ends a cell text
+        Assert.assertEquals(129, content.indexOf("hans otto 2"));
         Assert.assertTrue(!content.contains("MANDANT_ANREDE"));
 
     }
