@@ -1506,4 +1506,77 @@ public class LibreOfficeODFTest {
         }
     }
 
+    @Test
+    public void setEmptyPlaceholderRemovesLineInOdt() {
+        File f = null;
+        try {
+            f = File.createTempFile("j-lawyer-empty-line-", ".odt");
+            TextDocument document = TextDocument.newTextDocument();
+            document.addParagraph("zeile1");
+            document.addParagraph("{{MANDANT_NAME}}");
+            document.addParagraph("zeile 3");
+            document.addParagraph("{{MANDANT_VORNAME}}");
+            // a frame (here an empty text box) in front of an empty placeholder
+            org.odftoolkit.simple.text.Paragraph withFrame = document.addParagraph("{{MANDANT_NAME}}");
+            org.w3c.dom.Element frame = document.getContentDom().createElementNS("urn:oasis:names:tc:opendocument:xmlns:drawing:1.0", "draw:frame");
+            frame.appendChild(document.getContentDom().createElementNS("urn:oasis:names:tc:opendocument:xmlns:drawing:1.0", "draw:text-box"));
+            withFrame.getOdfElement().insertBefore(frame, withFrame.getOdfElement().getFirstChild());
+            // a field without text (hidden variable) in front of an empty placeholder
+            org.odftoolkit.simple.text.Paragraph withField = document.addParagraph("{{MANDANT_NAME}}");
+            org.w3c.dom.Element field = document.getContentDom().createElementNS("urn:oasis:names:tc:opendocument:xmlns:text:1.0", "text:variable-set");
+            field.setAttributeNS("urn:oasis:names:tc:opendocument:xmlns:text:1.0", "text:name", "jlawyerTestVariable");
+            field.setAttributeNS("urn:oasis:names:tc:opendocument:xmlns:text:1.0", "text:display", "none");
+            field.setAttributeNS("urn:oasis:names:tc:opendocument:xmlns:office:1.0", "office:value-type", "string");
+            field.setAttributeNS("urn:oasis:names:tc:opendocument:xmlns:office:1.0", "office:string-value", "jlawyerTestValue");
+            withField.getOdfElement().insertBefore(field, withField.getOdfElement().getFirstChild());
+            // a bookmark starting in front of an empty placeholder and ending in the next paragraph
+            org.odftoolkit.simple.text.Paragraph withBookmark = document.addParagraph("{{MANDANT_NAME}}");
+            org.w3c.dom.Element bookmarkStart = document.getContentDom().createElementNS("urn:oasis:names:tc:opendocument:xmlns:text:1.0", "text:bookmark-start");
+            bookmarkStart.setAttributeNS("urn:oasis:names:tc:opendocument:xmlns:text:1.0", "text:name", "jlawyerTestBookmark");
+            withBookmark.getOdfElement().insertBefore(bookmarkStart, withBookmark.getOdfElement().getFirstChild());
+            org.odftoolkit.simple.text.Paragraph bookmarkEnd = document.addParagraph("zeile 5");
+            org.w3c.dom.Element bookmarkEndElement = document.getContentDom().createElementNS("urn:oasis:names:tc:opendocument:xmlns:text:1.0", "text:bookmark-end");
+            bookmarkEndElement.setAttributeNS("urn:oasis:names:tc:opendocument:xmlns:text:1.0", "text:name", "jlawyerTestBookmark");
+            bookmarkEnd.getOdfElement().appendChild(bookmarkEndElement);
+            // a named hyperlink target without text in front of an empty placeholder, and a link to it
+            org.odftoolkit.simple.text.Paragraph withTarget = document.addParagraph("{{MANDANT_NAME}}");
+            org.w3c.dom.Element target = document.getContentDom().createElementNS("urn:oasis:names:tc:opendocument:xmlns:text:1.0", "text:a");
+            target.setAttributeNS("urn:oasis:names:tc:opendocument:xmlns:office:1.0", "office:name", "jlawyerTestTarget");
+            target.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", "#jlawyerTestTarget");
+            withTarget.getOdfElement().insertBefore(target, withTarget.getOdfElement().getFirstChild());
+            org.odftoolkit.simple.text.Paragraph withLink = document.addParagraph("");
+            org.w3c.dom.Element link = document.getContentDom().createElementNS("urn:oasis:names:tc:opendocument:xmlns:text:1.0", "text:a");
+            link.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", "#jlawyerTestTarget");
+            link.setTextContent("zum Ziel");
+            withLink.getOdfElement().appendChild(link);
+            // a placeholder repeated twice after a line break
+            org.odftoolkit.simple.text.Paragraph repeated = document.addParagraph("{{MANDANT_NAME}}{{MANDANT_NAME}}");
+            repeated.getOdfElement().insertBefore(document.getContentDom().createElementNS("urn:oasis:names:tc:opendocument:xmlns:text:1.0", "text:line-break"), repeated.getOdfElement().getFirstChild());
+            document.save(f);
+            document.close();
+
+            HashMap<String,Object> ph = new HashMap<>();
+            ph.put("{{MANDANT_NAME}}", "");
+            ph.put("{{MANDANT_VORNAME}}", "hans");
+
+            LibreOfficeAccess.setPlaceHolders("", f.getAbsolutePath(), f.getName(), ph, null);
+
+            String contentXml = readZipEntry(f, "content.xml");
+            Assert.assertTrue("the line that only held the empty placeholder is removed", java.util.regex.Pattern.compile("(?s).*zeile1</text:p><text:p[^>]*>zeile 3</text:p>.*").matcher(contentXml).matches());
+            Assert.assertTrue("a placeholder at the end of a paragraph gets no trailing space", java.util.regex.Pattern.compile("(?s).*>hans(</text:span>)*</text:p>.*").matcher(contentXml).matches());
+            Assert.assertTrue("a frame is kept", contentXml.contains("<draw:text-box"));
+            Assert.assertTrue("a field without text is kept", contentXml.contains("jlawyerTestValue"));
+            Assert.assertTrue("both ends of a bookmark are kept", java.util.regex.Pattern.compile("(?s).*<text:bookmark-start[^>]*jlawyerTestBookmark.*<text:bookmark-end[^>]*jlawyerTestBookmark.*").matcher(contentXml).matches());
+            Assert.assertTrue("a named hyperlink target is kept", contentXml.contains("office:name=\"jlawyerTestTarget\""));
+            Assert.assertFalse("every placeholder is replaced", contentXml.contains("{{MANDANT_NAME}}"));
+        } catch (Throwable t) {
+            t.printStackTrace();
+            Assert.fail(t.getMessage());
+        } finally {
+            if (f != null) {
+                f.delete();
+            }
+        }
+    }
+
 }

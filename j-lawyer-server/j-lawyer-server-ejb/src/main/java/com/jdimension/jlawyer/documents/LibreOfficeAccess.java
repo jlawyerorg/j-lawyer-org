@@ -1560,6 +1560,11 @@ public class LibreOfficeAccess {
                         try {
                             TextSelection item = (TextSelection) eolSearch.nextSelection();
                             item.replaceWith(eolValue);
+                            // as in the replacement below: remove lines that are empty after replacing placeholders with empty string
+                            if (eolValue.isEmpty() && isEmptyParagraph(item.getElement())) {
+                                removalParents.add(item.getElement().getParentNode());
+                                removalChildren.add(item.getElement());
+                            }
                         } catch (Throwable t) {
                             log.error("Error replacing " + regExKeyEol + " with " + eolValue + " in " + fileInFileSystem, t);
                         }
@@ -2173,6 +2178,36 @@ public class LibreOfficeAccess {
             PdfFormsAccess.setPlaceHolders(caseId, fileInFileSystem, fileName, values, formsPrefixes);
         }
 
+    }
+
+    // inline elements an empty paragraph may still hold when it is removed - no bookmarks, the
+    // other end of a bookmark may be in another paragraph
+    private static final Set<String> INLINE_TEXT_ELEMENTS = Set.of("text:span", "text:a", "text:s", "text:tab", "text:line-break", "text:soft-page-break");
+
+    private static boolean isEmptyParagraph(OdfElement paragraph) {
+        // no text left, and never remove paragraphs with images, frames, fields or other non-text content
+        return paragraph.getTextContent().trim().isEmpty() && containsInlineTextElementsOnly(paragraph);
+    }
+
+    private static boolean containsInlineTextElementsOnly(Node node) {
+        NodeList childNodes = node.getChildNodes();
+        for (int i = 0; i < childNodes.getLength(); i++) {
+            Node child = childNodes.item(i);
+            if (child.getNodeType() == Node.ELEMENT_NODE
+                    && (!INLINE_TEXT_ELEMENTS.contains(child.getNodeName()) || isNamedHyperlink(child) || !containsInlineTextElementsOnly(child))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean isNamedHyperlink(Node node) {
+        // a hyperlink with a name is a target other hyperlinks may point to
+        if (!"text:a".equals(node.getNodeName())) {
+            return false;
+        }
+        Node name = node.getAttributes().getNamedItemNS("urn:oasis:names:tc:opendocument:xmlns:office:1.0", "name");
+        return name != null && !name.getNodeValue().isEmpty();
     }
 
     private static boolean replaceIngoTextWithParagraphs(TextSelection item, String value) {
