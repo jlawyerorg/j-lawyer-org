@@ -2095,7 +2095,8 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
     }//GEN-LAST:event_lstAttachmentsMouseReleased
 
     private void lstAttachmentsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstAttachmentsMouseClicked
-        if (evt.getClickCount() == 2 && this.lstAttachments.getSelectedValue() != null) {
+        // on macOS, Control+click opens the context menu - it must not open the attachment
+        if (evt.getClickCount() == 2 && evt.getButton() == MouseEvent.BUTTON1 && !(SystemUtils.isMacOs() && evt.isControlDown()) && this.lstAttachments.getSelectedValue() != null) {
             try {
                 byte[] data = null;
                 if (this.emlMsgContainer != null && this.emlMsgContainer.isServerBased()) {

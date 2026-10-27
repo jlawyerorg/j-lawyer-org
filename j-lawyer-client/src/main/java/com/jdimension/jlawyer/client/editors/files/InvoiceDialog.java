@@ -3121,7 +3121,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     }//GEN-LAST:event_lblInvoiceDocumentMouseExited
 
     private void lblInvoiceDocumentMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblInvoiceDocumentMouseClicked
-        if (this.cmdViewDocument.isEnabled()) {
+        if (this.cmdViewDocument.isEnabled() && javax.swing.SwingUtilities.isLeftMouseButton(evt)) {
             this.cmdViewDocumentActionPerformed(null);
         }
     }//GEN-LAST:event_lblInvoiceDocumentMouseClicked
