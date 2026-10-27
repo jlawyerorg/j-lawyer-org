@@ -1150,7 +1150,8 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
             this.lblExpandMouseClicked(evt);
             return;
         }
-        if ((evt.getModifiers() & InputEvent.BUTTON2_MASK) == MouseEvent.BUTTON2_MASK || (evt.getModifiers() & InputEvent.BUTTON2_DOWN_MASK) == MouseEvent.BUTTON2_DOWN_MASK || (evt.getModifiers() & InputEvent.BUTTON3_MASK) == MouseEvent.BUTTON3_MASK || (evt.getModifiers() & InputEvent.BUTTON3_DOWN_MASK) == MouseEvent.BUTTON3_DOWN_MASK) {
+        // BUTTON2_MASK / BUTTON3_MASK equal ALT_MASK / META_MASK, so check the button itself - otherwise Alt+click or Cmd+click (macOS) would open the popup
+        if (javax.swing.SwingUtilities.isMiddleMouseButton(evt) || javax.swing.SwingUtilities.isRightMouseButton(evt)) {
             if ((evt.getModifiers() & InputEvent.SHIFT_MASK) == InputEvent.SHIFT_MASK || (evt.getModifiers() & InputEvent.CTRL_MASK) == InputEvent.CTRL_MASK) {
                 this.documentClicked(evt, false);
             } else {
@@ -1205,7 +1206,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
     }//GEN-LAST:event_lblFavoriteMouseClicked
 
     private void chkSelectedMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_chkSelectedMouseReleased
-        if ((evt.getModifiers() & InputEvent.BUTTON2_MASK) == evt.BUTTON2_MASK || (evt.getModifiers() & InputEvent.BUTTON2_DOWN_MASK) == evt.BUTTON2_DOWN_MASK || (evt.getModifiers() & InputEvent.BUTTON3_MASK) == evt.BUTTON3_MASK || (evt.getModifiers() & InputEvent.BUTTON3_DOWN_MASK) == evt.BUTTON3_DOWN_MASK) {
+        if (javax.swing.SwingUtilities.isMiddleMouseButton(evt) || javax.swing.SwingUtilities.isRightMouseButton(evt)) {
             if ((evt.getModifiers() & InputEvent.SHIFT_MASK) == InputEvent.SHIFT_MASK || (evt.getModifiers() & InputEvent.CTRL_MASK) == InputEvent.CTRL_MASK) {
                 this.documentClicked(evt, false);
             } else {
