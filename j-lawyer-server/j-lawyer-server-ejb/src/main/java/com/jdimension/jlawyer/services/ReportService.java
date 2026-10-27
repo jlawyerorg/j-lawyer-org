@@ -1677,7 +1677,7 @@ public class ReportService implements ReportServiceRemote, ReportServiceLocal {
 
         HashMap<String, ReportResultTable> splitTables = new HashMap<>();
         for (Object[] row : dataRows) {
-            String groupValue = row[columnIndex].toString();
+            String groupValue = row[columnIndex] == null ? "" : row[columnIndex].toString();
             if (!splitTables.containsKey(groupValue)) {
                 ReportResultTable newSubTable = new ReportResultTable();
                 newSubTable.setColumnNames(mainTable.getColumnNames());
