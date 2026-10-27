@@ -671,6 +671,7 @@ import groovy.lang.GroovyObject;
 import groovy.lang.GroovyShell;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -688,6 +689,7 @@ import java.util.HashMap;
 import java.util.zip.ZipFile;
 import junit.framework.Assert;
 import org.apache.tika.Tika;
+import org.apache.tika.config.TikaConfig;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -713,11 +715,22 @@ public class LibreOfficeODFTest {
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder();
 
+    /**
+     * Tika without OCR. Where Tesseract is installed, Tika's default configuration runs it on images in
+     * the parsed document. template.odt and template.ods embed a thumbnail ahead of content.xml, so its
+     * recognized text would end up in front of the document text.
+     */
+    private static TikaConfig tikaWithoutOcr;
+
     public LibreOfficeODFTest() {
     }
 
     @BeforeClass
-    public static void setUpClass() {
+    public static void setUpClass() throws Exception {
+        String config = "<properties><parsers><parser class=\"org.apache.tika.parser.DefaultParser\">"
+                + "<parser-exclude class=\"org.apache.tika.parser.ocr.TesseractOCRParser\"/>"
+                + "</parser></parsers></properties>";
+        tikaWithoutOcr = new TikaConfig(new ByteArrayInputStream(config.getBytes(StandardCharsets.UTF_8)));
     }
 
     @AfterClass
@@ -803,7 +816,7 @@ public class LibreOfficeODFTest {
         }
 
         String content = "";
-        Tika tika = new Tika();
+        Tika tika = new Tika(tikaWithoutOcr);
         try {
             //Reader r = tika.parse(new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt"));
             Reader r = tika.parse(f);
@@ -1230,7 +1243,7 @@ public class LibreOfficeODFTest {
         }
 
         String content = "";
-        Tika tika = new Tika();
+        Tika tika = new Tika(tikaWithoutOcr);
         try {
             Reader r = tika.parse(f);
             BufferedReader br = new BufferedReader(r);
@@ -1283,7 +1296,7 @@ public class LibreOfficeODFTest {
         }
 
         String content = "";
-        Tika tika = new Tika();
+        Tika tika = new Tika(tikaWithoutOcr);
         try {
             //Reader r = tika.parse(new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt"));
             Reader r = tika.parse(f);
@@ -1352,7 +1365,7 @@ public class LibreOfficeODFTest {
         }
 
         String content = "";
-        Tika tika = new Tika();
+        Tika tika = new Tika(tikaWithoutOcr);
         try {
             //Reader r = tika.parse(new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt"));
             Reader r = tika.parse(f);
@@ -1431,7 +1444,7 @@ public class LibreOfficeODFTest {
         }
 
         String content = "";
-        Tika tika = new Tika();
+        Tika tika = new Tika(tikaWithoutOcr);
         try {
             Reader r = tika.parse(f);
             //Reader r = tika.parse(new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.ods"));
