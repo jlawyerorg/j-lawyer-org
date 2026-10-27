@@ -675,6 +675,10 @@ public class CaseInsensitiveStringComparator implements Comparator {
     public int compare(Object t, Object t1) {
         try {
 
+            if (t == null && t1 == null) {
+                return 0;
+            }
+
             if (t == null) {
                 return 1;
             }
@@ -687,6 +691,15 @@ public class CaseInsensitiveStringComparator implements Comparator {
             String s2 = t1.toString();
 
             
+            if(s1 == null)
+                s1 = "";
+            
+            if(s2 == null)
+                s2 = "";
+            
+            if("".equals(s1) && "".equals(s2))
+                return 0;
+            
             if("".equals(s1))
                 return 1;
             
@@ -698,7 +711,7 @@ public class CaseInsensitiveStringComparator implements Comparator {
 
 
         } catch (Throwable thr) {
-            return 1;
+            return 0;
         }
     }
 }
