@@ -870,6 +870,36 @@ public class SendBeaMessageAction extends ProgressableAction {
             BeaProcessCard p = null;
             boolean isEgvpRecipient = BeaAccess.isEgvpPostBoxBySafeId(to.getSafeId());
 
+            // wait for the process card independently of saving the message to the case,
+            // otherwise sending without "als Dokument speichern" always reports a missing process card
+            if (isEgvpRecipient) {
+                this.progress("Warten auf EGVP-Laufzettel...");
+                try {
+                    long maxWaitTime = 120000l;
+                    long start = System.currentTimeMillis();
+                    long waited = 0;
+                    while (p == null && waited < maxWaitTime) {
+                        if (this.isCancelled()) {
+                            break;
+                        }
+                        p = bea.getProcessCards(this.fromSafeId, sentMessage.getId());
+                        if (p != null) {
+                            sentMessage.setProcessCard(p);
+                            break;
+                        } else {
+                            waited = System.currentTimeMillis() - start;
+                            try {
+                                Thread.sleep(1000l);
+                            } catch (Throwable t) {
+
+                            }
+                        }
+                    }
+                } catch (Throwable t) {
+                    log.error("Could not retrieve process card for message " + sentMessage.getId(), t);
+                }
+            }
+
             Throwable storeException = null;
             try {
                 if (this.archiveFile != null) {
@@ -881,31 +911,6 @@ public class SendBeaMessageAction extends ProgressableAction {
                     this.progress("Laden der Nachricht...");
 
                     BeaMessage msgEx = sentMessage;
-
-                    this.progress("Warten auf EGVP-Laufzettel...");
-
-                    if (isEgvpRecipient) {
-                        long maxWaitTime = 120000l;
-                        long start = System.currentTimeMillis();
-                        long waited = 0;
-                        while (p == null && waited < maxWaitTime) {
-                            if (this.isCancelled()) {
-                                break;
-                            }
-                            p = bea.getProcessCards(this.fromSafeId, sentMessage.getId());
-                            if (p != null) {
-                                msgEx.setProcessCard(p);
-                                break;
-                            } else {
-                                waited = System.currentTimeMillis() - start;
-                                try {
-                                    Thread.sleep(1000l);
-                                } catch (Throwable t) {
-
-                                }
-                            }
-                        }
-                    }
 
                     if (!this.isCancelled()) {
                         this.progress("Speichern in Akte " + this.archiveFile.getFileNumber());
