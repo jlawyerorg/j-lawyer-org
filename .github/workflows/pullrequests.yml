@@ -79,7 +79,12 @@ jobs:
           -Dnpm.install.args="ci --ignore-scripts"
           -Dmaven.test.skip=true install
 
+      # GitHub does not pass repository secrets to pull_request runs from forks, so SONAR_TOKEN
+      # is empty there and the scan always fails with "Not authorized", marking the whole
+      # build red although it succeeded. Run the scan only where the token is available:
+      # PRs from branches of this repository (incl. Dependabot) and manual runs.
       - name: SonarCloud Scan
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         uses: SonarSource/sonarcloud-github-action@master
         with:
           args: >
