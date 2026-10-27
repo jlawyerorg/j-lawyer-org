@@ -2533,6 +2533,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 for (ArchiveFileDocumentsBean copy : copies.values()) {
                     this.caseFolderPanel1.addDocument(copy, null);
                 }
+                this.updateFavoriteDocuments();
                 this.updateDocumentTagsOverview();
             }
         } catch (Exception ex) {
@@ -7062,7 +7063,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 ProgressableActionCallback callback = () -> {
                     try {
 
-                        byte[] content = remote.getDocumentContent(doc.getId());
                         ArchiveFileDocumentsBean orgDoc = remote.getDocument(doc.getId());
                         String newName = FileUtils.getNewFileName(dto, doc.getName(), new Date(), true, EditorsRegistry.getInstance().getMainWindow(), "Dokument duplizieren");
 
@@ -7075,15 +7075,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             this.lastPopupClosed = System.currentTimeMillis();
                             return;
                         }
-                        ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, content, doc.getDictateSign(), null);
+                        // copied on the server into the same case and folder, keeping highlights, favorite, tags and metadata
+                        ArrayList<String> docId = new ArrayList<>();
+                        docId.add(doc.getId());
+                        HashMap<String, String> newNames = new HashMap<>();
+                        newNames.put(doc.getId(), newName);
+                        String folderId = orgDoc.getFolder() == null ? null : orgDoc.getFolder().getId();
+                        ArchiveFileDocumentsBean newDoc = remote.copyDocumentsToCase(docId, dto.getId(), folderId, newNames).get(doc.getId());
 
-                        if (orgDoc.getFolder() != null) {
-                            ArrayList<String> docId = new ArrayList<>();
-                            docId.add(newDoc.getId());
-                            remote.moveDocumentsToFolder(docId, orgDoc.getFolder().getId());
-
-                        }
                         caseFolderPanel1.addDocument(remote.getDocument(newDoc.getId()), null);
+                        this.updateFavoriteDocuments();
+                        this.updateDocumentTagsOverview();
                         this.lastPopupClosed = System.currentTimeMillis();
 
                     } catch (Exception ioe) {
