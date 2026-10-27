@@ -757,15 +757,15 @@ public class MicrosoftOfficeAccess {
 
                     }
 
-                    String value = values.get(key).toString() + " ";
+                    String value = values.get(key).toString();
                     for (XWPFHeader header : outputDocx.getHeaderList()) {
-                        replaceInBodyElements(key, value, header.getBodyElements());
+                        replaceWithAutoSpaceInBodyElements(key, value, header.getBodyElements());
                     }
                     // REPLACE BODY
-                    replaceInBodyElements(key, value, outputDocx.getBodyElements());
+                    replaceWithAutoSpaceInBodyElements(key, value, outputDocx.getBodyElements());
 
                     for (XWPFFooter footer : outputDocx.getFooterList()) {
-                        replaceInBodyElements(key, value, footer.getBodyElements());
+                        replaceWithAutoSpaceInBodyElements(key, value, footer.getBodyElements());
                     }
 
                 } else if (values.get(key) instanceof CalculationTable) {
@@ -1230,6 +1230,59 @@ public class MicrosoftOfficeAccess {
             } else if (bodyElement.getElementType().compareTo(BodyElementType.TABLE) == 0) {
                 replaceInTable(key, value, (XWPFTable) bodyElement);
             }
+        }
+    }
+
+    /**
+     * Replaces the placeholder with the value followed by a space, like
+     * replaceInBodyElements. If the placeholder is the last content of a
+     * paragraph, the space is omitted - it would otherwise survive as a
+     * trailing space artifact at the end of the line.
+     */
+    private static void replaceWithAutoSpaceInBodyElements(String key, String value, List<IBodyElement> bodyElements) {
+        for (IBodyElement bodyElement : bodyElements) {
+            if (bodyElement.getElementType().compareTo(BodyElementType.PARAGRAPH) == 0) {
+                replaceWithAutoSpaceInParagraph(key, value, (XWPFParagraph) bodyElement);
+                replaceInTextfield(key, value + " ", (XWPFParagraph) bodyElement);
+            } else if (bodyElement.getElementType().compareTo(BodyElementType.TABLE) == 0) {
+                replaceWithAutoSpaceInTable(key, value, (XWPFTable) bodyElement);
+            }
+        }
+    }
+
+    private static void replaceWithAutoSpaceInTable(String key, String value, XWPFTable table) {
+        for (XWPFTableRow row : table.getRows()) {
+            for (XWPFTableCell cell : row.getTableCells()) {
+                for (IBodyElement bodyElement : cell.getBodyElements()) {
+                    if (bodyElement.getElementType().compareTo(BodyElementType.PARAGRAPH) == 0) {
+                        replaceWithAutoSpaceInParagraph(key, value, (XWPFParagraph) bodyElement);
+                    }
+                    if (bodyElement.getElementType().compareTo(BodyElementType.TABLE) == 0) {
+                        replaceWithAutoSpaceInTable(key, value, (XWPFTable) bodyElement);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * The space is only omitted if the placeholder occurs exactly once in the
+     * paragraph text (as left by the trailing chars passes), because
+     * replaceInParagraph only replaces within the runs of the first match.
+     * Empty values keep the space.
+     */
+    private static void replaceWithAutoSpaceInParagraph(String key, String value, XWPFParagraph xwpfParagraph) {
+        // getText() appends the text of referenced footnotes - only the paragraph content counts
+        String paragraphText = xwpfParagraph.getText();
+        String footnoteText = xwpfParagraph.getFootnoteText();
+        if (paragraphText.endsWith(footnoteText)) {
+            paragraphText = paragraphText.substring(0, paragraphText.length() - footnoteText.length());
+        }
+        boolean lastContent = paragraphText.endsWith(key) && paragraphText.indexOf(key) == paragraphText.length() - key.length();
+        if (lastContent && !value.isEmpty()) {
+            replaceInParagraph(key, value, xwpfParagraph);
+        } else {
+            replaceInParagraph(key, value + " ", xwpfParagraph);
         }
     }
 
