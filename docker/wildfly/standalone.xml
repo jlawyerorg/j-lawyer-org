@@ -587,6 +587,14 @@
                 <https-listener name="https" max-post-size="50971520" socket-binding="https" ssl-context="applicationSSC" enable-http2="true"/>
                 <host name="default-host" alias="localhost">
                     <location name="/" handler="welcome-content"/>
+                    <!-- gzip for textual responses (REST JSON, web client, Swagger UI). Not compressed: the token-issuing
+                         auth endpoints (matched on the decoded path without path parameters, so "auth;x" does not bypass it),
+                         partial (Range) responses, whose Content-Range describes the uncompressed bytes, and HEAD responses,
+                         which therefore report the uncompressed length. -->
+                    <filter-ref name="gzipFilter" predicate="not (regex(pattern='/j-lawyer-io', value='%{RESOLVED_PATH}', full-match=true) and regex(pattern='/rest/v[0-9]+/auth(/.*)?', value='%{RELATIVE_PATH}', full-match=true)) and not method(HEAD) and not exists('%{o,Content-Range}') and exists('%{o,Content-Type}') and regex(pattern='(?:application/json|application/javascript|text/javascript|text/css|text/html|text/plain|text/xml|application/xml)(;.*)?', value='%{o,Content-Type}', full-match=true)"/>
+                    <!-- responses may now differ by Accept-Encoding; tells caches (e.g. for the public web client assets) to
+                         keep the variants apart. The gzip filter does not set it itself. -->
+                    <filter-ref name="varyAcceptEncoding"/>
                     <http-invoker http-authentication-factory="application-http-authentication"/>
                 </host>
             </server>
@@ -597,6 +605,10 @@
             <handlers>
                 <file name="welcome-content" path="${jboss.home.dir}/welcome-content"/>
             </handlers>
+            <filters>
+                <gzip name="gzipFilter"/>
+                <response-header name="varyAcceptEncoding" header-name="Vary" header-value="Accept-Encoding"/>
+            </filters>
             <application-security-domains>
                 <application-security-domain name="other" security-domain="ApplicationDomain"/>
                 <!-- Bearer + Basic for the HTTP tier via the explicit factory; override-deployment-config
