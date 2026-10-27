@@ -712,6 +712,7 @@ import org.odftoolkit.odfdom.pkg.OdfPackage;
 import org.odftoolkit.odfdom.type.Color;
 import org.odftoolkit.simple.SpreadsheetDocument;
 import org.odftoolkit.simple.TextDocument;
+import org.odftoolkit.simple.common.TextExtractor;
 import org.odftoolkit.simple.common.navigation.TextNavigation;
 import org.odftoolkit.simple.common.navigation.TextSelection;
 import org.odftoolkit.simple.draw.Image;
@@ -741,6 +742,8 @@ public class LibreOfficeAccess {
     private static final String PLACEHOLDER_CLOSE = "}}";
     private static final String PLACEHOLDER_REGEX_OPEN = "\\{\\{";
     private static final String PLACEHOLDER_REGEX_CLOSE = "\\}\\}";
+    // inline elements that may surround an empty script in a paragraph which is then removed
+    private static final Set<String> PARAGRAPH_TEXT_ELEMENTS = Set.of("text:span", "text:a", "text:s", "text:tab", "text:line-break", "text:soft-page-break", "text:bookmark", "text:bookmark-start", "text:bookmark-end");
 
     public static void applyHeaderGraphic(String intoDocument, String mergeDocument, String templateName) throws Exception {
         // note: intoDocument is just an ID as filename, does not have an .odt / .docx extension
@@ -2212,24 +2215,49 @@ public class LibreOfficeAccess {
         return value != null && value.replace("\r\n", "\n").replace('\r', '\n').matches("(?s).*\\n\\s*\\n.*");
     }
 
-    private static boolean isContainedAsSeparateParagraph(Node rNode, String searchText) {
+    /**
+     * Checks whether a paragraph contains nothing but the given script and
+     * whitespace, so that it can be removed when the script has an empty
+     * result.
+     *
+     * @param paragraph the paragraph containing the script
+     * @param searchText the script text as found by TextNavigation
+     * @return true if the paragraph may be removed
+     */
+    private static boolean isContainedAsSeparateParagraph(OdfElement paragraph, String searchText) {
 
-        Node parentNode = rNode.getParentNode();
-        if (parentNode == null) {
+        if (paragraph.getParentNode() == null) {
             return false;
         }
 
-        NodeList childNodes = parentNode.getChildNodes();
+        // use the same text extraction as TextNavigation - getTextContent() ignores
+        // spaces stored as <text:s/>, tabs and line breaks
+        String paragraphText = TextExtractor.getText(paragraph);
+        int scriptIndex = paragraphText.indexOf(searchText);
+        if (scriptIndex < 0) {
+            return false;
+        }
+
+        String remainingText = paragraphText.substring(0, scriptIndex) + paragraphText.substring(scriptIndex + searchText.length());
+        if (remainingText.trim().length() > 0) {
+            return false;
+        }
+
+        // never remove paragraphs with images, frames, fields or other non-text content
+        return containsTextElementsOnly(paragraph);
+    }
+
+    private static boolean containsTextElementsOnly(Node node) {
+        NodeList childNodes = node.getChildNodes();
         for (int i = 0; i < childNodes.getLength(); i++) {
             Node child = childNodes.item(i);
-            if (child.getTextContent().contains(searchText) && child.getTextContent().length() > searchText.length()) {
-                return false;
-            }
-            if (child.getTextContent().equals(searchText)) {
-                return true;
+            if (child.getNodeType() == Node.ELEMENT_NODE) {
+                if (!PARAGRAPH_TEXT_ELEMENTS.contains(child.getNodeName()) || !containsTextElementsOnly(child)) {
+                    return false;
+                }
             }
         }
-        return false;
+        return true;
     }
 
     /**
