@@ -1067,12 +1067,31 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         }
         Store store = imapConnect(ms);
         Folder folder = store.getFolder(folderId);
-        folder.open(Folder.READ_ONLY);
-        try {
-            return new int[]{folder.getUnreadMessageCount(), folder.getMessageCount()};
-        } finally {
-            folder.close(false);
+        int[] counts = imapFolderCounts(folder);
+        return new int[]{counts[1], counts[0]};
+    }
+
+    /**
+     * Total and unread message count of a closed IMAP folder, as {total, unread}. On a closed folder
+     * JavaMail reads both from the IMAP STATUS command (normally one command, the second count comes
+     * from its status cache) instead of opening (SELECT/EXAMINE), searching and closing the folder.
+     * Servers without STATUS support make JavaMail report -1 for the unread count; then the folder is
+     * opened and counted as before. The unread count is read first because without STATUS support
+     * getMessageCount() would itself open and close the folder before the fallback opens it again.
+     */
+    private static int[] imapFolderCounts(Folder folder) throws javax.mail.MessagingException {
+        int unread = folder.getUnreadMessageCount();
+        int total = (unread < 0) ? -1 : folder.getMessageCount();
+        if (total < 0 || unread < 0) {
+            folder.open(Folder.READ_ONLY);
+            try {
+                total = folder.getMessageCount();
+                unread = folder.getUnreadMessageCount();
+            } finally {
+                folder.close(false);
+            }
         }
+        return new int[]{total, unread};
     }
 
     /** Removes the hidden folders (and their descendants) from a folder list, by matching stored paths. */
@@ -1942,10 +1961,9 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                     dto.setFolderId(fullName);
                     dto.setDisplayName(f.getName());
                     if (includeCounts) {
-                        f.open(Folder.READ_ONLY);
-                        dto.setTotalCount(f.getMessageCount());
-                        dto.setUnreadCount(f.getUnreadMessageCount());
-                        f.close(false);
+                        int[] counts = imapFolderCounts(f);
+                        dto.setTotalCount(counts[0]);
+                        dto.setUnreadCount(counts[1]);
                     } else {
                         dto.setTotalCount(COUNT_UNKNOWN);
                         dto.setUnreadCount(COUNT_UNKNOWN);
