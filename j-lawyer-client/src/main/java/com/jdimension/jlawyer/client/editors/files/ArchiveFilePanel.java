@@ -7753,17 +7753,30 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     }
                 }
 
-                ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, content, doc.getDictateSign(), null);
-                newDoc.setSize(content.length);
-                if (doc.getFolder() != null) {
-                    newDoc.setFolder(doc.getFolder());
-                    ArrayList<String> documentIds = new ArrayList<>();
-                    documentIds.add(newDoc.getId());
-                    remote.moveDocumentsToFolder(documentIds, doc.getFolder().getId());
+                if (replaceDocument) {
+                    ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, content, doc.getDictateSign(), null);
+                    newDoc.setSize(content.length);
+                    if (doc.getFolder() != null) {
+                        newDoc.setFolder(doc.getFolder());
+                        ArrayList<String> documentIds = new ArrayList<>();
+                        documentIds.add(newDoc.getId());
+                        remote.moveDocumentsToFolder(documentIds, doc.getFolder().getId());
+                    } else {
+                        log.warn("document folder of source document is null when duplicating existing PDF");
+                    }
+                    caseFolderPanel1.addDocument(newDoc, null);
                 } else {
-                    log.warn("document folder of source document is null when duplicating existing PDF");
+                    // duplicated under a new name: copied on the server into the same case and folder, keeping highlights, favorite, tags and metadata
+                    ArrayList<String> documentIds = new ArrayList<>();
+                    documentIds.add(doc.getId());
+                    HashMap<String, String> newNames = new HashMap<>();
+                    newNames.put(doc.getId(), newName);
+                    String folderId = doc.getFolder() == null ? null : doc.getFolder().getId();
+                    ArchiveFileDocumentsBean newDoc = remote.copyDocumentsToCase(documentIds, dto.getId(), folderId, newNames).get(doc.getId());
+                    caseFolderPanel1.addDocument(newDoc, null);
+                    this.updateFavoriteDocuments();
+                    this.updateDocumentTagsOverview();
                 }
-                caseFolderPanel1.addDocument(newDoc, null);
             } catch (Throwable t) {
                 log.error("Could not duplicate existing PDF document", t);
                 JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Duplizieren: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
