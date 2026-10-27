@@ -2758,6 +2758,8 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         }
 
         this.clearPositionsPanel();
+        // the server unlinks all timesheet positions when the invoice has no positions left
+        this.enableTimesheetButton(false);
 
         this.updateTotals(null);
 
@@ -3300,6 +3302,16 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                     this.enableTimesheetButton(true);
                 }
             }
+        }
+    }
+
+    /**
+     * Called after an invoice position has been removed. Once no positions are
+     * left, the server has unlinked the timesheet positions from the invoice.
+     */
+    public void positionRemoved() {
+        if (this.pnlInvoicePositions.getComponentCount() == 0) {
+            this.enableTimesheetButton(false);
         }
     }
 

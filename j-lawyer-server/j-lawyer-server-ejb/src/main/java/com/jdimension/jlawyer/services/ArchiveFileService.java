@@ -6795,9 +6795,21 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (allowed) {
             InvoicePosition removePos = this.invoicePositionsFacade.find(position.getId());
             this.invoicePositionsFacade.remove(removePos);
+            // timesheet positions are linked to the invoice, not to individual invoice positions
+            // - once the last position is gone, there is nothing left that bills them
+            if (this.invoicePositionsFacade.findByInvoice(invoice).isEmpty()) {
+                this.unlinkTimesheetPositions(invoice);
+            }
             this.updateInvoiceTotal(invoiceId);
         } else {
             throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+        }
+    }
+
+    private void unlinkTimesheetPositions(Invoice invoice) {
+        for (TimesheetPosition tp : this.timesheetPositionsFacade.findByInvoice(invoice)) {
+            tp.setInvoice(null);
+            this.timesheetPositionsFacade.edit(tp);
         }
     }
 
@@ -7052,6 +7064,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             for (InvoicePosition pos : this.invoicePositionsFacade.findByInvoice(invoice)) {
                 this.invoicePositionsFacade.remove(pos);
             }
+            this.unlinkTimesheetPositions(invoice);
             this.updateInvoiceTotal(invoiceId);
         } else {
             throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
