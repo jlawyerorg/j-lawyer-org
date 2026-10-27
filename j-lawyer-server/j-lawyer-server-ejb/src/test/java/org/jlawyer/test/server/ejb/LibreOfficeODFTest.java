@@ -683,6 +683,7 @@ import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.zip.ZipFile;
 import junit.framework.Assert;
 import org.apache.tika.Tika;
@@ -696,6 +697,7 @@ import org.odftoolkit.simple.TextDocument;
 import org.odftoolkit.simple.draw.Image;
 import org.odftoolkit.simple.style.StyleTypeDefinitions;
 import org.odftoolkit.simple.text.Header;
+import org.odftoolkit.simple.text.Paragraph;
 
 /**
  *
@@ -839,6 +841,51 @@ public class LibreOfficeODFTest {
             String contentXml = readZipEntry(f, "content.xml");
             Assert.assertFalse(contentXml.contains("<text:line-break"));
             Assert.assertTrue(java.util.regex.Pattern.compile("(?s).*First paragraph</text:p><text:p[^>]*>Second paragraph</text:p><text:p[^>]*>Third paragraph\\..*").matcher(contentXml).matches());
+        } catch (Throwable t) {
+            t.printStackTrace();
+            Assert.fail(t.getMessage());
+        } finally {
+            if (f != null) {
+                f.delete();
+            }
+        }
+    }
+
+    @Test
+    public void removeParagraphsOfEmptyScriptsInOdt() {
+        File f = null;
+        try {
+            f = File.createTempFile("j-lawyer-empty-script-", ".odt");
+            TextDocument document = TextDocument.newTextDocument();
+            document.addParagraph("Intro");
+            // whitespace after the script, stored as <text:s/>
+            document.addParagraph("[[SCRIPT:TEXT(\"\")]]  ");
+            // multiple spaces within the script, stored as <text:s/>
+            document.addParagraph("[[SCRIPT:TEXT(  \"\")]]");
+            // tab before the script, stored as <text:tab/>
+            document.addParagraph("\t[[SCRIPT:TEXT(\"\")]]");
+            // two empty scripts in one paragraph
+            document.addParagraph("[[SCRIPT:TEXT(\"\")]] [[SCRIPT:TEXT(\"\")]]");
+            // paragraphs with other text or a frame must be kept
+            document.addParagraph("Rest[[SCRIPT:TEXT(\"\")]]");
+            document.addParagraph("[[SCRIPT:TEXT(\"\")]]").addTextbox();
+            document.addParagraph("[[SCRIPT:TEXT(\"x\")]]");
+            document.addParagraph("Outro");
+            document.save(f);
+            document.close();
+
+            LibreOfficeAccess.setPlaceHolders("", f.getAbsolutePath(), f.getName(), new HashMap<>(), null);
+
+            TextDocument result = TextDocument.loadDocument(f);
+            StringBuilder paragraphs = new StringBuilder();
+            Iterator<Paragraph> it = result.getParagraphIterator();
+            while (it.hasNext()) {
+                Paragraph p = it.next();
+                // mark paragraphs that still contain their text box
+                paragraphs.append('[').append(p.getTextContent()).append(p.getTextboxIterator().hasNext() ? "<textbox>" : "").append(']');
+            }
+            result.close();
+            Assert.assertTrue(paragraphs.toString(), paragraphs.toString().endsWith("[Intro][Rest][<textbox>][x][Outro]"));
         } catch (Throwable t) {
             t.printStackTrace();
             Assert.fail(t.getMessage());
