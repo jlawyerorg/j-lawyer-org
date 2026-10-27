@@ -704,7 +704,10 @@ public class FileNumberComparatorRowIdentifier implements Comparator<QuickArchiv
         if (s2 == null)
             return 1;
 
-        if (s1.matches("\\d{3,5}/\\d{2,4}") && s2.matches("\\d{3,5}/\\d{2,4}")) {
+        boolean defaultSchema1 = s1.matches("\\d{3,5}/\\d{2,4}");
+        boolean defaultSchema2 = s2.matches("\\d{3,5}/\\d{2,4}");
+
+        if (defaultSchema1 && defaultSchema2) {
             // in case of default file number schema
             try {
                 String year1 = s1.substring(s1.indexOf("/") + 1);
@@ -745,6 +748,13 @@ public class FileNumberComparatorRowIdentifier implements Comparator<QuickArchiv
                 log.error("error sorting by archive file number", thr);
                 // fall through to default comparison
             }
+        } else if (defaultSchema1) {
+            // only 1 has the default file number schema --> always sort it first.
+            // mixing numeric and string comparison would violate the comparator contract
+            return -1;
+        } else if (defaultSchema2) {
+            // only 2 has the default file number schema
+            return 1;
         }
 
         // default comparison
