@@ -1450,7 +1450,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
     }
 
     private void documentClicked(MouseEvent evt, boolean deselectOthers) {
-        if (evt.getClickCount() == 2 && !evt.isConsumed()) {
+        if (evt.getClickCount() == 2 && javax.swing.SwingUtilities.isLeftMouseButton(evt) && !evt.isConsumed()) {
             evt.consume();
             this.caseContainer.openSelectedDocument(this.document);
         } else if (evt.getClickCount() == 1 && !evt.isConsumed()) {

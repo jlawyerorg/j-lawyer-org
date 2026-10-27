@@ -691,6 +691,7 @@ import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.JTextFieldLimit;
 import com.jdimension.jlawyer.client.utils.IbanUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.client.utils.SystemUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FileConverter;
@@ -4523,7 +4524,8 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.tblContents.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 2 && javax.swing.SwingUtilities.isLeftMouseButton(e)) {
+                // on macOS, Control+click opens the context menu - it must not open the document
+                if (e.getClickCount() == 2 && javax.swing.SwingUtilities.isLeftMouseButton(e) && !(SystemUtils.isMacOs() && e.isControlDown())) {
                     openSelectedDocument();
                 }
             }

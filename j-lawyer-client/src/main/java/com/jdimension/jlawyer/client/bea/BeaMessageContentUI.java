@@ -2113,7 +2113,8 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
     }
 
     private void attachmentsMouseClicked(java.awt.event.MouseEvent evt, JList attList) {
-        if (evt.getClickCount() == 2 && attList.getSelectedValue() != null) {
+        // on macOS, Control+click opens the context menu - it must not open the attachment
+        if (evt.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(evt) && !(SystemUtils.isMacOs() && evt.isControlDown()) && attList.getSelectedValue() != null) {
             try {
                 BeaAttachment att = (BeaAttachment) attList.getSelectedValue();
                 byte[] data = ensureAttachmentContent(att);
