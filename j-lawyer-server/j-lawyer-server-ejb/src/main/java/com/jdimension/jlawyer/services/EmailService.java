@@ -1855,6 +1855,13 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         props.setProperty("mail.imaps.connectiontimeout", "15000");
         props.setProperty("mail.imap.timeout", "30000");
         props.setProperty("mail.imaps.timeout", "30000");
+        // the store is shared by concurrent requests (client clicks, polling, prefetch, mailbox
+        // scanner). JavaMail keeps only 1 idle connection by default, so a connection released by a
+        // concurrent folder access was logged out and the next concurrent access had to connect and
+        // log in again. Keep up to 4 idle connections for reuse (not a limit on active connections).
+        // Can be overridden per mailbox via custom receive properties.
+        props.setProperty("mail.imap.connectionpoolsize", "4");
+        props.setProperty("mail.imaps.connectionpoolsize", "4");
         props.setProperty("mail.store.protocol", protocol);
         props.setProperty("mail.imaps.host", server);
         props.setProperty("mail.imap.host", server);
