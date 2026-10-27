@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.persistence;
 
+import java.util.Collection;
 import java.util.List;
 import javax.ejb.Local;
 
@@ -708,9 +709,9 @@ public interface ArchiveFileBeanFacadeLocal {
      * @param offset     0-based row offset
      * @param limit      page size (clamped to 1..200; ≤0 defaults to 50)
      */
-    List<ArchiveFileBean> findOverviewPage(List<String> allowedIds, String search, Boolean archived, int offset, int limit);
+    List<ArchiveFileBean> findOverviewPage(Collection<String> allowedIds, String search, Boolean archived, int offset, int limit);
 
     /** Total number of cases matching {@link #findOverviewPage} (ignoring offset/limit). */
-    long countOverview(List<String> allowedIds, String search, Boolean archived);
+    long countOverview(Collection<String> allowedIds, String search, Boolean archived);
 
 }

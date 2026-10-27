@@ -675,7 +675,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.apache.log4j.Logger;
 
 /**
@@ -756,9 +758,20 @@ public class SecurityUtils {
 
     }
     
-    public static ArrayList<String> getAllowedCasesForUser(String principalId, SecurityServiceLocal securityFacade) throws Exception {
+    /**
+     * Returns the ids of all cases the user may see (owner group, allowed group or unprotected).
+     *
+     * The result is a hash-based set because callers check their result rows against it one by
+     * one; a list would make that filtering quadratic.
+     *
+     * @param principalId the user
+     * @param securityFacade used to determine the user's groups
+     * @return ids of all cases visible to the user
+     * @throws Exception on database errors
+     */
+    public static Set<String> getAllowedCasesForUser(String principalId, SecurityServiceLocal securityFacade) throws Exception {
         JDBCUtils utils = new JDBCUtils();
-        ArrayList<String> list = new ArrayList<>();
+        Set<String> list = new HashSet<>();
 
         List<Group> userGroups = new ArrayList<>();
         try {

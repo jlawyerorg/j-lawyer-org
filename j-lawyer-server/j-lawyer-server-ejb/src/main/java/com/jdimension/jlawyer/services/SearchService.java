@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBeanFacadeLocal;
 import com.jdimension.jlawyer.server.utils.SecurityUtils;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Set;
 import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
@@ -711,7 +712,7 @@ public class SearchService implements SearchServiceRemote, SearchServiceLocal {
     @RolesAllowed({"readArchiveFileRole"})
     public ArrayList<SearchHit> search(String queryString, int maxDocs, String caseId) throws SearchException {
 
-        ArrayList<String> allowedCases = null;
+        Set<String> allowedCases = null;
         try {
             allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
         } catch (Exception ex) {

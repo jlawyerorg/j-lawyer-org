@@ -706,6 +706,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import javax.annotation.Resource;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -1090,7 +1091,7 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
 
         String term = "%" + StringUtils.germanToUpperCase(query.trim()) + "%";
 
-        ArrayList<String> allowedCases;
+        Set<String> allowedCases;
         try {
             allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
         } catch (Exception ex) {

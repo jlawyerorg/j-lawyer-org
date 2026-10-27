@@ -678,6 +678,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
@@ -1526,7 +1527,7 @@ public class ReportService implements ReportServiceRemote, ReportServiceLocal {
 
     private ReportResultTable getTable(boolean caseIdColumn, String name, String query, List<String> sumColumns, Object... params) {
 
-        ArrayList<String> allowedCases = null;
+        Set<String> allowedCases = null;
         if (caseIdColumn) {
             try {
                 allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
@@ -1687,7 +1688,7 @@ public class ReportService implements ReportServiceRemote, ReportServiceLocal {
     }
 
     private ReportResultBarChart getBarChart(boolean caseIdColumn, String name, String xTitle, String yTitle, String query, int seriesNameColIndex, int xColIndex, int yColIndex, Object... params) {
-        ArrayList<String> allowedCases = null;
+        Set<String> allowedCases = null;
         if (caseIdColumn) {
             try {
                 allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
