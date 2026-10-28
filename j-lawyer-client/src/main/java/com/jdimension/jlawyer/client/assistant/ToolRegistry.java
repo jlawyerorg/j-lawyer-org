@@ -7,6 +7,7 @@ package com.jdimension.jlawyer.client.assistant;
 import com.jdimension.jlawyer.ai.ToolCall;
 import com.jdimension.jlawyer.ai.ToolDefinition;
 import com.jdimension.jlawyer.ai.ToolParameter;
+import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.documents.DocumentPreview;
 import com.jdimension.jlawyer.persistence.AddressBean;
@@ -416,7 +417,7 @@ public class ToolRegistry {
                         new ToolParameter("lawyer", "string", "Benutzername des Anwalts (optional)", false),
                         new ToolParameter("assistant", "string", "Benutzername des Sachbearbeiters (optional)", false),
                         new ToolParameter("notice", "string", "Aktennotiz (optional)", false),
-                        new ToolParameter("group", "string", "Name der Gruppe für Berechtigungen (optional)", false)),
+                        new ToolParameter("group", "string", "Name der Eigentümergruppe (optional, ohne Angabe wird die Standard-Eigentümergruppe des Benutzers verwendet)", false)),
                 ToolDefinition.RISK_MEDIUM));
 
         TOOLS.add(new ToolDefinition("create_contact", "Erstellt einen neuen Kontakt. Führt keine Ähnlichkeitssuche durch — dafür gibt es create_or_get_contact.",
@@ -3946,19 +3947,26 @@ public class ToolRegistry {
             return ToolJsonUtils.error("Aktenbezeichnung (name) fehlt");
         }
 
+        // Load users and groups fresh instead of using the caches: the errors below may ask to add a missing
+        // abbreviation in the user or group administration, and a retry within the same chat must see that change
+        List<AppUserBean> users = ToolJsonUtils.getLocator().lookupSecurityServiceRemote().getUsersHavingRole("loginRole");
+        List<Group> myGroups = ToolJsonUtils.getLocator().lookupSecurityServiceRemote().getGroupsForUser(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+
         // Validate lawyer if provided
+        AppUserBean matchedLawyer = null;
         if (lawyer != null && !lawyer.trim().isEmpty()) {
             boolean found = false;
-            for (AppUserBean u : getCachedUsers()) {
+            for (AppUserBean u : users) {
                 if (u.getPrincipalId().equalsIgnoreCase(lawyer.trim())) {
                     lawyer = u.getPrincipalId();
+                    matchedLawyer = u;
                     found = true;
                     break;
                 }
             }
             if (!found) {
                 StringBuilder userNames = new StringBuilder();
-                for (AppUserBean u : getCachedUsers()) {
+                for (AppUserBean u : users) {
                     if (userNames.length() > 0) {
                         userNames.append(", ");
                     }
@@ -3971,7 +3979,7 @@ public class ToolRegistry {
         // Validate assistant if provided
         if (assistant != null && !assistant.trim().isEmpty()) {
             boolean found = false;
-            for (AppUserBean u : getCachedUsers()) {
+            for (AppUserBean u : users) {
                 if (u.getPrincipalId().equalsIgnoreCase(assistant.trim())) {
                     assistant = u.getPrincipalId();
                     found = true;
@@ -3980,7 +3988,7 @@ public class ToolRegistry {
             }
             if (!found) {
                 StringBuilder userNames = new StringBuilder();
-                for (AppUserBean u : getCachedUsers()) {
+                for (AppUserBean u : users) {
                     if (userNames.length() > 0) {
                         userNames.append(", ");
                     }
@@ -3993,7 +4001,6 @@ public class ToolRegistry {
         // Validate group if provided
         Group matchedGroup = null;
         if (groupName != null && !groupName.trim().isEmpty()) {
-            List<Group> myGroups = getCachedMyGroups();
             for (Group g : myGroups) {
                 if (g.getName().equalsIgnoreCase(groupName.trim())) {
                     matchedGroup = g;
@@ -4009,6 +4016,59 @@ public class ToolRegistry {
                     groupNames.append(g.getName());
                 }
                 return ToolJsonUtils.error("Gruppe nicht gefunden: " + groupName + ". Verfügbare Gruppen: " + groupNames.toString());
+            }
+        } else {
+            // Apply default owner group, as for new cases created in the case editor
+            String defaultOwnerGroupId = UserSettings.getInstance().getSetting(UserSettings.CONF_CASE_DEFAULT_OWNERGROUP, "");
+            for (Group g : myGroups) {
+                if (g.getId().equals(defaultOwnerGroupId)) {
+                    matchedGroup = g;
+                    break;
+                }
+            }
+        }
+
+        // The extended file number may contain the abbreviations of the lawyer and the owner group.
+        // Without them, the server rejects the case with a generic message - check upfront and tell the model what is missing.
+        ServerSettings srvSettings = ServerSettings.getInstance();
+        if (srvSettings.getSettingAsBoolean(ServerSettings.SERVERCONF_CASENUMBERING_EXT_ENABLED, false)) {
+            List<String> problems = new ArrayList<>();
+            if (srvSettings.getSettingAsBoolean(ServerSettings.SERVERCONF_CASENUMBERING_EXT_LAWYER_ENABLED, false)) {
+                if (matchedLawyer == null) {
+                    StringBuilder userNames = new StringBuilder();
+                    for (AppUserBean u : users) {
+                        if (u.getAbbreviation() != null && !u.getAbbreviation().isEmpty()) {
+                            if (userNames.length() > 0) {
+                                userNames.append(", ");
+                            }
+                            userNames.append(u.getPrincipalId());
+                        }
+                    }
+                    problems.add("Das erweiterte Aktenzeichen enthält das Anwaltskürzel, daher wird ein Anwalt benötigt - bitte den Parameter lawyer angeben. Verfügbare Benutzer mit Kürzel: "
+                            + (userNames.length() > 0 ? userNames.toString() : "keine"));
+                } else if (matchedLawyer.getAbbreviation() == null || matchedLawyer.getAbbreviation().isEmpty()) {
+                    problems.add("Das erweiterte Aktenzeichen enthält das Anwaltskürzel, aber für den Anwalt " + matchedLawyer.getPrincipalId() + " ist kein Kürzel hinterlegt - bitte einen anderen Anwalt angeben oder das Kürzel in der Benutzerverwaltung ergänzen.");
+                }
+            }
+            if (srvSettings.getSettingAsBoolean(ServerSettings.SERVERCONF_CASENUMBERING_EXT_GROUP_ENABLED, false)) {
+                if (matchedGroup == null) {
+                    StringBuilder groupNames = new StringBuilder();
+                    for (Group g : myGroups) {
+                        if (g.getAbbreviation() != null && !g.getAbbreviation().isEmpty()) {
+                            if (groupNames.length() > 0) {
+                                groupNames.append(", ");
+                            }
+                            groupNames.append(g.getName());
+                        }
+                    }
+                    problems.add("Das erweiterte Aktenzeichen enthält das Gruppenkürzel, daher wird eine Eigentümergruppe benötigt - bitte den Parameter group angeben. Verfügbare Gruppen mit Kürzel: "
+                            + (groupNames.length() > 0 ? groupNames.toString() : "keine"));
+                } else if (matchedGroup.getAbbreviation() == null || matchedGroup.getAbbreviation().isEmpty()) {
+                    problems.add("Das erweiterte Aktenzeichen enthält das Gruppenkürzel, aber für die Gruppe " + matchedGroup.getName() + " ist kein Kürzel hinterlegt - bitte eine andere Gruppe angeben oder das Kürzel in der Gruppenverwaltung ergänzen.");
+                }
+            }
+            if (!problems.isEmpty()) {
+                return ToolJsonUtils.error(String.join(" ", problems));
             }
         }
 
@@ -4060,6 +4120,28 @@ public class ToolRegistry {
         JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
         ArchiveFileServiceRemote svc = locator.lookupArchiveFileServiceRemote();
         ArchiveFileBean created = svc.createArchiveFile(dto);
+
+        // Apply default allowed groups, as for new cases created in the case editor.
+        // The case already exists at this point, so a failure is reported as a warning instead of an error.
+        String allowedGroupsWarning = null;
+        try {
+            String[] defaultAllowedGroupIds = UserSettings.getInstance().getSettingArray(UserSettings.CONF_CASE_DEFAULT_ALLOWEDGROUPS, new String[0]);
+            if (defaultAllowedGroupIds != null && defaultAllowedGroupIds.length > 0) {
+                Set<String> defaultIdSet = new HashSet<>(Arrays.asList(defaultAllowedGroupIds));
+                ArrayList<Group> allowedGroups = new ArrayList<>();
+                for (Group g : locator.lookupSecurityServiceRemote().getAllGroups()) {
+                    if (defaultIdSet.contains(g.getId())) {
+                        allowedGroups.add(g);
+                    }
+                }
+                if (!allowedGroups.isEmpty()) {
+                    svc.updateAllowedGroups(created.getId(), allowedGroups);
+                }
+            }
+        } catch (Exception ex) {
+            log.warn("Unable to apply default allowed groups to case " + created.getFileNumber(), ex);
+            allowedGroupsWarning = "Die Akte wurde angelegt, aber die Standard-Zugriffsrechte konnten nicht gesetzt werden: " + ex.getMessage();
+        }
         EventBroker.getInstance().publishEvent(new CasesChangedEvent());
 
         StringBuilder sb = new StringBuilder();
@@ -4067,6 +4149,9 @@ public class ToolRegistry {
         sb.append(", \"id\": \"").append(ToolJsonUtils.escapeJson(created.getId())).append("\"");
         sb.append(", \"fileNumber\": \"").append(ToolJsonUtils.escapeJson(created.getFileNumber())).append("\"");
         sb.append(", \"name\": \"").append(ToolJsonUtils.escapeJson(created.getName())).append("\"");
+        if (allowedGroupsWarning != null) {
+            sb.append(", \"warning\": \"").append(ToolJsonUtils.escapeJson(allowedGroupsWarning)).append("\"");
+        }
         if (created.getReason() != null && !created.getReason().isEmpty()) {
             sb.append(", \"reason\": \"").append(ToolJsonUtils.escapeJson(created.getReason())).append("\"");
         }
