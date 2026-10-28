@@ -669,12 +669,14 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringWriter;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import junit.framework.Assert;
@@ -686,13 +688,21 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  *
  * @author jens
  */
 public class MicrosoftOfficeDocxTest {
+
+    /**
+     * Receives the "-run" copies of the templates, so the tests never write into the test resources.
+     */
+    @Rule
+    public TemporaryFolder tempFolder = new TemporaryFolder();
 
     public MicrosoftOfficeDocxTest() {
     }
@@ -715,6 +725,17 @@ public class MicrosoftOfficeDocxTest {
     public void tearDown() {
     }
 
+    /**
+     * Resolves a test data file from the test classpath (src/test/resources/data).
+     */
+    private static File testFile(String name) throws Exception {
+        URL url = MicrosoftOfficeDocxTest.class.getResource("/data/" + name);
+        if (url == null) {
+            throw new FileNotFoundException("test resource not found on classpath: /data/" + name);
+        }
+        return new File(url.toURI());
+    }
+
     @Test
     public void getPlaceHolders() {
         try {
@@ -723,7 +744,7 @@ public class MicrosoftOfficeDocxTest {
             allPartyTypesPlaceholders.add("MANDANT");
             allPartyTypesPlaceholders.add("GEGNER");
             allPartyTypesPlaceholders.add("DRITTE");
-            ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("test/data/template.docx", allPartyTypesPlaceholders, new ArrayList<String>()));
+            ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders(testFile("template.docx").getPath(), allPartyTypesPlaceholders, new ArrayList<String>()));
             Assert.assertEquals(3, l.size());
         } catch (Throwable t) {
             Assert.fail(t.getMessage());
@@ -739,8 +760,10 @@ public class MicrosoftOfficeDocxTest {
             allPartyTypesPlaceholders.add("MANDANT");
             allPartyTypesPlaceholders.add("GEGNER");
             allPartyTypesPlaceholders.add("DRITTE");
-            ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("test/data/template-scripts.docx", allPartyTypesPlaceholders, new ArrayList<>()));
-            Assert.assertEquals(6, l.size());
+            ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders(testFile("template-scripts.docx").getPath(), allPartyTypesPlaceholders, new ArrayList<>()));
+            // 3 placeholders and 7 scripts - scripts are listed per occurrence, and the script whose
+            // lines are separate paragraphs ("not working" in the template) is not detected
+            Assert.assertEquals(10, l.size());
         } catch (Throwable t) {
             Assert.fail(t.getMessage());
         }
@@ -754,7 +777,7 @@ public class MicrosoftOfficeDocxTest {
             allPartyTypesPlaceholders.add("MANDANT");
             allPartyTypesPlaceholders.add("GEGNER");
             allPartyTypesPlaceholders.add("DRITTE");
-            ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("test/data/textfield.docx", allPartyTypesPlaceholders, new ArrayList<>()));
+            ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders(testFile("textfield.docx").getPath(), allPartyTypesPlaceholders, new ArrayList<>()));
             Assert.assertEquals(13, l.size());
         } catch (Throwable t) {
             Assert.fail(t.getMessage());
@@ -772,7 +795,7 @@ public class MicrosoftOfficeDocxTest {
             allPartyTypesPlaceholders.add("DRITTE");
             long start = System.currentTimeMillis();
 
-            ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("test/data/many-textfields.docx", allPartyTypesPlaceholders, new ArrayList<>()));
+            ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders(testFile("many-textfields.docx").getPath(), allPartyTypesPlaceholders, new ArrayList<>()));
             long end = System.currentTimeMillis();
             System.out.println("textfield search took " + (end - start));
             //Assert.assertEquals(13, l.size());
@@ -784,13 +807,12 @@ public class MicrosoftOfficeDocxTest {
 
     @Test
     public void setPlaceHoldersDOCX() {
+        File f = new File(tempFolder.getRoot(), "template-run.docx");
         try {
             //Files.copy(new File("/home/jens/dev/projects/j-lawyer-server/j-lawyer-server-ejb/test/data/template.odt").toPath(), new File("/home/jens/dev/projects/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt").toPath(), StandardCopyOption.REPLACE_EXISTING);
             //File f=new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt");
-            File f = new File("test/data/template-run.docx");
-            f.delete();
             //copyFileUsingStream(new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template.odt"), new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt"));
-            copyFileUsingStream(new File("test/data/template.docx"), new File("test/data/template-run.docx"));
+            copyFileUsingStream(testFile("template.docx"), f);
         } catch (Throwable t) {
             t.printStackTrace();
             Assert.fail();
@@ -804,7 +826,7 @@ public class MicrosoftOfficeDocxTest {
 
         try {
             //LibreOfficeAccess.setPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt", ph);
-            LibreOfficeAccess.setPlaceHolders("", "test/data/template-run.docx", "test/data/template-run.docx", ph, null);
+            LibreOfficeAccess.setPlaceHolders("", f.getPath(), f.getPath(), ph, null);
         } catch (Throwable t) {
             t.printStackTrace();
             Assert.fail();
@@ -814,7 +836,7 @@ public class MicrosoftOfficeDocxTest {
         Tika tika = new Tika();
         try {
             //Reader r = tika.parse(new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt"));
-            Reader r = tika.parse(new File("test/data/template-run.docx"));
+            Reader r = tika.parse(f);
             BufferedReader br = new BufferedReader(r);
             StringWriter sw = new StringWriter();
             BufferedWriter bw = new BufferedWriter(sw);
@@ -851,10 +873,9 @@ public class MicrosoftOfficeDocxTest {
     
     @Test
     public void setPlaceHoldersDOCXTable() {
+        File f = new File(tempFolder.getRoot(), "template-run.docx");
         try {
-            File f = new File("test/data/template-run.docx");
-            f.delete();
-            copyFileUsingStream(new File("test/data/template-table.docx"), new File("test/data/template-run.docx"));
+            copyFileUsingStream(testFile("template-table.docx"), f);
         } catch (Throwable t) {
             t.printStackTrace();
             Assert.fail();
@@ -888,7 +909,7 @@ public class MicrosoftOfficeDocxTest {
         ph.put("{{TABELLE_1}}", tab);
 
         try {
-            LibreOfficeAccess.setPlaceHolders("", "test/data/template-run.docx", "test/data/template-run.docx", ph, null);
+            LibreOfficeAccess.setPlaceHolders("", f.getPath(), f.getPath(), ph, null);
         } catch (Throwable t) {
             t.printStackTrace();
             Assert.fail();
@@ -897,7 +918,7 @@ public class MicrosoftOfficeDocxTest {
         String content = "";
         Tika tika = new Tika();
         try {
-            Reader r = tika.parse(new File("test/data/template-run.docx"));
+            Reader r = tika.parse(f);
             BufferedReader br = new BufferedReader(r);
             StringWriter sw = new StringWriter();
             BufferedWriter bw = new BufferedWriter(sw);
@@ -935,13 +956,12 @@ public class MicrosoftOfficeDocxTest {
     @Test
     @Ignore
     public void setScriptPlaceHoldersDOCX() {
+        File f = new File(tempFolder.getRoot(), "template-scripts-run.docx");
         try {
             //Files.copy(new File("/home/jens/dev/projects/j-lawyer-server/j-lawyer-server-ejb/test/data/template.odt").toPath(), new File("/home/jens/dev/projects/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt").toPath(), StandardCopyOption.REPLACE_EXISTING);
             //File f=new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt");
-            File f = new File("test/data/template-scripts-run.docx");
-            f.delete();
             //copyFileUsingStream(new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template.odt"), new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt"));
-            copyFileUsingStream(new File("test/data/template-scripts.docx"), new File("test/data/template-scripts-run.docx"));
+            copyFileUsingStream(testFile("template-scripts.docx"), f);
         } catch (Throwable t) {
             t.printStackTrace();
             Assert.fail();
@@ -955,7 +975,7 @@ public class MicrosoftOfficeDocxTest {
 
         try {
             //LibreOfficeAccess.setPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt", ph);
-            LibreOfficeAccess.setPlaceHolders("", "test/data/template-scripts-run.docx", "test/data/template-scripts-run.docx", ph, null);
+            LibreOfficeAccess.setPlaceHolders("", f.getPath(), f.getPath(), ph, null);
         } catch (Throwable t) {
             t.printStackTrace();
             Assert.fail();
@@ -965,7 +985,7 @@ public class MicrosoftOfficeDocxTest {
         Tika tika = new Tika();
         try {
             //Reader r = tika.parse(new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt"));
-            Reader r = tika.parse(new File("test/data/template-scripts-run.docx"));
+            Reader r = tika.parse(f);
             BufferedReader br = new BufferedReader(r);
             StringWriter sw = new StringWriter();
             BufferedWriter bw = new BufferedWriter(sw);
@@ -991,13 +1011,12 @@ public class MicrosoftOfficeDocxTest {
 
     @Test
     public void setPlaceHoldersDocxTextfield() {
+        File f = new File(tempFolder.getRoot(), "textfield-run.docx");
         try {
             //Files.copy(new File("/home/jens/dev/projects/j-lawyer-server/j-lawyer-server-ejb/test/data/template.odt").toPath(), new File("/home/jens/dev/projects/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt").toPath(), StandardCopyOption.REPLACE_EXISTING);
             //File f=new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt");
-            File f = new File("test/data/textfield-run.docx");
-            f.delete();
             //copyFileUsingStream(new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template.odt"), new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt"));
-            copyFileUsingStream(new File("test/data/textfield.docx"), new File("test/data/textfield-run.docx"));
+            copyFileUsingStream(testFile("textfield.docx"), f);
         } catch (Throwable t) {
             t.printStackTrace();
             Assert.fail();
@@ -1021,7 +1040,7 @@ public class MicrosoftOfficeDocxTest {
 
         try {
             //LibreOfficeAccess.setPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt", ph);
-            LibreOfficeAccess.setPlaceHolders("", "test/data/textfield-run.docx", "test/data/textfield-run.docx", ph, null);
+            LibreOfficeAccess.setPlaceHolders("", f.getPath(), f.getPath(), ph, null);
         } catch (Throwable t) {
             t.printStackTrace();
             Assert.fail();
@@ -1031,7 +1050,7 @@ public class MicrosoftOfficeDocxTest {
         Tika tika = new Tika();
         try {
             //Reader r = tika.parse(new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt"));
-            Reader r = tika.parse(new File("test/data/textfield-run.docx"));
+            Reader r = tika.parse(f);
             BufferedReader br = new BufferedReader(r);
             StringWriter sw = new StringWriter();
             BufferedWriter bw = new BufferedWriter(sw);
