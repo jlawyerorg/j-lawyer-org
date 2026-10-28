@@ -956,6 +956,7 @@ public class InvoicePositionEntryPanel extends javax.swing.JPanel {
                 log.warn("unable to layout invoice dialog", ex);
             }
             this.parent.bumpSplitPane();
+            this.parent.positionRemoved();
             this.updateParentTotal();
         } catch (Exception ex) {
             log.error("Error updating invoice position", ex);

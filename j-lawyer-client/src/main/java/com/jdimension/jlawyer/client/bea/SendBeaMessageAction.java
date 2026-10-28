@@ -690,6 +690,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import com.jdimension.jlawyer.services.bea.rest.BeaAttachment;
 import com.jdimension.jlawyer.services.bea.rest.BeaIdentity;
+import com.jdimension.jlawyer.services.bea.rest.BeaInvalidCharactersException;
 import com.jdimension.jlawyer.services.bea.rest.BeaListItem;
 import com.jdimension.jlawyer.services.DocumentMetadata;
 import com.jdimension.jlawyer.client.editors.files.DocumentOrigin;
@@ -859,6 +860,10 @@ public class SendBeaMessageAction extends ProgressableAction {
         List<BeaIdentity> sentTo = new ArrayList<>();
         List<String> failures = new ArrayList<>();
         List<String> warnings = new ArrayList<>();
+        // beA rejected the content itself, so sending to further recipients would fail the same way
+        boolean contentRejected = false;
+        // only worth the hint when a message may have reached beA although it is reported as failed
+        boolean adviseBeaCheck = false;
 
         for (BeaIdentity to : recipients) {
 
@@ -867,6 +872,11 @@ public class SendBeaMessageAction extends ProgressableAction {
 
             if (this.isCancelled()) {
                 failures.add(to.toString() + ": nicht gesendet, Versand abgebrochen");
+                continue;
+            }
+
+            if (contentRejected) {
+                failures.add(to.toString() + ": nicht gesendet, Inhalt vom beA abgelehnt");
                 continue;
             }
 
@@ -913,9 +923,18 @@ public class SendBeaMessageAction extends ProgressableAction {
                 sentMessage = bea.sendMessage(senderSafeId, request);
 
             } catch (Exception ex) {
-                // the request may have reached beA before the error (e.g. a timeout), so delivery is unclear rather than failed
                 log.error("Unable to send beA message to " + to.toString(), ex);
-                failures.add(to.toString() + ": Versand fehlgeschlagen oder Status unklar - " + ex.getMessage());
+                BeaInvalidCharactersException invalidChars = BeaCharacterViolationFormatter.find(ex);
+                if (invalidChars != null) {
+                    // beA rejected the content before sending (subject, body, file numbers, attachment names) - it is the
+                    // same for every recipient, so the remaining ones are not attempted
+                    failures.add(to.toString() + ": Nachricht kann nicht gesendet werden.\n\n" + BeaCharacterViolationFormatter.format(invalidChars, this.attachments));
+                    contentRejected = true;
+                } else {
+                    // the request may have reached beA before the error (e.g. a timeout), so delivery is unclear rather than failed
+                    failures.add(to.toString() + ": Versand fehlgeschlagen oder Status unklar - " + ex.getMessage());
+                    adviseBeaCheck = true;
+                }
                 continue;
             }
 
@@ -1060,6 +1079,7 @@ public class SendBeaMessageAction extends ProgressableAction {
                     sentTo.add(to);
                 } else {
                     failures.add(to.toString() + ": EGVP-Laufzettel meldet fehlerhaften Nachrichtenversand");
+                    adviseBeaCheck = true;
                 }
                 SwingUtilities.invokeLater(() -> {
                     if (pCheck.isSuccess()) {
@@ -1117,7 +1137,9 @@ public class SendBeaMessageAction extends ProgressableAction {
                     sb.append("\nDiese Empfänger wurden aus der Empfängerliste entfernt.");
                 }
             }
-            sb.append("\n\nBitte vor einem erneuten Versand im beA-Postausgang prüfen, ob die Nachricht nicht doch angekommen ist.");
+            if (adviseBeaCheck || !sentTo.isEmpty()) {
+                sb.append("\n\nBitte vor einem erneuten Versand im beA-Postausgang prüfen, ob die Nachricht nicht doch angekommen ist.");
+            }
             throw new Exception(sb.toString());
         }
 

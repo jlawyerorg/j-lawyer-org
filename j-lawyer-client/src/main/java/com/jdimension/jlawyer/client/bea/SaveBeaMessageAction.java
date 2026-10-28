@@ -691,6 +691,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import com.jdimension.jlawyer.services.bea.rest.BeaAttachment;
 import com.jdimension.jlawyer.services.bea.rest.BeaIdentity;
+import com.jdimension.jlawyer.services.bea.rest.BeaInvalidCharactersException;
 import com.jdimension.jlawyer.services.bea.rest.BeaListItem;
 import com.jdimension.jlawyer.services.bea.rest.BeaMessage;
 import com.jdimension.jlawyer.services.bea.rest.BeaMessageExport;
@@ -827,7 +828,12 @@ public class SaveBeaMessageAction extends ProgressableAction {
 
         } catch (Exception ex) {
             log.error(ex);
-            JOptionPane.showMessageDialog(this.indicator, "Nachricht konnte nicht als Entwurf gespeichert werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            BeaInvalidCharactersException invalidChars = BeaCharacterViolationFormatter.find(ex);
+            if (invalidChars != null) {
+                JOptionPane.showMessageDialog(this.indicator, "Nachricht konnte nicht als Entwurf gespeichert werden.\n\n" + BeaCharacterViolationFormatter.format(invalidChars, this.attachments), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this.indicator, "Nachricht konnte nicht als Entwurf gespeichert werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            }
         }
 
         Throwable storeException = null;

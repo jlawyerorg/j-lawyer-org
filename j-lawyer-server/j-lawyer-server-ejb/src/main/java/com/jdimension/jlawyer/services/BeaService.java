@@ -1359,10 +1359,47 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
             token = getToken();
             response = sendPostRequest(path, jsonBody, token, timeout);
         }
+        if (response.statusCode() == 400) {
+            throwIfInvalidCharacters(response.body());
+        }
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
             throw new Exception("beAstie request failed (POST " + path + "): HTTP " + response.statusCode() + " - " + response.body());
         }
         return response.body();
+    }
+
+    /**
+     * beAstie rejects messages containing characters beA does not accept with
+     * HTTP 400 and a list of violations - turn those into an exception the
+     * client can present per field.
+     */
+    private void throwIfInvalidCharacters(String responseBody) throws BeaInvalidCharactersException {
+        JsonObject json;
+        try {
+            json = parseJson(responseBody);
+        } catch (Exception ex) {
+            return;
+        }
+        if (!json.containsKey("violations") || json.isNull("violations")) {
+            return;
+        }
+        List<BeaCharacterViolation> violations = new ArrayList<>();
+        JsonArray arr = json.getJsonArray("violations");
+        for (int i = 0; i < arr.size(); i++) {
+            JsonObject vo = arr.getJsonObject(i);
+            BeaCharacterViolation v = new BeaCharacterViolation();
+            v.setField(getStringOrNull(vo, "field"));
+            v.setCharacter(getStringOrNull(vo, "character"));
+            v.setCodePoint(getStringOrNull(vo, "codePoint"));
+            v.setUnicodeName(getStringOrNull(vo, "unicodeName"));
+            v.setPosition(getIntOrDefault(vo, "position", 0));
+            v.setLine(getIntOrDefault(vo, "line", 0));
+            v.setContext(getStringOrNull(vo, "context"));
+            violations.add(v);
+        }
+        if (!violations.isEmpty()) {
+            throw new BeaInvalidCharactersException(getStringOrNull(json, "message"), violations);
+        }
     }
 
     private String authenticatedPut(String path, String jsonBody, Duration timeout) throws Exception {
