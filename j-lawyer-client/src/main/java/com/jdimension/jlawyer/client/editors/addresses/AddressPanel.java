@@ -4337,18 +4337,27 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
             newCase = afRem.createArchiveFile(newCase);
 
             // Apply default allowed groups, as for new cases created in the case editor
-            String[] defaultAllowedGroupIds = UserSettings.getInstance().getSettingArray(UserSettings.CONF_CASE_DEFAULT_ALLOWEDGROUPS, new String[0]);
-            if (defaultAllowedGroupIds != null && defaultAllowedGroupIds.length > 0) {
-                java.util.Set<String> defaultIdSet = new java.util.HashSet<>(java.util.Arrays.asList(defaultAllowedGroupIds));
-                ArrayList<Group> allowedGroups = new ArrayList<>();
-                for (Group g : locator.lookupSecurityServiceRemote().getAllGroups()) {
-                    if (defaultIdSet.contains(g.getId())) {
-                        allowedGroups.add(g);
+            // the case already exists at this point - a failure here must not look like the case creation failed
+            try {
+                String[] defaultAllowedGroupIds = UserSettings.getInstance().getSettingArray(UserSettings.CONF_CASE_DEFAULT_ALLOWEDGROUPS, new String[0]);
+                if (defaultAllowedGroupIds != null && defaultAllowedGroupIds.length > 0) {
+                    java.util.Set<String> defaultIdSet = new java.util.HashSet<>(java.util.Arrays.asList(defaultAllowedGroupIds));
+                    ArrayList<Group> allowedGroups = new ArrayList<>();
+                    for (Group g : locator.lookupSecurityServiceRemote().getAllGroups()) {
+                        if (defaultIdSet.contains(g.getId())) {
+                            allowedGroups.add(g);
+                        }
+                    }
+                    if (!allowedGroups.isEmpty()) {
+                        afRem.updateAllowedGroups(newCase.getId(), allowedGroups);
                     }
                 }
-                if (!allowedGroups.isEmpty()) {
-                    afRem.updateAllowedGroups(newCase.getId(), allowedGroups);
-                }
+            } catch (Exception ex) {
+                log.error("Unable to apply default allowed groups to new case " + newCase.getId(), ex);
+                JOptionPane.showMessageDialog(this,
+                        "Die Akte wurde angelegt, die Standard-Zugriffsrechte konnten aber nicht gesetzt werden: " + ex.getMessage()
+                        + "\nBitte die Zugriffsrechte in der Akte prüfen.",
+                        com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
             }
 
             // Navigate to the new case
