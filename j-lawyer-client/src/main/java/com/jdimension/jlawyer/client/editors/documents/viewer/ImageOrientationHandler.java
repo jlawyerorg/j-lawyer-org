@@ -680,10 +680,15 @@ public class ImageOrientationHandler {
     private static final Logger log = Logger.getLogger(ImageOrientationHandler.class.getName());
     
     public static byte[] processImage(byte[] imageData) {
+        // EXIF-Orientierung wird nur für JPEG ausgewertet, andere Formate (PNG, GIF) unverändert zurückgeben
+        if (!isJpeg(imageData)) {
+            return imageData;
+        }
+
         try {
             // EXIF Orientierung auslesen
             int orientation = getExifOrientation(imageData);
-            log.info("Found EXIF orientation: " + orientation);
+            log.debug("Found EXIF orientation: " + orientation);
 
             // Wenn keine spezielle Orientierung (1) oder ungültige Orientierung (0 oder außerhalb 1-8), Original zurückgeben
             if (orientation <= 0 || orientation == 1 || orientation > 8) {
@@ -711,6 +716,11 @@ public class ImageOrientationHandler {
         }
     }
     
+    private static boolean isJpeg(byte[] imageData) {
+        // JPEG-Daten beginnen immer mit dem SOI-Marker 0xFF 0xD8
+        return imageData != null && imageData.length >= 2 && (imageData[0] & 0xFF) == 0xFF && (imageData[1] & 0xFF) == 0xD8;
+    }
+
     private static int getExifOrientation(byte[] imageData) throws Exception {
         // Spezifisch für JPEG/EXIF
         JpegImageParser parser = new JpegImageParser();
