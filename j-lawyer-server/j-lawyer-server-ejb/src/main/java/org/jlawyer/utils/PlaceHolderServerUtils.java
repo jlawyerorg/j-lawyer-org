@@ -1031,6 +1031,13 @@ public class PlaceHolderServerUtils extends PlaceHolders {
                     placeHolders.put(AKTE_ANWALT_KRZ, "");
                 }
             }
+            if (placeHolders.containsKey(AKTE_ANWALT_FKT)) {
+                if (caseLawyer != null) {
+                    placeHolders.put(AKTE_ANWALT_FKT, val(caseLawyer.getRole()));
+                } else {
+                    placeHolders.put(AKTE_ANWALT_FKT, "");
+                }
+            }
             if (placeHolders.containsKey(AKTE_SACHBEARBEITER)) {
                 placeHolders.put(AKTE_SACHBEARBEITER, val(aFile.getAssistant()));
             }
@@ -1046,6 +1053,13 @@ public class PlaceHolderServerUtils extends PlaceHolders {
                     placeHolders.put(AKTE_SACHBEARBEITER_KRZ, val(caseAssistant.getAbbreviation()));
                 } else {
                     placeHolders.put(AKTE_SACHBEARBEITER_KRZ, "");
+                }
+            }
+            if (placeHolders.containsKey(AKTE_SACHBEARBEITER_FKT)) {
+                if (caseAssistant != null) {
+                    placeHolders.put(AKTE_SACHBEARBEITER_FKT, val(caseAssistant.getRole()));
+                } else {
+                    placeHolders.put(AKTE_SACHBEARBEITER_FKT, "");
                 }
             }
             if (placeHolders.containsKey(AKTE_EIGENE1)) {
