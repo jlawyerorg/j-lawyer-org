@@ -1234,6 +1234,13 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
 
     
     public void addAttachment(String tempUrl, String dictateSign, String alias) {
+        String fileName = new File(tempUrl).getName();
+        if (this.attachments.containsKey(fileName)) {
+            // beA does not accept several attachments with the same file name
+            log.warn("File " + fileName + " is already attached to the beA message - skipping " + tempUrl);
+            ThreadUtils.showInformationDialog(this, "Die Datei \"" + fileName + "\" ist bereits angehängt und wird nicht erneut hinzugefügt.\nMehrere Anhänge mit gleichem Dateinamen sind im beA nicht zulässig.", "Datei anhängen");
+            return;
+        }
         this.contextDictateSign = dictateSign;
         this.attachments.put(new File(tempUrl).getName(), tempUrl);
 
