@@ -689,6 +689,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import com.jdimension.jlawyer.services.bea.rest.BeaAttachment;
 import com.jdimension.jlawyer.services.bea.rest.BeaIdentity;
+import com.jdimension.jlawyer.services.bea.rest.BeaInvalidCharactersException;
 import com.jdimension.jlawyer.services.bea.rest.BeaListItem;
 import com.jdimension.jlawyer.services.DocumentMetadata;
 import com.jdimension.jlawyer.client.editors.files.DocumentOrigin;
@@ -861,7 +862,12 @@ public class SendBeaMessageAction extends ProgressableAction {
 
             } catch (Exception ex) {
                 log.error(ex);
-                JOptionPane.showMessageDialog(this.indicator, "Nachricht kann nicht gesendet werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                BeaInvalidCharactersException invalidChars = BeaCharacterViolationFormatter.find(ex);
+                if (invalidChars != null) {
+                    JOptionPane.showMessageDialog(this.indicator, "Nachricht kann nicht gesendet werden.\n\n" + BeaCharacterViolationFormatter.format(invalidChars, this.attachments), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(this.indicator, "Nachricht kann nicht gesendet werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                }
                 throw ex;
             }
 

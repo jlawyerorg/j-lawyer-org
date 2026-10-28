@@ -887,6 +887,8 @@ public interface BeaServiceRemote {
      * @param request the send message request with recipient, subject, body,
      * attachments, and flags
      * @return the sent message
+     * @throws BeaInvalidCharactersException if a field contains characters
+     * beA does not accept; the exception lists every offending character
      * @throws Exception if sending fails
      */
     BeaMessage sendMessage(String safeId, BeaSendMessageRequest request) throws Exception;
@@ -897,6 +899,8 @@ public interface BeaServiceRemote {
      * @param safeId the Safe-ID of the postbox
      * @param request the draft message request
      * @return the draft message ID
+     * @throws BeaInvalidCharactersException if a field contains characters
+     * beA does not accept; the exception lists every offending character
      * @throws Exception if saving fails
      */
     String saveDraft(String safeId, BeaSaveDraftRequest request) throws Exception;
