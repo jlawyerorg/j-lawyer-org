@@ -666,11 +666,14 @@ package org.jlawyer.search;
 import java.io.File;
 import java.io.IOException;
 import java.text.BreakIterator;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.de.GermanAnalyzer;
@@ -756,9 +759,20 @@ public class SearchAPI {
 
     private static volatile SearchAPI activeInstance = null;
 
-    private SearchAPI() {
+    private final int refreshIntervalSeconds;
+    private final int commitIntervalSeconds;
+    private final DirectoryOpener directoryOpener;
 
-        this.openWriterAndDirectory();
+    /**
+     * Opens the index directory. Lets tests wrap it, e.g. to slow down its I/O.
+     */
+    interface DirectoryOpener {
+
+        Directory open(Path path) throws IOException;
+    }
+
+    private SearchAPI() {
+        this(SEARCHER_REFRESH_INTERVAL_SECONDS, COMMIT_INTERVAL_SECONDS, FSDirectory::open);
 
         // NOTE: closing is driven by the container lifecycle (see
         // ContainerLifecycleBean#terminate -> SearchAPI.shutdownInstance), NOT by a JVM
@@ -768,7 +782,17 @@ public class SearchAPI {
         // IndexFileDeleter$CommitPoint, which then fails with NoClassDefFoundError. Closing
         // via @PreDestroy happens while the classloader is still available.
         activeInstance = this;
+    }
 
+    /**
+     * Package-private for tests: other refresh and commit intervals and a custom index directory.
+     */
+    SearchAPI(int refreshIntervalSeconds, int commitIntervalSeconds, DirectoryOpener directoryOpener) {
+        this.refreshIntervalSeconds = refreshIntervalSeconds;
+        this.commitIntervalSeconds = commitIntervalSeconds;
+        this.directoryOpener = directoryOpener;
+
+        this.openWriterAndDirectory();
     }
 
     private void openWriterAndDirectory() {
@@ -786,7 +810,7 @@ public class SearchAPI {
         this.analyzer = new GermanAnalyzer();
 
         try {
-            this.directory = FSDirectory.open(dstDir.toPath());
+            this.directory = this.directoryOpener.open(dstDir.toPath());
 
             try {
                 this.writer = openIndexWriter(this.directory);
@@ -805,9 +829,10 @@ public class SearchAPI {
             this.searcherManager = new SearcherManager(this.writer, null);
 
             // Start background refresh scheduler
-            // two threads, so the refresh task is not queued behind a running commit on a single thread
+            // two threads (searcher refresh, commit), so the refresh task is not queued behind a running commit
+            AtomicInteger threadNumber = new AtomicInteger();
             this.refreshScheduler = Executors.newScheduledThreadPool(2, r -> {
-                Thread t = new Thread(r, "LuceneSearcherRefresh");
+                Thread t = new Thread(r, "LuceneIndexMaintenance-" + threadNumber.incrementAndGet());
                 t.setDaemon(true);
                 return t;
             });
@@ -817,11 +842,11 @@ public class SearchAPI {
                 } catch (IOException e) {
                     log.error("Error refreshing SearcherManager", e);
                 }
-            }, SEARCHER_REFRESH_INTERVAL_SECONDS, SEARCHER_REFRESH_INTERVAL_SECONDS, TimeUnit.SECONDS);
+            }, this.refreshIntervalSeconds, this.refreshIntervalSeconds, TimeUnit.SECONDS);
             // fixed-rate runs of a task never overlap, so commits never run concurrently with each other.
             // The task is bound to this writer, so a run of an old scheduler never touches a re-opened one.
             IndexWriter scheduledWriter = this.writer;
-            this.refreshScheduler.scheduleAtFixedRate(() -> commitPendingChanges(scheduledWriter), COMMIT_INTERVAL_SECONDS, COMMIT_INTERVAL_SECONDS, TimeUnit.SECONDS);
+            this.refreshScheduler.scheduleAtFixedRate(() -> commitPendingChanges(scheduledWriter), this.commitIntervalSeconds, this.commitIntervalSeconds, TimeUnit.SECONDS);
 
             this.initialized = true;
             this.initError = null;
@@ -844,10 +869,10 @@ public class SearchAPI {
      * when the writer is closed (server shutdown, re-opening the index) - after a crash all
      * changes since then would silently be missing from the search index until a full re-index.
      *
-     * Runs under commitLock: close() and reOpen() close the writer while holding the same lock,
-     * because closing an IndexWriter while another thread commits it can fail with an
-     * IllegalStateException and leave the writer open. A run that waited for the lock finds
-     * its writer closed and does nothing.
+     * Closing an IndexWriter while another thread commits it can fail with an
+     * IllegalStateException and leave the writer open. close() and reOpen() therefore first wait
+     * until the scheduler's runs have finished and then close the writer under commitLock; the
+     * lock and the isOpen() check keep a commit from ever touching a closed writer.
      */
     private void commitPendingChanges(IndexWriter w) {
         synchronized (commitLock) {
@@ -861,6 +886,34 @@ public class SearchAPI {
             } catch (IOException | RuntimeException ex) {
                 // never propagate: an exception would cancel all further runs of this scheduled task
                 log.error("Error committing search index changes", ex);
+            }
+        }
+    }
+
+    /**
+     * Waits until the tasks of a shut-down scheduler have finished, without ever interrupting them:
+     * a running commit or searcher refresh writes index files (in NRT mode a refresh flushes
+     * segments), and an interrupt during that I/O can close the IndexWriter with a tragic
+     * exception. shutdown() starts no further runs, so this ends when the current ones do. It is
+     * called before commitLock is taken, so a commit that is about to take the lock can finish.
+     *
+     * @return whether the calling thread was interrupted while waiting; the interrupt is cleared
+     * and has to be restored by the caller once the writer is closed
+     */
+    private static boolean awaitTasksUninterrupted(ExecutorService scheduler) {
+        boolean interrupted = false;
+        boolean logged = false;
+        while (true) {
+            try {
+                if (scheduler.awaitTermination(5, TimeUnit.SECONDS)) {
+                    return interrupted;
+                }
+                if (!logged) {
+                    log.info("Waiting for a running search index commit or refresh to finish");
+                    logged = true;
+                }
+            } catch (InterruptedException e) {
+                interrupted = true;
             }
         }
     }
@@ -889,13 +942,16 @@ public class SearchAPI {
                 }
             }
         }
-        this.directory = FSDirectory.open(dstDir.toPath());
+        this.directory = this.directoryOpener.open(dstDir.toPath());
     }
 
     private void closeQuietly() {
-        if (this.refreshScheduler != null) {
+        boolean interrupted = false;
+        ScheduledExecutorService scheduler = this.refreshScheduler;
+        if (scheduler != null) {
             try {
-                this.refreshScheduler.shutdownNow();
+                scheduler.shutdown();
+                interrupted = awaitTasksUninterrupted(scheduler);
             } catch (Throwable ignore) {
                 // best effort
             }
@@ -924,6 +980,9 @@ public class SearchAPI {
                 // best effort
             }
             this.directory = null;
+        }
+        if (interrupted) {
+            Thread.currentThread().interrupt();
         }
     }
 
@@ -1006,49 +1065,42 @@ public class SearchAPI {
     }
 
     public void close() {
-        boolean interrupted = false;
-        try {
-            // Shutdown refresh scheduler first
-            boolean terminated = true;
-            if (this.refreshScheduler != null) {
-                this.refreshScheduler.shutdown();
-                try {
-                    terminated = this.refreshScheduler.awaitTermination(5, TimeUnit.SECONDS);
-                } catch (InterruptedException e) {
-                    terminated = false;
-                    interrupted = true;
-                }
-            }
-
-            // a running commit is waited for instead of interrupted (an interrupt during Lucene
-            // I/O can close the writer with a tragic exception), and none starts while closing
-            synchronized (commitLock) {
-                // an interrupt that arrived while waiting would abort the final commit in close()
-                if (Thread.interrupted()) {
-                    interrupted = true;
-                }
-                if (!terminated) {
-                    this.refreshScheduler.shutdownNow();
+        // serialized with reOpen(), which replaces scheduler, writer and directory
+        synchronized (initLock) {
+            boolean interrupted = false;
+            try {
+                // Shutdown refresh scheduler first
+                ScheduledExecutorService scheduler = this.refreshScheduler;
+                if (scheduler != null) {
+                    scheduler.shutdown();
+                    interrupted = awaitTasksUninterrupted(scheduler);
                 }
 
-                // Close SearcherManager before writer
-                if (this.searcherManager != null) {
-                    this.searcherManager.close();
-                }
+                synchronized (commitLock) {
+                    // an interrupt that arrived meanwhile would abort the final commit in close()
+                    if (Thread.interrupted()) {
+                        interrupted = true;
+                    }
 
-                if (this.writer != null) {
-                    this.writer.close();
+                    // Close SearcherManager before writer
+                    if (this.searcherManager != null) {
+                        this.searcherManager.close();
+                    }
+
+                    if (this.writer != null) {
+                        this.writer.close();
+                    }
                 }
-            }
-            if (this.directory != null) {
-                this.directory.close();
-            }
-        } catch (Throwable t) {
-            log.error("Error closing Lucene Writer and Directory", t);
-        } finally {
-            if (interrupted) {
-                // restored only after closing: close() commits, which an interrupt could abort
-                Thread.currentThread().interrupt();
+                if (this.directory != null) {
+                    this.directory.close();
+                }
+            } catch (Throwable t) {
+                log.error("Error closing Lucene Writer and Directory", t);
+            } finally {
+                if (interrupted) {
+                    // restored only after closing: close() commits, which an interrupt could abort
+                    Thread.currentThread().interrupt();
+                }
             }
         }
     }
@@ -1083,62 +1135,55 @@ public class SearchAPI {
         synchronized (initLock) {
             boolean interrupted = false;
             try {
-                // Shutdown refresh scheduler first
-                boolean terminated = true;
-                if (this.refreshScheduler != null) {
-                    this.refreshScheduler.shutdown();
-                    try {
-                        terminated = this.refreshScheduler.awaitTermination(5, TimeUnit.SECONDS);
-                    } catch (InterruptedException e) {
-                        terminated = false;
-                        interrupted = true;
+                try {
+                    // Shutdown refresh scheduler first
+                    ScheduledExecutorService scheduler = this.refreshScheduler;
+                    if (scheduler != null) {
+                        scheduler.shutdown();
+                        interrupted = awaitTasksUninterrupted(scheduler);
                     }
+
+                    synchronized (commitLock) {
+                        // an interrupt that arrived meanwhile would abort the final commit in close()
+                        if (Thread.interrupted()) {
+                            interrupted = true;
+                        }
+                        this.refreshScheduler = null;
+
+                        // Close SearcherManager before writer
+                        if (this.searcherManager != null) {
+                            this.searcherManager.close();
+                            this.searcherManager = null;
+                        }
+
+                        if (this.writer != null) {
+                            this.writer.close();
+                            this.writer = null;
+                        }
+                    }
+                    if (this.directory != null) {
+                        this.directory.close();
+                        this.directory = null;
+                    }
+                } catch (Throwable t) {
+                    log.error("Error closing Lucene Writer / Index during reOpen, continuing...", t);
                 }
 
-                // a running commit is waited for instead of interrupted (an interrupt during Lucene
-                // I/O can close the writer with a tragic exception), and none starts while closing
-                synchronized (commitLock) {
-                    // an interrupt that arrived while waiting would abort the final commit in close()
-                    if (Thread.interrupted()) {
-                        interrupted = true;
-                    }
-                    if (!terminated) {
-                        this.refreshScheduler.shutdownNow();
-                    }
-                    this.refreshScheduler = null;
-
-                    // Close SearcherManager before writer
-                    if (this.searcherManager != null) {
-                        this.searcherManager.close();
-                        this.searcherManager = null;
-                    }
-
-                    if (this.writer != null) {
-                        this.writer.close();
-                        this.writer = null;
-                    }
+                this.initialized = false;
+                // ... and one that arrived while closing would abort opening the new writer
+                if (Thread.interrupted()) {
+                    interrupted = true;
                 }
-                if (this.directory != null) {
-                    this.directory.close();
-                    this.directory = null;
+                this.openWriterAndDirectory();
+                if (!this.initialized) {
+                    String cause = (this.initError != null) ? this.initError.getMessage() : "unknown cause";
+                    throw new SearchException("Search Index re-open failed: " + cause);
                 }
-            } catch (Throwable t) {
-                log.error("Error closing Lucene Writer / Index during reOpen, continuing...", t);
-            }
-
-            this.initialized = false;
-            // ... and one that arrived while closing would abort opening the new writer
-            if (Thread.interrupted()) {
-                interrupted = true;
-            }
-            this.openWriterAndDirectory();
-            if (interrupted) {
-                // restored only after closing and re-opening the writer, which an interrupt could abort
-                Thread.currentThread().interrupt();
-            }
-            if (!this.initialized) {
-                String cause = (this.initError != null) ? this.initError.getMessage() : "unknown cause";
-                throw new SearchException("Search Index re-open failed: " + cause);
+            } finally {
+                if (interrupted) {
+                    // restored only after closing and re-opening the writer, which an interrupt could abort
+                    Thread.currentThread().interrupt();
+                }
             }
         }
     }
