@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy, Component, computed, inject, input, OnInit, output, signal,
 } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { IconComponent } from '../shared/icon.component';
 import { BeaService } from './bea.service';
@@ -142,7 +143,7 @@ export class BeaEebDialogComponent implements OnInit {
     this.error.set(null);
     this.sending.set(true);
     const done = (sent: BeaMessage) => { this.sending.set(false); this.done.emit(sent); };
-    const fail = () => { this.sending.set(false); this.error.set(this.transloco.translate('beaEeb.error')); };
+    const fail = (e: HttpErrorResponse) => { this.sending.set(false); this.error.set(this.msg(e)); };
 
     if (this.mode() === 'confirm') {
       const iso = `${this.date()}T12:00:00Z`;
@@ -157,6 +158,15 @@ export class BeaEebDialogComponent implements OnInit {
   protected tryClose(): void {
     if (this.sending()) { return; }
     this.closed.emit();
+  }
+
+  /** The generic error, followed by the server's explanation (e.g. an eEB date before the message's reception) if present. */
+  private msg(e: HttpErrorResponse): string {
+    const generic = this.transloco.translate('beaEeb.error');
+    const message = e?.error?.message;
+    if (typeof message !== 'string') { return generic; }
+    const detail = message.replace(/^[\w.$]+:\s*/, '').trim();
+    return detail ? `${generic} ${detail}` : generic;
   }
 }
 
