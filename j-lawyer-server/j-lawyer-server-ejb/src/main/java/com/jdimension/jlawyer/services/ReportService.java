@@ -1670,9 +1670,15 @@ public class ReportService implements ReportServiceRemote, ReportServiceLocal {
             }
         }
 
+        // the three trailing sum rows (empty row, caption row, totals row) belong to the main table only
+        List<Object[]> dataRows = mainTable.getValues();
+        if (mainTable.isHasSumRows()) {
+            dataRows = dataRows.subList(0, dataRows.size() - 3);
+        }
+
         HashMap<String, ReportResultTable> splitTables = new HashMap<>();
-        for (Object[] row : mainTable.getValues()) {
-            String groupValue = row[columnIndex].toString();
+        for (Object[] row : dataRows) {
+            String groupValue = row[columnIndex] == null ? "" : row[columnIndex].toString();
             if (!splitTables.containsKey(groupValue)) {
                 ReportResultTable newSubTable = new ReportResultTable();
                 newSubTable.setColumnNames(mainTable.getColumnNames());
