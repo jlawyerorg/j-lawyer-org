@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.editors.reporting;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import javax.swing.JLabel;
 import org.apache.log4j.Logger;
 import org.jlawyer.reporting.ReportResultBarChart;
@@ -706,6 +707,17 @@ public class DynamicBarChartPanel extends javax.swing.JPanel {
         ch.getStyler().setToolTipHighlightColor(DefaultColorTheme.COLOR_LOGO_GREEN);
         ch.getStyler().setYAxisDecimalPattern("0.00");
         
+        // the GGPlot2 theme only provides five series colors, which would be reused for further series
+        // use evenly distributed hues when there are more series, so that each series gets a distinct color
+        int seriesCount = this.resultChart.getSeries().size();
+        if (seriesCount > ch.getStyler().getSeriesColors().length) {
+            Color[] seriesColors = new Color[seriesCount];
+            for (int i = 0; i < seriesCount; i++) {
+                seriesColors[i] = Color.getHSBColor((float) i / seriesCount, 0.65f, 0.85f);
+            }
+            ch.getStyler().setSeriesColors(seriesColors);
+        }
+
         for(ReportResultBarChartSeries s: this.resultChart.getSeries()) {
             CategorySeries series = ch.addSeries(s.getName(), s.getxData(), s.getyData());
             if(s.getFillColor()!=null)
