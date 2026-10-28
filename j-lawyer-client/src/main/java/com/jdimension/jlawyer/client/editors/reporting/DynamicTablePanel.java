@@ -681,6 +681,7 @@ import java.awt.Component;
 import java.awt.Image;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Comparator;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
@@ -691,6 +692,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.TableColumnModelEvent;
 import javax.swing.event.TableColumnModelListener;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
 import org.apache.log4j.Logger;
 import org.jlawyer.reporting.ReportResultTable;
 
@@ -729,6 +731,35 @@ public class DynamicTablePanel extends javax.swing.JPanel {
         if (table.getValues() != null) {
             for (int i = 0; i < dataRowCount; i++) {
                 model2.addRow(table.getValues().get(i));
+            }
+        }
+
+        // sort columns containing only numbers (or empty cells) by value instead of alphanumerically
+        // numbers come first, any other value (e.g. empty or edited cells) after them, ordered by its text
+        Comparator<Object> numberComparator = (Object o1, Object o2) -> {
+            if (o1 instanceof Number && o2 instanceof Number) {
+                return Double.compare(((Number) o1).doubleValue(), ((Number) o2).doubleValue());
+            } else if (o1 instanceof Number) {
+                return -1;
+            } else if (o2 instanceof Number) {
+                return 1;
+            }
+            return o1.toString().compareTo(o2.toString());
+        };
+        TableRowSorter<?> sorter = (TableRowSorter<?>) this.tblResult.getRowSorter();
+        for (int col = 0; col < model2.getColumnCount(); col++) {
+            boolean numeric = false;
+            for (int row = 0; row < model2.getRowCount(); row++) {
+                Object value = model2.getValueAt(row, col);
+                if (value instanceof Number) {
+                    numeric = true;
+                } else if (value != null && !value.toString().trim().isEmpty()) {
+                    numeric = false;
+                    break;
+                }
+            }
+            if (numeric) {
+                sorter.setComparator(col, numberComparator);
             }
         }
         ComponentUtils.autoSizeColumns(tblResult);
