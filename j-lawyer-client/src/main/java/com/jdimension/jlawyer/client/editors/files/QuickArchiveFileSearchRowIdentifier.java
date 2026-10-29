@@ -702,14 +702,27 @@ public class QuickArchiveFileSearchRowIdentifier implements Comparator, Comparab
             String s1 = null;
             String s2 = null;
 
+            // extract each file number on its own, null rows or cases are treated as a null file number
             if (t instanceof QuickArchiveFileSearchRowIdentifier) {
-                QuickArchiveFileSearchRowIdentifier i1 = (QuickArchiveFileSearchRowIdentifier) t;
-                QuickArchiveFileSearchRowIdentifier i2 = (QuickArchiveFileSearchRowIdentifier) t1;
-                s1 = i1.getArchiveFileDTO().getFileNumber();
-                s2 = i2.getArchiveFileDTO().getFileNumber();
-            } else {
+                ArchiveFileBean dto1 = ((QuickArchiveFileSearchRowIdentifier) t).getArchiveFileDTO();
+                if (dto1 != null) {
+                    s1 = dto1.getFileNumber();
+                }
+            } else if (t != null) {
                 s1 = t.toString();
+            }
+
+            if (t1 instanceof QuickArchiveFileSearchRowIdentifier) {
+                ArchiveFileBean dto2 = ((QuickArchiveFileSearchRowIdentifier) t1).getArchiveFileDTO();
+                if (dto2 != null) {
+                    s2 = dto2.getFileNumber();
+                }
+            } else if (t1 != null) {
                 s2 = t1.toString();
+            }
+
+            if (s1 == null && s2 == null) {
+                return 0;
             }
 
             if (s1 == null) {
@@ -720,7 +733,10 @@ public class QuickArchiveFileSearchRowIdentifier implements Comparator, Comparab
                 return 1;
             }
 
-            if (s1.matches("\\d{5}/\\d{2}") && s2.matches("\\d{5}/\\d{2}")) {
+            boolean defaultSchema1 = s1.matches("\\d{5}/\\d{2}");
+            boolean defaultSchema2 = s2.matches("\\d{5}/\\d{2}");
+
+            if (defaultSchema1 && defaultSchema2) {
                 // in case of default file number schema
                 String year1 = s1.substring(6);
                 String year2 = s2.substring(6);
@@ -756,6 +772,13 @@ public class QuickArchiveFileSearchRowIdentifier implements Comparator, Comparab
                 Integer in2 = Integer.parseInt(index2);
 
                 return in1.compareTo(in2);
+            } else if (defaultSchema1) {
+                // only 1 has the default file number schema --> always sort it first.
+                // mixing numeric and string comparison would violate the comparator contract
+                return -1;
+            } else if (defaultSchema2) {
+                // only 2 has the default file number schema
+                return 1;
             } else {
                 // default comparison
                 return s1.compareTo(s2);
@@ -763,7 +786,7 @@ public class QuickArchiveFileSearchRowIdentifier implements Comparator, Comparab
 
         } catch (Throwable thr) {
             //log.error("error sorting by archive file number", thr);
-            return -1;
+            return 0;
         }
     }
 
