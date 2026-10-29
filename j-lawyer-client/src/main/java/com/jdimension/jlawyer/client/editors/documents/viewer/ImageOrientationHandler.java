@@ -670,7 +670,7 @@ import java.io.ByteArrayOutputStream;
 import javax.imageio.ImageIO;
 import org.apache.log4j.Logger;
 import org.apache.commons.imaging.formats.jpeg.JpegImageParser;
-import org.apache.commons.imaging.formats.jpeg.JpegImageMetadata;
+import org.apache.commons.imaging.common.bytesource.ByteSourceArray;
 import org.apache.commons.imaging.formats.tiff.TiffImageMetadata;
 import org.apache.commons.imaging.formats.tiff.TiffField;
 import org.apache.commons.imaging.formats.tiff.constants.TiffTagConstants;
@@ -711,7 +711,9 @@ public class ImageOrientationHandler {
             return baos.toByteArray();
             
         } catch (Exception e) {
-            log.error("Error processing image orientation: " + e.getMessage(), e);
+            // fehlerhafte Bilddaten/Metadaten sind kein Anwendungsfehler - die Vorschau zeigt dann das Original
+            log.warn("Error processing image orientation: " + e.getMessage());
+            log.debug("Error processing image orientation", e);
             return imageData; // Im Fehlerfall Original zurückgeben
         }
     }
@@ -722,17 +724,15 @@ public class ImageOrientationHandler {
     }
 
     private static int getExifOrientation(byte[] imageData) throws Exception {
-        // Spezifisch für JPEG/EXIF
+        // Nur das EXIF-Segment (APP1) lesen: getMetadata() parst zusätzlich Photoshop-/IPTC-Segmente (APP13)
+        // und scheitert z.B. an Bildern mit mehreren APP13-Segmenten, obwohl die Orientierung lesbar wäre
         JpegImageParser parser = new JpegImageParser();
-        JpegImageMetadata metadata = (JpegImageMetadata) parser.getMetadata(imageData);
+        TiffImageMetadata exif = parser.getExifMetadata(new ByteSourceArray(imageData), null);
 
-        if (metadata != null) {
-            TiffImageMetadata exif = metadata.getExif();
-            if (exif != null) {
-                TiffField orientationField = exif.findField(TiffTagConstants.TIFF_TAG_ORIENTATION);
-                if (orientationField != null) {
-                    return orientationField.getIntValue();
-                }
+        if (exif != null) {
+            TiffField orientationField = exif.findField(TiffTagConstants.TIFF_TAG_ORIENTATION);
+            if (orientationField != null) {
+                return orientationField.getIntValue();
             }
         }
 
