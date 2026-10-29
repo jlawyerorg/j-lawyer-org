@@ -840,7 +840,12 @@ public class ConnectionProfile implements Comparable {
         if(name1!=null && name2!=null) {
             return name1.toLowerCase().compareTo(name2.toLowerCase());
         } else {
-            return 1;
+            if(name1==null && name2==null)
+                return 0;
+            if(name1==null)
+                return 1;
+            else
+                return -1;
         }
     }    
     

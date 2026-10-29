@@ -680,6 +680,13 @@ public class ArchiveFileDocumentsBeanComparator implements Comparator {
     public int compare(Object t, Object t1) {
         try {
 
+            if(t==null && t1==null)
+                return 0;
+            if(t==null)
+                return -1;
+            if(t1==null)
+                return 1;
+            
             String s1=null;
             String s2=null;
             
@@ -696,15 +703,17 @@ public class ArchiveFileDocumentsBeanComparator implements Comparator {
             if(s1!=null && s2!=null) {
                 return s1.toLowerCase().compareTo(s2.toLowerCase());
             } else {
+                if(s1==null && s2==null)
+                    return 0;
                 if(s1!=null)
-                    return s1.compareTo(s2);
+                    return 1;
                 else
                     return -1;
             }
 
         } catch (Throwable thr) {
             log.error("error sorting documents", thr);
-            return -1;
+            return 0;
         }
     }
 }

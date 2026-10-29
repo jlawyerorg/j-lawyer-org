@@ -989,7 +989,9 @@ public class EmailUtils extends CommonMailUtils {
             Collections.sort(sortedMailboxes, new Comparator<MailboxSetup>() {
                 @Override
                 public int compare(MailboxSetup o1, MailboxSetup o2) {
-                    return Integer.compare(o2.getEmailAddress().length(), o1.getEmailAddress().length());
+                    int len1 = o1.getEmailAddress() != null ? o1.getEmailAddress().length() : 0;
+                    int len2 = o2.getEmailAddress() != null ? o2.getEmailAddress().length() : 0;
+                    return Integer.compare(len2, len1);
                 }
             });
 

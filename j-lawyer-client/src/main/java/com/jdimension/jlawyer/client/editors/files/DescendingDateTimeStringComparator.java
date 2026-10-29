@@ -681,6 +681,10 @@ public class DescendingDateTimeStringComparator implements Comparator {
     public int compare(Object t, Object t1) {
         try {
 
+            if (t == null && t1 == null) {
+                return 0;
+            }
+
             if (t == null) {
                 return 1;
             }
@@ -692,6 +696,9 @@ public class DescendingDateTimeStringComparator implements Comparator {
             String s1 = t.toString();
             String s2 = t1.toString();
 
+            
+            if("".equals(s1) && "".equals(s2))
+                return 0;
             
             if("".equals(s1))
                 return 1;
@@ -705,14 +712,22 @@ public class DescendingDateTimeStringComparator implements Comparator {
                 d1 = df.parse(s1);
             } catch (Throwable th) {
                 //log.error(th);
-                return 1;
             }
             try {
                 d2 = df.parse(s2);
             } catch (Throwable th) {
                 //log.error(th);
-                return -1;
             }
+            
+            // unparseable values are sorted after valid dates
+            if(d1==null && d2==null)
+                return 0;
+            
+            if(d1==null)
+                return 1;
+            
+            if(d2==null)
+                return -1;
             
             return d2.compareTo(d1);
 
@@ -720,7 +735,7 @@ public class DescendingDateTimeStringComparator implements Comparator {
 
         } catch (Throwable thr) {
             log.error("error sorting by date string (descending)", thr);
-            return 1;
+            return 0;
         }
     }
 }

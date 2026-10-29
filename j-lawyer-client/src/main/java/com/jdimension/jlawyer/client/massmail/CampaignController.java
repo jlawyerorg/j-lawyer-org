@@ -703,7 +703,18 @@ public class CampaignController {
             public int compare(Object o1, Object o2) {
                 Campaign s1 = (Campaign) o1;
                 Campaign s2 = (Campaign) o2;
-                return s1.getName().toLowerCase().compareTo(s2.getName().toLowerCase());
+                String n1 = s1.getName();
+                String n2 = s2.getName();
+                if (n1 == null && n2 == null) {
+                    return 0;
+                }
+                if (n1 == null) {
+                    return -1;
+                }
+                if (n2 == null) {
+                    return 1;
+                }
+                return n1.toLowerCase().compareTo(n2.toLowerCase());
             }
 
         });

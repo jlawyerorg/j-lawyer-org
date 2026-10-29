@@ -691,6 +691,10 @@ public class DateTimeStringComparator implements Comparator {
     public int compare(Object t, Object t1) {
         try {
 
+            if (t == null && t1 == null) {
+                return 0;
+            }
+
             if (t == null) {
                 return -1;
             }
@@ -703,22 +707,45 @@ public class DateTimeStringComparator implements Comparator {
             String s2 = t1.toString();
 
             
+            if("".equals(s1) && "".equals(s2))
+                return 0;
+            
             if("".equals(s1))
                 return -1;
             
             if("".equals(s2))
                 return 1;
 
-            Date d1 = df.parse(s1);
-            Date d2 = df.parse(s2);
+            Date d1 = null;
+            Date d2 = null;
+            try {
+                d1 = df.parse(s1);
+            } catch (Throwable th) {
+                // unparseable, see below
+            }
+            try {
+                d2 = df.parse(s2);
+            } catch (Throwable th) {
+                // unparseable, see below
+            }
+            
+            // unparseable values are sorted before valid dates
+            if (d1 == null && d2 == null)
+                return 0;
+            
+            if (d1 == null)
+                return -1;
+            
+            if (d2 == null)
+                return 1;
 
             return d1.compareTo(d2);
 
 
 
         } catch (Throwable thr) {
-            log.error("error sorting by date string: " + this.df.toPattern() + " - " + t.toString() + " - " + t1.toString(), thr);
-            return -1;
+            log.error("error sorting by date string: " + this.df.toPattern(), thr);
+            return 0;
         }
     }
 }
