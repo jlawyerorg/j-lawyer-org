@@ -2351,6 +2351,13 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
             });
         }
         a.setSentDocumentIds(this.getSentDocumentIds());
+        // when sending failed for some recipients, the ones that already received the message must not get it again on a retry
+        a.setPartialSendListener(sentTo -> SwingUtilities.invokeLater(() -> {
+            DefaultListModel model = (DefaultListModel) this.lstTo.getModel();
+            for (BeaIdentity i : sentTo) {
+                model.removeElement(i);
+            }
+        }));
         a.start();
 
         UserSettings uset = UserSettings.getInstance();
