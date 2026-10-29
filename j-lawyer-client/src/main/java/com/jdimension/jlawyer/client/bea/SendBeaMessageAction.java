@@ -705,6 +705,7 @@ import com.jdimension.jlawyer.services.bea.rest.BeaSendMessageRequest;
 public class SendBeaMessageAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(SendBeaMessageAction.class.getName());
+    private static final long PROCESS_CARD_MAX_WAIT_MS = 120000l;
     List<BeaAttachmentMetadata> attachments = null;
     private boolean readReceipt = false;
     private BeaListItem authority = null;
@@ -807,6 +808,16 @@ public class SendBeaMessageAction extends ProgressableAction {
         }
     }
 
+    // an unsuccessful process card without entries and without an error is not a result yet
+    private static boolean hasResult(BeaProcessCard card) {
+        if (card == null) {
+            return false;
+        }
+        boolean hasEntries = card.getEntries() != null && !card.getEntries().isEmpty();
+        boolean hasError = card.getExceptionMessage() != null && !card.getExceptionMessage().isEmpty();
+        return card.isSuccess() || hasEntries || hasError;
+    }
+
     @Override
     public boolean execute() throws Exception {
 
@@ -873,8 +884,50 @@ public class SendBeaMessageAction extends ProgressableAction {
 
             this.markDocumentsSent();
 
-            BeaProcessCard p = null;
+            // the send response may already carry the process card - only poll if it does not
+            BeaProcessCard p = hasResult(sentMessage.getProcessCard()) ? sentMessage.getProcessCard() : null;
             boolean isEgvpRecipient = BeaAccess.isEgvpPostBoxBySafeId(to.getSafeId());
+
+            // wait for the process card independently of saving the message to the case,
+            // otherwise sending without "als Dokument speichern" always reports a missing process card
+            if (isEgvpRecipient && p == null) {
+                this.progress("Warten auf EGVP-Laufzettel...");
+                if (sentMessage.getId() == null) {
+                    log.error("Sent message to " + to.getSafeId() + " has no id - unable to retrieve its process card");
+                } else {
+                    long deadline = System.nanoTime() + PROCESS_CARD_MAX_WAIT_MS * 1000000l;
+                    Throwable lastError = null;
+                    // no new lookup once the deadline has passed - a lookup that is already running may still exceed it
+                    while (!this.isCancelled() && System.nanoTime() < deadline) {
+                        try {
+                            BeaProcessCard card = bea.getProcessCards(this.fromSafeId, sentMessage.getId());
+                            // an empty placeholder is not a result - keep waiting instead of reporting a failed delivery
+                            if (hasResult(card)) {
+                                p = card;
+                            }
+                        } catch (Throwable t) {
+                            // retry until the deadline, the message itself has already been sent
+                            lastError = t;
+                        }
+                        if (p != null) {
+                            sentMessage.setProcessCard(p);
+                            break;
+                        }
+                        if (System.nanoTime() >= deadline) {
+                            break;
+                        }
+                        try {
+                            Thread.sleep(1000l);
+                        } catch (InterruptedException ie) {
+                            // an interruption ends the wait; as before, the interrupt flag is not set again, so the calls that follow keep working
+                            break;
+                        }
+                    }
+                    if (p == null && lastError != null) {
+                        log.error("Could not retrieve process card for message " + sentMessage.getId(), lastError);
+                    }
+                }
+            }
 
             Throwable storeException = null;
             try {
@@ -887,31 +940,6 @@ public class SendBeaMessageAction extends ProgressableAction {
                     this.progress("Laden der Nachricht...");
 
                     BeaMessage msgEx = sentMessage;
-
-                    this.progress("Warten auf EGVP-Laufzettel...");
-
-                    if (isEgvpRecipient) {
-                        long maxWaitTime = 120000l;
-                        long start = System.currentTimeMillis();
-                        long waited = 0;
-                        while (p == null && waited < maxWaitTime) {
-                            if (this.isCancelled()) {
-                                break;
-                            }
-                            p = bea.getProcessCards(this.fromSafeId, sentMessage.getId());
-                            if (p != null) {
-                                msgEx.setProcessCard(p);
-                                break;
-                            } else {
-                                waited = System.currentTimeMillis() - start;
-                                try {
-                                    Thread.sleep(1000l);
-                                } catch (Throwable t) {
-
-                                }
-                            }
-                        }
-                    }
 
                     if (!this.isCancelled()) {
                         this.progress("Speichern in Akte " + this.archiveFile.getFileNumber());
