@@ -1095,9 +1095,16 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
                 sb.append("Ihr AZ ").append(this.cmbAzRecipient.getSelectedItem().toString()).append("_");
             }
 
+            // keep an unchanged file name as a whole - it may contain underscores itself (e.g. 2024-10-31_Schriftsatz.pdf)
+            String currentAlias = this.tblAttachments.getValueAt(i, COLUMN_ALIAS).toString();
+            String fileName = this.tblAttachments.getValueAt(i, COLUMN_FILENAME).toString();
+            boolean fileNameUnchanged = currentAlias.equals(fileName) || currentAlias.endsWith("_" + fileName);
+
             // assume user has already changed the alias
             int lastUnderScore = this.tblAttachments.getValueAt(i, COLUMN_ALIAS).toString().lastIndexOf("_");
-            if (lastUnderScore > 0) {
+            if (fileNameUnchanged) {
+                sb.append(fileName);
+            } else if (lastUnderScore > 0) {
                 String lastPart = this.tblAttachments.getValueAt(i, COLUMN_ALIAS).toString().substring(lastUnderScore + 1);
                 sb.append(lastPart);
             } else {
