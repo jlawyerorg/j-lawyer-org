@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.client.messenger.MessagePanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.client.utils.SystemUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.documents.DocumentKeywords;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
@@ -925,7 +926,8 @@ public class CaseDocumentsTable extends JPanel {
                 }
                 DocumentRow row = model.getRow(r);
                 String col = table.getColumnModel().getColumn(c).getIdentifier().toString();
-                if (e.getClickCount() == 2) {
+                // on macOS, Control+click opens the context menu - it must not open the document
+                if (e.getClickCount() == 2 && !(SystemUtils.isMacOs() && e.isControlDown())) {
                     if (caseContainer != null) {
                         caseContainer.openSelectedDocument(row.getDocument());
                     }

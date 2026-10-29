@@ -2865,7 +2865,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
     }//GEN-LAST:event_lstAttachmentsMousePressed
 
     private void lstAttachmentsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstAttachmentsMouseClicked
-        if (evt.getClickCount() == 2) {
+        if (evt.getClickCount() == 2 && evt.getButton() == MouseEvent.BUTTON1) {
             int idx = lstAttachments.getSelectedIndex();
             if (idx >= 0) {
                 if (this.attachments.size() > idx) {
