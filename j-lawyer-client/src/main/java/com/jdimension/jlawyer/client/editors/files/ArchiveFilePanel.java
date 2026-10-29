@@ -761,6 +761,7 @@ import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.CaseLinkDTO;
 import com.jdimension.jlawyer.services.CaseLinkExistsException;
+import com.jdimension.jlawyer.services.DocumentMetadata;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.AddressDocumentServiceRemote;
@@ -7075,7 +7076,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             this.lastPopupClosed = System.currentTimeMillis();
                             return;
                         }
-                        ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, content, doc.getDictateSign(), null);
+                        // keep the metadata of the source document (title, keywords, received date, correspondent),
+                        // but not its highlights, favorite flag or tags - a duplicate is often made to be attributed differently
+                        DocumentMetadata metadata = DocumentMetadata.fromDocument(orgDoc);
+                        metadata.setParentId(null);
+                        ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, content, doc.getDictateSign(), null, metadata);
 
                         if (orgDoc.getFolder() != null) {
                             ArrayList<String> docId = new ArrayList<>();
@@ -7609,7 +7614,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         if (favorites.isEmpty()) {
             this.mnuDirectPrint.setText("drucken (Standarddrucker)");
             this.mnuDirectPrint.setIcon(printerIcon);
-            this.mnuDirectPrint.setToolTipText("Weitere Drucker können über Eigenschaften → Dokumente → "
+            this.mnuDirectPrint.setToolTipText("Weitere Drucker können über Einstellungen → Dokumente → "
                     + "Druckerfavoriten konfiguriert werden.");
             this.documentsPopup.insert(this.mnuDirectPrint, insertionIndex);
             return;
@@ -7700,6 +7705,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             try {
                 byte[] content = remote.getDocumentContent(doc.getId());
+                // keep the metadata of the source document (title, keywords, received date, correspondent), but not its highlights,
+                // favorite flag or tags - read before anything is deleted, since replacing may delete the source document itself
+                DocumentMetadata metadata = DocumentMetadata.fromDocument(remote.getDocument(doc.getId()));
+                metadata.setParentId(null);
                 String newName = doc.getName();
                 if (newName == null || newName.trim().length() == 0) {
                     JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
@@ -7751,7 +7760,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     }
                 }
 
-                ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, content, doc.getDictateSign(), null);
+                ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, content, doc.getDictateSign(), null, metadata);
                 newDoc.setSize(content.length);
                 if (doc.getFolder() != null) {
                     newDoc.setFolder(doc.getFolder());

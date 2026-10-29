@@ -1092,7 +1092,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             return new ArchiveFileBean[0];
         }
 
-        ArrayList<String> allowedCases = null;
+        Set<String> allowedCases = null;
         try {
             allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
         } catch (Exception ex) {
@@ -1497,7 +1497,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         // userOnly = true  --> only files for this user#
         // userOnly = false  --> only files NOT changed by this user
 
-        ArrayList<String> allowedCases = null;
+        Set<String> allowedCases = null;
         try {
             allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
         } catch (Exception ex) {
@@ -3388,7 +3388,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @RolesAllowed({"readArchiveFileRole"})
     public HashMap<String, ArrayList<ArchiveFileTagsBean>> getTags(List<String> archiveFileId) throws Exception {
 
-        ArrayList<String> allowedCases = null;
+        Set<String> allowedCases = null;
         try {
             allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
         } catch (Exception ex) {
@@ -3426,7 +3426,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @RolesAllowed({"readArchiveFileRole"})
     public HashMap<String, ArrayList<DocumentTagsBean>> getDocumentTags(List<String> documentId) throws Exception {
 
-        ArrayList<String> allowedCases = null;
+        Set<String> allowedCases = null;
         try {
             allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
         } catch (Exception ex) {
@@ -3549,7 +3549,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         query = query.trim();
 
-        ArrayList<String> allowedCases = null;
+        Set<String> allowedCases = null;
         try {
             allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
         } catch (Exception ex) {
@@ -3837,7 +3837,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         query = query.trim();
 
-        ArrayList<String> allowedCases = null;
+        Set<String> allowedCases = null;
         try {
             allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
         } catch (Exception ex) {
@@ -4039,7 +4039,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @RolesAllowed({"readArchiveFileRole"})
     public List<ArchiveFileBean> getLastChanged(int limit) {
 
-        ArrayList<String> allowedCases = null;
+        Set<String> allowedCases = null;
         try {
             allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
         } catch (Exception ex) {
@@ -4126,7 +4126,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         JDBCUtils utils = new JDBCUtils();
         ArrayList<ArchiveFileBean> list = new ArrayList<>();
 
-        ArrayList<String> allowedCases = null;
+        Set<String> allowedCases = null;
         try {
             allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
         } catch (Exception ex) {
@@ -4165,7 +4165,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         JDBCUtils utils = new JDBCUtils();
         ArrayList<ArchiveFileBean> list = new ArrayList<>();
 
-        ArrayList<String> allowedCases = null;
+        Set<String> allowedCases = null;
         try {
             allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
         } catch (Exception ex) {
@@ -4311,7 +4311,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     /** Case ids the current caller may access (owner group / allowed group / unprotected). */
-    private ArrayList<String> allowedCaseIdsForCaller() {
+    private Set<String> allowedCaseIdsForCaller() {
         try {
             return SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
         } catch (Exception ex) {
@@ -4412,7 +4412,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             //log.info("getTagged for " + principalId + "; caseTags="+ServerStringUtils.toString(tagName, ",") + "; docTags="+ServerStringUtils.toString(docTagName, ","));
         }
 
-        ArrayList<String> allowedCases = null;
+        Set<String> allowedCases = null;
         try {
             allowedCases = SecurityUtils.getAllowedCasesForUser(principalId, this.securityFacade);
         } catch (Exception ex) {
@@ -4500,7 +4500,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
             st.setInt(index, 5 * limit);
             rs = st.executeQuery();
-            ArrayList<String> keyCache = new ArrayList<>();
+            Set<String> keyCache = new HashSet<>();
             while (rs.next()) {
                 String id = rs.getString(1);
                 // there might be duplicate cases in the result set
@@ -4556,7 +4556,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         String principalId = context.getCallerPrincipal().getName();
 
-        ArrayList<String> allowedCases = null;
+        Set<String> allowedCases = null;
         try {
             allowedCases = SecurityUtils.getAllowedCasesForUser(principalId, this.securityFacade);
         } catch (Exception ex) {
@@ -4610,7 +4610,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             st.setInt(index, 5 * limit);
 
             rs = st.executeQuery();
-            ArrayList<String> keyCache = new ArrayList<>();
+            Set<String> keyCache = new HashSet<>();
             while (rs.next()) {
                 String id = rs.getString(1);
                 if (!keyCache.contains(id)) {
@@ -5494,7 +5494,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
             st.setInt(index, limit);
             rs = st.executeQuery();
-            ArrayList<String> keyCache = new ArrayList<>();
+            Set<String> keyCache = new HashSet<>();
             while (rs.next()) {
                 String id = rs.getString(1);
                 // there might be duplicate cases in the result set
@@ -7594,7 +7594,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         List<Timesheet> allOpen = this.timesheetFacade.findByStatus(Timesheet.STATUS_OPEN);
         List<Timesheet> allOpenAllowed = new ArrayList<>();
 
-        ArrayList<String> allowedCases = null;
+        Set<String> allowedCases = null;
         try {
             allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
         } catch (Exception ex) {
@@ -7620,7 +7620,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         List<Timesheet> allOpen = this.timesheetFacade.findByStatus(Timesheet.STATUS_OPEN);
         List<Timesheet> allOpenAllowed = new ArrayList<>();
 
-        ArrayList<String> allowedCases = null;
+        Set<String> allowedCases = null;
         try {
             allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
         } catch (Exception ex) {

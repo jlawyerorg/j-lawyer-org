@@ -692,6 +692,9 @@ import java.beans.PropertyChangeEvent;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -1872,6 +1875,21 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             if (StringUtils.isEmpty(m.getEebId())) {
                 JOptionPane.showMessageDialog(this, "Eingehende eEB-ID ist leer - eEB bitte über beA im Browser abgeben!", "eEB abgeben", JOptionPane.WARNING_MESSAGE);
                 return;
+            }
+
+            // the eEB must not be dated before the message was received - compare calendar days only (day of reception in German time, like the server), so the day of reception itself is allowed
+            if (m.getReceptionTime() == null) {
+                int response = JOptionPane.showConfirmDialog(this, "Das Eingangsdatum der Nachricht konnte nicht ermittelt werden. eEB trotzdem mit Datum " + df.format(abgabeDate) + " abgeben?", "eEB abgeben", JOptionPane.YES_NO_OPTION);
+                if (response != JOptionPane.YES_OPTION) {
+                    return;
+                }
+            } else {
+                LocalDate abgabeDay = abgabeDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                LocalDate receptionDay = m.getReceptionTime().toInstant().atZone(ZoneId.of("Europe/Berlin")).toLocalDate();
+                if (abgabeDay.isBefore(receptionDay)) {
+                    JOptionPane.showMessageDialog(this, "Das Abgabedatum " + df.format(abgabeDate) + " liegt vor dem Eingang der Nachricht am " + receptionDay.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) + " - bitte ein Datum ab dem Eingangstag wählen.", "eEB abgeben", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
             }
 
             BeaMessage sentMessage = BeaAccess.getInstance().sendEebConfirmation(this.eebOwnSafeId, m.getId(), m.getSenderSafeId(), abgabeDate);

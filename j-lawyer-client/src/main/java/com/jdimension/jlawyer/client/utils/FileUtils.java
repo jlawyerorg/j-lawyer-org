@@ -1002,7 +1002,15 @@ public class FileUtils extends ServerFileUtils {
         }
 
         p.setFilename(currentFileName, d, applyNameTemplate);
-        JOptionPane pane = new JOptionPane(p, JOptionPane.QUESTION_MESSAGE);
+        final NewFilenameOptionPanel filenamePanel = p;
+        JOptionPane pane = new JOptionPane(p, JOptionPane.QUESTION_MESSAGE) {
+            @Override
+            public void selectInitialValue() {
+                // JOptionPane puts the initial focus on its OK button once the dialog gains focus - move it into the file name field
+                super.selectInitialValue();
+                filenamePanel.requestFilenameFocus();
+            }
+        };
         JDialog dialog = pane.createDialog(parent, title);
         dialog.doLayout();
         dialog.setSize(dialog.getWidth(), dialog.getHeight() + 50);

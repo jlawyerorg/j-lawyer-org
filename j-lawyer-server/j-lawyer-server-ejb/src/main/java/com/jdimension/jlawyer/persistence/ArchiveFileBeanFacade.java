@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.persistence;
 
+import java.util.Collection;
 import java.util.List;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
@@ -717,7 +718,7 @@ public class ArchiveFileBeanFacade extends AbstractFacade<ArchiveFileBean> imple
     }
 
     @Override
-    public List<ArchiveFileBean> findOverviewPage(List<String> allowedIds, String search, Boolean archived, int offset, int limit) {
+    public List<ArchiveFileBean> findOverviewPage(Collection<String> allowedIds, String search, Boolean archived, int offset, int limit) {
         if (allowedIds == null || allowedIds.isEmpty()) {
             return new java.util.ArrayList<>();
         }
@@ -730,7 +731,7 @@ public class ArchiveFileBeanFacade extends AbstractFacade<ArchiveFileBean> imple
     }
 
     @Override
-    public long countOverview(List<String> allowedIds, String search, Boolean archived) {
+    public long countOverview(Collection<String> allowedIds, String search, Boolean archived) {
         if (allowedIds == null || allowedIds.isEmpty()) {
             return 0L;
         }
@@ -754,7 +755,7 @@ public class ArchiveFileBeanFacade extends AbstractFacade<ArchiveFileBean> imple
         return jpql.toString();
     }
 
-    private static void applyOverviewParameters(javax.persistence.TypedQuery<?> q, List<String> allowedIds, String search, Boolean archived) {
+    private static void applyOverviewParameters(javax.persistence.TypedQuery<?> q, Collection<String> allowedIds, String search, Boolean archived) {
         q.setParameter("ids", allowedIds);
         if (archived != null) {
             q.setParameter("archived", archived);

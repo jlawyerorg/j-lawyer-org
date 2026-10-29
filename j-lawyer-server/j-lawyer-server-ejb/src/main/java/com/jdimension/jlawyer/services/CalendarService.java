@@ -702,6 +702,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Locale;
@@ -1020,7 +1021,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
 
     private Collection<ArchiveFileReviewsBean> getAllOpenReviewsImpl(String principalId) {
 
-        ArrayList<String> allowedCases = new ArrayList<>();
+        Set<String> allowedCases = new HashSet<>();
         if (principalId != null) {
             try {
                 allowedCases = SecurityUtils.getAllowedCasesForUser(principalId, this.securityFacade);
@@ -1214,7 +1215,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
             }
             rs = st.executeQuery();
 
-            ArrayList<String> allowedCases = null;
+            Set<String> allowedCases = null;
             try {
                 allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
             } catch (Exception ex) {
@@ -1607,7 +1608,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         }
 
         String principalId = this.context.getCallerPrincipal().getName();
-        ArrayList<String> allowedCases = new ArrayList<>();
+        Set<String> allowedCases = new HashSet<>();
         if (principalId != null) {
             try {
                 allowedCases = SecurityUtils.getAllowedCasesForUser(principalId, this.securityFacade);

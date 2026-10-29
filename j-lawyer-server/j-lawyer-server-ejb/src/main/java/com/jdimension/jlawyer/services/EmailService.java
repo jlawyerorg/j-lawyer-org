@@ -2038,6 +2038,8 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                 fp.add(javax.mail.FetchProfile.Item.ENVELOPE);
                 fp.add(javax.mail.FetchProfile.Item.FLAGS);
                 fp.add(javax.mail.UIDFolder.FetchProfileItem.UID);
+                // read below for every message - without it, each getHeader() is a separate IMAP round trip
+                fp.add("Message-ID");
                 folder.fetch(messages, fp);
 
                 UIDFolder uidFolder = (UIDFolder) folder;

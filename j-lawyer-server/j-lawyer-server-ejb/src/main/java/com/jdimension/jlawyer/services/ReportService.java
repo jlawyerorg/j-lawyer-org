@@ -678,6 +678,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
@@ -1526,7 +1527,7 @@ public class ReportService implements ReportServiceRemote, ReportServiceLocal {
 
     private ReportResultTable getTable(boolean caseIdColumn, String name, String query, List<String> sumColumns, Object... params) {
 
-        ArrayList<String> allowedCases = null;
+        Set<String> allowedCases = null;
         if (caseIdColumn) {
             try {
                 allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
@@ -1669,9 +1670,15 @@ public class ReportService implements ReportServiceRemote, ReportServiceLocal {
             }
         }
 
+        // the three trailing sum rows (empty row, caption row, totals row) belong to the main table only
+        List<Object[]> dataRows = mainTable.getValues();
+        if (mainTable.isHasSumRows()) {
+            dataRows = dataRows.subList(0, dataRows.size() - 3);
+        }
+
         HashMap<String, ReportResultTable> splitTables = new HashMap<>();
-        for (Object[] row : mainTable.getValues()) {
-            String groupValue = row[columnIndex].toString();
+        for (Object[] row : dataRows) {
+            String groupValue = row[columnIndex] == null ? "" : row[columnIndex].toString();
             if (!splitTables.containsKey(groupValue)) {
                 ReportResultTable newSubTable = new ReportResultTable();
                 newSubTable.setColumnNames(mainTable.getColumnNames());
@@ -1687,7 +1694,7 @@ public class ReportService implements ReportServiceRemote, ReportServiceLocal {
     }
 
     private ReportResultBarChart getBarChart(boolean caseIdColumn, String name, String xTitle, String yTitle, String query, int seriesNameColIndex, int xColIndex, int yColIndex, Object... params) {
-        ArrayList<String> allowedCases = null;
+        Set<String> allowedCases = null;
         if (caseIdColumn) {
             try {
                 allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);

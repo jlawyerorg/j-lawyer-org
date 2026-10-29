@@ -20,6 +20,9 @@ jobs:
   build:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
+    env:
+      # secrets cannot be tested in a step's "if:", so only expose whether SONAR_TOKEN is set
+      HAS_SONAR_TOKEN: ${{ secrets.SONAR_TOKEN != '' }}
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -79,7 +82,10 @@ jobs:
           -Dnpm.install.args="ci --ignore-scripts"
           -Dmaven.test.skip=true install
 
+      # GitHub does not pass repository secrets to pull requests from forks, so SONAR_TOKEN is
+      # empty there and the scan would fail the whole build; skip it in that case.
       - name: SonarCloud Scan
+        if: env.HAS_SONAR_TOKEN == 'true'
         uses: SonarSource/sonarcloud-github-action@master
         with:
           args: >

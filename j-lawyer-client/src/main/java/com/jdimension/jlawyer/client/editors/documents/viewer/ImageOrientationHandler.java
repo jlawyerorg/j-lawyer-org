@@ -670,7 +670,7 @@ import java.io.ByteArrayOutputStream;
 import javax.imageio.ImageIO;
 import org.apache.log4j.Logger;
 import org.apache.commons.imaging.formats.jpeg.JpegImageParser;
-import org.apache.commons.imaging.formats.jpeg.JpegImageMetadata;
+import org.apache.commons.imaging.common.bytesource.ByteSourceArray;
 import org.apache.commons.imaging.formats.tiff.TiffImageMetadata;
 import org.apache.commons.imaging.formats.tiff.TiffField;
 import org.apache.commons.imaging.formats.tiff.constants.TiffTagConstants;
@@ -680,10 +680,15 @@ public class ImageOrientationHandler {
     private static final Logger log = Logger.getLogger(ImageOrientationHandler.class.getName());
     
     public static byte[] processImage(byte[] imageData) {
+        // EXIF-Orientierung wird nur für JPEG ausgewertet, andere Formate (PNG, GIF) unverändert zurückgeben
+        if (!isJpeg(imageData)) {
+            return imageData;
+        }
+
         try {
             // EXIF Orientierung auslesen
             int orientation = getExifOrientation(imageData);
-            log.info("Found EXIF orientation: " + orientation);
+            log.debug("Found EXIF orientation: " + orientation);
 
             // Wenn keine spezielle Orientierung (1) oder ungültige Orientierung (0 oder außerhalb 1-8), Original zurückgeben
             if (orientation <= 0 || orientation == 1 || orientation > 8) {
@@ -706,23 +711,28 @@ public class ImageOrientationHandler {
             return baos.toByteArray();
             
         } catch (Exception e) {
-            log.error("Error processing image orientation: " + e.getMessage(), e);
+            // fehlerhafte Bilddaten/Metadaten sind kein Anwendungsfehler - die Vorschau zeigt dann das Original
+            log.warn("Error processing image orientation: " + e.getMessage());
+            log.debug("Error processing image orientation", e);
             return imageData; // Im Fehlerfall Original zurückgeben
         }
     }
     
-    private static int getExifOrientation(byte[] imageData) throws Exception {
-        // Spezifisch für JPEG/EXIF
-        JpegImageParser parser = new JpegImageParser();
-        JpegImageMetadata metadata = (JpegImageMetadata) parser.getMetadata(imageData);
+    private static boolean isJpeg(byte[] imageData) {
+        // JPEG-Daten beginnen immer mit dem SOI-Marker 0xFF 0xD8
+        return imageData != null && imageData.length >= 2 && (imageData[0] & 0xFF) == 0xFF && (imageData[1] & 0xFF) == 0xD8;
+    }
 
-        if (metadata != null) {
-            TiffImageMetadata exif = metadata.getExif();
-            if (exif != null) {
-                TiffField orientationField = exif.findField(TiffTagConstants.TIFF_TAG_ORIENTATION);
-                if (orientationField != null) {
-                    return orientationField.getIntValue();
-                }
+    private static int getExifOrientation(byte[] imageData) throws Exception {
+        // Nur das EXIF-Segment (APP1) lesen: getMetadata() parst zusätzlich Photoshop-/IPTC-Segmente (APP13)
+        // und scheitert z.B. an Bildern mit mehreren APP13-Segmenten, obwohl die Orientierung lesbar wäre
+        JpegImageParser parser = new JpegImageParser();
+        TiffImageMetadata exif = parser.getExifMetadata(new ByteSourceArray(imageData), null);
+
+        if (exif != null) {
+            TiffField orientationField = exif.findField(TiffTagConstants.TIFF_TAG_ORIENTATION);
+            if (orientationField != null) {
+                return orientationField.getIntValue();
             }
         }
 

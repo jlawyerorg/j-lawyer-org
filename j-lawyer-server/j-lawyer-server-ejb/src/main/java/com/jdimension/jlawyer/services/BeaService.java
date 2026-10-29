@@ -680,6 +680,9 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
@@ -711,6 +714,7 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
 
     private static final Logger log = Logger.getLogger(BeaService.class.getName());
     private static final String DEFAULT_BEASTIE_URL = "http://localhost:7080";
+    private static final ZoneId EEB_DATE_ZONE = ZoneId.of("Europe/Berlin");
     private String cachedClientId = null;
 
     @Resource
@@ -1266,6 +1270,9 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
 
     @Override
     public BeaMessage sendEebConfirmation(String safeId, String messageId, String senderSafeId, String recipientSafeId, String abgabeDate) throws Exception {
+        if (abgabeDate != null) {
+            checkEebDateNotBeforeReception(safeId, messageId, abgabeDate);
+        }
         javax.json.JsonObjectBuilder builder = Json.createObjectBuilder()
                 .add("incomingMessageId", messageId)
                 .add("senderSafeId", senderSafeId)
@@ -1274,6 +1281,34 @@ public class BeaService implements BeaServiceRemote, BeaServiceLocal {
 
         String responseBody = authenticatedPost("/api/v1/postboxes/" + encode(safeId) + "/eeb/confirm", builder.build().toString(), TIMEOUT_60S);
         return parseMessage(parseJson(responseBody));
+    }
+
+    /**
+     * An eEB must not be dated before the day the message was received. Both
+     * dates are compared as calendar days in German time - this is what users
+     * see for beA messages, while the server's default time zone may differ
+     * (e.g. UTC in containers). If the reception date can not be determined,
+     * the eEB is not blocked.
+     */
+    private void checkEebDateNotBeforeReception(String safeId, String messageId, String abgabeDate) throws Exception {
+        LocalDate abgabeDay;
+        Date receptionTime;
+        try {
+            abgabeDay = Instant.parse(abgabeDate).atZone(EEB_DATE_ZONE).toLocalDate();
+            receptionTime = getMessage(safeId, messageId, false).getReceptionTime();
+        } catch (Exception ex) {
+            log.warn("Unable to check eEB date " + abgabeDate + " against the reception of message " + messageId + " - eEB is not blocked", ex);
+            return;
+        }
+        if (receptionTime == null) {
+            log.warn("Message " + messageId + " has no reception time - eEB date " + abgabeDate + " can not be checked, eEB is not blocked");
+            return;
+        }
+        LocalDate receptionDay = receptionTime.toInstant().atZone(EEB_DATE_ZONE).toLocalDate();
+        if (abgabeDay.isBefore(receptionDay)) {
+            DateTimeFormatter df = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+            throw new Exception("Das Abgabedatum " + df.format(abgabeDay) + " liegt vor dem Eingang der Nachricht am " + df.format(receptionDay) + ".");
+        }
     }
 
     @Override

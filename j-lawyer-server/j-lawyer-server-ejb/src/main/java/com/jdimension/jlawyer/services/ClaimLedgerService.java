@@ -731,6 +731,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
@@ -1525,7 +1526,7 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
         // Summen, die die Forderung enthalten, und beides aus demselben Aufruf.
         Date effectiveKeyDate = ClaimLedgerKeyDate.endOfDay(keyDate);
 
-        List<String> allowedCases;
+        Set<String> allowedCases;
         try {
             allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
         } catch (Exception ex) {

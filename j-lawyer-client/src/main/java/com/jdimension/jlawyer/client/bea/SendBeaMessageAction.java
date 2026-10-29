@@ -935,6 +935,7 @@ public class SendBeaMessageAction extends ProgressableAction {
                     failures.add(to.toString() + ": Versand fehlgeschlagen oder Status unklar - " + ex.getMessage());
                     adviseBeaCheck = true;
                 }
+                // no dialog here: all errors are shown once, in the summary that ProgressableAction displays at the end
                 continue;
             }
 

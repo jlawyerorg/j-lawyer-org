@@ -1226,10 +1226,11 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
                 syncEnabled=true;
         }
         final boolean syncEnabled2=syncEnabled;
+        // only reflect the loaded state - doClick() would fire the action listener and write the
+        // unchanged sync settings back to the server on every case open
         SwingUtilities.invokeLater(
                 new Thread(() -> {
-                    togCaseSync.setSelected(!syncEnabled2);
-                    togCaseSync.doClick();
+                    togCaseSync.setSelected(syncEnabled2);
                 }));
         
         EditorsRegistry.getInstance().clearStatus(true);
