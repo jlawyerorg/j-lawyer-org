@@ -7705,6 +7705,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             try {
                 byte[] content = remote.getDocumentContent(doc.getId());
+                // keep the metadata of the source document (title, keywords, received date, correspondent), but not its highlights,
+                // favorite flag or tags - read before anything is deleted, since replacing may delete the source document itself
+                DocumentMetadata metadata = DocumentMetadata.fromDocument(remote.getDocument(doc.getId()));
+                metadata.setParentId(null);
                 String newName = doc.getName();
                 if (newName == null || newName.trim().length() == 0) {
                     JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
@@ -7756,13 +7760,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     }
                 }
 
-                // when duplicated under a new name, keep the metadata of the source document (title, keywords, received date,
-                // correspondent), but not its highlights, favorite flag or tags
-                DocumentMetadata metadata = null;
-                if (!replaceDocument) {
-                    metadata = DocumentMetadata.fromDocument(remote.getDocument(doc.getId()));
-                    metadata.setParentId(null);
-                }
                 ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, content, doc.getDictateSign(), null, metadata);
                 newDoc.setSize(content.length);
                 if (doc.getFolder() != null) {
