@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.CommonStrings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.client.utils.SystemUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.documents.PlaceHolderCatalog;
 import com.jdimension.jlawyer.documents.PlaceHolderContext;
@@ -701,6 +702,8 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
 
     private TextEditorPanel tp;
     private WebViewHtmlEditorPanel hp;
+    // true while a template is being loaded - its body replaces the editor content, so nothing needs to be carried over on a format switch
+    private boolean loadingTemplate = false;
 
     /**
      * Creates new form AddressPanel
@@ -780,6 +783,34 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         } catch (Exception ex) {
             log.error(ex);
             ThreadUtils.showErrorDialog(this, "Fehler beim Laden der E-Mail - Vorlagen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+        }
+    }
+
+    /**
+     * Waits for the HTML editor content cache to be synchronized on macOS.
+     * <p>
+     * On macOS, the WebViewHtmlEditorPanel uses a cached content mechanism to avoid
+     * EDT/JavaFX deadlocks. The cache is updated via JavaScript's onChange handler
+     * with a 300ms debounce. This method waits 1500ms (300ms debounce + buffer) to
+     * ensure the cache contains the latest editor content before reading it.
+     * </p>
+     * <p>
+     * This method only waits if:
+     * <ul>
+     *   <li>Running on macOS</li>
+     *   <li>The editor is a WebViewHtmlEditorPanel (not needed for plain text editors)</li>
+     * </ul>
+     * </p>
+     *
+     * @param ed the editor implementation to check
+     */
+    private void waitForHtmlContentOnMac(EditorImplementation ed) {
+        if (SystemUtils.isMacOs() && ed instanceof WebViewHtmlEditorPanel) {
+            try {
+                Thread.sleep(1500);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 
@@ -1138,6 +1169,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             EmailTemplate tpl = new EmailTemplate();
             EditorImplementation ed = (EditorImplementation) this.contentPanel.getComponent(0);
+            waitForHtmlContentOnMac(ed);
             tpl.setBody(ed.getText());
             tpl.setFileName(this.lstMailTemplates.getSelectedValue().toString());
             tpl.setFormat(this.cmbFormat.getSelectedItem().toString());
@@ -1167,7 +1199,12 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
             EmailTemplate tpl = locator.lookupIntegrationServiceRemote().getEmailTemplate(this.lstMailTemplates.getSelectedValue().toString());
-            this.cmbFormat.setSelectedItem(tpl.getFormat());
+            this.loadingTemplate = true;
+            try {
+                this.cmbFormat.setSelectedItem(tpl.getFormat());
+            } finally {
+                this.loadingTemplate = false;
+            }
             EditorImplementation ed = (EditorImplementation) this.contentPanel.getComponent(0);
             ed.setText(tpl.getBody());
             this.txtSubject.setText(tpl.getSubject());
@@ -1276,6 +1313,10 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
 
         if (sel.toLowerCase().contains("html")) {
             
+            if (!this.loadingTemplate && this.contentPanel.getComponent(0) != hp) {
+                // carry over the content of the current template - the HTML editor might still hold the body of a previously selected template
+                hp.setText(EmailUtils.text2Html(tp.getText()));
+            }
             this.contentPanel.remove(0);
             this.contentPanel.add(hp);
             hp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
@@ -1284,6 +1325,11 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
             SwingUtilities.updateComponentTreeUI(hp);
         } else {
             
+            if (!this.loadingTemplate && this.contentPanel.getComponent(0) != tp) {
+                // carry over the content of the current template - the text editor might still hold the body of a previously selected template
+                waitForHtmlContentOnMac(hp);
+                tp.setText(EmailUtils.html2Text(hp.getText()));
+            }
             this.contentPanel.remove(0);
             this.contentPanel.add(tp);
             tp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
