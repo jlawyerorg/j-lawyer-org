@@ -1582,6 +1582,20 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
             this.caseContainer.documentSelectionChanged();
     }
 
+    /**
+     * Checks only the given entry of the list view, without notifying the case panel - the caller
+     * has to call documentSelectionChanged() itself, e.g. once a drag has ended.
+     *
+     * @param entry the entry to check, all others are unchecked
+     */
+    void selectOnlyDocumentEntry(DocumentEntryPanel entry) {
+        for (Component c : this.pnlDocumentEntries.getComponents()) {
+            if (c instanceof DocumentEntryPanel) {
+                ((DocumentEntryPanel) c).setSelected(c == entry);
+            }
+        }
+    }
+
     private void cmdExpandAllActionPerformed(java.awt.event.ActionEvent evt) {
         if (this.foldersListPanel != null) {
             this.foldersListPanel.expandAllFromLevel1();
