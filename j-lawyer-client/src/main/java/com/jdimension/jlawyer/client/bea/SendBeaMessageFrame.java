@@ -1314,9 +1314,24 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
         }
     }
     
+    // client property of the party menu items holding the party's Safe-ID
+    private static final String PARTY_SAFEID = "beaSafeId";
+
+    // beA identities do not implement equals - recipients are matched by their Safe-ID
+    private static boolean containsSafeId(DefaultListModel model, String safeId) {
+        for (int i = 0; i < model.size(); i++) {
+            Object o = model.get(i);
+            if (o instanceof BeaIdentity && safeId != null && safeId.equals(((BeaIdentity) o).getSafeId())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void addRecipientCandidate(AddressBean ab, PartyTypeBean ptb, String fileNumber) {
         if (ab.getBeaSafeId() != null && !("".equals(ab.getBeaSafeId()))) {
             JCheckBoxMenuItem mi = new JCheckBoxMenuItem();
+            mi.putClientProperty(PARTY_SAFEID, ab.getBeaSafeId());
             mi.setState(false);
             mi.setText(ab.toDisplayName() + " (" + ptb.getName() + ")");
             mi.setBackground(new Color(ptb.getColor()));
@@ -2095,6 +2110,16 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
     }//GEN-LAST:event_mnuRemoveRecipientActionPerformed
 
     private void cmdRecipientsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRecipientsActionPerformed
+        // recipients can also be removed from the list or added via the search - the check marks follow the list
+        DefaultListModel model = (DefaultListModel) this.lstTo.getModel();
+        for (java.awt.Component c : this.popRecipients.getComponents()) {
+            if (c instanceof JCheckBoxMenuItem) {
+                Object safeId = ((JCheckBoxMenuItem) c).getClientProperty(PARTY_SAFEID);
+                if (safeId != null) {
+                    ((JCheckBoxMenuItem) c).setState(containsSafeId(model, safeId.toString()));
+                }
+            }
+        }
         this.popRecipients.show(this.cmdRecipients, 0, 0);
     }//GEN-LAST:event_cmdRecipientsActionPerformed
 
@@ -2913,20 +2938,25 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
             DefaultListModel model = (DefaultListModel) this.to.getModel();
 
             try {
-                BeaAccess bea = BeaAccess.getInstance();
                 JCheckBoxMenuItem mi = (JCheckBoxMenuItem) e.getSource();
-                BeaIdentity i = bea.getIdentity(safeId);
                 if (mi.getState()) {
 
-                    if (!model.contains(i)) {
+                    BeaIdentity i = BeaAccess.getInstance().getIdentity(this.safeId);
+                    // the identity check also catches a cached identity that carries no Safe-ID
+                    if (!containsSafeId(model, this.safeId) && !model.contains(i)) {
                         model.addElement(i);
                     }
                     if(this.toFileNumber!=null && this.toFileNumber.getEditor().getItem().toString().trim().isEmpty())
                         this.toFileNumber.setSelectedItem(StringUtils.nonEmpty(this.fileNumber));
 
-                } else if (model.contains(i)) {
-                    model.removeElement(i);
-                    
+                } else if (containsSafeId(model, this.safeId)) {
+                    for (int idx = model.size() - 1; idx >= 0; idx--) {
+                        Object o = model.get(idx);
+                        if (o instanceof BeaIdentity && this.safeId.equals(((BeaIdentity) o).getSafeId())) {
+                            model.remove(idx);
+                        }
+                    }
+
                     if(this.toFileNumber!=null && this.toFileNumber.getEditor().getItem().toString().equals(this.fileNumber))
                         this.toFileNumber.setSelectedItem("");
                 }
