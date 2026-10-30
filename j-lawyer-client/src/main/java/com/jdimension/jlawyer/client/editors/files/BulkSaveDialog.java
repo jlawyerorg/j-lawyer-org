@@ -756,6 +756,8 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
     private ArrayList<String> existingFileNames = new ArrayList<>();
 
     protected boolean failedOrCancelled = true;
+    // true while the documents are saved in the background - a second click would save them twice
+    private boolean saving = false;
     
     // caching for data that is required to build the file name if it contains place holders
     private List<PartyTypeBean> allPartyTypes=null;
@@ -1297,6 +1299,10 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
 
+        if (this.saving) {
+            return;
+        }
+
         for (BulkSaveEntry e : this.entryList) {
             if (e.isSelected()) {
                 String error = e.validateMetadata();
@@ -1314,6 +1320,9 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
         } catch (Exception ex) {
             log.error("Unable to unarchive case " + selectedCase.getFileNumber(), ex);
         }
+
+        this.saving = true;
+        this.cmdSave.setEnabled(false);
 
         Thread worker = new Thread(() -> {
             try {
@@ -1443,6 +1452,12 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
             } catch (Exception ex) {
                 log.error("Unable to save document", ex);
                 ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern der E-Mail / Anlagen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+            } finally {
+                // documents that failed can be saved again
+                SwingUtilities.invokeLater(() -> {
+                    this.saving = false;
+                    this.checkForDuplicateFileNames();
+                });
             }
         });
         worker.start();
@@ -1825,7 +1840,7 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
             }
         }
 
-        this.cmdSave.setEnabled(!activeConflicts);
+        this.cmdSave.setEnabled(!activeConflicts && !this.saving);
 
     }
 
