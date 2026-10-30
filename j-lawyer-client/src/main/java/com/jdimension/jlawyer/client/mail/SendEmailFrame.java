@@ -744,6 +744,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
@@ -830,6 +831,11 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
     private String initialPostSignatureTxt = null;
     private String initialPreSignatureHtml = null;
     private String initialPostSignatureHtml = null;
+    // false when setBody was called without signature (draft edited again: its signature is part of the content)
+    private boolean initialBodyWithSignature = true;
+
+    // mailbox selected in "Von" before the last selection event, to only react on an actual change
+    private Object lastSelectedFrom = null;
 
     // set via setTo / setCc / setBcc
     private String requestedTo = "";
@@ -1424,11 +1430,18 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
 
     public void setFrom(MailboxSetup ms) {
         if (ms != null) {
-            for (int i = 0; i < this.cmbFrom.getItemCount(); i++) {
-                String item = this.cmbFrom.getItemAt(i);
-                if (item.equals(ms.getDisplayName())) {
-                    this.cmbFrom.setSelectedItem(item);
+            // selected by the caller (reply, forward, draft), which sets the body itself - do not ask the user
+            boolean ignoreBefore = this.ignoreTemplateSelectionEvent;
+            this.ignoreTemplateSelectionEvent = true;
+            try {
+                for (int i = 0; i < this.cmbFrom.getItemCount(); i++) {
+                    String item = this.cmbFrom.getItemAt(i);
+                    if (item.equals(ms.getDisplayName())) {
+                        this.cmbFrom.setSelectedItem(item);
+                    }
                 }
+            } finally {
+                this.ignoreTemplateSelectionEvent = ignoreBefore;
             }
         }
     }
@@ -1515,6 +1528,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
     }
 
     public void setBody(String preSignature, String postSignature, String contentType, boolean useSignature) {
+        this.initialBodyWithSignature = useSignature;
         if (contentType.toLowerCase().contains("html")) {
             this.initialPreSignatureHtml = preSignature;
             this.initialPostSignatureHtml = postSignature;
@@ -3263,16 +3277,14 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
     }//GEN-LAST:event_cmdOpenTbActionPerformed
 
     private void cmbFromActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbFromActionPerformed
-        // when replying or forwarding, do not apply mail template but leave the quoted content
-        if (!this.replyOrForward) {
-            if (ignoreTemplateSelectionEvent) {
-                return;
-            }
+        Object selectedFrom = this.cmbFrom.getSelectedItem();
+        boolean fromChanged = !Objects.equals(selectedFrom, this.lastSelectedFrom);
+        this.lastSelectedFrom = selectedFrom;
 
-            if (this.initializing) {
-                return;
-            }
+        // a draft that is edited again contains its signature as part of the content - there is nothing to replace
+        boolean signatureReplaceable = this.initialBodyWithSignature || this.isTemplateSelected();
 
+        if (fromChanged && signatureReplaceable && !this.ignoreTemplateSelectionEvent && !this.initializing) {
             int response = JOptionPane.showConfirmDialog(
                     this,
                     "Aktuellen Nachrichteninhalt zurücksetzen und Signatur des ausgewählten Postfachs anwenden?",
@@ -3282,12 +3294,46 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
             );
 
             if (response == JOptionPane.YES_OPTION) {
-                this.cmbTemplatesActionPerformed(evt);
+                this.applySignatureOfSelectedMailbox();
             }
         }
 
         updateInsertSignatureEnabledState();
     }//GEN-LAST:event_cmbFromActionPerformed
+
+    private boolean isTemplateSelected() {
+        Object selected = this.cmbTemplates.getSelectedItem();
+        return selected != null && !"".equals(selected.toString());
+    }
+
+    /**
+     * Rebuilds the message body with the signature of the mailbox selected in "Von". If a template is
+     * selected, its body is applied again, but subject and recipients are kept. Otherwise the body is
+     * rebuilt from the content passed to setBody (e.g. the quoted message of a reply or forward), or
+     * consists of the signature only for a new e-mail without such content.
+     */
+    private void applySignatureOfSelectedMailbox() {
+        MailboxSetup ms = this.getSelectedMailbox();
+        if (ms == null) {
+            return;
+        }
+
+        if (this.isTemplateSelected()) {
+            this.applySelectedTemplate(false);
+            return;
+        }
+
+        if (this.initialPreSignatureTxt != null) {
+            this.setBody(this.initialPreSignatureTxt, this.initialPostSignatureTxt, ContentTypes.TEXT_PLAIN, this.initialBodyWithSignature);
+        } else {
+            this.tp.setText(StringUtils.nonEmpty(ms.getEmailSignatureTxt()));
+        }
+        if (this.initialPreSignatureHtml != null) {
+            this.setBody(this.initialPreSignatureHtml, this.initialPostSignatureHtml, ContentTypes.TEXT_HTML, this.initialBodyWithSignature);
+        } else {
+            this.hp.setText(StringUtils.nonEmpty(ms.getEmailSignature()));
+        }
+    }
 
     private void cmdAssistantMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdAssistantMouseReleased
         AssistantAccess ingo = AssistantAccess.getInstance();
@@ -3573,6 +3619,16 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
     }
 
     private void cmbTemplatesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbTemplatesActionPerformed
+        this.applySelectedTemplate(true);
+    }//GEN-LAST:event_cmbTemplatesActionPerformed
+
+    /**
+     * Applies the template selected in the templates dropdown.
+     *
+     * @param applyHeaders true to also set subject and recipients from the template, false to only
+     * rebuild the body (e.g. after another mailbox has been selected in "Von")
+     */
+    private void applySelectedTemplate(boolean applyHeaders) {
         if (ignoreTemplateSelectionEvent) {
             return;
         }
@@ -3597,31 +3653,33 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                 EmailTemplate tpl = locator.lookupIntegrationServiceRemote().getEmailTemplate(tplName);
 
                 HashMap<String, Object> htValues = this.getPlaceHolderValues(locator, StringUtils.nonEmpty(tpl.getSubject()) + " " + StringUtils.nonEmpty(tpl.getBody()) + " " + StringUtils.nonEmpty(tpl.getTo()) + " " + StringUtils.nonEmpty(tpl.getCc()) + " " + StringUtils.nonEmpty(tpl.getBcc()));
-                this.txtSubject.setText(TemplatesUtil.replacePlaceHolders(tpl.getSubject(), htValues));
+                if (applyHeaders) {
+                    this.txtSubject.setText(TemplatesUtil.replacePlaceHolders(tpl.getSubject(), htValues));
 
-                String newTo = TemplatesUtil.replacePlaceHolders(tpl.getTo(), htValues);
-                this.txtTo.setText(this.requestedTo);
-                if (!this.txtTo.getText().toLowerCase().contains(newTo.toLowerCase())) {
-                    if (!this.txtTo.getText().trim().isEmpty()) {
-                        newTo = ", " + newTo;
+                    String newTo = TemplatesUtil.replacePlaceHolders(tpl.getTo(), htValues);
+                    this.txtTo.setText(this.requestedTo);
+                    if (!this.txtTo.getText().toLowerCase().contains(newTo.toLowerCase())) {
+                        if (!this.txtTo.getText().trim().isEmpty()) {
+                            newTo = ", " + newTo;
+                        }
+                        this.txtTo.setText(this.txtTo.getText() + newTo);
                     }
-                    this.txtTo.setText(this.txtTo.getText() + newTo);
-                }
-                String newCc = TemplatesUtil.replacePlaceHolders(tpl.getCc(), htValues);
-                this.txtCc.setText(this.requestedCc);
-                if (!this.txtCc.getText().toLowerCase().contains(newCc.toLowerCase())) {
-                    if (!this.txtCc.getText().trim().isEmpty()) {
-                        newCc = ", " + newCc;
+                    String newCc = TemplatesUtil.replacePlaceHolders(tpl.getCc(), htValues);
+                    this.txtCc.setText(this.requestedCc);
+                    if (!this.txtCc.getText().toLowerCase().contains(newCc.toLowerCase())) {
+                        if (!this.txtCc.getText().trim().isEmpty()) {
+                            newCc = ", " + newCc;
+                        }
+                        this.txtCc.setText(this.txtCc.getText() + newCc);
                     }
-                    this.txtCc.setText(this.txtCc.getText() + newCc);
-                }
-                String newBcc = TemplatesUtil.replacePlaceHolders(tpl.getBcc(), htValues);
-                this.txtBcc.setText(this.requestedBcc);
-                if (!this.txtBcc.getText().toLowerCase().contains(newBcc.toLowerCase())) {
-                    if (!this.txtBcc.getText().trim().isEmpty()) {
-                        newBcc = ", " + newBcc;
+                    String newBcc = TemplatesUtil.replacePlaceHolders(tpl.getBcc(), htValues);
+                    this.txtBcc.setText(this.requestedBcc);
+                    if (!this.txtBcc.getText().toLowerCase().contains(newBcc.toLowerCase())) {
+                        if (!this.txtBcc.getText().trim().isEmpty()) {
+                            newBcc = ", " + newBcc;
+                        }
+                        this.txtBcc.setText(this.txtBcc.getText() + newBcc);
                     }
-                    this.txtBcc.setText(this.txtBcc.getText() + newBcc);
                 }
 
                 if (this.cloudLink != null) {
@@ -3729,7 +3787,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                 JOptionPane.showMessageDialog(this, "Fehler beim Erstellen der Vorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
         }
-    }//GEN-LAST:event_cmbTemplatesActionPerformed
+    }
 
     private void txtTemplateSearchMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_txtTemplateSearchMouseClicked
         // ComboBox-Auswahl temporär zurücksetzen, um Suche zu ermöglichen
