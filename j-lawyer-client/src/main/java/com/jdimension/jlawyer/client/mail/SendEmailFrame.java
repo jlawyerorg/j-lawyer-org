@@ -3911,13 +3911,9 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                 }
 
             } else {
-                int index = currentTo.indexOf(this.email);
-                if (index > -1) {
-                    currentTo = currentTo.substring(0, index - 1) + currentTo.substring(index + this.email.length(), currentTo.length());
-                    if (currentTo.endsWith(",")) {
-                        // cut off comma
-                        currentTo = currentTo.substring(0, currentTo.length() - 1);
-                    }
+                String remaining = EmailUtils.removeRecipient(currentTo, this.email);
+                if (!remaining.equals(currentTo)) {
+                    currentTo = remaining;
                     this.to.setText(currentTo);
                 }
             }
