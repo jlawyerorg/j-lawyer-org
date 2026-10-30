@@ -736,23 +736,19 @@ public class MicrosoftOfficeAccess {
 
                 if (values.get(key) instanceof String) {
 
-                    String[] trailingChars = new String[]{".", ",", ";", ":", "!", "?", "'", "\"", " ", "/", ")", "]", "-"};
-
-                    for (int i = 0; i < trailingChars.length; i++) {
-                        String trailChar = trailingChars[i];
+                    for (int i = 0; i < TRAILING_CHARS.length(); i++) {
+                        String trailChar = String.valueOf(TRAILING_CHARS.charAt(i));
 
                         String value = (String) values.get(key);
-                        value = value + trailChar;
-                        String trailKey = key + trailChar;
 
                         for (XWPFHeader header : outputDocx.getHeaderList()) {
-                            replaceInBodyElements(trailKey, value, header.getBodyElements());
+                            replaceWithTrailingCharInBodyElements(key, trailChar, value, header.getBodyElements());
                         }
                         // REPLACE BODY
-                        replaceInBodyElements(trailKey, value, outputDocx.getBodyElements());
+                        replaceWithTrailingCharInBodyElements(key, trailChar, value, outputDocx.getBodyElements());
 
                         for (XWPFFooter footer : outputDocx.getFooterList()) {
-                            replaceInBodyElements(trailKey, value, footer.getBodyElements());
+                            replaceWithTrailingCharInBodyElements(key, trailChar, value, footer.getBodyElements());
                         }
 
                     }
@@ -1222,22 +1218,79 @@ public class MicrosoftOfficeAccess {
         }
     }
 
-    private static void replaceInBodyElements(String key, String value, List<IBodyElement> bodyElements) {
+    // if a placeholder is followed by one of these characters, no space is appended to its value
+    private static final String TRAILING_CHARS = ".,;:!?'\" /)]-";
+
+    /**
+     * Replaces the placeholder followed by trailChar with the value followed by
+     * trailChar. Paragraphs in which the placeholder occurs only once are left
+     * to replaceWithAutoSpaceInParagraph, which omits the space before such a
+     * character and leaves the character in its own run - replacing it here
+     * would move it into the run of the placeholder and give it that run's
+     * formatting.
+     */
+    private static void replaceWithTrailingCharInBodyElements(String key, String trailChar, String value, List<IBodyElement> bodyElements) {
         for (IBodyElement bodyElement : bodyElements) {
             if (bodyElement.getElementType().compareTo(BodyElementType.PARAGRAPH) == 0) {
-                replaceInParagraph(key, value, (XWPFParagraph) bodyElement);
-                replaceInTextfield(key, value, (XWPFParagraph) bodyElement);
+                replaceWithTrailingCharInParagraph(key, trailChar, value, (XWPFParagraph) bodyElement);
+                replaceInTextfield(key + trailChar, value + trailChar, (XWPFParagraph) bodyElement);
             } else if (bodyElement.getElementType().compareTo(BodyElementType.TABLE) == 0) {
-                replaceInTable(key, value, (XWPFTable) bodyElement);
+                replaceWithTrailingCharInTable(key, trailChar, value, (XWPFTable) bodyElement);
             }
         }
     }
 
+    private static void replaceWithTrailingCharInTable(String key, String trailChar, String value, XWPFTable table) {
+        for (XWPFTableRow row : table.getRows()) {
+            for (XWPFTableCell cell : row.getTableCells()) {
+                for (IBodyElement bodyElement : cell.getBodyElements()) {
+                    if (bodyElement.getElementType().compareTo(BodyElementType.PARAGRAPH) == 0) {
+                        replaceWithTrailingCharInParagraph(key, trailChar, value, (XWPFParagraph) bodyElement);
+                    }
+                    if (bodyElement.getElementType().compareTo(BodyElementType.TABLE) == 0) {
+                        replaceWithTrailingCharInTable(key, trailChar, value, (XWPFTable) bodyElement);
+                    }
+                }
+            }
+        }
+    }
+
+    private static void replaceWithTrailingCharInParagraph(String key, String trailChar, String value, XWPFParagraph xwpfParagraph) {
+        if (!occursOnce(key, getParagraphContentText(xwpfParagraph), xwpfParagraph)) {
+            replaceInParagraph(key + trailChar, value + trailChar, xwpfParagraph);
+        }
+    }
+
     /**
-     * Replaces the placeholder with the value followed by a space, like
-     * replaceInBodyElements. If the placeholder is the last content of a
-     * paragraph, the space is omitted - it would otherwise survive as a
-     * trailing space artifact at the end of the line.
+     * Whether the key occurs exactly once in the paragraph text and in the text
+     * replaceInParagraph searches - the latter also contains field instructions
+     * and deleted text of the runs, where it could find the key first.
+     */
+    private static boolean occursOnce(String key, String paragraphText, XWPFParagraph xwpfParagraph) {
+        int index = paragraphText.indexOf(key);
+        if (index < 0 || index != paragraphText.lastIndexOf(key)) {
+            return false;
+        }
+        StringBuilder searchedText = new StringBuilder();
+        for (CTR run : xwpfParagraph.getCTP().getRArray()) {
+            XmlCursor cursor = run.newCursor();
+            cursor.selectPath("./*");
+            while (cursor.toNextSelection()) {
+                if (cursor.getObject() instanceof CTText) {
+                    searchedText.append(((CTText) cursor.getObject()).getStringValue());
+                }
+            }
+            cursor.dispose();
+        }
+        index = searchedText.indexOf(key);
+        return index >= 0 && index == searchedText.lastIndexOf(key);
+    }
+
+    /**
+     * Replaces the placeholder with the value followed by a space. If the
+     * placeholder is the last content of a paragraph or followed by one of
+     * TRAILING_CHARS, the space is omitted - at the end of the line it would
+     * survive as a trailing space artifact.
      */
     private static void replaceWithAutoSpaceInBodyElements(String key, String value, List<IBodyElement> bodyElements) {
         for (IBodyElement bodyElement : bodyElements) {
@@ -1269,21 +1322,31 @@ public class MicrosoftOfficeAccess {
      * The space is only omitted if the placeholder occurs exactly once in the
      * paragraph text (as left by the trailing chars passes), because
      * replaceInParagraph only replaces within the runs of the first match.
-     * Empty values keep the space.
+     * Before a trailing character it must also occur once in the text
+     * replaceInParagraph searches, see occursOnce. At the end of the
+     * paragraph, empty values keep the space.
      */
     private static void replaceWithAutoSpaceInParagraph(String key, String value, XWPFParagraph xwpfParagraph) {
+        String paragraphText = getParagraphContentText(xwpfParagraph);
+        int index = paragraphText.indexOf(key);
+        int next = index + key.length();
+        boolean lastContent = index >= 0 && next == paragraphText.length();
+        boolean trailingCharFollows = next < paragraphText.length() && occursOnce(key, paragraphText, xwpfParagraph) && TRAILING_CHARS.indexOf(paragraphText.charAt(next)) >= 0;
+        if ((lastContent && !value.isEmpty()) || trailingCharFollows) {
+            replaceInParagraph(key, value, xwpfParagraph);
+        } else {
+            replaceInParagraph(key, value + " ", xwpfParagraph);
+        }
+    }
+
+    private static String getParagraphContentText(XWPFParagraph xwpfParagraph) {
         // getText() appends the text of referenced footnotes - only the paragraph content counts
         String paragraphText = xwpfParagraph.getText();
         String footnoteText = xwpfParagraph.getFootnoteText();
         if (paragraphText.endsWith(footnoteText)) {
             paragraphText = paragraphText.substring(0, paragraphText.length() - footnoteText.length());
         }
-        boolean lastContent = paragraphText.endsWith(key) && paragraphText.indexOf(key) == paragraphText.length() - key.length();
-        if (lastContent && !value.isEmpty()) {
-            replaceInParagraph(key, value, xwpfParagraph);
-        } else {
-            replaceInParagraph(key, value + " ", xwpfParagraph);
-        }
+        return paragraphText;
     }
 
     private static void replaceScriptsInBodyElements(String caseId, Pattern pattern, HashMap<String, Object> values, ArrayList<String> formsPrefixes, List<IBodyElement> bodyElements, ArrayList<XWPFParagraph> removeParagraphs) {
@@ -1571,21 +1634,6 @@ public class MicrosoftOfficeAccess {
                                 t.setStringValue("");
                             }
                         }
-                    }
-                }
-            }
-        }
-    }
-
-    private static void replaceInTable(String key, String value, XWPFTable table) {
-        for (XWPFTableRow row : table.getRows()) {
-            for (XWPFTableCell cell : row.getTableCells()) {
-                for (IBodyElement bodyElement : cell.getBodyElements()) {
-                    if (bodyElement.getElementType().compareTo(BodyElementType.PARAGRAPH) == 0) {
-                        replaceInParagraph(key, value, (XWPFParagraph) bodyElement);
-                    }
-                    if (bodyElement.getElementType().compareTo(BodyElementType.TABLE) == 0) {
-                        replaceInTable(key, value, (XWPFTable) bodyElement);
                     }
                 }
             }

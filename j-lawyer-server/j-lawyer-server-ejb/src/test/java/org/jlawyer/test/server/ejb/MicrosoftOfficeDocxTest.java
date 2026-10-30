@@ -777,6 +777,76 @@ public class MicrosoftOfficeDocxTest {
         }
     }
 
+    /**
+     * A character after a placeholder keeps its own formatting (#2265): a bold placeholder followed by a comma
+     * that is not bold, once with the comma in the run of the following text, once in a run of its own. The text
+     * stays as before: the same placeholder twice in one run with different characters after it, an empty value
+     * before a comma, the placeholder in a field instruction before it, and at the end of a paragraph before a field
+     * instruction with it (no space, as with #3697). The same placeholder in separate runs no longer gets a space
+     * before the second comma.
+     */
+    @Test
+    public void setPlaceHolderKeepsFormattingOfFollowingCharacterInDocx() {
+        File f = new File(tempFolder.getRoot(), "format-after-placeholder.docx");
+        try {
+            try (org.apache.poi.xwpf.usermodel.XWPFDocument document = new org.apache.poi.xwpf.usermodel.XWPFDocument();
+                    FileOutputStream out = new FileOutputStream(f)) {
+                org.apache.poi.xwpf.usermodel.XWPFParagraph withText = document.createParagraph();
+                withText.createRun().setText("{{GEGNER_UNTERNEHMEN}}");
+                withText.getRuns().get(0).setBold(true);
+                withText.createRun().setText(", vertreten durch");
+                org.apache.poi.xwpf.usermodel.XWPFParagraph ownRun = document.createParagraph();
+                ownRun.createRun().setText("{{GEGNER_UNTERNEHMEN}}");
+                ownRun.getRuns().get(0).setBold(true);
+                ownRun.createRun().setText(",");
+                ownRun.createRun().setText(" vertreten durch");
+                document.createParagraph().createRun().setText("{{GEGNER_UNTERNEHMEN}}, {{GEGNER_UNTERNEHMEN}}.");
+                document.createParagraph().createRun().setText("{{GEGNER_NAME}}, Ort");
+                org.apache.poi.xwpf.usermodel.XWPFParagraph field = document.createParagraph();
+                field.createRun().getCTR().addNewInstrText().setStringValue(" MERGEFIELD \"{{GEGNER_UNTERNEHMEN}}\" ");
+                field.createRun().setText("{{GEGNER_UNTERNEHMEN}}");
+                field.createRun().setText(", Ort");
+                org.apache.poi.xwpf.usermodel.XWPFParagraph separateRuns = document.createParagraph();
+                separateRuns.createRun().setText("{{GEGNER_UNTERNEHMEN}}");
+                separateRuns.createRun().setText(", ");
+                separateRuns.createRun().setText("{{GEGNER_UNTERNEHMEN}}");
+                separateRuns.createRun().setText(", Ort");
+                org.apache.poi.xwpf.usermodel.XWPFParagraph fieldAfter = document.createParagraph();
+                fieldAfter.createRun().setText("{{GEGNER_UNTERNEHMEN}}");
+                fieldAfter.createRun().getCTR().addNewFldChar().setFldCharType(org.openxmlformats.schemas.wordprocessingml.x2006.main.STFldCharType.BEGIN);
+                fieldAfter.createRun().getCTR().addNewInstrText().setStringValue(" XE \"{{GEGNER_UNTERNEHMEN}}\" ");
+                fieldAfter.createRun().getCTR().addNewFldChar().setFldCharType(org.openxmlformats.schemas.wordprocessingml.x2006.main.STFldCharType.END);
+                document.write(out);
+            }
+
+            HashMap<String, Object> ph = new HashMap<>();
+            ph.put("{{GEGNER_UNTERNEHMEN}}", "Office 42 GmbH");
+            ph.put("{{GEGNER_NAME}}", "");
+            LibreOfficeAccess.setPlaceHolders("", f.getPath(), f.getPath(), ph, null);
+
+            String[] texts = new String[]{"Office 42 GmbH, vertreten durch", "Office 42 GmbH, vertreten durch", "Office 42 GmbH, Office 42 GmbH.", ", Ort", "Office 42 GmbH, Ort", "Office 42 GmbH, Office 42 GmbH, Ort", "Office 42 GmbH"};
+            String[] boldTexts = new String[]{"Office 42 GmbH", "Office 42 GmbH", "", "", "", "", ""};
+            try (FileInputStream in = new FileInputStream(f);
+                    org.apache.poi.xwpf.usermodel.XWPFDocument document = new org.apache.poi.xwpf.usermodel.XWPFDocument(in)) {
+                Assert.assertEquals(texts.length, document.getParagraphs().size());
+                for (int i = 0; i < texts.length; i++) {
+                    org.apache.poi.xwpf.usermodel.XWPFParagraph paragraph = document.getParagraphs().get(i);
+                    StringBuilder bold = new StringBuilder();
+                    for (org.apache.poi.xwpf.usermodel.XWPFRun run : paragraph.getRuns()) {
+                        if (run.isBold() && run.getText(0) != null) {
+                            bold.append(run.getText(0));
+                        }
+                    }
+                    Assert.assertEquals(texts[i], paragraph.getText());
+                    Assert.assertEquals("bold text in: " + paragraph.getText(), boldTexts[i], bold.toString());
+                }
+            }
+        } catch (Throwable t) {
+            t.printStackTrace();
+            Assert.fail(t.getMessage());
+        }
+    }
+
     @Test
     public void getPlaceHoldersInTextfield() {
         try {
