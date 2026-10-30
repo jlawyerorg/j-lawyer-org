@@ -1705,6 +1705,14 @@ public class MicrosoftOfficeAccess {
 
     private static void replaceInTextfield(String key, String value, XWPFParagraph xwpfParagraph) {
 
+        // characters key and value end with alike (such as the following character in the trailing character
+        // passes) are left in place with their formatting - only the rest of the key is replaced
+        int kept = 0;
+        while (kept < key.length() - 1 && kept < value.length() && key.charAt(key.length() - 1 - kept) == value.charAt(value.length() - 1 - kept)) {
+            kept++;
+        }
+        String replacedValue = value.substring(0, value.length() - kept);
+
         for (XmlObject textfieldParagraph : getTextfieldParagraphs(xwpfParagraph)) {
             try {
                 List<XmlObject> textElements = new ArrayList<>();
@@ -1717,7 +1725,7 @@ public class MicrosoftOfficeAccess {
                 // from the last match, so the positions of the earlier ones stay valid
                 for (int m = matches.size() - 1; m >= 0; m--) {
                     int matchStart = matches.get(m);
-                    int matchEnd = matchStart + key.length();
+                    int matchEnd = matchStart + key.length() - kept;
                     for (int i = 0; i < textElements.size(); i++) {
                         int elementStart = textRanges.get(i)[0];
                         int elementEnd = textRanges.get(i)[1];
@@ -1728,7 +1736,7 @@ public class MicrosoftOfficeAccess {
                         String elementText = getTextfieldText(textElements.get(i));
                         int from = Math.max(matchStart - elementStart, 0);
                         int to = Math.min(matchEnd, elementEnd) - elementStart;
-                        String replacement = elementStart <= matchStart ? value : "";
+                        String replacement = elementStart <= matchStart ? replacedValue : "";
                         setTextfieldText(textElements.get(i), elementText.substring(0, from) + replacement + elementText.substring(to));
                     }
                 }
