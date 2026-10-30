@@ -1145,7 +1145,7 @@ public class BeaAccess {
      * without calling the server.
      *
      * @param safeId the Safe-ID
-     * @return the cached identity, or null if it has not been looked up yet
+     * @return the cached identity, or null if none is currently cached for this Safe-ID
      */
     public BeaIdentity getCachedIdentity(String safeId) {
         return this.identityCache.get(safeId);
