@@ -1507,7 +1507,6 @@ public class LibreOfficeAccess {
                     //String[] trailingCharsRegex = new String[]{"\\.", ",", ";", ":", "!", "\\?", "'", "\"", " ", "\\n"};
                     //String[] trailingChars = new String[]{".", ",", ";", ":", "!", "?", "'", "\"", " ", "\n"};
                     String[] trailingCharsRegex = new String[]{"\\.", ",", ";", ":", "!", "\\?", "'", "\"", " ", "/", "\\)", "\\]", "-"};
-                    String[] trailingChars = new String[]{".", ",", ";", ":", "!", "?", "'", "\"", " ", "/", ")", "]", "-"};
 
                     String value = (String) values.get(key);
                     if (PlaceHolders.INGO_TEXT.equals(key) && isMultiParagraphText(value)) {
@@ -1531,10 +1530,8 @@ public class LibreOfficeAccess {
 
                     for (int i = 0; i < trailingCharsRegex.length; i++) {
                         String trailCharRegex = trailingCharsRegex[i];
-                        String trailChar = trailingChars[i];
-                        String regExKey = PLACEHOLDER_REGEX_OPEN + key.substring(2, key.length() - 2) + PLACEHOLDER_REGEX_CLOSE + trailCharRegex;
-
-                        String trailValue = value + trailChar;
+                        // select the placeholder only - the following character keeps its formatting
+                        String regExKey = PLACEHOLDER_REGEX_OPEN + key.substring(2, key.length() - 2) + PLACEHOLDER_REGEX_CLOSE + "(?=" + trailCharRegex + ")";
 
                         TextNavigation search = new TextNavigation(regExKey, outputOdt);
 
@@ -1542,10 +1539,10 @@ public class LibreOfficeAccess {
 
                             try {
                                 TextSelection item = (TextSelection) search.nextSelection();
-                                item.replaceWith(trailValue);
+                                item.replaceWith(value);
 
                             } catch (Throwable t) {
-                                log.error("Error replacing " + regExKey + " with " + trailValue + " in " + fileInFileSystem, t);
+                                log.error("Error replacing " + regExKey + " with " + value + " in " + fileInFileSystem, t);
                             }
                         }
                     }
@@ -2099,16 +2096,14 @@ public class LibreOfficeAccess {
 
                 // if the placeholder is followed by one of these characters, do not append a space
                 String[] trailingCharsRegex = new String[]{"\\.", ",", ";", ":", "!", "\\?", "'", "\"", " ", "/", "\\)", "\\]", "-"};
-                String[] trailingChars = new String[]{".", ",", ";", ":", "!", "?", "'", "\"", " ", "/", ")", "]", "-"};
                 for (int i = 0; i < trailingCharsRegex.length; i++) {
                     String trailCharRegex = trailingCharsRegex[i];
-                    String trailChar = trailingChars[i];
-                    String regExKey = PLACEHOLDER_REGEX_OPEN + key.substring(2, key.length() - 2) + PLACEHOLDER_REGEX_CLOSE + trailCharRegex;
+                    // select the placeholder only - the following character keeps its formatting
+                    String regExKey = PLACEHOLDER_REGEX_OPEN + key.substring(2, key.length() - 2) + PLACEHOLDER_REGEX_CLOSE + "(?=" + trailCharRegex + ")";
                     String value = (String) values.get(key);
                     if (value == null) {
                         value = "";
                     }
-                    value = value + trailChar;
 
                     TextNavigation search = new TextNavigation(regExKey, outputOds);
 
