@@ -200,6 +200,7 @@ public class AssistantChatPanel extends JDialog {
     private JScrollPane scrollMessages;
     private JPanel pnlMessages;
     private JProgressBar progress;
+    private IngoStatusLine statusLine;
     private JTextArea taPrompt;
     private JButton cmdSubmit;
     private JButton cmdInterrupt;
@@ -599,6 +600,10 @@ public class AssistantChatPanel extends JDialog {
         progress.setBorderPainted(false);
         bottomPanel.add(progress);
 
+        // --- Status line, visible while the progress bar is ---
+        statusLine = new IngoStatusLine();
+        bottomPanel.add(statusLine);
+
         // --- Input area: centered at ~80% width with buttons right of text field ---
         JPanel inputWrapper = new JPanel(new GridBagLayout());
         inputWrapper.setBorder(BorderFactory.createEmptyBorder(8, 16, 4, 16));
@@ -795,6 +800,7 @@ public class AssistantChatPanel extends JDialog {
 
         this.progress.setIndeterminate(true);
         this.progress.setVisible(true);
+        this.statusLine.start();
 
         final boolean anonymize = capability.isAnonymize();
         final String conversationId = anonymize ? this.storedChat.conversationId : null;
@@ -1008,8 +1014,10 @@ public class AssistantChatPanel extends JDialog {
 
                             if (approved) {
                                 final JPanel runningPanel = toolPanel;
+                                final String runningSummary = toolSummary;
                                 SwingUtilities.invokeAndWait(() -> {
                                     activeToolGroup.setRunning(runningPanel);
+                                    statusLine.setDetail(runningSummary);
                                 });
 
                                 // Execute the tool
@@ -1045,6 +1053,7 @@ public class AssistantChatPanel extends JDialog {
 
                         // Add all tool result messages and send follow-up
                         messages.addAll(toolResultMessages);
+                        SwingUtilities.invokeLater(() -> statusLine.setDetail(null));
 
                         // Send follow-up request with tool results
                         status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getActionId(), capability.getModelRef(), null, capability.getSystemPrompt(), capability.isAsyncRecommended(), fParams, null, messages, fPromptConfigs, fTools, anonymize, conversationId);
@@ -1193,6 +1202,7 @@ public class AssistantChatPanel extends JDialog {
                 lblAnonymization.requestFinished(status == null || status.isError());
                 progress.setIndeterminate(false);
                 progress.setVisible(false);
+                statusLine.stop();
                 taPrompt.setText("");
 
                 cmdSubmit.setVisible(true);
