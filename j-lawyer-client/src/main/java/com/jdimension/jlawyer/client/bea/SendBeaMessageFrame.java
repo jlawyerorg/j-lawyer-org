@@ -2119,26 +2119,16 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
     private void cmdRecipientsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRecipientsActionPerformed
         // recipients can also be removed from the list or added via the search - the check marks follow the list
         DefaultListModel model = (DefaultListModel) this.lstTo.getModel();
-        // the parties' identity objects are only needed for recipients without a Safe-ID
-        boolean anyWithoutSafeId = false;
-        for (int i = 0; i < model.size(); i++) {
-            Object o = model.get(i);
-            if (o instanceof BeaIdentity && ((BeaIdentity) o).getSafeId() == null) {
-                anyWithoutSafeId = true;
-                break;
-            }
-        }
         for (java.awt.Component c : this.popRecipients.getComponents()) {
             if (c instanceof JCheckBoxMenuItem) {
                 Object safeId = ((JCheckBoxMenuItem) c).getClientProperty(PARTY_SAFEID);
                 if (safeId != null) {
                     BeaIdentity partyIdentity = null;
-                    if (anyWithoutSafeId) {
-                        try {
-                            partyIdentity = BeaAccess.getInstance().getIdentity(safeId.toString());
-                        } catch (Exception ex) {
-                            log.warn("Unable to resolve beA identity " + safeId, ex);
-                        }
+                    try {
+                        // cache only, no server call when opening the menu - a click adds exactly the cached identity object
+                        partyIdentity = BeaAccess.getInstance().getCachedIdentity(safeId.toString());
+                    } catch (Exception ex) {
+                        log.warn("Unable to access beA", ex);
                     }
                     ((JCheckBoxMenuItem) c).setState(containsParty(model, safeId.toString(), partyIdentity));
                 }
