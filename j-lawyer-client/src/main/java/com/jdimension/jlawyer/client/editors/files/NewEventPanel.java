@@ -892,6 +892,7 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
 
         jLabel23.setText("Grund / Beschreibung:");
 
+        txtReviewReason.setColumns(20);
         txtReviewReason.setToolTipText("Zusammenfassung");
 
         taEventDescription.setColumns(20);
@@ -901,6 +902,7 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
         taEventDescription.setWrapStyleWord(true);
         jScrollPane5.setViewportView(taEventDescription);
 
+        txtEventLocation.setColumns(20);
         txtEventLocation.setEnabled(false);
 
         cmbReviewAssignee.setMaximumRowCount(20);
