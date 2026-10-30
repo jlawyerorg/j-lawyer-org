@@ -785,6 +785,135 @@ public class MicrosoftOfficeDocxTest {
         }
     }
 
+    /**
+     * Word may split a placeholder in a text box across several runs, e.g. at a spelling mark.
+     * Such placeholders are found and replaced like in body paragraphs (#3609).
+     */
+    @Test
+    public void setPlaceHoldersInTextfieldSplitAcrossRuns() {
+        File f = new File(tempFolder.getRoot(), "textfield-split-runs.docx");
+        try {
+            writeTextboxDocx(f,
+                    // split at a spelling mark, as Word does it
+                    "<w:p><w:r><w:t>{{MANDANT_</w:t></w:r><w:proofErr w:type=\"spellStart\"/><w:r><w:t>HAUSNR}}</w:t></w:r><w:proofErr w:type=\"spellEnd\"/></w:p>"
+                    // the same placeholder twice, only the second one split
+                    + "<w:p><w:r><w:t xml:space=\"preserve\">{{MANDANT_NAME}}, </w:t></w:r><w:r><w:t>{{MANDANT_</w:t></w:r><w:r><w:rPr><w:b/></w:rPr><w:t>NAME}}</w:t></w:r></w:p>"
+                    // two split matches of the same key in one paragraph
+                    + "<w:p><w:r><w:t>{{MANDANT_</w:t></w:r><w:r><w:t>HAUSNR}}-</w:t></w:r><w:r><w:t>{{MANDANT_</w:t></w:r><w:r><w:t>HAUSNR}}-</w:t></w:r></w:p>"
+                    // in one run
+                    + "<w:p><w:r><w:t>{{AKTE_ZEICHEN}}</w:t></w:r></w:p>");
+
+            ArrayList<String> found = textboxDocxPlaceHolders(f);
+            Assert.assertTrue("split placeholder not found: " + found, found.contains("{{MANDANT_HAUSNR}}"));
+            Assert.assertTrue(found.toString(), found.contains("{{MANDANT_NAME}}"));
+            Assert.assertTrue(found.toString(), found.contains("{{AKTE_ZEICHEN}}"));
+
+            HashMap<String, Object> ph = new HashMap<>();
+            ph.put("{{MANDANT_HAUSNR}}", "12a");
+            ph.put("{{MANDANT_NAME}}", "Mustermann");
+            ph.put("{{AKTE_ZEICHEN}}", "0815/19");
+            LibreOfficeAccess.setPlaceHolders("", f.getPath(), f.getPath(), ph, null);
+
+            ArrayList<String> texts = textboxTexts(f);
+            Assert.assertEquals("text box and its fallback", 2, texts.size());
+            for (String text : texts) {
+                Assert.assertEquals("12a \nMustermann, Mustermann \n12a-12a-\n0815/19 \n", text);
+            }
+        } catch (Throwable t) {
+            t.printStackTrace();
+            Assert.fail(t.getMessage());
+        }
+    }
+
+    /**
+     * Text box content the run by run replacement handled, next to cases it did not: a hyperlink before the
+     * placeholder, a run with several texts, an empty run in a split placeholder, a "{" right before it, a
+     * raised run, the placeholder in a field instruction before it, and a value containing its own placeholder.
+     */
+    @Test
+    public void setPlaceHoldersInTextfieldEdgeCases() {
+        File f = new File(tempFolder.getRoot(), "textfield-edge-cases.docx");
+        try {
+            writeTextboxDocx(f,
+                    "<w:p><w:hyperlink w:anchor=\"top\"><w:r><w:t>Link</w:t></w:r></w:hyperlink><w:r><w:t xml:space=\"preserve\"> {{AKTE_ZEICHEN}}</w:t></w:r></w:p>"
+                    + "<w:p><w:r><w:t xml:space=\"preserve\">Az. </w:t><w:tab/><w:t>{{AKTE_ZEICHEN}}</w:t></w:r></w:p>"
+                    + "<w:p><w:r><w:t>{{MANDANT_</w:t></w:r><w:r/><w:r><w:t>HAUSNR}}</w:t></w:r></w:p>"
+                    + "<w:p><w:r><w:t>{{{MANDANT_HAUSNR}}</w:t></w:r></w:p>"
+                    + "<w:p><w:r><w:rPr><w:position w:val=\"2\"/></w:rPr><w:t>{{AKTE_ZEICHEN}}</w:t></w:r></w:p>"
+                    + "<w:p><w:r><w:instrText xml:space=\"preserve\"> {{AKTE_ZEICHEN}} </w:instrText></w:r><w:r><w:t>{{AKTE_ZEICHEN}}</w:t></w:r></w:p>"
+                    + "<w:p><w:r><w:t>{{MANDANT_VORNAME}}</w:t></w:r><w:r><w:t>+</w:t></w:r><w:r><w:t>{{MANDANT_VORNAME}}</w:t></w:r></w:p>");
+
+            ArrayList<String> found = textboxDocxPlaceHolders(f);
+            Assert.assertTrue(found.toString(), found.contains("{{MANDANT_HAUSNR}}"));
+            Assert.assertTrue(found.toString(), found.contains("{{MANDANT_VORNAME}}"));
+            Assert.assertTrue(found.toString(), found.contains("{{AKTE_ZEICHEN}}"));
+
+            HashMap<String, Object> ph = new HashMap<>();
+            ph.put("{{MANDANT_HAUSNR}}", "12a");
+            ph.put("{{MANDANT_VORNAME}}", "Hans{{MANDANT_VORNAME}}");
+            ph.put("{{AKTE_ZEICHEN}}", "0815/19");
+            LibreOfficeAccess.setPlaceHolders("", f.getPath(), f.getPath(), ph, null);
+
+            ArrayList<String> texts = textboxTexts(f);
+            Assert.assertEquals("text box and its fallback", 2, texts.size());
+            for (String text : texts) {
+                Assert.assertEquals("Link 0815/19 \nAz. 0815/19 \n12a \n{12a \n0815/19 \n {{AKTE_ZEICHEN}} 0815/19 \nHans{{MANDANT_VORNAME}} +Hans{{MANDANT_VORNAME}} \n", text);
+            }
+        } catch (Throwable t) {
+            t.printStackTrace();
+            Assert.fail(t.getMessage());
+        }
+    }
+
+    /**
+     * Writes a DOCX with one text box holding the given paragraphs, as current Word versions write it:
+     * DrawingML with a VML fallback, both holding the text.
+     */
+    private static void writeTextboxDocx(File docx, String paragraphs) throws Exception {
+        String txbxContent = "<w:txbxContent>" + paragraphs + "</w:txbxContent>";
+        String textboxRun = "<w:r xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\""
+                + " xmlns:mc=\"http://schemas.openxmlformats.org/markup-compatibility/2006\""
+                + " xmlns:wp=\"http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing\""
+                + " xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\""
+                + " xmlns:wps=\"http://schemas.microsoft.com/office/word/2010/wordprocessingShape\""
+                + " xmlns:v=\"urn:schemas-microsoft-com:vml\">"
+                + "<mc:AlternateContent><mc:Choice Requires=\"wps\"><w:drawing><wp:inline><wp:extent cx=\"2000000\" cy=\"1000000\"/><wp:docPr id=\"1\" name=\"Textfeld 1\"/>"
+                + "<a:graphic><a:graphicData uri=\"http://schemas.microsoft.com/office/word/2010/wordprocessingShape\"><wps:wsp><wps:cNvSpPr txBox=\"1\"/><wps:spPr/>"
+                + "<wps:txbx>" + txbxContent + "</wps:txbx><wps:bodyPr/></wps:wsp></a:graphicData></a:graphic></wp:inline></w:drawing></mc:Choice>"
+                + "<mc:Fallback><w:pict><v:shape style=\"width:157pt;height:79pt\"><v:textbox>" + txbxContent + "</v:textbox></v:shape></w:pict></mc:Fallback>"
+                + "</mc:AlternateContent></w:r>";
+        try (org.apache.poi.xwpf.usermodel.XWPFDocument document = new org.apache.poi.xwpf.usermodel.XWPFDocument();
+                FileOutputStream out = new FileOutputStream(docx)) {
+            document.createParagraph().createRun().getCTR().set(org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR.Factory.parse(textboxRun));
+            document.write(out);
+        }
+    }
+
+    private static ArrayList<String> textboxDocxPlaceHolders(File docx) throws Exception {
+        ArrayList<String> allPartyTypesPlaceholders = new ArrayList<>();
+        allPartyTypesPlaceholders.add("MANDANT");
+        allPartyTypesPlaceholders.add("GEGNER");
+        allPartyTypesPlaceholders.add("DRITTE");
+        return new ArrayList<>(LibreOfficeAccess.getPlaceHolders(docx.getPath(), allPartyTypesPlaceholders, new ArrayList<>()));
+    }
+
+    /**
+     * Returns the text of each text box (w:txbxContent) in word/document.xml, one line per paragraph.
+     */
+    private static ArrayList<String> textboxTexts(File docx) throws IOException {
+        String xml;
+        try (java.util.zip.ZipFile zip = new java.util.zip.ZipFile(docx);
+                InputStream is = zip.getInputStream(zip.getEntry("word/document.xml"))) {
+            xml = new String(is.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+        }
+        ArrayList<String> texts = new ArrayList<>();
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("(?s)<w:txbxContent[^>]*>(.*?)</w:txbxContent>").matcher(xml);
+        while (m.find()) {
+            texts.add(m.group(1).replace("</w:p>", "\n").replaceAll("<[^>]+>", ""));
+        }
+        return texts;
+    }
+
     @Test
     public void getPlaceHoldersInTextfieldPerformance() {
         try {

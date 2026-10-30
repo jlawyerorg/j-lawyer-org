@@ -673,8 +673,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.xml.namespace.QName;
 import org.apache.log4j.Logger;
 import org.apache.poi.util.Units;
 import org.apache.poi.wp.usermodel.HeaderFooterType;
@@ -720,6 +722,13 @@ public class MicrosoftOfficeAccess {
     private static final Logger log = Logger.getLogger(MicrosoftOfficeAccess.class.getName());
 
     private static final String CURSOR_TEXTFIELD = "declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' .//*/w:txbxContent/w:p/w:r";
+    private static final String CURSOR_TEXTFIELD_PARAGRAPHS = "declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' .//*/w:txbxContent/w:p";
+    private static final String NS_WORDPROCESSINGML = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+    // elements Word may put in the middle of a placeholder without interrupting its text
+    private static final Set<String> TEXTFIELD_SKIPPED_ELEMENTS = Set.of("pPr", "rPr", "proofErr", "bookmarkStart", "bookmarkEnd", "lastRenderedPageBreak");
+    // stands for any other content of a paragraph (tab, break, field, hyperlink, ...), contained in no placeholder
+    private static final char TEXTFIELD_TEXT_BREAK = '\u0000';
+    private static final QName XML_SPACE = new QName("http://www.w3.org/XML/1998/namespace", "space");
     private static final String EXT_DOCX = ".docx";
 
     public static void setPlaceHolders(String caseId, String fileInFileSystem, String fileName, HashMap<String, Object> values, ArrayList<String> formsPrefixes) throws Exception {
@@ -1194,7 +1203,7 @@ public class MicrosoftOfficeAccess {
                 if (resultList.contains(key)) {
                     return;
                 }
-                findInTextfield(key, (XWPFParagraph) bodyElement, resultList, tfCache);
+                findInTextfield(key, (XWPFParagraph) bodyElement, resultList);
                 if (resultList.contains(key)) {
                     return;
                 }
@@ -1554,49 +1563,91 @@ public class MicrosoftOfficeAccess {
         }
     }
 
-    private static void findInTextfield(String key, XWPFParagraph xwpfParagraph, ArrayList<String> resultList, HashMap<Integer, CTR> tfCache) {
+    private static List<XmlObject> getTextfieldParagraphs(XWPFParagraph xwpfParagraph) {
+        List<XmlObject> paragraphs = new ArrayList<>();
+        XmlCursor cursor = xwpfParagraph.getCTP().newCursor();
+        cursor.selectPath(CURSOR_TEXTFIELD_PARAGRAPHS);
+        while (cursor.hasNextSelection()) {
+            cursor.toNextSelection();
+            paragraphs.add(cursor.getObject());
+        }
+        cursor.dispose();
+        return paragraphs;
+    }
+
+    /**
+     * Returns the text of a paragraph in a text box: the w:t elements of its runs in document order, as Word
+     * may split a placeholder across several runs. Any other content is represented by TEXTFIELD_TEXT_BREAK,
+     * so a placeholder never spans it. The w:t elements and their [start, end) in the text are added to
+     * textElements and textRanges, if given.
+     */
+    private static String getTextfieldParagraphText(XmlObject paragraph, List<XmlObject> textElements, List<int[]> textRanges) {
+        StringBuilder text = new StringBuilder();
+        XmlCursor cursor = paragraph.newCursor();
+        if (cursor.toFirstChild()) {
+            do {
+                if (isWordElement(cursor, "r")) {
+                    cursor.push();
+                    if (cursor.toFirstChild()) {
+                        do {
+                            if (isWordElement(cursor, "t")) {
+                                int start = text.length();
+                                text.append(cursor.getTextValue());
+                                if (textElements != null) {
+                                    textElements.add(cursor.getObject());
+                                    textRanges.add(new int[]{start, text.length()});
+                                }
+                            } else if (!isSkippedTextfieldElement(cursor)) {
+                                text.append(TEXTFIELD_TEXT_BREAK);
+                            }
+                        } while (cursor.toNextSibling());
+                    }
+                    cursor.pop();
+                } else if (!isSkippedTextfieldElement(cursor)) {
+                    text.append(TEXTFIELD_TEXT_BREAK);
+                }
+            } while (cursor.toNextSibling());
+        }
+        cursor.dispose();
+        return text.toString();
+    }
+
+    private static boolean isWordElement(XmlCursor cursor, String localName) {
+        QName name = cursor.getName();
+        return name != null && NS_WORDPROCESSINGML.equals(name.getNamespaceURI()) && localName.equals(name.getLocalPart());
+    }
+
+    private static boolean isSkippedTextfieldElement(XmlCursor cursor) {
+        QName name = cursor.getName();
+        return name != null && NS_WORDPROCESSINGML.equals(name.getNamespaceURI()) && TEXTFIELD_SKIPPED_ELEMENTS.contains(name.getLocalPart());
+    }
+
+    private static String getTextfieldText(XmlObject textElement) {
+        XmlCursor cursor = textElement.newCursor();
+        String text = cursor.getTextValue();
+        cursor.dispose();
+        return text;
+    }
+
+    private static void setTextfieldText(XmlObject textElement, String text) {
+        XmlCursor cursor = textElement.newCursor();
+        cursor.setTextValue(text);
+        if (!text.isEmpty() && (Character.isWhitespace(text.charAt(0)) || Character.isWhitespace(text.charAt(text.length() - 1)))) {
+            cursor.setAttributeText(XML_SPACE, "preserve");
+        }
+        cursor.dispose();
+    }
+
+    private static void findInTextfield(String key, XWPFParagraph xwpfParagraph, ArrayList<String> resultList) {
 
         if (resultList.contains(key)) {
             return;
         }
 
-        XmlCursor cursor = xwpfParagraph.getCTP().newCursor();
-        cursor.selectPath(CURSOR_TEXTFIELD);
-
-        List<XmlObject> ctrsintxtbx = new ArrayList<>();
-
-        while (cursor.hasNextSelection()) {
-            cursor.toNextSelection();
-            XmlObject obj = cursor.getObject();
-            ctrsintxtbx.add(obj);
-        }
-        for (XmlObject obj : ctrsintxtbx) {
-            try {
-                String xmlText = obj.xmlText();
-                if (!(tfCache.containsKey(xmlText.hashCode()))) {
-                    CTR ctr = CTR.Factory.parse(xmlText);
-                    tfCache.put(xmlText.hashCode(), ctr);
-
-                }
-                CTR ctr = tfCache.get(xmlText.hashCode());
-                //faster, but does not work: CTR ctr = CTR.Factory.parse(obj.getDomNode());
-
-                //CTR ctr = CTR.Factory.parse(obj.newInputStream());
-                XWPFRun bufferrun = new XWPFRun(ctr, (IRunBody) xwpfParagraph);
-                String text = bufferrun.getText(0);
-                if (text != null && text.contains(key)) {
-                    if (!resultList.contains(key)) {
-                        resultList.add(key);
-                        return;
-                    }
-                }
-//                if (text != null && text.contains(someWords)) {
-//                    text = text.replace(someWords, "replaced");
-//                    bufferrun.setText(text, 0);
-//                }
-//                obj.set(bufferrun.getCTR());
-            } catch (Exception ex) {
-                log.error("Unable to iterate text fields", ex);
+        for (XmlObject textfieldParagraph : getTextfieldParagraphs(xwpfParagraph)) {
+            if (getTextfieldParagraphText(textfieldParagraph, null, null).contains(key)) {
+                resultList.add(key);
+                return;
             }
         }
 
@@ -1654,32 +1705,35 @@ public class MicrosoftOfficeAccess {
 
     private static void replaceInTextfield(String key, String value, XWPFParagraph xwpfParagraph) {
 
-        XmlCursor cursor = xwpfParagraph.getCTP().newCursor();
-        cursor.selectPath(CURSOR_TEXTFIELD);
-
-        List<XmlObject> ctrsintxtbx = new ArrayList<>();
-
-        while (cursor.hasNextSelection()) {
-            cursor.toNextSelection();
-            XmlObject obj = cursor.getObject();
-            ctrsintxtbx.add(obj);
-        }
-        for (XmlObject obj : ctrsintxtbx) {
+        for (XmlObject textfieldParagraph : getTextfieldParagraphs(xwpfParagraph)) {
             try {
-                CTR ctr = CTR.Factory.parse(obj.xmlText());
-                //CTR ctr = CTR.Factory.parse(obj.newInputStream());
-                XWPFRun bufferrun = new XWPFRun(ctr, (IRunBody) xwpfParagraph);
-                String text = bufferrun.getText(0);
-//                if (text != null && text.contains(key)) {
-//                    text = text.replace(key, value);
-//                }
-                if (text != null && text.contains(key)) {
-                    text = text.replace(key, value);
-                    bufferrun.setText(text, 0);
+                List<XmlObject> textElements = new ArrayList<>();
+                List<int[]> textRanges = new ArrayList<>();
+                String text = getTextfieldParagraphText(textfieldParagraph, textElements, textRanges);
+                List<Integer> matches = new ArrayList<>();
+                for (int pos = text.indexOf(key); pos >= 0; pos = text.indexOf(key, pos + key.length())) {
+                    matches.add(pos);
                 }
-                obj.set(bufferrun.getCTR());
+                // from the last match, so the positions of the earlier ones stay valid
+                for (int m = matches.size() - 1; m >= 0; m--) {
+                    int matchStart = matches.get(m);
+                    int matchEnd = matchStart + key.length();
+                    for (int i = 0; i < textElements.size(); i++) {
+                        int elementStart = textRanges.get(i)[0];
+                        int elementEnd = textRanges.get(i)[1];
+                        if (elementEnd <= matchStart || elementStart >= matchEnd) {
+                            continue;
+                        }
+                        // the value goes where the match starts (taking that run's formatting), the rest of the match is removed
+                        String elementText = getTextfieldText(textElements.get(i));
+                        int from = Math.max(matchStart - elementStart, 0);
+                        int to = Math.min(matchEnd, elementEnd) - elementStart;
+                        String replacement = elementStart <= matchStart ? value : "";
+                        setTextfieldText(textElements.get(i), elementText.substring(0, from) + replacement + elementText.substring(to));
+                    }
+                }
             } catch (Exception ex) {
-                log.error("Unable to iterate text fields", ex);
+                log.error("Unable to replace in text fields", ex);
             }
         }
 

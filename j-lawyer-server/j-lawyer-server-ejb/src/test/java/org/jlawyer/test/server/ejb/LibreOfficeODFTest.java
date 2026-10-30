@@ -884,6 +884,58 @@ public class LibreOfficeODFTest {
         }
     }
 
+    /**
+     * Placeholders in a text box are found and replaced, also when formatting splits them into
+     * several spans (ODT counterpart of #3609 for DOCX).
+     */
+    @Test
+    public void setPlaceHoldersInTextboxSplitAcrossSpansInOdt() {
+        File f = new File(tempFolder.getRoot(), "textbox-split-spans.odt");
+        try {
+            TextDocument document = TextDocument.newTextDocument();
+            org.odftoolkit.simple.draw.Textbox textbox = document.addParagraph("").addTextbox(new org.odftoolkit.simple.draw.FrameRectangle(1, 1, 6, 3, StyleTypeDefinitions.SupportedLinearMeasure.CM));
+            org.odftoolkit.simple.text.Paragraph houseNumber = textbox.addParagraph("");
+            appendSpan(houseNumber, "{{MANDANT_");
+            appendSpan(houseNumber, "HAUSNR}}");
+            org.odftoolkit.simple.text.Paragraph names = textbox.addParagraph("{{MANDANT_NAME}}, ");
+            appendSpan(names, "{{MANDANT_");
+            appendSpan(names, "NAME}}");
+            textbox.addParagraph("{{AKTE_ZEICHEN}}");
+            document.save(f);
+            document.close();
+
+            ArrayList<String> allPartyTypesPlaceholders = new ArrayList<>();
+            allPartyTypesPlaceholders.add("MANDANT");
+            allPartyTypesPlaceholders.add("GEGNER");
+            allPartyTypesPlaceholders.add("DRITTE");
+            ArrayList<String> found = new ArrayList<>(LibreOfficeAccess.getPlaceHolders(f.getPath(), allPartyTypesPlaceholders, new ArrayList<>()));
+            Assert.assertTrue("split placeholder not found: " + found, found.contains("{{MANDANT_HAUSNR}}"));
+            Assert.assertTrue(found.toString(), found.contains("{{MANDANT_NAME}}"));
+            Assert.assertTrue(found.toString(), found.contains("{{AKTE_ZEICHEN}}"));
+
+            HashMap<String, Object> ph = new HashMap<>();
+            ph.put("{{MANDANT_HAUSNR}}", "12a");
+            ph.put("{{MANDANT_NAME}}", "Mustermann");
+            ph.put("{{AKTE_ZEICHEN}}", "0815/19");
+            LibreOfficeAccess.setPlaceHolders("", f.getPath(), f.getName(), ph, null);
+
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("(?s)<draw:text-box[^>]*>(.*?)</draw:text-box>").matcher(readZipEntry(f, "content.xml"));
+            Assert.assertTrue("text box missing", m.find());
+            String text = m.group(1).replace("</text:p>", "\n").replaceAll("<[^>]+>", "");
+            Assert.assertFalse("placeholder left in text box: " + text, text.contains("{{"));
+            Assert.assertTrue(text, text.contains("12a"));
+            Assert.assertTrue(text, text.contains("Mustermann, Mustermann"));
+            Assert.assertTrue(text, text.contains("0815/19"));
+        } catch (Throwable t) {
+            t.printStackTrace();
+            Assert.fail(t.getMessage());
+        }
+    }
+
+    private static void appendSpan(org.odftoolkit.simple.text.Paragraph paragraph, String text) {
+        ((org.odftoolkit.odfdom.dom.element.text.TextPElement) paragraph.getOdfElement()).newTextSpanElement().setTextContent(text);
+    }
+
     @Test
     @Ignore
     public void testSmartTemplateClass() {
