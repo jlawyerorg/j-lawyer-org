@@ -1317,11 +1317,18 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
     // client property of the party menu items holding the party's Safe-ID
     private static final String PARTY_SAFEID = "beaSafeId";
 
-    // beA identities do not implement equals - recipients are matched by their Safe-ID
-    private static boolean containsSafeId(DefaultListModel model, String safeId) {
+    // beA identities do not implement equals - a recipient belongs to a party if it has the party's Safe-ID,
+    // or if it is the party's cached identity object itself, which may carry no Safe-ID
+    private static boolean isPartyRecipient(Object o, String safeId, BeaIdentity partyIdentity) {
+        if (!(o instanceof BeaIdentity)) {
+            return false;
+        }
+        return o == partyIdentity || (safeId != null && safeId.equals(((BeaIdentity) o).getSafeId()));
+    }
+
+    private static boolean containsParty(DefaultListModel model, String safeId, BeaIdentity partyIdentity) {
         for (int i = 0; i < model.size(); i++) {
-            Object o = model.get(i);
-            if (o instanceof BeaIdentity && safeId != null && safeId.equals(((BeaIdentity) o).getSafeId())) {
+            if (isPartyRecipient(model.get(i), safeId, partyIdentity)) {
                 return true;
             }
         }
@@ -2112,11 +2119,28 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
     private void cmdRecipientsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRecipientsActionPerformed
         // recipients can also be removed from the list or added via the search - the check marks follow the list
         DefaultListModel model = (DefaultListModel) this.lstTo.getModel();
+        // the parties' identity objects are only needed for recipients without a Safe-ID
+        boolean anyWithoutSafeId = false;
+        for (int i = 0; i < model.size(); i++) {
+            Object o = model.get(i);
+            if (o instanceof BeaIdentity && ((BeaIdentity) o).getSafeId() == null) {
+                anyWithoutSafeId = true;
+                break;
+            }
+        }
         for (java.awt.Component c : this.popRecipients.getComponents()) {
             if (c instanceof JCheckBoxMenuItem) {
                 Object safeId = ((JCheckBoxMenuItem) c).getClientProperty(PARTY_SAFEID);
                 if (safeId != null) {
-                    ((JCheckBoxMenuItem) c).setState(containsSafeId(model, safeId.toString()));
+                    BeaIdentity partyIdentity = null;
+                    if (anyWithoutSafeId) {
+                        try {
+                            partyIdentity = BeaAccess.getInstance().getIdentity(safeId.toString());
+                        } catch (Exception ex) {
+                            log.warn("Unable to resolve beA identity " + safeId, ex);
+                        }
+                    }
+                    ((JCheckBoxMenuItem) c).setState(containsParty(model, safeId.toString(), partyIdentity));
                 }
             }
         }
@@ -2939,20 +2963,18 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
 
             try {
                 JCheckBoxMenuItem mi = (JCheckBoxMenuItem) e.getSource();
+                BeaIdentity i = BeaAccess.getInstance().getIdentity(this.safeId);
                 if (mi.getState()) {
 
-                    BeaIdentity i = BeaAccess.getInstance().getIdentity(this.safeId);
-                    // the identity check also catches a cached identity that carries no Safe-ID
-                    if (!containsSafeId(model, this.safeId) && !model.contains(i)) {
+                    if (!containsParty(model, this.safeId, i)) {
                         model.addElement(i);
                     }
                     if(this.toFileNumber!=null && this.toFileNumber.getEditor().getItem().toString().trim().isEmpty())
                         this.toFileNumber.setSelectedItem(StringUtils.nonEmpty(this.fileNumber));
 
-                } else if (containsSafeId(model, this.safeId)) {
+                } else if (containsParty(model, this.safeId, i)) {
                     for (int idx = model.size() - 1; idx >= 0; idx--) {
-                        Object o = model.get(idx);
-                        if (o instanceof BeaIdentity && this.safeId.equals(((BeaIdentity) o).getSafeId())) {
+                        if (isPartyRecipient(model.get(idx), this.safeId, i)) {
                             model.remove(idx);
                         }
                     }
