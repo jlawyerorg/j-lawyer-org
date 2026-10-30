@@ -1124,10 +1124,20 @@ public class AiChatHistoryPanel extends javax.swing.JPanel implements EventConsu
 
         this.pnlMessages.removeAll();
         // rendered like AssistantChatPanel renders a conversation
+        ToolCallGroupPanel toolGroup = null;
         for (AiChatTranscript.Entry entry : AiChatTranscript.toEntries(messages, this.toolRegistry, chat.getModelRef())) {
             if (entry.getKind() == AiChatTranscript.Entry.KIND_TOOL) {
-                this.pnlMessages.add(AiChatTranscript.createToolLine(entry.getText(), entry.getRiskLevel()));
+                // consecutive tool calls are shown as one group
+                if (toolGroup == null) {
+                    toolGroup = new ToolCallGroupPanel();
+                    this.pnlMessages.add(toolGroup);
+                }
+                toolGroup.addCall(entry.getText(), entry.getRiskLevel(), null);
                 continue;
+            }
+            if (toolGroup != null) {
+                toolGroup.finish();
+                toolGroup = null;
             }
             if (this.pnlMessages.getComponentCount() > 0) {
                 this.pnlMessages.add(Box.createRigidArea(new Dimension(0, 12)));
@@ -1153,6 +1163,9 @@ public class AiChatHistoryPanel extends javax.swing.JPanel implements EventConsu
                 p.setAlignmentX(Component.LEFT_ALIGNMENT);
                 this.pnlMessages.add(p);
             }
+        }
+        if (toolGroup != null) {
+            toolGroup.finish();
         }
         this.pnlMessages.revalidate();
         this.pnlMessages.repaint();

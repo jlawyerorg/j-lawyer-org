@@ -698,6 +698,11 @@ import org.json.simple.Jsoner;
  */
 public class AiChatTranscript {
 
+    /**
+     * name of the label in a tool line that holds the description of the call
+     */
+    public static final String TOOL_LABEL_NAME = "toolStatusLabel";
+
     private static final Logger log = Logger.getLogger(AiChatTranscript.class.getName());
 
     private static final int USER_MSG_TRUNCATE_LENGTH = 300;
@@ -879,22 +884,10 @@ public class AiChatTranscript {
      * @return the line
      */
     public static JPanel createToolLine(String text, String riskLevel) {
-        Color bgColor;
-        Color borderColor;
-        Color indicatorColor;
-        if (ToolDefinition.RISK_HIGH.equals(riskLevel)) {
-            bgColor = new Color(255, 240, 240);
-            borderColor = new Color(220, 150, 150);
-            indicatorColor = new Color(244, 67, 54);
-        } else if (ToolDefinition.RISK_MEDIUM.equals(riskLevel)) {
-            bgColor = new Color(255, 248, 220);
-            borderColor = new Color(220, 180, 100);
-            indicatorColor = new Color(255, 152, 0);
-        } else {
-            bgColor = new Color(240, 255, 240);
-            borderColor = new Color(150, 200, 150);
-            indicatorColor = new Color(76, 175, 80);
-        }
+        Color[] colors = getRiskColors(riskLevel);
+        Color bgColor = colors[0];
+        Color borderColor = colors[1];
+        Color indicatorColor = colors[2];
 
         JPanel toolPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 4));
         toolPanel.setOpaque(true);
@@ -909,11 +902,25 @@ public class AiChatTranscript {
         JLabel lbl = new JLabel(text);
         lbl.setFont(lbl.getFont().deriveFont(lbl.getFont().getSize2D() - 1f));
         lbl.setForeground(Color.DARK_GRAY);
+        lbl.setName(TOOL_LABEL_NAME);
         toolPanel.add(lbl);
 
         toolPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         toolPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, toolPanel.getPreferredSize().height + 8));
         return toolPanel;
+    }
+
+    /**
+     * @param riskLevel risk level of a tool
+     * @return background, border and indicator colour for the risk level
+     */
+    public static Color[] getRiskColors(String riskLevel) {
+        if (ToolDefinition.RISK_HIGH.equals(riskLevel)) {
+            return new Color[]{new Color(255, 240, 240), new Color(220, 150, 150), new Color(244, 67, 54)};
+        } else if (ToolDefinition.RISK_MEDIUM.equals(riskLevel)) {
+            return new Color[]{new Color(255, 248, 220), new Color(220, 180, 100), new Color(255, 152, 0)};
+        }
+        return new Color[]{new Color(240, 255, 240), new Color(150, 200, 150), new Color(76, 175, 80)};
     }
 
     /**
