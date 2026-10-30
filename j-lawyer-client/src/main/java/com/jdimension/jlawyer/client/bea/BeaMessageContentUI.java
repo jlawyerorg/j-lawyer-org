@@ -742,6 +742,38 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
     private static final ImageIcon ICON_SENDSTATUS_SUCCESS=new javax.swing.ImageIcon(BeaMessageContentUI.class.getResource("/com/jdimension/jlawyer/client/bea/send-success.png"));
     private static final ImageIcon ICON_SENDSTATUS_FAIL=new javax.swing.ImageIcon(BeaMessageContentUI.class.getResource("/com/jdimension/jlawyer/client/bea/send-failed.png"));
 
+    // OSCI feedback code "order executed" - process cards stored before beAstie have no success flag, only this entry
+    private static final String PROCESSCARD_CODE_EXECUTED = "0800";
+
+    // an unsuccessful process card without entries and without an error is not a result yet
+    private static boolean hasProcessCardResult(BeaProcessCard card) {
+        if (card == null) {
+            return false;
+        }
+        boolean hasEntries = card.getEntries() != null && !card.getEntries().isEmpty();
+        return card.isSuccess() || hasEntries || !StringUtils.isEmpty(card.getExceptionMessage());
+    }
+
+    // beAstie sets the success flag; older cards count as successful like in the former beA wrapper:
+    // no error and an entry with code 0800
+    private static boolean isProcessCardSuccess(BeaProcessCard card) {
+        if (card == null) {
+            return false;
+        }
+        if (card.isSuccess()) {
+            return true;
+        }
+        if (!StringUtils.isEmpty(card.getExceptionMessage()) || card.getEntries() == null) {
+            return false;
+        }
+        for (BeaProcessCardEntry e : card.getEntries()) {
+            if (PROCESSCARD_CODE_EXECUTED.equalsIgnoreCase(e.getCode())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * Creates new form BeaMessageContentUI
      */
@@ -1015,7 +1047,8 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         processCardTable.setModel(tm2);
         tabs.setIconAt(2, null);
         if (msg.getProcessCard() != null) {
-            if (!msg.getProcessCard().getEntries().isEmpty() || !StringUtils.isEmpty(msg.getProcessCard().getExceptionMessage())) {
+            // successful process cards list their steps as entries too - only warn if the card reports a problem
+            if (hasProcessCardResult(msg.getProcessCard()) && !isProcessCardSuccess(msg.getProcessCard())) {
                 tabs.setIconAt(2, new javax.swing.ImageIcon(BeaMessageContentUI.class.getResource("/icons/messagebox_warning.png")));
             }
             if(!StringUtils.isEmpty(msg.getProcessCard().getExceptionMessage())) {
@@ -1040,6 +1073,19 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         }
         
         int sendStatus=msg.getSentStatus();
+        String sendDescription=msg.getSentStatusDescription();
+        // the stored send status is not recalculated when the process card is reloaded (e.g. still "Laufzettel fehlt") -
+        // a process card with a result comes from the recipient's intermediary and decides. Received messages
+        // (SENDSTATUS_INVALID: received, not sent) keep their status
+        if (sendStatus != BeaMessage.SENDSTATUS_INVALID && hasProcessCardResult(msg.getProcessCard())) {
+            if (isProcessCardSuccess(msg.getProcessCard())) {
+                sendStatus = BeaMessage.SENDSTATUS_SUCCESS;
+                sendDescription = "Versand laut EGVP-Laufzettel erfolgreich";
+            } else {
+                sendStatus = BeaMessage.SENDSTATUS_FAIL;
+                sendDescription = "Versand anhand des EGVP-Laufzettels nicht bestätigt";
+            }
+        }
         lblSndStatus.setIcon(ICON_SENDSTATUS_UNKNOWN);
         switch (sendStatus) {
             case BeaMessage.SENDSTATUS_FAIL:
@@ -1054,7 +1100,6 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             default:
                 break;
         }
-        String sendDescription=msg.getSentStatusDescription();
         lblSndStatus.setToolTipText(sendDescription);
 
     }
@@ -1736,11 +1781,10 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             BeaAccess bea = BeaAccess.getInstance();
             String safeId = bea.getLoggedInSafeId();
             BeaProcessCard pc = bea.getProcessCards(safeId, msgContainer.getId());
-            // only replace if not empty! process cards cannot be downloaded after the message has been moved to the SENT folder
-            if (pc != null) {
-                if (!pc.getEntries().isEmpty()) {
-                    msgContainer.setProcessCard(pc);
-                }
+            // only replace if not empty! process cards cannot be downloaded after the message has been moved to the SENT folder,
+            // and a card with nothing but an error message may just be a failed lookup - it must not replace a stored card
+            if (pc != null && (pc.isSuccess() || (pc.getEntries() != null && !pc.getEntries().isEmpty()))) {
+                msgContainer.setProcessCard(pc);
             }
 
             if (this.documentId != null) {
