@@ -711,7 +711,8 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
     }
 
     public void setPaidTotal(BigDecimal totalGross, BigDecimal paid, String currency) {
-        if (paid != BigDecimal.valueOf(Float.MIN_VALUE)) {
+        // BigDecimal.valueOf(Float.MIN_VALUE) means "keep the current value" - compare by value, the instances always differ
+        if (paid.compareTo(BigDecimal.valueOf(Float.MIN_VALUE)) != 0) {
             this.paid = paid;
         }
         this.lblPaidTotal.setText(totalFormat.format(this.paid) + " " + currency);
