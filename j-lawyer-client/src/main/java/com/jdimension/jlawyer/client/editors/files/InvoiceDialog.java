@@ -3093,7 +3093,10 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             BigDecimal amount = BigDecimal.ZERO;
             boolean validAmount = false;
             try {
-                amount = BigDecimal.valueOf(cf.parse(this.lblInvoiceTotal.getText()).floatValue());
+                // parse exactly - a float has too few digits, amounts from about 131.000 would be off by a cent
+                DecimalFormat amountParser = (DecimalFormat) cf.clone();
+                amountParser.setParseBigDecimal(true);
+                amount = (BigDecimal) amountParser.parse(this.lblInvoiceTotal.getText());
                 validAmount = true;
             } catch (Throwable t) {
                 log.error("error parsing invoice total: " + this.lblInvoiceTotal.getText(), t);
