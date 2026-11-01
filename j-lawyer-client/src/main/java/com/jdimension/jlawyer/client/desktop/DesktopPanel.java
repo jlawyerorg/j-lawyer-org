@@ -786,6 +786,15 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     // Cache for due entries - used for client-side search filtering
     private ArrayList<ReviewDueEntry> cachedDueEntries = new ArrayList<>();
 
+    // calendar version and start time of the load the due list shows, see DueEntriesRefreshTimerTask
+    static final long DUE_VERSION_UNKNOWN = Long.MIN_VALUE;
+    private volatile long dueLoadedVersion = DUE_VERSION_UNKNOWN;
+    private volatile long dueLoadedAt = 0;
+    // sequence number of that load, and the compact view and day it was rendered with - EDT only
+    private long dueLoadedSequence = 0;
+    private Boolean dueRenderedCompactView = null;
+    private java.time.LocalDate dueRenderedDay = null;
+
     /**
      * Creates new form DesktopPanel
      */
@@ -902,11 +911,14 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         timer3.schedule(autoUpdateTask, 20000, 24l * 60l * 60l * 1000l);
 
         this.reviewsTimer = new Timer();
-        final ReviewsDueTimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, false,
-            (entries) -> {
-                this.cachedDueEntries = entries;
-            });
+        // the entries for the search are kept by dueEntriesLoaded
+        final ReviewsDueTimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, false);
         reviewsTimer.schedule(revDueTask, 1000, 15l*61000l);
+
+        // while the desktop is in front, reload the due list as soon as the calendar changes - runs on
+        // the same timer as the background and event-triggered loads, so it does not overlap with them
+        final DueEntriesRefreshTimerTask dueRefreshTask = new DueEntriesRefreshTimerTask(this);
+        reviewsTimer.schedule(dueRefreshTask, 60000, 60000);
         
         this.txtSearchDue.putClientProperty("JTextField.showClearButton", true);
         this.txtSearchDue.putClientProperty("JTextField.placeholderText", "Suche: ...");
@@ -985,6 +997,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             try {
                 log.info("shutting down ReviewsDueTimerTask");
                 revDueTask.stop();
+                dueRefreshTask.stop();
                 reviewsTimer.cancel();
             } catch (Throwable t) {
                 log.error("Error shutting down timer", t);
@@ -2286,7 +2299,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, true,
             (entries) -> {
-                this.cachedDueEntries = entries;
                 javax.swing.SwingUtilities.invokeLater(() -> this.txtSearchDue.setText(""));
             });
         timer.schedule(revDueTask, 10);
@@ -2363,7 +2375,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         Timer timer = new Timer();
         TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, true,
             (entries) -> {
-                this.cachedDueEntries = entries;
                 javax.swing.SwingUtilities.invokeLater(() -> this.txtSearchDue.setText(""));
             });
         timer.schedule(revDueTask, 10);
@@ -2456,29 +2467,93 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             return;
         }
 
-        final String filterLower = searchText == null ? "" : searchText.toLowerCase().trim();
         final boolean compactView = UserSettings.getInstance().getSettingAsBoolean(
             UserSettingsKeys.CONF_DESKTOP_DUE_COMPACT_VIEW, true);
 
-        // Determine which entries to display
-        final ArrayList<ReviewDueEntry> entriesToDisplay;
+        // Re-render entries on EDT - determine them only there, so that entries loaded in the meantime
+        // are not replaced by an older snapshot
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            renderDueEntries(getDueEntriesMatchingSearch(cachedDueEntries, searchText), compactView);
+        });
+    }
+
+    private ArrayList<ReviewDueEntry> getDueEntriesMatchingSearch(ArrayList<ReviewDueEntry> entries, String searchText) {
+        final String filterLower = searchText == null ? "" : searchText.toLowerCase().trim();
         if (filterLower.length() <= 1) {
             // Show all entries when search text is cleared or too short
-            entriesToDisplay = new ArrayList<>(cachedDueEntries);
-        } else {
-            // Filter entries based on search criteria
-            entriesToDisplay = new ArrayList<>();
-            for (ReviewDueEntry entry : cachedDueEntries) {
-                if (matchesSearch(entry, filterLower)) {
-                    entriesToDisplay.add(entry);
-                }
-            }
+            return new ArrayList<>(entries);
         }
 
-        // Re-render entries on EDT
-        javax.swing.SwingUtilities.invokeLater(() -> {
-            renderDueEntries(entriesToDisplay, compactView);
-        });
+        // Filter entries based on search criteria
+        ArrayList<ReviewDueEntry> matching = new ArrayList<>();
+        for (ReviewDueEntry entry : entries) {
+            if (matchesSearch(entry, filterLower)) {
+                matching.add(entry);
+            }
+        }
+        return matching;
+    }
+
+    /**
+     * Called by ReviewsDueTimerTask on the EDT after the due list has been loaded. Keeps the entries
+     * for the search, remembers which calendar version and start time they reflect, and renders the
+     * entries that match the current search text - unless nothing changed, so that a reload does
+     * not disturb the user without need.
+     *
+     * @param entries all loaded entries
+     * @param compactView whether the compact view is enabled
+     * @param calendarVersion the calendar version read before loading, or DUE_VERSION_UNKNOWN
+     * @param loadStartedAt when the load started
+     * @param loadSequence sequence number of the load - results of loads that started before the
+     * displayed one are dropped
+     */
+    void dueEntriesLoaded(ArrayList<ReviewDueEntry> entries, boolean compactView, long calendarVersion, long loadStartedAt, long loadSequence) {
+        if (loadSequence < this.dueLoadedSequence) {
+            return;
+        }
+        this.dueLoadedSequence = loadSequence;
+        this.dueLoadedVersion = calendarVersion;
+        this.dueLoadedAt = loadStartedAt;
+
+        // overdue entries are highlighted relative to today, so a new day is always rendered
+        java.time.LocalDate today = java.time.LocalDate.now();
+        boolean unchanged = today.equals(this.dueRenderedDay) && Boolean.valueOf(compactView).equals(this.dueRenderedCompactView)
+                && sameDueEntries(this.cachedDueEntries, entries);
+        this.cachedDueEntries = entries;
+        if (unchanged) {
+            return;
+        }
+        this.dueRenderedCompactView = compactView;
+        this.dueRenderedDay = today;
+        renderDueEntries(getDueEntriesMatchingSearch(entries, this.txtSearchDue.getText()), compactView);
+    }
+
+    private static boolean sameDueEntries(List<ReviewDueEntry> a, List<ReviewDueEntry> b) {
+        if (a == null || b == null || a.size() != b.size()) {
+            return false;
+        }
+        for (int i = 0; i < a.size(); i++) {
+            if (!a.get(i).getDisplaySignature().equals(b.get(i).getDisplaySignature())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    long getDueLoadedVersion() {
+        return this.dueLoadedVersion;
+    }
+
+    long getDueLoadedAt() {
+        return this.dueLoadedAt;
+    }
+
+    /**
+     * Reloads the due list in the calling thread, keeping the search text. Used by
+     * DueEntriesRefreshTimerTask.
+     */
+    void reloadDueEntries() {
+        new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, true).run();
     }
 
     /**

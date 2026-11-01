@@ -875,6 +875,32 @@ public class ReviewDueEntry {
     public void setArchived(boolean archived) {
         this.archived = archived;
     }
+
+    /**
+     * Everything the due list shows of this entry, plus every persisted field of its review, which
+     * is written back when the user acts on the entry, e.g. postpones it. Two loads with equal
+     * signatures in the same order need not be rendered again.
+     *
+     * @return the signature
+     */
+    String getDisplaySignature() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(id).append('|').append(type).append('|').append(due).append('|').append(reviewReason)
+                .append('|').append(responsible).append('|').append(archiveFileId).append('|').append(archiveFileNumber)
+                .append('|').append(archiveFileName).append('|').append(archiveFileReason).append('|').append(archived)
+                .append('|').append(tags).append('|').append(calendarSetupColor);
+        if (review != null) {
+            sb.append('|').append(review.getId()).append('|').append(review.getEventType())
+                    .append('|').append(review.getSummary()).append('|').append(review.getDescription())
+                    .append('|').append(review.getLocation()).append('|').append(review.getBeginDate())
+                    .append('|').append(review.getEndDate()).append('|').append(review.isDone())
+                    .append('|').append(review.getArchiveFileKey() != null ? review.getArchiveFileKey().getId() : null)
+                    .append('|').append(review.getAssignee())
+                    .append('|').append(review.getCalendarSetup() != null ? review.getCalendarSetup().getId() : null)
+                    .append('|').append(review.getReminderMinutes()).append('|').append(review.getCreatedBy());
+        }
+        return sb.toString();
+    }
     
     
 }

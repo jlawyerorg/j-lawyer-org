@@ -697,6 +697,9 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
     private volatile boolean stopped = false;
     private volatile boolean dataLoaded = false;
 
+    // numbers the loads, so that the result of a load that started earlier never replaces a newer one
+    private static final java.util.concurrent.atomic.AtomicLong LOAD_SEQUENCE = new java.util.concurrent.atomic.AtomicLong();
+
     public void stop() {
         stopped = true;
     }
@@ -744,6 +747,9 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
         }
 
         ArrayList<ReviewDueEntry> entries = new ArrayList<>();
+        long calendarVersion = DesktopPanel.DUE_VERSION_UNKNOWN;
+        long loadSequence = 0;
+        long loadStartedAt = 0;
 
         // Check if compact view is enabled - skip loading tags if true
         final boolean compactView = UserSettings.getInstance().getSettingAsBoolean(
@@ -768,8 +774,19 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
             
             
 
+            loadSequence = LOAD_SEQUENCE.incrementAndGet();
+            loadStartedAt = System.currentTimeMillis();
+
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
             CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
+
+            // the calendar version this load reflects, read before querying, so that a change made
+            // during the load is picked up by the next DueEntriesRefreshTimerTask
+            try {
+                calendarVersion = locator.lookupSingletonServiceRemote().getCalendarVersion();
+            } catch (Exception ex) {
+                log.warn("Unable to read the calendar version", ex);
+            }
 
             // each event type has its own time window - query them in parallel and merge the results
             Collection<ArchiveFileReviewsBean> myNewList = new ArrayList<>();
@@ -900,6 +917,9 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
             return;
         }
         final ArrayList<ReviewDueEntry> list = entries;
+        final long loadedVersion = calendarVersion;
+        final long sequence = loadSequence;
+        final long startedAt = loadStartedAt;
 
         // Delegate rendering to DesktopPanel to avoid code duplication
         // Both caching and rendering must happen on the EDT for thread safety
@@ -911,7 +931,7 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                 if (entriesCallback != null) {
                     entriesCallback.accept(entriesCopy);
                 }
-                desktopPanel.renderDueEntries(list, compactView);
+                desktopPanel.dueEntriesLoaded(list, compactView, loadedVersion, startedAt, sequence);
                 dataLoaded = true;
             });
         }
