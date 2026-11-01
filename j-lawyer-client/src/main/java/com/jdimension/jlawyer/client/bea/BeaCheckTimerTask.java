@@ -720,7 +720,8 @@ public class BeaCheckTimerTask extends java.util.TimerTask {
 
                     if (stopped) return;
                     List<String> messages = bea.getFolderOverviewMessageIdsWithoutCache(inbox, this.filter);
-                    unread = messages.size();
+                    // sum over all postboxes the user has access to
+                    unread = unread + messages.size();
                 }
 
                 if (stopped) return;

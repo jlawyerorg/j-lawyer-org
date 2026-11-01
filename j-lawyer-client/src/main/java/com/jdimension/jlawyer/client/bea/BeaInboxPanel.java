@@ -1015,23 +1015,23 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
         }
 
-        // count unread messages from already-loaded headers and publish status
+        // count unread messages of all inboxes and publish status - one event with the total, each event replaces the previous count
         try {
+            int unread = 0;
             for (String safeId : inboxFolders.keySet()) {
                 BeaFolder inbox = inboxFolders.get(safeId);
                 if (inbox != null) {
                     EditorsRegistry.getInstance().updateStatus("Nachrichtenübersicht wird geladen für " + inbox.getName() + "...");
                     List<BeaMessageHeader> messages = BeaAccess.getInstance().getFolderOverview(safeId, inbox, BeaAccess.getFilter(inbox.getType()));
-                    int unread = 0;
                     for (BeaMessageHeader mh : messages) {
                         if (!mh.isRead()) {
                             unread++;
                         }
                     }
-                    BeaStatusEvent e = new BeaStatusEvent(unread);
-                    EventBroker.getInstance().publishEvent(e);
                 }
             }
+            BeaStatusEvent e = new BeaStatusEvent(unread);
+            EventBroker.getInstance().publishEvent(e);
         } catch (Throwable t) {
             log.error(t);
         }
