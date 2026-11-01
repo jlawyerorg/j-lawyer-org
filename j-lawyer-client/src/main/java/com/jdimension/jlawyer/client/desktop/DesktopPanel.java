@@ -2816,11 +2816,13 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             this.revalidate();
             this.repaint();
         } else if(e instanceof BeaStatusEvent) {
-            this.lblUnreadBea.setEnabled(true);
             if(((BeaStatusEvent) e).getUnread()>0) {
+                this.lblUnreadBea.setEnabled(true);
                 this.lblUnreadBea.setText("" + ((BeaStatusEvent) e).getUnread());
                 this.lblUnreadBea.setToolTipText("" + ((BeaStatusEvent) e).getUnread() + " ungelesene beA-Nachricht(en)");
             } else {
+                // greyed out like the other status icons when there is nothing new
+                this.lblUnreadBea.setEnabled(false);
                 this.lblUnreadBea.setText("");
                 this.lblUnreadBea.setToolTipText("keine ungelesenen beA-Nachrichten");
             }
