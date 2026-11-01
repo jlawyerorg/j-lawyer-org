@@ -894,7 +894,8 @@ public class MicrosoftOfficeDocxTest {
                 + "</mc:AlternateContent></w:r>";
         try (org.apache.poi.xwpf.usermodel.XWPFDocument document = new org.apache.poi.xwpf.usermodel.XWPFDocument();
                 FileOutputStream out = new FileOutputStream(docx)) {
-            document.createParagraph().createRun().getCTR().set(org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR.Factory.parse(textboxRun));
+            // the content of the parsed w:r, not the w:r itself - otherwise the run would contain a second w:r
+            document.createParagraph().createRun().getCTR().set(org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR.Factory.parse(textboxRun, new org.apache.xmlbeans.XmlOptions().setLoadReplaceDocumentElement(null)));
             document.write(out);
         }
     }
