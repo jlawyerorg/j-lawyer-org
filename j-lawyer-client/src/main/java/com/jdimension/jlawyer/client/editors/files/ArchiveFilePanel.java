@@ -750,6 +750,7 @@ import com.jdimension.jlawyer.client.voip.EpostPdfConversionStep;
 import com.jdimension.jlawyer.client.voip.EpostPdfMergeStep;
 import com.jdimension.jlawyer.client.voip.EpostPdfOrderingStep;
 import com.jdimension.jlawyer.client.utils.pdf.PdfPageReorderDialog;
+import com.jdimension.jlawyer.client.utils.pdf.PdfSplitUtils;
 import com.jdimension.jlawyer.client.voip.EpostWizardDialog;
 import com.jdimension.jlawyer.client.voip.SendFaxDialog;
 import com.jdimension.jlawyer.client.wizard.WizardDataContainer;
@@ -9712,12 +9713,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         tempFiles.add(partTempPath);
 
                         PDDocument sourceDoc = PDDocument.load(new File(tempPath));
-                        PDDocument newDoc = new PDDocument();
-
-                        // Kopiere die relevanten Seiten
-                        for (int pageNum = startPage; pageNum < endPage; pageNum++) {
-                            newDoc.importPage(sourceDoc.getPage(pageNum));
-                        }
+                        // Kopiere die relevanten Seiten - ohne Verweise auf Seiten außerhalb des Teils, sonst enthält jeder Teil das ganze Original
+                        PDDocument newDoc = PdfSplitUtils.extractPages(sourceDoc, startPage, endPage);
 
                         // Speichere den Teil
                         newDoc.save(new File(partTempPath));
