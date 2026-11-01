@@ -688,6 +688,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JDialog;
@@ -1044,6 +1046,27 @@ public class FileUtils extends ServerFileUtils {
         }
 
         return null;
+    }
+
+    /**
+     * Keeps a file name unless it is already taken, otherwise asks for another
+     * name until a free one is given.
+     *
+     * @param fileName the name to keep if possible
+     * @param taken tells whether a name is already taken
+     * @param askForNewName asks for another name, gets the taken name and
+     * returns null or an empty string when cancelled
+     * @return a free name, or null if asking for a new name was cancelled
+     */
+    public static String keepFileNameUnlessTaken(String fileName, Predicate<String> taken, UnaryOperator<String> askForNewName) {
+        String name = fileName;
+        while (taken.test(name)) {
+            name = askForNewName.apply(name);
+            if (name == null || name.trim().isEmpty()) {
+                return null;
+            }
+        }
+        return name;
     }
 
     public static void setPosixFilePermissions(String absolutePathToFile, boolean read, boolean write, boolean execute) {

@@ -2504,22 +2504,41 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             CaseUtils.optionalUnarchiveCase(sel, this);
 
-            // file names are asked for as before, one document after the other
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+
+            Object[] nameOptions = {"Beibehalten", "Neu benennen", "Abbrechen"};
+            int nameMode = JOptionPane.showOptionDialog(this, "Sollen die vorhandenen Dateinamen beibehalten werden?\nNach einem neuen Namen wird dann nur gefragt, wenn es ihn in der Zielakte schon gibt.", action, JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, nameOptions, nameOptions[0]);
+            if (nameMode != JOptionPane.YES_OPTION && nameMode != JOptionPane.NO_OPTION) {
+                this.lastPopupClosed = System.currentTimeMillis();
+                return;
+            }
+            boolean keepNames = nameMode == JOptionPane.YES_OPTION;
+
             HashMap<String, String> newNames = new HashMap<>();
             ArrayList<String> ids = new ArrayList<>();
+            HashSet<String> namesInBatch = new HashSet<>();
             for (ArchiveFileDocumentsBean doc : selected) {
-                String newName = FileUtils.getNewFileName(sel, doc.getName(), new Date(), move, EditorsRegistry.getInstance().getMainWindow(), action);
+                String newName;
+                if (keepNames) {
+                    // keep the name, ask for another one only if the target case (or an earlier document of this batch) already has it
+                    newName = FileUtils.keepFileNameUnlessTaken(doc.getName(),
+                            name -> remote.doesDocumentExist(sel.getId(), name) || namesInBatch.contains(name.toLowerCase()),
+                            name -> FileUtils.getNewFileName(sel, name, new Date(), false, EditorsRegistry.getInstance().getMainWindow(), action + " - Name in der Zielakte bereits vorhanden"));
+                } else {
+                    // file names are asked for as before, one document after the other
+                    newName = FileUtils.getNewFileName(sel, doc.getName(), new Date(), move, EditorsRegistry.getInstance().getMainWindow(), action);
+                }
                 if (newName == null || newName.trim().isEmpty()) {
                     this.lastPopupClosed = System.currentTimeMillis();
                     return;
                 }
+                namesInBatch.add(newName.toLowerCase());
                 newNames.put(doc.getId(), newName);
                 ids.add(doc.getId());
             }
 
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
             String folderId = folder == null ? null : folder.getId();
             HashMap<String, ArchiveFileDocumentsBean> copies = move
                     ? remote.moveDocumentsToCase(ids, sel.getId(), folderId, newNames)

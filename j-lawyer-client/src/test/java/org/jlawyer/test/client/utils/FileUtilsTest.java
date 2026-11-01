@@ -735,4 +735,29 @@ public class FileUtilsTest {
          
          
      }
+
+     @Test
+     public void testKeepFileNameUnlessTaken() {
+         java.util.Set<String> taken = new java.util.HashSet<>(java.util.Arrays.asList("brief.pdf", "brief-2.pdf"));
+         java.util.List<String> asked = new java.util.ArrayList<>();
+
+         // a free name is kept without asking
+         Assert.assertEquals("klage.pdf", FileUtils.keepFileNameUnlessTaken("klage.pdf", taken::contains, n -> {
+             asked.add(n);
+             return "anders.pdf";
+         }));
+         Assert.assertTrue(asked.isEmpty());
+
+         // a taken name is asked for again until the answer is free
+         java.util.Iterator<String> answers = java.util.Arrays.asList("brief-2.pdf", "brief-3.pdf").iterator();
+         Assert.assertEquals("brief-3.pdf", FileUtils.keepFileNameUnlessTaken("brief.pdf", taken::contains, n -> {
+             asked.add(n);
+             return answers.next();
+         }));
+         Assert.assertEquals(java.util.Arrays.asList("brief.pdf", "brief-2.pdf"), asked);
+
+         // cancelling the question cancels
+         Assert.assertNull(FileUtils.keepFileNameUnlessTaken("brief.pdf", taken::contains, n -> null));
+         Assert.assertNull(FileUtils.keepFileNameUnlessTaken("brief.pdf", taken::contains, n -> " "));
+     }
 }
