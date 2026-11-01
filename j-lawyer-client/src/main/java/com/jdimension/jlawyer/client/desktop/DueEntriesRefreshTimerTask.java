@@ -678,7 +678,7 @@ import org.apache.log4j.Logger;
  * Keeps the due list on the desktop current while the desktop is in front, e.g. when follow-ups
  * are created or closed by colleagues or through the REST API. The calendar version is only the
  * fast change signal: the list is also reloaded when the day has changed since the last load,
- * because its date windows move on without any write, and at the latest after MAX_AGE_MILLIS,
+ * because its date windows move on without any write, and at the next check after MAX_AGE_MILLIS,
  * because changes to case data or permissions do not change the calendar version.
  *
  * @see com.jdimension.jlawyer.services.SingletonServiceRemote#getCalendarVersion()
