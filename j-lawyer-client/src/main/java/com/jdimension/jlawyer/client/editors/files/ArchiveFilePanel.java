@@ -2557,6 +2557,21 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     }
 
+    /**
+     * Like waitForOpenDocument, for several documents one after the other. The callback is not invoked if
+     * the user cancels waiting for one of them.
+     */
+    private void waitForOpenDocuments(List<ArchiveFileDocumentsBean> docs, ProgressableActionCallback callback) {
+        for (int i = 0; i < docs.size(); i++) {
+            if (this.isOpenForWrite(docs.get(i).getId())) {
+                List<ArchiveFileDocumentsBean> remaining = docs.subList(i + 1, docs.size());
+                this.waitForOpenDocument(docs.get(i), () -> this.waitForOpenDocuments(remaining, callback));
+                return;
+            }
+        }
+        callback.actionFinished();
+    }
+
     public void clearInputs() {
         this.dto = null;
         this.cmdIngoChat.setEnabled(false);
@@ -7330,6 +7345,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         }
 
+        // wait for open documents with the same logic as "Ablegen als PDF" (convertDocumentToPdf)
+        this.waitForOpenDocuments(selectedDocs, () -> this.sendDocumentsAsPdfByEmail(selectedDocs));
+    }//GEN-LAST:event_mnuSendDocumentPDFActionPerformed
+
+    private void sendDocumentsAsPdfByEmail(ArrayList<ArchiveFileDocumentsBean> selectedDocs) {
         // save form data so changes are available immediately for mail templates
         if (!this.readOnly) {
             this.saveFormData();
@@ -7363,7 +7383,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         a.start();
 
-    }//GEN-LAST:event_mnuSendDocumentPDFActionPerformed
+    }
 
     private void mnuOpenInExternalMailerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuOpenInExternalMailerActionPerformed
         try {
@@ -8070,6 +8090,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         }
 
+        // wait for open documents with the same logic as "Ablegen als PDF" (convertDocumentToPdf)
+        this.waitForOpenDocuments(selectedDocs, () -> this.sendDocumentsAsPdfByBea(selectedDocs));
+    }//GEN-LAST:event_mnuSendBeaDocumentPDFActionPerformed
+
+    private void sendDocumentsAsPdfByBea(ArrayList<ArchiveFileDocumentsBean> selectedDocs) {
         try {
             if (!BeaAccess.getInstance().ensureLoggedIn()) return;
         } catch (Exception ex) {
@@ -8097,7 +8122,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         SendPDFAction a = new SendPDFAction(pi, this.caseFolderPanel1, dlg, dlg);
 
         a.start();
-    }//GEN-LAST:event_mnuSendBeaDocumentPDFActionPerformed
+    }
 
     private CaseFolder resolveOutgoingDocumentFolder(List<ArchiveFileDocumentsBean> documents) {
         if (documents == null || documents.isEmpty()) {
