@@ -666,7 +666,9 @@ package com.jdimension.jlawyer.client.desktop;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.server.constants.ArchiveFileConstants;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 /**
  *
@@ -878,28 +880,25 @@ public class ReviewDueEntry {
 
     /**
      * Everything the due list shows of this entry, plus every persisted field of its review, which
-     * is written back when the user acts on the entry, e.g. postpones it. Two loads with equal
-     * signatures in the same order need not be rendered again.
+     * is written back when the user acts on the entry, e.g. postpones it. Two loads whose entries
+     * have equal signatures in the same order need not be rendered again. The values are compared
+     * one by one with equals, not joined into a string, so values containing a separator cannot
+     * make different entries look equal.
      *
      * @return the signature
      */
-    String getDisplaySignature() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(id).append('|').append(type).append('|').append(due).append('|').append(reviewReason)
-                .append('|').append(responsible).append('|').append(archiveFileId).append('|').append(archiveFileNumber)
-                .append('|').append(archiveFileName).append('|').append(archiveFileReason).append('|').append(archived)
-                .append('|').append(tags).append('|').append(calendarSetupColor);
+    List<Object> getDisplaySignature() {
+        ArrayList<Object> values = new ArrayList<>(Arrays.asList(id, type, due, reviewReason, responsible, archiveFileId,
+                archiveFileNumber, archiveFileName, archiveFileReason, archived, tags, calendarSetupColor));
         if (review != null) {
-            sb.append('|').append(review.getId()).append('|').append(review.getEventType())
-                    .append('|').append(review.getSummary()).append('|').append(review.getDescription())
-                    .append('|').append(review.getLocation()).append('|').append(review.getBeginDate())
-                    .append('|').append(review.getEndDate()).append('|').append(review.isDone())
-                    .append('|').append(review.getArchiveFileKey() != null ? review.getArchiveFileKey().getId() : null)
-                    .append('|').append(review.getAssignee())
-                    .append('|').append(review.getCalendarSetup() != null ? review.getCalendarSetup().getId() : null)
-                    .append('|').append(review.getReminderMinutes()).append('|').append(review.getCreatedBy());
+            values.addAll(Arrays.asList(review.getId(), review.getEventType(), review.getSummary(), review.getDescription(),
+                    review.getLocation(), review.getBeginDate(), review.getEndDate(), review.isDone(),
+                    review.getArchiveFileKey() != null ? review.getArchiveFileKey().getId() : null,
+                    review.getAssignee(),
+                    review.getCalendarSetup() != null ? review.getCalendarSetup().getId() : null,
+                    review.getReminderMinutes(), review.getCreatedBy()));
         }
-        return sb.toString();
+        return values;
     }
     
     

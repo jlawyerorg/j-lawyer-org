@@ -45,4 +45,14 @@ public class ReviewDueEntryTest {
         withReminder.getReview().setReminderMinutes(30);
         assertNotEquals(entry("Frist", "x").getDisplaySignature(), withReminder.getDisplaySignature());
     }
+
+    @Test
+    public void separatorInValuesDoesNotMakeEntriesEqual() {
+        // joined into one string, ("a|b", "c") and ("a", "b|c") would look the same
+        ReviewDueEntry first = entry("Frist", "a|b");
+        first.getReview().setLocation("c");
+        ReviewDueEntry second = entry("Frist", "a");
+        second.getReview().setLocation("b|c");
+        assertNotEquals(first.getDisplaySignature(), second.getDisplaySignature());
+    }
 }

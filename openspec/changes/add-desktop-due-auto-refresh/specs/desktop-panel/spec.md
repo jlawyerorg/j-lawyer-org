@@ -7,6 +7,11 @@ The due list on the desktop SHALL refresh itself while the desktop is the active
 - **WHEN** a follow-up, deadline or appointment within the list's date windows is created, changed or closed outside this client, for example by a colleague or through the REST API, while the desktop is the active view
 - **THEN** the due list shows the change within about one minute without the user pressing refresh
 
+#### Scenario: Version read before the change is committed
+- **WHEN** the calendar version is read after a write increased it but before the writing transaction is committed
+- **THEN** the list may still load the old entries together with the new version
+- **AND** the change appears with the reload after the maximum age, unless another change of the calendar version triggers an earlier reload
+
 #### Scenario: Nothing changed
 - **WHEN** the desktop stays the active view, no calendar entry changes and the list was loaded less than 15 minutes ago on the same day
 - **THEN** each interval only reads the calendar version, and the list is not reloaded
@@ -17,7 +22,7 @@ The due list on the desktop SHALL refresh itself while the desktop is the active
 
 #### Scenario: Maximum age
 - **WHEN** the load the list shows was started 15 minutes ago or longer while the desktop is the active view
-- **THEN** the list reloads without comparing the calendar version, so that changes the version does not reflect, such as case data or permissions, are picked up
+- **THEN** the list reloads at the next interval without comparing the calendar version, so that changes the version does not reflect, such as case data or permissions, are picked up
 
 #### Scenario: Desktop not active
 - **WHEN** the desktop is not the active view
@@ -34,7 +39,7 @@ The due list on the desktop SHALL refresh itself while the desktop is the active
 - **AND** the next interval tries again
 
 #### Scenario: Unchanged entries are not rendered again
-- **WHEN** a reload on the same day returns the same entries as the list already shows, including every stored field of their calendar entries
+- **WHEN** a reload on the same day and with unchanged compact view returns the same entries as the list already shows, including every stored field of their calendar entries
 - **THEN** the list is not rebuilt, so that its scroll position and an ongoing interaction with an entry are not disturbed
 
 #### Scenario: Overdue marking after a day change
