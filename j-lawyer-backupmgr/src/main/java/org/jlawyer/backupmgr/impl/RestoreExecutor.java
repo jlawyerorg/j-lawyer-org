@@ -1226,6 +1226,14 @@ public class RestoreExecutor {
             backup = backup + File.separator;
         }
 
+        if (this.isMariaDb()) {
+            // MariaDB does not know the default collation of MySQL 8, dumps created on MySQL 8 can not be imported otherwise
+            long replaced = SqlDumpUtils.replaceInFile(new File(backup + "jlawyerdb-dump.sql"), SqlDumpUtils.MYSQL8_DEFAULT_COLLATION, SqlDumpUtils.PORTABLE_COLLATION);
+            if (replaced > 0 && progress != null) {
+                progress.onProgress("Kollation " + SqlDumpUtils.MYSQL8_DEFAULT_COLLATION + " für MariaDB durch " + SqlDumpUtils.PORTABLE_COLLATION + " ersetzt (" + replaced + " Stellen)");
+            }
+        }
+
         String osName = System.getProperty("os.name").toLowerCase();
         String path = "";
         if (osName.contains("win")) {
@@ -1280,6 +1288,20 @@ public class RestoreExecutor {
         }
         if (process.exitValue() != 0) {
             throw new Exception("Datenbankwiederherstellung fehlgeschlagen!");
+        }
+    }
+
+    private boolean isMariaDb() {
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            try (Connection con = DriverManager.getConnection("jdbc:mysql://" + this.dbHost + ":" + this.dbPort + "/?user=" + this.dbUser + "&serverTimezone=Europe/Berlin&sslMode=DISABLED&password=" + dbPassword)) {
+                // e.g. "5.5.5-10.11.8-MariaDB-0ubuntu0.24.04.1"
+                String version = con.getMetaData().getDatabaseProductVersion();
+                return version != null && version.toLowerCase().contains("mariadb");
+            }
+        } catch (Throwable t) {
+            System.err.println("Unable to determine the database server version: " + t.getMessage());
+            return false;
         }
     }
 
