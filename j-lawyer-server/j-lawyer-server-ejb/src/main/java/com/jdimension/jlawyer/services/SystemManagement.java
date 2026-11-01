@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.documents.DocumentPreview;
+import com.jdimension.jlawyer.email.CommonMailUtils;
 import com.jdimension.jlawyer.pojo.PartiesTriplet;
 import com.jdimension.jlawyer.documents.LibreOfficeAccess;
 import com.jdimension.jlawyer.documents.TikaConfigurator;
@@ -1497,6 +1498,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         props.put("mail.smtps.auth", true);
         props.put("mail.from", fromAddress);
         props.put("mail.password", smtpPwd);
+        CommonMailUtils.setSmtpTimeouts(props);
 
         final String fromAddressFinal = fromAddress;
         javax.mail.Authenticator auth = new javax.mail.Authenticator() {
@@ -1599,6 +1601,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         props.put("mail.smtps.auth", true);
         props.put("mail.from", smtpUser);
         props.put("mail.password", smtpPwd);
+        CommonMailUtils.setSmtpTimeouts(props);
 
         if (isMsExchange) {
 

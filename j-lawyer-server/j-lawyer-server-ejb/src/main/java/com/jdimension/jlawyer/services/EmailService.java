@@ -1627,6 +1627,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
             props.put("mail.smtp.port", port);
             props.put("mail.smtps.port", port);
         }
+        CommonMailUtils.setSmtpTimeouts(props);
         ms.applyCustomProperties(ms.customConfigurationsSendProperties(), props);
         Session session = Session.getInstance(props, new Authenticator() {
             @Override
@@ -2489,6 +2490,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
             props.put("mail.smtps.dsn.notify", "SUCCESS,FAILURE,DELAY");
             props.put("mail.smtps.dsn.ret", "HDRS");
         }
+        CommonMailUtils.setSmtpTimeouts(props);
         ms.applyCustomProperties(ms.customConfigurationsSendProperties(), props);
         Session session = Session.getInstance(props, new Authenticator() {
             @Override
