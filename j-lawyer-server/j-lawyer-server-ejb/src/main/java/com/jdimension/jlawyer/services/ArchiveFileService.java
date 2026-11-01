@@ -7103,13 +7103,6 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     || (existingInvoice.getInvoiceType() != null && invoiceType != null && !(existingInvoice.getInvoiceType().getId().equals(invoiceType.getId())));
             if (poolChange || typeChange) {
                 // types have changed
-                if (typeChange) {
-                    if (invoiceType != null) {
-                        existingInvoice.setInvoiceType(this.invoicesTypesFacade.find(invoiceType.getId()));
-                    } else {
-                        existingInvoice.setInvoiceType(null);
-                    }
-                }
                 if (poolChange) {
                     InvoicePool pool = null;
                     if (invoicePool != null) {
@@ -7124,9 +7117,23 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                         throw new Exception("Ungültiger Rechnungsnummernkreis");
                     }
 
-                    existingInvoice.setInvoiceNumber(this.invoiceService.nextInvoiceNumber(pool));
+                    String newInvoiceNumber = this.invoiceService.nextInvoiceNumber(pool);
+                    // check for conflicting invoice numbers before the invoice is modified
+                    Invoice conflictingInvoice = this.invoicesFacade.findByInvoiceNumber(newInvoiceNumber);
+                    if (conflictingInvoice != null && !conflictingInvoice.getId().equals(existingInvoice.getId())) {
+                        throw new Exception("Es gibt bereits einen Beleg mit der Nummer '" + newInvoiceNumber + "' - bitte die Einstellungen des Nummernkreises '" + pool.getDisplayName() + "' prüfen!");
+                    }
+
+                    existingInvoice.setInvoiceNumber(newInvoiceNumber);
                     existingInvoice.setSmallBusiness(pool.isSmallBusiness());
                     existingInvoice.setLastPoolId(pool.getId());
+                }
+                if (typeChange) {
+                    if (invoiceType != null) {
+                        existingInvoice.setInvoiceType(this.invoicesTypesFacade.find(invoiceType.getId()));
+                    } else {
+                        existingInvoice.setInvoiceType(null);
+                    }
                 }
 
                 this.invoicesFacade.edit(existingInvoice);
