@@ -2092,9 +2092,13 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 // updated
                 this.currentEntry.setInvoiceNumber(this.lblInvoiceNumber.getText());
 
+                // persist unsaved input first - updateInvoiceType only changes type, pool and number, and setEntry reloads everything from the server
+                if (!this.save()) {
+                    return;
+                }
+
                 ClientSettings settings = ClientSettings.getInstance();
                 try {
-                    this.fillCurrentEntry();
                     this.currentEntry.setSmallBusiness(this.invoicePools.get(this.cmbInvoicePool.getSelectedItem().toString()).isSmallBusiness());
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                     Invoice updatedInvoice = locator.lookupArchiveFileServiceRemote().updateInvoiceType(this.caseDto.getId(), this.currentEntry, this.invoicePools.get(this.cmbInvoicePool.getSelectedItem().toString()), (InvoiceType) this.cmbInvoiceType.getSelectedItem());
@@ -2187,7 +2191,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         }
     }
 
-    private void save() {
+    private boolean save() {
         ClientSettings settings = ClientSettings.getInstance();
         int positionIndex = 0;
         for (Component c : this.pnlInvoicePositions.getComponents()) {
@@ -2215,10 +2219,12 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             locator.lookupArchiveFileServiceRemote().updateInvoice(this.caseDto.getId(), this.currentEntry);
+            return true;
 
         } catch (Exception ex) {
             log.error("error saving invoice", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Rechnung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return false;
         }
     }
 
