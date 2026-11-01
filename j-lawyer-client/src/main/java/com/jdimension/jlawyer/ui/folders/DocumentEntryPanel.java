@@ -1195,6 +1195,9 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
                 boolean newValue = !favorite;
                 remote.setDocumentFavorite(this.getDocument().getId(), newValue);
                 this.getDocument().setFavorite(newValue);
+                if (this.documentsContainer != null) {
+                    this.documentsContainer.documentChanged();
+                }
                 this.setFavorite(newValue);
                 this.caseContainer.updateFavoriteDocuments();
 
@@ -1621,6 +1624,9 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             locator.lookupArchiveFileServiceRemote().setDocumentHighlights(this.document.getId(), this.document.getHighlight1(), this.document.getHighlight2());
+            if (this.documentsContainer != null) {
+                this.documentsContainer.documentChanged();
+            }
         } catch (Exception ex) {
             log.error("unable to set document highlights", ex);
             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Hervorheben des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);

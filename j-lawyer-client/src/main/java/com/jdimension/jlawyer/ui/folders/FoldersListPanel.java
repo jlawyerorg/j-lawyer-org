@@ -768,7 +768,8 @@ public class FoldersListPanel extends javax.swing.JPanel {
         cell.setParentFolder(null);
         cell.setSelected(true, false);
         if (unselectedIds.contains(rootFolder.getId())) {
-            cell.setSelected(false);
+            // the selection is saved already
+            cell.setSelected(false, false);
         }
         this.pnlFolders.add(cell, gbc);
 
@@ -847,7 +848,7 @@ public class FoldersListPanel extends javax.swing.JPanel {
                 childNode.setParentFolder(folder);
                 childNode.setSelected(true, false);
                 if (unselectedIds.contains(child.getId())) {
-                    childNode.setSelected(false);
+                    childNode.setSelected(false, false);
                 }
                 boolean hasChildren = child.getChildren() != null && !child.getChildren().isEmpty();
                 boolean isCollapsed = this.collapsedFolderIds.contains(child.getId());
@@ -952,7 +953,7 @@ public class FoldersListPanel extends javax.swing.JPanel {
         }
     }
 
-    private ArrayList<String> getUnselectedFolderIds() {
+    ArrayList<String> getUnselectedFolderIds() {
         ArrayList<String> ids = new ArrayList<>();
         for (Component c : this.pnlFolders.getComponents()) {
             if (c instanceof FolderListCell) {
@@ -1029,6 +1030,26 @@ public class FoldersListPanel extends javax.swing.JPanel {
      */
     public void resetExpansionState() {
         this.collapsedFolderIds.clear();
+        this.applyExpansionVisibility();
+        this.forceRelayout();
+    }
+
+    /**
+     * @return the ids of the collapsed folders
+     */
+    java.util.Set<String> getCollapsedFolderIds() {
+        return new java.util.HashSet<>(this.collapsedFolderIds);
+    }
+
+    /**
+     * Collapses the given folders and expands all others, e.g. to restore the state after the
+     * folders have been loaded again.
+     *
+     * @param folderIds the ids of the folders to show collapsed
+     */
+    void setCollapsedFolderIds(java.util.Set<String> folderIds) {
+        this.collapsedFolderIds.clear();
+        this.collapsedFolderIds.addAll(folderIds);
         this.applyExpansionVisibility();
         this.forceRelayout();
     }
