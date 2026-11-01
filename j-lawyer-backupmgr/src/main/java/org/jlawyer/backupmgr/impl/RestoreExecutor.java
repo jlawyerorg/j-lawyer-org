@@ -1268,9 +1268,14 @@ public class RestoreExecutor {
 
         br = new BufferedReader(new InputStreamReader(process.getErrorStream()));
         line = null;
+        String firstError = null;
 
         while ((line = br.readLine()) != null) {
             System.out.println(line);
+            // errors in statements of the sourced dump do not change the exit code of the mysql client
+            if (firstError == null && line.startsWith("ERROR")) {
+                firstError = line;
+            }
         }
         br.close();
         try {
@@ -1280,6 +1285,9 @@ public class RestoreExecutor {
         }
         if (process.exitValue() != 0) {
             throw new Exception("Datenbankwiederherstellung fehlgeschlagen!");
+        }
+        if (firstError != null) {
+            throw new Exception("Datenbankwiederherstellung fehlgeschlagen: " + firstError);
         }
     }
 
