@@ -3,7 +3,7 @@
 - [x] 1.1 In `ReviewsDueTimerTask`, number each load and record its start time, and read the calendar version before querying, falling back to `DesktopPanel.DUE_VERSION_UNKNOWN` when it cannot be read
 - [x] 1.2 Add `DesktopPanel.dueEntriesLoaded(entries, compactView, calendarVersion, loadStartedAt, loadSequence)`. `ReviewsDueTimerTask` calls it instead of `renderDueEntries`
 - [x] 1.3 In `dueEntriesLoaded`, drop the result of a load that started before the displayed one, record version and start time, and keep the entries for the search for every load path, instead of in individual callbacks
-- [x] 1.4 Render only when the entries, the compact view or the day differ from what is displayed. Entries are compared by `ReviewDueEntry.getDisplaySignature()`, which covers every stored field of the calendar entry, because that bean is written back when the user acts on an entry
+- [x] 1.4 For automatic reloads only (`ReviewsDueTimerTask.setRenderOnlyIfChanged`), render only when the entries, the compact view or the day differ from what is displayed. Every other load renders as before. Entries are compared by `ReviewDueEntry.getDisplaySignature()`, which covers every stored field of the calendar entry, because that bean is written back when the user acts on an entry
 - [x] 1.5 Render the entries matching the current search text, sharing `getDueEntriesMatchingSearch` with `filterDueEntries`
 - [x] 1.6 Let `filterDueEntries` determine the entries inside its EDT runnable, so a queued search cannot reinstall an older snapshot
 
@@ -20,5 +20,6 @@
 ## 3. Tests
 
 - [x] 3.1 `DueEntriesRefreshTimerTaskTest`: inactive desktop, unchanged and changed version, unreachable server, day change, maximum age, never loaded, stopped task
-- [x] 3.2 `ReviewDueEntryTest`: the display signature changes with shown fields and with stored fields of the review, such as description and reminder
-- [x] 3.3 `CalendarVersionBumpTest`: `ArchiveFileReviewsBeanFacade.create`, `edit` and `remove` each change the calendar version
+- [x] 3.2 `ReviewDueEntryTest`: the display signature changes with shown fields and with stored fields of the review, such as description and reminder, and values containing a separator do not collide
+- [x] 3.3 `DueRenderDecisionTest`: only automatic reloads skip rendering unchanged entries, and an event-triggered load after a local postpone renders
+- [x] 3.4 `CalendarVersionBumpTest`: `ArchiveFileReviewsBeanFacade.create`, `edit` and `remove` each change the calendar version

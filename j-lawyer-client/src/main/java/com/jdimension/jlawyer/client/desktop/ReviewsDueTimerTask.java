@@ -700,8 +700,15 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
     // numbers the loads, so that the result of a load that started earlier never replaces a newer one
     private static final java.util.concurrent.atomic.AtomicLong LOAD_SEQUENCE = new java.util.concurrent.atomic.AtomicLong();
 
+    // set for the automatic reloads, which must not rebuild the list without need, see DesktopPanel.dueEntriesLoaded
+    private boolean renderOnlyIfChanged = false;
+
     public void stop() {
         stopped = true;
+    }
+
+    void setRenderOnlyIfChanged(boolean renderOnlyIfChanged) {
+        this.renderOnlyIfChanged = renderOnlyIfChanged;
     }
 
     /**
@@ -931,7 +938,7 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                 if (entriesCallback != null) {
                     entriesCallback.accept(entriesCopy);
                 }
-                desktopPanel.dueEntriesLoaded(list, compactView, loadedVersion, startedAt, sequence);
+                desktopPanel.dueEntriesLoaded(list, compactView, loadedVersion, startedAt, sequence, renderOnlyIfChanged);
                 dataLoaded = true;
             });
         }

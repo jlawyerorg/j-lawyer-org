@@ -39,8 +39,12 @@ The due list on the desktop SHALL refresh itself while the desktop is the active
 - **AND** the next interval tries again
 
 #### Scenario: Unchanged entries are not rendered again
-- **WHEN** a reload on the same day and with unchanged compact view returns the same entries as the list already shows, including every stored field of their calendar entries
+- **WHEN** an automatic reload on the same day and with unchanged compact view returns the same entries as the list already shows, including every stored field of their calendar entries
 - **THEN** the list is not rebuilt, so that its scroll position and an ongoing interaction with an entry are not disturbed
+
+#### Scenario: Other loads always render
+- **WHEN** the list is loaded for any other reason, for example after the user postponed an entry in this client, after a filter change, on a manual refresh or by the background reload
+- **THEN** the list is rebuilt as before, even if the loaded entries equal the displayed ones, because the displayed entries may have been changed in place
 
 #### Scenario: Overdue marking after a day change
 - **WHEN** a reload after a day change returns the same entries

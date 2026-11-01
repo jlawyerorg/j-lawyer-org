@@ -2506,8 +2506,11 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
      * @param loadStartedAt when the load started
      * @param loadSequence sequence number of the load - results of loads that started before the
      * displayed one are dropped
+     * @param onlyIfChanged true for the automatic reloads of DueEntriesRefreshTimerTask, which skip
+     * rendering unchanged entries. Every other load renders, as the displayed entries may have been
+     * changed in place, e.g. by postponing one of them.
      */
-    void dueEntriesLoaded(ArrayList<ReviewDueEntry> entries, boolean compactView, long calendarVersion, long loadStartedAt, long loadSequence) {
+    void dueEntriesLoaded(ArrayList<ReviewDueEntry> entries, boolean compactView, long calendarVersion, long loadStartedAt, long loadSequence, boolean onlyIfChanged) {
         if (loadSequence < this.dueLoadedSequence) {
             return;
         }
@@ -2515,17 +2518,26 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.dueLoadedVersion = calendarVersion;
         this.dueLoadedAt = loadStartedAt;
 
-        // overdue entries are highlighted relative to today, so a new day is always rendered
         java.time.LocalDate today = java.time.LocalDate.now();
-        boolean unchanged = today.equals(this.dueRenderedDay) && Boolean.valueOf(compactView).equals(this.dueRenderedCompactView)
-                && sameDueEntries(this.cachedDueEntries, entries);
+        boolean skipRender = canSkipDueRender(onlyIfChanged, today, this.dueRenderedDay, compactView, this.dueRenderedCompactView, this.cachedDueEntries, entries);
         this.cachedDueEntries = entries;
-        if (unchanged) {
+        if (skipRender) {
             return;
         }
         this.dueRenderedCompactView = compactView;
         this.dueRenderedDay = today;
         renderDueEntries(getDueEntriesMatchingSearch(entries, this.txtSearchDue.getText()), compactView);
+    }
+
+    /**
+     * Whether a load need not be rendered: only an automatic reload may skip, and only on the day
+     * and with the compact view of the last render, when it returned the displayed entries
+     * unchanged. Overdue entries are highlighted relative to today, so a new day is always rendered.
+     */
+    static boolean canSkipDueRender(boolean onlyIfChanged, java.time.LocalDate today, java.time.LocalDate renderedDay,
+            boolean compactView, Boolean renderedCompactView, List<ReviewDueEntry> displayed, List<ReviewDueEntry> loaded) {
+        return onlyIfChanged && today.equals(renderedDay) && Boolean.valueOf(compactView).equals(renderedCompactView)
+                && sameDueEntries(displayed, loaded);
     }
 
     private static boolean sameDueEntries(List<ReviewDueEntry> a, List<ReviewDueEntry> b) {
@@ -2553,7 +2565,9 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
      * DueEntriesRefreshTimerTask.
      */
     void reloadDueEntries() {
-        new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, true).run();
+        ReviewsDueTimerTask task = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, true);
+        task.setRenderOnlyIfChanged(true);
+        task.run();
     }
 
     /**
