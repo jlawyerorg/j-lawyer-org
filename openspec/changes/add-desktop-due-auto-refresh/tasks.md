@@ -1,7 +1,7 @@
 ## 1. Load bookkeeping
 
 - [x] 1.1 In `ReviewsDueTimerTask`, number each load and record its start time, and read the calendar version before querying, falling back to `DesktopPanel.DUE_VERSION_UNKNOWN` when it cannot be read
-- [x] 1.2 Add `DesktopPanel.dueEntriesLoaded(entries, compactView, calendarVersion, loadStartedAt, loadSequence)`. `ReviewsDueTimerTask` calls it instead of `renderDueEntries`
+- [x] 1.2 Add `DesktopPanel.dueEntriesLoaded(entries, compactView, calendarVersion, loadStartedAt, loadSequence, onlyIfChanged)`. `ReviewsDueTimerTask` calls it instead of `renderDueEntries`
 - [x] 1.3 In `dueEntriesLoaded`, drop the result of a load that started before the displayed one, record version and start time, and keep the entries for the search for every load path, instead of in individual callbacks
 - [x] 1.4 For automatic reloads only (`ReviewsDueTimerTask.setRenderOnlyIfChanged`), render only when the entries, the compact view or the day differ from what is displayed. Every other load renders as before. Entries are compared by `ReviewDueEntry.getDisplaySignature()`, which covers every stored field of the calendar entry, because that bean is written back when the user acts on an entry
 - [x] 1.5 Render the entries matching the current search text, sharing `getDueEntriesMatchingSearch` with `filterDueEntries`
