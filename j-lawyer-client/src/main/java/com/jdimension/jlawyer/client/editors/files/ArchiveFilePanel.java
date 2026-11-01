@@ -6583,37 +6583,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-            HashMap<String, BigDecimal> invoiceTotals = new HashMap<>();
             List<CaseAccountEntry> accountEntries = fileService.getAccountEntries(this.dto.getId());
             for (CaseAccountEntry cae : accountEntries) {
                 this.addAccountEntryRow(cae);
-                if (cae.getInvoice() != null) {
-                    if (!invoiceTotals.containsKey(cae.getInvoice().getId())) {
-                        invoiceTotals.put(cae.getInvoice().getId(), BigDecimal.ZERO);
-                    }
-                    invoiceTotals.put(cae.getInvoice().getId(), invoiceTotals.get(cae.getInvoice().getId()).add(cae.calculateEarningsTotal()));
-                }
             }
             ComponentUtils.autoSizeColumns(tblAccountEntries);
             this.updateAccountTotals();
-
-            for (int i = 0; i < this.pnlInvoices.getComponentCount(); i++) {
-                InvoiceEntryPanel ie = (InvoiceEntryPanel) this.pnlInvoices.getComponent(i);
-                Invoice inv = ie.getInvoice();
-                if (invoiceTotals.containsKey(inv.getId())) {
-                    if (inv.isSmallBusiness()) {
-                        ie.setPaidTotal(inv.getTotalGross(), invoiceTotals.get(inv.getId()), inv.getCurrency());
-                    } else {
-                        ie.setPaidTotal(inv.getTotal(), invoiceTotals.get(inv.getId()), inv.getCurrency());
-                    }
-                } else {
-                    if (inv.isSmallBusiness()) {
-                        ie.setPaidTotal(inv.getTotalGross(), BigDecimal.ZERO, inv.getCurrency());
-                    } else {
-                        ie.setPaidTotal(inv.getTotal(), BigDecimal.ZERO, inv.getCurrency());
-                    }
-                }
-            }
+            this.updateInvoicePaidTotals();
 
         } catch (Exception ex) {
             log.error("Error loading account entries", ex);
@@ -9248,6 +9224,30 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     }
 
+    /**
+     * Recalculates paid / open of all invoices from the account entries currently shown in the case account table.
+     */
+    private void updateInvoicePaidTotals() {
+        HashMap<String, BigDecimal> invoiceTotals = new HashMap<>();
+        for (int r = 0; r < this.tblAccountEntries.getRowCount(); r++) {
+            CaseAccountEntry cae = ((AccountEntryRowIdentifier) this.tblAccountEntries.getValueAt(r, 0)).getAccountEntry();
+            if (cae.getInvoice() != null) {
+                invoiceTotals.merge(cae.getInvoice().getId(), cae.calculateEarningsTotal(), BigDecimal::add);
+            }
+        }
+
+        for (int i = 0; i < this.pnlInvoices.getComponentCount(); i++) {
+            InvoiceEntryPanel ie = (InvoiceEntryPanel) this.pnlInvoices.getComponent(i);
+            Invoice inv = ie.getInvoice();
+            BigDecimal paid = invoiceTotals.getOrDefault(inv.getId(), BigDecimal.ZERO);
+            if (inv.isSmallBusiness()) {
+                ie.setPaidTotal(inv.getTotalGross(), paid, inv.getCurrency());
+            } else {
+                ie.setPaidTotal(inv.getTotal(), paid, inv.getCurrency());
+            }
+        }
+    }
+
     public boolean addAccountEntry(CaseAccountEntry entry) {
         ArrayList<Invoice> invoices = new ArrayList<>();
         for (int i = 0; i < this.pnlInvoices.getComponentCount(); i++) {
@@ -9268,6 +9268,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 e = caseService.addAccountEntry(this.dto.getId(), e);
                 this.addAccountEntryRow(e);
                 this.updateAccountTotals();
+                this.updateInvoicePaidTotals();
             } catch (Throwable ex) {
                 log.error("Error saving account entry", ex);
                 JOptionPane.showMessageDialog(this, "Buchungseintrag konnte nicht erstellt werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -9305,6 +9306,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         this.updateAccountTotals();
+        this.updateInvoicePaidTotals();
 
 
     }//GEN-LAST:event_cmdRemoveAccountEntryActionPerformed
@@ -9339,6 +9341,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 this.addAccountEntryRow(e);
 
                 this.updateAccountTotals();
+                this.updateInvoicePaidTotals();
             } catch (Throwable ex) {
                 log.error("Error saving account entry", ex);
                 JOptionPane.showMessageDialog(this, "Buchungseintrag konnte nicht aktualisiert werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -9504,6 +9507,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 this.addAccountEntryRow(e);
 
                 this.updateAccountTotals();
+                this.updateInvoicePaidTotals();
             } catch (Throwable ex) {
                 log.error("Error saving account entry", ex);
                 JOptionPane.showMessageDialog(this, "Buchungseintrag konnte nicht aktualisiert werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
