@@ -8498,12 +8498,50 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             return;
                         }
 
+                        boolean documentExists = remote.doesDocumentExist(dto.getId(), newName);
+                        boolean replaceDocument = false;
+                        while (documentExists && !replaceDocument) {
+                            int replaceResponse = JOptionPane.showOptionDialog(EditorsRegistry.getInstance().getMainWindow(), "Eine Datei mit dem Namen '" + newName + "' existiert bereits, soll diese ersetzt werden?", "Datei ersetzen?", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, new String[]{"Ja", "Nein"}, "Nein");
+                            replaceDocument = replaceResponse == JOptionPane.YES_OPTION;
+                            if (!replaceDocument) {
+                                newName = FileUtils.getNewFileName(dto, newName, new Date(), false, EditorsRegistry.getInstance().getMainWindow(), "Neuer Name für Dokument");
+                                if (newName == null || "".equals(newName)) {
+                                    this.lastPopupClosed = System.currentTimeMillis();
+                                    return;
+                                }
+                            }
+                            documentExists = remote.doesDocumentExist(dto.getId(), newName);
+                        }
+
                         FileConverter conv = FileConverter.getInstance();
                         String tempPath = FileUtils.createTempFile(doc.getName(), content);
                         String tempTargetPath = conv.convertTo(tempPath, targetFormat);
                         byte[] targetContent = FileUtils.readFile(new File(tempTargetPath));
                         FileUtils.cleanupTempFile(tempPath);
                         FileUtils.cleanupTempFile(tempTargetPath);
+
+                        // to replace a document, the old one is removed first (also from the bin), then the new one is uploaded
+                        if (replaceDocument) {
+                            final String searchName = newName;
+                            ArchiveFileDocumentsBean document = this.caseFolderPanel1.getDocuments().stream()
+                                    .filter(iterDoc -> searchName.equals(iterDoc.getName()))
+                                    .findAny()
+                                    .orElse(null);
+                            if (document != null) {
+                                remote.removeDocument(document.getId());
+                                remote.removeDocumentFromBin(document.getId());
+                                caseFolderPanel1.removeDocument(document);
+                            } else {
+                                document = remote.getDocumentsBin().stream()
+                                        .filter(iterDoc -> dto.getId().equals(iterDoc.getArchiveFileKey().getId()))
+                                        .filter(iterDoc -> searchName.equals(iterDoc.getName()))
+                                        .findAny()
+                                        .orElse(null);
+                                if (document != null) {
+                                    remote.removeDocumentFromBin(document.getId());
+                                }
+                            }
+                        }
 
                         ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, targetContent, doc.getDictateSign(), null);
 
