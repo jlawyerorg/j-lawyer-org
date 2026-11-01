@@ -747,11 +747,16 @@ public class BeaAttachment implements Serializable {
         this.technicalAttachment = technicalAttachment;
     }
 
+    // shown in the client's attachment lists and offered as file name when saving an attachment:
+    // "(alias) fileName" as with the former beA wrapper, so the file extension is not lost
     @Override
     public String toString() {
-        if (alias != null && !alias.isEmpty()) {
+        if (alias == null || alias.isEmpty() || alias.equals(name)) {
+            return name;
+        }
+        if (name == null || name.isEmpty()) {
             return alias;
         }
-        return name;
+        return "(" + alias + ") " + name;
     }
 }
