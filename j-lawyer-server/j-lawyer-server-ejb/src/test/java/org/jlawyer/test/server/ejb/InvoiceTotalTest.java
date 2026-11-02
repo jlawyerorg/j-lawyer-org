@@ -662,17 +662,26 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.test.server.ejb;
 
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.InvoiceFacadeLocal;
 import com.jdimension.jlawyer.persistence.InvoicePosition;
+import com.jdimension.jlawyer.persistence.InvoicePool;
+import com.jdimension.jlawyer.persistence.InvoicePoolFacadeLocal;
 import com.jdimension.jlawyer.persistence.InvoicePositionFacadeLocal;
+import com.jdimension.jlawyer.persistence.InvoiceType;
 import com.jdimension.jlawyer.services.ArchiveFileService;
+import com.jdimension.jlawyer.services.InvoiceServiceLocal;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.math.BigDecimal;
+import java.security.Principal;
 import java.util.Arrays;
 import java.util.List;
+import javax.ejb.SessionContext;
 import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
@@ -704,6 +713,51 @@ public class InvoiceTotalTest {
         m.setAccessible(true);
         m.invoke(service, "inv1");
         return invoice;
+    }
+
+    private static Object fake(Class<?> type, java.util.function.BiFunction<Method, Object[], Object> handler) {
+        return Proxy.newProxyInstance(type.getClassLoader(), new Class<?>[]{type}, (proxy, method, args) -> handler.apply(method, args));
+    }
+
+    @Test
+    public void testPoolChangeRecalculatesGross() throws Exception {
+        // the pool decides whether VAT is shown - switching from a pool with VAT to one without must update the gross total
+        InvoiceType type = new InvoiceType();
+        type.setId("type1");
+        type.setDisplayName("Rechnung");
+        Invoice invoice = new Invoice();
+        invoice.setId("inv1");
+        invoice.setInvoiceNumber("R-1");
+        invoice.setLastPoolId("poolWithVat");
+        invoice.setInvoiceType(type);
+        invoice.setSmallBusiness(true);
+        invoice.setTotal(new BigDecimal("100.00"));
+        invoice.setTotalGross(new BigDecimal("119.00"));
+        List<InvoicePosition> positions = Arrays.asList(position("100.00", "19"));
+
+        InvoicePool poolWithoutVat = new InvoicePool();
+        poolWithoutVat.setId("poolWithoutVat");
+        poolWithoutVat.setSmallBusiness(false);
+
+        ArchiveFileService service = new ArchiveFileService();
+        inject(service, "context", fake(SessionContext.class, (m, args) -> "getCallerPrincipal".equals(m.getName()) ? (Principal) () -> null : null));
+        inject(service, "archiveFileFacade", fake(ArchiveFileBeanFacadeLocal.class, (m, args) -> "find".equals(m.getName()) ? new ArchiveFileBean() : null));
+        inject(service, "invoicesFacade", fake(InvoiceFacadeLocal.class, (m, args) -> "find".equals(m.getName()) ? invoice : null));
+        inject(service, "invoicePositionsFacade", fake(InvoicePositionFacadeLocal.class, (m, args) -> "findByInvoice".equals(m.getName()) ? positions : null));
+        inject(service, "invoicesPoolsFacade", fake(InvoicePoolFacadeLocal.class, (m, args) -> "find".equals(m.getName()) ? poolWithoutVat : null));
+        inject(service, "invoiceService", fake(InvoiceServiceLocal.class, (m, args) -> "nextInvoiceNumber".equals(m.getName()) ? "R-2" : null));
+        inject(service, "archiveFileHistoryFacade", fake(ArchiveFileHistoryBeanFacadeLocal.class, (m, args) -> null));
+
+        try {
+            service.updateInvoiceType("case1", invoice, poolWithoutVat, type);
+        } catch (Throwable t) {
+            // expected outside of the application server: the case history also updates the change date of the case via
+            // JDBC, there is no data source here. The invoice has been recalculated before that.
+        }
+
+        assertEquals(false, invoice.isSmallBusiness());
+        assertEquals(new BigDecimal("100.00"), invoice.getTotal());
+        assertEquals(new BigDecimal("100.00"), invoice.getTotalGross());
     }
 
     private static void inject(Object target, String fieldName, Object value) throws Exception {
