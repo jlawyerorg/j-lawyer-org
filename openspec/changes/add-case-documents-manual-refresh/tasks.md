@@ -6,9 +6,11 @@
 - [x] 1.4 Replace the folders with `CaseFolderPanel.replaceRootFolder`, which keeps the selection and the collapsed state of the folders already shown and applies the saved settings to new folders
 - [x] 1.5 Replace the documents with `CaseFolderPanel.replaceDocuments`, which keeps the selection, the sort order, the collapsed attachments and the scroll position, then apply the last search with its terms
 - [x] 1.6 Leave details and preview of the selected documents as they are, update both like a click if the selection has changed, and reload the preview if the previewed document has new content. Confirm an edit in the table view before rebuilding (`CaseFolderPanel.stopDocumentEditing`)
-- [x] 1.8 Let a search worker that has been replaced skip applying its filter after loading the tags
 - [x] 1.7 In `FoldersListPanel.setRootFolder`, restore unselected folders without saving the setting again
+- [x] 1.8 Let a search worker that has been replaced skip applying its filter after loading the tags
+- [x] 1.9 Let `FoldersListPanel.folderAdded`, `folderRemoved` and `folderUpdated` apply the change to the folder with the same id among the folders shown now (`currentFolder`), because the modal folder dialogs keep the folder they were opened for while a reload may replace the folders. `folderAdded` adds the new folder once to the shown parent and to the given one (`addFolder`), because an upload of a directory tree keeps using the given parent to find the folders it created
 
 ## 2. Tests
 
 - [x] 2.1 `ReloadedFolderSelectionTest`: folders already shown keep their selection, new folders follow their saved settings and are selected without settings
+- [x] 2.2 `FolderLookupAfterReloadTest`: a folder from the folders shown before a reload resolves to the shown folder with the same id, a folder that is not shown stays as given, and a new folder is added once to the given and to the shown parent

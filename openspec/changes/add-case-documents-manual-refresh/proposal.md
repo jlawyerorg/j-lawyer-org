@@ -12,6 +12,7 @@ The documents and folders of a case are loaded when the case is opened. Document
 - The details and the preview of the selected documents are left as they are, so that unsaved input is kept. When the reload changes the selection, for example because a selected document is gone, preview and details are updated as after a click. When the previewed document has new content (version, size or change date), the preview is loaded again. An edit in the table view is confirmed before the table is rebuilt.
 - If this client changes documents, folders or document tags while the reload runs, or a search is started or still running, the result is discarded and loaded again, at most three times in total, then the user is asked to reload again. If the case is opened again or another case is opened meanwhile, the result is dropped.
 - A running search that has been replaced by a newer one no longer applies its filter after loading the tags. Before, it only checked this before loading them.
+- Creating, renaming and deleting a folder apply the change to the folder with the same id among the folders shown now. The modal folder dialogs keep the folder they were opened for, and a reload finishing while such a dialog is open replaces the folders shown.
 - Building the folder tree no longer saves the selection of every unselected folder to the server again. The selection is taken from the saved settings or was saved when it was changed. This removes one server call per unselected folder when a case is opened and when a folder is created, renamed or deleted.
 - No polling, no server change, no new remote method.
 
@@ -22,4 +23,4 @@ Not breaking.
 - Affected specs: `case-document-views`
 - Affected code:
   - `j-lawyer-client`: `ArchiveFilePanel` (with `.form`), `CaseFolderPanel`, `FoldersListPanel`, `DocumentEntryPanel`
-  - Tests: `ReloadedFolderSelectionTest` (client)
+  - Tests: `ReloadedFolderSelectionTest`, `FolderLookupAfterReloadTest` (client)

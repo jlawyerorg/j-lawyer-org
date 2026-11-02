@@ -23,3 +23,7 @@ The documents toolbar of a case in the desktop client SHALL offer a button that 
 #### Scenario: Local change during the reload
 - **WHEN** the user changes documents, folders or document tags in this client while the reload is running
 - **THEN** the loaded result is discarded and the documents are loaded again, so that the change is not undone
+
+#### Scenario: Folder dialog open during the reload
+- **WHEN** the reload finishes while the dialog for creating, renaming or deleting a folder is open, and the user then confirms the dialog
+- **THEN** the folder is created, renamed or deleted in the folders shown after the reload
