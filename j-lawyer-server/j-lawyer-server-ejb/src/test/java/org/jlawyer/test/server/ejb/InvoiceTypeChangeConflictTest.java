@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.persistence.InvoiceFacadeLocal;
 import com.jdimension.jlawyer.persistence.InvoicePool;
 import com.jdimension.jlawyer.persistence.InvoicePoolFacadeLocal;
 import com.jdimension.jlawyer.persistence.InvoiceType;
+import com.jdimension.jlawyer.persistence.InvoiceTypeFacadeLocal;
 import com.jdimension.jlawyer.services.ArchiveFileService;
 import com.jdimension.jlawyer.services.InvoiceServiceLocal;
 import java.lang.reflect.Field;
@@ -740,6 +741,59 @@ public class InvoiceTypeChangeConflictTest {
         assertEquals("E-1", invoice.getInvoiceNumber());
         assertEquals("draftPool", invoice.getLastPoolId());
         assertTrue(editedInvoices.isEmpty());
+    }
+
+    @Test
+    public void typeAndPoolChangeToTakenNumberKeepsTheType() throws Exception {
+        InvoiceType oldType = new InvoiceType();
+        oldType.setId("type1");
+        oldType.setDisplayName("Rechnung");
+        InvoiceType newType = new InvoiceType();
+        newType.setId("type2");
+        newType.setDisplayName("Gutschrift");
+
+        Invoice invoice = new Invoice();
+        invoice.setId("inv1");
+        invoice.setInvoiceNumber("E-1");
+        invoice.setLastPoolId("draftPool");
+        invoice.setInvoiceType(oldType);
+
+        Invoice otherInvoice = new Invoice();
+        otherInvoice.setId("inv2");
+        otherInvoice.setInvoiceNumber("R-2023-001");
+
+        InvoicePool pool = new InvoicePool();
+        pool.setId("invoicePool");
+        pool.setDisplayName("Rechnungen");
+
+        ArchiveFileService service = new ArchiveFileService();
+        inject(service, "context", fake(SessionContext.class, (m, args) -> "getCallerPrincipal".equals(m.getName()) ? (Principal) () -> null : null));
+        inject(service, "archiveFileFacade", fake(ArchiveFileBeanFacadeLocal.class, (m, args) -> "find".equals(m.getName()) ? new ArchiveFileBean() : null));
+        inject(service, "invoicesPoolsFacade", fake(InvoicePoolFacadeLocal.class, (m, args) -> "find".equals(m.getName()) ? pool : null));
+        inject(service, "invoicesTypesFacade", fake(InvoiceTypeFacadeLocal.class, (m, args) -> "find".equals(m.getName()) ? newType : null));
+        inject(service, "invoiceService", fake(InvoiceServiceLocal.class, (m, args) -> "nextInvoiceNumber".equals(m.getName()) ? "R-2023-001" : null));
+        inject(service, "invoicesFacade", fake(InvoiceFacadeLocal.class, (m, args) -> {
+            switch (m.getName()) {
+                case "find":
+                    return invoice;
+                case "findByInvoiceNumber":
+                    return "R-2023-001".equals(args[0]) ? otherInvoice : null;
+                default:
+                    return null;
+            }
+        }));
+
+        try {
+            service.updateInvoiceType("case1", invoice, pool, newType);
+            fail("expected an exception for the taken invoice number");
+        } catch (Exception ex) {
+            assertTrue(ex.getMessage(), ex.getMessage().contains("R-2023-001"));
+        }
+
+        // the checked exception does not roll back the transaction - the managed invoice must not have been changed at all
+        assertEquals("type1", invoice.getInvoiceType().getId());
+        assertEquals("E-1", invoice.getInvoiceNumber());
+        assertEquals("draftPool", invoice.getLastPoolId());
     }
 
     @SuppressWarnings("unchecked")
