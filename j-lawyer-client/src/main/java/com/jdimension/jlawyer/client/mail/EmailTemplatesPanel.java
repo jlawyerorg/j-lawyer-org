@@ -685,6 +685,13 @@ import java.util.Map;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.io.StringReader;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
+import javax.swing.text.Element;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.html.HTML;
+import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.*;
 import org.apache.log4j.Logger;
 
@@ -812,6 +819,74 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
                 Thread.currentThread().interrupt();
             }
         }
+    }
+
+    /**
+     * Converts the content of the HTML editor to plain text while keeping its line breaks.
+     * EmailUtils.html2Text (HTMLEditorKit) turns &lt;br&gt; into a space and prepends a line break,
+     * so switching a template from text/plain to text/html and back would merge its lines.
+     * The HTML is parsed the same way, but every &lt;br&gt; element becomes a line break - except one
+     * that only precedes white space up to the end of its paragraph, which adds no line, as in a
+     * browser (e.g. the empty paragraphs of the HTML editor).
+     *
+     * @param html the HTML content
+     * @return the plain text
+     */
+    private static String htmlToPlainText(String html) {
+        if (html == null) {
+            return "";
+        }
+        try {
+            HTMLEditorKit editorKit = new HTMLEditorKit();
+            Document doc = editorKit.createDefaultDocument();
+            doc.putProperty("IgnoreCharsetDirective", true);
+            editorKit.read(new StringReader(html), doc, 0);
+            StringBuilder text = new StringBuilder();
+            appendPlainText(doc, doc.getDefaultRootElement(), text);
+            if (text.length() > 0 && text.charAt(0) == '\n') {
+                text.deleteCharAt(0);
+            }
+            return text.toString();
+        } catch (Exception ex) {
+            log.error("Unable to convert HTML to plain text", ex);
+            return EmailUtils.html2Text(html);
+        }
+    }
+
+    private static void appendPlainText(Document doc, Element element, StringBuilder text) throws BadLocationException {
+        if (!element.isLeaf()) {
+            for (int i = 0; i < element.getElementCount(); i++) {
+                appendPlainText(doc, element.getElement(i), text);
+            }
+            return;
+        }
+        if (element.getAttributes().getAttribute(StyleConstants.NameAttribute) == HTML.Tag.BR) {
+            if (!isLastInParagraph(doc, element)) {
+                text.append('\n');
+            }
+            return;
+        }
+        int end = Math.min(element.getEndOffset(), doc.getLength());
+        if (end > element.getStartOffset()) {
+            text.append(doc.getText(element.getStartOffset(), end - element.getStartOffset()));
+        }
+    }
+
+    private static boolean isLastInParagraph(Document doc, Element br) throws BadLocationException {
+        // a <br> adds no line if it is followed by nothing but white space up to the end of its paragraph
+        // (a following <br> counts as content: HTMLEditorKit stores each <br> as a space)
+        Element paragraph = br.getParentElement();
+        for (int i = paragraph.getElementIndex(br.getStartOffset()) + 1; i < paragraph.getElementCount(); i++) {
+            Element next = paragraph.getElement(i);
+            if (next.getAttributes().getAttribute(StyleConstants.NameAttribute) == HTML.Tag.BR) {
+                return false;
+            }
+            int end = Math.min(next.getEndOffset(), doc.getLength());
+            if (end > next.getStartOffset() && !doc.getText(next.getStartOffset(), end - next.getStartOffset()).trim().isEmpty()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
@@ -1328,7 +1403,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
             if (!this.loadingTemplate && this.contentPanel.getComponent(0) != tp) {
                 // carry over the content of the current template - the text editor might still hold the body of a previously selected template
                 waitForHtmlContentOnMac(hp);
-                tp.setText(EmailUtils.html2Text(hp.getText()));
+                tp.setText(htmlToPlainText(hp.getText()));
             }
             this.contentPanel.remove(0);
             this.contentPanel.add(tp);
