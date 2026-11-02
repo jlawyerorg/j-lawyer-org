@@ -684,10 +684,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 import javax.swing.Icon;
@@ -991,6 +993,23 @@ public class FileUtils extends ServerFileUtils {
     }
 
     public static String getNewFileName(ArchiveFileBean selectedCase, String currentFileName, java.util.Date d, boolean applyNameTemplate, Component parent, String title) {
+        return getNewFileName(selectedCase, currentFileName, d, applyNameTemplate, parent, title, false);
+    }
+
+    /**
+     * Asks for a file name.
+     *
+     * @param selectedCase case the file belongs to, used for the name template
+     * @param currentFileName name to start with
+     * @param d date used for the name template
+     * @param applyNameTemplate whether to apply the name template
+     * @param parent parent component of the dialog
+     * @param title dialog title
+     * @param escapeCancels true if closing the dialog with Escape cancels,
+     * otherwise Escape accepts the name as shown
+     * @return the new name, or null if cancelled
+     */
+    public static String getNewFileName(ArchiveFileBean selectedCase, String currentFileName, java.util.Date d, boolean applyNameTemplate, Component parent, String title, boolean escapeCancels) {
 
         if (parent == null) {
             parent = EditorsRegistry.getInstance().getMainWindow();
@@ -1033,6 +1052,11 @@ public class FileUtils extends ServerFileUtils {
         // Clear focus again before dialog closes
         KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner();
 
+        // Escape closes the option pane with CLOSED_OPTION, the OK button sets OK_OPTION
+        if (escapeCancels && Integer.valueOf(JOptionPane.CLOSED_OPTION).equals(pane.getValue())) {
+            return null;
+        }
+
         if (p.getFilename() != null) {
 
             String newName = p.getFilename();
@@ -1067,6 +1091,34 @@ public class FileUtils extends ServerFileUtils {
             }
         }
         return name;
+    }
+
+    /**
+     * Keeps the given file names, asking for another name for each one that
+     * is taken in the target or by an earlier name of the same list. Names
+     * are compared ignoring case, like
+     * {@link String#equalsIgnoreCase(String)} and independent of the default
+     * locale.
+     *
+     * @param fileNames the names to keep if possible
+     * @param takenInTarget tells whether a name is already taken in the target
+     * @param askForNewName asks for another name, gets the taken name and
+     * returns null or an empty string when cancelled
+     * @return the resulting names in the order of fileNames, or null if asking
+     * for a new name was cancelled
+     */
+    public static List<String> keepFileNames(List<String> fileNames, Predicate<String> takenInTarget, UnaryOperator<String> askForNewName) {
+        Set<String> reserved = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        List<String> result = new ArrayList<>();
+        for (String fileName : fileNames) {
+            String name = keepFileNameUnlessTaken(fileName, n -> reserved.contains(n) || takenInTarget.test(n), askForNewName);
+            if (name == null) {
+                return null;
+            }
+            reserved.add(name);
+            result.add(name);
+        }
+        return result;
     }
 
     public static void setPosixFilePermissions(String absolutePathToFile, boolean read, boolean write, boolean execute) {

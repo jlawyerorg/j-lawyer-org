@@ -2518,25 +2518,34 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             HashMap<String, String> newNames = new HashMap<>();
             ArrayList<String> ids = new ArrayList<>();
-            HashSet<String> namesInBatch = new HashSet<>();
-            for (ArchiveFileDocumentsBean doc : selected) {
-                String newName;
-                if (keepNames) {
-                    // keep the name, ask for another one only if the target case (or an earlier document of this batch) already has it
-                    newName = FileUtils.keepFileNameUnlessTaken(doc.getName(),
-                            name -> remote.doesDocumentExist(sel.getId(), name) || namesInBatch.contains(name.toLowerCase()),
-                            name -> FileUtils.getNewFileName(sel, name, new Date(), false, EditorsRegistry.getInstance().getMainWindow(), action + " - Name in der Zielakte bereits vorhanden"));
-                } else {
-                    // file names are asked for as before, one document after the other
-                    newName = FileUtils.getNewFileName(sel, doc.getName(), new Date(), move, EditorsRegistry.getInstance().getMainWindow(), action);
+            if (keepNames) {
+                // keep the names, ask for another one only if the target case (or an earlier document of this batch) already has it
+                ArrayList<String> names = new ArrayList<>();
+                for (ArchiveFileDocumentsBean doc : selected) {
+                    names.add(doc.getName());
                 }
-                if (newName == null || newName.trim().isEmpty()) {
+                List<String> keptNames = FileUtils.keepFileNames(names,
+                        name -> remote.doesDocumentExist(sel.getId(), name),
+                        name -> FileUtils.getNewFileName(sel, name, new Date(), false, EditorsRegistry.getInstance().getMainWindow(), action + " - Name in der Zielakte bereits vorhanden", true));
+                if (keptNames == null) {
                     this.lastPopupClosed = System.currentTimeMillis();
                     return;
                 }
-                namesInBatch.add(newName.toLowerCase());
-                newNames.put(doc.getId(), newName);
-                ids.add(doc.getId());
+                for (int i = 0; i < selected.size(); i++) {
+                    newNames.put(selected.get(i).getId(), keptNames.get(i));
+                    ids.add(selected.get(i).getId());
+                }
+            } else {
+                // file names are asked for as before, one document after the other
+                for (ArchiveFileDocumentsBean doc : selected) {
+                    String newName = FileUtils.getNewFileName(sel, doc.getName(), new Date(), move, EditorsRegistry.getInstance().getMainWindow(), action);
+                    if (newName == null || newName.trim().isEmpty()) {
+                        this.lastPopupClosed = System.currentTimeMillis();
+                        return;
+                    }
+                    newNames.put(doc.getId(), newName);
+                    ids.add(doc.getId());
+                }
             }
 
             String folderId = folder == null ? null : folder.getId();
