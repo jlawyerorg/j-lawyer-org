@@ -663,9 +663,21 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.utils.pdf;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+import org.apache.pdfbox.cos.COSArray;
+import org.apache.pdfbox.cos.COSBase;
+import org.apache.pdfbox.cos.COSDictionary;
+import org.apache.pdfbox.cos.COSName;
+import org.apache.pdfbox.cos.COSNull;
+import org.apache.pdfbox.cos.COSObject;
 import org.apache.pdfbox.multipdf.Splitter;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
 
 /**
  * Helper for splitting PDF documents into parts.
@@ -676,10 +688,31 @@ public class PdfSplitUtils {
     }
 
     /**
+     * Turns the page numbers after which a document is split (as entered by the user, 1 to pageCount - 1) into the
+     * zero-based page ranges of the parts. Repeated or unsorted numbers are allowed, so no empty part is created.
+     *
+     * @param splitAfterPages page numbers after which to split
+     * @param pageCount number of pages of the document
+     * @return one range per part, each as {fromIndex inclusive, toIndex exclusive}
+     */
+    public static List<int[]> toPartRanges(List<Integer> splitAfterPages, int pageCount) {
+        List<Integer> bounds = new ArrayList<>(new TreeSet<>(splitAfterPages));
+        bounds.add(0, 0);
+        bounds.add(pageCount);
+        List<int[]> ranges = new ArrayList<>();
+        for (int i = 0; i < bounds.size() - 1; i++) {
+            ranges.add(new int[]{bounds.get(i), bounds.get(i + 1)});
+        }
+        return ranges;
+    }
+
+    /**
      * Creates a new document containing the pages fromIndex (inclusive) to toIndex (exclusive) of the source document,
-     * zero-based. PDFBox's Splitter is used because it removes links to pages outside of the part - a plain importPage
-     * keeps those references, so every linked page (usually the whole source document) would be written into the part.
-     * The source document must stay open until the returned document has been saved.
+     * zero-based. Any reference from the annotations of these pages to pages outside of the part, or to annotations on
+     * those pages, is removed - otherwise saving the part writes the referenced pages (usually the whole source
+     * document) into it as well. PDFBox's Splitter already removes the direct targets of links, references via form
+     * fields shown on several pages (/Parent, /Kids), chained actions (/Next), replies (/IRT) or popups are removed
+     * here. The source document is changed by this and must stay open until the returned document has been saved.
      *
      * @param source the document to take the pages from
      * @param fromIndex index of the first page, inclusive
@@ -691,12 +724,76 @@ public class PdfSplitUtils {
         if (fromIndex < 0 || toIndex > source.getNumberOfPages() || fromIndex >= toIndex) {
             throw new IllegalArgumentException("Invalid page range " + fromIndex + " - " + toIndex + " for a document with " + source.getNumberOfPages() + " pages");
         }
+        // everything that belongs to the pages outside of the part
+        Set<COSBase> outside = Collections.newSetFromMap(new IdentityHashMap<>());
+        for (int i = 0; i < source.getNumberOfPages(); i++) {
+            if (i >= fromIndex && i < toIndex) {
+                continue;
+            }
+            COSDictionary page = source.getPage(i).getCOSObject();
+            outside.add(page);
+            COSBase annotations = resolve(page.getDictionaryObject(COSName.ANNOTS));
+            if (annotations instanceof COSArray) {
+                for (COSBase annotation : (COSArray) annotations) {
+                    outside.add(resolve(annotation));
+                }
+            }
+        }
+
         Splitter splitter = new Splitter();
         splitter.setStartPage(fromIndex + 1);
         splitter.setEndPage(toIndex);
         splitter.setSplitAtPage(toIndex - fromIndex);
-        List<PDDocument> parts = splitter.split(source);
-        return parts.get(0);
+        PDDocument part = splitter.split(source).get(0);
+
+        Set<COSBase> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+        for (PDPage page : part.getPages()) {
+            removeReferences(page.getCOSObject().getDictionaryObject(COSName.ANNOTS), outside, visited);
+            removeReferences(page.getCOSObject().getDictionaryObject(COSName.B), outside, visited);
+        }
+        return part;
+    }
+
+    private static COSBase resolve(COSBase base) {
+        return base instanceof COSObject ? ((COSObject) base).getObject() : base;
+    }
+
+    private static void removeReferences(COSBase base, Set<COSBase> outside, Set<COSBase> visited) {
+        COSBase obj = resolve(base);
+        if (obj == null || !visited.add(obj)) {
+            return;
+        }
+        if (obj instanceof COSDictionary) {
+            COSDictionary dict = (COSDictionary) obj;
+            if (COSName.PAGE.equals(dict.getCOSName(COSName.TYPE))) {
+                // a page of the part, its annotations are processed on their own
+                return;
+            }
+            for (COSName key : new ArrayList<>(dict.keySet())) {
+                COSBase value = resolve(dict.getItem(key));
+                if (outside.contains(value)) {
+                    dict.removeItem(key);
+                } else {
+                    removeReferences(value, outside, visited);
+                }
+            }
+        } else if (obj instanceof COSArray) {
+            COSArray array = (COSArray) obj;
+            for (int i = array.size() - 1; i >= 0; i--) {
+                COSBase value = resolve(array.get(i));
+                if (outside.contains(value)) {
+                    if (COSName.PAGE.equals(((COSDictionary) value).getCOSName(COSName.TYPE))) {
+                        // keep the structure of destination arrays, the target page is just not part of this document
+                        array.set(i, COSNull.NULL);
+                    } else {
+                        // e.g. a widget of the same form field on another page
+                        array.remove(i);
+                    }
+                } else {
+                    removeReferences(value, outside, visited);
+                }
+            }
+        }
     }
 
 }

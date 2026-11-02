@@ -665,15 +665,23 @@ package org.jlawyer.test.client.utils;
 import com.jdimension.jlawyer.client.utils.pdf.PdfSplitUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.apache.pdfbox.pdmodel.interactive.action.PDAction;
 import org.apache.pdfbox.pdmodel.interactive.action.PDActionGoTo;
+import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotation;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationLink;
+import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationWidget;
+import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
+import org.apache.pdfbox.pdmodel.interactive.form.PDTextField;
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.destination.PDPageFitDestination;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -737,6 +745,80 @@ public class PdfSplitUtilsTest {
                 assertEquals(3, reloaded2.getNumberOfPages());
             }
         }
+    }
+
+    private static PDActionGoTo goTo(PDPage target) {
+        PDPageFitDestination dest = new PDPageFitDestination();
+        dest.setPage(target);
+        PDActionGoTo goTo = new PDActionGoTo();
+        goTo.setDestination(dest);
+        return goTo;
+    }
+
+    @Test
+    public void testFormFieldWithWidgetsOnOtherPages() throws Exception {
+        try (PDDocument source = createLinkedDocument(5)) {
+            // one text field shown on page 1 and on page 5 (e.g. the file number in the header of each page)
+            PDAcroForm acroForm = new PDAcroForm(source);
+            source.getDocumentCatalog().setAcroForm(acroForm);
+            PDTextField field = new PDTextField(acroForm);
+            field.setPartialName("aktenzeichen");
+            List<PDAnnotationWidget> widgets = new ArrayList<>();
+            for (int pageIndex : new int[]{0, 4}) {
+                PDAnnotationWidget widget = new PDAnnotationWidget();
+                widget.setRectangle(new PDRectangle(400, 800, 150, 20));
+                widget.setPage(source.getPage(pageIndex));
+                widget.setParent(field);
+                List<PDAnnotation> annotations = new ArrayList<>(source.getPage(pageIndex).getAnnotations());
+                annotations.add(widget);
+                source.getPage(pageIndex).setAnnotations(annotations);
+                widgets.add(widget);
+            }
+            field.setWidgets(widgets);
+            acroForm.getFields().add(field);
+
+            try (PDDocument part = PdfSplitUtils.extractPages(source, 0, 2); PDDocument reloaded = saveAndReload(part)) {
+                assertEquals(2, reloaded.getNumberOfPages());
+                assertEquals(2, reloaded.getDocument().getObjectsByType(COSName.PAGE).size());
+                // the widget on page 1 stays, so the page still looks the same
+                assertEquals(2, reloaded.getPage(0).getAnnotations().size());
+            }
+        }
+    }
+
+    @Test
+    public void testChainedActionToOtherPage() throws Exception {
+        try (PDDocument source = createLinkedDocument(5)) {
+            // link on page 1: go to page 2, then (next action) to page 5
+            PDActionGoTo first = goTo(source.getPage(1));
+            first.setNext(Arrays.<PDAction>asList(goTo(source.getPage(4))));
+            PDAnnotationLink link = new PDAnnotationLink();
+            link.setRectangle(new PDRectangle(50, 650, 100, 20));
+            link.setAction(first);
+            List<PDAnnotation> annotations = new ArrayList<>(source.getPage(0).getAnnotations());
+            annotations.add(link);
+            source.getPage(0).setAnnotations(annotations);
+
+            try (PDDocument part = PdfSplitUtils.extractPages(source, 0, 2); PDDocument reloaded = saveAndReload(part)) {
+                assertEquals(2, reloaded.getNumberOfPages());
+                assertEquals(2, reloaded.getDocument().getObjectsByType(COSName.PAGE).size());
+            }
+        }
+    }
+
+    @Test
+    public void testRepeatedSplitPagesCreateNoEmptyPart() {
+        // user input "2,2" for a 5 page document - two parts, not an empty one in between
+        List<int[]> ranges = PdfSplitUtils.toPartRanges(Arrays.asList(2, 2), 5);
+        assertEquals(2, ranges.size());
+        assertArrayEquals(new int[]{0, 2}, ranges.get(0));
+        assertArrayEquals(new int[]{2, 5}, ranges.get(1));
+
+        ranges = PdfSplitUtils.toPartRanges(Arrays.asList(4, 1, 4), 5);
+        assertEquals(3, ranges.size());
+        assertArrayEquals(new int[]{0, 1}, ranges.get(0));
+        assertArrayEquals(new int[]{1, 4}, ranges.get(1));
+        assertArrayEquals(new int[]{4, 5}, ranges.get(2));
     }
 
     @Test(expected = IllegalArgumentException.class)

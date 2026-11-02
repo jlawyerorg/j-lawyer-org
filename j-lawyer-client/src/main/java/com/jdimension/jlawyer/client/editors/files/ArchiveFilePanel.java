@@ -9694,32 +9694,28 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         }
                     }
 
-                    List<Integer> allSplitPoints = new ArrayList<>();
-                    allSplitPoints.add(0);
-                    allSplitPoints.addAll(splitPages);
-                    allSplitPoints.add(pageCount);
+                    // doppelte Seitenzahlen ergeben keinen leeren Teil
+                    List<int[]> partRanges = PdfSplitUtils.toPartRanges(splitPages, pageCount);
 
                     ClientSettings settings = ClientSettings.getInstance();
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                     ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
 
                     // Erstelle für jeden Abschnitt ein neues temporäres Dokument
-                    for (int i = 0; i < allSplitPoints.size() - 1; i++) {
-                        int startPage = allSplitPoints.get(i);
-                        int endPage = allSplitPoints.get(i + 1);
+                    for (int i = 0; i < partRanges.size(); i++) {
+                        int startPage = partRanges.get(i)[0];
+                        int endPage = partRanges.get(i)[1];
 
                         // Erstelle eine neue temporäre Datei für diesen Teil
                         String partTempPath = FileUtils.createTempFile("part_" + (i + 1) + "_" + doc.getName(), new byte[0]);
                         tempFiles.add(partTempPath);
 
-                        PDDocument sourceDoc = PDDocument.load(new File(tempPath));
                         // Kopiere die relevanten Seiten - ohne Verweise auf Seiten außerhalb des Teils, sonst enthält jeder Teil das ganze Original
-                        PDDocument newDoc = PdfSplitUtils.extractPages(sourceDoc, startPage, endPage);
-
-                        // Speichere den Teil
-                        newDoc.save(new File(partTempPath));
-                        newDoc.close();
-                        sourceDoc.close();
+                        try (PDDocument sourceDoc = PDDocument.load(new File(tempPath));
+                                PDDocument newDoc = PdfSplitUtils.extractPages(sourceDoc, startPage, endPage)) {
+                            // Speichere den Teil
+                            newDoc.save(new File(partTempPath));
+                        }
 
                         // Generiere Namen für das neue Dokument
                         String baseName = doc.getName();
