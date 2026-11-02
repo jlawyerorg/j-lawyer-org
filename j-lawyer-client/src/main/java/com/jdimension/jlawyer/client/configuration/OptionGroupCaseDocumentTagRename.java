@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.configuration;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.UserUtils;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
@@ -690,7 +691,7 @@ public class OptionGroupCaseDocumentTagRename extends OptionGroupRenameHandler {
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
             if(this.parent!=null) {
-                JOptionPane.showMessageDialog(this.parent, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this.parent, UserUtils.getServerErrorMessage(ex), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
             return;
         }
