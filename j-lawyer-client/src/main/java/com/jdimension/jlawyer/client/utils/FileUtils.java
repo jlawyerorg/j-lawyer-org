@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import java.awt.Component;
 import java.awt.KeyboardFocusManager;
 import java.awt.Toolkit;
+import java.awt.Window;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -692,6 +693,7 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import javax.swing.filechooser.FileSystemView;
 import org.apache.log4j.Logger;
@@ -1027,9 +1029,27 @@ public class FileUtils extends ServerFileUtils {
         });
 
         dialog.setVisible(true);
-        
+
         // Clear focus again before dialog closes
         KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner();
+
+        // release the native dialog window - JOptionPane.showXxx would do this, createDialog does not
+        dialog.dispose();
+
+        // on macOS, the screen menu bar is disabled while a modal dialog is showing and may stay disabled
+        // when modal dialogs follow each other (e.g. case assignment followed by this file name dialog), see #3731.
+        // Explicitly re-activating the owner window makes macOS re-evaluate the menu bar state.
+        // Done deferred, so the key event that closed the dialog has been fully processed (see #2066).
+        if (SystemUtils.isMacOs()) {
+            final Window ownerWindow = (parent instanceof Window) ? (Window) parent : SwingUtilities.getWindowAncestor(parent);
+            if (ownerWindow != null) {
+                SwingUtilities.invokeLater(() -> {
+                    if (ownerWindow.isShowing()) {
+                        ownerWindow.toFront();
+                    }
+                });
+            }
+        }
 
         if (p.getFilename() != null) {
 
