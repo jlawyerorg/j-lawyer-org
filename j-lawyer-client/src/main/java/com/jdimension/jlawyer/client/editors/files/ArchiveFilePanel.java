@@ -1743,8 +1743,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             @Override
             protected void done() {
-                if (caseLoadCount != caseLoadAtStart || dto == null || !caseId.equals(dto.getId())) {
-                    // the case has been opened again or another case has been opened, which loads the documents anyway
+                if (this.isObsolete()) {
                     finishDocumentsReload();
                     return;
                 }
@@ -1755,6 +1754,29 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     Throwable cause = (ex instanceof java.util.concurrent.ExecutionException && ex.getCause() != null) ? ex.getCause() : ex;
                     log.error("Could not reload the documents of case " + caseId, cause);
                     JOptionPane.showMessageDialog(ArchiveFilePanel.this, "Fehler beim Neuladen der Dokumente: " + cause.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                this.applyWhenNoDialogIsOpen();
+            }
+
+            // the case has been opened again or another case has been opened, which loads the
+            // documents anyway, or the case view has been closed, e.g. by switching to another module
+            private boolean isObsolete() {
+                return caseLoadCount != caseLoadAtStart || dto == null || !caseId.equals(dto.getId()) || !ArchiveFilePanel.this.isDisplayable();
+            }
+
+            // a modal dialog, e.g. for a folder, a highlight or an upload, may still change the
+            // documents or folders it has been opened for - the result is applied after it is closed
+            private void applyWhenNoDialogIsOpen() {
+                if (this.isObsolete()) {
+                    finishDocumentsReload();
+                    return;
+                }
+                if (isModalDialogShowing()) {
+                    javax.swing.Timer waitTimer = new javax.swing.Timer(300, e -> this.applyWhenNoDialogIsOpen());
+                    waitTimer.setRepeats(false);
+                    waitTimer.start();
                     return;
                 }
 
@@ -1778,7 +1800,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         docToInvoice.put(inv.getInvoiceDocument().getId(), inv);
                     }
                 }
-                ArchiveFileDocumentsBean previewedBefore = findDocument(caseFolderPanel1.getDocuments(), lastPreviewDocId);
+                ArchiveFileDocumentsBean previewedBefore = findDocument(caseFolderPanel1.getDocuments(), getShownPreviewDocumentId());
                 HashSet<String> selectedBefore = documentIds(caseFolderPanel1.getSelectedDocuments());
 
                 dto.setRootFolder(this.rootFolder);
@@ -1796,10 +1818,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 if (!documentIds(caseFolderPanel1.getSelectedDocuments()).equals(selectedBefore)) {
                     documentSelectionChanged();
                 }
-                ArchiveFileDocumentsBean previewedAfter = findDocument(caseFolderPanel1.getDocuments(), lastPreviewDocId);
-                if (previewedBefore != null && previewedAfter != null && (previewedBefore.getVersion() != previewedAfter.getVersion() || previewedBefore.getSize() != previewedAfter.getSize() || !java.util.Objects.equals(previewedBefore.getChangeDate(), previewedAfter.getChangeDate()))) {
-                    // the previewed document has new content
-                    updateDocumentPreview(true);
+                if (previewedBefore != null && hasNewContent(previewedBefore, findDocument(caseFolderPanel1.getDocuments(), previewedBefore.getId()))) {
+                    if (caseFolderPanel1.isTableMode()) {
+                        // the table view shows no preview - drop the outdated one, so that it is
+                        // loaded when the preview is shown again
+                        pnlPreview.removeAll();
+                        pnlPreview.revalidate();
+                        pnlPreview.repaint();
+                    } else if (previewedBefore.getId().equals(lastPreviewDocId)) {
+                        updateDocumentPreview(true);
+                    }
                 }
 
                 if (this.fulltextError != null) {
@@ -1807,6 +1835,36 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
             }
         }.execute();
+    }
+
+    /**
+     * @param shown a document as shown before the documents have been reloaded
+     * @param reloaded the same document as reloaded, null if it is gone
+     * @return true if the reloaded document has new content, so that its preview is outdated
+     */
+    static boolean hasNewContent(ArchiveFileDocumentsBean shown, ArchiveFileDocumentsBean reloaded) {
+        if (reloaded == null) {
+            return false;
+        }
+        return shown.getVersion() != reloaded.getVersion() || shown.getSize() != reloaded.getSize()
+                || !java.util.Objects.equals(shown.getChangeDate(), reloaded.getChangeDate());
+    }
+
+    // the document whose preview is shown - in the table view it may differ from the selection
+    private String getShownPreviewDocumentId() {
+        if (this.pnlPreview.getComponentCount() > 0 && this.pnlPreview.getComponent(0) instanceof com.jdimension.jlawyer.client.editors.documents.viewer.PreviewPanel) {
+            return ((com.jdimension.jlawyer.client.editors.documents.viewer.PreviewPanel) this.pnlPreview.getComponent(0)).getDocumentId();
+        }
+        return null;
+    }
+
+    private static boolean isModalDialogShowing() {
+        for (java.awt.Window w : java.awt.Window.getWindows()) {
+            if (w instanceof java.awt.Dialog && ((java.awt.Dialog) w).isModal() && w.isShowing()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static HashSet<String> documentIds(Collection<ArchiveFileDocumentsBean> documents) {

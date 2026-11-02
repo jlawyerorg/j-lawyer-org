@@ -2386,7 +2386,31 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         return this.documentTags.getOrDefault(documentId, new ArrayList<>());
     }
 
+    /**
+     * @param documents the documents of the case
+     * @param doc a document
+     * @return true if a document with the same id has been found and replaced by the given one
+     */
+    static boolean replaceDocument(List<ArchiveFileDocumentsBean> documents, ArchiveFileDocumentsBean doc) {
+        int index = documents.indexOf(doc);
+        if (index < 0) {
+            return false;
+        }
+        documents.set(index, doc);
+        return true;
+    }
+
     public void addDocument(ArchiveFileDocumentsBean newDoc, Invoice invoice) {
+        if (replaceDocument(this.documents, newDoc)) {
+            // already shown, e.g. the documents have been loaded again after it was saved - the
+            // given instance replaces the shown one, as the caller may keep changing it
+            this.changeCount++;
+            if (invoice != null) {
+                this.linkedInvoices.put(newDoc.getId(), invoice);
+            }
+            this.refreshKeepingScrollPosition();
+            return;
+        }
         this.changeCount++;
         this.documents.add(newDoc);
         if (invoice != null) {
