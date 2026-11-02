@@ -1031,6 +1031,14 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         }
     }
 
+    /**
+     * @return true if the displayed contact has already been saved on the
+     * server
+     */
+    protected boolean isContactSaved() {
+        return this.dto != null && this.dto.getId() != null;
+    }
+
     public void setAddressDTO(AddressBean dto) {
         this.dto = dto;
         this.invoicesPerCase.clear();

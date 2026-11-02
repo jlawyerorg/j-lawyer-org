@@ -839,6 +839,12 @@ public class NewAddressPanel extends AddressPanel implements ResetOnDisplayEdito
     public boolean needsReset() {
         return true;
     }
+
+    @Override
+    public boolean needsResetOnReselect() {
+        // the contact has been saved already, e.g. before activating a tag - selecting "new" again starts a new contact
+        return this.isContactSaved();
+    }
     
     
     

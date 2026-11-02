@@ -770,7 +770,9 @@ public class EditorsRegistry {
 
         if (c != null && this.pane.getComponentCount() == 1) {
             if (c == this.pane.getComponent(0)) {
-
+                if (!skipReset && c instanceof ResetOnDisplayEditor && ((ResetOnDisplayEditor) c).needsResetOnReselect()) {
+                    this.resetOnReselect(c);
+                }
                 return;
             }
         }
@@ -815,6 +817,23 @@ public class EditorsRegistry {
                 }
             }
         }
+    }
+
+    // the displayed editor has been selected again: offer to save pending changes, then reset it
+    private void resetOnReselect(Component c) {
+        if (c instanceof SaveableEditor) {
+            SaveableEditor se = (SaveableEditor) c;
+            if (se.isDirty()) {
+                int ret = JOptionPane.showConfirmDialog(this.getMainWindow(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("dialog.savebeforeexit"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("dialog.savebeforeexit.title"), JOptionPane.YES_NO_OPTION);
+                if (ret == JOptionPane.CLOSED_OPTION) {
+                    return;
+                }
+                if (ret == JOptionPane.YES_OPTION && !se.save()) {
+                    return;
+                }
+            }
+        }
+        ((ResetOnDisplayEditor) c).reset();
     }
 
     public void setStatusLabel(JLabel status) {

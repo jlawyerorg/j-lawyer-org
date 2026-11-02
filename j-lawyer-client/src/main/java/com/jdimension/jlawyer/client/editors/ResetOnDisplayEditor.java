@@ -673,4 +673,15 @@ public interface ResetOnDisplayEditor {
     
     public boolean needsReset();
     
+    /**
+     * Whether the editor is to be reset when it is selected again while it
+     * is already displayed, e.g. a "new entry" editor whose entry has been
+     * saved in the meantime.
+     *
+     * @return true to reset the editor, false to leave it as it is
+     */
+    default boolean needsResetOnReselect() {
+        return false;
+    }
+    
 }
