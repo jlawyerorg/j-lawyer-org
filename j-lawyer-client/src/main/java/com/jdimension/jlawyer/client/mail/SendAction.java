@@ -670,7 +670,6 @@ import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
-import com.jdimension.jlawyer.email.CommonMailUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
@@ -855,7 +854,6 @@ public class SendAction extends ProgressableAction {
         smtpProps.put("mail.smtp.user", ms.getEmailOutUser());
         smtpProps.put("mail.smtp.auth", true);
         smtpProps.put("mail.smtps.host", ms.getEmailOutServer());
-        CommonMailUtils.setSmtpTimeouts(smtpProps);
         if (ms.isEmailStartTls()) {
             smtpProps.put("mail.smtp.starttls.enable", "true");
         }
