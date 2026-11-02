@@ -12,17 +12,19 @@
     <packaging>jar</packaging>
     
     <dependencyManagement>
-        <!-- jackson conflicts with the version that is part of bea-wrapper, therefore fix its version -->
+        <!-- jackson is relocated into shaded.* (see maven-shade-plugin below), so this version is
+             internal to the shaded jar. Keep jackson-databind and jackson-core on the SAME version:
+             a mismatched pair inside the jar fails at runtime with NoSuchMethodError. -->
         <dependencies>
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
-                <version>2.16.1</version>
+                <version>2.18.11</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-core</artifactId>
-                <version>2.16.1</version>
+                <version>2.18.11</version>
             </dependency>
             <!-- nextcloud-api 13.1.0 is compiled against the Jakarta XML Binding 4.x API
                  (jakarta.xml.bind namespace). The parent pom manages the JAXB/activation
@@ -195,11 +197,11 @@
                                      fat jar is self-contained. The client classpath carries several
                                      competing jackson versions (WildFly's jboss-client.jar bundles
                                      databind ~2.12 for EJB remoting; ez-vcard pulls jackson-core; this
-                                     jar bundles databind/core 2.16.1). Without relocation nextcloud-api
+                                     jar bundles its own databind/core). Without relocation nextcloud-api
                                      loads an inconsistent (databind, core) pair depending on classpath
                                      order and fails with NoSuchMethodError (e.g. JsonParser.getRead
                                      Capabilities / JsonFactory.requiresPropertyOrdering). Relocating
-                                     isolates nextcloud-api onto this jar's own 2.16.1 jackson. -->
+                                     isolates nextcloud-api onto this jar's own jackson. -->
                                 <relocation>
                                     <pattern>com.fasterxml.jackson.core</pattern>
                                     <shadedPattern>shaded.com.fasterxml.jackson.core</shadedPattern>

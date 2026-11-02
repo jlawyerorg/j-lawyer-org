@@ -135,6 +135,8 @@ public class AssistantChatPanel extends JDialog {
     private AiRequestStatus result = null;
 
     private boolean interrupted = false;
+    // groups the tool calls of the running request, only accessed on the EDT
+    private ToolCallGroupPanel activeToolGroup = null;
 
     // variables for transcription
     private boolean isRecording = false;
@@ -198,6 +200,7 @@ public class AssistantChatPanel extends JDialog {
     private JScrollPane scrollMessages;
     private JPanel pnlMessages;
     private JProgressBar progress;
+    private IngoStatusLine statusLine;
     private JTextArea taPrompt;
     private JButton cmdSubmit;
     private JButton cmdInterrupt;
@@ -597,6 +600,10 @@ public class AssistantChatPanel extends JDialog {
         progress.setBorderPainted(false);
         bottomPanel.add(progress);
 
+        // --- Status line, visible while the progress bar is ---
+        statusLine = new IngoStatusLine();
+        bottomPanel.add(statusLine);
+
         // --- Input area: centered at ~80% width with buttons right of text field ---
         JPanel inputWrapper = new JPanel(new GridBagLayout());
         inputWrapper.setBorder(BorderFactory.createEmptyBorder(8, 16, 4, 16));
@@ -779,6 +786,7 @@ public class AssistantChatPanel extends JDialog {
     private void startBackgroundTask() {
 
         this.interrupted = false;
+        this.activeToolGroup = null;
 
         this.cmdSubmit.setVisible(false);
         this.cmdInterrupt.setVisible(true);
@@ -792,6 +800,7 @@ public class AssistantChatPanel extends JDialog {
 
         this.progress.setIndeterminate(true);
         this.progress.setVisible(true);
+        this.statusLine.start();
 
         final boolean anonymize = capability.isAnonymize();
         final String conversationId = anonymize ? this.storedChat.conversationId : null;
@@ -977,7 +986,15 @@ public class AssistantChatPanel extends JDialog {
                             final String fParamTooltip = paramTooltip;
                             final AtomicReference<JPanel> panelRef = new AtomicReference<>();
                             SwingUtilities.invokeAndWait(() -> {
-                                panelRef.set(addToolStatusMessage(fDisplayMsg, fRiskLevel, fParamTooltip));
+                                if (activeToolGroup == null) {
+                                    activeToolGroup = new ToolCallGroupPanel();
+                                    removePlaceholder();
+                                    pnlMessages.add(activeToolGroup);
+                                }
+                                panelRef.set(activeToolGroup.addCall(fDisplayMsg, fRiskLevel, fParamTooltip));
+                                pnlMessages.revalidate();
+                                pnlMessages.repaint();
+                                scrollToBottom();
                             });
                             toolPanels.add(panelRef.get());
                         }
@@ -996,6 +1013,13 @@ public class AssistantChatPanel extends JDialog {
                             toolResultMsg.setToolName(tc.getToolName());
 
                             if (approved) {
+                                final JPanel runningPanel = toolPanel;
+                                final String runningSummary = toolSummary;
+                                SwingUtilities.invokeAndWait(() -> {
+                                    activeToolGroup.setRunning(runningPanel);
+                                    statusLine.setDetail(runningSummary);
+                                });
+
                                 // Execute the tool
                                 String toolResult;
                                 try {
@@ -1009,7 +1033,7 @@ public class AssistantChatPanel extends JDialog {
                                 final JPanel tp = toolPanel;
                                 final List<String[]> docRefs = extractDocumentReferences(toolResult);
                                 SwingUtilities.invokeAndWait(() -> {
-                                    updateToolStatusMessage(tp, displayResult);
+                                    activeToolGroup.updateCall(tp, displayResult);
                                     if (!docRefs.isEmpty()) {
                                         addDocumentButton(tp, docRefs);
                                     }
@@ -1020,7 +1044,8 @@ public class AssistantChatPanel extends JDialog {
                                 final String displayDenied = toolSummary + " — abgelehnt";
                                 final JPanel tp = toolPanel;
                                 SwingUtilities.invokeAndWait(() -> {
-                                    updateToolStatusMessage(tp, displayDenied);
+                                    activeToolGroup.markDenied();
+                                    activeToolGroup.updateCall(tp, displayDenied);
                                 });
                             }
                             toolResultMessages.add(toolResultMsg);
@@ -1028,6 +1053,7 @@ public class AssistantChatPanel extends JDialog {
 
                         // Add all tool result messages and send follow-up
                         messages.addAll(toolResultMessages);
+                        SwingUtilities.invokeLater(() -> statusLine.setDetail(null));
 
                         // Send follow-up request with tool results
                         status = locator.lookupIntegrationServiceRemote().submitAssistantRequest(config, capability.getRequestType(), capability.getActionId(), capability.getModelRef(), null, capability.getSystemPrompt(), capability.isAsyncRecommended(), fParams, null, messages, fPromptConfigs, fTools, anonymize, conversationId);
@@ -1100,6 +1126,13 @@ public class AssistantChatPanel extends JDialog {
             protected void done() {
                 AiRequestStatus status = resultRef.get();
 
+                if (activeToolGroup != null) {
+                    activeToolGroup.finish();
+                    activeToolGroup = null;
+                    pnlMessages.revalidate();
+                    pnlMessages.repaint();
+                }
+
                 result = status;
                 if (status != null) {
                     if (status.isError()) {
@@ -1169,6 +1202,7 @@ public class AssistantChatPanel extends JDialog {
                 lblAnonymization.requestFinished(status == null || status.isError());
                 progress.setIndeterminate(false);
                 progress.setVisible(false);
+                statusLine.stop();
                 taPrompt.setText("");
 
                 cmdSubmit.setVisible(true);
@@ -1322,10 +1356,20 @@ public class AssistantChatPanel extends JDialog {
         this.taPrompt.setEnabled(true);
 
         removePlaceholder();
+        ToolCallGroupPanel toolGroup = null;
         for (AiChatTranscript.Entry entry : AiChatTranscript.toEntries(storedMessages, this.toolRegistry, this.capability.getModelRef())) {
             if (entry.getKind() == AiChatTranscript.Entry.KIND_TOOL) {
-                addToolStatusMessage(entry.getText(), entry.getRiskLevel(), null);
+                // consecutive tool calls are shown as one group
+                if (toolGroup == null) {
+                    toolGroup = new ToolCallGroupPanel();
+                    pnlMessages.add(toolGroup);
+                }
+                toolGroup.addCall(entry.getText(), entry.getRiskLevel(), null);
                 continue;
+            }
+            if (toolGroup != null) {
+                toolGroup.finish();
+                toolGroup = null;
             }
             Message m = entry.toMessage();
             AiChatMessageMarkdownPanel msgPanel = createStyledMessagePanel(m, this);
@@ -1343,6 +1387,9 @@ public class AssistantChatPanel extends JDialog {
                 msgPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
                 pnlMessages.add(msgPanel);
             }
+        }
+        if (toolGroup != null) {
+            toolGroup.finish();
         }
         pnlMessages.revalidate();
         pnlMessages.repaint();
@@ -1555,65 +1602,6 @@ public class AssistantChatPanel extends JDialog {
             JScrollBar bar = scrollMessages.getVerticalScrollBar();
             bar.setValue(bar.getMaximum());
         });
-    }
-
-    private JPanel addToolStatusMessage(String text, String riskLevel, String tooltip) {
-        Color bgColor;
-        Color borderColor;
-        Color indicatorColor;
-        if (ToolDefinition.RISK_HIGH.equals(riskLevel)) {
-            bgColor = new Color(255, 240, 240);
-            borderColor = new Color(220, 150, 150);
-            indicatorColor = new Color(244, 67, 54);
-        } else if (ToolDefinition.RISK_MEDIUM.equals(riskLevel)) {
-            bgColor = new Color(255, 248, 220);
-            borderColor = new Color(220, 180, 100);
-            indicatorColor = new Color(255, 152, 0);
-        } else {
-            bgColor = new Color(240, 255, 240);
-            borderColor = new Color(150, 200, 150);
-            indicatorColor = new Color(76, 175, 80);
-        }
-
-        JPanel toolPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 4));
-        toolPanel.setOpaque(true);
-        toolPanel.setBackground(bgColor);
-        toolPanel.setBorder(new FlatLineBorder(new Insets(4, 8, 4, 8), borderColor, 1, 8));
-
-        JLabel riskIndicator = new JLabel("\u25CF");
-        riskIndicator.setFont(riskIndicator.getFont().deriveFont(10f));
-        riskIndicator.setForeground(indicatorColor);
-        toolPanel.add(riskIndicator);
-
-        JLabel lbl = new JLabel(text);
-        lbl.setFont(lbl.getFont().deriveFont(lbl.getFont().getSize2D() - 1f));
-        lbl.setName("toolStatusLabel");
-        toolPanel.add(lbl);
-
-        if (tooltip != null && !tooltip.isEmpty()) {
-            toolPanel.setToolTipText(tooltip);
-        }
-
-        toolPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        toolPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, toolPanel.getPreferredSize().height + 8));
-        removePlaceholder();
-        pnlMessages.add(toolPanel);
-        pnlMessages.revalidate();
-        pnlMessages.repaint();
-        scrollToBottom();
-        return toolPanel;
-    }
-
-    private void updateToolStatusMessage(JPanel toolPanel, String newText) {
-        for (Component comp : toolPanel.getComponents()) {
-            if (comp instanceof JLabel && "toolStatusLabel".equals(comp.getName())) {
-                ((JLabel) comp).setText(newText);
-                toolPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, toolPanel.getPreferredSize().height + 8));
-                toolPanel.revalidate();
-                toolPanel.repaint();
-                break;
-            }
-        }
     }
 
     private List<String[]> extractDocumentReferences(String toolResult) {
