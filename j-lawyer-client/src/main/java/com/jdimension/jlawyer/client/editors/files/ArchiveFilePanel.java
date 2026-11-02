@@ -9328,7 +9328,23 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             invoices.add(inv);
         }
 
-        CaseAccountEntryDialog dlg = new CaseAccountEntryDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, ae.getAccountEntry(), this.pnlInvolvedParties.getInvolvedPartiesAddress(), invoices);
+        // the dialog writes its input into the entry it gets - edit a copy, the table keeps the stored values if saving fails
+        CaseAccountEntry original = ae.getAccountEntry();
+        CaseAccountEntry editedEntry = new CaseAccountEntry();
+        editedEntry.setId(original.getId());
+        editedEntry.setArchiveFileKey(original.getArchiveFileKey());
+        editedEntry.setEntryDate(original.getEntryDate());
+        editedEntry.setContact(original.getContact());
+        editedEntry.setInvoice(original.getInvoice());
+        editedEntry.setDescription(original.getDescription());
+        editedEntry.setEarnings(original.getEarnings());
+        editedEntry.setSpendings(original.getSpendings());
+        editedEntry.setEscrowIn(original.getEscrowIn());
+        editedEntry.setEscrowOut(original.getEscrowOut());
+        editedEntry.setExpendituresIn(original.getExpendituresIn());
+        editedEntry.setExpendituresOut(original.getExpendituresOut());
+
+        CaseAccountEntryDialog dlg = new CaseAccountEntryDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, editedEntry, this.pnlInvolvedParties.getInvolvedPartiesAddress(), invoices);
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
         if (dlg.getEntry() != null) {
