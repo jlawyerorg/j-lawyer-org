@@ -673,6 +673,8 @@ import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -1226,11 +1228,11 @@ public class RestoreExecutor {
             backup = backup + File.separator;
         }
 
-        if (this.isMariaDb()) {
-            // MariaDB does not know the default collation of MySQL 8, dumps created on MySQL 8 can not be imported otherwise
-            long replaced = SqlDumpUtils.replaceInFile(new File(backup + "jlawyerdb-dump.sql"), SqlDumpUtils.MYSQL8_DEFAULT_COLLATION, SqlDumpUtils.PORTABLE_COLLATION);
+        if (this.isCollationUnknown(SqlDumpUtils.MYSQL8_DEFAULT_COLLATION)) {
+            // e.g. MariaDB before 11.4.5 does not know the default collation of MySQL 8, dumps created on MySQL 8 can not be imported otherwise
+            long replaced = SqlDumpUtils.replaceCollation(new File(backup + "jlawyerdb-dump.sql"), SqlDumpUtils.MYSQL8_DEFAULT_COLLATION, SqlDumpUtils.PORTABLE_COLLATION);
             if (replaced > 0 && progress != null) {
-                progress.onProgress("Kollation " + SqlDumpUtils.MYSQL8_DEFAULT_COLLATION + " für MariaDB durch " + SqlDumpUtils.PORTABLE_COLLATION + " ersetzt (" + replaced + " Stellen)");
+                progress.onProgress("Kollation " + SqlDumpUtils.MYSQL8_DEFAULT_COLLATION + " ist auf dem Datenbankserver unbekannt und wurde durch " + SqlDumpUtils.PORTABLE_COLLATION + " ersetzt (" + replaced + " Stellen)");
             }
         }
 
@@ -1291,16 +1293,25 @@ public class RestoreExecutor {
         }
     }
 
-    private boolean isMariaDb() {
+    /**
+     * Asks the target database server whether it knows a collation. Only an explicit "unknown collation" error (1273)
+     * counts - if the check itself fails, the dump is restored unchanged as before.
+     */
+    private boolean isCollationUnknown(String collation) {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            try (Connection con = DriverManager.getConnection("jdbc:mysql://" + this.dbHost + ":" + this.dbPort + "/?user=" + this.dbUser + "&serverTimezone=Europe/Berlin&sslMode=DISABLED&password=" + dbPassword)) {
-                // e.g. "5.5.5-10.11.8-MariaDB-0ubuntu0.24.04.1"
-                String version = con.getMetaData().getDatabaseProductVersion();
-                return version != null && version.toLowerCase().contains("mariadb");
+            try (Connection con = DriverManager.getConnection("jdbc:mysql://" + this.dbHost + ":" + this.dbPort + "/?user=" + this.dbUser + "&serverTimezone=Europe/Berlin&sslMode=DISABLED&password=" + dbPassword);
+                    Statement st = con.createStatement()) {
+                st.executeQuery("SELECT _utf8mb4'a' COLLATE " + collation).close();
+                return false;
             }
+        } catch (SQLException ex) {
+            if (ex.getErrorCode() != 1273) {
+                System.err.println("Unable to check collation " + collation + " on the database server: " + ex.getMessage());
+            }
+            return ex.getErrorCode() == 1273;
         } catch (Throwable t) {
-            System.err.println("Unable to determine the database server version: " + t.getMessage());
+            System.err.println("Unable to check collation " + collation + " on the database server: " + t.getMessage());
             return false;
         }
     }

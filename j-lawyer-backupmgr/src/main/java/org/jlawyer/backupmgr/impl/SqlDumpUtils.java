@@ -662,6 +662,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.backupmgr.impl;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -673,6 +675,8 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Helpers for adjusting a database dump before it is restored.
@@ -680,7 +684,7 @@ import java.nio.file.StandardCopyOption;
 public class SqlDumpUtils {
 
     /**
-     * Default collation of MySQL 8 that MariaDB (up to 11.4.4) does not know.
+     * Default collation of MySQL 8 that MariaDB before 11.4.5 does not know.
      */
     public static final String MYSQL8_DEFAULT_COLLATION = "utf8mb4_0900_ai_ci";
 
@@ -695,41 +699,40 @@ public class SqlDumpUtils {
     }
 
     /**
-     * Replaces all occurrences of a string in a (possibly very large) file. The file is streamed and processed as
-     * ISO-8859-1, so that every byte is written back unchanged - dumps may contain binary data that is not valid
-     * UTF-8. The search string must therefore consist of ASCII characters only. The file is only replaced if the search
-     * string was found.
+     * Replaces a collation where the statements of a (possibly very large) dump use it as a collation: after COLLATE
+     * and in collation variables such as collation_connection. Lines with data (INSERT / REPLACE statements, one line
+     * each in a mysqldump file) are written back unchanged, also if their values contain the name of the collation.
+     * The file is processed as ISO-8859-1, so that every byte is written back unchanged - dumps may contain binary
+     * data that is not valid UTF-8. The file is only replaced if the collation was found.
      *
-     * @param file the file to process
-     * @param search the ASCII string to look for
-     * @param replacement the ASCII replacement
+     * @param file the dump to process
+     * @param collation the collation to replace (ASCII)
+     * @param replacement the new collation (ASCII)
      * @return the number of replaced occurrences
      * @throws IOException if the file can not be read or written
      */
-    public static long replaceInFile(File file, String search, String replacement) throws IOException {
+    public static long replaceCollation(File file, String collation, String replacement) throws IOException {
+        Pattern usage = Pattern.compile("(?i)(\\bCOLLATE\\s*=?\\s*|\\b\\w*collation\\w*\\s*=\\s*)" + Pattern.quote(collation) + "\\b");
         File tmp = new File(file.getAbsolutePath() + ".tmp");
         long count = 0;
-        try (Reader in = new InputStreamReader(new FileInputStream(file), StandardCharsets.ISO_8859_1);
-                Writer out = new OutputStreamWriter(new FileOutputStream(tmp), StandardCharsets.ISO_8859_1)) {
+        try (Reader in = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.ISO_8859_1), BUFFER_SIZE);
+                Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(tmp), StandardCharsets.ISO_8859_1), BUFFER_SIZE)) {
             char[] buffer = new char[BUFFER_SIZE];
-            String pending = "";
+            StringBuilder line = new StringBuilder();
             int read;
             while ((read = in.read(buffer)) != -1) {
-                String chunk = pending + new String(buffer, 0, read);
                 int start = 0;
-                int idx;
-                while ((idx = chunk.indexOf(search, start)) > -1) {
-                    out.write(chunk, start, idx - start);
-                    out.write(replacement);
-                    count++;
-                    start = idx + search.length();
+                for (int i = 0; i < read; i++) {
+                    if (buffer[i] == '\n') {
+                        line.append(buffer, start, i + 1 - start);
+                        count += writeLine(line, out, usage, replacement);
+                        line.setLength(0);
+                        start = i + 1;
+                    }
                 }
-                // keep the end of the chunk, it may be the beginning of an occurrence that continues in the next chunk
-                int keepFrom = Math.max(start, chunk.length() - (search.length() - 1));
-                out.write(chunk, start, keepFrom - start);
-                pending = chunk.substring(keepFrom);
+                line.append(buffer, start, read - start);
             }
-            out.write(pending);
+            count += writeLine(line, out, usage, replacement);
         } catch (IOException ex) {
             Files.deleteIfExists(tmp.toPath());
             throw ex;
@@ -741,6 +744,28 @@ public class SqlDumpUtils {
             Files.delete(tmp.toPath());
         }
         return count;
+    }
+
+    private static long writeLine(StringBuilder line, Writer out, Pattern usage, String replacement) throws IOException {
+        if (isDataStatement(line)) {
+            out.append(line);
+            return 0;
+        }
+        long count = 0;
+        Matcher m = usage.matcher(line);
+        StringBuffer result = new StringBuffer();
+        while (m.find()) {
+            m.appendReplacement(result, Matcher.quoteReplacement(m.group(1) + replacement));
+            count++;
+        }
+        m.appendTail(result);
+        out.append(result);
+        return count;
+    }
+
+    private static boolean isDataStatement(StringBuilder line) {
+        String start = line.substring(0, Math.min(line.length(), 8)).toUpperCase();
+        return start.startsWith("INSERT ") || start.startsWith("REPLACE ");
     }
 
 }

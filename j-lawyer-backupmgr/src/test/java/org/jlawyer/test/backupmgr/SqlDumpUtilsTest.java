@@ -674,75 +674,93 @@ import org.junit.rules.TemporaryFolder;
 import static org.junit.Assert.*;
 
 /**
- * Restoring a MySQL 8 dump into MariaDB needs the MySQL 8 default collation to be replaced (issue #2592).
+ * Restoring a MySQL 8 dump into a server without the MySQL 8 default collation needs the collation to be replaced in
+ * the statements, but not in the data (issue #2592).
  */
 public class SqlDumpUtilsTest {
 
     @Rule
     public TemporaryFolder tmp = new TemporaryFolder();
 
-    private static final String TABLE = "CREATE TABLE `cases` (\n  `id` varchar(50) NOT NULL\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;\n";
+    private static final String TABLE = "CREATE TABLE `cases` (\n  `id` varchar(50) COLLATE utf8mb4_0900_ai_ci NOT NULL\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;\n";
 
-    private File write(byte[] content) throws Exception {
-        File f = tmp.newFile("jlawyerdb-dump.sql");
+    private File write(String name, byte[] content) throws Exception {
+        File f = tmp.newFile(name);
         Files.write(f.toPath(), content);
         return f;
     }
 
+    private static long replace(File dump) throws Exception {
+        return SqlDumpUtils.replaceCollation(dump, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION, SqlDumpUtils.PORTABLE_COLLATION);
+    }
+
     @Test
-    public void testCollationIsReplaced() throws Exception {
-        File dump = write((TABLE + TABLE).getBytes(StandardCharsets.UTF_8));
-        long count = SqlDumpUtils.replaceInFile(dump, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION, SqlDumpUtils.PORTABLE_COLLATION);
-        assertEquals(2, count);
-        String result = new String(Files.readAllBytes(dump.toPath()), StandardCharsets.UTF_8);
-        assertFalse(result.contains("utf8mb4_0900_ai_ci"));
-        assertEquals((TABLE + TABLE).replace("utf8mb4_0900_ai_ci", "utf8mb4_unicode_ci"), result);
-        assertFalse(new File(dump.getAbsolutePath() + ".tmp").exists());
+    public void testCollationIsReplacedInStatements() throws Exception {
+        String dump = TABLE + "/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;\n";
+        File f = write("jlawyerdb-dump.sql", dump.getBytes(StandardCharsets.UTF_8));
+        assertEquals(3, replace(f));
+        assertEquals(dump.replace("utf8mb4_0900_ai_ci", "utf8mb4_unicode_ci"), new String(Files.readAllBytes(f.toPath()), StandardCharsets.UTF_8));
+        assertFalse(new File(f.getAbsolutePath() + ".tmp").exists());
+    }
+
+    @Test
+    public void testDataIsNotChanged() throws Exception {
+        // a note that mentions the collation, also in a COLLATE clause, must be restored as it was stored
+        String data = "INSERT INTO `case_notes` VALUES ('1','Kollation utf8mb4_0900_ai_ci, siehe COLLATE utf8mb4_0900_ai_ci');\n"
+                + "REPLACE INTO `case_notes` VALUES ('2','COLLATE=utf8mb4_0900_ai_ci');\n";
+        File f = write("jlawyerdb-dump.sql", (TABLE + data).getBytes(StandardCharsets.UTF_8));
+        assertEquals(2, replace(f));
+        assertEquals(TABLE.replace("utf8mb4_0900_ai_ci", "utf8mb4_unicode_ci") + data, new String(Files.readAllBytes(f.toPath()), StandardCharsets.UTF_8));
     }
 
     @Test
     public void testOccurrenceAcrossBufferBoundary() throws Exception {
-        // the file is processed in chunks of 64k characters, put an occurrence across every position around the boundary
-        for (int offset = 1; offset < SqlDumpUtils.MYSQL8_DEFAULT_COLLATION.length(); offset++) {
-            char[] filler = new char[64 * 1024 - offset];
+        // the file is read in blocks of 64k characters - put the collation across every position of a block boundary
+        String prefix = "COLLATE=";
+        int length = SqlDumpUtils.MYSQL8_DEFAULT_COLLATION.length();
+        for (int before = 1; before < length; before++) {
+            char[] filler = new char[64 * 1024 - prefix.length() - before];
             Arrays.fill(filler, 'x');
-            String content = new String(filler) + "COLLATE=utf8mb4_0900_ai_ci;";
-            File dump = tmp.newFile("dump" + offset + ".sql");
-            Files.write(dump.toPath(), content.getBytes(StandardCharsets.ISO_8859_1));
-            assertEquals(1, SqlDumpUtils.replaceInFile(dump, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION, SqlDumpUtils.PORTABLE_COLLATION));
-            assertEquals(new String(filler) + "COLLATE=utf8mb4_unicode_ci;", new String(Files.readAllBytes(dump.toPath()), StandardCharsets.ISO_8859_1));
+            // like "... DEFAULT CHARSET=utf8mb4 COLLATE=..." in a real dump
+            filler[filler.length - 1] = ' ';
+            String content = new String(filler) + prefix + SqlDumpUtils.MYSQL8_DEFAULT_COLLATION + ";\n";
+            // the block boundary is "before" characters into the collation name
+            assertEquals(SqlDumpUtils.MYSQL8_DEFAULT_COLLATION.substring(0, before), content.substring(64 * 1024 - before, 64 * 1024));
+            File f = write("dump" + before + ".sql", content.getBytes(StandardCharsets.ISO_8859_1));
+            assertEquals(1, replace(f));
+            assertEquals(new String(filler) + prefix + SqlDumpUtils.PORTABLE_COLLATION + ";\n", new String(Files.readAllBytes(f.toPath()), StandardCharsets.ISO_8859_1));
         }
     }
 
     @Test
     public void testBinaryContentIsPreserved() throws Exception {
-        ByteArrayOutputStream expected = new ByteArrayOutputStream();
-        ByteArrayOutputStream content = new ByteArrayOutputStream();
         byte[] binary = new byte[256];
         for (int i = 0; i < binary.length; i++) {
             binary[i] = (byte) i;
         }
-        // invalid UTF-8 sequences and umlauts must survive unchanged
+        ByteArrayOutputStream content = new ByteArrayOutputStream();
+        ByteArrayOutputStream expected = new ByteArrayOutputStream();
+        // invalid UTF-8 sequences, line ends (\r\n, \n) and umlauts must survive unchanged
+        content.write("INSERT INTO `blobs` VALUES ('".getBytes(StandardCharsets.UTF_8));
         content.write(binary);
-        content.write("Müller COLLATE=utf8mb4_0900_ai_ci ".getBytes(StandardCharsets.UTF_8));
-        content.write(binary);
-        expected.write(binary);
-        expected.write("Müller COLLATE=utf8mb4_unicode_ci ".getBytes(StandardCharsets.UTF_8));
-        expected.write(binary);
-        File dump = write(content.toByteArray());
-        assertEquals(1, SqlDumpUtils.replaceInFile(dump, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION, SqlDumpUtils.PORTABLE_COLLATION));
-        assertArrayEquals(expected.toByteArray(), Files.readAllBytes(dump.toPath()));
+        content.write("');\r\n".getBytes(StandardCharsets.UTF_8));
+        expected.write(content.toByteArray());
+        content.write("-- Müller\r\nCREATE TABLE x (a int) COLLATE utf8mb4_0900_ai_ci;\r\n".getBytes(StandardCharsets.UTF_8));
+        expected.write("-- Müller\r\nCREATE TABLE x (a int) COLLATE utf8mb4_unicode_ci;\r\n".getBytes(StandardCharsets.UTF_8));
+        File f = write("jlawyerdb-dump.sql", content.toByteArray());
+        assertEquals(1, replace(f));
+        assertArrayEquals(expected.toByteArray(), Files.readAllBytes(f.toPath()));
     }
 
     @Test
     public void testFileWithoutOccurrenceIsUntouched() throws Exception {
         byte[] content = "CREATE TABLE `x` (`id` int) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;".getBytes(StandardCharsets.UTF_8);
-        File dump = write(content);
-        long modified = dump.lastModified();
-        assertEquals(0, SqlDumpUtils.replaceInFile(dump, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION, SqlDumpUtils.PORTABLE_COLLATION));
-        assertArrayEquals(content, Files.readAllBytes(dump.toPath()));
-        assertEquals(modified, dump.lastModified());
-        assertFalse(new File(dump.getAbsolutePath() + ".tmp").exists());
+        File f = write("jlawyerdb-dump.sql", content);
+        long modified = f.lastModified();
+        assertEquals(0, replace(f));
+        assertArrayEquals(content, Files.readAllBytes(f.toPath()));
+        assertEquals(modified, f.lastModified());
+        assertFalse(new File(f.getAbsolutePath() + ".tmp").exists());
     }
 
 }
