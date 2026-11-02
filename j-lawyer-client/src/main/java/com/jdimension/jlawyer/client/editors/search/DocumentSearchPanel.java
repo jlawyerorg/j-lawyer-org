@@ -693,21 +693,13 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
     DecimalFormat df = new DecimalFormat("0.000");
 
     /**
-     * Accurate description of the search syntax actually supported by the server-side
-     * {@code SearchAPI}: a plain full-text query over the document content, OR a single
-     * field prefix (dateiname/akte/az/text). Fields cannot be combined and boolean
-     * operators / exclusion are not supported. Quotes around a metadata field value mean
-     * "match the whole value exactly" - without them the value matches as a substring.
-     * Shown by {@link #showSearchSyntaxHelp()}. Keep in sync with
-     * {@code SearchQueryBuilder.build()}.
-     */
-    /**
      * Query prefix per entry of the field-selection combo ({@code cmbSearchField}). The
      * order MUST match the combo's items in the .form:
-     * 0 = Inhalt (full text, no prefix), 1 = Dateiname, 2 = Aktenname, 3 = Aktenzeichen.
+     * 0 = Inhalt (full text, no prefix), 1 = Dateiname, 2 = Aktenname, 3 = Aktenzeichen,
+     * 4 = Bezeichnung, 5 = Schlagwort, 6 = Von/An.
      * An empty prefix means "search the document content" (value sent unchanged).
      */
-    private static final String[] SEARCH_FIELD_PREFIXES = {"", "dateiname:", "akte:", "az:"};
+    private static final String[] SEARCH_FIELD_PREFIXES = {"", "dateiname:", "akte:", "az:", "bezeichnung:", "schlagwort:", "von:"};
 
     /**
      * Matches a field prefix the user typed themselves. When it is present, the prefix from
@@ -716,9 +708,18 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
      * anything, so the search silently returns nothing.
      */
     private static final Pattern EXPLICIT_FIELD_PREFIX
-            = Pattern.compile("^(dateiname|akte|az|text)\\s*:.*",
+            = Pattern.compile("^(dateiname|akte|az|bezeichnung|schlagwort|von|text)\\s*:.*",
                     Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
+    /**
+     * Accurate description of the search syntax actually supported by the server-side
+     * {@code SearchAPI}: a plain full-text query over the document content, OR a single
+     * field prefix (dateiname/akte/az/bezeichnung/schlagwort/von/text). Fields cannot be
+     * combined and boolean operators / exclusion are not supported. Quotes around a metadata
+     * field value mean "match the whole value exactly" - without them the value matches as a
+     * substring. Shown by {@link #showSearchSyntaxHelp()}. Keep in sync with
+     * {@code SearchQueryBuilder.build()}.
+     */
     private static final String SEARCH_SYNTAX_HELP
             = "<html><body style='width:380px'>"
             + "<b>Volltextsuche</b><br/>"
@@ -730,11 +731,14 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
             + "<tr><td valign='top'><code>dateiname:</code></td><td>Dateiname, z.B. <code>dateiname:vertrag.pdf</code></td></tr>"
             + "<tr><td valign='top'><code>akte:</code></td><td>Aktenname</td></tr>"
             + "<tr><td valign='top'><code>az:</code></td><td>Aktenzeichen</td></tr>"
+            + "<tr><td valign='top'><code>bezeichnung:</code></td><td>Dokumentbezeichnung</td></tr>"
+            + "<tr><td valign='top'><code>schlagwort:</code></td><td>Schlagwort &ndash; trifft jedes einzelne Schlagwort des Dokuments</td></tr>"
+            + "<tr><td valign='top'><code>von:</code></td><td>Von/An</td></tr>"
             + "<tr><td valign='top'><code>text:</code></td><td>Dokumentinhalt (wie Standardsuche)</td></tr>"
             + "</table>"
             + "Feldsuchen ignorieren Gro&szlig;-/Kleinschreibung; der gesamte Text nach dem "
             + "Doppelpunkt ist der Feldwert.<br/><br/>"
-            + "<b>Feldwert &ndash; Teiltreffer, Platzhalter, exakt</b> (dateiname/akte/az):<br/>"
+            + "<b>Feldwert &ndash; Teiltreffer, Platzhalter, exakt</b> (alle Felder au&szlig;er text):<br/>"
             + "<table cellpadding='2'>"
             + "<tr><td valign='top'><code>dateiname:quittung</code></td>"
             + "<td>findet jeden Namen, der <i>quittung</i> enth&auml;lt</td></tr>"
@@ -855,9 +859,9 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
         lblResultCount.setText("0 Ergebnisse");
 
         jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_help_white_36dp.png"))); // NOI18N
-        jLabel3.setToolTipText("<html><b>Volltextsuche</b> im Dokumentinhalt.<br/>Feld optional über das Dropdown wählen<br/>(Dateiname / Aktenname / Aktenzeichen).<br/>Feldwerte treffen als Teilstring,<br/>in Anführungszeichen exakt.<br/>Platzhalter <code>*</code>/<code>?</code> nur in Feldsuchen.<br/><i>Klicken für Details.</i></html>");
+        jLabel3.setToolTipText("<html><b>Volltextsuche</b> im Dokumentinhalt.<br/>Feld optional über das Dropdown wählen<br/>(Dateiname / Aktenname / Aktenzeichen /<br/>Bezeichnung / Schlagwort / Von/An).<br/>Feldwerte treffen als Teilstring,<br/>in Anführungszeichen exakt.<br/>Platzhalter <code>*</code>/<code>?</code> nur in Feldsuchen.<br/><i>Klicken für Details.</i></html>");
 
-        cmbSearchField.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Inhalt", "Dateiname", "Aktenname", "Aktenzeichen" }));
+        cmbSearchField.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Inhalt", "Dateiname", "Aktenname", "Aktenzeichen", "Bezeichnung", "Schlagwort", "Von/An" }));
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
@@ -948,7 +952,8 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
     /**
      * Combines the field selected in {@code cmbSearchField} with the entered text into the
      * effective query string. For a metadata field the value is prefixed with
-     * {@code dateiname:}/{@code akte:}/{@code az:} (understood by {@code SearchAPI}); for
+     * {@code dateiname:}/{@code akte:}/{@code az:}/{@code bezeichnung:}/{@code schlagwort:}/
+     * {@code von:} (understood by {@code SearchAPI}); for
      * "Inhalt" (or an empty selection / empty value) the raw text is returned unchanged, so
      * power users can still type their own field prefix.
      */

@@ -128,6 +128,8 @@ auch wo er vom Benutzerhandbuch abweicht.
 | `{{AKTE_ANWALT}}` | Anwalt (Benutzername) |
 | `{{AKTE_SACHBEARBEITER_KRZ}}` | Sachbearbeiter (Kürzel) |
 | `{{AKTE_ANWALT_KRZ}}` | Anwalt (Kürzel) |
+| `{{AKTE_SACHBEARBEITER_FKT}}` | Sachbearbeiter (Funktion) |
+| `{{AKTE_ANWALT_FKT}}` | Anwalt (Funktion) |
 | `{{AKTE_EIGENE1}}` | Eigenes Feld 1 |
 | `{{AKTE_EIGENE2}}` | Eigenes Feld 2 |
 | `{{AKTE_EIGENE3}}` | Eigenes Feld 3 |

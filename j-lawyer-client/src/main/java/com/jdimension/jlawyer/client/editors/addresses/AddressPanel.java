@@ -4292,6 +4292,38 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
             newCase.setName(this.dto.toDisplayName()); // Rubrum
             newCase.setReason(reason.trim()); // Wegen
 
+            // Apply default owner group, as for new cases created in the case editor
+            List<Group> userGroups = locator.lookupSecurityServiceRemote().getGroupsForUser(currentUser);
+            String defaultOwnerGroupId = UserSettings.getInstance().getSetting(UserSettings.CONF_CASE_DEFAULT_OWNERGROUP, "");
+            for (Group g : userGroups) {
+                if (g.getId().equals(defaultOwnerGroupId)) {
+                    newCase.setGroup(g);
+                    break;
+                }
+            }
+
+            // No default owner group, but the extended file number requires a group abbreviation - ask for the owner group
+            ServerSettings srvSettings = ServerSettings.getInstance();
+            if (newCase.getGroup() == null && !userGroups.isEmpty()
+                    && srvSettings.getSettingAsBoolean(ServerSettings.SERVERCONF_CASENUMBERING_EXT_ENABLED, false)
+                    && srvSettings.getSettingAsBoolean(ServerSettings.SERVERCONF_CASENUMBERING_EXT_GROUP_ENABLED, false)) {
+                Object ownerGroup = JOptionPane.showInputDialog(
+                    this,
+                    "Eigentümergruppe:",
+                    "Neue Akte anlegen",
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    userGroups.toArray(),
+                    userGroups.get(0)
+                );
+
+                // If user cancelled, abort
+                if (ownerGroup == null) {
+                    return;
+                }
+                newCase.setGroup((Group) ownerGroup);
+            }
+
             // Add address as party
             if (partyType != null) {
                 ArchiveFileAddressesBean aab = new ArchiveFileAddressesBean();
@@ -4303,6 +4335,30 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
 
             // Save case to server
             newCase = afRem.createArchiveFile(newCase);
+
+            // Apply default allowed groups, as for new cases created in the case editor
+            // the case already exists at this point - a failure here must not look like the case creation failed
+            try {
+                String[] defaultAllowedGroupIds = UserSettings.getInstance().getSettingArray(UserSettings.CONF_CASE_DEFAULT_ALLOWEDGROUPS, new String[0]);
+                if (defaultAllowedGroupIds != null && defaultAllowedGroupIds.length > 0) {
+                    java.util.Set<String> defaultIdSet = new java.util.HashSet<>(java.util.Arrays.asList(defaultAllowedGroupIds));
+                    ArrayList<Group> allowedGroups = new ArrayList<>();
+                    for (Group g : locator.lookupSecurityServiceRemote().getAllGroups()) {
+                        if (defaultIdSet.contains(g.getId())) {
+                            allowedGroups.add(g);
+                        }
+                    }
+                    if (!allowedGroups.isEmpty()) {
+                        afRem.updateAllowedGroups(newCase.getId(), allowedGroups);
+                    }
+                }
+            } catch (Exception ex) {
+                log.error("Unable to apply default allowed groups to new case " + newCase.getId(), ex);
+                JOptionPane.showMessageDialog(this,
+                        "Die Akte wurde angelegt, die Standard-Zugriffsrechte konnten aber nicht gesetzt werden: " + ex.getMessage()
+                        + "\nBitte die Zugriffsrechte in der Akte prüfen.",
+                        com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
+            }
 
             // Navigate to the new case
             Object editor = EditorsRegistry.getInstance().getEditor("com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel");

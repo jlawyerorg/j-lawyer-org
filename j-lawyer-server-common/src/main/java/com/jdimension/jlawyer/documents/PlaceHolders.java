@@ -874,6 +874,12 @@ public class PlaceHolders {
     @PlaceHolderInfo(category = PlaceHolderCategory.AKTE, label = "Anwalt (Kürzel)")
     public static final String AKTE_ANWALT_KRZ = "{{AKTE_ANWALT_KRZ}}";
     
+    // Funktion
+    @PlaceHolderInfo(category = PlaceHolderCategory.AKTE, label = "Sachbearbeiter (Funktion)")
+    public static final String AKTE_SACHBEARBEITER_FKT = "{{AKTE_SACHBEARBEITER_FKT}}";
+    @PlaceHolderInfo(category = PlaceHolderCategory.AKTE, label = "Anwalt (Funktion)")
+    public static final String AKTE_ANWALT_FKT = "{{AKTE_ANWALT_FKT}}";
+    
     
     @PlaceHolderInfo(category = PlaceHolderCategory.DATUM_DOKUMENT, label = "Diktatzeichen")
     public static final String DOK_DZ = "{{DOK_DZ}}";
@@ -1177,6 +1183,8 @@ public class PlaceHolders {
         ALLPLACEHOLDERS.add(AKTE_SACHBEARBEITER_AN);
         ALLPLACEHOLDERS.add(AKTE_SACHBEARBEITER_KRZ);
         ALLPLACEHOLDERS.add(AKTE_ANWALT_KRZ);
+        ALLPLACEHOLDERS.add(AKTE_SACHBEARBEITER_FKT);
+        ALLPLACEHOLDERS.add(AKTE_ANWALT_FKT);
         ALLPLACEHOLDERS.add(AKTE_EIGENE1);
         ALLPLACEHOLDERS.add(AKTE_EIGENE2);
         ALLPLACEHOLDERS.add(AKTE_EIGENE3);

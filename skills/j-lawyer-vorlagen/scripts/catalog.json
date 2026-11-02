@@ -254,6 +254,20 @@
    "in_documents": true
   },
   {
+   "name": "AKTE_SACHBEARBEITER_FKT",
+   "category": "Akte",
+   "label": "Sachbearbeiter (Funktion)",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
+   "name": "AKTE_ANWALT_FKT",
+   "category": "Akte",
+   "label": "Anwalt (Funktion)",
+   "alias_of": null,
+   "in_documents": true
+  },
+  {
    "name": "DOK_DZ",
    "category": "Datum und Dokument",
    "label": "Diktatzeichen",

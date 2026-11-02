@@ -673,7 +673,6 @@ import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -687,6 +686,7 @@ import org.apache.log4j.Logger;
 public class LastChangedTimerTask extends java.util.TimerTask {
 
     private static final Logger log = Logger.getLogger(LastChangedTimerTask.class.getName());
+    private static final int MAX_ENTRIES = 25;
     private JPanel resultUI;
     private boolean ignoreCurrentEditor = false;
     
@@ -754,10 +754,16 @@ public class LastChangedTimerTask extends java.util.TimerTask {
             }
 
             if (stopped) return;
+            // only the first MAX_ENTRIES cases are displayed - load their tags with a single call
+            List<String> displayedIds = new ArrayList<>();
             for (ArchiveFileBean a : myNewList) {
-                if (stopped) return;
-                Collection<ArchiveFileTagsBean> xTags = fileService.getTags(a.getId());
-                tags.put(a.getId(), (List<ArchiveFileTagsBean>) xTags);
+                if (displayedIds.size() == MAX_ENTRIES) {
+                    break;
+                }
+                displayedIds.add(a.getId());
+            }
+            if (!displayedIds.isEmpty()) {
+                tags.putAll(fileService.getTags(displayedIds));
             }
 
         } catch (Throwable ex) {
@@ -800,7 +806,7 @@ public class LastChangedTimerTask extends java.util.TimerTask {
 
                     resultUI.add(ep);
                     i++;
-                    if (i == 25) {
+                    if (i == MAX_ENTRIES) {
                         dataLoaded = true;
                         return;
                     }
