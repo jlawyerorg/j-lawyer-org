@@ -666,6 +666,9 @@ package com.jdimension.jlawyer.client.components;
 import com.jdimension.jlawyer.client.calendar.CalendarUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.toedter.calendar.JDayChooser;
+import java.awt.AWTEvent;
+import java.awt.EventQueue;
+import java.awt.event.KeyEvent;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -1033,7 +1036,36 @@ public class MultiCalDialog extends javax.swing.JDialog {
         this.c3.setMinSelectableDate(d);
     }
 
+    /**
+     * JDayChooser fires its "day" property for every key pressed on a day
+     * button, not only for the arrow keys. Pressing Alt for Alt+Tab (or any
+     * other key) would therefore select the highlighted day (#3165). Only
+     * mouse clicks and the keys meant to pick a day select it.
+     *
+     * @param e the event being dispatched when the day changed
+     * @return true if the event is meant to select a day
+     */
+    static boolean isDaySelectionEvent(AWTEvent e) {
+        if (!(e instanceof KeyEvent)) {
+            return true;
+        }
+        switch (((KeyEvent) e).getKeyCode()) {
+            case KeyEvent.VK_UP:
+            case KeyEvent.VK_DOWN:
+            case KeyEvent.VK_LEFT:
+            case KeyEvent.VK_RIGHT:
+            case KeyEvent.VK_ENTER:
+            case KeyEvent.VK_SPACE:
+                return true;
+            default:
+                return false;
+        }
+    }
+
     private void selectDate(JDayChooser cal, Calendar c) {
+        if (!isDaySelectionEvent(EventQueue.getCurrentEvent())) {
+            return;
+        }
         c.set(Calendar.DAY_OF_MONTH, cal.getDay());
         Date d = c.getTime();
 
