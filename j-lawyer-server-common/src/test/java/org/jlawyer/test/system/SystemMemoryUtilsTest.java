@@ -663,9 +663,14 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package org.jlawyer.test.system;
 
 import com.jdimension.jlawyer.server.utils.SystemMemoryUtils;
+import java.lang.reflect.Proxy;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import static org.junit.Assert.*;
 
 /**
@@ -685,6 +690,52 @@ public class SystemMemoryUtilsTest {
             "SwapFree:        2097148 kB");
 
     private static final long TOTAL = 8048572L * 1024L;
+
+    @Rule
+    public TemporaryFolder tmp = new TemporaryFolder();
+
+    private static final long JVM_FREE = 4242L;
+
+    private static com.sun.management.OperatingSystemMXBean jvm(long total) {
+        return (com.sun.management.OperatingSystemMXBean) Proxy.newProxyInstance(SystemMemoryUtilsTest.class.getClassLoader(), new Class<?>[]{com.sun.management.OperatingSystemMXBean.class}, (proxy, method, args) -> {
+            switch (method.getName()) {
+                case "getTotalPhysicalMemorySize":
+                case "getTotalMemorySize":
+                    return total;
+                case "getFreePhysicalMemorySize":
+                case "getFreeMemorySize":
+                    return JVM_FREE;
+                default:
+                    return null;
+            }
+        });
+    }
+
+    @Test
+    public void testMeminfoIsUsed() throws Exception {
+        Path meminfo = tmp.newFile("meminfo").toPath();
+        Files.write(meminfo, MEMINFO);
+        assertEquals(5876240L * 1024L, SystemMemoryUtils.getAvailablePhysicalMemory(jvm(TOTAL), meminfo));
+    }
+
+    @Test
+    public void testFallbackWithoutMeminfo() throws Exception {
+        // Windows, macOS
+        assertEquals(JVM_FREE, SystemMemoryUtils.getAvailablePhysicalMemory(jvm(TOTAL), tmp.getRoot().toPath().resolve("missing")));
+    }
+
+    @Test
+    public void testFallbackIfMeminfoCanNotBeRead() throws Exception {
+        // a directory can not be read as a file, like a file without read permission
+        assertEquals(JVM_FREE, SystemMemoryUtils.getAvailablePhysicalMemory(jvm(TOTAL), tmp.newFolder("meminfo").toPath()));
+    }
+
+    @Test
+    public void testFallbackInContainerWithMemoryLimit() throws Exception {
+        Path meminfo = tmp.newFile("meminfo").toPath();
+        Files.write(meminfo, MEMINFO);
+        assertEquals(JVM_FREE, SystemMemoryUtils.getAvailablePhysicalMemory(jvm(2L * 1024L * 1024L * 1024L), meminfo));
+    }
 
     @Test
     public void testAvailableMemoryIncludesPageCache() {

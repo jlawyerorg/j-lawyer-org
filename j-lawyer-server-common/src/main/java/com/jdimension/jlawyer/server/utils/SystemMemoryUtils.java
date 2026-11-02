@@ -684,16 +684,27 @@ public class SystemMemoryUtils {
      * @return available physical memory in bytes
      */
     public static long getAvailablePhysicalMemory(com.sun.management.OperatingSystemMXBean osBean) {
-        Path meminfo = Paths.get("/proc/meminfo");
-        if (Files.isReadable(meminfo)) {
-            try {
+        return getAvailablePhysicalMemory(osBean, Paths.get("/proc/meminfo"));
+    }
+
+    /**
+     * Same as {@link #getAvailablePhysicalMemory(com.sun.management.OperatingSystemMXBean)}, but reads the given file
+     * instead of /proc/meminfo.
+     *
+     * @param osBean the operating system bean of the JVM
+     * @param meminfo file in the format of /proc/meminfo
+     * @return available physical memory in bytes
+     */
+    public static long getAvailablePhysicalMemory(com.sun.management.OperatingSystemMXBean osBean, Path meminfo) {
+        try {
+            if (Files.isReadable(meminfo)) {
                 long available = getAvailableMemoryFromMeminfo(Files.readAllLines(meminfo), osBean.getTotalPhysicalMemorySize());
                 if (available > -1) {
                     return available;
                 }
-            } catch (Throwable t) {
-                // fall back to the value reported by the JVM
             }
+        } catch (Throwable t) {
+            // e.g. no permission to read the file - fall back to the value reported by the JVM
         }
         return osBean.getFreePhysicalMemorySize();
     }
