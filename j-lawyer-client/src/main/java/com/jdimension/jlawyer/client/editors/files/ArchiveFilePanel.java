@@ -8502,6 +8502,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         boolean replaceDocument = false;
                         while (documentExists && !replaceDocument) {
                             int replaceResponse = JOptionPane.showOptionDialog(EditorsRegistry.getInstance().getMainWindow(), "Eine Datei mit dem Namen '" + newName + "' existiert bereits, soll diese ersetzt werden?", "Datei ersetzen?", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, new String[]{"Ja", "Nein"}, "Nein");
+                            if (replaceResponse == JOptionPane.CLOSED_OPTION) {
+                                // dialog closed without a choice - cancel
+                                this.lastPopupClosed = System.currentTimeMillis();
+                                return;
+                            }
                             replaceDocument = replaceResponse == JOptionPane.YES_OPTION;
                             if (!replaceDocument) {
                                 newName = FileUtils.getNewFileName(dto, newName, new Date(), false, EditorsRegistry.getInstance().getMainWindow(), "Neuer Name für Dokument");
@@ -8520,30 +8525,20 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         FileUtils.cleanupTempFile(tempPath);
                         FileUtils.cleanupTempFile(tempTargetPath);
 
-                        // to replace a document, the old one is removed first (also from the bin), then the new one is uploaded
+                        // to replace a document, the new one is stored first and the existing one (in the case or its bin) is only deleted afterwards
+                        ArchiveFileDocumentsBean existing = null;
+                        boolean existingInBin = false;
                         if (replaceDocument) {
-                            final String searchName = newName;
-                            ArchiveFileDocumentsBean document = this.caseFolderPanel1.getDocuments().stream()
-                                    .filter(iterDoc -> searchName.equals(iterDoc.getName()))
-                                    .findAny()
-                                    .orElse(null);
-                            if (document != null) {
-                                remote.removeDocument(document.getId());
-                                remote.removeDocumentFromBin(document.getId());
-                                caseFolderPanel1.removeDocument(document);
-                            } else {
-                                document = remote.getDocumentsBin().stream()
-                                        .filter(iterDoc -> dto.getId().equals(iterDoc.getArchiveFileKey().getId()))
-                                        .filter(iterDoc -> searchName.equals(iterDoc.getName()))
-                                        .findAny()
-                                        .orElse(null);
-                                if (document != null) {
-                                    remote.removeDocumentFromBin(document.getId());
-                                }
+                            existing = DocumentReplacement.findByName(this.caseFolderPanel1.getDocuments(), newName);
+                            if (existing == null) {
+                                existing = DocumentReplacement.findInBin(remote, dto.getId(), newName);
+                                existingInBin = existing != null;
                             }
                         }
-
-                        ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, targetContent, doc.getDictateSign(), null);
+                        ArchiveFileDocumentsBean newDoc = DocumentReplacement.addReplacing(remote, dto.getId(), newName, targetContent, doc.getDictateSign(), existing, existingInBin);
+                        if (existing != null && !existingInBin) {
+                            caseFolderPanel1.removeDocument(existing);
+                        }
 
                         if (doc.getFolder() != null) {
                             newDoc.setFolder(doc.getFolder());
