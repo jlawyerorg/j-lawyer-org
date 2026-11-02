@@ -2193,6 +2193,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
     private boolean save() {
         ClientSettings settings = ClientSettings.getInstance();
+        boolean positionsSaved = true;
         int positionIndex = 0;
         for (Component c : this.pnlInvoicePositions.getComponents()) {
             if (c instanceof InvoicePositionEntryPanel) {
@@ -2207,6 +2208,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 } catch (Exception ex) {
                     log.error("Error updating invoice position", ex);
                     JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Rechnungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    positionsSaved = false;
                 }
                 positionIndex = positionIndex + 1;
             }
@@ -2219,7 +2221,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             locator.lookupArchiveFileServiceRemote().updateInvoice(this.caseDto.getId(), this.currentEntry);
-            return true;
+            return positionsSaved;
 
         } catch (Exception ex) {
             log.error("error saving invoice", ex);
