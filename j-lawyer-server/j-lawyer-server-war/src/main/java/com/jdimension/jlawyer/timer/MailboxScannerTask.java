@@ -745,7 +745,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
             List<MailboxSetup> entries = mailboxes.findAll();
 
             ArrayList<String> allFileNumbers = caseSvc.getAllArchiveFileNumbersUnrestricted(false);
-            List<PartyTypeBean> allPartyTypes = sysSvc.getPartyTypes();
+            List<PartyTypeBean> allPartyTypes = sysSvc.getPartyTypesUnrestricted();
             for (MailboxSetup ms : entries) {
                 if (ms.isScanInbox()) {
                     try {

@@ -727,17 +727,6 @@ import javax.mail.Store;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
-import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathFactory;
 import org.apache.log4j.Logger;
 import org.apache.tika.Tika;
 import org.jboss.ejb3.annotation.TransactionTimeout;
@@ -747,10 +736,6 @@ import org.jlawyer.plugins.calculation.GenericCalculationTable;
 import org.jlawyer.utils.PlaceHolderServerUtils;
 import org.jlawyer.utils.ocr.OcrRequest;
 import org.jlawyer.utils.ocr.OcrUtils;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 /**
  *
@@ -1402,7 +1387,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     @Override
-    //@RolesAllowed({"loginRole"})
+    // intentionally unsecured: Local-only, called by IterativeBackupTask without a security context
     public void statusMail(String subject, String body) {
 
         ServerSettingsBean enabled = this.settingsFacade.find("jlawyer.server.monitor.notify");
@@ -1799,112 +1784,6 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     @Override
-    public String getServerInterfacesBoundTo() throws Exception {
-        File data = new File(System.getProperty("jlawyer.server.basedirectory"));
-        File jlawyer = data.getParentFile();
-        File wildFlyConf = new File(jlawyer.getAbsolutePath() + File.separator + "wildfly" + File.separator + "standalone" + File.separator + "configuration" + File.separator + "standalone-full.xml");
-        Document dom;
-        // Make an  instance of the DocumentBuilderFactory
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        try {
-            dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-            dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
-        } catch (IllegalArgumentException iae) {
-            // only available from JAXP 1.5+, but Wildfly still ships 1.4
-            log.warn("Unable to set external entity restrictions in XML parser: " + iae.getMessage());
-        }
-
-        // use the factory to take an instance of the document builder
-        DocumentBuilder db = dbf.newDocumentBuilder();
-        // parse using the builder to get the DOM mapping of the    
-        // XML file
-        dom = db.parse(wildFlyConf);
-
-        Element doc = dom.getDocumentElement();
-
-        XPath xpath = XPathFactory.newInstance().newXPath();
-        XPathExpression expr1 = xpath.compile("//server/interfaces/interface/inet-address");
-        NodeList nodes = (NodeList) expr1.evaluate(doc, XPathConstants.NODESET);
-        String bindString = "";
-        for (int i = 0; i < nodes.getLength(); i++) {
-            Node n = nodes.item(i);
-
-            String interfaceType = ((Element) n.getParentNode()).getAttribute("name");
-
-            String interfaceBound = (((Element) n).getAttribute("value"));
-            bindString = bindString + interfaceType + "=" + interfaceBound + ", ";
-
-        }
-        if (bindString.length() >= 2) {
-            bindString = bindString.substring(0, bindString.length() - 2);
-        }
-
-        return bindString;
-    }
-
-    @Override
-    public boolean setServerInterfaceBindings(String ip) throws Exception {
-        File data = new File(System.getProperty("jlawyer.server.basedirectory"));
-        File jlawyer = data.getParentFile();
-        File wildFlyConf = new File(jlawyer.getAbsolutePath() + File.separator + "wildfly" + File.separator + "standalone" + File.separator + "configuration" + File.separator + "standalone-full.xml");
-
-        if (!wildFlyConf.exists()) {
-            throw new Exception("server configuration not found: " + wildFlyConf.getAbsolutePath());
-        }
-
-        ServerFileUtils.copyFile(wildFlyConf.getAbsolutePath(), new File(wildFlyConf.getAbsolutePath() + ".bak." + System.currentTimeMillis()).getAbsolutePath());
-
-        Document dom;
-        // Make an  instance of the DocumentBuilderFactory
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        try {
-            dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-            dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
-        } catch (IllegalArgumentException iae) {
-            // only available from JAXP 1.5+, but Wildfly still ships 1.4
-            log.warn("Unable to set external entity restrictions in XML parser", iae);
-        }
-
-        // use the factory to take an instance of the document builder
-        DocumentBuilder db = dbf.newDocumentBuilder();
-        // parse using the builder to get the DOM mapping of the    
-        // XML file
-        dom = db.parse(wildFlyConf);
-
-        Element doc = dom.getDocumentElement();
-
-        XPath xpath = XPathFactory.newInstance().newXPath();
-        XPathExpression expr1 = xpath.compile("//server/interfaces/interface/inet-address");
-        NodeList nodes = (NodeList) expr1.evaluate(doc, XPathConstants.NODESET);
-        for (int i = 0; i < nodes.getLength(); i++) {
-            Node n = nodes.item(i);
-
-            String interfaceType = ((Element) n.getParentNode()).getAttribute("name");
-
-            String interfaceBound = (((Element) n).getAttribute("value"));
-            ((Element) n).setAttribute("value", ip);
-
-        }
-
-        TransformerFactory transformerFactory = TransformerFactory.newInstance();
-        try {
-            transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, ""); // Compliant
-            transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, ""); // Compliant
-        } catch (IllegalArgumentException iae) {
-            // only available from JAXP 1.5+, but Wildfly still ships 1.4
-            log.warn("Unable to set external entity restrictions in XML parser", iae);
-        }
-
-        Transformer transformer = transformerFactory.newTransformer();
-        DOMSource source = new DOMSource(doc);
-        StreamResult result = new StreamResult(wildFlyConf);
-
-        transformer.transform(source, result);
-
-        return true;
-    }
-
-    @Override
     @RolesAllowed({"loginRole"})
     public boolean addTemplate(int templateType, GenericNode folder, String fileName, byte[] data) throws Exception {
         String localBaseDir = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(folder));
@@ -2207,7 +2086,13 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     @Override
+    @RolesAllowed({"loginRole"})
     public List<PartyTypeBean> getPartyTypes() {
+        return this.getPartyTypesUnrestricted();
+    }
+
+    @Override
+    public List<PartyTypeBean> getPartyTypesUnrestricted() {
         return this.partyTypesFacade.findAllInSequence();
     }
 
@@ -2318,6 +2203,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     @Override
+    @RolesAllowed({"adminRole"})
     public PartyTypeBean addPartyType(PartyTypeBean partyType) throws Exception {
         List<PartyTypeBean> allTypes = this.partyTypesFacade.findAll();
         for (PartyTypeBean ptb : allTypes) {
@@ -2349,6 +2235,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     @Override
+    @RolesAllowed({"adminRole"})
     public void removePartyType(PartyTypeBean partyType) throws Exception {
 
         List<ArchiveFileAddressesBean> list = this.archiveFileAddressesFacade.findByReferenceType(partyType);
@@ -2360,6 +2247,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     }
 
+    @Override
+    @RolesAllowed({"adminRole"})
     public PartyTypeBean updatePartyType(PartyTypeBean partyType) throws Exception {
         List<PartyTypeBean> allTypes = this.partyTypesFacade.findAll();
         for (PartyTypeBean ptb : allTypes) {

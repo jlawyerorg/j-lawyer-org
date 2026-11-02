@@ -763,8 +763,6 @@ public interface SystemManagementRemote {
 
     MonitoringSnapshot getMonitoringSnapshot();
 
-    void statusMail(String subject, String body);
-    
     void testSendMail(String smtpHost, int smtpPort, String smtpUser, String smtpPwd, boolean smtpSsl, boolean smtpStartTls, String mailAddress, boolean isMsExchange, String authToken, Properties customProps) throws Exception;
     
     void testReceiveMail(String mailAddress, String host, String protocol, boolean ssl, String user, String pwd, boolean isMsExchange, String authToken, Properties customProps) throws Exception;
@@ -778,10 +776,6 @@ public interface SystemManagementRemote {
     void setUserSettings(AppUserBean user, Properties settings);
 
     String getServerIpV4() throws Exception;
-
-    String getServerInterfacesBoundTo() throws Exception;
-
-    boolean setServerInterfaceBindings(String ip) throws Exception;
 
     boolean addTemplate(int templateType, GenericNode folder, String fileName, byte[] data) throws Exception;
 

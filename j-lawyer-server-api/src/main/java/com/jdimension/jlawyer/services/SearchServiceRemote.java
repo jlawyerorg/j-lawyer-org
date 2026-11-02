@@ -678,10 +678,18 @@ public interface SearchServiceRemote {
     ArrayList<SearchHit> search(String queryString, int maxDocs) throws SearchException;
     ArrayList<SearchHit> search(String queryString, int maxDocs, String caseId) throws SearchException;
 
+    /**
+     * Triggers an asynchronous full rebuild of the fulltext search index. The request is
+     * queued and the method returns immediately. Requires the system administrator role.
+     */
     void reIndexAll();
 
-    void reOpenIndex() throws SearchException;
-
+    /**
+     * Returns the number of documents currently contained in the fulltext search index.
+     *
+     * @return number of indexed documents
+     * @throws SearchException if the index cannot be accessed
+     */
     int getNumberOfDocs() throws SearchException;
     
 }

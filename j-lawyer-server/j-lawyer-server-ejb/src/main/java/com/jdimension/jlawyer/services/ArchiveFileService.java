@@ -5784,7 +5784,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
-    @RolesAllowed({"adminRole"})
+    @RolesAllowed({"loginRole"})
     public void addFolderTemplate(DocumentFolderTemplate template) throws Exception {
         Object o = this.folderTemplateFacade.findByName(template.getName());
         if (o != null) {
@@ -5807,7 +5807,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
-    @RolesAllowed({"adminRole"})
+    @RolesAllowed({"loginRole"})
     public void removeFolderTemplate(String name) {
         DocumentFolderTemplate t = this.folderTemplateFacade.findByName(name);
         if (t != null) {
@@ -5817,7 +5817,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
-    @RolesAllowed({"adminRole"})
+    @RolesAllowed({"loginRole"})
     public void updateFolderTemplate(DocumentFolderTemplate template) {
         DocumentFolderTemplate t = this.folderTemplateFacade.find(template.getId());
         if (t != null) {
@@ -5833,6 +5833,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    @RolesAllowed({"loginRole"})
     public DocumentFolder addFolderToTemplate(String templateName, DocumentFolder folder) throws Exception {
 
         DocumentFolderTemplate t = this.folderTemplateFacade.findByName(templateName);
@@ -5865,6 +5866,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    @RolesAllowed({"loginRole"})
     public void removeFolderFromTemplate(String folderId) throws Exception {
 
         if (folderId == null || "".equals(folderId)) {
@@ -5881,6 +5883,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    @RolesAllowed({"loginRole"})
     public DocumentFolder renameFolderInTemplate(String folderId, String newName) throws Exception {
 
         if (folderId == null || "".equals(folderId)) {
@@ -5899,6 +5902,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    @RolesAllowed({"loginRole"})
     public void cloneFolderTemplate(String sourceTemplateName, String targetTemplateName) throws Exception {
         DocumentFolderTemplate source = this.getFolderTemplate(sourceTemplateName);
         DocumentFolderTemplate target = new DocumentFolderTemplate();

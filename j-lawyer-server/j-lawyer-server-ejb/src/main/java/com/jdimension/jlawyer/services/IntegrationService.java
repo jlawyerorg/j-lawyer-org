@@ -872,7 +872,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         }
 
         File scanDirectory = new File(scanDir);
-        if (!scanDirectory.exists() && scanDirectory.isDirectory()) {
+        if (!scanDirectory.exists() || !scanDirectory.isDirectory()) {
             log.error("observed directory does not exist / is not a directory");
             return false;
         }
@@ -917,7 +917,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         }
 
         File scanDirectory = new File(scanDir);
-        if (!scanDirectory.exists() && scanDirectory.isDirectory()) {
+        if (!scanDirectory.exists() || !scanDirectory.isDirectory()) {
             log.error("observed directory does not exist / is not a directory");
             return null;
         }
@@ -961,7 +961,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         }
 
         File scanDirectory = new File(scanDir);
-        if (!scanDirectory.exists() && scanDirectory.isDirectory()) {
+        if (!scanDirectory.exists() || !scanDirectory.isDirectory()) {
             log.error("observed directory does not exist / is not a directory");
             return null;
         }
@@ -1147,6 +1147,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     }
 
     @Override
+    @RolesAllowed(value = {"readArchiveFileRole"})
     public DocumentPreview getObservedFilePreview(String fileName) throws Exception {
         byte[] data = this.getObservedFile(fileName);
         if (data == null) {
@@ -1265,6 +1266,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     }
 
     @Override
+    @RolesAllowed(value = {"sysAdminRole"})
     public boolean validateExternalStorageLocation(String location) throws Exception {
         try {
             VirtualFile vf = VirtualFile.getFile(location);
@@ -1343,7 +1345,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         }
 
         File scanDirectory = new File(scanDir);
-        if (!scanDirectory.exists() && scanDirectory.isDirectory()) {
+        if (!scanDirectory.exists() || !scanDirectory.isDirectory()) {
             log.error("observed directory does not exist / is not a directory");
             return false;
         }
@@ -1397,7 +1399,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         }
 
         File scanDirectory = new File(scanDir);
-        if (!scanDirectory.exists() && scanDirectory.isDirectory()) {
+        if (!scanDirectory.exists() || !scanDirectory.isDirectory()) {
             log.error("observed directory does not exist / is not a directory");
             return false;
         }
@@ -1507,7 +1509,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         }
 
         File scanDirectory = new File(scanDir);
-        if (!scanDirectory.exists() && scanDirectory.isDirectory()) {
+        if (!scanDirectory.exists() || !scanDirectory.isDirectory()) {
             log.error("observed directory does not exist / is not a directory");
             return null;
         }
@@ -1553,7 +1555,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         }
 
         File scanDirectory = new File(scanDir);
-        if (!scanDirectory.exists() && scanDirectory.isDirectory()) {
+        if (!scanDirectory.exists() || !scanDirectory.isDirectory()) {
             log.error("observed directory does not exist / is not a directory");
             return false;
         }
@@ -1833,7 +1835,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         }
 
         File scanDirectory = new File(scanDir);
-        if (!scanDirectory.exists() && scanDirectory.isDirectory()) {
+        if (!scanDirectory.exists() || !scanDirectory.isDirectory()) {
             log.error("observed directory does not exist / is not a directory");
             return false;
         }
