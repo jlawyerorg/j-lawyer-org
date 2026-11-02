@@ -707,4 +707,13 @@ public class UserUtilsTest {
     public void noExceptionIsNoPermissionProblem() {
         assertFalse(UserUtils.isPermissionDenied(null));
     }
+
+    @Test(timeout = 5000)
+    public void cyclicCauseChainEnds() {
+        Exception first = new Exception("first");
+        Exception second = new Exception("second", first);
+        first.initCause(second);
+        assertFalse(UserUtils.isPermissionDenied(first));
+        assertEquals("first", UserUtils.getServerErrorMessage(first));
+    }
 }

@@ -743,7 +743,8 @@ public class UserUtils {
      */
     public static boolean isPermissionDenied(Throwable t) {
         Throwable cause = t;
-        while (cause != null) {
+        // limited depth, so a cyclic cause chain cannot loop forever
+        for (int depth = 0; cause != null && depth < 20; depth++) {
             if (cause instanceof EJBAccessException) {
                 return true;
             }
