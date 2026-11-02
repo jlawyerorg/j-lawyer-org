@@ -55,4 +55,15 @@ public class DueRenderDecisionTest {
         assertFalse(DesktopPanel.canSkipDueRender(true, TODAY, TODAY, false, Boolean.TRUE, entries(due), entries(due)));
         assertFalse(DesktopPanel.canSkipDueRender(true, TODAY, null, true, null, entries(due), entries(due)));
     }
+
+    @Test
+    public void automaticReloadRendersEntryReopenedAfterLocalDone() {
+        // the user marked the displayed entry as done, which changes it in place, then it was
+        // reopened outside this client - the reload has to be compared with the displayed objects
+        Date due = new Date(1794000000000l);
+        List<ReviewDueEntry> displayed = entries(due);
+        displayed.get(0).getReview().setDone(true);
+        List<ReviewDueEntry> reopened = entries(due);
+        assertFalse(DesktopPanel.canSkipDueRender(true, TODAY, TODAY, true, Boolean.TRUE, displayed, reopened));
+    }
 }

@@ -2495,10 +2495,11 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     }
 
     /**
-     * Called by ReviewsDueTimerTask on the EDT after the due list has been loaded. Keeps the entries
-     * for the search, remembers which calendar version and start time they reflect, and renders the
-     * entries that match the current search text - unless nothing changed, so that a reload does
-     * not disturb the user without need.
+     * Called by ReviewsDueTimerTask on the EDT after the due list has been loaded. Remembers which
+     * calendar version and start time the entries reflect, and renders the entries that match the
+     * current search text - unless nothing changed, so that a reload does not disturb the user
+     * without need. The rendered entries are kept for the search and for the comparison with the
+     * next load.
      *
      * @param entries all loaded entries
      * @param compactView whether the compact view is enabled
@@ -2519,11 +2520,12 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.dueLoadedAt = loadStartedAt;
 
         java.time.LocalDate today = java.time.LocalDate.now();
-        boolean skipRender = canSkipDueRender(onlyIfChanged, today, this.dueRenderedDay, compactView, this.dueRenderedCompactView, this.cachedDueEntries, entries);
-        this.cachedDueEntries = entries;
-        if (skipRender) {
+        if (canSkipDueRender(onlyIfChanged, today, this.dueRenderedDay, compactView, this.dueRenderedCompactView, this.cachedDueEntries, entries)) {
+            // keep the entries the panels show: acting on an entry, e.g. marking it as done,
+            // changes these objects in place, and the next reload has to be compared with that
             return;
         }
+        this.cachedDueEntries = entries;
         this.dueRenderedCompactView = compactView;
         this.dueRenderedDay = today;
         renderDueEntries(getDueEntriesMatchingSearch(entries, this.txtSearchDue.getText()), compactView);

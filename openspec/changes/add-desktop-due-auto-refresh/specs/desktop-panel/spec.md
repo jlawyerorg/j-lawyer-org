@@ -17,11 +17,11 @@ The due list on the desktop SHALL refresh itself while the desktop is the active
 - **THEN** each interval only reads the calendar version, and the list is not reloaded
 
 #### Scenario: Day change
-- **WHEN** the date has changed since the load the list shows was started
+- **WHEN** the date has changed since the last accepted load was started
 - **THEN** the list reloads without comparing the calendar version, because its date windows have moved
 
 #### Scenario: Maximum age
-- **WHEN** the load the list shows was started 15 minutes ago or longer while the desktop is the active view
+- **WHEN** the last accepted load was started 15 minutes ago or longer while the desktop is the active view
 - **THEN** the list reloads at the next interval without comparing the calendar version, so that changes the version does not reflect, such as case data or permissions, are picked up
 
 #### Scenario: Desktop not active
