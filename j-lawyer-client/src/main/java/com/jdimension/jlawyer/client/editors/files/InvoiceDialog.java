@@ -2233,6 +2233,14 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
 
+        if (this.cmbInvoicePool.isEnabled()) {
+            // type / pool are still in edit mode - a change there is only applied when confirmed
+            int response = JOptionPane.showConfirmDialog(this, "Belegart und Nummernkreis wurden noch nicht mit dem Haken bestätigt. Eine Änderung daran wird nicht gespeichert.\nTrotzdem speichern?", "Nummernkreis nicht bestätigt", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+            if (response != JOptionPane.YES_OPTION) {
+                return;
+            }
+        }
+
         this.save();
         this.cancelled = false;
         this.setVisible(false);
