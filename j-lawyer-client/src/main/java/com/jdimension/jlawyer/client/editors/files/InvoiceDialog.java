@@ -679,6 +679,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.CaseUtils;
+import com.jdimension.jlawyer.client.utils.AmountUtils;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
@@ -3101,7 +3102,8 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             BigDecimal amount = BigDecimal.ZERO;
             boolean validAmount = false;
             try {
-                amount = BigDecimal.valueOf(cf.parse(this.lblInvoiceTotal.getText()).floatValue());
+                // parse exactly - a float has too few digits, amounts from about 131.000 would be off by a cent
+                amount = AmountUtils.parseExact(cf, this.lblInvoiceTotal.getText());
                 validAmount = true;
             } catch (Throwable t) {
                 log.error("error parsing invoice total: " + this.lblInvoiceTotal.getText(), t);
