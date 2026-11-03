@@ -2312,6 +2312,20 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.setArchiveFileDTO(inDto, null);
     }
 
+    /**
+     * Brings the document list in line with what a document replacement left on the server.
+     *
+     * @param outcome the outcome of the replacement
+     */
+    private void showReplacementOutcome(DocumentReplacement.Outcome outcome) {
+        for (ArchiveFileDocumentsBean affected : outcome.getAffectedDocuments()) {
+            this.caseFolderPanel1.removeDocument(affected);
+        }
+        for (ArchiveFileDocumentsBean active : outcome.getActiveDocuments()) {
+            this.caseFolderPanel1.addDocument(active, null);
+        }
+    }
+
     public void setArchiveFileDTO(ArchiveFileBean inDto, String selectDocumentWithFileName) {
         log.info("[AKTE-LOAD] setArchiveFileDTO START: " + (inDto != null ? inDto.getFileNumber() : "null"));
         this.dto = inDto;
@@ -8525,25 +8539,21 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         FileUtils.cleanupTempFile(tempPath);
                         FileUtils.cleanupTempFile(tempTargetPath);
 
-                        // to replace a document, the new one is stored first and the document that has the name on the server (in the case or its bin) is only deleted afterwards
-                        DocumentReplacement.Result replacement;
+                        // to replace a document, the new one is stored first, the document that has the name on the server is only moved to the bin afterwards
+                        DocumentReplacement.Outcome replacement;
                         try {
                             replacement = DocumentReplacement.addReplacing(remote, dto.getId(), newName, targetContent, doc.getDictateSign(), replaceDocument);
                         } catch (DocumentReplacement.ReplacementException rex) {
                             log.error("Error replacing document " + newName, rex);
-                            // show what is left on the server: the deleted document disappears, the new one is listed under its temporary name
-                            for (ArchiveFileDocumentsBean removed : rex.getRemovedDocuments()) {
-                                caseFolderPanel1.removeDocument(removed);
-                            }
-                            if (rex.getStoredDocument() != null) {
-                                caseFolderPanel1.addDocument(rex.getStoredDocument(), null);
-                            }
+                            // show the documents as they are on the server now, the new one under its temporary name
+                            this.showReplacementOutcome(rex.getOutcome());
                             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), rex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                             return;
                         }
                         ArchiveFileDocumentsBean newDoc = replacement.getDocument();
-                        for (ArchiveFileDocumentsBean removed : replacement.getRemovedDocuments()) {
-                            caseFolderPanel1.removeDocument(removed);
+                        this.showReplacementOutcome(replacement);
+                        if (replacement.getProblems() != null) {
+                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), replacement.getProblems(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
                         }
 
                         if (doc.getFolder() != null) {
