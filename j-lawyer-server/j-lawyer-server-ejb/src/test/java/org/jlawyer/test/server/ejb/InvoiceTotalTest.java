@@ -664,7 +664,6 @@ package org.jlawyer.test.server.ejb;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBeanFacadeLocal;
-import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.InvoiceFacadeLocal;
 import com.jdimension.jlawyer.persistence.InvoicePosition;
@@ -679,8 +678,11 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.math.BigDecimal;
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.ejb.SessionContext;
 import static org.junit.Assert.assertEquals;
 import org.junit.Test;
@@ -719,9 +721,42 @@ public class InvoiceTotalTest {
         return Proxy.newProxyInstance(type.getClassLoader(), new Class<?>[]{type}, (proxy, method, args) -> handler.apply(method, args));
     }
 
+    /**
+     * The invoice as stored. find returns a copy and edit stores a copy, so the test only sees what the service has
+     * actually stored, not changes to an object it still holds.
+     */
+    private static final class InvoiceStore {
+
+        private Invoice stored;
+
+        private static Invoice copy(Invoice i) {
+            Invoice c = new Invoice();
+            c.setId(i.getId());
+            c.setInvoiceNumber(i.getInvoiceNumber());
+            c.setLastPoolId(i.getLastPoolId());
+            c.setInvoiceType(i.getInvoiceType());
+            c.setSmallBusiness(i.isSmallBusiness());
+            c.setTotal(i.getTotal());
+            c.setTotalGross(i.getTotalGross());
+            return c;
+        }
+
+        Object handle(Method m, Object[] args) {
+            switch (m.getName()) {
+                case "find":
+                    return copy(stored);
+                case "edit":
+                    stored = copy((Invoice) args[0]);
+                    return null;
+                default:
+                    return null;
+            }
+        }
+    }
+
     @Test
     public void testPoolChangeRecalculatesGross() throws Exception {
-        // the pool decides whether VAT is shown - switching from a pool with VAT to one without must update the gross total
+        // the pool decides whether VAT is shown - switching between a pool with VAT and one without must update the gross total
         InvoiceType type = new InvoiceType();
         type.setId("type1");
         type.setDisplayName("Rechnung");
@@ -733,35 +768,52 @@ public class InvoiceTotalTest {
         invoice.setSmallBusiness(true);
         invoice.setTotal(new BigDecimal("100.00"));
         invoice.setTotalGross(new BigDecimal("119.00"));
+        InvoiceStore store = new InvoiceStore();
+        store.stored = invoice;
         List<InvoicePosition> positions = Arrays.asList(position("100.00", "19"));
 
-        InvoicePool poolWithoutVat = new InvoicePool();
-        poolWithoutVat.setId("poolWithoutVat");
-        poolWithoutVat.setSmallBusiness(false);
+        Map<String, InvoicePool> pools = new HashMap<>();
+        for (boolean vat : new boolean[]{true, false}) {
+            InvoicePool pool = new InvoicePool();
+            pool.setId(vat ? "poolWithVat" : "poolWithoutVat");
+            pool.setSmallBusiness(vat);
+            pools.put(pool.getId(), pool);
+        }
+        int[] numbers = {1};
 
-        ArchiveFileService service = new ArchiveFileService();
+        List<String> history = new ArrayList<>();
+        // the case history also updates the change date of the case via JDBC - there is no data source in a unit test,
+        // so the history is recorded here instead
+        ArchiveFileService service = new ArchiveFileService() {
+            @Override
+            public void addCaseHistory(String newHistoryId, ArchiveFileBean dto, String description) {
+                history.add(description);
+            }
+        };
         inject(service, "context", fake(SessionContext.class, (m, args) -> "getCallerPrincipal".equals(m.getName()) ? (Principal) () -> null : null));
         inject(service, "archiveFileFacade", fake(ArchiveFileBeanFacadeLocal.class, (m, args) -> "find".equals(m.getName()) ? new ArchiveFileBean() : null));
-        inject(service, "invoicesFacade", fake(InvoiceFacadeLocal.class, (m, args) -> "find".equals(m.getName()) ? invoice : null));
+        inject(service, "invoicesFacade", fake(InvoiceFacadeLocal.class, store::handle));
         inject(service, "invoicePositionsFacade", fake(InvoicePositionFacadeLocal.class, (m, args) -> "findByInvoice".equals(m.getName()) ? positions : null));
-        inject(service, "invoicesPoolsFacade", fake(InvoicePoolFacadeLocal.class, (m, args) -> "find".equals(m.getName()) ? poolWithoutVat : null));
-        inject(service, "invoiceService", fake(InvoiceServiceLocal.class, (m, args) -> "nextInvoiceNumber".equals(m.getName()) ? "R-2" : null));
-        inject(service, "archiveFileHistoryFacade", fake(ArchiveFileHistoryBeanFacadeLocal.class, (m, args) -> null));
+        inject(service, "invoicesPoolsFacade", fake(InvoicePoolFacadeLocal.class, (m, args) -> "find".equals(m.getName()) ? pools.get((String) args[0]) : null));
+        inject(service, "invoiceService", fake(InvoiceServiceLocal.class, (m, args) -> "nextInvoiceNumber".equals(m.getName()) ? "R-" + (++numbers[0]) : null));
 
-        try {
-            service.updateInvoiceType("case1", invoice, poolWithoutVat, type);
-        } catch (Throwable t) {
-            // expected outside of the application server: the case history also updates the change date of the case via
-            // JDBC, there is no data source here. The invoice has been recalculated before that.
-        }
+        Invoice withoutVat = service.updateInvoiceType("case1", invoice, pools.get("poolWithoutVat"), type);
+        assertEquals(false, withoutVat.isSmallBusiness());
+        assertEquals("R-2", withoutVat.getInvoiceNumber());
+        assertEquals(new BigDecimal("100.00"), withoutVat.getTotal());
+        assertEquals(new BigDecimal("100.00"), withoutVat.getTotalGross());
 
-        assertEquals(false, invoice.isSmallBusiness());
-        assertEquals(new BigDecimal("100.00"), invoice.getTotal());
-        assertEquals(new BigDecimal("100.00"), invoice.getTotalGross());
+        Invoice withVat = service.updateInvoiceType("case1", withoutVat, pools.get("poolWithVat"), type);
+        assertEquals(true, withVat.isSmallBusiness());
+        assertEquals("R-3", withVat.getInvoiceNumber());
+        assertEquals(new BigDecimal("100.00"), withVat.getTotal());
+        assertEquals(new BigDecimal("119.00"), withVat.getTotalGross());
+
+        assertEquals(Arrays.asList("Belegart oder Nummernkreis geändert (R-2, Rechnung)", "Belegart oder Nummernkreis geändert (R-3, Rechnung)"), history);
     }
 
     private static void inject(Object target, String fieldName, Object value) throws Exception {
-        Field f = target.getClass().getDeclaredField(fieldName);
+        Field f = ArchiveFileService.class.getDeclaredField(fieldName);
         f.setAccessible(true);
         f.set(target, value);
     }
