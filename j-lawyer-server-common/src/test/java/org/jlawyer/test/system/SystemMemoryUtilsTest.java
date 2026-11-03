@@ -749,6 +749,18 @@ public class SystemMemoryUtilsTest {
     }
 
     @Test
+    public void testContainerLimitCloseToHostMemoryIsNotMixedWithHostValues() throws Exception {
+        // a container limit just below (and just above) the host's memory, within 1% - the host's MemAvailable must not
+        // be used together with the container's total
+        for (long total : new long[]{TOTAL - TOTAL / 200, TOTAL - 1024L, TOTAL + 1024L}) {
+            assertEquals(-1L, SystemMemoryUtils.getAvailableMemoryFromMeminfo(MEMINFO, total));
+            Path meminfo = tmp.newFile().toPath();
+            Files.write(meminfo, MEMINFO);
+            assertEquals(JVM_FREE, SystemMemoryUtils.getAvailablePhysicalMemory(jvm(total), meminfo));
+        }
+    }
+
+    @Test
     public void testMissingMemAvailable() {
         // kernels before 3.14 do not provide MemAvailable
         List<String> oldKernel = Arrays.asList("MemTotal:        8048572 kB", "MemFree:          153328 kB");
