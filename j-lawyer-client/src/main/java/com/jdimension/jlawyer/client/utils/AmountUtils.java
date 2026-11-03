@@ -675,8 +675,10 @@ public class AmountUtils {
     }
 
     /**
-     * Parses an amount that has been formatted with the given format, without rounding it through float or double -
-     * those have too few digits for cent amounts above roughly 131.000. The given format is not changed.
+     * Parses an amount that has been formatted with the given format into a BigDecimal, without rounding it through a
+     * binary floating point type. A float has too few digits for cent amounts above roughly 131.000, a double has
+     * enough digits for usual amounts but still can not represent most cent values exactly. The given format is not
+     * changed.
      *
      * @param format the format the text was created with
      * @param text the formatted amount, e.g. "150.000,01"
