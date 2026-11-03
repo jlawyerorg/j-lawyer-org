@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.utils;
 
 import com.jdimension.jlawyer.client.editors.webview.WebViewHtmlEditorPanel;
+import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.services.CalendarEntryDTO;
 import de.costache.calendar.CalendarPanel;
@@ -672,6 +673,8 @@ import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.LayoutManager;
 import java.util.Collection;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
@@ -1040,6 +1043,45 @@ public class ThreadUtils {
         SwingUtilities.invokeLater(() -> {
             calendarTarget.setData(entries);
         });
+    }
+
+    /**
+     * Runs a task in a background thread and waits for its result. A modal
+     * progress indicator is shown meanwhile, so the window keeps repainting
+     * but takes no other input. Must be called on the event dispatch thread.
+     *
+     * @param <T> result type
+     * @param owner window the progress indicator belongs to
+     * @param message text shown in the progress indicator
+     * @param task the task to run
+     * @return the result of the task
+     * @throws Exception the exception thrown by the task
+     */
+    public static <T> T callWithProgressIndicator(JFrame owner, String message, Callable<T> task) throws Exception {
+        ProgressIndicator pi = new ProgressIndicator(owner, true);
+        pi.setShowCancelButton(false);
+        pi.setInfinite(true);
+        pi.setProgressString(message);
+        AtomicReference<T> result = new AtomicReference<>();
+        AtomicReference<Exception> failure = new AtomicReference<>();
+        new Thread(() -> {
+            try {
+                result.set(task.call());
+            } catch (Exception ex) {
+                failure.set(ex);
+            } finally {
+                // runs on the event dispatch thread inside the modal loop of the indicator and ends it
+                SwingUtilities.invokeLater(() -> {
+                    pi.setVisible(false);
+                    pi.dispose();
+                });
+            }
+        }).start();
+        pi.setVisible(true);
+        if (failure.get() != null) {
+            throw failure.get();
+        }
+        return result.get();
     }
 
 }

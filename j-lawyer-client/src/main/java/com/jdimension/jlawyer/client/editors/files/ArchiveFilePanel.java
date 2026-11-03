@@ -2722,8 +2722,21 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 for (ArchiveFileDocumentsBean doc : selected) {
                     names.add(doc.getName());
                 }
+                // the names of all documents are checked against the target case (and its trash) in one background run
+                Set<String> takenNames = ThreadUtils.callWithProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), "Dateinamen in der Zielakte werden geprüft...", () -> {
+                    Set<String> taken = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+                    for (String name : names) {
+                        if (remote.doesDocumentExist(sel.getId(), name)) {
+                            taken.add(name);
+                        }
+                    }
+                    return taken;
+                });
+                Set<String> checkedNames = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+                checkedNames.addAll(names);
                 List<String> keptNames = FileUtils.keepFileNames(names,
-                        name -> remote.doesDocumentExist(sel.getId(), name),
+                        // a name typed in the conflict dialog is checked right after it was entered
+                        name -> takenNames.contains(name) || (!checkedNames.contains(name) && remote.doesDocumentExist(sel.getId(), name)),
                         name -> FileUtils.getNewFileName(sel, name, new Date(), false, EditorsRegistry.getInstance().getMainWindow(), action + " - Name in der Zielakte bereits vorhanden", true));
                 if (keptNames == null) {
                     this.lastPopupClosed = System.currentTimeMillis();
