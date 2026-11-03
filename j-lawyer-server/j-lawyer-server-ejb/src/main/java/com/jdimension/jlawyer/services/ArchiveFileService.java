@@ -7278,7 +7278,14 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public Invoice copyInvoice(String invoiceId, String toCaseId, InvoicePool invoicePool, boolean asCredit, boolean markAsCopy, Date periodFrom, Date periodTo, Date due) throws Exception {
 
         Invoice oldInvoice = this.invoicesFacade.find(invoiceId);
-        
+        if (oldInvoice == null) {
+            throw new Exception("Rechnung " + invoiceId + " existiert nicht.");
+        }
+
+        // the caller must be allowed to see the source case, not only the target case
+        ArchiveFileBean sourceCase = oldInvoice.getArchiveFileKey();
+        SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), sourceCase, this.securityFacade, this.getAllowedGroups(sourceCase));
+
         if(invoicePool==null) {
             invoicePool=this.invoicesPoolsFacade.find(oldInvoice.getLastPoolId());
         }
