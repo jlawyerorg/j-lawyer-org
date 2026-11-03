@@ -916,7 +916,7 @@ public class SendAction extends ProgressableAction {
                 smtpProps.setProperty("mail." + ms.getEmailInType() + ".ssl.enable", "true");
             }
             ServerSettings sset = ServerSettings.getInstance();
-            String trustedServers = sset.getSetting("mail.imaps.ssl.trust", "");
+            String trustedServers = sset.getSetting(com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys.SERVERCONF_MAIL_IMAPS_SSLTRUST, "");
             if (trustedServers.length() > 0) {
                 smtpProps.put("mail.imaps.ssl.trust", trustedServers);
             }
@@ -1155,7 +1155,7 @@ public class SendAction extends ProgressableAction {
                     imapProps.setProperty("mail." + ms.getEmailInType() + ".ssl.enable", "true");
                 }
                 ServerSettings sset = ServerSettings.getInstance();
-                String trustedServers = sset.getSetting("mail.imaps.ssl.trust", "");
+                String trustedServers = sset.getSetting(com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys.SERVERCONF_MAIL_IMAPS_SSLTRUST, "");
                 if (trustedServers.length() > 0) {
                     imapProps.put("mail.imaps.ssl.trust", trustedServers);
                 }

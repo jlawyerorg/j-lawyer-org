@@ -1073,10 +1073,23 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
     @RolesAllowed({"loginRole"})
     public List<Invoice> getInvoicesByStatus(int... status) throws Exception {
 
+        // only return invoices of cases the caller is allowed to see
+        Set<String> allowedCases;
+        try {
+            allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
+        } catch (Exception ex) {
+            log.error("Unable to determine allowed cases for user " + context.getCallerPrincipal().getName(), ex);
+            throw new Exception("Akten für Nutzer '" + context.getCallerPrincipal().getName() + "' konnten nicht ermittelt werden.", ex);
+        }
+
         List<Invoice> invoicesList = new ArrayList<>();
-        this.invoices.findByStatus(Invoice.STATUS_OPEN);
         for(int s: status) {
-            invoicesList.addAll(invoices.findByStatus(s));
+            for (Invoice inv : invoices.findByStatus(s)) {
+                ArchiveFileBean c = inv.getArchiveFileKey();
+                if (c != null && allowedCases.contains(c.getId())) {
+                    invoicesList.add(inv);
+                }
+            }
         }
         return invoicesList;
     }

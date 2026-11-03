@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jdimension.jlawyer.email.CommonMailUtils;
 import com.jdimension.jlawyer.persistence.MailboxAccessFacadeLocal;
@@ -865,10 +866,33 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     @EJB
     private MailboxAccessFacadeLocal mailboxAccessFacade;
 
+    // ==================== Access Control ====================
+    /**
+     * Whether the caller may use the given mailbox: administrators may use every configured
+     * mailbox, all other users only the mailboxes assigned to them.
+     */
+    private boolean hasMailboxAccess(String mailboxId) {
+        if (mailboxId == null) {
+            return false;
+        }
+        if (this.context.isCallerInRole("adminRole")) {
+            return true;
+        }
+        return this.mailboxAccessFacade.findByUserAndMailbox(this.context.getCallerPrincipal().getName(), mailboxId) != null;
+    }
+
+    private void checkMailboxAccess(String mailboxId) throws Exception {
+        if (!this.hasMailboxAccess(mailboxId)) {
+            log.warn("user " + this.context.getCallerPrincipal().getName() + " tried to access mailbox " + mailboxId + " without permission");
+            throw new Exception("Kein Zugriff auf Postfach " + mailboxId);
+        }
+    }
+
     // ==================== Token Management ====================
     @Override
-    @PermitAll
+    @RolesAllowed({"loginRole"})
     public String getAuthToken(String mailboxId) throws Exception {
+        this.checkMailboxAccess(mailboxId);
         MailboxSetup ms = this.mailboxSetupFacade.find(mailboxId);
         if (ms != null) {
             return ms.getAuthToken();
@@ -898,6 +922,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     @Override
     @RolesAllowed({"loginRole"})
     public boolean updateAuthToken(String mailboxId) throws Exception {
+        this.checkMailboxAccess(mailboxId);
         MailboxSetup ms = this.mailboxSetupFacade.find(mailboxId);
         if (ms != null) {
             return this.updateAuthTokenForMailbox(ms);
@@ -971,6 +996,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     @Override
     @RolesAllowed({"loginRole"})
     public List<MailFolderDTO> listFolders(String mailboxId) throws Exception {
+        this.checkMailboxAccess(mailboxId);
         return doListFolders(mailboxId);
     }
 
@@ -986,6 +1012,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     @Override
     @RolesAllowed({"loginRole"})
     public List<MailFolderDTO> listFolders(String mailboxId, boolean includeHidden, boolean includeCounts) throws Exception {
+        this.checkMailboxAccess(mailboxId);
         List<MailFolderDTO> folders = doListFolders(mailboxId, includeCounts);
         if (!includeHidden) {
             folders = filterHiddenFolders(mailboxId, folders);
@@ -1006,6 +1033,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     @Override
     @RolesAllowed({"loginRole"})
     public List<MailFolderDTO> getHiddenFolders(String mailboxId) throws Exception {
+        this.checkMailboxAccess(mailboxId);
         List<MailFolderDTO> folders = doListFolders(mailboxId, false);
         Map<String, MailFolderDTO> byId = new HashMap<>();
         for (MailFolderDTO f : folders) {
@@ -1025,6 +1053,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     @Override
     @RolesAllowed({"loginRole"})
     public void setFolderHidden(String mailboxId, String folderId, boolean hidden) throws Exception {
+        this.checkMailboxAccess(mailboxId);
         List<MailFolderDTO> folders = doListFolders(mailboxId, false);
         Map<String, MailFolderDTO> byId = new HashMap<>();
         MailFolderDTO target = null;
@@ -1056,6 +1085,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     @Override
     @RolesAllowed({"loginRole"})
     public int[] getFolderCounts(String mailboxId, String folderId) throws Exception {
+        this.checkMailboxAccess(mailboxId);
         MailboxSetup ms = getMailboxOrThrow(mailboxId);
         if (ms.isMsExchange()) {
             for (MailFolderDTO f : graphListFolders(ms)) {
@@ -1195,12 +1225,14 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     @Override
     @RolesAllowed({"loginRole"})
     public List<MailMessageDTO> listMessages(String mailboxId, String folderId, int top, int offset) throws Exception {
+        this.checkMailboxAccess(mailboxId);
         return listMessages(mailboxId, folderId, top, offset, null, false);
     }
 
     @Override
     @RolesAllowed({"loginRole"})
     public List<MailMessageDTO> listMessages(String mailboxId, String folderId, int top, int offset, Date sinceDate, boolean unreadOnly) throws Exception {
+        this.checkMailboxAccess(mailboxId);
         return listMessages(mailboxId, folderId, top, offset, sinceDate, unreadOnly, null);
     }
 
@@ -1252,6 +1284,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     @Override
     @RolesAllowed({"loginRole"})
     public List<MailMessageDTO> listMessages(String mailboxId, String folderId, int top, int offset, Date sinceDate, boolean unreadOnly, String searchTerm) throws Exception {
+        this.checkMailboxAccess(mailboxId);
         return doListMessages(mailboxId, folderId, top, offset, sinceDate, unreadOnly, searchTerm);
     }
 
@@ -1273,6 +1306,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     @Override
     @RolesAllowed({"loginRole"})
     public MailMessageDTO getMessage(String mailboxId, String messageRef) throws Exception {
+        this.checkMailboxAccess(mailboxId);
         return doGetMessage(mailboxId, messageRef);
     }
 
@@ -1285,6 +1319,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     @Override
     @RolesAllowed({"loginRole"})
     public MailMessageDTO getMessage(String mailboxId, String messageRef, boolean includeAttachmentMetadata) throws Exception {
+        this.checkMailboxAccess(mailboxId);
         MailMessageDTO prefetched = prefetchCache.remove(messageRef);
         if (prefetched != null) {
             return prefetched;
@@ -1330,6 +1365,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     @Override
     @RolesAllowed({"loginRole"})
     public MailAttachmentDTO getAttachmentContent(String mailboxId, String messageRef, String attachmentId) throws Exception {
+        this.checkMailboxAccess(mailboxId);
         MailboxSetup ms = getMailboxOrThrow(mailboxId);
         return ms.isMsExchange()
                 ? graphGetSingleAttachment(ms, messageRef, attachmentId)
@@ -1344,6 +1380,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     @Override
     @RolesAllowed({"loginRole"})
     public List<MailAttachmentDTO> getAttachments(String mailboxId, String messageRef) throws Exception {
+        this.checkMailboxAccess(mailboxId);
         return doGetAttachments(mailboxId, messageRef);
     }
 
@@ -1356,6 +1393,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     @Override
     @RolesAllowed({"loginRole"})
     public void sendMail(String mailboxId, String to, String cc, String bcc, String subject, String body, String contentType, List<MailAttachmentDTO> attachments, String priority, boolean readReceipt, boolean deliveryReceipt, String inReplyTo, String references) throws Exception {
+        this.checkMailboxAccess(mailboxId);
         MailboxSetup ms = getMailboxOrThrow(mailboxId);
         if (ms.isMsExchange()) {
             graphSendMail(ms, to, cc, bcc, subject, body, contentType, attachments, priority, readReceipt, deliveryReceipt, inReplyTo, references);
@@ -1391,6 +1429,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     @Override
     @RolesAllowed({"loginRole"})
     public void moveMessage(String mailboxId, String messageRef, String targetFolderId) throws Exception {
+        this.checkMailboxAccess(mailboxId);
         doMoveMessage(mailboxId, messageRef, targetFolderId);
     }
 
@@ -1403,6 +1442,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     @Override
     @RolesAllowed({"loginRole"})
     public void deleteMessage(String mailboxId, String messageRef) throws Exception {
+        this.checkMailboxAccess(mailboxId);
         List<String> single = new ArrayList<>();
         single.add(messageRef);
         List<String> failed = deleteMessages(mailboxId, single);
@@ -1414,6 +1454,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     @Override
     @RolesAllowed({"loginRole"})
     public List<String> deleteMessages(String mailboxId, List<String> messageRefs) throws Exception {
+        this.checkMailboxAccess(mailboxId);
         List<String> failed = new ArrayList<>();
         if (messageRefs == null || messageRefs.isEmpty()) {
             return failed;
@@ -1525,6 +1566,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     @Override
     @RolesAllowed({"loginRole"})
     public void markAsRead(String mailboxId, String messageRef, boolean read) throws Exception {
+        this.checkMailboxAccess(mailboxId);
         MailboxSetup ms = getMailboxOrThrow(mailboxId);
         if (ms.isMsExchange()) {
             graphMarkAsRead(ms, messageRef, read);
@@ -1555,6 +1597,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     @Override
     @RolesAllowed({"loginRole"})
     public boolean hasNewMessages(String mailboxId) throws Exception {
+        this.checkMailboxAccess(mailboxId);
         getMailboxOrThrow(mailboxId);
         Boolean flag = newMessageFlags.get(mailboxId);
         return flag != null && flag;
@@ -1568,7 +1611,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
             return result;
         }
         for (String id : mailboxIds) {
-            if (id == null) continue;
+            if (id == null || !this.hasMailboxAccess(id)) continue;
             Integer cached = inboxUnreadCounts.get(id);
             result.put(id, cached != null ? cached : 0);
         }
@@ -1578,6 +1621,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     @Override
     @RolesAllowed({"loginRole"})
     public String testConnection(String mailboxId) throws Exception {
+        this.checkMailboxAccess(mailboxId);
         MailboxSetup ms = getMailboxOrThrow(mailboxId);
         // Force fresh connection — cached connections may use stale credentials
         imapInvalidateCache(mailboxId);
@@ -1654,6 +1698,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     @Override
     @RolesAllowed({"loginRole"})
     public MailFolderDTO createFolder(String mailboxId, String parentFolderId, String folderName) throws Exception {
+        this.checkMailboxAccess(mailboxId);
         return doCreateFolder(mailboxId, parentFolderId, folderName);
     }
 
@@ -1666,6 +1711,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     @Override
     @RolesAllowed({"loginRole"})
     public void deleteFolder(String mailboxId, String folderId) throws Exception {
+        this.checkMailboxAccess(mailboxId);
         MailboxSetup ms = getMailboxOrThrow(mailboxId);
         if (ms.isMsExchange()) {
             graphDeleteFolder(ms, folderId);
@@ -1677,6 +1723,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     @Override
     @RolesAllowed({"loginRole"})
     public void emptyTrash(String mailboxId, String trashFolderId) throws Exception {
+        this.checkMailboxAccess(mailboxId);
         MailboxSetup ms = getMailboxOrThrow(mailboxId);
         if (ms.isMsExchange()) {
             graphEmptyTrash(ms, trashFolderId);
@@ -1689,6 +1736,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     @Override
     @RolesAllowed({"loginRole"})
     public void invalidateCaches(String mailboxId) throws Exception {
+        this.checkMailboxAccess(mailboxId);
         getMailboxOrThrow(mailboxId);
         invalidateAllFolderCaches(mailboxId);
         imapInvalidateCache(mailboxId);
@@ -1697,6 +1745,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     @Override
     @RolesAllowed({"loginRole"})
     public void appendToFolder(String mailboxId, String folderId, String to, String cc, String bcc, String subject, String body, String contentType, List<MailAttachmentDTO> attachments, boolean markAsRead) throws Exception {
+        this.checkMailboxAccess(mailboxId);
         MailboxSetup ms = getMailboxOrThrow(mailboxId);
         if (ms.isMsExchange()) {
             graphAppendToFolder(ms, folderId, to, cc, bcc, subject, body, contentType, attachments, markAsRead);
@@ -1864,7 +1913,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         try {
             InitialContext ic = new InitialContext();
             ServerSettingsBeanFacadeLocal settings = (ServerSettingsBeanFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ServerSettingsBeanFacade!com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal");
-            ServerSettingsBean trustedServers = settings.find("mail.imaps.ssl.trust");
+            ServerSettingsBean trustedServers = settings.find(ServerSettingsKeys.SERVERCONF_MAIL_IMAPS_SSLTRUST);
             if (trustedServers != null) {
                 props.put("mail.imaps.ssl.trust", trustedServers.getSettingValue());
             }
@@ -3269,6 +3318,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
     @Override
     @RolesAllowed({"loginRole"})
     public byte[] getMessageAsEml(String mailboxId, String messageRef) throws Exception {
+        this.checkMailboxAccess(mailboxId);
         return doGetMessageAsEml(mailboxId, messageRef);
     }
 

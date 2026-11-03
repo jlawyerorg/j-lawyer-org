@@ -804,7 +804,8 @@ public class PreviewGenerator {
         File dstFileById = new File(dstId);
 
         File dstFileByName = new File(dstName);
-        if (dstFileByName.exists()) {
+        // legacy previews were stored under the document name - a name with path elements cannot be one of them
+        if (ServerFileUtils.isSimpleName(fileName) && dstFileByName.exists()) {
             dstFileByName.renameTo(dstFileById);
         }
 
@@ -866,7 +867,7 @@ public class PreviewGenerator {
         String srcFile = src + fileName;
 
         File fSrcFile = new File(srcId);
-        if (!fSrcFile.exists()) {
+        if (!fSrcFile.exists() && ServerFileUtils.isSimpleName(fileName)) {
             fSrcFile = new File(srcFile);
         }
 
@@ -930,7 +931,7 @@ public class PreviewGenerator {
         dstDir.mkdirs();
 
         File oldFile = new File(dir + docName);
-        if (oldFile.exists()) {
+        if (ServerFileUtils.isSimpleName(docName) && oldFile.exists()) {
             File toFile = new File(dir + docId + "." + previewType);
             if (!oldFile.renameTo(toFile)) {
                 log.error("Could not rename file " + oldFile.getAbsolutePath() + " to " + toFile.getAbsolutePath());

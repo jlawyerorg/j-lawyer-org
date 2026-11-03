@@ -768,6 +768,8 @@ public class UserSettingsKeys {
 
     public static final String CONF_CASE_DEFAULT_OWNERGROUP = "user.case.default.ownergroup";
     public static final String CONF_CASE_DEFAULT_ALLOWEDGROUPS = "user.case.default.allowedgroups";
+    public static final String CONF_CASE_INVOICES_SORT = "user.case.invoices.sort";
+    public static final String CONF_CASE_INVOICES_STATUSFILTER = "user.case.invoices.statusfilter";
 
     // will be used with a suffix indicating the event type (see CalendarSetup class)
     public static final String CONF_CALENDAR_LASTSELECTED = "user.calendar.lastcalsetup.";

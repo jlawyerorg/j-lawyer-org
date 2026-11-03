@@ -831,8 +831,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     }
 
     private void updateEpostStatus() {
-        String encryptedVendorId = ServerSettings.getInstance().getSetting(ServerSettings.SERVERCONF_EPOSTVENDORID_ENCRYPTED, "");
-        if ("".equalsIgnoreCase(encryptedVendorId)) {
+        // the code itself is never returned by the server, only whether it is stored
+        if (!ServerSettings.getInstance().hasSetting(ServerSettings.SERVERCONF_EPOSTVENDORID_ENCRYPTED)) {
             this.lblEpostRegistered.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
             this.lblEpostRegistered.setText("inaktiv");
         } else {

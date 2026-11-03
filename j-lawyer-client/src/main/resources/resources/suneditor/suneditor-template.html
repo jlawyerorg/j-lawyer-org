@@ -285,8 +285,9 @@
             // on all tags so inline formatting survives getContents() serialization.
             // Without this, SunEditor strips most CSS properties from block elements
             // (<p>, <div>), which drops font information from outgoing emails.
+            // data-se-embed must survive sanitization as well, see markImagesAsEmbedded().
             attributesWhitelist: {
-                'all': 'style|class|id'
+                'all': 'style|class|id|data-se-embed'
             },
 
             // Allow <font> and additional inline tags to survive sanitization.
@@ -1023,6 +1024,32 @@
             log('Applied ' + ruleCount + ' CSS rules');
         }
 
+        /**
+         * Marks all <img> elements in the given HTML with data-se-embed="true".
+         *
+         * WORKAROUND for image duplication while typing: on every content change SunEditor's
+         * image plugin (fileManager.checkInfo) picks up every <img> that is not wrapped in its
+         * own component container and runs update_image() on it. update_image() clones the
+         * image into a new container, but for certain nestings (e.g. logos in quoted mail
+         * signatures) it fails to remove the original (bug: "__updateTags.map(...).length"
+         * instead of filter). The original stays unwrapped and is cloned again on the next
+         * keystroke. Images marked with data-se-embed="true" are skipped by checkInfo, so
+         * images coming from Java (quotes, signatures, templates, drafts) are left untouched.
+         *
+         * A plain string replacement is used on purpose (instead of re-parsing the DOM) so the
+         * remaining markup - including full documents with <html>/<head> - is passed to
+         * SunEditor exactly as before.
+         *
+         * @param {string} html - HTML content
+         * @returns {string} HTML content with marked images (unchanged if it contains no <img>)
+         */
+        function markImagesAsEmbedded(html) {
+            if (!html || !/<img/i.test(html)) {
+                return html;
+            }
+            return html.replace(/<img(?=[\s\/>])(?![^>]*\sdata-se-embed\s*=)/gi, '<img data-se-embed="true"');
+        }
+
         // JavaScript API Bridge for Java integration
         window.editorAPI = {
             /**
@@ -1041,7 +1068,7 @@
                 if (!html) {
                     html = '';
                 }
-                editor.setContents(html);
+                editor.setContents(markImagesAsEmbedded(html));
             },
 
             /**
@@ -1052,7 +1079,7 @@
             insert: function(text, pos) {
                 // SunEditor doesn't support inserting at arbitrary position easily
                 // So we insert at cursor position (which is the typical use case)
-                editor.insertHTML(text);
+                editor.insertHTML(markImagesAsEmbedded(text));
             },
 
             /**

@@ -670,6 +670,7 @@ import javax.persistence.Id;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
@@ -725,6 +726,30 @@ public class CalendarSetup implements Serializable, EventTypes {
     // if true, events that are marked as done are deleted from Nextcloud
     @Column(name = "delete_done")
     protected boolean deleteDone=false;
+
+    // not persisted: set on copies handed out to clients, which never contain the password
+    @Transient
+    protected boolean cloudPasswordSet=false;
+
+    /**
+     * Returns a detached copy without the cloud password, for handing it out to clients. The
+     * server reads the stored password itself when it talks to the calendar server.
+     *
+     * @return a copy with an empty password; {@link #isCloudPasswordSet()} tells whether one is stored
+     */
+    public CalendarSetup copyWithoutPassword() {
+        CalendarSetup cs = (CalendarSetup) this.getClone();
+        cs.cloudPasswordSet = this.cloudPasswordSet || (this.cloudPassword != null && !this.cloudPassword.isEmpty());
+        cs.cloudPassword = null;
+        return cs;
+    }
+
+    /**
+     * @return true if a cloud password is stored - also on copies without the password
+     */
+    public boolean isCloudPasswordSet() {
+        return this.cloudPasswordSet || (this.cloudPassword != null && !this.cloudPassword.isEmpty());
+    }
 
     public Object getClone() {
         CalendarSetup cs= new CalendarSetup();

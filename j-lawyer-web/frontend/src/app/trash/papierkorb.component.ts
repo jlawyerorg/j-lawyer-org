@@ -44,10 +44,13 @@ type Filter = 'all' | 'case' | 'address';
         <div class="tr-retention">
           <span>{{ 'trash.retention' | transloco }}</span>
           @if (canAdmin()) {
-            <input type="number" min="0" [value]="retention()" (input)="retention.set(toInt($any($event.target).value))" />
+            <input type="number" min="0" [value]="retention()" [title]="'trash.retentionHint' | transloco" (input)="retention.set(toInt($any($event.target).value))" />
             <span>{{ 'trash.days' | transloco }}</span>
+            @if (retention() <= 0) { <span class="hint">{{ 'trash.retentionDisabled' | transloco }}</span> }
             <button type="button" class="btn-ghost sm" [disabled]="retentionSaving()" (click)="saveRetention()">{{ (retentionSaving() ? 'settings.saving' : 'settings.save') | transloco }}</button>
             @if (retentionOk()) { <span class="ok">✓</span> }
+          } @else if (retention() <= 0) {
+            <b>{{ 'trash.retentionDisabled' | transloco }}</b>
           } @else {
             <b>{{ retention() }}</b> <span>{{ 'trash.days' | transloco }}</span>
           }
@@ -111,6 +114,7 @@ type Filter = 'all' | 'case' | 'address';
     .tr-retention { display: flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--jl-ink-faint); }
     .tr-retention input { width: 68px; font: inherit; padding: 5px 8px; border: 1px solid var(--jl-line-strong); border-radius: 7px; background: var(--jl-surface); color: var(--jl-ink); }
     .tr-retention .ok { color: var(--jl-green, #1a7f37); }
+    .tr-retention .hint { font-style: italic; }
     .tr-muted { color: var(--jl-ink-soft); font-size: .88rem; }
     .tr-error { color: var(--jl-red); font-size: .84rem; margin: 0; }
     .tr-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
@@ -181,7 +185,7 @@ export class PapierkorbComponent implements OnInit {
     });
   }
 
-  protected toInt(v: string): number { const n = parseInt(v, 10); return Number.isFinite(n) ? n : 0; }
+  protected toInt(v: string): number { const n = parseInt(v, 10); return Number.isFinite(n) ? Math.max(0, n) : 0; }
   protected sizeStr(bytes: number): string {
     if (bytes >= 1024 * 1024) { return (bytes / (1024 * 1024)).toFixed(1) + ' MB'; }
     if (bytes >= 1024) { return Math.round(bytes / 1024) + ' KB'; }

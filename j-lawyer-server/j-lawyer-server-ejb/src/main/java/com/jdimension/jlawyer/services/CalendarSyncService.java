@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
+import com.jdimension.jlawyer.persistence.CalendarSetupFacadeLocal;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
 import com.jdimension.jlawyer.security.CryptoProvider;
@@ -696,6 +697,9 @@ public class CalendarSyncService implements CalendarSyncServiceLocal {
 
     @EJB
     private ServerSettingsBeanFacadeLocal settings;
+
+    @EJB
+    private CalendarSetupFacadeLocal calendarSetupFacade;
 
     @EJB
     private ArchiveFileReviewsBeanFacadeLocal archiveFileReviewsFacade;
@@ -769,6 +773,17 @@ public class CalendarSyncService implements CalendarSyncServiceLocal {
     }
 
     private NextcloudCalendarConnector getConnector(CalendarSetup cs) throws Exception {
+
+        if (cs != null && cs.getId() != null) {
+            // clients only ever see copies without the password - always use the stored setup
+            CalendarSetup stored = this.calendarSetupFacade.find(cs.getId());
+            if (stored != null) {
+                cs = stored;
+            }
+        }
+        if (cs == null) {
+            return null;
+        }
 
         if (ServerStringUtils.isEmpty(cs.getCloudHost()) || ServerStringUtils.isEmpty(cs.getCloudUser()) || ServerStringUtils.isEmpty(cs.getCloudPassword())) {
             log.info("No or invalid calendar sync configuration for calendar setup " + cs.getDisplayName());

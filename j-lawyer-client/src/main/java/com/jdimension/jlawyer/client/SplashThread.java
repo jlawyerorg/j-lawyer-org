@@ -1046,7 +1046,8 @@ public class SplashThread implements Runnable {
                     openBackupConfigurationDialog();
                 }
             }
-            if ("1".equals(serverSettings1.getSetting(ServerSettings.SERVERCONF_REPLICATION_ISTARGET, "0"))) {
+            // only system administrators may switch off the replication target mode
+            if ("1".equals(serverSettings1.getSetting(ServerSettings.SERVERCONF_REPLICATION_ISTARGET, "0")) && UserUtils.isCurrentUserSysAdmin()) {
                 StringBuilder dialogContent = new StringBuilder();
                 dialogContent.append("<html>");
                 dialogContent.append("<b>Diese Installation empf&auml;ngt momentan Daten einer anderen j-lawyer.BOX (Replikation).</b><br/>");

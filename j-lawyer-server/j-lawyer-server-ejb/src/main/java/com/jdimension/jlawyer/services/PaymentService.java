@@ -663,13 +663,19 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.Payment;
 import com.jdimension.jlawyer.persistence.PaymentFacadeLocal;
+import com.jdimension.jlawyer.server.utils.SecurityUtils;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
+import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -677,20 +683,42 @@ import javax.ejb.Stateless;
  */
 @Stateless
 public class PaymentService implements PaymentServiceRemote, PaymentServiceLocal {
-    
+
+    private static final Logger log = Logger.getLogger(PaymentService.class.getName());
+
+    @Resource
+    private SessionContext context;
+
     @EJB
     private PaymentFacadeLocal payments;
 
+    @EJB
+    private SecurityServiceLocal securityFacade;
+
     // Add business logic below. (Right-click in editor and choose
     // "Insert Code > Add Business Method")
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public List<Payment> getPaymentsByStatus(int... status) throws Exception {
 
+        // only return payments of cases the caller is allowed to see
+        Set<String> allowedCases;
+        try {
+            allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
+        } catch (Exception ex) {
+            log.error("Unable to determine allowed cases for user " + context.getCallerPrincipal().getName(), ex);
+            throw new Exception("Akten für Nutzer '" + context.getCallerPrincipal().getName() + "' konnten nicht ermittelt werden.", ex);
+        }
+
         List<Payment> paymentsList = new ArrayList<>();
         for(int s: status) {
-            paymentsList.addAll(payments.findByStatus(s));
+            for (Payment p : payments.findByStatus(s)) {
+                ArchiveFileBean c = p.getArchiveFileKey();
+                if (c != null && allowedCases.contains(c.getId())) {
+                    paymentsList.add(p);
+                }
+            }
         }
         return paymentsList;
     }
