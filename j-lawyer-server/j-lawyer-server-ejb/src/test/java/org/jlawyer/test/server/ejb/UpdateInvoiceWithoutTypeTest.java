@@ -664,33 +664,38 @@ package org.jlawyer.test.server.ejb;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBeanFacadeLocal;
-import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.InvoiceFacadeLocal;
+import com.jdimension.jlawyer.persistence.InvoicePool;
+import com.jdimension.jlawyer.persistence.InvoicePoolFacadeLocal;
 import com.jdimension.jlawyer.persistence.InvoicePositionFacadeLocal;
+import com.jdimension.jlawyer.persistence.InvoiceType;
+import com.jdimension.jlawyer.persistence.InvoiceTypeFacadeLocal;
 import com.jdimension.jlawyer.services.ArchiveFileService;
+import com.jdimension.jlawyer.services.InvoiceServiceLocal;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.math.BigDecimal;
 import java.security.Principal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.function.BiFunction;
 import javax.ejb.SessionContext;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 import org.junit.Test;
 
 /**
  * Invoices created before invoice types existed have no type. Saving them must work, because the invoice dialog saves
- * before a type is assigned (issue #3371).
+ * before a type is assigned, and assigning a type afterwards must work as well (issue #3371).
  */
 public class UpdateInvoiceWithoutTypeTest {
 
     @Test
-    public void testSaveInvoiceWithoutType() throws Exception {
+    public void testSaveInvoiceWithoutTypeThenAssignType() throws Exception {
         Invoice stored = new Invoice();
         stored.setId("inv1");
         stored.setInvoiceNumber("R-2019-007");
@@ -707,29 +712,45 @@ public class UpdateInvoiceWithoutTypeTest {
         edited.setTotal(BigDecimal.ZERO);
         edited.setTotalGross(BigDecimal.ZERO);
 
+        InvoicePool pool = new InvoicePool();
+        pool.setId("pool1");
+        pool.setSmallBusiness(true);
+        InvoiceType type = new InvoiceType();
+        type.setId("type1");
+        type.setDisplayName("Rechnung");
+
         List<String> history = new ArrayList<>();
-        ArchiveFileService service = new ArchiveFileService();
+        // the case history also updates the change date of the case via JDBC - there is no data source in a unit test,
+        // so the history is recorded here instead
+        ArchiveFileService service = new ArchiveFileService() {
+            @Override
+            public void addCaseHistory(String newHistoryId, ArchiveFileBean dto, String description) {
+                history.add(description);
+            }
+        };
         inject(service, "context", fake(SessionContext.class, (m, args) -> "getCallerPrincipal".equals(m.getName()) ? (Principal) () -> null : null));
         inject(service, "archiveFileFacade", fake(ArchiveFileBeanFacadeLocal.class, (m, args) -> "find".equals(m.getName()) ? new ArchiveFileBean() : null));
         inject(service, "invoicesFacade", fake(InvoiceFacadeLocal.class, (m, args) -> "find".equals(m.getName()) ? stored : null));
         inject(service, "invoicePositionsFacade", fake(InvoicePositionFacadeLocal.class, (m, args) -> "findByInvoice".equals(m.getName()) ? new ArrayList<>() : null));
-        inject(service, "archiveFileHistoryFacade", fake(ArchiveFileHistoryBeanFacadeLocal.class, (m, args) -> {
-            if ("create".equals(m.getName())) {
-                history.add(((ArchiveFileHistoryBean) args[0]).getChangeDescription());
-            }
-            return null;
-        }));
+        inject(service, "invoicesPoolsFacade", fake(InvoicePoolFacadeLocal.class, (m, args) -> "find".equals(m.getName()) ? pool : null));
+        inject(service, "invoicesTypesFacade", fake(InvoiceTypeFacadeLocal.class, (m, args) -> "find".equals(m.getName()) ? type : null));
+        inject(service, "invoiceService", fake(InvoiceServiceLocal.class, (m, args) -> "nextInvoiceNumber".equals(m.getName()) ? "RE-2026-001" : null));
 
-        try {
-            service.updateInvoice("case1", edited);
-        } catch (Throwable t) {
-            // expected outside of the application server: the case history also updates the change date of the case via
-            // JDBC, there is no data source here. The history entry itself has been created before that.
-        }
+        // saving the untyped invoice completes and keeps the edits
+        Invoice saved = service.updateInvoice("case1", edited);
+        assertSame(stored, saved);
+        assertEquals(Invoice.STATUS_OPEN, saved.getStatus());
+        assertEquals("Beratung", saved.getName());
+        assertEquals(Arrays.asList("Beleg geändert (R-2019-007, " + saved.getStatusString() + ", ohne Belegart)"), history);
 
-        assertEquals("Beleg geändert (R-2019-007, " + stored.getStatusString() + ", ohne Belegart)", history.isEmpty() ? null : history.get(0));
-        assertEquals(Invoice.STATUS_OPEN, stored.getStatus());
-        assertEquals("Beratung", stored.getName());
+        // then the dialog assigns type and number range
+        Invoice typed = service.updateInvoiceType("case1", saved, pool, type);
+        assertSame(type, typed.getInvoiceType());
+        assertEquals("pool1", typed.getLastPoolId());
+        assertEquals("RE-2026-001", typed.getInvoiceNumber());
+        assertEquals("Beratung", typed.getName());
+        assertEquals(2, history.size());
+        assertEquals("Belegart oder Nummernkreis geändert (RE-2026-001, Rechnung)", history.get(1));
     }
 
     @SuppressWarnings("unchecked")
@@ -750,7 +771,7 @@ public class UpdateInvoiceWithoutTypeTest {
     }
 
     private static void inject(Object target, String fieldName, Object value) throws Exception {
-        Field f = target.getClass().getDeclaredField(fieldName);
+        Field f = ArchiveFileService.class.getDeclaredField(fieldName);
         f.setAccessible(true);
         f.set(target, value);
     }
