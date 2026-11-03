@@ -663,6 +663,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors;
 
+import java.util.function.IntSupplier;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
@@ -709,17 +711,53 @@ public class EditorsRegistryReselectTest {
         }
     }
 
+    private static class DirtyTestEditor extends TestEditor implements SaveableEditor {
+
+        boolean saveSucceeds = true;
+        int saves = 0;
+
+        @Override
+        public boolean isDirty() {
+            return true;
+        }
+
+        @Override
+        public boolean save() {
+            this.saves++;
+            return this.saveSucceeds;
+        }
+    }
+
     private JPanel previousPane;
+    private IntSupplier previousQuestion;
+    private int questions;
 
     @Before
     public void setUp() {
         this.previousPane = EditorsRegistry.getInstance().getMainEditorsPane();
+        this.previousQuestion = EditorsRegistry.getInstance().reselectSaveQuestion;
         EditorsRegistry.getInstance().setMainEditorsPane(new JPanel());
+        this.questions = 0;
     }
 
     @After
     public void tearDown() {
         EditorsRegistry.getInstance().setMainEditorsPane(this.previousPane);
+        EditorsRegistry.getInstance().reselectSaveQuestion = this.previousQuestion;
+    }
+
+    private void answer(int option) {
+        EditorsRegistry.getInstance().reselectSaveQuestion = () -> {
+            this.questions++;
+            return option;
+        };
+    }
+
+    private DirtyTestEditor displayedDirtyEditor() {
+        DirtyTestEditor editor = new DirtyTestEditor();
+        EditorsRegistry.getInstance().setMainEditorsPaneView(editor);
+        editor.resetOnReselect = true;
+        return editor;
     }
 
     @Test
@@ -760,8 +798,51 @@ public class EditorsRegistryReselectTest {
         EditorsRegistry.getInstance().setMainEditorsPaneView(editor);
         editor.resetOnReselect = true;
 
-        // not dirty, so no confirmation dialog is shown (which would fail headless)
+        answer(JOptionPane.YES_OPTION);
         EditorsRegistry.getInstance().setMainEditorsPaneView(editor);
+        assertEquals(0, this.questions);
         assertEquals(2, editor.resets);
+    }
+
+    @Test
+    public void reselectingDirtyEditorAnsweredYesSavesThenResets() {
+        DirtyTestEditor editor = displayedDirtyEditor();
+        answer(JOptionPane.YES_OPTION);
+
+        EditorsRegistry.getInstance().setMainEditorsPaneView(editor);
+        assertEquals(1, this.questions);
+        assertEquals(1, editor.saves);
+        assertEquals(2, editor.resets);
+    }
+
+    @Test
+    public void reselectingDirtyEditorKeepsItWhenSavingFails() {
+        DirtyTestEditor editor = displayedDirtyEditor();
+        editor.saveSucceeds = false;
+        answer(JOptionPane.YES_OPTION);
+
+        EditorsRegistry.getInstance().setMainEditorsPaneView(editor);
+        assertEquals(1, editor.saves);
+        assertEquals(1, editor.resets);
+    }
+
+    @Test
+    public void reselectingDirtyEditorAnsweredNoResetsWithoutSaving() {
+        DirtyTestEditor editor = displayedDirtyEditor();
+        answer(JOptionPane.NO_OPTION);
+
+        EditorsRegistry.getInstance().setMainEditorsPaneView(editor);
+        assertEquals(0, editor.saves);
+        assertEquals(2, editor.resets);
+    }
+
+    @Test
+    public void reselectingDirtyEditorClosedQuestionKeepsIt() {
+        DirtyTestEditor editor = displayedDirtyEditor();
+        answer(JOptionPane.CLOSED_OPTION);
+
+        EditorsRegistry.getInstance().setMainEditorsPaneView(editor);
+        assertEquals(0, editor.saves);
+        assertEquals(1, editor.resets);
     }
 }

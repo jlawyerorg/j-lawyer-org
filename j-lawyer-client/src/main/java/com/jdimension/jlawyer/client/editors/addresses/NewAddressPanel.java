@@ -736,7 +736,21 @@ public class NewAddressPanel extends AddressPanel implements ResetOnDisplayEdito
     }
 
     @Override
+    public void populateOptions() {
+        // a contact saved already (e.g. before activating a tag) keeps its selections - selecting "new" again
+        // repopulates the options before asking whether to save, which would reset all dropdowns to blank
+        if (this.isContactSaved()) {
+            return;
+        }
+        super.populateOptions();
+    }
+
+    @Override
     public boolean isDirty() {
+        if (this.isContactSaved()) {
+            // compare against the saved contact instead of checking for non-empty fields
+            return super.isDirty();
+        }
         
         if (!StringUtils.isEmpty(this.txtBankAccount.getText())) {
             return true;

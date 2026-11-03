@@ -669,6 +669,7 @@ import java.awt.Component;
 import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.function.IntSupplier;
 import javax.swing.*;
 import org.apache.log4j.Logger;
 
@@ -688,6 +689,9 @@ public class EditorsRegistry {
 
     private Timer timer = null;
     private JFrame mainWindow = null;
+
+    // asks whether to save before an editor that is selected again gets reset - package-private so tests can answer it
+    IntSupplier reselectSaveQuestion = () -> JOptionPane.showConfirmDialog(this.getMainWindow(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("dialog.savebeforeexit"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("dialog.savebeforeexit.title"), JOptionPane.YES_NO_OPTION);
 
     /**
      * Creates a new instance of EditorsRegistry
@@ -824,7 +828,7 @@ public class EditorsRegistry {
         if (c instanceof SaveableEditor) {
             SaveableEditor se = (SaveableEditor) c;
             if (se.isDirty()) {
-                int ret = JOptionPane.showConfirmDialog(this.getMainWindow(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("dialog.savebeforeexit"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("dialog.savebeforeexit.title"), JOptionPane.YES_NO_OPTION);
+                int ret = this.reselectSaveQuestion.getAsInt();
                 if (ret == JOptionPane.CLOSED_OPTION) {
                     return;
                 }
