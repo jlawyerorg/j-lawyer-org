@@ -703,6 +703,7 @@ import java.security.NoSuchAlgorithmException;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
+import javax.ejb.EJBAccessException;
 import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
 import org.apache.log4j.Logger;
@@ -1038,12 +1039,15 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
     @Override
     @RolesAllowed({"loginRole"})
     public List<MailboxAccess> getMailboxAccessForUser(String principalId) throws Exception {
+        this.checkOwnPrincipalOrAdmin(principalId);
         return this.mailboxAccessFacade.findByUser(principalId);
     }
 
     @Override
     @RolesAllowed({"loginRole"})
     public List<MailboxSetup> getMailboxesForUser(String principalId) throws Exception {
+        // mailbox setups contain credentials - only for the caller himself or an administrator
+        this.checkOwnPrincipalOrAdmin(principalId);
         List<MailboxAccess> mailboxAccesses = this.mailboxAccessFacade.findByUser(principalId);
         ArrayList<MailboxSetup> mailboxes = new ArrayList<>();
         for (MailboxAccess ma : mailboxAccesses) {
@@ -1061,9 +1065,34 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
     }
 
     @Override
-    @RolesAllowed({"loginRole"})
+    @RolesAllowed({"adminRole"})
     public List<MailboxSetup> getAllMailboxSetups() {
         return this.mailboxSetupFacade.findAll();
+    }
+
+    /**
+     * Throws unless the caller requests data about himself or is an administrator.
+     */
+    private void checkOwnPrincipalOrAdmin(String principalId) throws Exception {
+        String caller = this.sessionContext.getCallerPrincipal().getName();
+        if (!this.sessionContext.isCallerInRole("adminRole") && (principalId == null || !principalId.equals(caller))) {
+            log.warn("user " + caller + " tried to read mailbox assignments of " + principalId);
+            throw new Exception("Keine Berechtigung für die Postfächer von Nutzer " + principalId);
+        }
+    }
+
+    /**
+     * Throws unless the caller is an administrator or the mailbox is assigned to him.
+     */
+    private void checkMailboxAccess(MailboxSetup mailbox) {
+        String caller = this.sessionContext.getCallerPrincipal().getName();
+        if (this.sessionContext.isCallerInRole("adminRole")) {
+            return;
+        }
+        if (mailbox == null || mailbox.getId() == null || this.mailboxAccessFacade.findByUserAndMailbox(caller, mailbox.getId()) == null) {
+            log.warn("user " + caller + " tried to access settings of a mailbox without permission");
+            throw new EJBAccessException("Kein Zugriff auf das Postfach");
+        }
     }
 
     @Override
@@ -1079,6 +1108,7 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
     @Override
     @RolesAllowed({"loginRole"})
     public Properties getMailboxSettings(MailboxSetup mailbox) {
+        this.checkMailboxAccess(mailbox);
         MailboxSetup currentValues = this.mailboxSetupFacade.find(mailbox.getId());
 
         byte[] settingBytes = currentValues.getSettings();
@@ -1100,6 +1130,7 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
     @Override
     @RolesAllowed({"loginRole"})
     public void setMailboxSettings(MailboxSetup mailbox, Properties settings) {
+        this.checkMailboxAccess(mailbox);
         MailboxSetup currentValues = this.mailboxSetupFacade.find(mailbox.getId());
 
         byte[] settingBytes = new byte[0];
