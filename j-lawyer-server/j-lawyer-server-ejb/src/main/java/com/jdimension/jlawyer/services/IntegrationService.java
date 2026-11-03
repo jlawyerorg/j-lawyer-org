@@ -1013,7 +1013,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
 
         localBaseDir = localBaseDir + "emailtemplates" + System.getProperty("file.separator");
 
-        File f = new File(localBaseDir + template.getFileName());
+        File f = new File(localBaseDir + ServerFileUtils.requireSimpleName(template.getFileName()));
 
         if (f.exists() && !replace) {
             throw new Exception("Datei existiert bereits: " + template.getFileName());
@@ -1035,7 +1035,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
 
         localBaseDir = localBaseDir + "emailtemplates" + System.getProperty("file.separator");
 
-        File f = new File(localBaseDir + fileName);
+        File f = new File(localBaseDir + ServerFileUtils.requireSimpleName(fileName));
         if (f.exists()) {
             f.delete();
         }
@@ -1053,7 +1053,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
 
         localBaseDir = localBaseDir + "emailtemplates" + System.getProperty("file.separator");
 
-        File f = new File(localBaseDir + fileName);
+        File f = new File(localBaseDir + ServerFileUtils.requireSimpleName(fileName));
         if (f.exists()) {
             StringBuilder sb = new StringBuilder();
             try (FileReader fr = new FileReader(f)) {
@@ -1368,7 +1368,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
                         scanDir = scanDir + File.separator;
                     }
                     File oldMetadata = new File(f.getAbsolutePath() + ".metadata");
-                    File toFile = new File(scanDir + toName);
+                    File toFile = new File(scanDir + ServerFileUtils.requireSimpleName(toName));
                     File newMetadata = new File(toFile.getAbsolutePath() + ".metadata");
                     oldMetadata.renameTo(newMetadata);
                     return f.renameTo(toFile);
@@ -1417,7 +1417,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         if (!scanDir.endsWith(File.separator)) {
             scanDir = scanDir + File.separator;
         }
-        try (FileOutputStream fout = new FileOutputStream(scanDir + fileName)) {
+        try (FileOutputStream fout = new FileOutputStream(scanDir + ServerFileUtils.requireSimpleName(fileName))) {
             fout.write(data);
         }
 
@@ -1446,12 +1446,12 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
 
         localBaseDir = localBaseDir + "emailtemplates" + System.getProperty("file.separator");
 
-        File f = new File(localBaseDir + oldName);
+        File f = new File(localBaseDir + ServerFileUtils.requireSimpleName(oldName));
         if (!f.exists()) {
             throw new Exception("Datei existiert nicht: " + oldName);
         }
 
-        File fNew = new File(localBaseDir + newName);
+        File fNew = new File(localBaseDir + ServerFileUtils.requireSimpleName(newName));
         if (fNew.exists()) {
             throw new Exception("Dateiname bereits vergeben: " + newName);
         }
@@ -1473,12 +1473,12 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
 
         localBaseDir = localBaseDir + "emailtemplates" + System.getProperty("file.separator");
 
-        File f = new File(localBaseDir + templateName);
+        File f = new File(localBaseDir + ServerFileUtils.requireSimpleName(templateName));
         if (!f.exists()) {
             throw new Exception("Datei existiert nicht: " + templateName);
         }
 
-        File fNew = new File(localBaseDir + duplicateName);
+        File fNew = new File(localBaseDir + ServerFileUtils.requireSimpleName(duplicateName));
         if (fNew.exists()) {
             throw new Exception("Dateiname bereits vergeben: " + duplicateName);
         }
@@ -1861,7 +1861,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             throw new Exception("Datei " + fileName + " existiert nicht!");
         }
 
-        try (FileOutputStream fout = new FileOutputStream(scanDir + fileName)) {
+        try (FileOutputStream fout = new FileOutputStream(scanDir + ServerFileUtils.requireSimpleName(fileName))) {
             fout.write(data);
         }
 

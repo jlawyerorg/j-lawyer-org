@@ -1050,8 +1050,9 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         String localBaseDirFrom = localBaseDir + "mastertemplates" + System.getProperty("file.separator");
         String localBaseDirTo = localBaseDir + getTypedFolderName(templateType) + System.getProperty("file.separator");
 
-        String src = localBaseDirFrom + basedOnFileName;
-        String dst = localBaseDirTo + fileName;
+        String src = localBaseDirFrom + ServerFileUtils.requireSimpleName(basedOnFileName);
+        String dst = localBaseDirTo + ServerFileUtils.requireSimpleName(fileName);
+        ServerFileUtils.requireWithin(localBaseDir + getTypedFolderName(templateType), dst);
 
         ServerFileUtils.copyFile(src, dst);
 
@@ -1854,7 +1855,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     public boolean addTemplate(int templateType, GenericNode folder, String fileName, byte[] data) throws Exception {
         String localBaseDir = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(folder));
 
-        String dst = localBaseDir + File.separator + fileName;
+        String dst = localBaseDir + File.separator + ServerFileUtils.requireSimpleName(fileName);
 
         File f2 = new File(dst);
 
@@ -1876,8 +1877,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     public boolean addTemplateFromTemplate(int templateType, GenericNode folder, String fileName, String basedOnTemplateFileName) throws Exception {
         String localBaseDir = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(folder));
 
-        String src = localBaseDir + File.separator + basedOnTemplateFileName;
-        String dst = localBaseDir + File.separator + fileName;
+        String src = localBaseDir + File.separator + ServerFileUtils.requireSimpleName(basedOnTemplateFileName);
+        String dst = localBaseDir + File.separator + ServerFileUtils.requireSimpleName(fileName);
 
         ServerFileUtils.copyFile(src, dst);
 
@@ -1889,7 +1890,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     public boolean deleteTemplate(int templateType, GenericNode folder, String fileName) throws Exception {
         String localBaseDir = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(folder));
 
-        String del = localBaseDir + File.separator + fileName;
+        String del = localBaseDir + File.separator + ServerFileUtils.requireSimpleName(fileName);
 
         File f = new File(del);
         return f.delete();
@@ -1948,7 +1949,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     public byte[] getTemplateData(int templateType, GenericNode folder, String fileName) throws Exception {
         String localBaseDir = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(folder));
 
-        String read = localBaseDir + File.separator + fileName;
+        String read = localBaseDir + File.separator + ServerFileUtils.requireSimpleName(fileName);
 
         File f = new File(read);
         return ServerFileUtils.readFile(f);
@@ -1959,7 +1960,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     public void setTemplateData(int templateType, GenericNode folder, String fileName, byte[] content) throws Exception {
         String localBaseDir = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(folder));
 
-        String upd = localBaseDir + File.separator + fileName;
+        String upd = localBaseDir + File.separator + ServerFileUtils.requireSimpleName(fileName);
 
         File f = new File(upd);
         ServerFileUtils.writeFile(f, content);
@@ -1968,6 +1969,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @RolesAllowed({"loginRole"})
     public boolean addTemplateFolder(int templateType, GenericNode parent, String folderName) throws Exception {
+        ServerFileUtils.requireSimpleName(folderName);
         String localBaseDir = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(parent) + File.separator + folderName);
 
         return new File(localBaseDir).mkdirs();
@@ -1977,6 +1979,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @RolesAllowed({"loginRole"})
     public boolean deleteTemplateFolder(int templateType, GenericNode parent, String folderName) throws Exception {
+        ServerFileUtils.requireSimpleName(folderName);
         String localBaseDir = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(parent) + File.separator + folderName);
 
         ServerFileUtils.getInstance().delete(new File(localBaseDir));
@@ -1986,6 +1989,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @RolesAllowed({"loginRole"})
     public boolean renameTemplateFolder(int templateType, GenericNode parent, String oldFolderName, String newFolderName) throws Exception {
+        ServerFileUtils.requireSimpleName(oldFolderName);
+        ServerFileUtils.requireSimpleName(newFolderName);
         String oldName = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(parent) + File.separator + oldFolderName);
         String newName = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(parent) + File.separator + newFolderName);
 
@@ -2031,8 +2036,9 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         String localBaseDirFrom = localBaseDir + "mastertemplates" + System.getProperty("file.separator");
         String localBaseDirTo = localBaseDir + getTypedFolderName(templateType) + TreeNodeUtils.buildNodePath(folder) + File.separator;
 
-        String src = localBaseDirFrom + basedOnFileName;
-        String dst = localBaseDirTo + fileName;
+        String src = localBaseDirFrom + ServerFileUtils.requireSimpleName(basedOnFileName);
+        String dst = localBaseDirTo + ServerFileUtils.requireSimpleName(fileName);
+        ServerFileUtils.requireWithin(localBaseDir + getTypedFolderName(templateType), dst);
 
         ServerFileUtils.copyFile(src, dst);
 
@@ -2048,7 +2054,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         }
         String localBaseDir = this.getTemplatesBaseDir(templateType, templatePath);
 
-        String tpl = localBaseDir + File.separator + templateName;
+        String tpl = localBaseDir + File.separator + ServerFileUtils.requireSimpleName(templateName);
 
         List<PartyTypeBean> partyTypes = this.getPartyTypes();
         ArrayList<String> allPartyTypesPlaceholders = new ArrayList<>();
@@ -2064,6 +2070,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @RolesAllowed({"loginRole"})
     public List<String> getPlaceHoldersForTemplate(int templateType, GenericNode folder, String templateName, Collection<String> formsPlaceHolders) throws Exception {
+        ServerFileUtils.requireSimpleName(templateName);
         String localBaseDir = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(folder) + System.getProperty("file.separator") + templateName);
 
         List<PartyTypeBean> partyTypes = this.getPartyTypes();
@@ -2095,7 +2102,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     public DocumentPreview getTemplatePreview(int templateType, GenericNode folder, String fileName) throws Exception {
         String localBaseDir = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(folder));
 
-        String read = localBaseDir + File.separator + fileName;
+        String read = localBaseDir + File.separator + ServerFileUtils.requireSimpleName(fileName);
 
         ServerSettingsBean sb = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_STIRLINGPDF_ENDPOINT);
         StirlingPdfAPI pdfApi = null;
@@ -2140,8 +2147,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     public void renameTemplate(int templateType, GenericNode folder, String fromName, String toName) throws Exception {
         String localBaseDir = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(folder));
 
-        String from = localBaseDir + File.separator + fromName;
-        String to = localBaseDir + File.separator + toName;
+        String from = localBaseDir + File.separator + ServerFileUtils.requireSimpleName(fromName);
+        String to = localBaseDir + File.separator + ServerFileUtils.requireSimpleName(toName);
 
         File fromFile = new File(from);
         if (!fromFile.exists()) {
@@ -2568,7 +2575,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
         localBaseDir = localBaseDir + getTypedFolderName(templateType);
         if (!ServerStringUtils.isEmpty(appendDirectories)) {
-            return localBaseDir + appendDirectories;
+            // folders come from the caller - they must not lead out of the template directory
+            return ServerFileUtils.requireWithin(localBaseDir, localBaseDir + appendDirectories);
         } else {
             return localBaseDir + System.getProperty("file.separator");
         }

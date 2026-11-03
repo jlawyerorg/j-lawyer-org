@@ -2911,7 +2911,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
             File prvFile = new File(prvName);
             File prvFileId = new File(prvId);
-            if (prvFile.exists()) {
+            if (ServerFileUtils.isSimpleName(db.getName()) && prvFile.exists()) {
                 prvFile.renameTo(prvFileId);
             }
 
@@ -5152,7 +5152,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             localBaseDir = localBaseDir + System.getProperty("file.separator");
         }
 
-        String src = localBaseDir + "templates" + templateFolder + System.getProperty("file.separator") + templateName;
+        // template folder and name come from the caller - they must not lead out of the template directory
+        String src = localBaseDir + "templates" + templateFolder + System.getProperty("file.separator") + ServerFileUtils.requireSimpleName(templateName);
+        ServerFileUtils.requireWithin(localBaseDir + "templates", src);
         String dst = localBaseDir + "archivefiles" + System.getProperty("file.separator") + aFile.getId() + System.getProperty("file.separator");
 
         String ext = "";
@@ -5182,7 +5184,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             ServerFileUtils.copyFile(src, dstId);
         } else if (letterHead.toLowerCase().endsWith(".png") || letterHead.toLowerCase().endsWith(".jpg") || letterHead.toLowerCase().endsWith(".jpeg")) {
             ServerFileUtils.copyFile(src, dstId);
-            String srcHead = localBaseDir + "letterheads" + System.getProperty("file.separator") + letterHead;
+            String srcHead = localBaseDir + "letterheads" + System.getProperty("file.separator") + ServerFileUtils.requireSimpleName(letterHead);
             if (!(new File(srcHead).exists())) {
                 throw new Exception("Briefkopf " + letterHead + " existiert nicht!");
             }
@@ -5190,7 +5192,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             LibreOfficeAccess.applyHeaderGraphic(srcHead, dstId, templateName);
         } else {
             // new document equals the head template
-            String srcHead = localBaseDir + "letterheads" + System.getProperty("file.separator") + letterHead;
+            String srcHead = localBaseDir + "letterheads" + System.getProperty("file.separator") + ServerFileUtils.requireSimpleName(letterHead);
             ServerFileUtils.copyFile(srcHead, dstId);
             if (!(new File(srcHead).exists())) {
                 throw new Exception("Briefkopf " + letterHead + " existiert nicht!");
@@ -6278,7 +6280,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } else {
             String dstByName = dst + db.getName();
             dbFile = new File(dstByName);
-            if (dbFile.exists()) {
+            // legacy files were stored under their name - a name with path elements cannot be one of them
+            if (ServerFileUtils.isSimpleName(db.getName()) && dbFile.exists()) {
                 boolean deleted = dbFile.delete();
                 if (!deleted) {
                     // could not delete document, but still let's continue with removal
@@ -6555,6 +6558,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     private void migrateDocument(String dir, String docId, String docName) {
 
         if (new File(dir + docId).exists()) {
+            return;
+        }
+        if (!ServerFileUtils.isSimpleName(docName)) {
+            // legacy files were stored under their name - a name with path elements cannot be one of them
             return;
         }
 
