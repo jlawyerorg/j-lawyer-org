@@ -683,5 +683,5 @@ public interface ResetOnDisplayEditor {
     default boolean needsResetOnReselect() {
         return false;
     }
-    
+
 }
