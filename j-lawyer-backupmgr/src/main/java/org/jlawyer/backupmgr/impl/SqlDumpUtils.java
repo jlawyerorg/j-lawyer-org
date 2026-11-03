@@ -741,7 +741,8 @@ public class SqlDumpUtils {
         File tmp = new File(file.getAbsolutePath() + ".tmp");
         long count = writeWithReplacedCollation(file, tmp, collation, replacement);
         if (count > 0) {
-            // the replaced dump gets the access rights of the original one
+            // the replaced dump gets the POSIX permission bits of the original one - owner, group and ACLs are those
+            // of a new file created by this process
             copyPosixPermissions(file.toPath(), tmp.toPath());
             Files.move(tmp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
@@ -790,6 +791,31 @@ public class SqlDumpUtils {
     public static long countCollationUsages(File dump, String collation) throws IOException {
         try (Reader in = new InputStreamReader(new FileInputStream(dump), StandardCharsets.ISO_8859_1)) {
             return replaceCollation(in, Writer.nullWriter(), collation, collation);
+        }
+    }
+
+    /**
+     * Looks for a text anywhere in a dump, also in data and comments.
+     *
+     * @param dump the dump to read
+     * @param text the text to look for (ASCII)
+     * @return true if the dump contains the text
+     * @throws IOException if the dump can not be read
+     */
+    public static boolean containsText(File dump, String text) throws IOException {
+        try (Reader in = new InputStreamReader(new FileInputStream(dump), StandardCharsets.ISO_8859_1)) {
+            char[] buffer = new char[BUFFER_SIZE];
+            StringBuilder window = new StringBuilder();
+            int read;
+            while ((read = in.read(buffer)) != -1) {
+                window.append(buffer, 0, read);
+                if (window.indexOf(text) >= 0) {
+                    return true;
+                }
+                // keep the end, the text may continue in the next block
+                window.delete(0, Math.max(0, window.length() - text.length() + 1));
+            }
+            return false;
         }
     }
 
@@ -864,7 +890,22 @@ public class SqlDumpUtils {
         /**
          * What has to come right before the collation for it to be used as a collation.
          */
-        private static final Pattern USAGE = Pattern.compile("(?i)(?:\\bCOLLATE\\s*=?\\s*|(?<![\\w.@$])(?:@@(?:(?:global|session|local)\\.)?|\\b(?:global|session|local)\\s+)?(?:collation_connection|collation_server|collation_database)\\s*:?=\\s*)\\z");
+        private static final Pattern COLLATE_USAGE = Pattern.compile("(?i)\\bCOLLATE\\s*=?\\s*\\z");
+        /**
+         * An assignment to a collation system variable right before the collation. Not after a dot (also with spaces),
+         * so NEW.collation_connection is not taken for the variable. Inside the body of a trigger or routine a local
+         * variable can have the same name, see {@link #storedProgram}.
+         */
+        private static final Pattern VARIABLE_USAGE = Pattern.compile("(?i)(?<![\\w.@$])(?<!\\.\\s{1,20})(?:@@(?:(?:global|session|local)\\.)?|\\b(?:global|session|local)\\s+)?(?:collation_connection|collation_server|collation_database)\\s*:?=\\s*\\z");
+        /**
+         * Every assignment to the system variable sql_mode in a SET statement, to find assignments with a value that
+         * is not understood.
+         */
+        private static final Pattern SQL_MODE_TARGET = Pattern.compile("(?i)(?<![\\w.@$])(@@(?:(global|session|local)\\.)?|\\b(global|session|local)\\s+)?sql_mode\\s*:?=");
+        /**
+         * sql_mode values that contain ANSI_QUOTES - double quotes then delimit identifiers.
+         */
+        private static final java.util.Set<String> ANSI_QUOTES_MODES = new java.util.HashSet<>(java.util.Arrays.asList("ANSI_QUOTES", "ANSI", "DB2", "MAXDB", "MSSQL", "ORACLE", "POSTGRESQL"));
 
         private final Reader in;
         private final Writer out;
@@ -898,12 +939,20 @@ public class SqlDumpUtils {
         private long commentVersion = 0;
         private boolean mariaDbComment = false;
         /**
-         * The current statement started in an executable comment that the target server may ignore.
+         * The current statement contains an executable comment that the target server may ignore (MariaDB ignores
+         * the ones for MySQL 5.7.0 to 9.99.99, MySQL ignores the ones for MariaDB).
          */
-        private boolean statementMayBeIgnored = false;
+        private boolean statementHasIgnorableComment = false;
         /**
-         * A change of sql_mode was found that the target server may ignore - the mode, and with it the meaning of
-         * backslashes in strings, can not be followed.
+         * The current statement creates a trigger, routine or event, or is a compound statement - its body can
+         * declare local variables named like system variables.
+         */
+        private boolean storedProgram = false;
+        private boolean createStatement = false;
+        /**
+         * Something was found that can not be followed safely: a change of sql_mode the target server may ignore, a
+         * sql_mode value that is not understood or that sets ANSI_QUOTES, or an assignment of the collation in the body
+         * of a stored program. Nothing is replaced then.
          */
         private boolean modeUnknown = false;
 
@@ -1063,6 +1112,9 @@ public class SqlDumpUtils {
                 versionNumber = true;
                 executableComment = true;
                 mariaDbComment = rest == 3;
+                if (mariaDbComment) {
+                    statementHasIgnorableComment = true;
+                }
                 commentVersion = 0;
             } else if (ch == '/' && peek(0) == '*') {
                 state = BLOCK_COMMENT;
@@ -1106,12 +1158,33 @@ public class SqlDumpUtils {
             versionNumber = false;
             if (version) {
                 commentVersion = word.length() <= 9 ? Long.parseLong(word.toString()) : Long.MAX_VALUE;
+                if (commentVersion >= 50700) {
+                    // conservative: MariaDB ignores 50700 to 99999, versions from 100000 on are its own
+                    statementHasIgnorableComment = true;
+                }
             }
             if (!version) {
                 noteWord(word);
                 addToSetStatement(word);
+                if (createStatement && !storedProgram) {
+                    String w = word.toString();
+                    storedProgram = w.equalsIgnoreCase("TRIGGER") || w.equalsIgnoreCase("PROCEDURE") || w.equalsIgnoreCase("FUNCTION") || w.equalsIgnoreCase("EVENT");
+                }
             }
-            if (!dataStatement && word.length() == collation.length() && word.toString().equalsIgnoreCase(collation) && USAGE.matcher(context).find()) {
+            boolean replace = false;
+            if (!dataStatement && word.length() == collation.length() && word.toString().equalsIgnoreCase(collation)) {
+                if (COLLATE_USAGE.matcher(context).find()) {
+                    replace = true;
+                } else if (VARIABLE_USAGE.matcher(context).find()) {
+                    if (storedProgram) {
+                        // may be a local variable or a column - fail safe
+                        modeUnknown = true;
+                    } else {
+                        replace = true;
+                    }
+                }
+            }
+            if (replace) {
                 appendContext(replacement);
                 write(replacement);
                 count++;
@@ -1153,10 +1226,10 @@ public class SqlDumpUtils {
         private void noteWord(CharSequence w) {
             if (!statementHasWord) {
                 statementHasWord = true;
-                // MariaDB ignores executable comments for MySQL 5.7 and later, MySQL ignores the ones for MariaDB -
-                // which of them the target server executes is not known here
-                statementMayBeIgnored = executableComment && (mariaDbComment || commentVersion >= 50700);
                 String first = w.toString();
+                createStatement = first.equalsIgnoreCase("CREATE");
+                // a compound statement outside of a stored program (MariaDB: BEGIN NOT ATOMIC)
+                storedProgram = first.equalsIgnoreCase("BEGIN");
                 dataStatement = first.equalsIgnoreCase("INSERT") || first.equalsIgnoreCase("REPLACE");
                 if (first.equalsIgnoreCase("DELIMITER")) {
                     delimiterCommand = new StringBuilder();
@@ -1219,9 +1292,22 @@ public class SqlDumpUtils {
             literal = null;
             statementHasWord = false;
             dataStatement = false;
+            statementHasIgnorableComment = false;
+            storedProgram = false;
+            createStatement = false;
         }
 
         private void applySet(String text, List<String> literals) {
+            // every assignment to sql_mode must be understood below, otherwise the mode is not known any more
+            int targets = 0;
+            Matcher t = SQL_MODE_TARGET.matcher(text);
+            while (t.find()) {
+                String scope = t.group(2) != null ? t.group(2) : t.group(3);
+                if (scope == null || !scope.equalsIgnoreCase("global")) {
+                    targets++;
+                }
+            }
+            int understood = 0;
             Matcher m = ASSIGNMENT.matcher(text);
             while (m.find()) {
                 String marker = m.group(1) == null ? "" : m.group(1).trim();
@@ -1237,7 +1323,8 @@ public class SqlDumpUtils {
                         savedModes.put(name, noBackslashEscapes);
                     }
                 } else if (name.equals("sql_mode")) {
-                    if (statementMayBeIgnored) {
+                    understood++;
+                    if (statementHasIgnorableComment) {
                         // the target server may or may not execute this - fail safe, the dump is not changed
                         modeUnknown = true;
                         continue;
@@ -1250,15 +1337,30 @@ public class SqlDumpUtils {
                             }
                         }
                         if (index < literals.size()) {
-                            noBackslashEscapes = literals.get(index).toUpperCase(Locale.ROOT).contains("NO_BACKSLASH_ESCAPES");
+                            String mode = literals.get(index).toUpperCase(Locale.ROOT);
+                            noBackslashEscapes = mode.contains("NO_BACKSLASH_ESCAPES");
+                            for (String part : mode.split(",")) {
+                                if (ANSI_QUOTES_MODES.contains(part.trim())) {
+                                    // double quotes delimit identifiers then - not followed, fail safe
+                                    modeUnknown = true;
+                                }
+                            }
+                        } else {
+                            modeUnknown = true;
                         }
                     } else if (!valueIsMode) {
                         Boolean saved = savedModes.get(value.substring(1).toLowerCase(Locale.ROOT));
                         if (saved != null) {
                             noBackslashEscapes = saved;
+                        } else {
+                            // a variable that was not saved from sql_mode in this dump
+                            modeUnknown = true;
                         }
                     }
                 }
+            }
+            if (understood < targets) {
+                modeUnknown = true;
             }
         }
 

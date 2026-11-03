@@ -1069,7 +1069,16 @@ public class RestoreExecutor {
             this.restoreDatabase(this.dbPassword, dump, progress);
         } finally {
             if (!dump.getName().equals(DATABASE_DUMP)) {
-                Files.deleteIfExists(dump.toPath());
+                // a failure here must neither hide an error of the restore nor turn a successful restore into a failed one
+                try {
+                    Files.deleteIfExists(dump.toPath());
+                } catch (Throwable t) {
+                    String message = "Die temporäre Kopie der Datenbanksicherung " + dump.getAbsolutePath() + " konnte nicht gelöscht werden: " + t.getMessage();
+                    System.err.println(message);
+                    if (progress != null) {
+                        progress.onProgress(message);
+                    }
+                }
             }
         }
     }
@@ -1083,8 +1092,13 @@ public class RestoreExecutor {
      * @return the dump to import - the copy, which has to be deleted afterwards, or the dump of the backup
      */
     private File prepareDatabaseDump(BackupProgressCallback progress) throws Exception {
+        int failuresBefore = fileFailures;
         this.restoreFromTo(this.backupDirectory, this.backupDirectory, progress);
         File dump = new File(this.backupDirectory, DATABASE_DUMP);
+        if (fileFailures > failuresBefore || !dump.isFile()) {
+            // e.g. the disk is full - an incomplete dump must not replace the database
+            throw new Exception("Die Datenbanksicherung konnte nicht vollständig ausgepackt werden. Die Wiederherstellung wurde abgebrochen, es wurde nichts verändert.");
+        }
         if (this.isCollationUnknown(SqlDumpUtils.MYSQL8_DEFAULT_COLLATION)) {
             // e.g. MariaDB before 11.4.5 does not know the default collation of MySQL 8, dumps created on MySQL 8 can not be imported otherwise
             long found = SqlDumpUtils.countCollationUsages(dump, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION);
@@ -1097,8 +1111,11 @@ public class RestoreExecutor {
                     }
                     return copy;
                 }
-            } else if (found < 0 && progress != null) {
-                progress.onProgress("Kollation " + SqlDumpUtils.MYSQL8_DEFAULT_COLLATION + " ist auf dem Datenbankserver unbekannt, die Datenbanksicherung kann aber nicht sicher angepasst werden und wird unverändert eingespielt");
+            } else if (found < 0 && SqlDumpUtils.containsText(dump, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION)) {
+                // importing it unchanged would fail on the unknown collation, after the data directory and the database were deleted
+                throw new Exception("Der Datenbankserver kennt die Kollation " + SqlDumpUtils.MYSQL8_DEFAULT_COLLATION + " nicht, die die Datenbanksicherung verwendet. "
+                        + "Die Sicherung kann nicht sicher angepasst werden (sie ist unvollständig oder enthält SQL, dessen Bedeutung von Einstellungen des Zielservers abhängt). "
+                        + "Die Wiederherstellung wurde abgebrochen, es wurde nichts verändert.");
             }
         }
         return dump;

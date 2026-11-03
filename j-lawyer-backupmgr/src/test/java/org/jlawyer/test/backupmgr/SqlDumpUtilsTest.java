@@ -1042,6 +1042,57 @@ public class SqlDumpUtilsTest {
         assertEquals(1, replace("/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;\n" + table));
     }
 
+    @Test
+    public void testVersionGuardedAssignmentWithinAStatement() throws Exception {
+        // only the assignment is in a comment MariaDB ignores, not the start of the statement
+        String sql = "SET @dummy=1 /*!80000 , sql_mode='NO_BACKSLASH_ESCAPES' */;\n"
+                + "CREATE TABLE w(a VARCHAR(40) DEFAULT 'it\\'s', b VARCHAR(80) DEFAULT 'COLLATE utf8mb4_0900_ai_ci \\'x') COLLATE=utf8mb4_0900_ai_ci;\n";
+        assertEquals(-1, replace(sql));
+        assertEquals(-1, replace("SET @dummy=1 /*M!100100 , sql_mode='NO_BACKSLASH_ESCAPES' */;\n" + TABLE_U));
+    }
+
+    @Test
+    public void testAnsiQuotesIsNotFollowed() throws Exception {
+        // with ANSI_QUOTES, "a\" is an identifier - not followed, nothing is replaced
+        assertEquals(-1, replace("SET sql_mode='ANSI_QUOTES';\nSELECT \"a\\\", \"x'\", 'COLLATE utf8mb4_0900_ai_ci \\'x' FROM t;\n" + TABLE_U));
+        assertEquals(-1, replace(storedProgram("ANSI,NO_ENGINE_SUBSTITUTION", "CREATE TRIGGER `t_bi` BEFORE INSERT ON `t` FOR EACH ROW SET NEW.\"a\\\" = 'COLLATE utf8mb4_0900_ai_ci \\'x' ;;\n") + TABLE_U));
+        assertEquals(-1, replace("/*!40101 SET SQL_MODE='POSTGRESQL' */;\n" + TABLE_U));
+    }
+
+    @Test
+    public void testSqlModeValuesThatAreNotUnderstood() throws Exception {
+        assertEquals(-1, replace("SET sql_mode = CONCAT(@@sql_mode, ',NO_BACKSLASH_ESCAPES');\n" + TABLE_U));
+        assertEquals(-1, replace("SET sql_mode = @never_saved;\n" + TABLE_U));
+        // a change of the global mode does not change the session
+        assertEquals(1, replace("SET GLOBAL sql_mode = 'NO_BACKSLASH_ESCAPES';\n" + TABLE_U));
+    }
+
+    @Test
+    public void testCollationVariablesInStoredProgramBodies() throws Exception {
+        // a local variable named like the system variable, and a column - the target is not known, nothing is replaced
+        assertEquals(-1, replace(storedProgram("", "CREATE PROCEDURE `p`() BEGIN DECLARE collation_connection VARCHAR(40) DEFAULT 'x'; DECLARE utf8mb4_0900_ai_ci VARCHAR(40) DEFAULT 'y'; SET collation_connection = utf8mb4_0900_ai_ci; END ;;\n") + TABLE_U));
+        // a column of the new row, also with a space after the dot - not changed, only the table after it
+        String trigger = storedProgram("", "/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `t_bi` BEFORE INSERT ON `t` FOR EACH ROW SET NEW. collation_connection = utf8mb4_0900_ai_ci */;;\n");
+        assertEquals(trigger + replaced(TABLE_U), replaced(trigger + TABLE_U, 1));
+        // COLLATE in a body is unambiguous and replaced
+        String procedure = storedProgram("", "CREATE PROCEDURE `q`() BEGIN SELECT `a` COLLATE utf8mb4_0900_ai_ci FROM `t`; END ;;\n");
+        assertEquals(procedure.replace("COLLATE utf8mb4_0900_ai_ci", "COLLATE utf8mb4_unicode_ci"), replaced(procedure, 1));
+        // a column outside of a body is not taken for the system variable either
+        assertEquals(0, replace("UPDATE `t` SET `t`. collation_connection = utf8mb4_0900_ai_ci;\n"));
+    }
+
+    @Test
+    public void testContainsText() throws Exception {
+        StringBuilder sb = new StringBuilder();
+        while (sb.length() < 64 * 1024 - 5) {
+            sb.append('x');
+        }
+        // across the boundary of the read blocks
+        File f = write("big.sql", (sb + "utf8mb4_0900_ai_ci;\n").getBytes(StandardCharsets.ISO_8859_1));
+        assertTrue(SqlDumpUtils.containsText(f, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION));
+        assertFalse(SqlDumpUtils.containsText(f, SqlDumpUtils.PORTABLE_COLLATION));
+    }
+
     private static boolean posix(File f) {
         return f.toPath().getFileSystem().supportedFileAttributeViews().contains("posix");
     }
