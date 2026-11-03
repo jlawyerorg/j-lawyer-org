@@ -754,7 +754,7 @@ public class DunningExportDialog extends javax.swing.JDialog {
         this.ledger = ledger;
         initComponents();
         com.jdimension.jlawyer.client.utils.DesktopDateEntry.hint(this.txtOrderDate);
-        this.tblClaims.setToolTipText("Zinsen bis: TT.MM.JJJJ oder TTMMJJJJ (vierstelliges Jahr)");
+        this.tblClaims.setToolTipText("vom / Zinsen bis: TT.MM.JJJJ oder TTMMJJJJ (vierstelliges Jahr)");
 
         this.tblClaims.setModel(new DefaultTableModel(
                 new Object[]{"", "Position", "Art", "Betrag", "Rechnungsnr.", "vom",
@@ -770,15 +770,17 @@ public class DunningExportDialog extends javax.swing.JDialog {
             }
         });
         this.tblClaims.getColumnModel().getColumn(COL_INCLUDED).setMaxWidth(30);
-        JTextField interestDateEditor = new JTextField();
-        com.jdimension.jlawyer.client.utils.DesktopDateEntry.hint(interestDateEditor);
-        this.tblClaims.getColumnModel().getColumn(COL_INTEREST_TO).setCellEditor(new DefaultCellEditor(interestDateEditor) {
+        JTextField dateField = new JTextField();
+        com.jdimension.jlawyer.client.utils.DesktopDateEntry.hint(dateField);
+        DefaultCellEditor dateEditor = new DefaultCellEditor(dateField) {
             @Override
             public boolean stopCellEditing() {
-                com.jdimension.jlawyer.client.utils.DesktopDateEntry.normalizeCompleteDigits(interestDateEditor);
+                com.jdimension.jlawyer.client.utils.DesktopDateEntry.normalizeCompleteDigits(dateField);
                 return super.stopCellEditing();
             }
-        });
+        };
+        this.tblClaims.getColumnModel().getColumn(COL_CLAIM_FROM).setCellEditor(dateEditor);
+        this.tblClaims.getColumnModel().getColumn(COL_INTEREST_TO).setCellEditor(dateEditor);
 
         loadHeader();
         loadComponents();
@@ -1035,20 +1037,24 @@ public class DunningExportDialog extends javax.swing.JDialog {
 
     private boolean checkInterestDates() {
         DefaultTableModel model = (DefaultTableModel) this.tblClaims.getModel();
+        int[] dateColumns = {COL_CLAIM_FROM, COL_INTEREST_TO};
         for (int row = 0; row < model.getRowCount(); row++) {
             if (!Boolean.TRUE.equals(model.getValueAt(row, COL_INCLUDED))) {
                 continue;
             }
-            Object raw = model.getValueAt(row, COL_INTEREST_TO);
-            try {
-                String normalized = com.jdimension.jlawyer.client.utils.DateUtils.normalizeDesktopDay(
-                        raw == null ? "" : raw.toString());
-                model.setValueAt(normalized, row, COL_INTEREST_TO);
-            } catch (IllegalArgumentException ex) {
-                JOptionPane.showMessageDialog(this, "Position " + (row + 1) + ", Zinsen bis: " + ex.getMessage(),
-                        "Ungültiges Datum", JOptionPane.WARNING_MESSAGE);
-                this.tblClaims.changeSelection(row, COL_INTEREST_TO, false, false);
-                return false;
+            for (int column : dateColumns) {
+                String label = column == COL_CLAIM_FROM ? "vom" : "Zinsen bis";
+                Object raw = model.getValueAt(row, column);
+                try {
+                    String normalized = com.jdimension.jlawyer.client.utils.DateUtils.normalizeDesktopDay(
+                            raw == null ? "" : raw.toString());
+                    model.setValueAt(normalized, row, column);
+                } catch (IllegalArgumentException ex) {
+                    JOptionPane.showMessageDialog(this, "Position " + (row + 1) + ", " + label + ": " + ex.getMessage(),
+                            "Ungültiges Datum", JOptionPane.WARNING_MESSAGE);
+                    this.tblClaims.changeSelection(row, column, false, false);
+                    return false;
+                }
             }
         }
         return true;
@@ -1353,6 +1359,12 @@ public class DunningExportDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdSelectOrderDateActionPerformed
 
     private void cmdValidateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdValidateActionPerformed
+        if (this.tblClaims.isEditing()) {
+            this.tblClaims.getCellEditor().stopCellEditing();
+        }
+        if (!checkInterestDates()) {
+            return;
+        }
         this.txtClaimValue.setText(currencyFormat.format(sumOfSelected()));
 
         BigDecimal claimValue = parseAmount(this.txtClaimValue.getText());

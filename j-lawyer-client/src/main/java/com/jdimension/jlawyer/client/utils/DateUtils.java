@@ -721,29 +721,48 @@ public class DateUtils {
                 .atStartOfDay(ZoneId.systemDefault()).toInstant());
     }
 
-    /** Rejects new implausible personal dates while tolerating malformed stored values left unchanged. */
-    public static void validatePersonalDays(String birthText, String deathText,
-            boolean birthChanged, boolean deathChanged, LocalDate today) {
-        LocalDate birth = comparablePersonalDay(birthText, birthChanged);
-        LocalDate death = comparablePersonalDay(deathText, deathChanged);
-        if (birthChanged && birth != null && birth.isAfter(today)) {
-            throw new IllegalArgumentException("Das Geburtsdatum darf nicht in der Zukunft liegen.");
+    /** Identifies the contact field that needs correction without parsing an error message. */
+    public enum PersonalDateField { BIRTH, DEATH }
+
+    public static final class PersonalDateException extends IllegalArgumentException {
+        private final PersonalDateField field;
+
+        private PersonalDateException(PersonalDateField field, String message) {
+            super(message);
+            this.field = field;
         }
-        if (deathChanged && death != null && death.isAfter(today)) {
-            throw new IllegalArgumentException("Das Sterbedatum darf nicht in der Zukunft liegen.");
-        }
-        if ((birthChanged || deathChanged) && birth != null && death != null && death.isBefore(birth)) {
-            throw new IllegalArgumentException("Das Sterbedatum darf nicht vor dem Geburtsdatum liegen.");
+
+        public PersonalDateField getField() {
+            return field;
         }
     }
 
-    private static LocalDate comparablePersonalDay(String input, boolean changed) {
+    /** Rejects new implausible personal dates while tolerating malformed stored values left unchanged. */
+    public static void validatePersonalDays(String birthText, String deathText,
+            boolean birthChanged, boolean deathChanged, LocalDate today) {
+        LocalDate birth = comparablePersonalDay(birthText, birthChanged, PersonalDateField.BIRTH);
+        LocalDate death = comparablePersonalDay(deathText, deathChanged, PersonalDateField.DEATH);
+        if (birthChanged && birth != null && birth.isAfter(today)) {
+            throw new PersonalDateException(PersonalDateField.BIRTH,
+                    "Das Geburtsdatum darf nicht in der Zukunft liegen.");
+        }
+        if (deathChanged && death != null && death.isAfter(today)) {
+            throw new PersonalDateException(PersonalDateField.DEATH,
+                    "Das Sterbedatum darf nicht in der Zukunft liegen.");
+        }
+        if ((birthChanged || deathChanged) && birth != null && death != null && death.isBefore(birth)) {
+            throw new PersonalDateException(PersonalDateField.DEATH,
+                    "Das Sterbedatum darf nicht vor dem Geburtsdatum liegen.");
+        }
+    }
+
+    private static LocalDate comparablePersonalDay(String input, boolean changed, PersonalDateField field) {
         try {
             String value = normalizeDesktopDay(input);
             return value.isEmpty() ? null : LocalDate.parse(value, DESKTOP_DAY_FORMAT);
         } catch (IllegalArgumentException ex) {
             if (changed) {
-                throw ex;
+                throw new PersonalDateException(field, ex.getMessage());
             }
             return null;
         }

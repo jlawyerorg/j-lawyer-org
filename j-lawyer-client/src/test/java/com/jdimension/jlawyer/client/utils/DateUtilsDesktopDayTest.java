@@ -759,14 +759,14 @@ public class DateUtilsDesktopDayTest {
         DateUtils.validatePersonalDays("28.06.79", "", false, false, today);
         DateUtils.validatePersonalDays("28.06.79", "01.01.2020", false, true, today);
         for (String[] dates : new String[][]{
-                {"29.09.2026", ""},
-                {"28.06.1979", "29.09.2026"},
-                {"28.06.1979", "27.06.1979"}}) {
+                {"29.09.2026", "", "BIRTH"},
+                {"28.06.1979", "29.09.2026", "DEATH"},
+                {"28.06.1979", "27.06.1979", "DEATH"}}) {
             try {
                 DateUtils.validatePersonalDays(dates[0], dates[1], true, true, today);
                 fail("Invalid personal date pair was accepted");
-            } catch (IllegalArgumentException expected) {
-                // New future dates and new inverted birth/death pairs are invalid.
+            } catch (DateUtils.PersonalDateException expected) {
+                assertEquals(DateUtils.PersonalDateField.valueOf(dates[2]), expected.getField());
             }
         }
         DateUtils.validatePersonalDays("28.06.1979", "27.06.1979", false, false, today);

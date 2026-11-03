@@ -4928,9 +4928,10 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
             com.jdimension.jlawyer.client.utils.DateUtils.validatePersonalDays(
                     this.txtBirthDate.getText(), this.txtDeathDate.getText(),
                     birthChanged, deathChanged, LocalDate.now());
-        } catch (IllegalArgumentException ex) {
+        } catch (com.jdimension.jlawyer.client.utils.DateUtils.PersonalDateException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Ungültiges Datum", JOptionPane.WARNING_MESSAGE);
-            (ex.getMessage().contains("Geburt") ? this.txtBirthDate : this.txtDeathDate).requestFocusInWindow();
+            (ex.getField() == com.jdimension.jlawyer.client.utils.DateUtils.PersonalDateField.BIRTH
+                    ? this.txtBirthDate : this.txtDeathDate).requestFocusInWindow();
             return false;
         }
         updateAge();

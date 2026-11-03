@@ -709,6 +709,7 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
         // before it reaches getEntry(). Keep raw text until the explicit date check.
         javax.swing.text.DefaultFormatter dateText = new javax.swing.text.DefaultFormatter();
         dateText.setAllowsInvalid(true);
+        dateText.setOverwriteMode(false);
         this.txtDate.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(dateText));
         this.txtDate.setFocusLostBehavior(javax.swing.JFormattedTextField.PERSIST);
         com.jdimension.jlawyer.client.utils.DesktopDateEntry.hint(this.txtDate);

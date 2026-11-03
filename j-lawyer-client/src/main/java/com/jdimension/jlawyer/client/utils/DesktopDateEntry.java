@@ -668,7 +668,6 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.Date;
 import java.util.Objects;
-import javax.swing.InputVerifier;
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
@@ -753,7 +752,7 @@ public final class DesktopDateEntry {
     }
 
     /** Connects the actual text editor of a date chooser to date-only validation. */
-    public static void installChooser(JDateChooser chooser, Component owner, String label) {
+    public static void installChooser(JDateChooser chooser) {
         chooser.setDateFormatString("dd.MM.yyyy");
         JComponent component = chooser.getDateEditor().getUiComponent();
         if (!(component instanceof JTextField) || !((JTextField) component).isEditable()) {
@@ -773,7 +772,7 @@ public final class DesktopDateEntry {
                         try {
                             chooser.setDate(DateUtils.parseDesktopDay(typed));
                         } catch (IllegalArgumentException ignored) {
-                            // Keep the impossible date visible for the verifier to explain.
+                            // Keep the impossible date visible for explicit validation.
                         }
                     }
                 });
@@ -792,12 +791,6 @@ public final class DesktopDateEntry {
             @Override
             public void changedUpdate(DocumentEvent event) {
                 normalizeCompleteDigits();
-            }
-        });
-        field.setInputVerifier(new InputVerifier() {
-            @Override
-            public boolean verify(JComponent input) {
-                return checkChooser(owner, chooser, label);
             }
         });
     }

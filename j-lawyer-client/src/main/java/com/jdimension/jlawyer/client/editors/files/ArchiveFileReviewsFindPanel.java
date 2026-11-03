@@ -711,8 +711,8 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
      */
     public ArchiveFileReviewsFindPanel() {
         initComponents();
-        com.jdimension.jlawyer.client.utils.DesktopDateEntry.installChooser(this.txtFromDate, this, "Zeitraum von");
-        com.jdimension.jlawyer.client.utils.DesktopDateEntry.installChooser(this.txtToDate, this, "Zeitraum bis");
+        com.jdimension.jlawyer.client.utils.DesktopDateEntry.installChooser(this.txtFromDate);
+        com.jdimension.jlawyer.client.utils.DesktopDateEntry.installChooser(this.txtToDate);
         this.cmdReset.setVerifyInputWhenFocusTarget(false);
         
         if (UserSettings.getInstance().isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
