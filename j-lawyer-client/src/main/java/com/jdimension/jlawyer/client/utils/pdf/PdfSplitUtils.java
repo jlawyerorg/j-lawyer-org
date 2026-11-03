@@ -720,8 +720,10 @@ public class PdfSplitUtils {
      * references to source pages that are part of the new document are redirected to their copies, references to all
      * other source pages, to the nodes of the source page tree and to the annotations of the other pages are removed.
      * In arrays, a removed page is replaced by null so that destination arrays keep their structure, a removed
-     * annotation (e.g. a widget of the same form field on another page) is dropped. As a safety net, any other page or
-     * page tree node that is not part of the new document is removed as well.
+     * annotation (e.g. a widget of the same form field on another page) is dropped. Form fields without a widget on a
+     * page of the new document are removed with their values, although a remaining widget reaches them via the /Parent
+     * and /Kids of its field. As a safety net, any other page or page tree node that is not part of the new document is
+     * removed as well.
      * <p>
      * The source document is changed by this and must stay open until the returned document has been saved.
      *
@@ -756,15 +758,20 @@ public class PdfSplitUtils {
             }
             index++;
         }
+        List<COSBase> otherAnnotations = new ArrayList<>();
         for (COSDictionary page : otherSourcePages) {
             outside.add(page);
             for (COSBase annotation : annotationsOf(page)) {
                 // an annotation object that is also shown on a page of the part stays
                 if (!keptAnnotations.contains(annotation)) {
                     outside.add(annotation);
+                    otherAnnotations.add(annotation);
                 }
             }
         }
+        // a widget of the part reaches its form field and, via /Parent and /Kids, the other fields of the form -
+        // fields without a widget on a page of the part are removed together with their values
+        outside.addAll(fieldsWithoutKeptWidgets(source, keptAnnotations, otherAnnotations));
 
         Splitter splitter = new Splitter();
         splitter.setStartPage(fromIndex + 1);
@@ -789,6 +796,73 @@ public class PdfSplitUtils {
 
     private static Set<COSBase> identitySet() {
         return Collections.newSetFromMap(new IdentityHashMap<>());
+    }
+
+    /**
+     * @return the nodes of the form field trees (fields and widgets) that have no widget on a page of the part - the
+     * trees start at the fields of the AcroForm and at the topmost /Parent of every widget
+     */
+    private static Set<COSBase> fieldsWithoutKeptWidgets(PDDocument source, Set<COSBase> keptAnnotations, List<COSBase> otherAnnotations) {
+        Set<COSBase> roots = identitySet();
+        COSBase acroForm = resolve(source.getDocumentCatalog().getCOSObject().getDictionaryObject(COSName.ACRO_FORM));
+        if (acroForm instanceof COSDictionary) {
+            COSBase fields = resolve(((COSDictionary) acroForm).getDictionaryObject(COSName.FIELDS));
+            if (fields instanceof COSArray) {
+                for (COSBase field : (COSArray) fields) {
+                    COSBase resolved = resolve(field);
+                    if (resolved instanceof COSDictionary) {
+                        roots.add(resolved);
+                    }
+                }
+            }
+        }
+        List<COSBase> annotations = new ArrayList<>(keptAnnotations);
+        annotations.addAll(otherAnnotations);
+        for (COSBase annotation : annotations) {
+            if (annotation instanceof COSDictionary) {
+                Set<COSBase> chain = identitySet();
+                COSDictionary top = (COSDictionary) annotation;
+                COSBase parent = resolve(top.getDictionaryObject(COSName.PARENT));
+                while (parent instanceof COSDictionary && !isPageOrPageTreeNode(parent) && chain.add(parent)) {
+                    top = (COSDictionary) parent;
+                    parent = resolve(top.getDictionaryObject(COSName.PARENT));
+                }
+                if (top != annotation) {
+                    roots.add(top);
+                }
+            }
+        }
+
+        Set<COSBase> withoutKeptWidgets = identitySet();
+        Set<COSBase> visited = identitySet();
+        for (COSBase root : roots) {
+            collectWithoutKeptWidgets(root, keptAnnotations, visited, withoutKeptWidgets);
+        }
+        return withoutKeptWidgets;
+    }
+
+    /**
+     * @return true if the given field (or widget) or one of its descendants is a widget on a page of the part
+     */
+    private static boolean collectWithoutKeptWidgets(COSBase node, Set<COSBase> keptAnnotations, Set<COSBase> visited, Set<COSBase> withoutKeptWidgets) {
+        if (!(node instanceof COSDictionary) || isPageOrPageTreeNode(node)) {
+            return false;
+        }
+        if (!visited.add(node)) {
+            // decided by its first visit - or still being decided further up a (malformed) cycle, then it stays
+            return !withoutKeptWidgets.contains(node);
+        }
+        boolean kept = keptAnnotations.contains(node);
+        COSBase kids = resolve(((COSDictionary) node).getDictionaryObject(COSName.KIDS));
+        if (kids instanceof COSArray) {
+            for (COSBase kid : (COSArray) kids) {
+                kept |= collectWithoutKeptWidgets(resolve(kid), keptAnnotations, visited, withoutKeptWidgets);
+            }
+        }
+        if (!kept) {
+            withoutKeptWidgets.add(node);
+        }
+        return kept;
     }
 
     private static List<COSBase> annotationsOf(COSDictionary page) {

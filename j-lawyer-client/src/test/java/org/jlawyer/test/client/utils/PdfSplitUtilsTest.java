@@ -671,11 +671,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import org.apache.pdfbox.cos.COSArray;
 import org.apache.pdfbox.cos.COSBase;
+import org.apache.pdfbox.cos.COSDictionary;
 import org.apache.pdfbox.cos.COSDocument;
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.cos.COSObjectKey;
 import org.apache.pdfbox.cos.COSStream;
+import org.apache.pdfbox.cos.COSString;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -793,6 +796,104 @@ public class PdfSplitUtilsTest {
                 assertEquals(2, reloaded.getPage(0).getAnnotations().size());
             }
         }
+    }
+
+    /**
+     * A field of a hierarchical form whose widget is on another page must not be written into the part with its
+     * value: the widget on the kept page reaches it via the /Parent of its own field and the /Kids of that parent.
+     */
+    @Test
+    public void testFormFieldValuesOfOtherPagesAreRemoved() throws Exception {
+        try (PDDocument source = createLinkedDocument(5)) {
+            PDAcroForm acroForm = new PDAcroForm(source);
+            source.getDocumentCatalog().setAcroForm(acroForm);
+            COSDictionary parent = new COSDictionary();
+            parent.setString(COSName.T, "beteiligte");
+            COSArray kids = new COSArray();
+            kids.add(childField(source, parent, "mandant", "Wert Seite 1", 0, false));
+            kids.add(childField(source, parent, "gegner", "Wert Seite 5", 4, false));
+            // the widget of this field is the field itself
+            kids.add(childField(source, parent, "dritter", "Wert Seite 4", 3, true));
+            parent.setItem(COSName.KIDS, kids);
+            COSArray fields = new COSArray();
+            fields.add(parent);
+            acroForm.getCOSObject().setItem(COSName.FIELDS, fields);
+
+            try (PDDocument part = PdfSplitUtils.extractPages(source, 0, 2); PDDocument reloaded = saveAndReload(part)) {
+                assertEquals(2, reloaded.getNumberOfPages());
+                assertEquals(2, reloaded.getDocument().getObjectsByType(COSName.PAGE).size());
+                // link and widget of page 1 stay
+                assertEquals(2, reloaded.getPage(0).getAnnotations().size());
+                assertTrue(containsString(reloaded, "Vorgabe Wert Seite 1"));
+                for (String other : new String[]{"Wert Seite 4", "Wert Seite 5"}) {
+                    assertFalse(other + " written", containsString(reloaded, other));
+                }
+            }
+        }
+    }
+
+    /**
+     * @return a text field below the given parent, with value and default value, whose widget is on the given page
+     */
+    private static COSDictionary childField(PDDocument source, COSDictionary parent, String name, String value, int pageIndex, boolean merged) throws IOException {
+        COSDictionary field = new COSDictionary();
+        field.setItem(COSName.FT, COSName.getPDFName("Tx"));
+        field.setString(COSName.T, name);
+        field.setString(COSName.V, value);
+        field.setString(COSName.DV, "Vorgabe " + value);
+        field.setItem(COSName.PARENT, parent);
+        COSDictionary widget = merged ? field : new COSDictionary();
+        widget.setItem(COSName.TYPE, COSName.ANNOT);
+        widget.setItem(COSName.SUBTYPE, COSName.getPDFName("Widget"));
+        widget.setItem(COSName.RECT, new PDRectangle(400, 800, 150, 20).getCOSArray());
+        PDPage page = source.getPage(pageIndex);
+        widget.setItem(COSName.P, page);
+        if (!merged) {
+            widget.setItem(COSName.PARENT, field);
+            COSArray widgets = new COSArray();
+            widgets.add(widget);
+            field.setItem(COSName.KIDS, widgets);
+        }
+        List<PDAnnotation> annotations = new ArrayList<>(page.getAnnotations());
+        annotations.add(PDAnnotation.createAnnotation(widget));
+        page.setAnnotations(annotations);
+        return field;
+    }
+
+    /**
+     * @return true if a stream or a string of any object of the (saved and reloaded) document contains the given text
+     */
+    private static boolean containsString(PDDocument doc, String text) throws IOException {
+        if (containsText(doc, text)) {
+            return true;
+        }
+        COSDocument cos = doc.getDocument();
+        for (COSObjectKey key : new ArrayList<>(cos.getXrefTable().keySet())) {
+            if (containsStringValue(cos.getObjectFromPool(key).getObject(), text)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean containsStringValue(COSBase base, String text) {
+        if (base instanceof COSString) {
+            return ((COSString) base).getString().contains(text);
+        }
+        if (base instanceof COSDictionary) {
+            for (COSBase value : ((COSDictionary) base).getValues()) {
+                if (containsStringValue(value, text)) {
+                    return true;
+                }
+            }
+        } else if (base instanceof COSArray) {
+            for (COSBase value : (COSArray) base) {
+                if (containsStringValue(value, text)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     @Test
