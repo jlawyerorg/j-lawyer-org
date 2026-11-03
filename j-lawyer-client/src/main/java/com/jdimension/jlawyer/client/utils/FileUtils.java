@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.utils;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import java.awt.Component;
 import java.awt.KeyboardFocusManager;
@@ -686,6 +687,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -1111,6 +1113,30 @@ public class FileUtils extends ServerFileUtils {
             }
         }
         return name;
+    }
+
+    /**
+     * Collects the names of a case's documents, including its trash, compared
+     * ignoring case like {@link String#equalsIgnoreCase(String)}.
+     *
+     * @param caseId id of the case
+     * @param documents the active documents of the case
+     * @param bin documents in the trash, entries of other cases are ignored
+     * @return the document names of the case
+     */
+    public static Set<String> documentNamesInCase(String caseId, Collection<ArchiveFileDocumentsBean> documents, Collection<ArchiveFileDocumentsBean> bin) {
+        Set<String> names = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        for (ArchiveFileDocumentsBean doc : documents) {
+            if (doc.getName() != null) {
+                names.add(doc.getName());
+            }
+        }
+        for (ArchiveFileDocumentsBean doc : bin) {
+            if (doc.getName() != null && doc.getArchiveFileKey() != null && caseId.equals(doc.getArchiveFileKey().getId())) {
+                names.add(doc.getName());
+            }
+        }
+        return names;
     }
 
     /**
