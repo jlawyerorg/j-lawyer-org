@@ -677,8 +677,6 @@ import com.jdimension.jlawyer.client.editors.files.BulkSaveDialog;
 import com.jdimension.jlawyer.client.editors.files.BulkSaveEntry;
 import com.jdimension.jlawyer.client.editors.files.DescendingDateTimeStringComparator;
 import com.jdimension.jlawyer.client.editors.files.FileNumberComparatorArchiveFileBean;
-import com.jdimension.jlawyer.client.events.BeaStatusEvent;
-import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.mail.sidebar.CreateNewAddressPanel;
 import com.jdimension.jlawyer.client.mail.sidebar.ExtractedPhoneNumbersPanel;
 import com.jdimension.jlawyer.client.mail.sidebar.NavigateToAddressPanel;
@@ -1015,23 +1013,13 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
         }
 
-        // count unread messages from already-loaded headers and publish status
+        // count unread messages of all inboxes and publish status - one event with the total, each event replaces the previous count
         try {
-            for (String safeId : inboxFolders.keySet()) {
-                BeaFolder inbox = inboxFolders.get(safeId);
-                if (inbox != null) {
-                    EditorsRegistry.getInstance().updateStatus("Nachrichtenübersicht wird geladen für " + inbox.getName() + "...");
-                    List<BeaMessageHeader> messages = BeaAccess.getInstance().getFolderOverview(safeId, inbox, BeaAccess.getFilter(inbox.getType()));
-                    int unread = 0;
-                    for (BeaMessageHeader mh : messages) {
-                        if (!mh.isRead()) {
-                            unread++;
-                        }
-                    }
-                    BeaStatusEvent e = new BeaStatusEvent(unread);
-                    EventBroker.getInstance().publishEvent(e);
-                }
-            }
+            // if the count can not be determined (a postbox without inbox, or an error), nothing is published and the indicator keeps its previous value
+            BeaUnreadCounter.publishUnread(inboxes.size(), inboxFolders, (safeId, inbox) -> {
+                EditorsRegistry.getInstance().updateStatus("Nachrichtenübersicht wird geladen für " + inbox.getName() + "...");
+                return BeaAccess.getInstance().getFolderOverview(safeId, inbox, BeaAccess.getFilter(inbox.getType()));
+            });
         } catch (Throwable t) {
             log.error(t);
         }
