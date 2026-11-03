@@ -673,6 +673,12 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -702,8 +708,10 @@ public class SqlDumpUtils {
      * The dump is read as a stream of SQL: string literals ('...' and "...", with backslash escapes and doubled
      * quotes), quoted identifiers (`...`) and comments (--, # and /* *&#47;) are never changed. Executable comments
      * (/*!50003 ... *&#47;, as mysqldump writes them) are SQL and are processed. INSERT and REPLACE statements are
-     * written back unchanged as a whole. Memory use does not depend on the length of a line or statement, so rows
-     * with large values are no problem.
+     * written back unchanged as a whole. Changes of the session's sql_mode (SET sql_mode = '...', saving it in and
+     * restoring it from a user variable, as mysqldump does around triggers and routines) are followed: while
+     * NO_BACKSLASH_ESCAPES is set, a backslash in a string literal is an ordinary character. Memory use does not
+     * depend on the length of a line or statement, so rows with large values are no problem.
      * <p>
      * The file is processed as ISO-8859-1, so that every byte is written back unchanged - dumps may contain binary
      * data that is not valid UTF-8. The file is only replaced if the collation was found. If the dump ends inside a
@@ -773,6 +781,19 @@ public class SqlDumpUtils {
          */
         private static final char BREAK = '\0';
         /**
+         * Longest SET statement and string literal in it that are kept for following changes of sql_mode.
+         */
+        private static final int MAX_SET_STATEMENT = 8192;
+        /**
+         * Stands for a string literal in the text of a SET statement.
+         */
+        private static final char LITERAL = '\u0001';
+        /**
+         * One assignment in a SET statement: scope or user variable marker, variable name, and a value that matters
+         * for sql_mode (a string literal, @@sql_mode or a user variable).
+         */
+        private static final Pattern ASSIGNMENT = Pattern.compile("(?i)(@@(?:(global|session|local)\\.)?|@|\\b(global|session|local)\\s+)?\\b([A-Za-z0-9_$]+)\\s*:?=\\s*(\\u0001|@@(?:(?:global|session|local)\\.)?sql_mode\\b|@[A-Za-z0-9_$]+)");
+        /**
          * What has to come right before the collation for it to be used as a collation.
          */
         private static final Pattern USAGE = Pattern.compile("(?i)(?:\\bCOLLATE\\s*=?\\s*|\\b\\w*collation\\w*\\s*=\\s*)\\z");
@@ -797,6 +818,19 @@ public class SqlDumpUtils {
         private final StringBuilder context = new StringBuilder();
         private boolean statementHasWord = false;
         private boolean dataStatement = false;
+        /**
+         * The next word is the version number of an executable comment, not part of the statement.
+         */
+        private boolean versionNumber = false;
+
+        private boolean noBackslashEscapes = false;
+        private final Map<String, Boolean> savedModes = new HashMap<>();
+        /**
+         * Text of the current SET statement (string literals replaced by LITERAL), or null.
+         */
+        private StringBuilder setStatement = null;
+        private final List<String> setLiterals = new ArrayList<>();
+        private StringBuilder literal = null;
 
         private long count = 0;
         private boolean complete = false;
@@ -820,17 +854,23 @@ public class SqlDumpUtils {
                     case DOUBLE_QUOTED:
                         write(ch);
                         char quote = state == SINGLE_QUOTED ? '\'' : '"';
-                        if (ch == '\\') {
+                        if (ch == '\\' && !noBackslashEscapes) {
+                            addLiteral(ch);
                             int escaped = read();
                             if (escaped != -1) {
                                 write((char) escaped);
+                                addLiteral((char) escaped);
                             }
                         } else if (ch == quote) {
                             if (peek(0) == quote) {
+                                addLiteral(ch);
                                 write((char) read());
                             } else {
                                 state = NORMAL;
+                                endLiteral();
                             }
+                        } else {
+                            addLiteral(ch);
                         }
                         break;
                     case BACKTICK_QUOTED:
@@ -859,6 +899,7 @@ public class SqlDumpUtils {
                 }
             }
             endWord();
+            endStatement();
             flush();
             complete = state == NORMAL || state == LINE_COMMENT;
         }
@@ -872,21 +913,35 @@ public class SqlDumpUtils {
             if (ch == '\'' || ch == '"' || ch == '`') {
                 state = ch == '\'' ? SINGLE_QUOTED : (ch == '"' ? DOUBLE_QUOTED : BACKTICK_QUOTED);
                 appendContext(BREAK);
+                if (ch != '`') {
+                    startLiteral();
+                }
                 write(ch);
             } else if (ch == '#' || (ch == '-' && peek(0) == '-' && (peek(1) == -1 || peek(1) <= ' '))) {
                 state = LINE_COMMENT;
                 appendContext(BREAK);
                 write(ch);
-            } else if (ch == '/' && peek(0) == '*' && !(peek(1) == '!' || (peek(1) == 'M' && peek(2) == '!'))) {
-                // a comment - unlike executable comments like /*!50003 ... */, which contain SQL
+            } else if (ch == '/' && peek(0) == '*' && (peek(1) == '!' || (peek(1) == 'M' && peek(2) == '!'))) {
+                // an executable comment like /*!50003 ... */ - its content is SQL, the version number is not part of it
+                write(ch);
+                appendContext(ch);
+                int rest = peek(1) == '!' ? 2 : 3;
+                for (int i = 0; i < rest; i++) {
+                    char c = (char) read();
+                    write(c);
+                    appendContext(c);
+                }
+                versionNumber = true;
+            } else if (ch == '/' && peek(0) == '*') {
                 state = BLOCK_COMMENT;
                 appendContext(BREAK);
                 write(ch);
                 write((char) read());
             } else {
                 if (ch == ';') {
-                    statementHasWord = false;
-                    dataStatement = false;
+                    endStatement();
+                } else {
+                    addToSetStatement(ch);
                 }
                 appendContext(ch);
                 write(ch);
@@ -895,6 +950,7 @@ public class SqlDumpUtils {
 
         private void addWordChar(char ch) throws IOException {
             if (longWord) {
+                addToSetStatement(ch);
                 appendContext(ch);
                 write(ch);
                 return;
@@ -902,6 +958,7 @@ public class SqlDumpUtils {
             word.append(ch);
             if (word.length() > MAX_WORD) {
                 noteWord(word);
+                addToSetStatement(word);
                 appendContext(word);
                 write(word);
                 word.setLength(0);
@@ -917,7 +974,12 @@ public class SqlDumpUtils {
             if (word.length() == 0) {
                 return;
             }
-            noteWord(word);
+            boolean version = versionNumber && isDigits(word);
+            versionNumber = false;
+            if (!version) {
+                noteWord(word);
+                addToSetStatement(word);
+            }
             if (!dataStatement && word.length() == collation.length() && word.toString().equalsIgnoreCase(collation) && USAGE.matcher(context).find()) {
                 appendContext(replacement);
                 write(replacement);
@@ -929,14 +991,117 @@ public class SqlDumpUtils {
             word.setLength(0);
         }
 
+        private static boolean isDigits(CharSequence w) {
+            for (int i = 0; i < w.length(); i++) {
+                if (!Character.isDigit(w.charAt(i))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         /**
-         * Remembers whether the current statement is an INSERT or REPLACE statement, by its first word.
+         * Remembers whether the current statement is an INSERT or REPLACE statement, or a SET statement, by its first
+         * word.
          */
         private void noteWord(CharSequence w) {
             if (!statementHasWord) {
                 statementHasWord = true;
                 String first = w.toString();
                 dataStatement = first.equalsIgnoreCase("INSERT") || first.equalsIgnoreCase("REPLACE");
+                if (first.equalsIgnoreCase("SET")) {
+                    setStatement = new StringBuilder();
+                    setLiterals.clear();
+                }
+            }
+        }
+
+        private void addToSetStatement(char ch) {
+            if (setStatement != null) {
+                setStatement.append(ch);
+                if (setStatement.length() > MAX_SET_STATEMENT) {
+                    // far too long for a change of sql_mode
+                    setStatement = null;
+                }
+            }
+        }
+
+        private void addToSetStatement(CharSequence s) {
+            for (int i = 0; i < s.length(); i++) {
+                addToSetStatement(s.charAt(i));
+            }
+        }
+
+        private void startLiteral() {
+            if (setStatement != null) {
+                addToSetStatement(LITERAL);
+                literal = new StringBuilder();
+            }
+        }
+
+        private void addLiteral(char ch) {
+            if (literal != null) {
+                literal.append(ch);
+                if (literal.length() > MAX_SET_STATEMENT) {
+                    literal = null;
+                    setStatement = null;
+                }
+            }
+        }
+
+        private void endLiteral() {
+            if (literal != null && setStatement != null) {
+                setLiterals.add(literal.toString());
+            }
+            literal = null;
+        }
+
+        /**
+         * At the end of a statement: follows changes of sql_mode in a SET statement.
+         */
+        private void endStatement() {
+            if (setStatement != null) {
+                applySet(setStatement.toString(), setLiterals);
+            }
+            setStatement = null;
+            literal = null;
+            statementHasWord = false;
+            dataStatement = false;
+        }
+
+        private void applySet(String text, List<String> literals) {
+            Matcher m = ASSIGNMENT.matcher(text);
+            while (m.find()) {
+                String marker = m.group(1) == null ? "" : m.group(1).trim();
+                String scope = m.group(2) != null ? m.group(2) : m.group(3);
+                if (scope != null && scope.equalsIgnoreCase("global")) {
+                    continue;
+                }
+                String name = m.group(4).toLowerCase(Locale.ROOT);
+                String value = m.group(5);
+                boolean valueIsMode = value.startsWith("@@");
+                if ("@".equals(marker)) {
+                    if (valueIsMode) {
+                        savedModes.put(name, noBackslashEscapes);
+                    }
+                } else if (name.equals("sql_mode")) {
+                    if (value.charAt(0) == LITERAL) {
+                        int index = 0;
+                        for (int i = 0; i < m.start(5); i++) {
+                            if (text.charAt(i) == LITERAL) {
+                                index++;
+                            }
+                        }
+                        if (index < literals.size()) {
+                            noBackslashEscapes = literals.get(index).toUpperCase(Locale.ROOT).contains("NO_BACKSLASH_ESCAPES");
+                        }
+                    } else if (!valueIsMode) {
+                        Boolean saved = savedModes.get(value.substring(1).toLowerCase(Locale.ROOT));
+                        if (saved != null) {
+                            noBackslashEscapes = saved;
+                        }
+                    }
+                }
             }
         }
 

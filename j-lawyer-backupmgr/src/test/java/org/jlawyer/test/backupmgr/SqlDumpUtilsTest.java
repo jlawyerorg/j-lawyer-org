@@ -662,10 +662,14 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.test.backupmgr;
 
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
+import java.io.Writer;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
@@ -865,6 +869,152 @@ public class SqlDumpUtilsTest {
         File f = write("jlawyerdb-dump.sql", (data + TABLE).getBytes(StandardCharsets.ISO_8859_1));
         assertEquals(2, replace(f));
         assertEquals(data + TABLE.replace("utf8mb4_0900_ai_ci", "utf8mb4_unicode_ci"), new String(Files.readAllBytes(f.toPath()), StandardCharsets.ISO_8859_1));
+    }
+
+    /**
+     * A table, a trigger and another table as mysqldump writes them: the trigger was created with NO_BACKSLASH_ESCAPES,
+     * so its definition contains '\' as a string of one backslash. mysqldump sets the trigger's sql_mode before it and
+     * restores the saved one afterwards.
+     */
+    private static final String TRIGGER_DUMP = "CREATE TABLE `t` (`a` varchar(10) COLLATE utf8mb4_0900_ai_ci DEFAULT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;\n"
+            + "/*!50003 SET @saved_cs_client      = @@character_set_client */ ;\n"
+            + "/*!50003 SET @saved_col_connection = @@collation_connection */ ;\n"
+            + "/*!50003 SET character_set_client  = utf8mb4 */ ;\n"
+            + "/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;\n"
+            + "/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;\n"
+            + "/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,NO_BACKSLASH_ESCAPES,NO_ENGINE_SUBSTITUTION' */ ;\n"
+            + "DELIMITER ;;\n"
+            + "/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `t_bi` BEFORE INSERT ON `t` FOR EACH ROW SET NEW.a = CONCAT('\\', 'COLLATE utf8mb4_0900_ai_ci') */;;\n"
+            + "DELIMITER ;\n"
+            + "/*!50003 SET sql_mode              = @saved_sql_mode */ ;\n"
+            + "/*!50003 SET character_set_client  = @saved_cs_client */ ;\n"
+            + "/*!50003 SET collation_connection  = @saved_col_connection */ ;\n"
+            + "CREATE TABLE `u` (`b` varchar(10) COLLATE utf8mb4_0900_ai_ci DEFAULT 'it\\'s') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;\n";
+
+    @Test
+    public void testTriggerWithNoBackslashEscapes() throws Exception {
+        String expected = TRIGGER_DUMP.replace("COLLATE utf8mb4_0900_ai_ci DEFAULT", "COLLATE utf8mb4_unicode_ci DEFAULT")
+                .replace("COLLATE=utf8mb4_0900_ai_ci;", "COLLATE=utf8mb4_unicode_ci;")
+                .replace("collation_connection  = utf8mb4_0900_ai_ci", "collation_connection  = utf8mb4_unicode_ci");
+        // the trigger itself stays as it is
+        assertTrue(expected.contains("CONCAT('\\', 'COLLATE utf8mb4_0900_ai_ci')"));
+        File f = write("jlawyerdb-dump.sql", TRIGGER_DUMP.getBytes(StandardCharsets.UTF_8));
+        assertEquals(5, replace(f));
+        assertEquals(expected, new String(Files.readAllBytes(f.toPath()), StandardCharsets.UTF_8));
+        for (int chunk = 1; chunk <= 3; chunk++) {
+            StringWriter out = new StringWriter();
+            assertEquals(5, SqlDumpUtils.replaceCollation(chunked(TRIGGER_DUMP, chunk), out, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION, SqlDumpUtils.PORTABLE_COLLATION));
+            assertEquals(expected, out.toString());
+        }
+    }
+
+    private static final String ROW_TEXT = "Lorem ipsum dolor sit amet, \\'consetetur\\' sadipscing elitr COLLATE utf8mb4_0900_ai_ci ";
+
+    @Test
+    public void testReadsOnlyALittleAhead() throws Exception {
+        // a generated row of 64 MiB: the output must follow the input closely, so the row is never held in memory
+        String head = TABLE + "INSERT INTO `case_documents` VALUES ('1','";
+        String tail = "');\n" + TABLE;
+        long bodyLength = 64L * 1024 * 1024;
+        long[] read = {0};
+        long[] written = {0};
+        long[] maxAhead = {0};
+        Reader in = new Reader() {
+            @Override
+            public int read(char[] cbuf, int off, int len) {
+                long total = head.length() + bodyLength + tail.length();
+                if (read[0] >= total) {
+                    return -1;
+                }
+                int n = (int) Math.min(len, total - read[0]);
+                for (int i = 0; i < n; i++) {
+                    long pos = read[0] + i;
+                    if (pos < head.length()) {
+                        cbuf[off + i] = head.charAt((int) pos);
+                    } else if (pos < head.length() + bodyLength) {
+                        cbuf[off + i] = ROW_TEXT.charAt((int) ((pos - head.length()) % ROW_TEXT.length()));
+                    } else {
+                        cbuf[off + i] = tail.charAt((int) (pos - head.length() - bodyLength));
+                    }
+                }
+                read[0] += n;
+                maxAhead[0] = Math.max(maxAhead[0], read[0] - written[0]);
+                return n;
+            }
+
+            @Override
+            public void close() {
+            }
+        };
+        String expectedHead = TABLE.replace("utf8mb4_0900_ai_ci", "utf8mb4_unicode_ci") + "INSERT INTO `case_documents` VALUES ('1','";
+        StringBuilder outHead = new StringBuilder();
+        StringBuilder outTail = new StringBuilder();
+        Writer out = new Writer() {
+            @Override
+            public void write(char[] cbuf, int off, int len) {
+                for (int i = 0; i < len; i++) {
+                    long pos = written[0] + i;
+                    char c = cbuf[off + i];
+                    if (pos < expectedHead.length()) {
+                        outHead.append(c);
+                    } else if (pos < expectedHead.length() + bodyLength) {
+                        assertEquals(ROW_TEXT.charAt((int) ((pos - expectedHead.length()) % ROW_TEXT.length())), c);
+                    } else {
+                        outTail.append(c);
+                    }
+                }
+                written[0] += len;
+            }
+
+            @Override
+            public void flush() {
+            }
+
+            @Override
+            public void close() {
+            }
+        };
+        assertEquals(4, SqlDumpUtils.replaceCollation(in, out, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION, SqlDumpUtils.PORTABLE_COLLATION));
+        assertEquals(expectedHead, outHead.toString());
+        assertEquals("');\n" + TABLE.replace("utf8mb4_0900_ai_ci", "utf8mb4_unicode_ci"), outTail.toString());
+        assertTrue("read ahead of the output: " + maxAhead[0], maxAhead[0] <= 256 * 1024);
+    }
+
+    /**
+     * Run in a separate JVM with little memory by {@link #testLargeRowInLittleMemory()}.
+     */
+    public static class LargeDumpMain {
+
+        public static void main(String[] args) throws Exception {
+            System.out.println("replaced " + SqlDumpUtils.replaceCollation(new File(args[0]), SqlDumpUtils.MYSQL8_DEFAULT_COLLATION, SqlDumpUtils.PORTABLE_COLLATION));
+        }
+    }
+
+    @Test
+    public void testLargeRowInLittleMemory() throws Exception {
+        // a dump with a 48 MiB row, restored with 32 MiB of heap: holding the row in memory would need 96 MiB
+        File f = tmp.newFile("big-dump.sql");
+        long length;
+        try (Writer w = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f), StandardCharsets.ISO_8859_1))) {
+            w.write(TABLE);
+            w.write("INSERT INTO `case_documents` VALUES ('1','");
+            StringBuilder chunk = new StringBuilder();
+            while (chunk.length() < 64 * 1024) {
+                chunk.append(ROW_TEXT);
+            }
+            for (int i = 0; i < 768; i++) {
+                w.write(chunk.toString());
+            }
+            w.write("');\n");
+        }
+        length = f.length();
+        Process p = new ProcessBuilder(System.getProperty("java.home") + File.separator + "bin" + File.separator + "java", "-Xmx32m", "-cp", System.getProperty("java.class.path"), LargeDumpMain.class.getName(), f.getAbsolutePath())
+                .redirectErrorStream(true).start();
+        String output = new String(p.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        assertEquals(output, 0, p.waitFor());
+        assertTrue(output, output.contains("replaced 2"));
+        // both collation names have the same length
+        assertEquals(length, f.length());
     }
 
     @Test
