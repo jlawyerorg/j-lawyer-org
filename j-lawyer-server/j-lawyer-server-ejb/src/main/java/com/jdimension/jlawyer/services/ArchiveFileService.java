@@ -2849,6 +2849,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    @RolesAllowed({"readArchiveFileRole"})
     public Collection<ArchiveFileAddressesBean> getArchiveFileAddressesForAddress(String adressId) {
 
         List<Group> userGroups = new ArrayList<>();
@@ -4018,11 +4019,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    @RolesAllowed({"readArchiveFileRole"})
     public List<ArchiveFileHistoryBean> getHistoryByDateInterval(Date fromDate, Date toDate, int limit) {
         return filterHistory(this.archiveFileHistoryFacade.findByDateInterval(fromDate, toDate, limit), context.getCallerPrincipal().getName());
     }
 
     @Override
+    @RolesAllowed({"readArchiveFileRole"})
     public List<ArchiveFileHistoryBean> getHistoryByPrincipalAndDateInterval(String principal, Date fromDate, Date toDate, int limit) {
         return filterHistory(this.archiveFileHistoryFacade.findByPrincipalAndDateInterval(principal, fromDate, toDate, limit), context.getCallerPrincipal().getName());
     }
