@@ -732,12 +732,12 @@ public class BeaUnreadCounterTest {
     @Test
     public void testSumOverAllPostboxes() {
         // two lawyers of a law firm, the second postbox was loaded last - its count must not replace the first one's
-        assertEquals(Integer.valueOf(3), BeaUnreadCounter.countUnread(0, inboxes("DE.BRAK.lawyer1", "DE.BRAK.lawyer2"), TWO_LAWYERS));
+        assertEquals(Integer.valueOf(3), BeaUnreadCounter.countUnread(2, inboxes("DE.BRAK.lawyer1", "DE.BRAK.lawyer2"), TWO_LAWYERS));
     }
 
     @Test
     public void testEmptyInboxesCountZero() {
-        assertEquals(Integer.valueOf(0), BeaUnreadCounter.countUnread(0, inboxes("DE.BRAK.lawyer1"), (safeId, inbox) -> new ArrayList<>()));
+        assertEquals(Integer.valueOf(0), BeaUnreadCounter.countUnread(1, inboxes("DE.BRAK.lawyer1"), (safeId, inbox) -> new ArrayList<>()));
     }
 
     @Test
@@ -749,12 +749,26 @@ public class BeaUnreadCounterTest {
     @Test
     public void testFoldersOfOnePostboxCouldNotBeLoaded() {
         // the inbox of lawyer1 is empty, the folders of lawyer2 timed out - its inbox may contain unread messages
-        assertNull(BeaUnreadCounter.countUnread(1, inboxes("DE.BRAK.lawyer1"), (safeId, inbox) -> new ArrayList<>()));
+        assertNull(BeaUnreadCounter.countUnread(2, inboxes("DE.BRAK.lawyer1"), (safeId, inbox) -> new ArrayList<>()));
+    }
+
+    @Test
+    public void testPostboxWithoutInboxFolder() {
+        // the folders of lawyer2 were loaded without an error, but contain no inbox - not "no unread messages" either
+        Map<String, BeaFolder> inboxes = inboxes("DE.BRAK.lawyer1");
+        assertNull(BeaUnreadCounter.countUnread(2, inboxes, (safeId, inbox) -> new ArrayList<>()));
+        inboxes.put("DE.BRAK.lawyer2", null);
+        assertNull(BeaUnreadCounter.countUnread(2, inboxes, (safeId, inbox) -> new ArrayList<>()));
+    }
+
+    @Test
+    public void testNoPostboxHasAnInboxFolder() {
+        assertNull(BeaUnreadCounter.countUnread(2, inboxes(), (safeId, inbox) -> new ArrayList<>()));
     }
 
     @Test
     public void testLoadingMessagesFails() {
-        Integer unread = BeaUnreadCounter.countUnread(0, inboxes("DE.BRAK.lawyer1", "DE.BRAK.lawyer2"), (safeId, inbox) -> {
+        Integer unread = BeaUnreadCounter.countUnread(2, inboxes("DE.BRAK.lawyer1", "DE.BRAK.lawyer2"), (safeId, inbox) -> {
             if ("DE.BRAK.lawyer2".equals(safeId)) {
                 throw new Exception("beAstie nicht erreichbar");
             }
@@ -765,22 +779,22 @@ public class BeaUnreadCounterTest {
 
     @Test
     public void testPublishesOneEventWithTheSum() throws Exception {
-        assertEquals(Integer.valueOf(3), BeaUnreadCounter.publishUnread(0, inboxes("DE.BRAK.lawyer1", "DE.BRAK.lawyer2"), TWO_LAWYERS));
+        assertEquals(Integer.valueOf(3), BeaUnreadCounter.publishUnread(2, inboxes("DE.BRAK.lawyer1", "DE.BRAK.lawyer2"), TWO_LAWYERS));
         assertEquals(Arrays.asList(3), published());
     }
 
     @Test
     public void testPublishesZeroForEmptyInboxes() throws Exception {
-        BeaUnreadCounter.publishUnread(0, inboxes("DE.BRAK.lawyer1", "DE.BRAK.lawyer2"), (safeId, inbox) -> Arrays.asList(header(true)));
+        BeaUnreadCounter.publishUnread(2, inboxes("DE.BRAK.lawyer1", "DE.BRAK.lawyer2"), (safeId, inbox) -> Arrays.asList(header(true)));
         assertEquals(Arrays.asList(0), published());
     }
 
     @Test
     public void testPublishesNothingIfTheCountIsUnknown() throws Exception {
-        // folders of all postboxes failed, folders of one postbox failed, messages of one inbox failed
+        // no inbox found for any postbox, no inbox found for one postbox (folders failed or contain no inbox), messages of one inbox failed
         assertNull(BeaUnreadCounter.publishUnread(2, inboxes(), (safeId, inbox) -> new ArrayList<>()));
-        assertNull(BeaUnreadCounter.publishUnread(1, inboxes("DE.BRAK.lawyer1"), (safeId, inbox) -> new ArrayList<>()));
-        assertNull(BeaUnreadCounter.publishUnread(0, inboxes("DE.BRAK.lawyer1", "DE.BRAK.lawyer2"), (safeId, inbox) -> {
+        assertNull(BeaUnreadCounter.publishUnread(2, inboxes("DE.BRAK.lawyer1"), (safeId, inbox) -> new ArrayList<>()));
+        assertNull(BeaUnreadCounter.publishUnread(2, inboxes("DE.BRAK.lawyer1", "DE.BRAK.lawyer2"), (safeId, inbox) -> {
             throw new Exception("beAstie nicht erreichbar");
         }));
         assertTrue(published().isEmpty());

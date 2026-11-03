@@ -950,7 +950,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("beA-Postfächer");
         Collection<BeaPostbox> inboxes = bea.getPostBoxesOrdered();
         HashMap<String, BeaFolder> inboxFolders = new HashMap<>();
-        int failedPostboxes = 0;
         for (BeaPostbox pb : inboxes) {
             EditorsRegistry.getInstance().updateStatus("Lade beA-Postfach" + pb.getSafeId() + "...");
             try {
@@ -982,7 +981,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 }
             } catch (Throwable t) {
                 log.error("Unable to load postbox " + pb.getSafeId() + ", probably due to missing privileges", t);
-                failedPostboxes++;
             }
         }
 
@@ -1017,8 +1015,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
         // count unread messages of all inboxes and publish status - one event with the total, each event replaces the previous count
         try {
-            // if the count can not be determined, nothing is published and the indicator keeps its previous value
-            BeaUnreadCounter.publishUnread(failedPostboxes, inboxFolders, (safeId, inbox) -> {
+            // if the count can not be determined (a postbox without inbox, or an error), nothing is published and the indicator keeps its previous value
+            BeaUnreadCounter.publishUnread(inboxes.size(), inboxFolders, (safeId, inbox) -> {
                 EditorsRegistry.getInstance().updateStatus("Nachrichtenübersicht wird geladen für " + inbox.getName() + "...");
                 return BeaAccess.getInstance().getFolderOverview(safeId, inbox, BeaAccess.getFilter(inbox.getType()));
             });

@@ -691,16 +691,22 @@ public class BeaUnreadCounter {
     /**
      * Sums the unread messages of all inboxes.
      *
-     * @param failedPostboxes number of postboxes whose folders could not be loaded. The reason is not known (the beA
-     * calls run through the server, a missing privilege can not be told apart from e.g. a timeout), so their inboxes
-     * might contain unread messages.
-     * @param inboxes the inbox of each postbox whose folders were loaded, by safe id
+     * @param postboxCount number of postboxes of the user
+     * @param inboxes the inbox of each postbox for which one was found, by safe id. A postbox without an entry (its
+     * folders could not be loaded, or they contain no inbox) might have unread messages. The reason of a failure is
+     * not known: the beA calls run through the server, a missing privilege can not be told apart from e.g. a timeout.
      * @param loader loads the messages of an inbox
-     * @return the number of unread messages, or null if it can not be determined - the folders of a postbox could not
-     * be loaded, or loading the messages of an inbox failed. The indicator should keep its value then.
+     * @return the number of unread messages, or null if it can not be determined - the inbox of a postbox was not
+     * found, or loading the messages of an inbox failed. The indicator should keep its value then.
      */
-    public static Integer countUnread(int failedPostboxes, Map<String, BeaFolder> inboxes, InboxLoader loader) {
-        if (failedPostboxes > 0) {
+    public static Integer countUnread(int postboxCount, Map<String, BeaFolder> inboxes, InboxLoader loader) {
+        int found = 0;
+        for (BeaFolder inbox : inboxes.values()) {
+            if (inbox != null) {
+                found++;
+            }
+        }
+        if (found < postboxCount) {
             return null;
         }
         int unread = 0;
@@ -727,13 +733,13 @@ public class BeaUnreadCounter {
      * the count shown so far. Nothing is published if the count can not be determined, see
      * {@link #countUnread(int, Map, InboxLoader)}, so the indicator keeps its value.
      *
-     * @param failedPostboxes number of postboxes whose folders could not be loaded
-     * @param inboxes the inbox of each postbox whose folders were loaded, by safe id
+     * @param postboxCount number of postboxes of the user
+     * @param inboxes the inbox of each postbox for which one was found, by safe id
      * @param loader loads the messages of an inbox
      * @return the published number of unread messages, or null if nothing was published
      */
-    public static Integer publishUnread(int failedPostboxes, Map<String, BeaFolder> inboxes, InboxLoader loader) {
-        Integer unread = countUnread(failedPostboxes, inboxes, loader);
+    public static Integer publishUnread(int postboxCount, Map<String, BeaFolder> inboxes, InboxLoader loader) {
+        Integer unread = countUnread(postboxCount, inboxes, loader);
         if (unread != null) {
             EventBroker.getInstance().publishEvent(new BeaStatusEvent(unread));
         }
