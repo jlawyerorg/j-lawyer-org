@@ -868,7 +868,8 @@ public class SendBeaMessageAction extends ProgressableAction {
                 } else {
                     JOptionPane.showMessageDialog(this.indicator, "Nachricht kann nicht gesendet werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 }
-                throw ex;
+                // error has already been shown - do not rethrow, ProgressableAction would show it a second time
+                return false;
             }
 
             this.markDocumentsSent();

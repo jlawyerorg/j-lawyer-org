@@ -666,6 +666,8 @@ package com.jdimension.jlawyer.client.editors.files;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AssistantPrompt;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.util.ArrayList;
 import java.util.List;
@@ -696,11 +698,26 @@ public class BulkSaveMetadataAllPanel extends JPanel {
     private final JButton cmdCorrespondent = new JButton("Von / An für alle...");
     private final JButton cmdSuggest = new JButton("Schlagworte eintragen");
     private final JButton cmdSuggestTitles = new JButton("Bezeichnungen vorschlagen");
-    private final JLabel lblProgress = new JLabel(" ");
+    // status of the AI suggestions - shown in its own row and without a width of its own, so that
+    // long texts are cut off instead of widening the panel (and the whole dialog, see #3730)
+    private final JLabel lblProgress = new JLabel(" ") {
+        @Override
+        public Dimension getPreferredSize() {
+            return new Dimension(0, super.getPreferredSize().height);
+        }
+
+        @Override
+        public Dimension getMinimumSize() {
+            return new Dimension(0, super.getMinimumSize().height);
+        }
+    };
 
     public BulkSaveMetadataAllPanel() {
-        super(new FlowLayout(FlowLayout.LEFT, 4, 0));
+        super(new BorderLayout(0, 2));
         this.setOpaque(false);
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+        buttons.setOpaque(false);
+        this.lblProgress.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 4, 0, 4));
         this.cmdKeywords.setToolTipText("Schlagworte allen zum Speichern markierten Dateien hinzufügen");
         this.cmdKeywords.addActionListener(e -> this.keywordsForAll());
         this.cmdCorrespondent.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/vcard.png")));
@@ -715,11 +732,12 @@ public class BulkSaveMetadataAllPanel extends JPanel {
         boolean prompts = MetadataSuggester.hasPrompts();
         this.cmdSuggest.setEnabled(prompts);
         this.cmdSuggestTitles.setEnabled(prompts);
-        this.add(this.cmdKeywords);
-        this.add(this.cmdCorrespondent);
-        this.add(this.cmdSuggest);
-        this.add(this.cmdSuggestTitles);
-        this.add(this.lblProgress);
+        buttons.add(this.cmdKeywords);
+        buttons.add(this.cmdCorrespondent);
+        buttons.add(this.cmdSuggest);
+        buttons.add(this.cmdSuggestTitles);
+        this.add(buttons, BorderLayout.CENTER);
+        this.add(this.lblProgress, BorderLayout.SOUTH);
     }
 
     public void setDialog(BulkSaveDialog dialog) {
@@ -842,6 +860,7 @@ public class BulkSaveMetadataAllPanel extends JPanel {
                 } catch (Exception ex) {
                     log.error("Error getting suggestions", ex);
                     lblProgress.setText("Fehler: " + ex.getMessage());
+                    lblProgress.setToolTipText("Fehler: " + ex.getMessage());
                 }
             }
         }.execute();

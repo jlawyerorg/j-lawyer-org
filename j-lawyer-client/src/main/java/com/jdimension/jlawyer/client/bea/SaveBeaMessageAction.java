@@ -834,6 +834,8 @@ public class SaveBeaMessageAction extends ProgressableAction {
             } else {
                 JOptionPane.showMessageDialog(this.indicator, "Nachricht konnte nicht als Entwurf gespeichert werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
+            // no draft has been saved - do not try to store it in the case
+            return false;
         }
 
         Throwable storeException = null;

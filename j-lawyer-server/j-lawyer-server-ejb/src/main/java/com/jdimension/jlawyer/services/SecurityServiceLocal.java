@@ -734,4 +734,15 @@ public interface SecurityServiceLocal {
      */
     List<String> authenticateAndGetRoles(String principalId, String password);
 
+    /**
+     * Returns the current role names of a principal from the user/role store, without
+     * authenticating. Intended for the browser token refresh (see OpenSpec change
+     * {@code add-web-client}): a refresh must reflect revoked or changed roles instead of
+     * carrying over the roles from the refresh token. Local only, never exposed remotely.
+     *
+     * @param principalId the user name
+     * @return the user's current role names, or {@code null} if the user does not exist
+     */
+    List<String> getCurrentRolesUnrestricted(String principalId);
+
 }

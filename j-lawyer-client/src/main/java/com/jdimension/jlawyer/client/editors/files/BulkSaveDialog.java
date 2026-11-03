@@ -1234,7 +1234,7 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                                 .addComponent(lblFileCount)
                                 .addGap(18, 18, 18)
-                                .addComponent(lblTotalSize, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(lblTotalSize, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                                 .addComponent(cmdSave)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1594,16 +1594,24 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
     public void updateTotals() {
         int files = 0;
         long totalSize = 0;
+        boolean unknownSize = false;
         for (BulkSaveEntry e : this.entryList) {
             if (e.isSelected()) {
                 files++;
-                if (e.getDocumentBytes() != null) {
-                    totalSize += e.getDocumentBytes().length;
+                long size = e.getDocumentSize();
+                if (size >= 0) {
+                    totalSize += size;
+                } else {
+                    unknownSize = true;
                 }
             }
         }
         this.lblFileCount.setText(files + " / " + this.entryList.size() + " Datei(en)");
-        this.lblTotalSize.setText(FileUtils.getFileSizeHumanReadable(totalSize));
+        if (unknownSize && totalSize == 0) {
+            this.lblTotalSize.setText("? MB");
+        } else {
+            this.lblTotalSize.setText((unknownSize ? "> " : "") + FileUtils.getFileSizeHumanReadable(totalSize));
+        }
     }
 
     /**

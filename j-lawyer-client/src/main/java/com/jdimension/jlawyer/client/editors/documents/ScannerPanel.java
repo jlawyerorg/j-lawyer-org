@@ -2488,9 +2488,14 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             bulkSaveDlg.setEntryProcessor(processor);
 
             ArrayList<String> fileNames = new ArrayList<>();
+            HashMap<String, Long> fileSizes = new HashMap<>();
             for (int r : selRow) {
                 String fileName = this.tblDirContent.getValueAt(r, 2).toString();
                 fileNames.add(fileName);
+                Object meta = this.tblDirContent.getValueAt(r, 1);
+                if (meta instanceof FileMetadata) {
+                    fileSizes.put(fileName, ((FileMetadata) meta).getFileSize());
+                }
             }
 
             CaseFolder rootFolder = null;
@@ -2538,6 +2543,10 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                     //newName = FileUtils.sanitizeFileName(newName);
 
                     bulkEntry.setDocumentFilename(newName);
+                    // bytes are not loaded, but the size is known from the scan metadata
+                    if (fileSizes.containsKey(fileName)) {
+                        bulkEntry.setDocumentSize(fileSizes.get(fileName));
+                    }
                     bulkSaveDlg.addEntry(bulkEntry);
 
                 } catch (Exception ex) {

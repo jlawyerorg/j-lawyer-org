@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.timer;
 
+import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
 import com.jdimension.jlawyer.server.constants.MonitoringConstants;
@@ -740,7 +741,7 @@ public class SystemMonitorTask extends java.util.TimerTask {
             this.vmWarnLevel = getLimit(settings, "jlawyer.server.monitor.vmwarn", this.vmWarnLevel);
             String vmIssuesInSequenceString = "0";
             int vmIssuesInSequence = 0;
-          ServerSettingsBean vmSeq = settings.find("jlawyer.server.monitor.vm.issuessequence");
+          ServerSettingsBean vmSeq = settings.find(ServerSettingsKeys.SERVERCONF_MONITOR_VM_ISSUESSEQUENCE);
             if (vmSeq != null) {
                 try {
                     vmIssuesInSequenceString = vmSeq.getSettingValue();
@@ -807,10 +808,10 @@ public class SystemMonitorTask extends java.util.TimerTask {
                     vmIssuesInSequence = 0;
                     vm = MonitoringConstants.LEVEL_NORMAL;
                 }
-                ServerSettingsBean st = settings.find("jlawyer.server.monitor.vm.issuessequence");
+                ServerSettingsBean st = settings.find(ServerSettingsKeys.SERVERCONF_MONITOR_VM_ISSUESSEQUENCE);
                 if (st == null) {
                     // first status ever
-                    ServerSettingsBean sb = new ServerSettingsBean("jlawyer.server.monitor.vm.issuessequence");
+                    ServerSettingsBean sb = new ServerSettingsBean(ServerSettingsKeys.SERVERCONF_MONITOR_VM_ISSUESSEQUENCE);
                     sb.setSettingValue(""+vmIssuesInSequence);
                     settings.create(sb);
                 } else if (!(""+vmIssuesInSequence).equals(st.getSettingValue())) {
@@ -829,11 +830,11 @@ public class SystemMonitorTask extends java.util.TimerTask {
             }
 
             boolean sendMail = false;
-            ServerSettingsBean stLevel = settings.find("jlawyer.server.monitor.laststatuslevel");
+            ServerSettingsBean stLevel = settings.find(ServerSettingsKeys.SERVERCONF_MONITOR_LASTSTATUSLEVEL);
             if (stLevel == null) {
                 // first status ever
                 sendMail = false;
-                ServerSettingsBean sb = new ServerSettingsBean("jlawyer.server.monitor.laststatuslevel");
+                ServerSettingsBean sb = new ServerSettingsBean(ServerSettingsKeys.SERVERCONF_MONITOR_LASTSTATUSLEVEL);
                 sb.setSettingValue("" + aggregate);
                 settings.create(sb);
             } else // only send mail when status changes
@@ -845,10 +846,10 @@ public class SystemMonitorTask extends java.util.TimerTask {
                 }
             }
 
-            ServerSettingsBean st = settings.find("jlawyer.server.monitor.laststatus");
+            ServerSettingsBean st = settings.find(ServerSettingsKeys.SERVERCONF_MONITOR_LASTSTATUS);
             if (st == null) {
                 // first status ever
-                ServerSettingsBean sb = new ServerSettingsBean("jlawyer.server.monitor.laststatus");
+                ServerSettingsBean sb = new ServerSettingsBean(ServerSettingsKeys.SERVERCONF_MONITOR_LASTSTATUS);
                 sb.setSettingValue(status);
                 settings.create(sb);
             } else if (!status.equals(st.getSettingValue())) {
@@ -917,9 +918,9 @@ public class SystemMonitorTask extends java.util.TimerTask {
         }
 
         try {
-            ServerSettingsBean mode = settings.find("jlawyer.server.monitor.avgcpu");
+            ServerSettingsBean mode = settings.find(ServerSettingsKeys.SERVERCONF_MONITOR_AVGCPU);
             if (mode == null) {
-                ServerSettingsBean sb = new ServerSettingsBean("jlawyer.server.monitor.avgcpu");
+                ServerSettingsBean sb = new ServerSettingsBean(ServerSettingsKeys.SERVERCONF_MONITOR_AVGCPU);
                 sb.setSettingValue(df.format((usage * 100d)));
                 settings.create(sb);
             } else {

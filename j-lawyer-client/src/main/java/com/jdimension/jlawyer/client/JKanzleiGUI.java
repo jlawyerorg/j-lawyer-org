@@ -2543,13 +2543,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.savingsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.ERROR_MESSAGE);
             }
 
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                locator.lookupSearchServiceRemote().reOpenIndex();
-
-            } catch (Throwable ex) {
-                log.error("Error re-opening search index", ex);
-            }
             this.setVisible(false);
             this.dispose();
             System.exit(0);

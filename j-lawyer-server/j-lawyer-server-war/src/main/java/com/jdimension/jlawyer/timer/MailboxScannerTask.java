@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.timer;
 
+import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import com.jdimension.jlawyer.documents.ServerTemplatesUtil;
 import com.jdimension.jlawyer.email.AttachmentInfo;
 import com.jdimension.jlawyer.email.CommonMailUtils;
@@ -745,7 +746,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
             List<MailboxSetup> entries = mailboxes.findAll();
 
             ArrayList<String> allFileNumbers = caseSvc.getAllArchiveFileNumbersUnrestricted(false);
-            List<PartyTypeBean> allPartyTypes = sysSvc.getPartyTypes();
+            List<PartyTypeBean> allPartyTypes = sysSvc.getPartyTypesUnrestricted();
             for (MailboxSetup ms : entries) {
                 if (ms.isScanInbox()) {
                     try {
@@ -1138,7 +1139,7 @@ public class MailboxScannerTask extends java.util.TimerTask {
 
                 InitialContext ic = new InitialContext();
                 ServerSettingsBeanFacadeLocal settings = (ServerSettingsBeanFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ServerSettingsBeanFacade!com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal");
-                ServerSettingsBean trustedServers = settings.find("mail.imaps.ssl.trust");
+                ServerSettingsBean trustedServers = settings.find(ServerSettingsKeys.SERVERCONF_MAIL_IMAPS_SSLTRUST);
                 if (trustedServers != null) {
                     props.put("mail.imaps.ssl.trust", trustedServers.getSettingValue());
                 }

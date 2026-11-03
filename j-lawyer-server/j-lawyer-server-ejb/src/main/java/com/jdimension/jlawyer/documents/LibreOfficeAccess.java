@@ -663,8 +663,6 @@
  */
 package com.jdimension.jlawyer.documents;
 
-import groovy.lang.GroovyClassLoader;
-import groovy.lang.GroovyObject;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
@@ -2037,11 +2035,12 @@ public class LibreOfficeAccess {
             ArrayList<Node> removalNodes = new ArrayList<>();
             ArrayList<String> removalNodesItemText = new ArrayList<>();
             String scriptRegExKey = "\\[\\[SCRIPT:[^\\]]*\\]\\]";
+            String scriptCheckMode = SmartTemplateEvaluator.readMode();
             TextNavigation search = new TextNavigation(scriptRegExKey, outputOdt);
             while (search.hasNext()) {
                 TextSelection item = (TextSelection) search.nextSelection();
                 String scriptContent = item.getText();
-                String scriptResult = evaluateScript(caseId, scriptContent, values, formsPrefixes);
+                String scriptResult = evaluateScript(caseId, scriptContent, values, formsPrefixes, scriptCheckMode);
                 if (scriptResult == null) {
                     scriptResult = "";
                 }
@@ -2474,75 +2473,8 @@ public class LibreOfficeAccess {
 
     }
 
-    protected static String evaluateScript(String caseId, String scriptContent, HashMap<String, Object> values, ArrayList<String> formsPrefixes) {
-        if (scriptContent.startsWith("[[SCRIPT:")) {
-            scriptContent = scriptContent.substring(9);
-        }
-        if (scriptContent.endsWith("]]")) {
-            scriptContent = scriptContent.substring(0, scriptContent.length() - 2);
-        }
-        scriptContent = scriptContent.trim();
-
-        Set<String> valueKeys = values.keySet();
-
-        // need to sort by key length descending
-        // e.g. to prevent MANDANT_ORT from replacing the value for MANDANT_ORTSTEIL
-        List<String> lengthSortedValueKeys = new ArrayList<>(valueKeys);
-        Collections.sort(lengthSortedValueKeys, (Object arg0, Object arg1) -> {
-            if (arg0 == null) {
-                arg0 = "";
-            }
-            if (arg1 == null) {
-                arg1 = "";
-            }
-            return Integer.compare(arg1.toString().length(), arg0.toString().length());
-        });
-
-        for (String scriptPlaceHolderKey : lengthSortedValueKeys) {
-            if (scriptPlaceHolderKey.startsWith(PLACEHOLDER_OPEN) && scriptPlaceHolderKey.endsWith(PLACEHOLDER_CLOSE)) {
-                String scriptPlaceHolderValue = values.get(scriptPlaceHolderKey).toString();
-                scriptPlaceHolderKey = scriptPlaceHolderKey.substring(2);
-                scriptPlaceHolderKey = scriptPlaceHolderKey.substring(0, scriptPlaceHolderKey.length() - 2);
-                scriptContent = scriptContent.replaceAll(scriptPlaceHolderKey, "\"" + scriptPlaceHolderValue + "\"");
-            }
-        }
-        scriptContent = scriptContent.replace("„", "\"");
-        scriptContent = scriptContent.replace("“", "\"");
-
-        // required for "WENNVORHANDEN"
-        // scriptContent = scriptContent.replace("\"\"", "\"");
-        try (InputStream is = LibreOfficeAccess.class.getResourceAsStream("/templates/smart/smarttemplate.groovy"); InputStreamReader isr = new InputStreamReader(is); BufferedReader br = new BufferedReader(isr);) {
-
-            StringBuilder sb = new StringBuilder();
-            String line = br.readLine();
-            while (line != null) {
-                sb.append(line).append(System.lineSeparator());
-                line = br.readLine();
-            }
-
-            String myclass = sb.toString();
-            myclass = myclass.replace("SMARTTEMPLATESCRIPT", scriptContent);
-            myclass = myclass.replace("SMARTTEMPLATECASEID", caseId);
-
-            StringBuilder allFormPrefixes = new StringBuilder();
-            if (formsPrefixes != null) {
-                for (String fp : formsPrefixes) {
-                    allFormPrefixes.append("-").append(fp).append("-");
-                }
-            }
-            myclass = myclass.replace("ALLFORMPREFIXES", allFormPrefixes.toString());
-
-            GroovyClassLoader gcl = new GroovyClassLoader();
-            Class calcClass = gcl.parseClass(myclass);
-            GroovyObject calc = (GroovyObject) calcClass.newInstance();
-            return (String) calc.invokeMethod("evaluateScript", new Object[]{});
-        } catch (Throwable t) {
-            log.error("Unable to evaluate smart template script", t);
-            log.error("****************************************");
-            log.error(scriptContent);
-            log.error("****************************************");
-            return "SCRIPTFEHLER: " + t.getMessage();
-        }
+    protected static String evaluateScript(String caseId, String scriptContent, HashMap<String, Object> values, ArrayList<String> formsPrefixes, String scriptCheckMode) {
+        return SmartTemplateEvaluator.evaluate(caseId, scriptContent, values, formsPrefixes, scriptCheckMode);
     }
 
 //    private static void findPlaceHolders(List<String> allPartyTypesPlaceHolders, Collection<String> formsPlaceHolders, String content, java.util.List<String> results) {

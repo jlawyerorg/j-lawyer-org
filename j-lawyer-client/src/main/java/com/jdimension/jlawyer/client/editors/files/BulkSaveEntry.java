@@ -716,6 +716,8 @@ public class BulkSaveEntry extends javax.swing.JPanel {
     
     protected Date documentDate=new Date();
     protected byte[] documentBytes=null;
+    // size of the document if it is known without its bytes being loaded (e.g. scans on the server), -1 if unknown
+    protected long documentSize=-1;
     protected String documentFilename=null;
     protected String documentFilenameNew=null;
     
@@ -1339,8 +1341,38 @@ public class BulkSaveEntry extends javax.swing.JPanel {
         this.documentBytes = documentBytes;
         if(documentBytes!=null)
             this.lblFileSize.setText(FileUtils.getFileSizeHumanReadable(documentBytes.length));
+        else if(this.documentSize>=0)
+            this.lblFileSize.setText(FileUtils.getFileSizeHumanReadable(this.documentSize));
         else
             this.lblFileSize.setText("? MB");
+    }
+
+    /**
+     * Sets the size of the document for entries whose bytes are not loaded into the entry
+     * (e.g. scans that remain on the server until saving).
+     *
+     * @param documentSize size in bytes, or -1 if unknown
+     */
+    public void setDocumentSize(long documentSize) {
+        this.documentSize = documentSize;
+        if (this.documentBytes == null) {
+            if (documentSize >= 0) {
+                this.lblFileSize.setText(FileUtils.getFileSizeHumanReadable(documentSize));
+            } else {
+                this.lblFileSize.setText("? MB");
+            }
+        }
+    }
+
+    /**
+     * @return the size of the document in bytes - the length of its bytes if loaded, otherwise
+     * the size set via {@link #setDocumentSize(long)}, or -1 if unknown
+     */
+    public long getDocumentSize() {
+        if (this.documentBytes != null) {
+            return this.documentBytes.length;
+        }
+        return this.documentSize;
     }
 
     /**

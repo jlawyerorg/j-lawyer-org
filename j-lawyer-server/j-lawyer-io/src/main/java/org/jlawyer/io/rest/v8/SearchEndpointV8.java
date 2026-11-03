@@ -749,7 +749,7 @@ public class SearchEndpointV8 implements SearchEndpointLocalV8 {
     /**
      * Triggers a full re-index of the global fulltext document index. The rebuild runs
      * asynchronously; this operation returns immediately once the request has been
-     * queued. Administrator role required.
+     * queued. System administrator role required.
      *
      * @response 202 Re-index has been started
      * @response 401 User not authorized
@@ -759,7 +759,7 @@ public class SearchEndpointV8 implements SearchEndpointLocalV8 {
     @POST
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Path("/reindex")
-    @RolesAllowed({"adminRole"})
+    @RolesAllowed({"sysAdminRole"})
     @ApiOperation(value="Triggers a full, asynchronous re-index of the global fulltext document index")
     public Response reIndexAll() {
         try {

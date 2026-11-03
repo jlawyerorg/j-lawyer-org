@@ -749,7 +749,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
     private static final Logger log = Logger.getLogger(InvoiceDialog.class.getName());
     private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
-    private final DecimalFormat cf = new DecimalFormat(ServerSettings.getInstance().getSetting("plugins.global.tableproperties.numberFormat", "#,##0.00"));
+    private final DecimalFormat cf = new DecimalFormat(ServerSettings.getInstance().getSetting(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "numberFormat", "#,##0.00"));
     private final DecimalFormat accountEntryFormat = new DecimalFormat("#,##0.00");
     private final DecimalFormat percentageFormat = new DecimalFormat("0.0");
 
@@ -2257,7 +2257,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             currencyFormat = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.GERMANY));
         }
 
-        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
+        if (ServerSettings.getInstance().getSettingAsBoolean(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "table.emptyRows", true)) {
             ct.addRow("", "", "", "", "", "");
         }
 
@@ -2276,14 +2276,14 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             ct.addRow(person, dfDateTime.format(pos.getStarted()), String.format("%02d:%02d", hours, minutes), currencyFormat.format(pos.getUnitPrice()), currencyFormat.format(pos.getTotal()), pos.getDescription());
         }
 
-        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
+        if (ServerSettings.getInstance().getSettingAsBoolean(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "table.emptyRows", true)) {
             ct.addRow("", "", "", "", "", "");
         }
 
         //HeaderRow
-        ct.setRowForeGround(0, new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.header.fore.color", Color.BLACK.getRGB())));
-        ct.setRowBackGround(0, new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.header.back.color", Color.LIGHT_GRAY.getRGB())));
-        ct.setRowBold(0, ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.header.Bold", true));
+        ct.setRowForeGround(0, new Color(ServerSettings.getInstance().getSettingAsInt(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "header.fore.color", Color.BLACK.getRGB())));
+        ct.setRowBackGround(0, new Color(ServerSettings.getInstance().getSettingAsInt(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "header.back.color", Color.LIGHT_GRAY.getRGB())));
+        ct.setRowBold(0, ServerSettings.getInstance().getSettingAsBoolean(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "header.Bold", true));
 
         //TableLayout
         ct.setColumnAlignment(0, Cell.ALIGNMENT_LEFT);
@@ -2299,10 +2299,10 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         ct.setColumnWidth(2, 45);
         ct.setColumnWidth(3, 35);
         ct.setColumnWidth(4, 35);
-        ct.setLineBorder(ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.lines", true));
-        ct.setBorderColor(new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.table.lines.color", Color.BLACK.getRGB())));
-        ct.setFontFamily(ServerSettings.getInstance().getSetting("plugins.global.tableproperties.table.fontfamily", "Arial"));
-        ct.setFontSize(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.table.fontsize", 12));
+        ct.setLineBorder(ServerSettings.getInstance().getSettingAsBoolean(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "table.lines", true));
+        ct.setBorderColor(new Color(ServerSettings.getInstance().getSettingAsInt(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "table.lines.color", Color.BLACK.getRGB())));
+        ct.setFontFamily(ServerSettings.getInstance().getSetting(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "table.fontfamily", "Arial"));
+        ct.setFontSize(ServerSettings.getInstance().getSettingAsInt(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "table.fontsize", 12));
 
         return ct;
 
@@ -2330,7 +2330,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             currencyFormat = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.GERMANY));
         }
 
-        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
+        if (ServerSettings.getInstance().getSettingAsBoolean(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "table.emptyRows", true)) {
             ct.addRow("", "", "");
         }
 
@@ -2367,14 +2367,14 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             ct.addRow(person, String.format("%02d:%02d", hours, minutes), currencyFormat.format(personTotal.get(principal)));
         }
 
-        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
+        if (ServerSettings.getInstance().getSettingAsBoolean(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "table.emptyRows", true)) {
             ct.addRow("", "", "", "", "", "");
         }
 
         //HeaderRow
-        ct.setRowForeGround(0, new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.header.fore.color", Color.BLACK.getRGB())));
-        ct.setRowBackGround(0, new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.header.back.color", Color.LIGHT_GRAY.getRGB())));
-        ct.setRowBold(0, ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.header.Bold", true));
+        ct.setRowForeGround(0, new Color(ServerSettings.getInstance().getSettingAsInt(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "header.fore.color", Color.BLACK.getRGB())));
+        ct.setRowBackGround(0, new Color(ServerSettings.getInstance().getSettingAsInt(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "header.back.color", Color.LIGHT_GRAY.getRGB())));
+        ct.setRowBold(0, ServerSettings.getInstance().getSettingAsBoolean(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "header.Bold", true));
 
         //TableLayout
         ct.setColumnAlignment(0, Cell.ALIGNMENT_LEFT);
@@ -2385,10 +2385,10 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         ct.setColumnWidth(0, 65);
         ct.setColumnWidth(1, 55);
         ct.setColumnWidth(2, 55);
-        ct.setLineBorder(ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.lines", true));
-        ct.setBorderColor(new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.table.lines.color", Color.BLACK.getRGB())));
-        ct.setFontFamily(ServerSettings.getInstance().getSetting("plugins.global.tableproperties.table.fontfamily", "Arial"));
-        ct.setFontSize(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.table.fontsize", 12));
+        ct.setLineBorder(ServerSettings.getInstance().getSettingAsBoolean(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "table.lines", true));
+        ct.setBorderColor(new Color(ServerSettings.getInstance().getSettingAsInt(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "table.lines.color", Color.BLACK.getRGB())));
+        ct.setFontFamily(ServerSettings.getInstance().getSetting(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "table.fontfamily", "Arial"));
+        ct.setFontSize(ServerSettings.getInstance().getSettingAsInt(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "table.fontsize", 12));
 
         return ct;
 
@@ -2416,7 +2416,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             ct.addHeaders("", "Position", "Menge", "Einzel", "USt.", "Gesamt");
             currencyFormat = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.GERMANY));
         }
-        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
+        if (ServerSettings.getInstance().getSettingAsBoolean(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "table.emptyRows", true)) {
             ct.addRow("", "", "", "", "", "");
         }
 
@@ -2490,7 +2490,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             }
         }
 
-        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
+        if (ServerSettings.getInstance().getSettingAsBoolean(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "table.emptyRows", true)) {
             ct.addRow("", "", "", "", "", "");
         }
         int footerRowNet = -1;
@@ -2525,9 +2525,9 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         }
 
         //HeaderRow
-        ct.setRowForeGround(0, new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.header.fore.color", Color.BLACK.getRGB())));
-        ct.setRowBackGround(0, new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.header.back.color", Color.LIGHT_GRAY.getRGB())));
-        ct.setRowBold(0, ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.header.Bold", true));
+        ct.setRowForeGround(0, new Color(ServerSettings.getInstance().getSettingAsInt(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "header.fore.color", Color.BLACK.getRGB())));
+        ct.setRowBackGround(0, new Color(ServerSettings.getInstance().getSettingAsInt(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "header.back.color", Color.LIGHT_GRAY.getRGB())));
+        ct.setRowBold(0, ServerSettings.getInstance().getSettingAsBoolean(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "header.Bold", true));
 
         this.formatFooterRow(ct, footerRowNet);
         for (int footRowIndex : footerRowTaxes) {
@@ -2558,10 +2558,10 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 //        ct.setColumnWidth(2, -1);
 //        ct.setColumnWidth(3, -1);
 //        ct.setColumnWidth(4, -1);
-        ct.setLineBorder(ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.lines", true));
-        ct.setBorderColor(new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.table.lines.color", Color.BLACK.getRGB())));
-        ct.setFontFamily(ServerSettings.getInstance().getSetting("plugins.global.tableproperties.table.fontfamily", "Arial"));
-        ct.setFontSize(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.table.fontsize", 12));
+        ct.setLineBorder(ServerSettings.getInstance().getSettingAsBoolean(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "table.lines", true));
+        ct.setBorderColor(new Color(ServerSettings.getInstance().getSettingAsInt(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "table.lines.color", Color.BLACK.getRGB())));
+        ct.setFontFamily(ServerSettings.getInstance().getSetting(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "table.fontfamily", "Arial"));
+        ct.setFontSize(ServerSettings.getInstance().getSettingAsInt(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "table.fontsize", 12));
 
         // build flexible invoice table data
         FlexibleInvoiceTableData flexData = new FlexibleInvoiceTableData();
@@ -2600,27 +2600,27 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
     private void formatFooterRow(StyledCalculationTable ct, int footerRowIndex) {
         //FooterRow
-        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.footerRow.Bold", true)) {
+        if (ServerSettings.getInstance().getSettingAsBoolean(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "footerRow.Bold", true)) {
             ct.setRowBold(footerRowIndex, true);
         } else {
             ct.setRowBold(footerRowIndex, false);
         }
-        ct.getCellAt(footerRowIndex, 5).setUnderline(ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.footerRow.Underline", true));
+        ct.getCellAt(footerRowIndex, 5).setUnderline(ServerSettings.getInstance().getSettingAsBoolean(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "footerRow.Underline", true));
 
-        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.vorSumme.Underline", true)) {
-            if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
+        if (ServerSettings.getInstance().getSettingAsBoolean(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "vorSumme.Underline", true)) {
+            if (ServerSettings.getInstance().getSettingAsBoolean(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "table.emptyRows", true)) {
                 ct.getCellAt(ct.getRowCount() - 3, 5).setUnderline(true);
             } else {
                 ct.getCellAt(ct.getRowCount() - 2, 5).setUnderline(true);
             }
         } else {
-            if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.emptyRows", true)) {
+            if (ServerSettings.getInstance().getSettingAsBoolean(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "table.emptyRows", true)) {
                 ct.getCellAt(ct.getRowCount() - 3, 5).setUnderline(false);
             } else {
                 ct.getCellAt(ct.getRowCount() - 2, 5).setUnderline(false);
             }
         }
-        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.footerRow.Italic", true)) {
+        if (ServerSettings.getInstance().getSettingAsBoolean(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "footerRow.Italic", true)) {
             ct.getCellAt(footerRowIndex, 1).setItalic(true);
             ct.getCellAt(footerRowIndex, 2).setItalic(true);
             ct.getCellAt(footerRowIndex, 3).setItalic(true);
@@ -2633,8 +2633,8 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             ct.getCellAt(footerRowIndex, 4).setItalic(false);
             ct.getCellAt(footerRowIndex, 5).setItalic(false);
         }
-        ct.setRowForeGround(footerRowIndex, new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.footerrow.fore.color", Color.BLACK.getRGB())));
-        ct.setRowBackGround(footerRowIndex, new Color(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.footerrow.back.color", Color.LIGHT_GRAY.getRGB())));
+        ct.setRowForeGround(footerRowIndex, new Color(ServerSettings.getInstance().getSettingAsInt(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "footerrow.fore.color", Color.BLACK.getRGB())));
+        ct.setRowBackGround(footerRowIndex, new Color(ServerSettings.getInstance().getSettingAsInt(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "footerrow.back.color", Color.LIGHT_GRAY.getRGB())));
 
     }
 

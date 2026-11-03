@@ -484,6 +484,18 @@ passt zur strikten CSP (Decision 2c).
 zustandsändernden Calls, falls cookie-basiert); Token kurzlebig + Refresh; Logout
 serverseitig invalidieren.
 
+**Refresh-Regeln (ergänzt 2026-11-03, nach Security-Meldung JLO-SEC-2026-001):**
+- Der Refresh übernimmt **niemals** Rollen aus dem Refresh-Token, sondern liest Nutzer und
+  Rollen neu aus dem Store (`SecurityServiceLocal.getCurrentRolesUnrestricted`). Fehlt der
+  Nutzer oder hat er keine `loginRole` mehr → 401, Refresh-Cookie wird gelöscht.
+- Login und Refresh setzen `loginRole` voraus.
+- **Absolute Sitzungsdauer 12 h:** Die Login-Zeit wird als Claim `auth_time` in Access- und
+  Refresh-Token mitgeführt und beim Refresh nicht verlängert; die Laufzeit des rotierten
+  Refresh-Tokens wird auf das Sitzungsende gekappt. Ohne diese Grenze verlängert die
+  Rotation (8 h pro Refresh) eine Sitzung unbegrenzt.
+- Access-Tokens (15 min) tragen die Rollen weiterhin selbst (Elytron `token-realm`); ein
+  Rechteentzug wirkt daher spätestens nach Ablauf des aktuellen Access-Tokens.
+
 **Abhängigkeit:** Der Server-Teil (Filter + Login-/Refresh-/Logout-Endpunkte) ist Arbeit
 in `j-lawyer-io`/`j-lawyer-server` und **muss mit `add-two-factor-auth` koordiniert**
 werden.
@@ -600,6 +612,13 @@ Sicherheits-Review.
   Spike zu WOPI (Collabora/OnlyOffice); Fallback Download/Upload akzeptiert.
 - **Auth-Umstellung**: Basic Auth ungeeignet. → tokengestützter Login, mit
   `add-two-factor-auth` abstimmen.
+- **Rechteentzug bei zustandslosen Tokens**: Ohne Abgleich mit dem Nutzer-/Rollen-Store
+  bliebe ein entzogener Nutzer per Refresh-Rotation unbegrenzt angemeldet (gemeldet als
+  JLO-SEC-2026-001). → Refresh liest Rollen neu und verlangt `loginRole`, absolute
+  Sitzungsdauer 12 h (siehe Decision 5, Refresh-Regeln). **Restrisiko:** Access-Tokens
+  bleiben bis zu 15 min nach Rechteentzug gültig; Logout und Passwortänderung widerrufen
+  ein zuvor kopiertes Refresh-Token noch nicht (bis zum Ablauf der Sitzung). → Offen:
+  serverseitiger Widerruf über eine Token-Version pro Nutzer (Task 2.3g).
 - **Design-Drift**: Ohne Governance divergieren Module. → Design-System + Katalog +
   PR-Checkliste ab Tag 1.
 - **Responsive-Aufwand**: Der Client ist stark tabellen-/dichtelastig; das auf das
