@@ -1014,6 +1014,8 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
 
     private void cmdSelectDateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSelectDateActionPerformed
         MultiCalDialog dlg = new MultiCalDialog(this.txtDate, this.parentDialog, true);
+        // case account entries are mostly booked for past payments: show previous, current and next month
+        dlg.setMonthOffset(-1);
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdSelectDateActionPerformed
 
