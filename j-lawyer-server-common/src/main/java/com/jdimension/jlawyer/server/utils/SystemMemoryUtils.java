@@ -712,11 +712,13 @@ public class SystemMemoryUtils {
     /**
      * Determines the available memory from the contents of /proc/meminfo.
      * <p>
-     * /proc/meminfo is only used if its MemTotal is exactly the total the JVM reports. Without a memory limit, the JVM
-     * reports sysconf(_SC_PHYS_PAGES) times the page size on Linux, which glibc and musl derive from the same page
-     * count as MemTotal, so both are equal to the byte. In a container with a memory limit (cgroups), the JVM reports
-     * the limit instead, while /proc/meminfo still describes the host - its MemAvailable must not be combined with
-     * the container's total then, also not if the limit is only slightly below the host's memory.
+     * /proc/meminfo is only used if its MemTotal is exactly the total the JVM reports. Without a memory limit the JVM
+     * recognizes, it reports sysconf(_SC_PHYS_PAGES) times the page size on Linux, which glibc and musl derive from the
+     * same page count as MemTotal, so both are equal to the byte. If the JVM recognizes a container memory limit
+     * (cgroups) below the host's memory, it reports that limit instead, while /proc/meminfo still describes the host -
+     * its MemAvailable must not be combined with the container's total then, also not if the limit is only slightly
+     * below the host's memory. A limit at or above the host's memory is treated as no limit by the JVM, which then
+     * reports the host's memory and MemTotal matches again.
      *
      * @param meminfoLines lines of /proc/meminfo
      * @param totalPhysicalMemory total physical memory in bytes as seen by the JVM
