@@ -1190,6 +1190,13 @@ public interface ArchiveFileServiceRemote {
 
     Collection<ArchiveFileDocumentsBean> getDocumentsBin();
 
+    /**
+     * Permanently deletes a document that is in the bin, with its file.
+     *
+     * @param docId the id of the document
+     * @throws Exception if the document is not in the bin (any more, e.g. because another user has just restored it),
+     * it is not deleted then
+     */
     void removeDocumentFromBin(String docId) throws Exception;
 
     boolean restoreDocumentFromBin(String docId) throws Exception;

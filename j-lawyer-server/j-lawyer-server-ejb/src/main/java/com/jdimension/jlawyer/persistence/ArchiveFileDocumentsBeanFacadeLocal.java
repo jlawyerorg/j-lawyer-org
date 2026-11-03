@@ -697,6 +697,15 @@ public interface ArchiveFileDocumentsBeanFacadeLocal {
     
     public List<ArchiveFileDocumentsBean> findLocked();
 
+    /**
+     * Reads a document again from the database and locks it until the end of the transaction, so that its state can
+     * be checked right before it is changed.
+     *
+     * @param id the id of the document
+     * @return the document, or null if it does not exist
+     */
+    ArchiveFileDocumentsBean findForUpdate(String id);
+
     int count();
     
 }

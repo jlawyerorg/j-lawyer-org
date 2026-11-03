@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.persistence;
 import java.util.List;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
+import javax.persistence.LockModeType;
 import javax.persistence.NoResultException;
 import javax.persistence.NonUniqueResultException;
 import javax.persistence.PersistenceContext;
@@ -739,5 +740,15 @@ public class ArchiveFileDocumentsBeanFacade extends AbstractFacade<ArchiveFileDo
     @Override
     public List<ArchiveFileDocumentsBean> findLocked() {
         return getEntityManager().createNamedQuery("ArchiveFileDocumentsBean.findLocked").getResultList();
+    }
+
+    @Override
+    public ArchiveFileDocumentsBean findForUpdate(String id) {
+        ArchiveFileDocumentsBean d = em.find(ArchiveFileDocumentsBean.class, id);
+        if (d != null) {
+            // the current state of the row, nobody else can change it until the transaction ends
+            em.refresh(d, LockModeType.PESSIMISTIC_WRITE);
+        }
+        return d;
     }
 }

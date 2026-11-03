@@ -718,6 +718,7 @@ public class DocumentReplacementTest {
         private Function<String, String> tagRule = name -> null;
         /** called before getDocument returns, to simulate another client */
         private Runnable beforeGetDocument;
+        private Runnable afterGetDocument;
         private int nextId = 1;
 
         ArchiveFileServiceRemote remote() {
@@ -867,7 +868,11 @@ public class DocumentReplacementTest {
                     if (d == null) {
                         throw new Exception("Dokument mit ID " + args[0] + " existiert nicht!");
                     }
-                    return copy(d);
+                    ArchiveFileDocumentsBean result = copy(d);
+                    if (afterGetDocument != null) {
+                        afterGetDocument.run();
+                    }
+                    return result;
                 }
                 case "removeDocument": {
                     maybeFail(m, m + ":" + args[0]);
@@ -880,7 +885,10 @@ public class DocumentReplacementTest {
                 case "removeDocumentFromBin": {
                     maybeFail(m, m + ":" + args[0]);
                     ArchiveFileDocumentsBean d = docs.get((String) args[0]);
-                    assertTrue("only documents in the bin can be removed from it", d.isDeleted());
+                    if (!d.isDeleted()) {
+                        // like the server, which checks the document again, locked in its transaction
+                        throw new Exception("Das Dokument liegt nicht im Papierkorb und wird nicht endgültig gelöscht.");
+                    }
                     // like the server: the file first, then the database entry
                     files.remove(d.getId());
                     maybeFail("removeDocumentFromBin-entry:" + args[0]);
@@ -1248,6 +1256,18 @@ public class DocumentReplacementTest {
         DocumentReplacement.ReplacementException rex = assertFails();
         assertTrue(server.docs.get("binOld").isDeleted());
         assertTrue(rex.getMessage().contains("'Brief.pdf': im Papierkorb der Akte als 'Brief.pdf'"));
+    }
+
+    @Test
+    public void testDocumentRestoredFromTheBinRightBeforeReplacing() throws Exception {
+        // another user restores the document after it was read, the server refuses to delete it
+        server.put("binOld", "Brief.pdf", "case1", true);
+        server.afterGetDocument = () -> server.docs.get("binOld").setDeleted(false);
+        DocumentReplacement.ReplacementException rex = assertFails();
+        assertFalse(server.docs.get("binOld").isDeleted());
+        assertEquals("Brief.pdf", server.docs.get("binOld").getName());
+        assertTrue(server.files.contains("binOld"));
+        assertTrue(rex.getMessage().contains("'Brief.pdf': in der Akte als 'Brief.pdf'"));
     }
 
     @Test
