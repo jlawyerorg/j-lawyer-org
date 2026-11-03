@@ -855,9 +855,10 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
                 ArrayList<ArchiveFileBean> lastChangedClone = new ArrayList<>();
                 lastChangedClone.addAll(lastChanged);
                 if (this.searchContext != null) {
+                    // the context is compared in lower case, so file numbers must be as well - they may contain capital letters
                     this.searchContext = this.searchContext.toLowerCase();
                     for (ArchiveFileBean a : lastChangedClone) {
-                        if (this.searchContext.contains(a.getFileNumber())) {
+                        if (this.searchContext.contains(a.getFileNumber().toLowerCase())) {
                             contextMatches.add(a);
                             lastChanged.remove(a);
                         } else if (a.getName() != null && !("".equals(a.getName())) && this.searchContext.contains(a.getName().toLowerCase())) {
@@ -869,7 +870,7 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
                         ArchiveFileBean[] foundByContext = fileService.searchSimple(searchContext);
                         if (foundByContext != null) {
                             for (ArchiveFileBean fbc : foundByContext) {
-                                if (fbc.getFileNumber().contains(searchContext)) {
+                                if (fbc.getFileNumber().toLowerCase().contains(searchContext)) {
                                     contextMatches.add(0, fbc);
                                 } else {
                                     contextMatches.add(fbc);
