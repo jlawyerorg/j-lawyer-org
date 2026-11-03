@@ -662,6 +662,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.bea;
 
+import com.jdimension.jlawyer.client.events.BeaStatusEvent;
+import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.services.bea.rest.BeaFolder;
 import com.jdimension.jlawyer.services.bea.rest.BeaMessageHeader;
 import java.util.List;
@@ -689,14 +691,16 @@ public class BeaUnreadCounter {
     /**
      * Sums the unread messages of all inboxes.
      *
-     * @param postboxCount number of postboxes the inboxes were looked up for
-     * @param inboxes the inbox of each postbox that could be loaded, by safe id
+     * @param failedPostboxes number of postboxes whose folders could not be loaded. The reason is not known (the beA
+     * calls run through the server, a missing privilege can not be told apart from e.g. a timeout), so their inboxes
+     * might contain unread messages.
+     * @param inboxes the inbox of each postbox whose folders were loaded, by safe id
      * @param loader loads the messages of an inbox
-     * @return the number of unread messages, or null if it can not be determined - no inbox could be loaded although
-     * there are postboxes, or loading the messages of an inbox failed. The indicator should keep its value then.
+     * @return the number of unread messages, or null if it can not be determined - the folders of a postbox could not
+     * be loaded, or loading the messages of an inbox failed. The indicator should keep its value then.
      */
-    public static Integer countUnread(int postboxCount, Map<String, BeaFolder> inboxes, InboxLoader loader) {
-        if (postboxCount > 0 && inboxes.isEmpty()) {
+    public static Integer countUnread(int failedPostboxes, Map<String, BeaFolder> inboxes, InboxLoader loader) {
+        if (failedPostboxes > 0) {
             return null;
         }
         int unread = 0;
@@ -714,6 +718,24 @@ public class BeaUnreadCounter {
                 log.error("Unable to count unread messages of postbox " + inbox.getKey(), ex);
                 return null;
             }
+        }
+        return unread;
+    }
+
+    /**
+     * Counts the unread messages of all inboxes and publishes the total as one {@link BeaStatusEvent}, which replaces
+     * the count shown so far. Nothing is published if the count can not be determined, see
+     * {@link #countUnread(int, Map, InboxLoader)}, so the indicator keeps its value.
+     *
+     * @param failedPostboxes number of postboxes whose folders could not be loaded
+     * @param inboxes the inbox of each postbox whose folders were loaded, by safe id
+     * @param loader loads the messages of an inbox
+     * @return the published number of unread messages, or null if nothing was published
+     */
+    public static Integer publishUnread(int failedPostboxes, Map<String, BeaFolder> inboxes, InboxLoader loader) {
+        Integer unread = countUnread(failedPostboxes, inboxes, loader);
+        if (unread != null) {
+            EventBroker.getInstance().publishEvent(new BeaStatusEvent(unread));
         }
         return unread;
     }

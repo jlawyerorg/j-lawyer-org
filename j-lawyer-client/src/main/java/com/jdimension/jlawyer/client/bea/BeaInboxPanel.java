@@ -677,8 +677,6 @@ import com.jdimension.jlawyer.client.editors.files.BulkSaveDialog;
 import com.jdimension.jlawyer.client.editors.files.BulkSaveEntry;
 import com.jdimension.jlawyer.client.editors.files.DescendingDateTimeStringComparator;
 import com.jdimension.jlawyer.client.editors.files.FileNumberComparatorArchiveFileBean;
-import com.jdimension.jlawyer.client.events.BeaStatusEvent;
-import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.mail.sidebar.CreateNewAddressPanel;
 import com.jdimension.jlawyer.client.mail.sidebar.ExtractedPhoneNumbersPanel;
 import com.jdimension.jlawyer.client.mail.sidebar.NavigateToAddressPanel;
@@ -952,6 +950,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("beA-Postfächer");
         Collection<BeaPostbox> inboxes = bea.getPostBoxesOrdered();
         HashMap<String, BeaFolder> inboxFolders = new HashMap<>();
+        int failedPostboxes = 0;
         for (BeaPostbox pb : inboxes) {
             EditorsRegistry.getInstance().updateStatus("Lade beA-Postfach" + pb.getSafeId() + "...");
             try {
@@ -983,6 +982,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 }
             } catch (Throwable t) {
                 log.error("Unable to load postbox " + pb.getSafeId() + ", probably due to missing privileges", t);
+                failedPostboxes++;
             }
         }
 
@@ -1017,14 +1017,11 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
         // count unread messages of all inboxes and publish status - one event with the total, each event replaces the previous count
         try {
-            Integer unread = BeaUnreadCounter.countUnread(inboxes.size(), inboxFolders, (safeId, inbox) -> {
+            // if the count can not be determined, nothing is published and the indicator keeps its previous value
+            BeaUnreadCounter.publishUnread(failedPostboxes, inboxFolders, (safeId, inbox) -> {
                 EditorsRegistry.getInstance().updateStatus("Nachrichtenübersicht wird geladen für " + inbox.getName() + "...");
                 return BeaAccess.getInstance().getFolderOverview(safeId, inbox, BeaAccess.getFilter(inbox.getType()));
             });
-            if (unread != null) {
-                // if the count can not be determined, the indicator keeps its previous value
-                EventBroker.getInstance().publishEvent(new BeaStatusEvent(unread));
-            }
         } catch (Throwable t) {
             log.error(t);
         }

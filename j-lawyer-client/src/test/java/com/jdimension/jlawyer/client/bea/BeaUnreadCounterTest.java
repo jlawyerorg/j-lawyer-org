@@ -662,14 +662,22 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.bea;
 
+import com.jdimension.jlawyer.client.events.BeaStatusEvent;
+import com.jdimension.jlawyer.client.events.Event;
+import com.jdimension.jlawyer.client.events.EventBroker;
+import com.jdimension.jlawyer.client.events.EventConsumer;
 import com.jdimension.jlawyer.services.bea.rest.BeaFolder;
 import com.jdimension.jlawyer.services.bea.rest.BeaMessageHeader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import javax.swing.SwingUtilities;
 import static org.junit.Assert.*;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -677,6 +685,28 @@ import org.junit.Test;
  * (issue #2658).
  */
 public class BeaUnreadCounterTest {
+
+    private final List<Integer> published = Collections.synchronizedList(new ArrayList<>());
+    private final EventConsumer consumer = (Event e) -> published.add(((BeaStatusEvent) e).getUnread());
+
+    @Before
+    public void subscribe() {
+        EventBroker.getInstance().subscribeConsumer(consumer, Event.TYPE_BEASTATUS);
+    }
+
+    @After
+    public void unsubscribe() {
+        EventBroker.getInstance().unsubscribeConsumer(consumer, Event.TYPE_BEASTATUS);
+    }
+
+    /**
+     * @return the counts published so far - BeaStatusEvent is delivered on the event dispatch thread
+     */
+    private List<Integer> published() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+        });
+        return new ArrayList<>(published);
+    }
 
     private static BeaMessageHeader header(boolean read) {
         BeaMessageHeader h = new BeaMessageHeader();
@@ -692,20 +722,22 @@ public class BeaUnreadCounterTest {
         return inboxes;
     }
 
-    @Test
-    public void testSumOverAllPostboxes() {
-        // two lawyers of a law firm, the second postbox was loaded last - its count must not replace the first one's
+    private static final BeaUnreadCounter.InboxLoader TWO_LAWYERS = (safeId, inbox) -> {
         Map<String, List<BeaMessageHeader>> messages = new LinkedHashMap<>();
         messages.put("DE.BRAK.lawyer1", Arrays.asList(header(false), header(true), header(false)));
         messages.put("DE.BRAK.lawyer2", Arrays.asList(header(true), header(false)));
-        Integer unread = BeaUnreadCounter.countUnread(2, inboxes("DE.BRAK.lawyer1", "DE.BRAK.lawyer2"), (safeId, inbox) -> messages.get(safeId));
-        assertEquals(Integer.valueOf(3), unread);
+        return messages.get(safeId);
+    };
+
+    @Test
+    public void testSumOverAllPostboxes() {
+        // two lawyers of a law firm, the second postbox was loaded last - its count must not replace the first one's
+        assertEquals(Integer.valueOf(3), BeaUnreadCounter.countUnread(0, inboxes("DE.BRAK.lawyer1", "DE.BRAK.lawyer2"), TWO_LAWYERS));
     }
 
     @Test
     public void testEmptyInboxesCountZero() {
-        Integer unread = BeaUnreadCounter.countUnread(1, inboxes("DE.BRAK.lawyer1"), (safeId, inbox) -> new ArrayList<>());
-        assertEquals(Integer.valueOf(0), unread);
+        assertEquals(Integer.valueOf(0), BeaUnreadCounter.countUnread(0, inboxes("DE.BRAK.lawyer1"), (safeId, inbox) -> new ArrayList<>()));
     }
 
     @Test
@@ -715,14 +747,43 @@ public class BeaUnreadCounterTest {
     }
 
     @Test
+    public void testFoldersOfOnePostboxCouldNotBeLoaded() {
+        // the inbox of lawyer1 is empty, the folders of lawyer2 timed out - its inbox may contain unread messages
+        assertNull(BeaUnreadCounter.countUnread(1, inboxes("DE.BRAK.lawyer1"), (safeId, inbox) -> new ArrayList<>()));
+    }
+
+    @Test
     public void testLoadingMessagesFails() {
-        Integer unread = BeaUnreadCounter.countUnread(2, inboxes("DE.BRAK.lawyer1", "DE.BRAK.lawyer2"), (safeId, inbox) -> {
+        Integer unread = BeaUnreadCounter.countUnread(0, inboxes("DE.BRAK.lawyer1", "DE.BRAK.lawyer2"), (safeId, inbox) -> {
             if ("DE.BRAK.lawyer2".equals(safeId)) {
                 throw new Exception("beAstie nicht erreichbar");
             }
             return Arrays.asList(header(false));
         });
         assertNull(unread);
+    }
+
+    @Test
+    public void testPublishesOneEventWithTheSum() throws Exception {
+        assertEquals(Integer.valueOf(3), BeaUnreadCounter.publishUnread(0, inboxes("DE.BRAK.lawyer1", "DE.BRAK.lawyer2"), TWO_LAWYERS));
+        assertEquals(Arrays.asList(3), published());
+    }
+
+    @Test
+    public void testPublishesZeroForEmptyInboxes() throws Exception {
+        BeaUnreadCounter.publishUnread(0, inboxes("DE.BRAK.lawyer1", "DE.BRAK.lawyer2"), (safeId, inbox) -> Arrays.asList(header(true)));
+        assertEquals(Arrays.asList(0), published());
+    }
+
+    @Test
+    public void testPublishesNothingIfTheCountIsUnknown() throws Exception {
+        // folders of all postboxes failed, folders of one postbox failed, messages of one inbox failed
+        assertNull(BeaUnreadCounter.publishUnread(2, inboxes(), (safeId, inbox) -> new ArrayList<>()));
+        assertNull(BeaUnreadCounter.publishUnread(1, inboxes("DE.BRAK.lawyer1"), (safeId, inbox) -> new ArrayList<>()));
+        assertNull(BeaUnreadCounter.publishUnread(0, inboxes("DE.BRAK.lawyer1", "DE.BRAK.lawyer2"), (safeId, inbox) -> {
+            throw new Exception("beAstie nicht erreichbar");
+        }));
+        assertTrue(published().isEmpty());
     }
 
 }
