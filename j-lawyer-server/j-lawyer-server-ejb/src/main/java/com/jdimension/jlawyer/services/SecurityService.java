@@ -789,6 +789,23 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
             return null;
         }
 
+        return this.getRoleNames(principalId);
+    }
+
+    @Override
+    @PermitAll
+    public List<String> getCurrentRolesUnrestricted(String principalId) {
+        if (principalId == null) {
+            return null;
+        }
+        AppUserBean user = this.userBeanFacade.findByPrincipalIdUnrestricted(principalId);
+        if (user == null) {
+            return null;
+        }
+        return this.getRoleNames(principalId);
+    }
+
+    private List<String> getRoleNames(String principalId) {
         List<String> roles = new ArrayList<>();
         for (AppRoleBean role : this.roleBeanFacade.findByPrincipalId(principalId)) {
             if (role.getRole() != null) {

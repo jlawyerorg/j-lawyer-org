@@ -71,6 +71,27 @@ public class JwtService {
      */
     public String issue(PrivateKey signingKey, String subject, List<String> roles, String issuer,
             String audience, long nowEpochSeconds, long ttlSeconds, String tokenId) throws JwtException {
+        return issue(signingKey, subject, roles, issuer, audience, nowEpochSeconds, ttlSeconds, tokenId, 0L);
+    }
+
+    /**
+     * Issues a signed compact-serialization JWT carrying the time of the original interactive
+     * authentication, so that a session can be capped to an absolute lifetime across refreshes.
+     *
+     * @param signingKey RSA private key used to sign (RS256)
+     * @param subject    the principal ({@code sub} claim)
+     * @param roles      granted roles ({@code roles} claim); may be empty, not {@code null}
+     * @param issuer     the {@code iss} claim, or {@code null} to omit
+     * @param audience   the {@code aud} claim, or {@code null} to omit
+     * @param nowEpochSeconds current time in epoch seconds ({@code iat})
+     * @param ttlSeconds  token lifetime in seconds ({@code exp = iat + ttl})
+     * @param tokenId     the unique token id ({@code jti}), or {@code null} to omit
+     * @param authTimeEpochSeconds time of the original login ({@code auth_time}), or 0 to omit
+     * @return the compact-serialized token {@code header.payload.signature}
+     * @throws JwtException if signing fails
+     */
+    public String issue(PrivateKey signingKey, String subject, List<String> roles, String issuer,
+            String audience, long nowEpochSeconds, long ttlSeconds, String tokenId, long authTimeEpochSeconds) throws JwtException {
         JsonObject header = new JsonObject();
         header.put("alg", ALGORITHM);
         header.put("typ", "JWT");
@@ -92,6 +113,9 @@ public class JwtService {
         payload.put("exp", nowEpochSeconds + ttlSeconds);
         if (tokenId != null) {
             payload.put("jti", tokenId);
+        }
+        if (authTimeEpochSeconds > 0) {
+            payload.put("auth_time", authTimeEpochSeconds);
         }
 
         String signingInput = base64Url(Jsoner.serialize(header)) + "." + base64Url(Jsoner.serialize(payload));
@@ -166,7 +190,8 @@ public class JwtService {
                 (String) payload.get("aud"),
                 payload.containsKey("iat") ? asLong(payload.get("iat"), "iat") : 0L,
                 exp,
-                (String) payload.get("jti"));
+                (String) payload.get("jti"),
+                payload.containsKey("auth_time") ? asLong(payload.get("auth_time"), "auth_time") : 0L);
     }
 
     private JsonObject decodeSegment(String segment, String name) throws JwtException {

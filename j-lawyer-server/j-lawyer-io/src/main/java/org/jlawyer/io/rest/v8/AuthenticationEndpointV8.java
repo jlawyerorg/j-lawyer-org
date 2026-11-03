@@ -78,6 +78,9 @@ public class AuthenticationEndpointV8 implements AuthenticationEndpointLocalV8 {
     private static final String AUDIENCE_REFRESH = "j-lawyer-web-refresh";
     private static final long ACCESS_TTL_SECONDS = 15 * 60L;
     private static final long REFRESH_TTL_SECONDS = 8 * 60 * 60L;
+    // absolute session lifetime: refreshing never extends a session beyond this age since login
+    private static final long MAX_SESSION_SECONDS = 12 * 60 * 60L;
+    private static final String LOGIN_ROLE = "loginRole";
     private static final long CLOCK_SKEW_SECONDS = 30L;
 
     private static final String REFRESH_COOKIE = "JLAWYER_REFRESH";
@@ -109,14 +112,15 @@ public class AuthenticationEndpointV8 implements AuthenticationEndpointLocalV8 {
             InitialContext ic = new InitialContext();
             SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup(LOOKUP_SECURITY);
             List<String> roles = security.authenticateAndGetRoles(request.getUsername(), request.getPassword());
-            if (roles == null) {
+            if (roles == null || !roles.contains(LOGIN_ROLE)) {
+                // same answer for unknown users, wrong passwords and users without login permission
                 return error(Response.Status.UNAUTHORIZED, "invalid_credentials");
             }
 
             // NOTE: request.getOtp() (second factor) is accepted but not yet enforced — it is
             // wired in by the add-two-factor-auth change, which owns the verification logic.
 
-            return issueTokens(request.getUsername(), roles);
+            return issueTokens(request.getUsername(), roles, epochSeconds());
         } catch (Exception ex) {
             log.error("login failed for principal " + request.getUsername(), ex);
             return RestErrorResponses.serverError(ex);
@@ -143,16 +147,27 @@ public class AuthenticationEndpointV8 implements AuthenticationEndpointLocalV8 {
             long now = epochSeconds();
             JwtClaims claims = jwt.verify(JwtKeyProvider.getPublicKey(), refreshToken, ISSUER,
                     AUDIENCE_REFRESH, now, CLOCK_SKEW_SECONDS);
-            // roles are carried over from the refresh token (stateless); a revoked account
-            // remains valid until the refresh token expires (see design.md Risks).
-            return issueTokens(claims.getSubject(), claims.getRoles());
+
+            // absolute session lifetime - tokens issued before auth_time existed fall back to iat
+            long authTime = claims.getAuthTime() > 0 ? claims.getAuthTime() : claims.getIssuedAt();
+            if (now - authTime > MAX_SESSION_SECONDS) {
+                log.info("refresh rejected: session of " + claims.getSubject() + " exceeded its maximum lifetime");
+                return rejectRefresh("session_expired");
+            }
+
+            // never carry over roles from the token: re-read them, so revoked users or roles take effect
+            InitialContext ic = new InitialContext();
+            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup(LOOKUP_SECURITY);
+            List<String> roles = security.getCurrentRolesUnrestricted(claims.getSubject());
+            if (roles == null || !roles.contains(LOGIN_ROLE)) {
+                log.info("refresh rejected: " + claims.getSubject() + " does not exist or may no longer log in");
+                return rejectRefresh("invalid_refresh_token");
+            }
+
+            return issueTokens(claims.getSubject(), roles, authTime);
         } catch (JwtException ex) {
             log.info("refresh rejected: " + ex.getMessage());
-            return Response.status(Response.Status.UNAUTHORIZED)
-                    .header("Set-Cookie", clearingCookie())
-                    .entity("{\"error\":\"invalid_refresh_token\"}")
-                    .type(MediaType.APPLICATION_JSON + ";charset=utf-8")
-                    .build();
+            return rejectRefresh("invalid_refresh_token");
         } catch (Exception ex) {
             log.error("refresh failed", ex);
             return RestErrorResponses.serverError(ex);
@@ -173,16 +188,26 @@ public class AuthenticationEndpointV8 implements AuthenticationEndpointLocalV8 {
         return Response.noContent().header("Set-Cookie", clearingCookie()).build();
     }
 
-    private Response issueTokens(String principal, List<String> roles) throws JwtException {
+    private Response issueTokens(String principal, List<String> roles, long authTime) throws JwtException {
         long now = epochSeconds();
+        // the refresh token never outlives the absolute session lifetime
+        long refreshTtl = Math.max(1L, Math.min(REFRESH_TTL_SECONDS, authTime + MAX_SESSION_SECONDS - now));
         String accessToken = jwt.issue(JwtKeyProvider.getPrivateKey(), principal, roles, ISSUER,
-                AUDIENCE_ACCESS, now, ACCESS_TTL_SECONDS, UUID.randomUUID().toString());
+                AUDIENCE_ACCESS, now, ACCESS_TTL_SECONDS, UUID.randomUUID().toString(), authTime);
         String refreshToken = jwt.issue(JwtKeyProvider.getPrivateKey(), principal, roles, ISSUER,
-                AUDIENCE_REFRESH, now, REFRESH_TTL_SECONDS, UUID.randomUUID().toString());
+                AUDIENCE_REFRESH, now, refreshTtl, UUID.randomUUID().toString(), authTime);
 
         TokenResponseV8 body = new TokenResponseV8(accessToken, ACCESS_TTL_SECONDS, principal, roles);
         return Response.ok(body)
-                .header("Set-Cookie", refreshCookie(refreshToken, REFRESH_TTL_SECONDS))
+                .header("Set-Cookie", refreshCookie(refreshToken, refreshTtl))
+                .build();
+    }
+
+    private Response rejectRefresh(String code) {
+        return Response.status(Response.Status.UNAUTHORIZED)
+                .header("Set-Cookie", clearingCookie())
+                .entity("{\"error\":\"" + code + "\"}")
+                .type(MediaType.APPLICATION_JSON + ";charset=utf-8")
                 .build();
     }
 
