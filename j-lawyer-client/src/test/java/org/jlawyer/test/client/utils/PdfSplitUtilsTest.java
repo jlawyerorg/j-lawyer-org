@@ -832,6 +832,64 @@ public class PdfSplitUtilsTest {
         }
     }
 
+    @Test
+    public void testCyclicFieldHierarchy() throws Exception {
+        // a malformed form: the field of page 5 lists itself as one of its kids - its value must still not be written
+        try (PDDocument source = createLinkedDocument(5)) {
+            PDAcroForm acroForm = new PDAcroForm(source);
+            source.getDocumentCatalog().setAcroForm(acroForm);
+            COSDictionary parent = new COSDictionary();
+            parent.setString(COSName.T, "beteiligte");
+            COSArray kids = new COSArray();
+            kids.add(childField(source, parent, "mandant", "Wert Seite 1", 0, false));
+            COSDictionary other = childField(source, parent, "gegner", "Wert Seite 5", 4, false);
+            ((COSArray) other.getDictionaryObject(COSName.KIDS)).add(other);
+            kids.add(other);
+            parent.setItem(COSName.KIDS, kids);
+            COSArray fields = new COSArray();
+            fields.add(parent);
+            acroForm.getCOSObject().setItem(COSName.FIELDS, fields);
+
+            try (PDDocument part = PdfSplitUtils.extractPages(source, 0, 2); PDDocument reloaded = saveAndReload(part)) {
+                assertEquals(2, reloaded.getDocument().getObjectsByType(COSName.PAGE).size());
+                assertTrue(containsString(reloaded, "Vorgabe Wert Seite 1"));
+                assertFalse(containsString(reloaded, "Wert Seite 5"));
+            }
+        }
+    }
+
+    @Test
+    public void testDeepFieldHierarchy() throws Exception {
+        // 20000 nested fields with a widget on page 5 - the form must not overflow the stack
+        try (PDDocument source = createLinkedDocument(5)) {
+            PDAcroForm acroForm = new PDAcroForm(source);
+            source.getDocumentCatalog().setAcroForm(acroForm);
+            COSDictionary root = new COSDictionary();
+            root.setString(COSName.T, "tief");
+            COSDictionary node = root;
+            for (int i = 0; i < 20000; i++) {
+                COSDictionary kid = new COSDictionary();
+                kid.setString(COSName.T, "f" + i);
+                kid.setItem(COSName.PARENT, node);
+                COSArray kids = new COSArray();
+                kids.add(kid);
+                node.setItem(COSName.KIDS, kids);
+                node = kid;
+            }
+            COSArray deepest = new COSArray();
+            deepest.add(childField(source, node, "ganz unten", "Wert Seite 5", 4, true));
+            node.setItem(COSName.KIDS, deepest);
+            COSArray fields = new COSArray();
+            fields.add(root);
+            acroForm.getCOSObject().setItem(COSName.FIELDS, fields);
+
+            try (PDDocument part = PdfSplitUtils.extractPages(source, 0, 2); PDDocument reloaded = saveAndReload(part)) {
+                assertEquals(2, reloaded.getNumberOfPages());
+                assertFalse(containsString(reloaded, "Wert Seite 5"));
+            }
+        }
+    }
+
     /**
      * @return a text field below the given parent, with value and default value, whose widget is on the given page
      */

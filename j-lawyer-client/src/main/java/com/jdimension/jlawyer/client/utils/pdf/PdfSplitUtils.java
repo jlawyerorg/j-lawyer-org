@@ -833,36 +833,39 @@ public class PdfSplitUtils {
             }
         }
 
-        Set<COSBase> withoutKeptWidgets = identitySet();
-        Set<COSBase> visited = identitySet();
-        for (COSBase root : roots) {
-            collectWithoutKeptWidgets(root, keptAnnotations, visited, withoutKeptWidgets);
-        }
-        return withoutKeptWidgets;
-    }
-
-    /**
-     * @return true if the given field (or widget) or one of its descendants is a widget on a page of the part
-     */
-    private static boolean collectWithoutKeptWidgets(COSBase node, Set<COSBase> keptAnnotations, Set<COSBase> visited, Set<COSBase> withoutKeptWidgets) {
-        if (!(node instanceof COSDictionary) || isPageOrPageTreeNode(node)) {
-            return false;
-        }
-        if (!visited.add(node)) {
-            // decided by its first visit - or still being decided further up a (malformed) cycle, then it stays
-            return !withoutKeptWidgets.contains(node);
-        }
-        boolean kept = keptAnnotations.contains(node);
-        COSBase kids = resolve(((COSDictionary) node).getDictionaryObject(COSName.KIDS));
-        if (kids instanceof COSArray) {
-            for (COSBase kid : (COSArray) kids) {
-                kept |= collectWithoutKeptWidgets(resolve(kid), keptAnnotations, visited, withoutKeptWidgets);
+        // what has a widget on a page of the part below it: those widgets and, up their /Parent chain, their fields
+        Set<COSBase> kept = identitySet();
+        for (COSBase annotation : keptAnnotations) {
+            COSBase node = annotation;
+            while (node instanceof COSDictionary && !isPageOrPageTreeNode(node) && kept.add(node)) {
+                node = resolve(((COSDictionary) node).getDictionaryObject(COSName.PARENT));
             }
         }
-        if (!kept) {
-            withoutKeptWidgets.add(node);
+
+        // every node of the field trees that is not kept - iteratively, forms can be deep, and malformed ones can
+        // contain cycles
+        Set<COSBase> withoutKeptWidgets = identitySet();
+        Set<COSBase> visited = identitySet();
+        Deque<COSBase> pending = new ArrayDeque<>(roots);
+        while (!pending.isEmpty()) {
+            COSBase node = pending.pop();
+            if (!(node instanceof COSDictionary) || isPageOrPageTreeNode(node) || !visited.add(node)) {
+                continue;
+            }
+            if (!kept.contains(node)) {
+                withoutKeptWidgets.add(node);
+            }
+            COSBase kids = resolve(((COSDictionary) node).getDictionaryObject(COSName.KIDS));
+            if (kids instanceof COSArray) {
+                for (COSBase kid : (COSArray) kids) {
+                    COSBase resolved = resolve(kid);
+                    if (resolved != null) {
+                        pending.push(resolved);
+                    }
+                }
+            }
         }
-        return kept;
+        return withoutKeptWidgets;
     }
 
     private static List<COSBase> annotationsOf(COSDictionary page) {
