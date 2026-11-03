@@ -1420,6 +1420,8 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
 
     public void clearInputs() {
         this.dto = null;
+        // without an address this empties the documents table and the cached documents
+        this.loadAddressDocuments();
         this.clearOverview();
         this.invoicesPerCase.clear();
         this.encryptionPwd = null;
@@ -1430,6 +1432,9 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.txtBankAccountOwner.setText("");
         this.txtBankCode.setText("");
         this.txtBankName.setText("");
+        this.txtSepaReference.setText("");
+        this.txtSepaSince.setText("");
+        this.txtLeitwegId.setText("");
         this.txtCity.setText("");
         this.txtCompany.setText("");
         this.txtDepartment.setText("");
