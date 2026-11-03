@@ -668,16 +668,21 @@ import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * Replaces a document of a case by a new one with the same name.
  * <p>
- * Nothing that holds content is deleted for good on the way: the new document is never removed again, and an existing
- * document in the case is only moved to the bin, under a name that shows that it was replaced, after the new document
- * has its name. Only an existing document that is already in the bin is deleted for good, because the user confirmed
- * to replace it. If a step fails, the new document stays in the case under its temporary name, and the state of every
- * document involved is read again from the server and reported.
+ * The new document is never removed again, also not if a step fails. An existing document in the case is not deleted
+ * for good: it is renamed to a name that shows that it was replaced, and only moved to the bin after the new document
+ * has its name. Its tags are kept as they were (renaming applies the tagging rules of the server for the new name). An
+ * existing document that is already in the bin is deleted for good right away, because the user confirmed to replace
+ * it. If a step fails, giving a renamed document its name and tags back is attempted, and the state of every document
+ * involved is read again from the server and reported.
  * <p>
  * The document to replace is always determined from the current data of the server, right before it is changed, never
  * from what a client has cached: the user confirms to replace the document with a given name, so that is the document
@@ -695,7 +700,18 @@ public class DocumentReplacement {
      */
     private static final int MAX_EXTENSION_LENGTH = 16;
 
+    private static long lastStamp = 0;
+
     private DocumentReplacement() {
+    }
+
+    /**
+     * @return the current time in milliseconds, but never the same value twice in this client - two replacements of the
+     * same name within one millisecond must not get the same temporary names
+     */
+    private static synchronized long nextStamp() {
+        lastStamp = Math.max(System.currentTimeMillis(), lastStamp + 1);
+        return lastStamp;
     }
 
     /**
@@ -818,7 +834,7 @@ public class DocumentReplacement {
      * @return the temporary name
      */
     static String stagingName(String fileName) {
-        return "Ersetzen_" + System.currentTimeMillis() + extension(fileName);
+        return "Ersetzen_" + nextStamp() + extension(fileName);
     }
 
     /**
@@ -829,7 +845,7 @@ public class DocumentReplacement {
      * @return the new name of the replaced document
      */
     static String replacedName(String fileName) {
-        String prefix = "Ersetzt_" + System.currentTimeMillis() + "_";
+        String prefix = "Ersetzt_" + nextStamp() + "_";
         String name = prefix + fileName;
         if (name.length() <= MAX_NAME_LENGTH) {
             return name;
@@ -845,13 +861,14 @@ public class DocumentReplacement {
      * When replacing: the new document is stored under a temporary name, the tags the tagging rules set for that name
      * are removed again (renaming applies the rules for the final name). Then the document that has the name on the
      * server now is looked up and its name is checked once more. A document in the case is renamed to
-     * {@link #replacedName(String)}, a document in the bin is deleted for good. The new document gets its name, and
-     * finally the renamed document is moved to the bin.
+     * {@link #replacedName(String)} and gets the tags back it had before, a document in the bin is deleted for good.
+     * The new document gets its name, and finally the renamed document is moved to the bin.
      * <p>
      * If storing the new document fails, nothing is changed and that error is thrown. If a later step fails, the new
-     * document is kept, a renamed document gets its name back if possible, and a {@link ReplacementException} tells
-     * where each document is now. If only moving the replaced document to the bin fails, the replacement is done and
-     * {@link Outcome#getProblems()} says that the replaced document is still in the case.
+     * document is kept under its temporary name, giving a renamed document its name and tags back is attempted (this
+     * may fail as well), a document from the bin that was deleted stays deleted, and a {@link ReplacementException}
+     * tells where each document is now. If only moving the replaced document to the bin or restoring its tags fails,
+     * the replacement is done and {@link Outcome#getProblems()} says what is left.
      *
      * @param remote the case service
      * @param caseId the case
@@ -872,8 +889,10 @@ public class DocumentReplacement {
 
         ArchiveFileDocumentsBean staged = remote.addDocument(caseId, stagingName(fileName), content, dictateSign, null);
         List<ArchiveFileDocumentsBean> targets = new ArrayList<>();
-        // documents in the case that were renamed, with their former names
+        // documents in the case that were renamed, with their former names, and their tags before
         List<ArchiveFileDocumentsBean> renamed = new ArrayList<>();
+        Map<String, Map<String, String>> savedTags = new HashMap<>();
+        List<String> tagProblems = new ArrayList<>();
         try {
             removeTags(remote, staged);
             for (ArchiveFileDocumentsBean candidate : findDocumentsWithName(remote, caseId, fileName, staged.getId())) {
@@ -886,23 +905,26 @@ public class DocumentReplacement {
                 if (current.isDeleted()) {
                     remote.removeDocumentFromBin(current.getId());
                 } else {
+                    savedTags.put(current.getId(), tagsOf(remote, current.getId()));
                     remote.renameDocument(current.getId(), replacedName(current.getName()));
                     renamed.add(current);
+                    restoreTags(remote, current, savedTags.get(current.getId()), tagProblems);
                 }
             }
             remote.renameDocument(staged.getId(), fileName);
         } catch (Exception ex) {
-            // give renamed documents their names back - the new document does not have the name
+            // try to give renamed documents their names and tags back - the new document does not have the name
             for (ArchiveFileDocumentsBean d : renamed) {
                 try {
                     remote.renameDocument(d.getId(), d.getName());
                 } catch (Exception renameBack) {
-                    // reported via the state read below
+                    // the name is reported via the state read below
                 }
+                restoreTags(remote, d, savedTags.get(d.getId()), tagProblems);
             }
             List<ArchiveFileDocumentsBean> affected = new ArrayList<>(targets);
             affected.add(staged);
-            throw new ReplacementException(describe(remote, "Ersetzen von '" + fileName + "' nicht abgeschlossen: " + ex.getMessage(), affected), ex);
+            throw new ReplacementException(describe(remote, "Ersetzen von '" + fileName + "' nicht abgeschlossen: " + ex.getMessage(), tagProblems, affected), ex);
         }
         staged.setName(fileName);
 
@@ -915,18 +937,73 @@ public class DocumentReplacement {
                 binFailure = ex;
             }
         }
-        if (binFailure == null) {
+        if (binFailure == null && tagProblems.isEmpty()) {
             return new Outcome(staged, targets, new ArrayList<>(), null);
         }
-        Outcome state = describe(remote, "'" + fileName + "' wurde ersetzt, aber die bisherige Datei konnte nicht in den Papierkorb verschoben werden: " + binFailure.getMessage(), targets);
+        String problem = binFailure != null
+                ? "'" + fileName + "' wurde ersetzt, aber die bisherige Datei konnte nicht in den Papierkorb verschoben werden: " + binFailure.getMessage()
+                : "'" + fileName + "' wurde ersetzt.";
+        Outcome state = describe(remote, problem, tagProblems, targets);
         return new Outcome(staged, targets, state.getActiveDocuments(), state.getProblems());
+    }
+
+    /**
+     * @return the tags of a document, name to value, as stored on the server
+     */
+    private static Map<String, String> tagsOf(ArchiveFileServiceRemote remote, String documentId) throws Exception {
+        Map<String, String> result = new LinkedHashMap<>();
+        Collection<DocumentTagsBean> tags = remote.getDocumentTags(documentId);
+        if (tags != null) {
+            for (DocumentTagsBean t : tags) {
+                result.put(t.getTagName(), t.getTagValue());
+            }
+        }
+        return result;
+    }
+
+    private static void setTag(ArchiveFileServiceRemote remote, String documentId, String name, String value, boolean active) throws Exception {
+        DocumentTagsBean tag = new DocumentTagsBean();
+        tag.setTagName(name);
+        tag.setTagValue(value);
+        remote.setDocumentTag(documentId, tag, active);
+    }
+
+    /**
+     * Gives a document exactly the tags it had before: tags that renaming added are removed, tags it had are set
+     * again with their values. A failure is added to problems.
+     */
+    private static void restoreTags(ArchiveFileServiceRemote remote, ArchiveFileDocumentsBean doc, Map<String, String> saved, List<String> problems) {
+        try {
+            Map<String, String> current = tagsOf(remote, doc.getId());
+            for (String name : current.keySet()) {
+                if (!saved.containsKey(name)) {
+                    setTag(remote, doc.getId(), name, null, false);
+                }
+            }
+            for (Map.Entry<String, String> tag : saved.entrySet()) {
+                boolean present = current.containsKey(tag.getKey());
+                if (present && Objects.equals(current.get(tag.getKey()), tag.getValue())) {
+                    continue;
+                }
+                if (present && tag.getValue() == null) {
+                    // the server keeps an existing value when setting a tag without value - remove it first
+                    setTag(remote, doc.getId(), tag.getKey(), null, false);
+                }
+                setTag(remote, doc.getId(), tag.getKey(), tag.getValue(), true);
+            }
+        } catch (Exception ex) {
+            problems.add("Die Etiketten von '" + doc.getName() + "' konnten nicht wiederhergestellt werden: " + ex.getMessage());
+        }
     }
 
     /**
      * Reads the current state of the given documents from the server and describes it.
      */
-    private static Outcome describe(ArchiveFileServiceRemote remote, String problem, List<ArchiveFileDocumentsBean> affected) {
+    private static Outcome describe(ArchiveFileServiceRemote remote, String problem, List<String> moreProblems, List<ArchiveFileDocumentsBean> affected) {
         StringBuilder sb = new StringBuilder(problem);
+        for (String p : moreProblems) {
+            sb.append(System.lineSeparator()).append(p);
+        }
         List<ArchiveFileDocumentsBean> active = new ArrayList<>();
         for (ArchiveFileDocumentsBean d : affected) {
             sb.append(System.lineSeparator());

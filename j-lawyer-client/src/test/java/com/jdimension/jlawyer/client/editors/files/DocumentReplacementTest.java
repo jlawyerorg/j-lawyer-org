@@ -697,7 +697,8 @@ public class DocumentReplacementTest {
     private static class FakeServer implements InvocationHandler {
 
         private final Map<String, ArchiveFileDocumentsBean> docs = new LinkedHashMap<>();
-        private final Map<String, Set<String>> tags = new HashMap<>();
+        /** tags of each document, name to value */
+        private final Map<String, Map<String, String>> tags = new HashMap<>();
         /** documents whose file (content) exists */
         private final Set<String> files = new HashSet<>();
         /** folder of each document */
@@ -709,7 +710,7 @@ public class DocumentReplacementTest {
         private final List<String> calls = new ArrayList<>();
         /** "method", "method:documentId" or "method:documentId:newName" that fails, "removeDocumentFromBin-entry:id" fails after deleting the file */
         private final Set<String> failOn = new HashSet<>();
-        /** tag set by the tagging rules for a document name, or null */
+        /** tags ("name" or "name=value", comma separated) the tagging rules set for a document name, or null */
         private Function<String, String> tagRule = name -> null;
         /** called before getDocument returns, to simulate another client */
         private Runnable beforeGetDocument;
@@ -728,7 +729,7 @@ public class DocumentReplacementTest {
             d.setArchiveFileKey(c);
             d.setDeleted(deleted);
             docs.put(id, d);
-            tags.put(id, new LinkedHashSet<>());
+            tags.put(id, new LinkedHashMap<>());
             files.add(id);
             folders.put(id, "root");
             return d;
@@ -752,10 +753,27 @@ public class DocumentReplacementTest {
             return null;
         }
 
+        /**
+         * Like setDocumentTag on the server: a new tag is added with its value, an existing one gets a new value only
+         * if one is given.
+         */
+        private void setTag(String docId, String name, String value) {
+            Map<String, String> t = tags.get(docId);
+            if (!t.containsKey(name) || value != null) {
+                t.put(name, value);
+            }
+        }
+
+        /**
+         * Like applyAutomatedDocumentTags on the server: adds the tags of matching rules, never removes one.
+         */
         private void applyTagRule(ArchiveFileDocumentsBean d) {
-            String tag = tagRule.apply(d.getName());
-            if (tag != null) {
-                tags.get(d.getId()).add(tag);
+            String rule = tagRule.apply(d.getName());
+            if (rule != null) {
+                for (String tag : rule.split(",")) {
+                    int eq = tag.indexOf('=');
+                    setTag(d.getId(), eq > 0 ? tag.substring(0, eq) : tag, eq > 0 ? tag.substring(eq + 1) : null);
+                }
             }
         }
 
@@ -849,20 +867,21 @@ public class DocumentReplacementTest {
                 }
                 case "getDocumentTags": {
                     List<DocumentTagsBean> result = new ArrayList<>();
-                    for (String t : tags.get((String) args[0])) {
+                    for (Map.Entry<String, String> t : tags.get((String) args[0]).entrySet()) {
                         DocumentTagsBean tb = new DocumentTagsBean();
-                        tb.setTagName(t);
+                        tb.setTagName(t.getKey());
+                        tb.setTagValue(t.getValue());
                         result.add(tb);
                     }
                     return result;
                 }
                 case "setDocumentTag": {
-                    maybeFail(m);
-                    String t = ((DocumentTagsBean) args[1]).getTagName();
+                    maybeFail(m, m + ":" + args[0]);
+                    DocumentTagsBean t = (DocumentTagsBean) args[1];
                     if ((Boolean) args[2]) {
-                        tags.get((String) args[0]).add(t);
+                        setTag((String) args[0], t.getTagName(), t.getTagValue());
                     } else {
-                        tags.get((String) args[0]).remove(t);
+                        tags.get((String) args[0]).remove(t.getTagName());
                     }
                     return null;
                 }
@@ -919,6 +938,26 @@ public class DocumentReplacementTest {
         }
         assertEquals(1, server.all().size());
         assertEquals("old", server.byName("case1", "Brief.pdf").getId());
+    }
+
+    @Test
+    public void testReplacedDocumentKeepsItsTags() throws Exception {
+        Map<String, String> tagsBefore = tagRulesAndTaggedDocument();
+        DocumentReplacement.Outcome r = DocumentReplacement.addReplacing(server.remote(), "case1", "Brief.pdf", new byte[]{1}, null, true);
+        assertNull(r.getProblems());
+        assertTrue(server.docs.get("old").isDeleted());
+        assertEquals(tagsBefore, server.tags.get("old"));
+    }
+
+    @Test
+    public void testRestoringTagsFails() throws Exception {
+        tagRulesAndTaggedDocument();
+        server.failOn.add("setDocumentTag:old");
+        DocumentReplacement.Outcome r = DocumentReplacement.addReplacing(server.remote(), "case1", "Brief.pdf", new byte[]{1}, null, true);
+        // replaced, and the message says that the former document's tags are not as before
+        assertEquals("Brief.pdf", r.getDocument().getName());
+        assertNotNull(r.getProblems());
+        assertTrue(r.getProblems(), r.getProblems().contains("Die Etiketten von 'Brief.pdf' konnten nicht wiederhergestellt werden"));
     }
 
     @Test
@@ -1007,7 +1046,7 @@ public class DocumentReplacementTest {
         server.added.clear();
         r = DocumentReplacement.addReplacing(server.remote(), "case1", "Brief.pdf", new byte[]{2}, null, true);
         assertEquals(1, server.tags.get(r.getDocument().getId()).size());
-        assertTrue(server.tags.get(r.getDocument().getId()).contains("Brief"));
+        assertTrue(server.tags.get(r.getDocument().getId()).containsKey("Brief"));
     }
 
     @Test
@@ -1073,13 +1112,41 @@ public class DocumentReplacementTest {
         assertTrue(server.invoiceLinks.contains("old"));
     }
 
+    /**
+     * Tagging rules for the tag tests: everything not called Brief.pdf, replaced documents and names containing
+     * "brief". The existing document has tags a user set, and not the tag "Brief" the rule would give it.
+     */
+    private Map<String, String> tagRulesAndTaggedDocument() {
+        server.tagRule = name -> {
+            List<String> t = new ArrayList<>();
+            if (!name.equalsIgnoreCase("Brief.pdf")) {
+                t.add("Sonstiges");
+            }
+            if (name.startsWith("Ersetzt_")) {
+                t.add("Status=ersetzt");
+            }
+            if (name.toLowerCase().contains("brief")) {
+                t.add("Brief");
+            }
+            return t.isEmpty() ? null : String.join(",", t);
+        };
+        server.put("old", "Brief.pdf", "case1", false);
+        Map<String, String> before = new LinkedHashMap<>();
+        before.put("Status", "offen");
+        before.put("Mandant", null);
+        server.tags.get("old").putAll(before);
+        return before;
+    }
+
     @Test
     public void testRenamingTheNewDocumentFailsAndTheExistingOneGetsItsNameBack() throws Exception {
-        server.put("old", "Brief.pdf", "case1", false);
+        Map<String, String> tagsBefore = tagRulesAndTaggedDocument();
         server.folders.put("old", "Schriftsätze");
         server.invoiceLinks.add("old");
         server.failOn.add("renameDocument:new1:Brief.pdf");
         DocumentReplacement.ReplacementException rex = assertFails();
+        // the tags are exactly the ones it had, although renaming it twice applied the rules
+        assertEquals(tagsBefore, server.tags.get("old"));
         // nothing was moved or unlinked
         assertEquals("Brief.pdf", server.docs.get("old").getName());
         assertFalse(server.docs.get("old").isDeleted());
