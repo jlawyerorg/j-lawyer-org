@@ -817,7 +817,6 @@ public class SqlDumpUtilsTest {
         "SELECT t.collate utf8mb4_0900_ai_ci FROM t;\n",
         "SET @c = 'utf8mb4_0900_ai_ci';\n",
         "REPLACE INTO t VALUES ('utf8mb4_0900_ai_ci');\n",
-        "DELIMITER ;;\nCREATE TRIGGER x BEFORE INSERT ON t FOR EACH ROW SET NEW.a = 'COLLATE utf8mb4_0900_ai_ci';;\nDELIMITER ;\n",
         // strings, comments and data that do not end where mysqldump ends them
         "SELECT 'a\nb' COLLATE utf8mb4_0900_ai_ci;\n",
         "/* a\n*/ SELECT 1;\n",
@@ -826,15 +825,79 @@ public class SqlDumpUtilsTest {
         "INSERT INTO t VALUES ('abc"
     };
 
+    private int files;
+
+    private void assertUncertain(String... cases) throws Exception {
+        for (String sql : cases) {
+            File f = write("dump" + (++files) + ".sql", (TABLE + sql).getBytes(StandardCharsets.UTF_8));
+            assertEquals(sql, -1, SqlDumpUtils.countCollationUsages(f, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION));
+            assertEquals(sql, 0, replace(f));
+            assertFalse(sql, copy.exists());
+        }
+    }
+
     @Test
     public void testOtherSqlIsNotReplaced() throws Exception {
-        for (int i = 0; i < UNCERTAIN.length; i++) {
-            byte[] content = (TABLE + UNCERTAIN[i]).getBytes(StandardCharsets.UTF_8);
-            File f = write("dump" + i + ".sql", content);
-            assertEquals(UNCERTAIN[i], -1, SqlDumpUtils.countCollationUsages(f, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION));
-            assertEquals(UNCERTAIN[i], 0, replace(f));
-            assertFalse(UNCERTAIN[i], copy.exists());
-        }
+        assertUncertain(UNCERTAIN);
+    }
+
+    @Test
+    public void testOnlySqlModesThatKeepQuoting() throws Exception {
+        String header = "/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL,NO_AUTO_VALUE_ON_ZERO' */;\n";
+        assertEquals(2, replace(write("traditional.sql", (header + TABLE).getBytes(StandardCharsets.UTF_8))));
+        // ANSI and the other combinations contain ANSI_QUOTES
+        assertUncertain("SET sql_mode='ANSI';\nCREATE VIEW v AS SELECT 1 AS \"a\\\", 2 AS \"x'\", 'COLLATE utf8mb4_0900_ai_ci \\'x' AS s;\n",
+                "/*!40101 SET SQL_MODE='ORACLE' */;\n", "/*!40101 SET SQL_MODE='MSSQL' */;\n", "/*!40101 SET SQL_MODE='DB2' */;\n",
+                "/*!40101 SET SQL_MODE='POSTGRESQL' */;\n", "/*!40101 SET SQL_MODE='MAXDB' */;\n",
+                "/*!40101 SET SQL_MODE='NO_AUTO_VALUE_ON_ZERO,NO_BACKSLASH_ESCAPES' */;\n", "/*!40101 SET SQL_MODE='STRICT_TRANS_TABLES,UNKNOWN' */;\n");
+    }
+
+    /**
+     * A trigger created with NO_BACKSLASH_ESCAPES, as mysqldump writes it: its string '\' is one backslash.
+     */
+    private static final String TRIGGER = "/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;\n"
+            + "/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,NO_BACKSLASH_ESCAPES,STRICT_TRANS_TABLES' */ ;\n"
+            + "DELIMITER ;;\n"
+            + "/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `cases_bi` BEFORE INSERT ON `cases` FOR EACH ROW SET NEW.id = CONCAT(NEW.id, '\\') */;;\n"
+            + "DELIMITER ;\n"
+            + "/*!50003 SET sql_mode              = @saved_sql_mode */ ;\n";
+
+    private static final String RESTORED_MODE = "/*!50003 SET sql_mode              = @saved_sql_mode */ ;\n";
+
+    @Test
+    public void testTriggerWithNoBackslashEscapes() throws Exception {
+        String dump = TABLE + TRIGGER + TABLE;
+        assertEquals(4, replace(write("trigger.sql", dump.getBytes(StandardCharsets.UTF_8))));
+        assertEquals(dump.replace("utf8mb4_0900_ai_ci", "utf8mb4_unicode_ci"), new String(Files.readAllBytes(copy.toPath()), StandardCharsets.UTF_8));
+        // only directly before and after a trigger
+        assertUncertain(TRIGGER.replace("DELIMITER ;;\n", TABLE + "DELIMITER ;;\n"), TRIGGER.replace(RESTORED_MODE, TABLE + RESTORED_MODE),
+                TRIGGER.replace("NO_BACKSLASH_ESCAPES", "ANSI_QUOTES"), TRIGGER.substring(0, TRIGGER.indexOf("DELIMITER")));
+    }
+
+    @Test
+    public void testTriggerEndsOnlyAfterItsLastLine() throws Exception {
+        // DELIMITER ; in a string of the trigger does not end it, other delimiters are not written by mysqldump
+        assertUncertain("DELIMITER ;;\n/*!50003 CREATE TRIGGER t_bi BEFORE INSERT ON t\nFOR EACH ROW BEGIN\n  SET NEW.a = 'a\nDELIMITER ;\nCOLLATE utf8mb4_0900_ai_ci\n#';\nEND */;;\nDELIMITER ;\n",
+                "DELIMITER $$\nCREATE TRIGGER x BEFORE INSERT ON t FOR EACH ROW SET NEW.a = 1$$\nDELIMITER ;\n",
+                "\\d $$\nCREATE TRIGGER x BEFORE INSERT ON t FOR EACH ROW SET NEW.a = 1$$\n",
+                "DELIMITER ;;\nCREATE TRIGGER x BEFORE INSERT ON t FOR EACH ROW SET NEW.a = 1;;\n");
+    }
+
+    @Test
+    public void testTableDataIsChecked() throws Exception {
+        // the collation only in strings, no comments, every line ends with a row
+        assertUncertain("INSERT INTO t VALUES ('a;\nCOLLATE utf8mb4_0900_ai_ci\n#');\n",
+                "INSERT INTO t VALUES ('a' COLLATE utf8mb4_0900_ai_ci);\n",
+                "INSERT INTO `utf8mb4_0900_ai_ci` VALUES (1);\n",
+                "INSERT INTO t VALUES (1, /* 'x' */ 2);\n",
+                "INSERT INTO t VALUES (1)\n;\n",
+                "INSERT INTO t VALUES\n(1,'a')\n(2,'b');\n");
+    }
+
+    @Test
+    public void testQualifierAtTheEndOfALine() throws Exception {
+        // a column named collate, with the alias utf8mb4_0900_ai_ci
+        assertUncertain("CREATE VIEW v AS SELECT t.\ncollate utf8mb4_0900_ai_ci FROM t;\n");
     }
 
     @Test
@@ -898,27 +961,22 @@ public class SqlDumpUtilsTest {
         // a generated row of 64 MiB: the output must follow the input closely, so the row is never held in memory
         String head = TABLE + "INSERT INTO `case_documents` VALUES ('1','";
         String tail = "');\n" + TABLE;
-        long bodyLength = 64L * 1024 * 1024;
+        long total = head.length() + 64L * 1024 * 1024 + tail.length();
         long[] read = {0};
         long[] written = {0};
         long[] maxAhead = {0};
         Reader in = new Reader() {
             @Override
             public int read(char[] cbuf, int off, int len) {
-                long total = head.length() + bodyLength + tail.length();
-                if (read[0] >= total) {
+                int n = (int) Math.min(len, total - read[0]);
+                if (n <= 0) {
                     return -1;
                 }
-                int n = (int) Math.min(len, total - read[0]);
                 for (int i = 0; i < n; i++) {
-                    long pos = read[0] + i;
-                    if (pos < head.length()) {
-                        cbuf[off + i] = head.charAt((int) pos);
-                    } else if (pos < head.length() + bodyLength) {
-                        cbuf[off + i] = ROW_TEXT.charAt((int) ((pos - head.length()) % ROW_TEXT.length()));
-                    } else {
-                        cbuf[off + i] = tail.charAt((int) (pos - head.length() - bodyLength));
-                    }
+                    long p = read[0] + i;
+                    cbuf[off + i] = p < head.length() ? head.charAt((int) p)
+                            : p >= total - tail.length() ? tail.charAt((int) (p - total + tail.length()))
+                            : ROW_TEXT.charAt((int) ((p - head.length()) % ROW_TEXT.length()));
                 }
                 read[0] += n;
                 maxAhead[0] = Math.max(maxAhead[0], read[0] - written[0]);
@@ -929,23 +987,9 @@ public class SqlDumpUtilsTest {
             public void close() {
             }
         };
-        String expectedHead = TABLE.replace("utf8mb4_0900_ai_ci", "utf8mb4_unicode_ci") + "INSERT INTO `case_documents` VALUES ('1','";
-        StringBuilder outHead = new StringBuilder();
-        StringBuilder outTail = new StringBuilder();
         Writer out = new Writer() {
             @Override
             public void write(char[] cbuf, int off, int len) {
-                for (int i = 0; i < len; i++) {
-                    long pos = written[0] + i;
-                    char c = cbuf[off + i];
-                    if (pos < expectedHead.length()) {
-                        outHead.append(c);
-                    } else if (pos < expectedHead.length() + bodyLength) {
-                        assertEquals(ROW_TEXT.charAt((int) ((pos - expectedHead.length()) % ROW_TEXT.length())), c);
-                    } else {
-                        outTail.append(c);
-                    }
-                }
                 written[0] += len;
             }
 
@@ -958,8 +1002,8 @@ public class SqlDumpUtilsTest {
             }
         };
         assertEquals(4, SqlDumpUtils.replaceCollation(in, out, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION, SqlDumpUtils.PORTABLE_COLLATION));
-        assertEquals(expectedHead, outHead.toString());
-        assertEquals("');\n" + TABLE.replace("utf8mb4_0900_ai_ci", "utf8mb4_unicode_ci"), outTail.toString());
+        // both collation names have the same length
+        assertEquals(total, written[0]);
         assertTrue("read ahead of the output: " + maxAhead[0], maxAhead[0] <= 256 * 1024);
     }
 

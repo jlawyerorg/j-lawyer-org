@@ -745,4 +745,13 @@ public class RestorePreparationTest {
         assertRestoreStopsBeforeAnythingIsDeleted(backup);
     }
 
+    @Test
+    public void testDumpFromAnotherArchiveIsNotUsed() throws Exception {
+        File backup = backup();
+        // the archive of the database backup holds no dump, another archive in the backup directory does
+        Files.write(new File(backup, "jlawyerdb-dump.sql.zip").toPath(), zip("hinweis.txt", "keine Datenbank".getBytes(StandardCharsets.UTF_8)));
+        Files.write(new File(backup, "older.zip").toPath(), zip("jlawyerdb-dump.sql", "CREATE TABLE `t` (`a` int) ENGINE=InnoDB;\n".getBytes(StandardCharsets.UTF_8)));
+        assertRestoreStopsBeforeAnythingIsDeleted(backup);
+    }
+
 }

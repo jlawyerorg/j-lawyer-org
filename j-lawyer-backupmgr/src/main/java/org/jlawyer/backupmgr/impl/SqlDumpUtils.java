@@ -676,6 +676,7 @@ import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -700,26 +701,31 @@ public class SqlDumpUtils {
     }
 
     /**
-     * Writes a copy of a (possibly very large) dump written by mysqldump, with a collation replaced in its SQL. The dump
-     * itself is not changed. Only the lines mysqldump writes are accepted:
+     * Writes a copy of a (possibly very large) dump written by mysqldump of MySQL 8 or MariaDB with its default
+     * options, with a collation replaced in its SQL. The dump itself is not changed. Only the lines mysqldump writes are
+     * accepted:
      * <ul>
-     * <li>INSERT INTO statements are table data and are written back unchanged, however long they are, up to the line
-     * that ends with a semicolon (mysqldump of MySQL writes one statement per line, the one of MariaDB one row per
-     * line, line breaks in values are escaped)</li>
-     * <li>SET statements as in the header and trailer and around views and triggers, also in an executable comment
-     * (/*!40101 SET ... *&#47;;): the value of collation_connection or another collation_ variable is replaced. sql_mode
-     * may only be set to one literal without NO_BACKSLASH_ESCAPES and ANSI_QUOTES, saved from @@sql_mode or restored
-     * from a user variable whose name contains sql_mode</li>
-     * <li>bodies of triggers between DELIMITER ;; and DELIMITER ; are written back unchanged</li>
+     * <li>table data: INSERT INTO statements on one line (MySQL) or with one row per line (MariaDB). Every line ends
+     * with ), or ); (the first one also with VALUES), line breaks in values are escaped. The collation may only occur
+     * in strings, comments are not allowed. Table data is never changed.</li>
+     * <li>SET statements of simple assignments at the start of a statement, as in the header and trailer and around
+     * views and triggers, also in an executable comment (/*!40101 SET ... *&#47;;): the value of collation_connection
+     * or another collation_ variable is replaced. sql_mode may only be set to a literal of modes that do not change
+     * how strings are read, saved from @@sql_mode or restored from a user variable whose name contains sql_mode.
+     * NO_BACKSLASH_ESCAPES is accepted only for a trigger: in /*!50003 SET sql_mode = '...' *&#47; ; directly before
+     * DELIMITER ;; and with /*!50003 SET sql_mode = @saved_sql_mode *&#47; ; directly after the trigger.</li>
+     * <li>triggers from DELIMITER ;; to DELIMITER ; after a line that ends with ;; are never changed, the collation
+     * must not occur in them</li>
      * <li>in all other lines (CREATE TABLE, views, comments) the collation is replaced where it follows COLLATE (COLLATE x
-     * or COLLATE=x). Strings ('...' and "...", with backslash escapes as mysqldump's header sets them), quoted
-     * identifiers (`...`) and comments are never changed, the content of executable comments is SQL</li>
+     * or COLLATE=x). Strings ('...' and "...", with backslash escapes), quoted identifiers (`...`) and comments are
+     * never changed, the content of executable comments is SQL</li>
      * </ul>
-     * Anything else makes the result uncertain and nothing is replaced: the collation in data that is not part of an
-     * INSERT INTO statement, in a trigger body, in a string, identifier or comment, or after something else than COLLATE;
-     * sql_mode or a collation_ variable outside of these SET statements; a string, identifier or comment that continues
-     * on the next line; a string in an executable comment that contains the end of the comment; a dump that ends
-     * inside table data. Collation names are compared ignoring case.
+     * Anything else makes the result uncertain and nothing is replaced: the collation anywhere else (in a string,
+     * identifier or comment outside of table data, after something else than COLLATE), sql_mode or a collation_
+     * variable outside of these SET statements, other DELIMITER lines, other commands of the mysql client, a string,
+     * identifier or comment that continues on the next line, a line that ends with a qualifier (t.), a string in an
+     * executable comment that contains the end of the comment, a dump that ends inside a statement. Collation names
+     * are compared ignoring case.
      * <p>
      * The dump is processed as ISO-8859-1, so that every byte is written back unchanged - dumps may contain binary
      * data that is not valid UTF-8. The copy is created so that only its owner can read it (where the file system
@@ -821,12 +827,15 @@ public class SqlDumpUtils {
     private static final class DumpRewriter {
 
         /**
-         * Table data: mysqldump writes INSERT statements with escaped line breaks in values, so they end at the end of
-         * a line.
+         * Table data: mysqldump escapes line breaks in values, so every line of an INSERT statement ends outside of a
+         * string.
          */
         private static final String DATA = "INSERT INTO ";
         private static final int DATA_START = -2;
         private static final int TOO_LONG = -3;
+        private static final int UNSAFE = -1;
+        private static final int ROW_END = 0;
+        private static final int ROWS_FOLLOW = 1;
         /**
          * Longer lines of SQL (not data) are not written by mysqldump.
          */
@@ -836,9 +845,22 @@ public class SqlDumpUtils {
         private static final String ASSIGNMENTS = ASSIGNMENT + "(?:\\s*,\\s*" + ASSIGNMENT + ")*";
         private static final Pattern SET = Pattern.compile("(?:/\\*!\\d{5}\\s+SET\\s+" + ASSIGNMENTS + "\\s*\\*/|SET\\s+" + ASSIGNMENTS + ")\\s*;\\s*", Pattern.CASE_INSENSITIVE);
         private static final Pattern SET_ASSIGNMENT = Pattern.compile(ASSIGNMENT, Pattern.CASE_INSENSITIVE);
-        private static final Pattern MODE_DEPENDENT_QUOTES = Pattern.compile("NO_BACKSLASH_ESCAPES|ANSI_QUOTES", Pattern.CASE_INSENSITIVE);
         private static final Pattern SESSION_VARIABLE = Pattern.compile("sql_mode|collation_", Pattern.CASE_INSENSITIVE);
-        private static final Pattern DELIMITER = Pattern.compile("DELIMITER\\s+(\\S+)\\s*", Pattern.CASE_INSENSITIVE);
+        /**
+         * The sql_mode of a trigger, its start and the restored sql_mode after it, as mysqldump writes them.
+         */
+        private static final Pattern TRIGGER_MODE = Pattern.compile("/\\*!50003 SET sql_mode\\s+= '[\\w,]*' \\*/ ;\\s*", Pattern.CASE_INSENSITIVE);
+        private static final Pattern TRIGGER_START = Pattern.compile("DELIMITER ;;\\s*");
+        private static final Pattern TRIGGER_MODE_RESTORED = Pattern.compile("/\\*!50003 SET sql_mode\\s+= @saved_sql_mode \\*/ ;\\s*", Pattern.CASE_INSENSITIVE);
+        /**
+         * Modes of MySQL 8.0 and MariaDB that do not change how strings, identifiers and comments are read (unlike
+         * ANSI_QUOTES, NO_BACKSLASH_ESCAPES and the combinations ANSI, DB2, MAXDB, MSSQL, ORACLE and POSTGRESQL).
+         */
+        private static final Set<String> MODES = Set.of("ALLOW_INVALID_DATES", "ERROR_FOR_DIVISION_BY_ZERO", "HIGH_NOT_PRECEDENCE",
+                "IGNORE_SPACE", "NO_AUTO_CREATE_USER", "NO_AUTO_VALUE_ON_ZERO", "NO_DIR_IN_CREATE", "NO_ENGINE_SUBSTITUTION",
+                "NO_UNSIGNED_SUBTRACTION", "NO_ZERO_DATE", "NO_ZERO_IN_DATE", "ONLY_FULL_GROUP_BY", "PAD_CHAR_TO_FULL_LENGTH",
+                "PIPES_AS_CONCAT", "REAL_AS_FLOAT", "STRICT_ALL_TABLES", "STRICT_TRANS_TABLES", "TIME_TRUNCATE_FRACTIONAL",
+                "TRADITIONAL");
 
         private final Reader in;
         private final Writer out;
@@ -853,6 +875,9 @@ public class SqlDumpUtils {
         private boolean statementStart = true;
         private boolean executableComment;
         private boolean triggerBody;
+        private boolean triggerWithoutBackslashEscapes;
+        private Pattern nextLine;
+        private String previousLine = "";
         private long count;
         private int lineCount;
 
@@ -869,8 +894,9 @@ public class SqlDumpUtils {
             StringBuilder line = new StringBuilder();
             boolean data = false;
             while (true) {
+                StringBuilder code = new StringBuilder();
                 if (!data) {
-                    int c = readLine(line, statementStart && !triggerBody);
+                    int c = readLine(line, statementStart && !triggerBody && nextLine == null);
                     if (c == TOO_LONG) {
                         return -1;
                     }
@@ -888,18 +914,18 @@ public class SqlDumpUtils {
                         continue;
                     }
                     out.write(DATA);
+                    code.append(DATA);
                 }
-                // table data, one statement per line (MySQL) or one row per line (MariaDB), is written back unchanged
-                data = copyData() != ';';
+                int end = copyData(code, !data);
+                if (end == UNSAFE || (eof && end != ROW_END)) {
+                    return -1;
+                }
+                data = end == ROWS_FOLLOW;
                 if (eof) {
-                    // the dump must not end inside a statement
-                    if (data) {
-                        return -1;
-                    }
                     break;
                 }
             }
-            return executableComment ? -1 : count;
+            return executableComment || triggerBody || nextLine != null ? -1 : count;
         }
 
         /**
@@ -936,19 +962,44 @@ public class SqlDumpUtils {
         }
 
         /**
-         * Copies the rest of a line of table data unchanged.
+         * Copies the rest of a line of table data unchanged. The collation may only occur in strings, comments are not
+         * allowed, and the line has to end with a row (or with VALUES, if it is the first line of the statement).
          *
-         * @return the last character of the line that is not white space
+         * @param code the code before, outside of strings
+         * @return {@link #ROW_END} if the statement ends here, {@link #ROWS_FOLLOW} if it continues on the next line,
+         * {@link #UNSAFE} otherwise
          */
-        private int copyData() throws IOException {
-            int last = -1;
+        private int copyData(StringBuilder code, boolean first) throws IOException {
+            char quote = 0;
+            boolean escaped = false;
+            boolean closing = false;
             while (pos < limit || fill()) {
                 int start = pos;
                 while (pos < limit && buffer[pos] != '\n') {
-                    if (buffer[pos] > ' ') {
-                        last = buffer[pos];
+                    char c = buffer[pos++];
+                    if (quote != 0) {
+                        if (escaped) {
+                            escaped = false;
+                            continue;
+                        }
+                        if (!closing) {
+                            escaped = c == '\\';
+                            closing = c == quote;
+                            continue;
+                        }
+                        closing = false;
+                        if (c == quote) {
+                            // a doubled quote
+                            continue;
+                        }
+                        quote = 0;
                     }
-                    pos++;
+                    if (c == '\'' || c == '"') {
+                        quote = c;
+                        code.append('\0');
+                    } else if (!dataCode(code, c)) {
+                        return UNSAFE;
+                    }
                 }
                 boolean lineEnd = pos < limit;
                 if (lineEnd) {
@@ -959,7 +1010,39 @@ public class SqlDumpUtils {
                     break;
                 }
             }
-            return last;
+            if (quote != 0 && !closing) {
+                return UNSAFE;
+            }
+            int end = code.length();
+            while (end > 0 && Character.isWhitespace(code.charAt(end - 1))) {
+                end--;
+            }
+            String last = code.substring(Math.max(0, end - 8), end);
+            if (last.endsWith(");")) {
+                return ROW_END;
+            }
+            return last.endsWith("),") || (first && last.endsWith(" VALUES")) ? ROWS_FOLLOW : UNSAFE;
+        }
+
+        /**
+         * A character of table data outside of strings.
+         *
+         * @return false if it starts a comment or ends the collation
+         */
+        private boolean dataCode(StringBuilder code, char c) {
+            char previous = code.length() == 0 ? ' ' : code.charAt(code.length() - 1);
+            code.append(c);
+            if (c == '#' || (c == '*' && previous == '/') || (c == '-' && previous == '-')) {
+                return false;
+            }
+            int n = collation.length();
+            if (Character.toLowerCase(c) == Character.toLowerCase(collation.charAt(n - 1)) && code.length() >= n && code.substring(code.length() - n).equalsIgnoreCase(collation)) {
+                return false;
+            }
+            if (code.length() > 4 * n) {
+                code.delete(0, code.length() - n);
+            }
+            return true;
         }
 
         /**
@@ -969,19 +1052,35 @@ public class SqlDumpUtils {
          */
         private boolean process(String line) throws IOException {
             lineCount = 0;
+            String trimmed = line.stripTrailing();
+            Pattern expected = nextLine;
+            nextLine = null;
             String result;
-            Matcher delimiter = DELIMITER.matcher(line);
-            if (delimiter.matches()) {
-                triggerBody = !";".equals(delimiter.group(1));
-                statementStart = true;
-                result = line;
+            if (expected != null && !expected.matcher(line).matches()) {
+                return false;
             } else if (triggerBody) {
+                // never changed, it ends after the line with ;; at the end
+                if (trimmed.equals("DELIMITER ;") && previousLine.endsWith(";;")) {
+                    triggerBody = false;
+                    statementStart = true;
+                    if (triggerWithoutBackslashEscapes) {
+                        nextLine = TRIGGER_MODE_RESTORED;
+                        triggerWithoutBackslashEscapes = false;
+                    }
+                }
+                result = line;
+            } else if (trimmed.strip().regionMatches(true, 0, "DELIMITER", 0, 9)) {
+                if (!statementStart || !TRIGGER_START.matcher(line).matches()) {
+                    return false;
+                }
+                triggerBody = true;
                 result = line;
             } else if (statementStart && SET.matcher(line).matches()) {
                 result = setStatement(line);
             } else {
                 result = sql(line);
             }
+            previousLine = trimmed;
             int occurrences = 0;
             for (Matcher m = name.matcher(line); m.find();) {
                 occurrences++;
@@ -1006,7 +1105,7 @@ public class SqlDumpUtils {
                 String value = assignment.group(2) == null ? "" : assignment.group(2).toLowerCase(Locale.ROOT);
                 if (variable.contains("sql_mode")) {
                     boolean known = variable.startsWith("@") ? "@@sql_mode".equals(value)
-                            : value.startsWith("'") ? !MODE_DEPENDENT_QUOTES.matcher(value).find()
+                            : value.startsWith("'") ? knownModes(line, value)
                             : value.startsWith("@") && !value.startsWith("@@") && value.contains("sql_mode");
                     if (!known) {
                         return null;
@@ -1018,6 +1117,26 @@ public class SqlDumpUtils {
                 }
             }
             return result.append(line, copied, line.length()).toString();
+        }
+
+        /**
+         * Only modes that do not change how strings are read. NO_BACKSLASH_ESCAPES only as the mode of a trigger:
+         * directly before DELIMITER ;; and restored directly after the trigger, as mysqldump writes it.
+         */
+        private boolean knownModes(String line, String literal) {
+            boolean withoutBackslashEscapes = false;
+            for (String mode : literal.substring(1, literal.length() - 1).toUpperCase(Locale.ROOT).split(",")) {
+                if ("NO_BACKSLASH_ESCAPES".equals(mode) && TRIGGER_MODE.matcher(line).matches()) {
+                    withoutBackslashEscapes = true;
+                } else if (!mode.isEmpty() && !MODES.contains(mode)) {
+                    return false;
+                }
+            }
+            if (withoutBackslashEscapes) {
+                nextLine = TRIGGER_START;
+                triggerWithoutBackslashEscapes = true;
+            }
+            return true;
         }
 
         /**
@@ -1067,12 +1186,19 @@ public class SqlDumpUtils {
                     executableComment = false;
                     Arrays.fill(code, i, i + 2, ' ');
                     i += 2;
+                } else if (c == '\\' && next != '-') {
+                    // a command of the mysql client, e.g. \d to change the delimiter (\- is the sandbox mode of MariaDB)
+                    return null;
                 } else {
                     if (c > ' ') {
                         lastCode = c;
                     }
                     i++;
                 }
+            }
+            if (lastCode == '.') {
+                // a qualified name that continues on the next line
+                return null;
             }
             if (executableComment) {
                 statementStart = false;

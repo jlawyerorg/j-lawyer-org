@@ -1083,14 +1083,30 @@ public class RestoreExecutor {
     }
 
     /**
-     * Unpacks the database dump of the backup into the staging directory and, if the target database server does not
-     * know the default collation of MySQL 8 and the dump uses it, writes a copy with a collation the server knows.
+     * Unpacks the database dump from the archive of the database backup (and no other archive) into the staging
+     * directory and, if the target database server does not know the default collation of MySQL 8 and the dump uses
+     * it, writes a copy with a collation the server knows.
      *
      * @return the dump to import, in the staging directory
      */
     private File prepareDatabaseDump(File staging, BackupProgressCallback progress) throws Exception {
+        File archive = new File(this.backupDirectory, "jlawyerdb-dump.sql.zip");
+        File encrypted = new File(this.backupDirectory, "jlawyerdb-dump-encrypted.sql.zip");
+        if (archive.isFile() == encrypted.isFile()) {
+            throw new Exception("Im Sicherungsverzeichnis muss genau eine Datenbanksicherung liegen (jlawyerdb-dump.sql.zip oder jlawyerdb-dump-encrypted.sql.zip). Die Wiederherstellung wurde abgebrochen, es wurde nichts verändert.");
+        }
+        if (encrypted.isFile()) {
+            archive = encrypted;
+        }
+        if (progress != null) {
+            progress.onProgress("Wiederherstellung: " + archive.getName());
+        }
         int failuresBefore = fileFailures;
-        this.restoreFromTo(this.backupDirectory, staging.getAbsolutePath(), progress);
+        if ("".equals(this.encryptionPassword) || this.encryptionPassword == null) {
+            this.unzip(archive, staging.getAbsolutePath());
+        } else {
+            this.unzipWithPassword(archive, staging.getAbsolutePath(), this.encryptionPassword);
+        }
         File dump = new File(staging, "jlawyerdb-dump.sql");
         if (fileFailures > failuresBefore || !dump.isFile()) {
             // e.g. the disk is full - an incomplete dump must not replace the database
