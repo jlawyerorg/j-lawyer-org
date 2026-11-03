@@ -697,7 +697,7 @@ public class BeaUnreadCounter {
      * not known: the beA calls run through the server, a missing privilege can not be told apart from e.g. a timeout.
      * @param loader loads the messages of an inbox
      * @return the number of unread messages, or null if it can not be determined - the inbox of a postbox was not
-     * found, or loading the messages of an inbox failed. The indicator should keep its value then.
+     * found, or loading the messages of an inbox failed or returned null. The indicator should keep its value then.
      */
     public static Integer countUnread(int postboxCount, Map<String, BeaFolder> inboxes, InboxLoader loader) {
         int found = 0;
@@ -715,7 +715,12 @@ public class BeaUnreadCounter {
                 continue;
             }
             try {
-                for (BeaMessageHeader mh : loader.load(inbox.getKey(), inbox.getValue())) {
+                List<BeaMessageHeader> messages = loader.load(inbox.getKey(), inbox.getValue());
+                if (messages == null) {
+                    log.error("No message overview for postbox " + inbox.getKey());
+                    return null;
+                }
+                for (BeaMessageHeader mh : messages) {
                     if (!mh.isRead()) {
                         unread++;
                     }

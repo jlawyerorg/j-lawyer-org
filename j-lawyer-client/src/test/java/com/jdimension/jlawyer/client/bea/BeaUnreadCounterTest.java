@@ -670,10 +670,10 @@ import com.jdimension.jlawyer.services.bea.rest.BeaFolder;
 import com.jdimension.jlawyer.services.bea.rest.BeaMessageHeader;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import javax.swing.SwingUtilities;
 import static org.junit.Assert.*;
 import org.junit.After;
@@ -686,7 +686,10 @@ import org.junit.Test;
  */
 public class BeaUnreadCounterTest {
 
-    private final List<Integer> published = Collections.synchronizedList(new ArrayList<>());
+    /**
+     * Counts delivered on the event dispatch thread, read by the test thread.
+     */
+    private final List<Integer> published = new CopyOnWriteArrayList<>();
     private final EventConsumer consumer = (Event e) -> published.add(((BeaStatusEvent) e).getUnread());
 
     @Before
@@ -764,6 +767,13 @@ public class BeaUnreadCounterTest {
     @Test
     public void testNoPostboxHasAnInboxFolder() {
         assertNull(BeaUnreadCounter.countUnread(2, inboxes(), (safeId, inbox) -> new ArrayList<>()));
+    }
+
+    @Test
+    public void testLoaderReturnsNoMessageList() throws Exception {
+        // null is not "no messages" - the count is unknown, nothing is published
+        assertNull(BeaUnreadCounter.publishUnread(2, inboxes("DE.BRAK.lawyer1", "DE.BRAK.lawyer2"), (safeId, inbox) -> "DE.BRAK.lawyer2".equals(safeId) ? null : Arrays.asList(header(false))));
+        assertTrue(published().isEmpty());
     }
 
     @Test
