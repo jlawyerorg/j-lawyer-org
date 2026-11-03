@@ -663,16 +663,89 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Replaces a document of a case by a new one with the same name, without losing the existing document if storing the
  * new one fails.
+ * <p>
+ * The document to replace is always determined from the current data of the server, right before it is deleted, never
+ * from what a client has cached: the user confirms to replace the document with a given name, so that is the document
+ * that has this name when replacing.
  */
 public class DocumentReplacement {
 
+    /**
+     * Longest extension that is kept for the temporary name. The temporary name stays far below the 250 characters a
+     * document name may have.
+     */
+    private static final int MAX_EXTENSION_LENGTH = 16;
+
     private DocumentReplacement() {
+    }
+
+    /**
+     * Outcome of a successful {@link #addReplacing}.
+     */
+    public static final class Result {
+
+        private final ArchiveFileDocumentsBean document;
+        private final List<ArchiveFileDocumentsBean> removedDocuments;
+
+        private Result(ArchiveFileDocumentsBean document, List<ArchiveFileDocumentsBean> removedDocuments) {
+            this.document = document;
+            this.removedDocuments = Collections.unmodifiableList(removedDocuments);
+        }
+
+        /**
+         * @return the new document, with its final name
+         */
+        public ArchiveFileDocumentsBean getDocument() {
+            return document;
+        }
+
+        /**
+         * @return the documents that were deleted for good (from the case or its bin), as they were before deleting
+         */
+        public List<ArchiveFileDocumentsBean> getRemovedDocuments() {
+            return removedDocuments;
+        }
+    }
+
+    /**
+     * A replacement that failed after something was already changed on the server. Tells what is left, so the view can
+     * be brought in line with the server and the user can find the new document.
+     */
+    public static final class ReplacementException extends Exception {
+
+        private final ArchiveFileDocumentsBean storedDocument;
+        private final List<ArchiveFileDocumentsBean> removedDocuments;
+
+        private ReplacementException(String message, Throwable cause, ArchiveFileDocumentsBean storedDocument, List<ArchiveFileDocumentsBean> removedDocuments) {
+            super(message, cause);
+            this.storedDocument = storedDocument;
+            this.removedDocuments = Collections.unmodifiableList(new ArrayList<>(removedDocuments));
+        }
+
+        /**
+         * @return the new document as it is stored on the server (with its temporary name), or null if it is not
+         * stored
+         */
+        public ArchiveFileDocumentsBean getStoredDocument() {
+            return storedDocument;
+        }
+
+        /**
+         * @return the documents that were deleted for good
+         */
+        public List<ArchiveFileDocumentsBean> getRemovedDocuments() {
+            return removedDocuments;
+        }
     }
 
     /**
@@ -712,34 +785,146 @@ public class DocumentReplacement {
     }
 
     /**
-     * Adds a document to a case, replacing an existing document. The new document is stored under a temporary name
-     * first, the existing one is only deleted once that has worked, then the new document gets its name. If storing
-     * the new document fails, the existing one is left untouched. If only the final rename fails, the new document
-     * remains with its temporary name.
+     * Temporary name for storing the new document while the existing one still blocks its name. Bounded in length, so
+     * any valid name can be replaced, and with the extension of the final name, so previews work as usual.
+     *
+     * @param fileName the final name
+     * @return the temporary name
+     */
+    static String stagingName(String fileName) {
+        String extension = "";
+        int dot = fileName.lastIndexOf('.');
+        if (dot > 0 && fileName.length() - dot <= MAX_EXTENSION_LENGTH) {
+            extension = fileName.substring(dot);
+        }
+        return "Ersetzen_" + System.currentTimeMillis() + extension;
+    }
+
+    /**
+     * Adds a document to a case, optionally replacing the document that currently has the same name (in the case or
+     * its bin).
+     * <p>
+     * When replacing, the new document is stored under a temporary name first. The tags the server's tagging rules
+     * set for the temporary name are removed again, renaming applies the rules for the final name. Then the document
+     * that has the name on the server now is looked up, its name is checked once more right before deleting it, and
+     * it is deleted. Finally the new document gets its name.
+     * <p>
+     * If storing the new document fails, nothing is changed. If a later step fails before an existing document is
+     * deleted for good, the new document is removed again and an existing document moved to the bin is restored. If
+     * the final rename fails, a {@link ReplacementException} tells which document was deleted and under which name the
+     * new document is stored.
      *
      * @param remote the case service
      * @param caseId the case
      * @param fileName the name of the new document
      * @param content the content of the new document
      * @param dictateSign dictate sign of the new document
-     * @param existing the document to replace, or null to just add the new one
-     * @param existingInBin true if the document to replace is in the bin of the case
-     * @return the new document
-     * @throws Exception if the new document can not be stored, or the existing one can not be removed
+     * @param replace true to replace the document that has this name, false to just add the new document
+     * @return the new document and the documents that were deleted for it
+     * @throws ReplacementException if the replacement failed after something was changed that could not be undone
+     * @throws Exception if the new document can not be stored, or replacing it failed and everything was undone
      */
-    public static ArchiveFileDocumentsBean addReplacing(ArchiveFileServiceRemote remote, String caseId, String fileName, byte[] content, String dictateSign, ArchiveFileDocumentsBean existing, boolean existingInBin) throws Exception {
-        if (existing == null) {
-            return remote.addDocument(caseId, fileName, content, dictateSign, null);
+    public static Result addReplacing(ArchiveFileServiceRemote remote, String caseId, String fileName, byte[] content, String dictateSign, boolean replace) throws Exception {
+        if (!replace) {
+            // the server refuses the name if a document with it was added in the meantime, nothing is deleted
+            return new Result(remote.addDocument(caseId, fileName, content, dictateSign, null), new ArrayList<>());
         }
 
-        ArchiveFileDocumentsBean added = remote.addDocument(caseId, "Ersetzen_" + System.currentTimeMillis() + "_" + fileName, content, dictateSign, null);
-        if (!existingInBin) {
-            remote.removeDocument(existing.getId());
+        ArchiveFileDocumentsBean staged = remote.addDocument(caseId, stagingName(fileName), content, dictateSign, null);
+        List<ArchiveFileDocumentsBean> removed = new ArrayList<>();
+        ArchiveFileDocumentsBean movedToBin = null;
+        try {
+            removeTags(remote, staged);
+            for (ArchiveFileDocumentsBean target : findDocumentsWithName(remote, caseId, fileName, staged.getId())) {
+                // check again right before deleting, it may have been renamed in the meantime
+                ArchiveFileDocumentsBean current = remote.getDocument(target.getId());
+                if (current == null || current.getName() == null || !current.getName().equalsIgnoreCase(fileName)) {
+                    continue;
+                }
+                if (!current.isDeleted()) {
+                    remote.removeDocument(current.getId());
+                    movedToBin = current;
+                }
+                remote.removeDocumentFromBin(current.getId());
+                movedToBin = null;
+                removed.add(current);
+            }
+        } catch (Exception ex) {
+            if (removed.isEmpty() && undo(remote, staged, movedToBin)) {
+                throw ex;
+            }
+            throw new ReplacementException(describe(fileName, staged, removed, movedToBin, ex), ex, staged, removed);
         }
-        remote.removeDocumentFromBin(existing.getId());
-        remote.renameDocument(added.getId(), fileName);
-        added.setName(fileName);
-        return added;
+
+        try {
+            remote.renameDocument(staged.getId(), fileName);
+        } catch (Exception ex) {
+            throw new ReplacementException(describe(fileName, staged, removed, null, ex), ex, staged, removed);
+        }
+        staged.setName(fileName);
+        return new Result(staged, removed);
+    }
+
+    private static void removeTags(ArchiveFileServiceRemote remote, ArchiveFileDocumentsBean doc) throws Exception {
+        Collection<DocumentTagsBean> tags = remote.getDocumentTags(doc.getId());
+        if (tags == null) {
+            return;
+        }
+        for (DocumentTagsBean tag : new ArrayList<>(tags)) {
+            remote.setDocumentTag(doc.getId(), tag, false);
+        }
+    }
+
+    /**
+     * The documents that currently have the given name, in the case or its bin, according to the server.
+     */
+    private static List<ArchiveFileDocumentsBean> findDocumentsWithName(ArchiveFileServiceRemote remote, String caseId, String fileName, String excludeId) {
+        List<ArchiveFileDocumentsBean> result = new ArrayList<>();
+        Collection<ArchiveFileDocumentsBean> active = remote.getDocuments(caseId);
+        if (active != null) {
+            for (ArchiveFileDocumentsBean d : active) {
+                if (!d.getId().equals(excludeId) && d.getName() != null && d.getName().equalsIgnoreCase(fileName)) {
+                    result.add(d);
+                }
+            }
+        }
+        ArchiveFileDocumentsBean inBin = findInBin(remote, caseId, fileName);
+        if (inBin != null && !inBin.getId().equals(excludeId) && !result.contains(inBin)) {
+            result.add(inBin);
+        }
+        return result;
+    }
+
+    /**
+     * Restores a document that was moved to the bin and removes the new document again.
+     *
+     * @return true if everything is as before
+     */
+    private static boolean undo(ArchiveFileServiceRemote remote, ArchiveFileDocumentsBean staged, ArchiveFileDocumentsBean movedToBin) {
+        try {
+            if (movedToBin != null) {
+                remote.restoreDocumentFromBin(movedToBin.getId());
+            }
+            remote.removeDocument(staged.getId());
+            remote.removeDocumentFromBin(staged.getId());
+            return true;
+        } catch (Exception undoFailed) {
+            return false;
+        }
+    }
+
+    private static String describe(String fileName, ArchiveFileDocumentsBean staged, List<ArchiveFileDocumentsBean> removed, ArchiveFileDocumentsBean movedToBin, Exception cause) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Ersetzen von '").append(fileName).append("' nicht abgeschlossen: ").append(cause.getMessage()).append(System.lineSeparator());
+        sb.append("Die neue Datei liegt in der Akte unter dem Namen '").append(staged.getName()).append("'.");
+        if (!removed.isEmpty()) {
+            sb.append(System.lineSeparator()).append("Die bisherige Datei '").append(removed.get(0).getName()).append("' wurde gelöscht.");
+        } else if (movedToBin != null) {
+            sb.append(System.lineSeparator()).append("Die bisherige Datei '").append(movedToBin.getName()).append("' liegt im Papierkorb der Akte.");
+        } else {
+            sb.append(System.lineSeparator()).append("Die bisherige Datei ist unverändert.");
+        }
+        return sb.toString();
     }
 
 }

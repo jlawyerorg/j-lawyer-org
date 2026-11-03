@@ -8525,19 +8525,25 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         FileUtils.cleanupTempFile(tempPath);
                         FileUtils.cleanupTempFile(tempTargetPath);
 
-                        // to replace a document, the new one is stored first and the existing one (in the case or its bin) is only deleted afterwards
-                        ArchiveFileDocumentsBean existing = null;
-                        boolean existingInBin = false;
-                        if (replaceDocument) {
-                            existing = DocumentReplacement.findByName(this.caseFolderPanel1.getDocuments(), newName);
-                            if (existing == null) {
-                                existing = DocumentReplacement.findInBin(remote, dto.getId(), newName);
-                                existingInBin = existing != null;
+                        // to replace a document, the new one is stored first and the document that has the name on the server (in the case or its bin) is only deleted afterwards
+                        DocumentReplacement.Result replacement;
+                        try {
+                            replacement = DocumentReplacement.addReplacing(remote, dto.getId(), newName, targetContent, doc.getDictateSign(), replaceDocument);
+                        } catch (DocumentReplacement.ReplacementException rex) {
+                            log.error("Error replacing document " + newName, rex);
+                            // show what is left on the server: the deleted document disappears, the new one is listed under its temporary name
+                            for (ArchiveFileDocumentsBean removed : rex.getRemovedDocuments()) {
+                                caseFolderPanel1.removeDocument(removed);
                             }
+                            if (rex.getStoredDocument() != null) {
+                                caseFolderPanel1.addDocument(rex.getStoredDocument(), null);
+                            }
+                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), rex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                            return;
                         }
-                        ArchiveFileDocumentsBean newDoc = DocumentReplacement.addReplacing(remote, dto.getId(), newName, targetContent, doc.getDictateSign(), existing, existingInBin);
-                        if (existing != null && !existingInBin) {
-                            caseFolderPanel1.removeDocument(existing);
+                        ArchiveFileDocumentsBean newDoc = replacement.getDocument();
+                        for (ArchiveFileDocumentsBean removed : replacement.getRemovedDocuments()) {
+                            caseFolderPanel1.removeDocument(removed);
                         }
 
                         if (doc.getFolder() != null) {
