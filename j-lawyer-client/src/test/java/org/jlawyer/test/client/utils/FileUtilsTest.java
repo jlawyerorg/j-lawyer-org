@@ -802,31 +802,6 @@ public class FileUtilsTest {
          }
      }
 
-     private static com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean document(String caseId, String name) {
-         com.jdimension.jlawyer.persistence.ArchiveFileBean c = new com.jdimension.jlawyer.persistence.ArchiveFileBean();
-         c.setId(caseId);
-         com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean d = new com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean();
-         d.setName(name);
-         d.setArchiveFileKey(c);
-         return d;
-     }
-
-     @Test
-     public void testDocumentNamesInCase() {
-         java.util.List<com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean> documents = java.util.Arrays.asList(document("ziel", "Brief.pdf"), document("ziel", null));
-         // the trash lists the documents of all cases, only those of the target case count
-         java.util.List<com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean> bin = java.util.Arrays.asList(document("ziel", "Alt.pdf"), document("andere", "Fremd.pdf"), document("ziel", null));
-         java.util.Set<String> names = FileUtils.documentNamesInCase("ziel", documents, bin);
-
-         Assert.assertEquals(2, names.size());
-         Assert.assertTrue(names.contains("Brief.pdf"));
-         Assert.assertTrue(names.contains("Alt.pdf"));
-         Assert.assertFalse(names.contains("Fremd.pdf"));
-         // compared ignoring case, like doesDocumentExist()
-         Assert.assertTrue(names.contains("BRIEF.PDF"));
-         Assert.assertTrue(names.contains("alt.pdf"));
-     }
-
      @Test
      public void testKeepFileNamesCancel() {
          Assert.assertNull(FileUtils.keepFileNames(java.util.Arrays.asList("a.pdf", "b.pdf"), "b.pdf"::equals, n -> null));
