@@ -1060,41 +1060,38 @@ public class RestoreExecutor {
 
     public void restore(BackupProgressCallback progress) throws Exception {
         fileFailures = 0;
-        // the database dump is prepared before anything is changed: if that fails (e.g. the disk is full while writing
-        // a rewritten copy), the data directory and the database are both left as they were
-        File dump = this.prepareDatabaseDump(progress);
+        // the database dump is unpacked into a new directory and prepared before anything is changed: if that fails
+        // (e.g. the disk is full), the data directory and the database are both left as they were. A dump left over
+        // from an earlier restore can not be taken for the one of this backup.
+        File staging = Files.createTempDirectory(new File(this.backupDirectory).toPath(), "jlawyerdb-restore-").toFile();
         try {
+            File dump = this.prepareDatabaseDump(staging, progress);
             this.clearDataDirectory(progress);
             this.restoreFiles(progress);
             this.restoreDatabase(this.dbPassword, dump, progress);
         } finally {
-            if (!dump.getName().equals(DATABASE_DUMP)) {
-                // a failure here must neither hide an error of the restore nor turn a successful restore into a failed one
-                try {
-                    Files.deleteIfExists(dump.toPath());
-                } catch (Throwable t) {
-                    String message = "Die temporäre Kopie der Datenbanksicherung " + dump.getAbsolutePath() + " konnte nicht gelöscht werden: " + t.getMessage();
-                    System.err.println(message);
-                    if (progress != null) {
-                        progress.onProgress(message);
-                    }
+            // the unpacked dump holds the whole database
+            this.deleteQuietly(staging);
+            if (staging.exists()) {
+                String message = "Das Verzeichnis " + staging.getAbsolutePath() + " mit der ausgepackten Datenbanksicherung konnte nicht gelöscht werden.";
+                System.err.println(message);
+                if (progress != null) {
+                    progress.onProgress(message);
                 }
             }
         }
     }
 
-    private static final String DATABASE_DUMP = "jlawyerdb-dump.sql";
-
     /**
-     * Unpacks the database dump of the backup and, if the target database server does not know the default
-     * collation of MySQL 8 and the dump uses it, writes a copy with a collation the server knows.
+     * Unpacks the database dump of the backup into the staging directory and, if the target database server does not
+     * know the default collation of MySQL 8 and the dump uses it, writes a copy with a collation the server knows.
      *
-     * @return the dump to import - the copy, which has to be deleted afterwards, or the dump of the backup
+     * @return the dump to import, in the staging directory
      */
-    private File prepareDatabaseDump(BackupProgressCallback progress) throws Exception {
+    private File prepareDatabaseDump(File staging, BackupProgressCallback progress) throws Exception {
         int failuresBefore = fileFailures;
-        this.restoreFromTo(this.backupDirectory, this.backupDirectory, progress);
-        File dump = new File(this.backupDirectory, DATABASE_DUMP);
+        this.restoreFromTo(this.backupDirectory, staging.getAbsolutePath(), progress);
+        File dump = new File(staging, "jlawyerdb-dump.sql");
         if (fileFailures > failuresBefore || !dump.isFile()) {
             // e.g. the disk is full - an incomplete dump must not replace the database
             throw new Exception("Die Datenbanksicherung konnte nicht vollständig ausgepackt werden. Die Wiederherstellung wurde abgebrochen, es wurde nichts verändert.");
@@ -1103,7 +1100,7 @@ public class RestoreExecutor {
             // e.g. MariaDB before 11.4.5 does not know the default collation of MySQL 8, dumps created on MySQL 8 can not be imported otherwise
             long found = SqlDumpUtils.countCollationUsages(dump, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION);
             if (found > 0) {
-                File copy = new File(this.backupDirectory, "jlawyerdb-dump-restore.sql");
+                File copy = new File(staging, "jlawyerdb-dump-restore.sql");
                 long replaced = SqlDumpUtils.writeWithReplacedCollation(dump, copy, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION, SqlDumpUtils.PORTABLE_COLLATION);
                 if (replaced > 0) {
                     if (progress != null) {
@@ -1114,7 +1111,7 @@ public class RestoreExecutor {
             } else if (found < 0 && SqlDumpUtils.containsText(dump, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION)) {
                 // importing it unchanged would fail on the unknown collation, after the data directory and the database were deleted
                 throw new Exception("Der Datenbankserver kennt die Kollation " + SqlDumpUtils.MYSQL8_DEFAULT_COLLATION + " nicht, die die Datenbanksicherung verwendet. "
-                        + "Die Sicherung kann nicht sicher angepasst werden (sie ist unvollständig oder enthält SQL, dessen Bedeutung von Einstellungen des Zielservers abhängt). "
+                        + "Die Sicherung enthält SQL, das nicht so aussieht, wie mysqldump es schreibt, deshalb kann die Kollation darin nicht sicher ersetzt werden. "
                         + "Die Wiederherstellung wurde abgebrochen, es wurde nichts verändert.");
             }
         }

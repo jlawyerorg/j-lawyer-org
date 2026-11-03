@@ -664,7 +664,6 @@ package org.jlawyer.backupmgr.impl;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -673,14 +672,10 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFilePermissions;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.Arrays;
 import java.util.Locale;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -705,54 +700,30 @@ public class SqlDumpUtils {
     }
 
     /**
-     * Replaces a collation where the SQL of a (possibly very large) dump uses it as a collation: after COLLATE and in
-     * collation variables such as collation_connection.
+     * Writes a copy of a (possibly very large) dump written by mysqldump, with a collation replaced in its SQL. The dump
+     * itself is not changed. Only the lines mysqldump writes are accepted:
+     * <ul>
+     * <li>INSERT INTO statements are table data and are written back unchanged, however long they are, up to the line
+     * that ends with a semicolon (mysqldump of MySQL writes one statement per line, the one of MariaDB one row per
+     * line, line breaks in values are escaped)</li>
+     * <li>SET statements as in the header and trailer and around views and triggers, also in an executable comment
+     * (/*!40101 SET ... *&#47;;): the value of collation_connection or another collation_ variable is replaced. sql_mode
+     * may only be set to one literal without NO_BACKSLASH_ESCAPES and ANSI_QUOTES, saved from @@sql_mode or restored
+     * from a user variable whose name contains sql_mode</li>
+     * <li>bodies of triggers between DELIMITER ;; and DELIMITER ; are written back unchanged</li>
+     * <li>in all other lines (CREATE TABLE, views, comments) the collation is replaced where it follows COLLATE (COLLATE x
+     * or COLLATE=x). Strings ('...' and "...", with backslash escapes as mysqldump's header sets them), quoted
+     * identifiers (`...`) and comments are never changed, the content of executable comments is SQL</li>
+     * </ul>
+     * Anything else makes the result uncertain and nothing is replaced: the collation in data that is not part of an
+     * INSERT INTO statement, in a trigger body, in a string, identifier or comment, or after something else than COLLATE;
+     * sql_mode or a collation_ variable outside of these SET statements; a string, identifier or comment that continues
+     * on the next line; a string in an executable comment that contains the end of the comment; a dump that ends
+     * inside table data. Collation names are compared ignoring case.
      * <p>
-     * The dump is read as a stream of SQL: string literals ('...' and "...", with backslash escapes and doubled
-     * quotes), quoted identifiers (`...`) and comments (--, # and /* *&#47;) are never changed. Executable comments
-     * (/*!50003 ... *&#47;, as mysqldump writes them) are SQL and are processed. INSERT and REPLACE statements are
-     * written back unchanged as a whole. Statements end at the client's delimiter, which a DELIMITER command changes
-     * (mysqldump writes DELIMITER ;; around triggers and routines, so their bodies are one statement). Changes of the
-     * session's sql_mode by top-level SET statements (SET sql_mode = '...', saving it in and restoring it from a user
-     * variable, as mysqldump does around triggers and routines) are followed: while NO_BACKSLASH_ESCAPES is set, a
-     * backslash in a string literal is an ordinary character. SET statements inside the body of a trigger or routine
-     * are not executed when it is created and are ignored. Memory use does not
-     * depend on the length of a line or statement, so rows with large values are no problem.
-     * <p>
-     * The file is processed as ISO-8859-1, so that every byte is written back unchanged - dumps may contain binary
-     * data that is not valid UTF-8. The file is only replaced if the collation was found, the replaced file keeps the
-     * access rights of the original one, and the temporary file is created so that only its owner can read it. If the
-     * dump ends inside a string literal, quoted identifier, comment or executable comment, it is not valid SQL and is
-     * left unchanged. It is also left unchanged if it changes sql_mode in an executable comment that the target server
-     * may ignore (MySQL versions from 5.7.0 on, which MariaDB ignores, or MariaDB-only comments), because then the
-     * meaning of backslashes in later strings is not known.
-     * <p>
-     * Only collation names written as SQL are replaced: after COLLATE (comments between count as whitespace) and in
-     * assignments to collation_connection, collation_server and collation_database. A quoted collation name is left
-     * as it is, mysqldump writes them unquoted.
-     *
-     * @param file the dump to process
-     * @param collation the collation to replace (ASCII)
-     * @param replacement the new collation (ASCII)
-     * @return the number of replaced occurrences, 0 if the file was left unchanged
-     * @throws IOException if the file can not be read or written
-     */
-    public static long replaceCollation(File file, String collation, String replacement) throws IOException {
-        File tmp = new File(file.getAbsolutePath() + ".tmp");
-        long count = writeWithReplacedCollation(file, tmp, collation, replacement);
-        if (count > 0) {
-            // the replaced dump gets the POSIX permission bits of the original one - owner, group and ACLs are those
-            // of a new file created by this process
-            copyPosixPermissions(file.toPath(), tmp.toPath());
-            Files.move(tmp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        }
-        return count;
-    }
-
-    /**
-     * Writes a copy of a dump in which the collation is replaced like {@link #replaceCollation(File, String, String)},
-     * the dump itself is not changed. The copy is created so that only its owner can read it (where the file system
-     * supports POSIX permissions), it holds the whole database. It is only kept if the collation was found.
+     * The dump is processed as ISO-8859-1, so that every byte is written back unchanged - dumps may contain binary
+     * data that is not valid UTF-8. The copy is created so that only its owner can read it (where the file system
+     * supports POSIX permissions), it holds the whole database. It is only kept if the collation was replaced.
      *
      * @param dump the dump to read
      * @param target the copy to write, replaced if it exists
@@ -779,13 +750,13 @@ public class SqlDumpUtils {
     }
 
     /**
-     * Counts where a dump uses a collation as a collation, without writing anything, e.g. to find out whether a
-     * rewritten copy is needed at all.
+     * Counts where {@link #writeWithReplacedCollation(File, File, String, String)} would replace a collation, without
+     * writing anything.
      *
      * @param dump the dump to read
      * @param collation the collation to look for (ASCII)
-     * @return the number of occurrences that would be replaced, or -1 if the dump ends inside a string literal, quoted
-     * identifier or comment, or contains a change of sql_mode that can not be followed (then nothing would be replaced)
+     * @return the number of occurrences that would be replaced, or -1 if the result is uncertain (then nothing would be
+     * replaced)
      * @throws IOException if the dump can not be read
      */
     public static long countCollationUsages(File dump, String collation) throws IOException {
@@ -795,7 +766,8 @@ public class SqlDumpUtils {
     }
 
     /**
-     * Looks for a text anywhere in a dump, also in data and comments.
+     * Looks for a text anywhere in a dump, also in data and comments, ignoring case like
+     * {@link #writeWithReplacedCollation(File, File, String, String)} does.
      *
      * @param dump the dump to read
      * @param text the text to look for (ASCII)
@@ -803,13 +775,14 @@ public class SqlDumpUtils {
      * @throws IOException if the dump can not be read
      */
     public static boolean containsText(File dump, String text) throws IOException {
+        Pattern pattern = Pattern.compile(Pattern.quote(text), Pattern.CASE_INSENSITIVE);
         try (Reader in = new InputStreamReader(new FileInputStream(dump), StandardCharsets.ISO_8859_1)) {
             char[] buffer = new char[BUFFER_SIZE];
             StringBuilder window = new StringBuilder();
             int read;
             while ((read = in.read(buffer)) != -1) {
                 window.append(buffer, 0, read);
-                if (window.indexOf(text) >= 0) {
+                if (pattern.matcher(window).find()) {
                     return true;
                 }
                 // keep the end, the text may continue in the next block
@@ -828,611 +801,322 @@ public class SqlDumpUtils {
         }
     }
 
-    private static void copyPosixPermissions(Path from, Path to) throws IOException {
-        if (from.getFileSystem().supportedFileAttributeViews().contains("posix")) {
-            Files.setPosixFilePermissions(to, Files.getPosixFilePermissions(from));
-        }
-    }
-
     /**
-     * Copies a dump from in to out and replaces the collation like {@link #replaceCollation(File, String, String)}.
+     * Copies a dump from in to out and replaces the collation like {@link #writeWithReplacedCollation(File, File, String, String)}.
      *
      * @param in the dump
      * @param out receives the processed dump
      * @param collation the collation to replace
      * @param replacement the new collation
-     * @return the number of replaced occurrences, or -1 if the dump ends inside a string literal, quoted identifier or
-     * comment, or contains a change of sql_mode in an executable comment that the target server may ignore (then the
-     * output must not be used)
+     * @return the number of replaced occurrences, or -1 if the result is uncertain (then the output must not be used)
      * @throws IOException if reading or writing fails
      */
     public static long replaceCollation(Reader in, Writer out, String collation, String replacement) throws IOException {
-        CollationRewriter rewriter = new CollationRewriter(in, out, collation, replacement);
-        rewriter.run();
-        return rewriter.complete ? rewriter.count : -1;
+        return new DumpRewriter(in, out, collation, replacement).run();
     }
 
     /**
-     * Streams a dump from in to out, character by character, and replaces the collation where SQL code uses it.
+     * Copies a dump line by line and replaces the collation where mysqldump writes it.
      */
-    private static final class CollationRewriter {
-
-        private static final int NORMAL = 0;
-        private static final int SINGLE_QUOTED = 1;
-        private static final int DOUBLE_QUOTED = 2;
-        private static final int BACKTICK_QUOTED = 3;
-        private static final int LINE_COMMENT = 4;
-        private static final int BLOCK_COMMENT = 5;
+    private static final class DumpRewriter {
 
         /**
-         * Longer words can not be the collation, they are written through.
+         * Table data: mysqldump writes INSERT statements with escaped line breaks in values, so they end at the end of
+         * a line.
          */
-        private static final int MAX_WORD = 64;
-        private static final int MAX_CONTEXT = 512;
+        private static final String DATA = "INSERT INTO ";
+        private static final int DATA_START = -2;
+        private static final int TOO_LONG = -3;
         /**
-         * Marks quoted text or a comment in the context, so that e.g. COLLATE 'x' utf8mb4_0900_ai_ci does not match.
+         * Longer lines of SQL (not data) are not written by mysqldump.
          */
-        private static final char BREAK = '\0';
-        /**
-         * Longest SET statement and string literal in it that are kept for following changes of sql_mode.
-         */
-        private static final int MAX_SET_STATEMENT = 8192;
-        /**
-         * Stands for a string literal in the text of a SET statement.
-         */
-        private static final char LITERAL = '\u0001';
-        /**
-         * One assignment in a SET statement: scope or user variable marker, variable name, and a value that matters
-         * for sql_mode (a string literal, @@sql_mode or a user variable). Not after a dot, so NEW.sql_mode or
-         * t.sql_mode is not taken for the system variable.
-         */
-        private static final Pattern ASSIGNMENT = Pattern.compile("(?i)(?<![\\w.@$])(@@(?:(global|session|local)\\.)?|@|\\b(global|session|local)\\s+)?([A-Za-z0-9_$]+)\\s*:?=\\s*(\\u0001|@@(?:(?:global|session|local)\\.)?sql_mode\\b|@[A-Za-z0-9_$]+)");
-        /**
-         * What has to come right before the collation for it to be used as a collation.
-         */
-        private static final Pattern COLLATE_USAGE = Pattern.compile("(?i)\\bCOLLATE\\s*=?\\s*\\z");
-        /**
-         * An assignment to a collation system variable right before the collation. Not after a dot (also with spaces),
-         * so NEW.collation_connection is not taken for the variable. Inside the body of a trigger or routine a local
-         * variable can have the same name, see {@link #storedProgram}.
-         */
-        private static final Pattern VARIABLE_USAGE = Pattern.compile("(?i)(?<![\\w.@$])(?<!\\.\\s{1,20})(?:@@(?:(?:global|session|local)\\.)?|\\b(?:global|session|local)\\s+)?(?:collation_connection|collation_server|collation_database)\\s*:?=\\s*\\z");
-        /**
-         * Every assignment to the system variable sql_mode in a SET statement, to find assignments with a value that
-         * is not understood.
-         */
-        private static final Pattern SQL_MODE_TARGET = Pattern.compile("(?i)(?<![\\w.@$])(@@(?:(global|session|local)\\.)?|\\b(global|session|local)\\s+)?sql_mode\\s*:?=");
-        /**
-         * sql_mode values that contain ANSI_QUOTES - double quotes then delimit identifiers.
-         */
-        private static final java.util.Set<String> ANSI_QUOTES_MODES = new java.util.HashSet<>(java.util.Arrays.asList("ANSI_QUOTES", "ANSI", "DB2", "MAXDB", "MSSQL", "ORACLE", "POSTGRESQL"));
+        private static final int MAX_LINE = 16 * 1024 * 1024;
+        private static final String WORD = "[\\w$\\u0080-\\u00ff]";
+        private static final String ASSIGNMENT = "(?:(@?\\w+)\\s*=\\s*('[\\w,:+\\-]*'|@{0,2}\\w+)|NAMES\\s+\\w+)";
+        private static final String ASSIGNMENTS = ASSIGNMENT + "(?:\\s*,\\s*" + ASSIGNMENT + ")*";
+        private static final Pattern SET = Pattern.compile("(?:/\\*!\\d{5}\\s+SET\\s+" + ASSIGNMENTS + "\\s*\\*/|SET\\s+" + ASSIGNMENTS + ")\\s*;\\s*", Pattern.CASE_INSENSITIVE);
+        private static final Pattern SET_ASSIGNMENT = Pattern.compile(ASSIGNMENT, Pattern.CASE_INSENSITIVE);
+        private static final Pattern MODE_DEPENDENT_QUOTES = Pattern.compile("NO_BACKSLASH_ESCAPES|ANSI_QUOTES", Pattern.CASE_INSENSITIVE);
+        private static final Pattern SESSION_VARIABLE = Pattern.compile("sql_mode|collation_", Pattern.CASE_INSENSITIVE);
+        private static final Pattern DELIMITER = Pattern.compile("DELIMITER\\s+(\\S+)\\s*", Pattern.CASE_INSENSITIVE);
 
         private final Reader in;
         private final Writer out;
         private final String collation;
         private final String replacement;
+        private final Pattern name;
+        private final Pattern collate;
+        private final char[] buffer = new char[BUFFER_SIZE];
+        private int pos;
+        private int limit;
+        private boolean eof;
+        private boolean statementStart = true;
+        private boolean executableComment;
+        private boolean triggerBody;
+        private long count;
+        private int lineCount;
 
-        private final char[] inBuffer = new char[BUFFER_SIZE];
-        private int inPos = 0;
-        private int inLen = 0;
-        private final char[] outBuffer = new char[BUFFER_SIZE];
-        private int outLen = 0;
-
-        private int state = NORMAL;
-        private final StringBuilder word = new StringBuilder();
-        private boolean longWord = false;
-        /**
-         * The last characters of SQL code (outside of quotes and comments).
-         */
-        private final StringBuilder context = new StringBuilder();
-        private boolean statementHasWord = false;
-        private boolean dataStatement = false;
-        /**
-         * The next word is the version number of an executable comment, not part of the statement.
-         */
-        private boolean versionNumber = false;
-        /**
-         * Inside an executable comment (/*!NNNNN ... *&#47; or /*M!NNNNNN ... *&#47;), with its version and whether it is
-         * one for MariaDB only.
-         */
-        private boolean executableComment = false;
-        private long commentVersion = 0;
-        private boolean mariaDbComment = false;
-        /**
-         * The current statement contains an executable comment that the target server may ignore (MariaDB ignores
-         * the ones for MySQL 5.7.0 to 9.99.99, MySQL ignores the ones for MariaDB).
-         */
-        private boolean statementHasIgnorableComment = false;
-        /**
-         * The current statement creates a trigger, routine or event, or is a compound statement - its body can
-         * declare local variables named like system variables.
-         */
-        private boolean storedProgram = false;
-        private boolean createStatement = false;
-        /**
-         * Something was found that can not be followed safely: a change of sql_mode the target server may ignore, a
-         * sql_mode value that is not understood or that sets ANSI_QUOTES, or an assignment of the collation in the body
-         * of a stored program. Nothing is replaced then.
-         */
-        private boolean modeUnknown = false;
-
-        /**
-         * Ends a statement, as set by the DELIMITER command of the mysql client.
-         */
-        private String delimiter = ";";
-        /**
-         * The rest of the line is the new delimiter of a DELIMITER command, collected here.
-         */
-        private StringBuilder delimiterCommand = null;
-
-        private boolean noBackslashEscapes = false;
-        private final Map<String, Boolean> savedModes = new HashMap<>();
-        /**
-         * Text of the current SET statement (string literals replaced by LITERAL), or null.
-         */
-        private StringBuilder setStatement = null;
-        private final List<String> setLiterals = new ArrayList<>();
-        private StringBuilder literal = null;
-
-        private long count = 0;
-        private boolean complete = false;
-
-        private CollationRewriter(Reader in, Writer out, String collation, String replacement) {
+        DumpRewriter(Reader in, Writer out, String collation, String replacement) {
             this.in = in;
             this.out = out;
             this.collation = collation;
             this.replacement = replacement;
+            this.name = Pattern.compile(Pattern.quote(collation), Pattern.CASE_INSENSITIVE);
+            this.collate = Pattern.compile("(?<!" + WORD + ")COLLATE(?:\\s+|\\s*=\\s*)(" + Pattern.quote(collation) + ")(?!" + WORD + ")", Pattern.CASE_INSENSITIVE);
         }
 
-        private void run() throws IOException {
-            int c;
-            while ((c = read()) != -1) {
-                char ch = (char) c;
-                switch (state) {
-                    case NORMAL:
-                        normal(ch);
-                        break;
-                    case SINGLE_QUOTED:
-                    case DOUBLE_QUOTED:
-                        write(ch);
-                        char quote = state == SINGLE_QUOTED ? '\'' : '"';
-                        if (ch == '\\' && !noBackslashEscapes) {
-                            addLiteral(ch);
-                            int escaped = read();
-                            if (escaped != -1) {
-                                write((char) escaped);
-                                addLiteral((char) escaped);
-                            }
-                        } else if (ch == quote) {
-                            if (peek(0) == quote) {
-                                addLiteral(ch);
-                                write((char) read());
-                            } else {
-                                state = NORMAL;
-                                endLiteral();
-                            }
-                        } else {
-                            addLiteral(ch);
-                        }
-                        break;
-                    case BACKTICK_QUOTED:
-                        write(ch);
-                        if (ch == '`') {
-                            if (peek(0) == '`') {
-                                write((char) read());
-                            } else {
-                                state = NORMAL;
-                            }
-                        }
-                        break;
-                    case LINE_COMMENT:
-                        write(ch);
-                        if (ch == '\n') {
-                            state = NORMAL;
-                        }
-                        break;
-                    default:
-                        write(ch);
-                        if (ch == '*' && peek(0) == '/') {
-                            write((char) read());
-                            state = NORMAL;
-                        }
-                        break;
-                }
-            }
-            endWord();
-            endStatement();
-            flush();
-            complete = (state == NORMAL || state == LINE_COMMENT) && !executableComment && !modeUnknown;
-        }
-
-        private void normal(char ch) throws IOException {
-            if (delimiterCommand != null) {
-                // the rest of a DELIMITER line, written through
-                write(ch);
-                if (ch == '\n') {
-                    String[] parts = delimiterCommand.toString().trim().split("\\s+");
-                    if (parts.length > 0 && !parts[0].isEmpty()) {
-                        delimiter = parts[0];
+        long run() throws IOException {
+            StringBuilder line = new StringBuilder();
+            boolean data = false;
+            while (true) {
+                if (!data) {
+                    int c = readLine(line, statementStart && !triggerBody);
+                    if (c == TOO_LONG) {
+                        return -1;
                     }
-                    delimiterCommand = null;
-                    endStatement();
-                } else {
-                    delimiterCommand.append(ch);
-                }
-                return;
-            }
-            if (isDelimiterAt(ch)) {
-                endWord();
-                write(ch);
-                appendContext(ch);
-                for (int i = 1; i < delimiter.length(); i++) {
-                    char c = (char) read();
-                    write(c);
-                    appendContext(c);
-                }
-                endStatement();
-                return;
-            }
-            if (Character.isLetterOrDigit(ch) || ch == '_' || ch == '$') {
-                addWordChar(ch);
-                return;
-            }
-            endWord();
-            if (executableComment && ch == '*' && peek(0) == '/') {
-                // end of an executable comment
-                write(ch);
-                appendContext(ch);
-                char c = (char) read();
-                write(c);
-                appendContext(c);
-                executableComment = false;
-            } else if (ch == '\'' || ch == '"' || ch == '`') {
-                state = ch == '\'' ? SINGLE_QUOTED : (ch == '"' ? DOUBLE_QUOTED : BACKTICK_QUOTED);
-                appendContext(BREAK);
-                if (ch != '`') {
-                    startLiteral();
-                }
-                write(ch);
-            } else if (ch == '#' || (ch == '-' && peek(0) == '-' && (peek(1) == -1 || peek(1) <= ' '))) {
-                state = LINE_COMMENT;
-                // a comment separates tokens like whitespace, e.g. COLLATE -- ... followed by the name on the next line
-                appendContext(' ');
-                write(ch);
-            } else if (ch == '/' && peek(0) == '*' && (peek(1) == '!' || (peek(1) == 'M' && peek(2) == '!'))) {
-                // an executable comment like /*!50003 ... */ - its content is SQL, the version number is not part of it
-                write(ch);
-                appendContext(ch);
-                int rest = peek(1) == '!' ? 2 : 3;
-                for (int i = 0; i < rest; i++) {
-                    char c = (char) read();
-                    write(c);
-                    appendContext(c);
-                }
-                versionNumber = true;
-                executableComment = true;
-                mariaDbComment = rest == 3;
-                if (mariaDbComment) {
-                    statementHasIgnorableComment = true;
-                }
-                commentVersion = 0;
-            } else if (ch == '/' && peek(0) == '*') {
-                state = BLOCK_COMMENT;
-                appendContext(' ');
-                write(ch);
-                write((char) read());
-            } else {
-                addToSetStatement(ch);
-                appendContext(ch);
-                write(ch);
-            }
-        }
-
-        private void addWordChar(char ch) throws IOException {
-            if (longWord) {
-                addToSetStatement(ch);
-                appendContext(ch);
-                write(ch);
-                return;
-            }
-            word.append(ch);
-            if (word.length() > MAX_WORD) {
-                noteWord(word);
-                addToSetStatement(word);
-                appendContext(word);
-                write(word);
-                word.setLength(0);
-                longWord = true;
-            }
-        }
-
-        private void endWord() throws IOException {
-            if (longWord) {
-                longWord = false;
-                return;
-            }
-            if (word.length() == 0) {
-                return;
-            }
-            boolean version = versionNumber && isDigits(word);
-            versionNumber = false;
-            if (version) {
-                commentVersion = word.length() <= 9 ? Long.parseLong(word.toString()) : Long.MAX_VALUE;
-                if (commentVersion >= 50700) {
-                    // conservative: MariaDB ignores 50700 to 99999, versions from 100000 on are its own
-                    statementHasIgnorableComment = true;
-                }
-            }
-            if (!version) {
-                noteWord(word);
-                addToSetStatement(word);
-                if (createStatement && !storedProgram) {
-                    String w = word.toString();
-                    storedProgram = w.equalsIgnoreCase("TRIGGER") || w.equalsIgnoreCase("PROCEDURE") || w.equalsIgnoreCase("FUNCTION") || w.equalsIgnoreCase("EVENT");
-                }
-            }
-            boolean replace = false;
-            if (!dataStatement && word.length() == collation.length() && word.toString().equalsIgnoreCase(collation)) {
-                if (COLLATE_USAGE.matcher(context).find()) {
-                    replace = true;
-                } else if (VARIABLE_USAGE.matcher(context).find()) {
-                    if (storedProgram) {
-                        // may be a local variable or a column - fail safe
-                        modeUnknown = true;
-                    } else {
-                        replace = true;
+                    if (c < 0 && line.length() == 0) {
+                        break;
                     }
-                }
-            }
-            if (replace) {
-                appendContext(replacement);
-                write(replacement);
-                count++;
-            } else {
-                appendContext(word);
-                write(word);
-            }
-            word.setLength(0);
-        }
-
-        /**
-         * @return true if the delimiter starts with the given character, followed by the rest of it in the input
-         */
-        private boolean isDelimiterAt(char ch) throws IOException {
-            if (ch != delimiter.charAt(0)) {
-                return false;
-            }
-            for (int i = 1; i < delimiter.length(); i++) {
-                if (peek(i - 1) != delimiter.charAt(i)) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        private static boolean isDigits(CharSequence w) {
-            for (int i = 0; i < w.length(); i++) {
-                if (!Character.isDigit(w.charAt(i))) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        /**
-         * Remembers whether the current statement is an INSERT or REPLACE statement, or a SET statement, by its first
-         * word.
-         */
-        private void noteWord(CharSequence w) {
-            if (!statementHasWord) {
-                statementHasWord = true;
-                String first = w.toString();
-                createStatement = first.equalsIgnoreCase("CREATE");
-                // a compound statement outside of a stored program (MariaDB: BEGIN NOT ATOMIC)
-                storedProgram = first.equalsIgnoreCase("BEGIN");
-                dataStatement = first.equalsIgnoreCase("INSERT") || first.equalsIgnoreCase("REPLACE");
-                if (first.equalsIgnoreCase("DELIMITER")) {
-                    delimiterCommand = new StringBuilder();
-                }
-                if (first.equalsIgnoreCase("SET")) {
-                    setStatement = new StringBuilder();
-                    setLiterals.clear();
-                }
-            }
-        }
-
-        private void addToSetStatement(char ch) {
-            if (setStatement != null) {
-                setStatement.append(ch);
-                if (setStatement.length() > MAX_SET_STATEMENT) {
-                    // far too long for a change of sql_mode
-                    setStatement = null;
-                }
-            }
-        }
-
-        private void addToSetStatement(CharSequence s) {
-            for (int i = 0; i < s.length(); i++) {
-                addToSetStatement(s.charAt(i));
-            }
-        }
-
-        private void startLiteral() {
-            if (setStatement != null) {
-                addToSetStatement(LITERAL);
-                literal = new StringBuilder();
-            }
-        }
-
-        private void addLiteral(char ch) {
-            if (literal != null) {
-                literal.append(ch);
-                if (literal.length() > MAX_SET_STATEMENT) {
-                    literal = null;
-                    setStatement = null;
-                }
-            }
-        }
-
-        private void endLiteral() {
-            if (literal != null && setStatement != null) {
-                setLiterals.add(literal.toString());
-            }
-            literal = null;
-        }
-
-        /**
-         * At the end of a statement: follows changes of sql_mode in a SET statement.
-         */
-        private void endStatement() {
-            if (setStatement != null) {
-                applySet(setStatement.toString(), setLiterals);
-            }
-            setStatement = null;
-            literal = null;
-            statementHasWord = false;
-            dataStatement = false;
-            statementHasIgnorableComment = false;
-            storedProgram = false;
-            createStatement = false;
-        }
-
-        private void applySet(String text, List<String> literals) {
-            // every assignment to sql_mode must be understood below, otherwise the mode is not known any more
-            int targets = 0;
-            Matcher t = SQL_MODE_TARGET.matcher(text);
-            while (t.find()) {
-                String scope = t.group(2) != null ? t.group(2) : t.group(3);
-                if (scope == null || !scope.equalsIgnoreCase("global")) {
-                    targets++;
-                }
-            }
-            int understood = 0;
-            Matcher m = ASSIGNMENT.matcher(text);
-            while (m.find()) {
-                String marker = m.group(1) == null ? "" : m.group(1).trim();
-                String scope = m.group(2) != null ? m.group(2) : m.group(3);
-                if (scope != null && scope.equalsIgnoreCase("global")) {
-                    continue;
-                }
-                String name = m.group(4).toLowerCase(Locale.ROOT);
-                String value = m.group(5);
-                boolean valueIsMode = value.startsWith("@@");
-                if ("@".equals(marker)) {
-                    if (valueIsMode) {
-                        savedModes.put(name, noBackslashEscapes);
-                    }
-                } else if (name.equals("sql_mode")) {
-                    understood++;
-                    if (statementHasIgnorableComment) {
-                        // the target server may or may not execute this - fail safe, the dump is not changed
-                        modeUnknown = true;
+                    if (c != DATA_START) {
+                        if (!process(line.toString())) {
+                            return -1;
+                        }
+                        if (c < 0) {
+                            break;
+                        }
+                        out.write('\n');
                         continue;
                     }
-                    if (value.charAt(0) == LITERAL) {
-                        int index = 0;
-                        for (int i = 0; i < m.start(5); i++) {
-                            if (text.charAt(i) == LITERAL) {
-                                index++;
-                            }
-                        }
-                        if (index < literals.size()) {
-                            String mode = literals.get(index).toUpperCase(Locale.ROOT);
-                            noBackslashEscapes = mode.contains("NO_BACKSLASH_ESCAPES");
-                            for (String part : mode.split(",")) {
-                                if (ANSI_QUOTES_MODES.contains(part.trim())) {
-                                    // double quotes delimit identifiers then - not followed, fail safe
-                                    modeUnknown = true;
-                                }
-                            }
-                        } else {
-                            modeUnknown = true;
-                        }
-                    } else if (!valueIsMode) {
-                        Boolean saved = savedModes.get(value.substring(1).toLowerCase(Locale.ROOT));
-                        if (saved != null) {
-                            noBackslashEscapes = saved;
-                        } else {
-                            // a variable that was not saved from sql_mode in this dump
-                            modeUnknown = true;
-                        }
+                    out.write(DATA);
+                }
+                // table data, one statement per line (MySQL) or one row per line (MariaDB), is written back unchanged
+                data = copyData() != ';';
+                if (eof) {
+                    // the dump must not end inside a statement
+                    if (data) {
+                        return -1;
                     }
+                    break;
                 }
             }
-            if (understood < targets) {
-                modeUnknown = true;
-            }
+            return executableComment ? -1 : count;
         }
 
-        private void appendContext(char ch) {
-            context.append(ch);
-            trimContext();
-        }
-
-        private void appendContext(CharSequence s) {
-            context.append(s);
-            trimContext();
-        }
-
-        private void trimContext() {
-            if (context.length() > MAX_CONTEXT) {
-                context.delete(0, context.length() - MAX_CONTEXT / 2);
+        /**
+         * Reads a line without its line break, but stops after the start of table data if that is possible here.
+         *
+         * @return the line break, -1 at the end of the dump, {@link #DATA_START} or {@link #TOO_LONG}
+         */
+        private int readLine(StringBuilder line, boolean dataPossible) throws IOException {
+            line.setLength(0);
+            while (true) {
+                if (dataPossible && line.length() == DATA.length() && DATA.contentEquals(line)) {
+                    return DATA_START;
+                }
+                int c = read();
+                if (c < 0 || c == '\n') {
+                    return c;
+                }
+                if (line.length() == MAX_LINE) {
+                    return TOO_LONG;
+                }
+                line.append((char) c);
             }
         }
 
         private int read() throws IOException {
-            if (inPos >= inLen && !fill(1)) {
-                return -1;
-            }
-            return inBuffer[inPos++];
+            return pos < limit || fill() ? buffer[pos++] : -1;
+        }
+
+        private boolean fill() throws IOException {
+            pos = 0;
+            limit = Math.max(0, in.read(buffer, 0, buffer.length));
+            eof = limit == 0;
+            return !eof;
         }
 
         /**
-         * @return the character offset characters after the current position, without consuming it, or -1 at the end
+         * Copies the rest of a line of table data unchanged.
+         *
+         * @return the last character of the line that is not white space
          */
-        private int peek(int offset) throws IOException {
-            if (inPos + offset >= inLen && !fill(offset + 1)) {
-                return -1;
-            }
-            return inBuffer[inPos + offset];
-        }
-
-        /**
-         * Makes sure that at least needed characters are available from the current position on.
-         */
-        private boolean fill(int needed) throws IOException {
-            if (inPos > 0) {
-                System.arraycopy(inBuffer, inPos, inBuffer, 0, inLen - inPos);
-                inLen -= inPos;
-                inPos = 0;
-            }
-            while (inLen < needed) {
-                int n = in.read(inBuffer, inLen, inBuffer.length - inLen);
-                if (n == -1) {
-                    return false;
+        private int copyData() throws IOException {
+            int last = -1;
+            while (pos < limit || fill()) {
+                int start = pos;
+                while (pos < limit && buffer[pos] != '\n') {
+                    if (buffer[pos] > ' ') {
+                        last = buffer[pos];
+                    }
+                    pos++;
                 }
-                inLen += n;
+                boolean lineEnd = pos < limit;
+                if (lineEnd) {
+                    pos++;
+                }
+                out.write(buffer, start, pos - start);
+                if (lineEnd) {
+                    break;
+                }
             }
+            return last;
+        }
+
+        /**
+         * Writes a line (without its line break) with the collation replaced.
+         *
+         * @return false if the result is uncertain
+         */
+        private boolean process(String line) throws IOException {
+            lineCount = 0;
+            String result;
+            Matcher delimiter = DELIMITER.matcher(line);
+            if (delimiter.matches()) {
+                triggerBody = !";".equals(delimiter.group(1));
+                statementStart = true;
+                result = line;
+            } else if (triggerBody) {
+                result = line;
+            } else if (statementStart && SET.matcher(line).matches()) {
+                result = setStatement(line);
+            } else {
+                result = sql(line);
+            }
+            int occurrences = 0;
+            for (Matcher m = name.matcher(line); m.find();) {
+                occurrences++;
+            }
+            if (result == null || occurrences != lineCount) {
+                return false;
+            }
+            count += lineCount;
+            out.write(result);
             return true;
         }
 
-        private void write(char ch) throws IOException {
-            if (outLen == outBuffer.length) {
-                flush();
+        /**
+         * A SET statement of only simple assignments, like those of mysqldump.
+         */
+        private String setStatement(String line) {
+            StringBuilder result = new StringBuilder(line.length());
+            int copied = 0;
+            Matcher assignment = SET_ASSIGNMENT.matcher(line);
+            while (assignment.find()) {
+                String variable = assignment.group(1) == null ? "" : assignment.group(1).toLowerCase(Locale.ROOT);
+                String value = assignment.group(2) == null ? "" : assignment.group(2).toLowerCase(Locale.ROOT);
+                if (variable.contains("sql_mode")) {
+                    boolean known = variable.startsWith("@") ? "@@sql_mode".equals(value)
+                            : value.startsWith("'") ? !MODE_DEPENDENT_QUOTES.matcher(value).find()
+                            : value.startsWith("@") && !value.startsWith("@@") && value.contains("sql_mode");
+                    if (!known) {
+                        return null;
+                    }
+                } else if (variable.contains("collation_") && value.equalsIgnoreCase(collation)) {
+                    result.append(line, copied, assignment.start(2)).append(replacement);
+                    copied = assignment.end(2);
+                    lineCount++;
+                }
             }
-            outBuffer[outLen++] = ch;
+            return result.append(line, copied, line.length()).toString();
         }
 
-        private void write(CharSequence s) throws IOException {
-            for (int i = 0; i < s.length(); i++) {
-                write(s.charAt(i));
+        /**
+         * Any other line of SQL: the collation is replaced after COLLATE, outside of strings, identifiers and comments.
+         */
+        private String sql(String line) {
+            if (SESSION_VARIABLE.matcher(line).find()) {
+                // sql_mode or a collation variable outside of a SET statement as mysqldump writes it
+                return null;
             }
+            // the line with strings and identifiers blanked out by \0 and comments by spaces
+            char[] code = line.toCharArray();
+            int lastCode = -1;
+            int i = 0;
+            while (i < code.length) {
+                char c = code[i];
+                char next = i + 1 < code.length ? code[i + 1] : ' ';
+                if (c == '\'' || c == '"' || c == '`') {
+                    int close = closingQuote(line, i);
+                    int commentEnd = line.indexOf("*/", i);
+                    if (close < 0 || (executableComment && commentEnd >= 0 && commentEnd < close)) {
+                        // continues on the next line, or ends a comment for servers that ignore the executable comment
+                        return null;
+                    }
+                    Arrays.fill(code, i, close + 1, '\0');
+                    lastCode = c;
+                    i = close + 1;
+                } else if (c == '#' || (c == '-' && next == '-' && (i + 2 == code.length || code[i + 2] <= ' '))) {
+                    if (executableComment) {
+                        return null;
+                    }
+                    Arrays.fill(code, i, code.length, ' ');
+                    break;
+                } else if (c == '/' && next == '*') {
+                    if (executableComment) {
+                        return null;
+                    }
+                    int marker = line.startsWith("/*!", i) ? 3 : line.startsWith("/*M!", i) ? 4 : 0;
+                    int close = marker > 0 ? i + marker : line.indexOf("*/", i + 2) + 2;
+                    if (close < 2) {
+                        return null;
+                    }
+                    executableComment = marker > 0;
+                    Arrays.fill(code, i, close, ' ');
+                    i = close;
+                } else if (c == '*' && next == '/' && executableComment) {
+                    executableComment = false;
+                    Arrays.fill(code, i, i + 2, ' ');
+                    i += 2;
+                } else {
+                    if (c > ' ') {
+                        lastCode = c;
+                    }
+                    i++;
+                }
+            }
+            if (executableComment) {
+                statementStart = false;
+            } else if (lastCode >= 0) {
+                statementStart = lastCode == ';';
+            }
+            StringBuilder result = new StringBuilder(line.length());
+            int copied = 0;
+            Matcher m = collate.matcher(new String(code));
+            while (m.find()) {
+                int before = m.start() - 1;
+                while (before >= 0 && Character.isWhitespace(code[before])) {
+                    before--;
+                }
+                if (before >= 0 && code[before] == '.') {
+                    // a column named collate (t.collate), not the keyword
+                    continue;
+                }
+                result.append(line, copied, m.start(1)).append(replacement);
+                copied = m.end(1);
+                lineCount++;
+            }
+            return result.append(line, copied, line.length()).toString();
         }
 
-        private void flush() throws IOException {
-            out.write(outBuffer, 0, outLen);
-            outLen = 0;
+        /**
+         * @return the index of the quote that ends the string or identifier starting at start, -1 if there is none in
+         * this line
+         */
+        private static int closingQuote(String line, int start) {
+            char quote = line.charAt(start);
+            for (int i = start + 1; i < line.length(); i++) {
+                char c = line.charAt(i);
+                if (c == '\\' && quote != '`') {
+                    i++;
+                } else if (c == quote) {
+                    if (i + 1 < line.length() && line.charAt(i + 1) == quote) {
+                        i++;
+                    } else {
+                        return i;
+                    }
+                }
+            }
+            return -1;
         }
     }
-
 }

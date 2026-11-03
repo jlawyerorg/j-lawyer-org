@@ -662,20 +662,16 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.test.backupmgr;
 
-import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.Reader;
-import java.io.Writer;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.attribute.PosixFilePermissions;
-import java.util.Arrays;
 import org.jlawyer.backupmgr.impl.SqlDumpUtils;
 import org.junit.Rule;
 import org.junit.Test;
@@ -693,52 +689,164 @@ public class SqlDumpUtilsTest {
 
     private static final String TABLE = "CREATE TABLE `cases` (\n  `id` varchar(50) COLLATE utf8mb4_0900_ai_ci NOT NULL\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;\n";
 
+    /**
+     * Parts of a dump as mysqldump of MySQL 8.0 writes it: header, a table with data, a trigger, a view and the
+     * trailer. {C} and {U} mark where the collation has to be replaced, everywhere else it must stay.
+     */
+    private static final String DUMP = "-- MySQL dump 10.13  Distrib 8.0.36, for Linux (x86_64)\n"
+            + "--\n"
+            + "-- Server version\t8.0.36\n"
+            + "\n"
+            + "/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;\n"
+            + "/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;\n"
+            + "/*!50503 SET NAMES utf8mb4 */;\n"
+            + "/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;\n"
+            + "/*!40103 SET TIME_ZONE='+00:00' */;\n"
+            + "/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;\n"
+            + "/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;\n"
+            + "\n"
+            + "DROP TABLE IF EXISTS `notes`;\n"
+            + "/*!40101 SET @saved_cs_client     = @@character_set_client */;\n"
+            + "/*!50503 SET character_set_client = utf8mb4 */;\n"
+            + "CREATE TABLE `notes` (\n"
+            + "  `id` int NOT NULL,\n"
+            + "  `a` varchar(50) CHARACTER SET utf8mb4 COLLATE {C} DEFAULT 'it''s \\\\ \"x\" -- # /*',\n"
+            + "  `b` enum('x','y') COLLATE {U} DEFAULT NULL COMMENT 'Kollation, siehe `a`',\n"
+            + "  PRIMARY KEY (`id`)\n"
+            + ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE={C};\n"
+            + "/*!40101 SET character_set_client = @saved_cs_client */;\n"
+            + "LOCK TABLES `notes` WRITE;\n"
+            + "/*!40000 ALTER TABLE `notes` DISABLE KEYS */;\n"
+            + "INSERT INTO `notes` VALUES (1,'it\\'s COLLATE utf8mb4_0900_ai_ci','x'),(2,'SET collation_connection = utf8mb4_0900_ai_ci;\\nDELIMITER ;;','y');\n"
+            // mysqldump of MariaDB writes one row per line
+            + "INSERT INTO `notes` VALUES\n"
+            + "(3,'COLLATE=utf8mb4_0900_ai_ci;','x'),\n"
+            + "(4,'*/ \\';','y');\n"
+            + "/*!40000 ALTER TABLE `notes` ENABLE KEYS */;\n"
+            + "UNLOCK TABLES;\n"
+            + "/*!50003 SET @saved_cs_client      = @@character_set_client */ ;\n"
+            + "/*!50003 SET @saved_col_connection = @@collation_connection */ ;\n"
+            + "/*!50003 SET collation_connection  = {C} */ ;\n"
+            + "/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;\n"
+            + "/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;\n"
+            + "DELIMITER ;;\n"
+            + "/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `notes_bi` BEFORE INSERT ON `notes` FOR EACH ROW BEGIN\n"
+            + "  SET NEW.a = 'it''s\n"
+            + "COLLATE';\n"
+            + "END */;;\n"
+            + "DELIMITER ;\n"
+            + "/*!50003 SET sql_mode              = @saved_sql_mode */ ;\n"
+            + "/*!50003 SET collation_connection  = @saved_col_connection */ ;\n"
+            + "/*!50001 DROP VIEW IF EXISTS `v`*/;\n"
+            + "/*!50001 SET @saved_col_connection     = @@collation_connection */;\n"
+            + "/*!50001 SET collation_connection      = {C} */;\n"
+            + "/*!50001 CREATE ALGORITHM=UNDEFINED */\n"
+            + "/*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */\n"
+            + "/*!50001 VIEW `v` AS select `notes`.`a` collate {C} AS `a`,_utf8mb4'it\\'s' AS `b` from `notes` */;\n"
+            + "/*!50001 SET collation_connection      = @saved_col_connection */;\n"
+            + "/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;\n"
+            + "/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;\n"
+            + "\n"
+            + "-- Dump completed on 2026-11-03 12:00:00\n";
+
+    private static final String ORIGINAL = DUMP.replace("{C}", SqlDumpUtils.MYSQL8_DEFAULT_COLLATION).replace("{U}", SqlDumpUtils.MYSQL8_DEFAULT_COLLATION.toUpperCase());
+    private static final String EXPECTED = DUMP.replace("{C}", SqlDumpUtils.PORTABLE_COLLATION).replace("{U}", SqlDumpUtils.PORTABLE_COLLATION);
+
     private File write(String name, byte[] content) throws Exception {
         File f = tmp.newFile(name);
         Files.write(f.toPath(), content);
         return f;
     }
 
-    private static long replace(File dump) throws Exception {
-        return SqlDumpUtils.replaceCollation(dump, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION, SqlDumpUtils.PORTABLE_COLLATION);
+    private File copy;
+
+    private long replace(File dump) throws Exception {
+        copy = new File(tmp.getRoot(), dump.getName() + ".copy");
+        return SqlDumpUtils.writeWithReplacedCollation(dump, copy, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION, SqlDumpUtils.PORTABLE_COLLATION);
+    }
+
+    /**
+     * Returns at most chunk characters per read, so that every position is at the end of a block once.
+     */
+    private static Reader chunked(String s, int chunk) {
+        return new StringReader(s) {
+            @Override
+            public int read(char[] cbuf, int off, int len) throws IOException {
+                return super.read(cbuf, off, Math.min(len, chunk));
+            }
+        };
     }
 
     @Test
-    public void testCollationIsReplacedInStatements() throws Exception {
-        String dump = TABLE + "/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;\n";
-        File f = write("jlawyerdb-dump.sql", dump.getBytes(StandardCharsets.UTF_8));
-        assertEquals(3, replace(f));
-        assertEquals(dump.replace("utf8mb4_0900_ai_ci", "utf8mb4_unicode_ci"), new String(Files.readAllBytes(f.toPath()), StandardCharsets.UTF_8));
-        assertFalse(new File(f.getAbsolutePath() + ".tmp").exists());
-    }
-
-    @Test
-    public void testDataIsNotChanged() throws Exception {
-        // a note that mentions the collation, also in a COLLATE clause, must be restored as it was stored
-        String data = "INSERT INTO `case_notes` VALUES ('1','Kollation utf8mb4_0900_ai_ci, siehe COLLATE utf8mb4_0900_ai_ci');\n"
-                + "REPLACE INTO `case_notes` VALUES ('2','COLLATE=utf8mb4_0900_ai_ci');\n";
-        File f = write("jlawyerdb-dump.sql", (TABLE + data).getBytes(StandardCharsets.UTF_8));
-        assertEquals(2, replace(f));
-        assertEquals(TABLE.replace("utf8mb4_0900_ai_ci", "utf8mb4_unicode_ci") + data, new String(Files.readAllBytes(f.toPath()), StandardCharsets.UTF_8));
-    }
-
-    @Test
-    public void testOccurrenceAcrossBufferBoundary() throws Exception {
-        // the file is read in blocks of 64k characters - put the collation across every position of a block boundary
-        String prefix = "COLLATE=";
-        int length = SqlDumpUtils.MYSQL8_DEFAULT_COLLATION.length();
-        for (int before = 1; before < length; before++) {
-            char[] filler = new char[64 * 1024 - prefix.length() - before];
-            Arrays.fill(filler, 'x');
-            // like "... DEFAULT CHARSET=utf8mb4 COLLATE=..." in a real dump
-            filler[filler.length - 1] = ' ';
-            String content = new String(filler) + prefix + SqlDumpUtils.MYSQL8_DEFAULT_COLLATION + ";\n";
-            // the block boundary is "before" characters into the collation name
-            assertEquals(SqlDumpUtils.MYSQL8_DEFAULT_COLLATION.substring(0, before), content.substring(64 * 1024 - before, 64 * 1024));
-            File f = write("dump" + before + ".sql", content.getBytes(StandardCharsets.ISO_8859_1));
-            assertEquals(1, replace(f));
-            assertEquals(new String(filler) + prefix + SqlDumpUtils.PORTABLE_COLLATION + ";\n", new String(Files.readAllBytes(f.toPath()), StandardCharsets.ISO_8859_1));
+    public void testMysqldumpDump() throws Exception {
+        File f = write("jlawyerdb-dump.sql", ORIGINAL.getBytes(StandardCharsets.UTF_8));
+        assertEquals(6, replace(f));
+        assertEquals(EXPECTED, new String(Files.readAllBytes(copy.toPath()), StandardCharsets.UTF_8));
+        assertEquals(ORIGINAL, new String(Files.readAllBytes(f.toPath()), StandardCharsets.UTF_8));
+        for (int chunk = 1; chunk <= 13; chunk++) {
+            StringWriter out = new StringWriter();
+            assertEquals("chunk " + chunk, 6, SqlDumpUtils.replaceCollation(chunked(ORIGINAL, chunk), out, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION, SqlDumpUtils.PORTABLE_COLLATION));
+            assertEquals("chunk " + chunk, EXPECTED, out.toString());
         }
+    }
+
+    /**
+     * SQL that mysqldump does not write, each after a table that would otherwise be replaced: the result is uncertain
+     * and nothing is replaced.
+     */
+    private static final String[] UNCERTAIN = {
+        // sql_mode in other forms - also saved and restored through other variables or in version dependent comments
+        "SET sql_mode='';\nSET @saved=@@sql_mode;\nSET sql_mode='NO_BACKSLASH_ESCAPES';\n/*!80000 SET @saved=@@sql_mode */;\nSET sql_mode=@saved;\n"
+        + "CREATE TABLE w(\n  a VARCHAR(40) DEFAULT 'it\\'s',\n  b VARCHAR(80) DEFAULT 'COLLATE utf8mb4_0900_ai_ci \\'x'\n) COLLATE=utf8mb4_0900_ai_ci;\n",
+        "SET @m = @@sql_mode;\nSET sql_mode = @m;\n",
+        "SET @saved_sql_mode = 'ANSI_QUOTES';\n",
+        "SET sql_mode='ANSI_' 'QUOTES';\nSELECT \"a\\\", \"x'\", 'COLLATE utf8mb4_0900_ai_ci \\'x' FROM t;\n",
+        "SET `sql_mode`='ANSI_QUOTES';\n",
+        "SET/**/sql_mode='ANSI_QUOTES';\n",
+        "SET sql_mode='ANSI_QUOTES';\nCREATE TABLE t(a INT)\n  DEFAULT CHARSET=utf8mb4 COLLATE=UTF8MB4_0900_AI_CI;\n",
+        // collation variables that are columns
+        "CREATE VIEW v AS\n  SELECT collation_connection = utf8mb4_0900_ai_ci AS same_value\n  FROM t;\n",
+        "UPDATE t SET collation_connection = utf8mb4_0900_ai_ci;\n",
+        "UPDATE t SET t.                     collation_connection = utf8mb4_0900_ai_ci;\n",
+        "UPDATE t\n/*!50001 SET collation_connection = utf8mb4_0900_ai_ci */;\n",
+        // the collation where it is not replaced
+        "CREATE TABLE x (a varchar(20) DEFAULT 'utf8mb4_0900_ai_ci');\n",
+        "/* COLLATE utf8mb4_0900_ai_ci */\n",
+        "-- utf8mb4_0900_ai_ci\n",
+        "CREATE TABLE `utf8mb4_0900_ai_ci` (a int);\n",
+        "SELECT t.collate utf8mb4_0900_ai_ci FROM t;\n",
+        "SET @c = 'utf8mb4_0900_ai_ci';\n",
+        "REPLACE INTO t VALUES ('utf8mb4_0900_ai_ci');\n",
+        "DELIMITER ;;\nCREATE TRIGGER x BEFORE INSERT ON t FOR EACH ROW SET NEW.a = 'COLLATE utf8mb4_0900_ai_ci';;\nDELIMITER ;\n",
+        // strings, comments and data that do not end where mysqldump ends them
+        "SELECT 'a\nb' COLLATE utf8mb4_0900_ai_ci;\n",
+        "/* a\n*/ SELECT 1;\n",
+        "/*!80000 ' */ 'COLLATE utf8mb4_0900_ai_ci' /*!80000 ' */;\n",
+        "INSERT INTO t VALUES\n(1,'a'),\n",
+        "INSERT INTO t VALUES ('abc"
+    };
+
+    @Test
+    public void testOtherSqlIsNotReplaced() throws Exception {
+        for (int i = 0; i < UNCERTAIN.length; i++) {
+            byte[] content = (TABLE + UNCERTAIN[i]).getBytes(StandardCharsets.UTF_8);
+            File f = write("dump" + i + ".sql", content);
+            assertEquals(UNCERTAIN[i], -1, SqlDumpUtils.countCollationUsages(f, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION));
+            assertEquals(UNCERTAIN[i], 0, replace(f));
+            assertFalse(UNCERTAIN[i], copy.exists());
+        }
+    }
+
+    @Test
+    public void testContainsTextIgnoresCase() throws Exception {
+        StringBuilder sb = new StringBuilder();
+        while (sb.length() < 64 * 1024 - 5) {
+            sb.append('x');
+        }
+        // across the boundary of the read blocks
+        File f = write("big.sql", (sb + "COLLATE=UTF8MB4_0900_AI_CI;\n").getBytes(StandardCharsets.ISO_8859_1));
+        assertTrue(SqlDumpUtils.containsText(f, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION));
+        assertFalse(SqlDumpUtils.containsText(f, SqlDumpUtils.PORTABLE_COLLATION));
     }
 
     /**
@@ -747,31 +855,12 @@ public class SqlDumpUtilsTest {
     private static byte[] mysqldumpEscape(byte[] value) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         for (byte b : value) {
-            switch (b) {
-                case 0:
-                    out.write('\\');
-                    out.write('0');
-                    break;
-                case '\n':
-                    out.write('\\');
-                    out.write('n');
-                    break;
-                case '\r':
-                    out.write('\\');
-                    out.write('r');
-                    break;
-                case 0x1a:
-                    out.write('\\');
-                    out.write('Z');
-                    break;
-                case '\\':
-                case '\'':
-                case '"':
-                    out.write('\\');
-                    out.write(b);
-                    break;
-                default:
-                    out.write(b);
+            int i = "\0\n\r\u001a\\'\"".indexOf((char) (b & 0xff));
+            if (i >= 0) {
+                out.write('\\');
+                out.write("0nrZ\\'\"".charAt(i));
+            } else {
+                out.write(b);
             }
         }
         return out.toByteArray();
@@ -799,331 +888,7 @@ public class SqlDumpUtilsTest {
         expected.write("-- Müller\r\nCREATE TABLE x (a int) COLLATE utf8mb4_unicode_ci;\r\n".getBytes(StandardCharsets.UTF_8));
         File f = write("jlawyerdb-dump.sql", content.toByteArray());
         assertEquals(1, replace(f));
-        assertArrayEquals(expected.toByteArray(), Files.readAllBytes(f.toPath()));
-    }
-
-    /**
-     * A table, a view and a trigger setting as mysqldump writes them, with the collation also in quoted values,
-     * identifiers and comments.
-     */
-    private static final String STATEMENTS = "CREATE TABLE `notes` (\n"
-            + "  `a` varchar(50) COLLATE utf8mb4_0900_ai_ci DEFAULT 'COLLATE utf8mb4_0900_ai_ci',\n"
-            + "  `b` varchar(50) COLLATE utf8mb4_0900_ai_ci DEFAULT 'it\\'s COLLATE=utf8mb4_0900_ai_ci' COMMENT 'collation_connection = utf8mb4_0900_ai_ci',\n"
-            + "  `c` varchar(50) DEFAULT 'it''s COLLATE utf8mb4_0900_ai_ci \\\\',\n"
-            + "  `COLLATE utf8mb4_0900_ai_ci` int DEFAULT NULL\n"
-            + ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='siehe COLLATE utf8mb4_0900_ai_ci';\n"
-            + "/* COLLATE utf8mb4_0900_ai_ci */\n"
-            + "-- COLLATE utf8mb4_0900_ai_ci\n"
-            + "# COLLATE utf8mb4_0900_ai_ci\n"
-            + "/*!50001 CREATE VIEW `v` AS select 'COLLATE utf8mb4_0900_ai_ci' AS `x`,`notes`.`a` COLLATE utf8mb4_0900_ai_ci AS `y`,\"COLLATE utf8mb4_0900_ai_ci\" AS `z` from `notes` */;\n"
-            + "/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;\n";
-
-    private static final String STATEMENTS_EXPECTED = "CREATE TABLE `notes` (\n"
-            + "  `a` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT 'COLLATE utf8mb4_0900_ai_ci',\n"
-            + "  `b` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT 'it\\'s COLLATE=utf8mb4_0900_ai_ci' COMMENT 'collation_connection = utf8mb4_0900_ai_ci',\n"
-            + "  `c` varchar(50) DEFAULT 'it''s COLLATE utf8mb4_0900_ai_ci \\\\',\n"
-            + "  `COLLATE utf8mb4_0900_ai_ci` int DEFAULT NULL\n"
-            + ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='siehe COLLATE utf8mb4_0900_ai_ci';\n"
-            + "/* COLLATE utf8mb4_0900_ai_ci */\n"
-            + "-- COLLATE utf8mb4_0900_ai_ci\n"
-            + "# COLLATE utf8mb4_0900_ai_ci\n"
-            + "/*!50001 CREATE VIEW `v` AS select 'COLLATE utf8mb4_0900_ai_ci' AS `x`,`notes`.`a` COLLATE utf8mb4_unicode_ci AS `y`,\"COLLATE utf8mb4_0900_ai_ci\" AS `z` from `notes` */;\n"
-            + "/*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;\n";
-
-    @Test
-    public void testQuotedValuesAndCommentsInStatementsAreNotChanged() throws Exception {
-        File f = write("jlawyerdb-dump.sql", STATEMENTS.getBytes(StandardCharsets.UTF_8));
-        assertEquals(5, replace(f));
-        assertEquals(STATEMENTS_EXPECTED, new String(Files.readAllBytes(f.toPath()), StandardCharsets.UTF_8));
-    }
-
-    /**
-     * Returns at most chunk characters per read, so that every position is at the end of a block once.
-     */
-    private static Reader chunked(String s, int chunk) {
-        return new StringReader(s) {
-            @Override
-            public int read(char[] cbuf, int off, int len) throws IOException {
-                return super.read(cbuf, off, Math.min(len, chunk));
-            }
-        };
-    }
-
-    @Test
-    public void testAnyBlockBoundary() throws Exception {
-        for (int chunk = 1; chunk <= 7; chunk++) {
-            StringWriter out = new StringWriter();
-            assertEquals("chunk " + chunk, 5, SqlDumpUtils.replaceCollation(chunked(STATEMENTS, chunk), out, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION, SqlDumpUtils.PORTABLE_COLLATION));
-            assertEquals("chunk " + chunk, STATEMENTS_EXPECTED, out.toString());
-        }
-    }
-
-    @Test
-    public void testLargeRowIsStreamed() throws Exception {
-        // a row with a large value, as a single line - its length must not matter
-        StringBuilder value = new StringBuilder("COLLATE utf8mb4_0900_ai_ci ");
-        while (value.length() < 16 * 1024 * 1024) {
-            value.append("Lorem ipsum dolor sit amet, \\'consetetur\\' sadipscing elitr ");
-        }
-        value.append("COLLATE=utf8mb4_0900_ai_ci");
-        String data = "INSERT INTO `case_documents` VALUES ('1','" + value + "');\n";
-        File f = write("jlawyerdb-dump.sql", (data + TABLE).getBytes(StandardCharsets.ISO_8859_1));
-        assertEquals(2, replace(f));
-        assertEquals(data + TABLE.replace("utf8mb4_0900_ai_ci", "utf8mb4_unicode_ci"), new String(Files.readAllBytes(f.toPath()), StandardCharsets.ISO_8859_1));
-    }
-
-    /**
-     * A table, a trigger and another table as mysqldump writes them: the trigger was created with NO_BACKSLASH_ESCAPES,
-     * so its definition contains '\' as a string of one backslash. mysqldump sets the trigger's sql_mode before it and
-     * restores the saved one afterwards.
-     */
-    private static final String TRIGGER_DUMP = "CREATE TABLE `t` (`a` varchar(10) COLLATE utf8mb4_0900_ai_ci DEFAULT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;\n"
-            + "/*!50003 SET @saved_cs_client      = @@character_set_client */ ;\n"
-            + "/*!50003 SET @saved_col_connection = @@collation_connection */ ;\n"
-            + "/*!50003 SET character_set_client  = utf8mb4 */ ;\n"
-            + "/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;\n"
-            + "/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;\n"
-            + "/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,NO_BACKSLASH_ESCAPES,NO_ENGINE_SUBSTITUTION' */ ;\n"
-            + "DELIMITER ;;\n"
-            + "/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `t_bi` BEFORE INSERT ON `t` FOR EACH ROW SET NEW.a = CONCAT('\\', 'COLLATE utf8mb4_0900_ai_ci') */;;\n"
-            + "DELIMITER ;\n"
-            + "/*!50003 SET sql_mode              = @saved_sql_mode */ ;\n"
-            + "/*!50003 SET character_set_client  = @saved_cs_client */ ;\n"
-            + "/*!50003 SET collation_connection  = @saved_col_connection */ ;\n"
-            + "CREATE TABLE `u` (`b` varchar(10) COLLATE utf8mb4_0900_ai_ci DEFAULT 'it\\'s') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;\n";
-
-    @Test
-    public void testTriggerWithNoBackslashEscapes() throws Exception {
-        String expected = TRIGGER_DUMP.replace("COLLATE utf8mb4_0900_ai_ci DEFAULT", "COLLATE utf8mb4_unicode_ci DEFAULT")
-                .replace("COLLATE=utf8mb4_0900_ai_ci;", "COLLATE=utf8mb4_unicode_ci;")
-                .replace("collation_connection  = utf8mb4_0900_ai_ci", "collation_connection  = utf8mb4_unicode_ci");
-        // the trigger itself stays as it is
-        assertTrue(expected.contains("CONCAT('\\', 'COLLATE utf8mb4_0900_ai_ci')"));
-        File f = write("jlawyerdb-dump.sql", TRIGGER_DUMP.getBytes(StandardCharsets.UTF_8));
-        assertEquals(5, replace(f));
-        assertEquals(expected, new String(Files.readAllBytes(f.toPath()), StandardCharsets.UTF_8));
-        for (int chunk = 1; chunk <= 3; chunk++) {
-            StringWriter out = new StringWriter();
-            assertEquals(5, SqlDumpUtils.replaceCollation(chunked(TRIGGER_DUMP, chunk), out, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION, SqlDumpUtils.PORTABLE_COLLATION));
-            assertEquals(expected, out.toString());
-        }
-    }
-
-    private static final String TABLE_T = "CREATE TABLE `t` (`a` varchar(100) COLLATE utf8mb4_0900_ai_ci DEFAULT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;\n";
-    private static final String TABLE_U = "CREATE TABLE `u` (`b` varchar(10) DEFAULT 'it\\'s') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;\n";
-
-    private static String replaced(String sql) {
-        return sql.replace("COLLATE utf8mb4_0900_ai_ci DEFAULT", "COLLATE utf8mb4_unicode_ci DEFAULT").replace("COLLATE=utf8mb4_0900_ai_ci;", "COLLATE=utf8mb4_unicode_ci;");
-    }
-
-    /**
-     * A stored program as mysqldump writes it: its sql_mode is set before, its body is one statement up to the
-     * delimiter ;; and is not executed when it is created, the saved sql_mode is restored after.
-     */
-    private static String storedProgram(String mode, String definition) {
-        return "/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;\n"
-                + "/*!50003 SET sql_mode              = '" + mode + "' */ ;\n"
-                + "DELIMITER ;;\n"
-                + definition
-                + "DELIMITER ;\n"
-                + "/*!50003 SET sql_mode              = @saved_sql_mode */ ;\n";
-    }
-
-    private static void assertOnlyTablesReplaced(String dump, int expected) throws Exception {
-        String result = replaced(dump);
-        for (int chunk = 1; chunk <= 64 * 1024; chunk *= 8) {
-            StringWriter out = new StringWriter();
-            assertEquals("chunk " + chunk, expected, SqlDumpUtils.replaceCollation(chunked(dump, chunk), out, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION, SqlDumpUtils.PORTABLE_COLLATION));
-            assertEquals("chunk " + chunk, result, out.toString());
-        }
-    }
-
-    @Test
-    public void testSetInProcedureBodyDoesNotChangeTheMode() throws Exception {
-        // the SET sql_mode in the body runs when the procedure is called, not when it is created - the literals after
-        // it are read with backslash escapes, like the server does when creating the procedure
-        String body = "CREATE DEFINER=`root`@`localhost` PROCEDURE `p`()\n"
-                + "BEGIN\n"
-                + "  SET @dummy = 1;\n"
-                + "  SET sql_mode = 'NO_BACKSLASH_ESCAPES';\n"
-                + "  SELECT 'it\\'s COLLATE utf8mb4_0900_ai_ci',\n"
-                + "         'it\\'s COLLATE utf8mb4_0900_ai_ci';\n"
-                + "END ;;\n";
-        assertOnlyTablesReplaced(TABLE_T + storedProgram("", body) + TABLE_U, 3);
-        // with a single literal the dump must not be taken for incomplete
-        assertOnlyTablesReplaced(TABLE_T + storedProgram("", body.replace(",\n         'it\\'s COLLATE utf8mb4_0900_ai_ci'", "")) + TABLE_U, 3);
-    }
-
-    @Test
-    public void testCompoundTriggerAssigningAColumnNamedSqlMode() throws Exception {
-        String trigger = "/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `t_bi` BEFORE INSERT ON `t` FOR EACH ROW BEGIN\n"
-                + "  SET NEW.a = 'x';\n"
-                + "  SET NEW.sql_mode = 'NO_BACKSLASH_ESCAPES';\n"
-                + "  SET NEW.a = CONCAT('it\\'s COLLATE utf8mb4_0900_ai_ci',\n"
-                + "                     'it\\'s COLLATE utf8mb4_0900_ai_ci');\n"
-                + "END */;;\n";
-        assertOnlyTablesReplaced(TABLE_T + storedProgram("", trigger) + TABLE_U, 3);
-    }
-
-    @Test
-    public void testOtherDelimiter() throws Exception {
-        String dump = TABLE_T
-                + "DELIMITER $$\n"
-                + "CREATE PROCEDURE `q`() BEGIN SET @d = 1; SET sql_mode = 'NO_BACKSLASH_ESCAPES'; SELECT 'a\\'b COLLATE utf8mb4_0900_ai_ci', 'a\\'b COLLATE utf8mb4_0900_ai_ci'; END $$\n"
-                + "DELIMITER ;\n"
-                + TABLE_U;
-        assertOnlyTablesReplaced(dump, 3);
-    }
-
-    private static long replace(String sql) throws Exception {
-        return SqlDumpUtils.replaceCollation(new StringReader(sql), new StringWriter(), SqlDumpUtils.MYSQL8_DEFAULT_COLLATION, SqlDumpUtils.PORTABLE_COLLATION);
-    }
-
-    private static String replaced(String sql, long expected) throws Exception {
-        StringWriter out = new StringWriter();
-        assertEquals(expected, SqlDumpUtils.replaceCollation(new StringReader(sql), out, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION, SqlDumpUtils.PORTABLE_COLLATION));
-        return out.toString();
-    }
-
-    @Test
-    public void testUnterminatedExecutableCommentAtTheEnd() throws Exception {
-        // a truncated dump - not complete, nothing is replaced
-        assertEquals(-1, replace(TABLE + "/*!50001 CREATE VIEW `v` AS select 1 AS `a`"));
-        byte[] content = (TABLE + "/*!40101 SET character_set_client = utf8mb4").getBytes(StandardCharsets.UTF_8);
-        File f = write("jlawyerdb-dump.sql", content);
-        assertEquals(0, replace(f));
-        assertArrayEquals(content, Files.readAllBytes(f.toPath()));
-    }
-
-    @Test
-    public void testOnlyCollationSystemVariablesAreReplaced() throws Exception {
-        String sql = "/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;\n"
-                + "SET @@session.collation_connection = utf8mb4_0900_ai_ci, GLOBAL collation_server=utf8mb4_0900_ai_ci;\n"
-                + "SET @@global.collation_database := utf8mb4_0900_ai_ci;\n"
-                // a user variable, a column and a local variable that happen to be called like the collation
-                + "SET @my_collation = utf8mb4_0900_ai_ci;\n"
-                + "DELIMITER ;;\n"
-                + "CREATE TRIGGER `t_bi` BEFORE INSERT ON `t` FOR EACH ROW BEGIN DECLARE utf8mb4_0900_ai_ci VARCHAR(10) DEFAULT 'x'; SET NEW.collation = utf8mb4_0900_ai_ci; SET NEW.connection_collation = utf8mb4_0900_ai_ci; END ;;\n"
-                + "DELIMITER ;\n";
-        String expected = sql.replace("collation_connection  = utf8mb4_0900_ai_ci", "collation_connection  = utf8mb4_unicode_ci")
-                .replace("collation_connection = utf8mb4_0900_ai_ci", "collation_connection = utf8mb4_unicode_ci")
-                .replace("collation_server=utf8mb4_0900_ai_ci", "collation_server=utf8mb4_unicode_ci")
-                .replace("collation_database := utf8mb4_0900_ai_ci", "collation_database := utf8mb4_unicode_ci");
-        assertEquals(expected, replaced(sql, 4));
-    }
-
-    @Test
-    public void testCommentBetweenCollateAndName() throws Exception {
-        String sql = "CREATE TABLE `t` (`a` varchar(10) COLLATE /* MySQL 8 */ utf8mb4_0900_ai_ci,\n"
-                + "  `b` varchar(10) COLLATE -- MySQL 8\n utf8mb4_0900_ai_ci,\n"
-                + "  `c` varchar(10) COLLATE # utf8mb4_0900_ai_ci\n utf8mb4_0900_ai_ci) COLLATE=utf8mb4_0900_ai_ci;\n";
-        String expected = sql.replace("*/ utf8mb4_0900_ai_ci", "*/ utf8mb4_unicode_ci").replace("8\n utf8mb4_0900_ai_ci", "8\n utf8mb4_unicode_ci")
-                .replace("ci\n utf8mb4_0900_ai_ci)", "ci\n utf8mb4_unicode_ci)").replace("COLLATE=utf8mb4_0900_ai_ci", "COLLATE=utf8mb4_unicode_ci");
-        // the comment itself is not changed
-        assertTrue(expected.contains("# utf8mb4_0900_ai_ci\n"));
-        assertEquals(expected, replaced(sql, 4));
-    }
-
-    @Test
-    public void testSqlModeTheTargetMayIgnore() throws Exception {
-        // MariaDB ignores executable comments for MySQL 5.7.0 and later, MySQL ignores the ones for MariaDB - whether
-        // backslashes escape is not known after these, so nothing is replaced
-        // with backslash escapes the literals below are "it's" and "COLLATE utf8mb4_0900_ai_ci 'x", without them the
-        // collation in the second literal would look like SQL
-        String table = "CREATE TABLE `w` (`b` varchar(40) DEFAULT 'it\\'s', `c` varchar(40) DEFAULT 'COLLATE utf8mb4_0900_ai_ci \\'x') COLLATE=utf8mb4_0900_ai_ci;\n";
-        for (String guard : new String[]{"/*!80000", "/*!50700", "/*M!100100"}) {
-            String sql = guard + " SET sql_mode = 'NO_BACKSLASH_ESCAPES' */;\n" + table;
-            assertEquals(guard, -1, replace(sql));
-            File f = write("dump" + guard.length() + guard.charAt(3) + ".sql", sql.getBytes(StandardCharsets.UTF_8));
-            assertEquals(guard, 0, replace(f));
-            assertEquals(guard, sql, new String(Files.readAllBytes(f.toPath()), StandardCharsets.UTF_8));
-        }
-        // executed by every server that lacks the collation, as mysqldump writes it
-        assertEquals(1, replace("/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;\n" + table));
-    }
-
-    @Test
-    public void testVersionGuardedAssignmentWithinAStatement() throws Exception {
-        // only the assignment is in a comment MariaDB ignores, not the start of the statement
-        String sql = "SET @dummy=1 /*!80000 , sql_mode='NO_BACKSLASH_ESCAPES' */;\n"
-                + "CREATE TABLE w(a VARCHAR(40) DEFAULT 'it\\'s', b VARCHAR(80) DEFAULT 'COLLATE utf8mb4_0900_ai_ci \\'x') COLLATE=utf8mb4_0900_ai_ci;\n";
-        assertEquals(-1, replace(sql));
-        assertEquals(-1, replace("SET @dummy=1 /*M!100100 , sql_mode='NO_BACKSLASH_ESCAPES' */;\n" + TABLE_U));
-    }
-
-    @Test
-    public void testAnsiQuotesIsNotFollowed() throws Exception {
-        // with ANSI_QUOTES, "a\" is an identifier - not followed, nothing is replaced
-        assertEquals(-1, replace("SET sql_mode='ANSI_QUOTES';\nSELECT \"a\\\", \"x'\", 'COLLATE utf8mb4_0900_ai_ci \\'x' FROM t;\n" + TABLE_U));
-        assertEquals(-1, replace(storedProgram("ANSI,NO_ENGINE_SUBSTITUTION", "CREATE TRIGGER `t_bi` BEFORE INSERT ON `t` FOR EACH ROW SET NEW.\"a\\\" = 'COLLATE utf8mb4_0900_ai_ci \\'x' ;;\n") + TABLE_U));
-        assertEquals(-1, replace("/*!40101 SET SQL_MODE='POSTGRESQL' */;\n" + TABLE_U));
-    }
-
-    @Test
-    public void testSqlModeValuesThatAreNotUnderstood() throws Exception {
-        assertEquals(-1, replace("SET sql_mode = CONCAT(@@sql_mode, ',NO_BACKSLASH_ESCAPES');\n" + TABLE_U));
-        assertEquals(-1, replace("SET sql_mode = @never_saved;\n" + TABLE_U));
-        // a change of the global mode does not change the session
-        assertEquals(1, replace("SET GLOBAL sql_mode = 'NO_BACKSLASH_ESCAPES';\n" + TABLE_U));
-    }
-
-    @Test
-    public void testCollationVariablesInStoredProgramBodies() throws Exception {
-        // a local variable named like the system variable, and a column - the target is not known, nothing is replaced
-        assertEquals(-1, replace(storedProgram("", "CREATE PROCEDURE `p`() BEGIN DECLARE collation_connection VARCHAR(40) DEFAULT 'x'; DECLARE utf8mb4_0900_ai_ci VARCHAR(40) DEFAULT 'y'; SET collation_connection = utf8mb4_0900_ai_ci; END ;;\n") + TABLE_U));
-        // a column of the new row, also with a space after the dot - not changed, only the table after it
-        String trigger = storedProgram("", "/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `t_bi` BEFORE INSERT ON `t` FOR EACH ROW SET NEW. collation_connection = utf8mb4_0900_ai_ci */;;\n");
-        assertEquals(trigger + replaced(TABLE_U), replaced(trigger + TABLE_U, 1));
-        // COLLATE in a body is unambiguous and replaced
-        String procedure = storedProgram("", "CREATE PROCEDURE `q`() BEGIN SELECT `a` COLLATE utf8mb4_0900_ai_ci FROM `t`; END ;;\n");
-        assertEquals(procedure.replace("COLLATE utf8mb4_0900_ai_ci", "COLLATE utf8mb4_unicode_ci"), replaced(procedure, 1));
-        // a column outside of a body is not taken for the system variable either
-        assertEquals(0, replace("UPDATE `t` SET `t`. collation_connection = utf8mb4_0900_ai_ci;\n"));
-    }
-
-    @Test
-    public void testContainsText() throws Exception {
-        StringBuilder sb = new StringBuilder();
-        while (sb.length() < 64 * 1024 - 5) {
-            sb.append('x');
-        }
-        // across the boundary of the read blocks
-        File f = write("big.sql", (sb + "utf8mb4_0900_ai_ci;\n").getBytes(StandardCharsets.ISO_8859_1));
-        assertTrue(SqlDumpUtils.containsText(f, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION));
-        assertFalse(SqlDumpUtils.containsText(f, SqlDumpUtils.PORTABLE_COLLATION));
-    }
-
-    private static boolean posix(File f) {
-        return f.toPath().getFileSystem().supportedFileAttributeViews().contains("posix");
-    }
-
-    @Test
-    public void testReplacedDumpKeepsItsPermissions() throws Exception {
-        File f = write("jlawyerdb-dump.sql", TABLE.getBytes(StandardCharsets.UTF_8));
-        org.junit.Assume.assumeTrue(posix(f));
-        Files.setPosixFilePermissions(f.toPath(), PosixFilePermissions.fromString("rw-r-----"));
-        assertEquals(2, replace(f));
-        assertEquals("rw-r-----", PosixFilePermissions.toString(Files.getPosixFilePermissions(f.toPath())));
-    }
-
-    @Test
-    public void testCopyIsOnlyReadableByItsOwner() throws Exception {
-        File dump = write("jlawyerdb-dump.sql", TABLE.getBytes(StandardCharsets.UTF_8));
-        File copy = new File(tmp.getRoot(), "copy.sql");
-        assertEquals(2, SqlDumpUtils.countCollationUsages(dump, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION));
-        assertFalse(copy.exists());
-        assertEquals(2, SqlDumpUtils.writeWithReplacedCollation(dump, copy, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION, SqlDumpUtils.PORTABLE_COLLATION));
-        // the dump of the backup is not changed
-        assertEquals(TABLE, new String(Files.readAllBytes(dump.toPath()), StandardCharsets.UTF_8));
-        assertEquals(TABLE.replace("utf8mb4_0900_ai_ci", "utf8mb4_unicode_ci"), new String(Files.readAllBytes(copy.toPath()), StandardCharsets.UTF_8));
-        if (posix(copy)) {
-            assertEquals("rw-------", PosixFilePermissions.toString(Files.getPosixFilePermissions(copy.toPath())));
-        }
-        // nothing to replace - no copy
-        File other = write("other.sql", TABLE_U.replace("utf8mb4_0900_ai_ci", "utf8mb4_unicode_ci").getBytes(StandardCharsets.UTF_8));
-        File otherCopy = new File(tmp.getRoot(), "other-copy.sql");
-        assertEquals(0, SqlDumpUtils.writeWithReplacedCollation(other, otherCopy, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION, SqlDumpUtils.PORTABLE_COLLATION));
-        assertFalse(otherCopy.exists());
+        assertArrayEquals(expected.toByteArray(), Files.readAllBytes(copy.toPath()));
     }
 
     private static final String ROW_TEXT = "Lorem ipsum dolor sit amet, \\'consetetur\\' sadipscing elitr COLLATE utf8mb4_0900_ai_ci ";
@@ -1198,63 +963,25 @@ public class SqlDumpUtilsTest {
         assertTrue("read ahead of the output: " + maxAhead[0], maxAhead[0] <= 256 * 1024);
     }
 
-    /**
-     * Run in a separate JVM with little memory by {@link #testLargeRowInLittleMemory()}.
-     */
-    public static class LargeDumpMain {
+    private static boolean posix(File f) {
+        return f.toPath().getFileSystem().supportedFileAttributeViews().contains("posix");
+    }
 
-        public static void main(String[] args) throws Exception {
-            System.out.println("replaced " + SqlDumpUtils.replaceCollation(new File(args[0]), SqlDumpUtils.MYSQL8_DEFAULT_COLLATION, SqlDumpUtils.PORTABLE_COLLATION));
+    @Test
+    public void testCopyIsOnlyReadableByItsOwner() throws Exception {
+        File dump = write("jlawyerdb-dump.sql", TABLE.getBytes(StandardCharsets.UTF_8));
+        assertEquals(2, SqlDumpUtils.countCollationUsages(dump, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION));
+        assertEquals(2, replace(dump));
+        // the dump of the backup is not changed
+        assertEquals(TABLE, new String(Files.readAllBytes(dump.toPath()), StandardCharsets.UTF_8));
+        assertEquals(TABLE.replace("utf8mb4_0900_ai_ci", "utf8mb4_unicode_ci"), new String(Files.readAllBytes(copy.toPath()), StandardCharsets.UTF_8));
+        if (posix(copy)) {
+            assertEquals("rw-------", PosixFilePermissions.toString(Files.getPosixFilePermissions(copy.toPath())));
         }
-    }
-
-    @Test
-    public void testLargeRowInLittleMemory() throws Exception {
-        // a dump with a 48 MiB row, restored with 32 MiB of heap: holding the row in memory would need 96 MiB
-        File f = tmp.newFile("big-dump.sql");
-        long length;
-        try (Writer w = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f), StandardCharsets.ISO_8859_1))) {
-            w.write(TABLE);
-            w.write("INSERT INTO `case_documents` VALUES ('1','");
-            StringBuilder chunk = new StringBuilder();
-            while (chunk.length() < 64 * 1024) {
-                chunk.append(ROW_TEXT);
-            }
-            for (int i = 0; i < 768; i++) {
-                w.write(chunk.toString());
-            }
-            w.write("');\n");
-        }
-        length = f.length();
-        Process p = new ProcessBuilder(System.getProperty("java.home") + File.separator + "bin" + File.separator + "java", "-Xmx32m", "-cp", System.getProperty("java.class.path"), LargeDumpMain.class.getName(), f.getAbsolutePath())
-                .redirectErrorStream(true).start();
-        String output = new String(p.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-        assertEquals(output, 0, p.waitFor());
-        assertTrue(output, output.contains("replaced 2"));
-        // both collation names have the same length
-        assertEquals(length, f.length());
-    }
-
-    @Test
-    public void testIncompleteDumpIsUntouched() throws Exception {
-        // ends inside a string - not valid SQL, so nothing is replaced
-        byte[] content = (TABLE + "INSERT INTO `x` VALUES ('abc").getBytes(StandardCharsets.UTF_8);
-        File f = write("jlawyerdb-dump.sql", content);
-        assertEquals(0, replace(f));
-        assertArrayEquals(content, Files.readAllBytes(f.toPath()));
-        assertFalse(new File(f.getAbsolutePath() + ".tmp").exists());
-        assertEquals(-1, SqlDumpUtils.replaceCollation(new StringReader(new String(content, StandardCharsets.UTF_8)), new StringWriter(), SqlDumpUtils.MYSQL8_DEFAULT_COLLATION, SqlDumpUtils.PORTABLE_COLLATION));
-    }
-
-    @Test
-    public void testFileWithoutOccurrenceIsUntouched() throws Exception {
-        byte[] content = "CREATE TABLE `x` (`id` int) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;".getBytes(StandardCharsets.UTF_8);
-        File f = write("jlawyerdb-dump.sql", content);
-        long modified = f.lastModified();
-        assertEquals(0, replace(f));
-        assertArrayEquals(content, Files.readAllBytes(f.toPath()));
-        assertEquals(modified, f.lastModified());
-        assertFalse(new File(f.getAbsolutePath() + ".tmp").exists());
+        // nothing to replace - no copy
+        File other = write("other.sql", TABLE.replace("utf8mb4_0900_ai_ci", "utf8mb4_unicode_ci").getBytes(StandardCharsets.UTF_8));
+        assertEquals(0, replace(other));
+        assertFalse(copy.exists());
     }
 
 }

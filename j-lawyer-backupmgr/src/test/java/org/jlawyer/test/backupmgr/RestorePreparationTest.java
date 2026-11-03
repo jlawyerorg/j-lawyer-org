@@ -666,6 +666,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Random;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import org.jlawyer.backupmgr.impl.RestoreExecutor;
@@ -682,22 +683,25 @@ public class RestorePreparationTest {
     @Rule
     public TemporaryFolder tmp = new TemporaryFolder();
 
-    @Test
-    public void testDumpThatCanNotBeExtractedStopsBeforeAnythingIsDeleted() throws Exception {
+    private File backup() throws Exception {
         File backup = tmp.newFolder("backup");
         for (String dir : new String[]{"templates", "letterheads", "mastertemplates", "faxqueue", "emailtemplates", "archivefiles"}) {
             new File(backup, dir).mkdirs();
         }
-        // a valid dump archive, but writing the dump fails (like on a full disk): its name is taken by a directory
+        return backup;
+    }
+
+    private static byte[] zip(String name, byte[] content) throws Exception {
         ByteArrayOutputStream zip = new ByteArrayOutputStream();
         try (ZipOutputStream out = new ZipOutputStream(zip)) {
-            out.putNextEntry(new ZipEntry("jlawyerdb-dump.sql"));
-            out.write("CREATE TABLE `t` (`a` int) ENGINE=InnoDB;\n".getBytes(StandardCharsets.UTF_8));
+            out.putNextEntry(new ZipEntry(name));
+            out.write(content);
             out.closeEntry();
         }
-        Files.write(new File(backup, "jlawyerdb-dump.sql.zip").toPath(), zip.toByteArray());
-        new File(backup, "jlawyerdb-dump.sql").mkdirs();
+        return zip.toByteArray();
+    }
 
+    private void assertRestoreStopsBeforeAnythingIsDeleted(File backup) throws Exception {
         File data = tmp.newFolder("data");
         File document = new File(data, "archivefiles" + File.separator + "case1" + File.separator + "brief.pdf");
         document.getParentFile().mkdirs();
@@ -707,12 +711,38 @@ public class RestorePreparationTest {
         RestoreExecutor restore = new RestoreExecutor(data.getAbsolutePath(), backup.getAbsolutePath(), "", "127.0.0.1", "1", "jlawyerdb", "jlawyer", "jlawyer");
         try {
             restore.restore(null);
-            fail("the broken dump must stop the restore");
+            fail("the dump must stop the restore");
         } catch (Exception ex) {
             // expected
         }
         assertTrue("the data directory must not be touched", document.isFile());
         assertEquals("Inhalt", new String(Files.readAllBytes(document.toPath()), StandardCharsets.UTF_8));
+        for (String name : backup.list()) {
+            assertFalse("the unpacked dump must be deleted: " + name, name.startsWith("jlawyerdb-restore-"));
+        }
+    }
+
+    @Test
+    public void testDumpThatCanNotBeExtractedStopsBeforeAnythingIsDeleted() throws Exception {
+        File backup = backup();
+        // a damaged archive: the dump is only partly written when reading it fails
+        byte[] dump = new byte[256 * 1024];
+        new Random(2592).nextBytes(dump);
+        byte[] archive = zip("jlawyerdb-dump.sql", dump);
+        for (int i = archive.length / 2; i < archive.length / 2 + 16; i++) {
+            archive[i] ^= (byte) 0xff;
+        }
+        Files.write(new File(backup, "jlawyerdb-dump.sql.zip").toPath(), archive);
+        assertRestoreStopsBeforeAnythingIsDeleted(backup);
+    }
+
+    @Test
+    public void testDumpOfAnEarlierRestoreIsNotUsed() throws Exception {
+        File backup = backup();
+        // the archive of this backup holds no dump, the one in the directory is left over from an earlier restore
+        Files.write(new File(backup, "jlawyerdb-dump.sql.zip").toPath(), zip("hinweis.txt", "keine Datenbank".getBytes(StandardCharsets.UTF_8)));
+        Files.write(new File(backup, "jlawyerdb-dump.sql").toPath(), "CREATE TABLE `t` (`a` int) ENGINE=InnoDB;\n".getBytes(StandardCharsets.UTF_8));
+        assertRestoreStopsBeforeAnythingIsDeleted(backup);
     }
 
 }
