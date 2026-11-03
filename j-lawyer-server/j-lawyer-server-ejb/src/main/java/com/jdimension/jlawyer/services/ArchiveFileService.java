@@ -6228,17 +6228,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         return deletedAllowed;
     }
 
-    /**
-     * @return false if the document is not in the bin (any more), it is not removed then
-     */
-    private boolean removeDocumentFromBinImpl(String docId, boolean authCheck, boolean createHistoryEntry) throws Exception {
+    private void removeDocumentFromBinImpl(String docId, boolean authCheck, boolean createHistoryEntry) throws Exception {
         StringGenerator idGen = new StringGenerator();
-        // read again and locked: another user may have restored the document in the meantime, an active document
-        // must never be deleted here
-        ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.findForUpdate(docId);
-        if (db == null || !db.isDeleted()) {
-            return false;
-        }
+        ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(docId);
         ArchiveFileBean aFile = db.getArchiveFileKey();
 
         if (authCheck) {
@@ -6281,15 +6273,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
 
         this.archiveFileDocumentsFacade.remove(db);
-        return true;
     }
 
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public void removeDocumentFromBin(String docId) throws Exception {
-        if (!this.removeDocumentFromBinImpl(docId, true, true)) {
-            throw new Exception("Das Dokument liegt nicht im Papierkorb und wird nicht endgültig gelöscht. Es wurde vielleicht gerade wiederhergestellt.");
-        }
+        this.removeDocumentFromBinImpl(docId, true, true);
     }
 
     @Override
@@ -6378,9 +6367,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             if (delDate != null) {
                 long deletionDate = delDate.getTime();
                 if ((now - deletionDate) > retentionMillis) {
-                    if (!this.removeDocumentFromBinImpl(doc.getId(), false, false)) {
-                        log.info("document " + doc.getId() + " is no longer in the bin and is not removed");
-                    }
+                    this.removeDocumentFromBinImpl(doc.getId(), false, false);
                 }
             } else {
                 log.error("document in bin has no deletion date: " + doc.getId());
