@@ -4258,7 +4258,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 writer.write("</ul></body></html>");
             }
 
-            DataBucket bucket = DataBucketUtils.newBucket(uniqueDirName + ".zip");
+            DataBucket bucket = DataBucketUtils.newBucket(uniqueDirName + ".zip", context.getCallerPrincipal().getName());
             String zipFile = DataBucketUtils.getLocalFile(bucket);
             AdvancedHtmlExport.zipDirectory(tmpDir, zipFile);
             File zip = new File(zipFile);
@@ -4283,7 +4283,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             AdvancedHtmlExport export = new AdvancedHtmlExport(tmpDir, this, this.calendarFacade);
             exportPath = export.export(dto, null);
 
-            DataBucket bucket = DataBucketUtils.newBucket(caseId + ".zip");
+            DataBucket bucket = DataBucketUtils.newBucket(caseId + ".zip", context.getCallerPrincipal().getName());
             String zipFile = DataBucketUtils.getLocalFile(bucket);
             AdvancedHtmlExport.zipDirectory(exportPath, zipFile);
             File zip = new File(zipFile);
@@ -6605,7 +6605,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             throw new Exception("Dokument " + db.getName() + " existiert nicht!");
         }
 
-        DataBucket bucket = DataBucketUtils.newBucket(db.getName());
+        DataBucket bucket = DataBucketUtils.newBucket(db.getName(), context.getCallerPrincipal().getName());
         String bucketFile = DataBucketUtils.getLocalFile(bucket);
 
         Path srcPath = Paths.get(dstId);
