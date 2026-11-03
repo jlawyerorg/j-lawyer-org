@@ -3933,6 +3933,21 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @RolesAllowed({"readArchiveFileRole"})
     public DocumentPreview getDocumentPreview(String id, String previewType) throws Exception {
 
+        ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(id);
+        if (db == null) {
+            log.error("Document with id " + id + " does not exist");
+            throw new Exception("Dokument mit ID " + id + " existiert nicht!");
+        }
+        SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), db.getArchiveFileKey(), this.securityFacade, this.getAllowedGroups(db.getArchiveFileKey()));
+
+        return this.getDocumentPreviewImpl(id, previewType);
+    }
+
+    /**
+     * Returns a document preview without any permission check - callers must have checked case access before.
+     */
+    private DocumentPreview getDocumentPreviewImpl(String id, String previewType) throws Exception {
+
         ServerSettingsBean sb = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_STIRLINGPDF_ENDPOINT);
         StirlingPdfAPI pdfApi = null;
         if (sb != null && !ServerStringUtils.isEmpty(sb.getSettingValue())) {
@@ -6398,7 +6413,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), db.getArchiveFileKey(), this.securityFacade, this.getAllowedGroups(db.getArchiveFileKey()));
 
-        DocumentPreview preview = this.getDocumentPreview(docId, DocumentPreview.TYPE_TEXT);
+        DocumentPreview preview = this.getDocumentPreviewImpl(docId, DocumentPreview.TYPE_TEXT);
         if (preview == null || ServerStringUtils.isEmpty(preview.getText())) {
             return new ArrayList<>();
         }
