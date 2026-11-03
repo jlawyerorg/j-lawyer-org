@@ -1660,10 +1660,11 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                     byte[] data = ensureAttachmentContent(att);
                     
                     String newName = FileUtils.getNewFileName(sel, selected.toString(), true);
-                    newName=FileUtils.preserveExtension(att.getName(), newName);
+                    // null when the user cancelled the file name dialog
                     if (newName == null) {
                         return;
                     }
+                    newName=FileUtils.preserveExtension(att.getName(), newName);
 
                     DocumentMetadata attachmentMetadata = null;
                     if (this.msgContainer != null) {
