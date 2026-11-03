@@ -663,10 +663,13 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.utils.pdf;
 
 import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import org.apache.pdfbox.cos.COSArray;
@@ -708,11 +711,19 @@ public class PdfSplitUtils {
 
     /**
      * Creates a new document containing the pages fromIndex (inclusive) to toIndex (exclusive) of the source document,
-     * zero-based. Any reference from the annotations of these pages to pages outside of the part, or to annotations on
-     * those pages, is removed - otherwise saving the part writes the referenced pages (usually the whole source
-     * document) into it as well. PDFBox's Splitter already removes the direct targets of links, references via form
-     * fields shown on several pages (/Parent, /Kids), chained actions (/Next), replies (/IRT) or popups are removed
-     * here. The source document is changed by this and must stay open until the returned document has been saved.
+     * zero-based.
+     * <p>
+     * PDFBox's Splitter copies the page dictionaries, but everything they refer to (annotations, page actions, article
+     * beads, form fields, ...) still belongs to the source document. Any reference from there to a page of the source
+     * reaches the whole source page tree via /Parent, and saving the part would write all pages of the source into it.
+     * Therefore every object that is written when saving the part (everything reachable from its trailer) is checked:
+     * references to source pages that are part of the new document are redirected to their copies, references to all
+     * other source pages, to the nodes of the source page tree and to the annotations of the other pages are removed.
+     * In arrays, a removed page is replaced by null so that destination arrays keep their structure, a removed
+     * annotation (e.g. a widget of the same form field on another page) is dropped. As a safety net, any other page or
+     * page tree node that is not part of the new document is removed as well.
+     * <p>
+     * The source document is changed by this and must stay open until the returned document has been saved.
      *
      * @param source the document to take the pages from
      * @param fromIndex index of the first page, inclusive
@@ -721,21 +732,36 @@ public class PdfSplitUtils {
      * @throws IOException if the pages can not be processed
      */
     public static PDDocument extractPages(PDDocument source, int fromIndex, int toIndex) throws IOException {
-        if (fromIndex < 0 || toIndex > source.getNumberOfPages() || fromIndex >= toIndex) {
-            throw new IllegalArgumentException("Invalid page range " + fromIndex + " - " + toIndex + " for a document with " + source.getNumberOfPages() + " pages");
+        int pageCount = source.getNumberOfPages();
+        if (fromIndex < 0 || toIndex > pageCount || fromIndex >= toIndex) {
+            throw new IllegalArgumentException("Invalid page range " + fromIndex + " - " + toIndex + " for a document with " + pageCount + " pages");
         }
-        // everything that belongs to the pages outside of the part
-        Set<COSBase> outside = Collections.newSetFromMap(new IdentityHashMap<>());
-        for (int i = 0; i < source.getNumberOfPages(); i++) {
-            if (i >= fromIndex && i < toIndex) {
-                continue;
+        List<COSDictionary> keptSourcePages = new ArrayList<>();
+        Set<COSBase> keptAnnotations = identitySet();
+        List<COSDictionary> otherSourcePages = new ArrayList<>();
+        Set<COSBase> outside = identitySet();
+        int index = 0;
+        for (PDPage sourcePage : source.getPages()) {
+            COSDictionary page = sourcePage.getCOSObject();
+            // all nodes of the source page tree
+            COSBase parent = page.getDictionaryObject(COSName.PARENT);
+            while (parent instanceof COSDictionary && outside.add(parent)) {
+                parent = ((COSDictionary) parent).getDictionaryObject(COSName.PARENT);
             }
-            COSDictionary page = source.getPage(i).getCOSObject();
+            if (index >= fromIndex && index < toIndex) {
+                keptSourcePages.add(page);
+                keptAnnotations.addAll(annotationsOf(page));
+            } else {
+                otherSourcePages.add(page);
+            }
+            index++;
+        }
+        for (COSDictionary page : otherSourcePages) {
             outside.add(page);
-            COSBase annotations = resolve(page.getDictionaryObject(COSName.ANNOTS));
-            if (annotations instanceof COSArray) {
-                for (COSBase annotation : (COSArray) annotations) {
-                    outside.add(resolve(annotation));
+            for (COSBase annotation : annotationsOf(page)) {
+                // an annotation object that is also shown on a page of the part stays
+                if (!keptAnnotations.contains(annotation)) {
+                    outside.add(annotation);
                 }
             }
         }
@@ -746,51 +772,143 @@ public class PdfSplitUtils {
         splitter.setSplitAtPage(toIndex - fromIndex);
         PDDocument part = splitter.split(source).get(0);
 
-        Set<COSBase> visited = Collections.newSetFromMap(new IdentityHashMap<>());
-        for (PDPage page : part.getPages()) {
-            removeReferences(page.getCOSObject().getDictionaryObject(COSName.ANNOTS), outside, visited);
-            removeReferences(page.getCOSObject().getDictionaryObject(COSName.B), outside, visited);
+        Map<COSBase, COSDictionary> copies = new IdentityHashMap<>();
+        Set<COSBase> partPageTree = identitySet();
+        for (int i = 0; i < keptSourcePages.size(); i++) {
+            COSDictionary copy = part.getPage(i).getCOSObject();
+            copies.put(keptSourcePages.get(i), copy);
+            partPageTree.add(copy);
+            COSBase parent = copy.getDictionaryObject(COSName.PARENT);
+            while (parent instanceof COSDictionary && partPageTree.add(parent)) {
+                parent = ((COSDictionary) parent).getDictionaryObject(COSName.PARENT);
+            }
         }
+        new ReferenceCleaner(outside, copies, partPageTree).clean(part.getDocument().getTrailer());
         return part;
+    }
+
+    private static Set<COSBase> identitySet() {
+        return Collections.newSetFromMap(new IdentityHashMap<>());
+    }
+
+    private static List<COSBase> annotationsOf(COSDictionary page) {
+        List<COSBase> result = new ArrayList<>();
+        COSBase annotations = resolve(page.getDictionaryObject(COSName.ANNOTS));
+        if (annotations instanceof COSArray) {
+            for (COSBase annotation : (COSArray) annotations) {
+                COSBase resolved = resolve(annotation);
+                if (resolved != null) {
+                    result.add(resolved);
+                }
+            }
+        }
+        return result;
     }
 
     private static COSBase resolve(COSBase base) {
         return base instanceof COSObject ? ((COSObject) base).getObject() : base;
     }
 
-    private static void removeReferences(COSBase base, Set<COSBase> outside, Set<COSBase> visited) {
-        COSBase obj = resolve(base);
-        if (obj == null || !visited.add(obj)) {
-            return;
+    private static boolean isPageOrPageTreeNode(COSBase base) {
+        if (!(base instanceof COSDictionary)) {
+            return false;
         }
-        if (obj instanceof COSDictionary) {
-            COSDictionary dict = (COSDictionary) obj;
-            if (COSName.PAGE.equals(dict.getCOSName(COSName.TYPE))) {
-                // a page of the part, its annotations are processed on their own
-                return;
+        COSName type = ((COSDictionary) base).getCOSName(COSName.TYPE);
+        return COSName.PAGE.equals(type) || COSName.PAGES.equals(type);
+    }
+
+    /**
+     * Walks through all objects of the new document once and fixes every reference that leaves it.
+     */
+    private static final class ReferenceCleaner {
+
+        private final Set<COSBase> outside;
+        private final Map<COSBase, COSDictionary> copies;
+        private final Set<COSBase> partPageTree;
+        private final Set<COSBase> visited = identitySet();
+
+        private ReferenceCleaner(Set<COSBase> outside, Map<COSBase, COSDictionary> copies, Set<COSBase> partPageTree) {
+            this.outside = outside;
+            this.copies = copies;
+            this.partPageTree = partPageTree;
+        }
+
+        /**
+         * @return the object a reference to the given object has to point to, or null if the reference has to be
+         * removed
+         */
+        private COSBase target(COSBase value) {
+            COSDictionary copy = copies.get(value);
+            if (copy != null) {
+                return copy;
             }
-            for (COSName key : new ArrayList<>(dict.keySet())) {
-                COSBase value = resolve(dict.getItem(key));
-                if (outside.contains(value)) {
-                    dict.removeItem(key);
-                } else {
-                    removeReferences(value, outside, visited);
+            if (outside.contains(value) || (isPageOrPageTreeNode(value) && !partPageTree.contains(value))) {
+                return null;
+            }
+            return value;
+        }
+
+        /**
+         * Processes the given object and everything reachable from it. Iterative, long chains of beads or actions
+         * must not overflow the stack.
+         */
+        private void clean(COSBase start) {
+            Deque<COSBase> pending = new ArrayDeque<>();
+            pending.push(start);
+            while (!pending.isEmpty()) {
+                COSBase obj = resolve(pending.pop());
+                if (obj == null || !visited.add(obj)) {
+                    continue;
                 }
+                cleanContainer(obj, pending);
             }
-        } else if (obj instanceof COSArray) {
-            COSArray array = (COSArray) obj;
-            for (int i = array.size() - 1; i >= 0; i--) {
-                COSBase value = resolve(array.get(i));
-                if (outside.contains(value)) {
-                    if (COSName.PAGE.equals(((COSDictionary) value).getCOSName(COSName.TYPE))) {
-                        // keep the structure of destination arrays, the target page is just not part of this document
-                        array.set(i, COSNull.NULL);
-                    } else {
-                        // e.g. a widget of the same form field on another page
-                        array.remove(i);
+        }
+
+        private static void push(Deque<COSBase> pending, COSBase value) {
+            if (value instanceof COSDictionary || value instanceof COSArray) {
+                pending.push(value);
+            }
+        }
+
+        private void cleanContainer(COSBase obj, Deque<COSBase> pending) {
+            if (obj instanceof COSDictionary) {
+                COSDictionary dict = (COSDictionary) obj;
+                for (COSName key : new ArrayList<>(dict.keySet())) {
+                    COSBase value = resolve(dict.getItem(key));
+                    if (value == null) {
+                        // unresolvable reference, nothing is written for it
+                        continue;
                     }
-                } else {
-                    removeReferences(value, outside, visited);
+                    COSBase target = target(value);
+                    if (target == null) {
+                        dict.removeItem(key);
+                    } else if (target != value) {
+                        dict.setItem(key, target);
+                    } else {
+                        push(pending, value);
+                    }
+                }
+            } else if (obj instanceof COSArray) {
+                COSArray array = (COSArray) obj;
+                for (int i = array.size() - 1; i >= 0; i--) {
+                    COSBase value = resolve(array.get(i));
+                    if (value == null) {
+                        continue;
+                    }
+                    COSBase target = target(value);
+                    if (target == null) {
+                        if (isPageOrPageTreeNode(value)) {
+                            // keep the structure of destination arrays, the target page is just not part of this document
+                            array.set(i, COSNull.NULL);
+                        } else {
+                            // e.g. a widget of the same form field on another page
+                            array.remove(i);
+                        }
+                    } else if (target != value) {
+                        array.set(i, target);
+                    } else {
+                        push(pending, value);
+                    }
                 }
             }
         }

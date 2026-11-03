@@ -665,11 +665,17 @@ package org.jlawyer.test.client.utils;
 import com.jdimension.jlawyer.client.utils.pdf.PdfSplitUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import org.apache.pdfbox.cos.COSBase;
+import org.apache.pdfbox.cos.COSDocument;
 import org.apache.pdfbox.cos.COSName;
+import org.apache.pdfbox.cos.COSObjectKey;
+import org.apache.pdfbox.cos.COSStream;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -682,7 +688,10 @@ import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationLink;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationWidget;
 import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
 import org.apache.pdfbox.pdmodel.interactive.form.PDTextField;
+import org.apache.pdfbox.pdmodel.interactive.documentnavigation.destination.PDPageDestination;
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.destination.PDPageFitDestination;
+import org.apache.pdfbox.pdmodel.interactive.pagenavigation.PDThread;
+import org.apache.pdfbox.pdmodel.interactive.pagenavigation.PDThreadBead;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -802,6 +811,196 @@ public class PdfSplitUtilsTest {
             try (PDDocument part = PdfSplitUtils.extractPages(source, 0, 2); PDDocument reloaded = saveAndReload(part)) {
                 assertEquals(2, reloaded.getNumberOfPages());
                 assertEquals(2, reloaded.getDocument().getObjectsByType(COSName.PAGE).size());
+            }
+        }
+    }
+
+    /**
+     * @return true if any stream of the (saved and reloaded) document contains the given text, e.g. the content
+     * stream of a page that must not be part of it
+     */
+    private static boolean containsText(PDDocument doc, String text) throws IOException {
+        COSDocument cos = doc.getDocument();
+        for (COSObjectKey key : new ArrayList<>(cos.getXrefTable().keySet())) {
+            COSBase base = cos.getObjectFromPool(key).getObject();
+            if (base instanceof COSStream) {
+                try (InputStream in = ((COSStream) base).createInputStream()) {
+                    if (new String(in.readAllBytes(), StandardCharsets.ISO_8859_1).contains(text)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private static void assertOnlyFirstTwoPages(PDDocument reloaded) throws IOException {
+        assertEquals(2, reloaded.getNumberOfPages());
+        assertEquals(2, reloaded.getDocument().getObjectsByType(COSName.PAGE).size());
+        assertTrue(containsText(reloaded, "Seite 1 Zeile 0"));
+        assertTrue(containsText(reloaded, "Seite 2 Zeile 0"));
+        for (int page = 3; page <= 5; page++) {
+            assertFalse("content of page " + page + " written", containsText(reloaded, "Seite " + page + " Zeile 0"));
+        }
+    }
+
+    @Test
+    public void testChainedActionToKeptPageUsesTheCopy() throws Exception {
+        try (PDDocument source = createLinkedDocument(5)) {
+            // link on page 1: go to page 1, then (next action) to page 2, which is part of the first part
+            PDActionGoTo first = goTo(source.getPage(0));
+            first.setNext(Arrays.<PDAction>asList(goTo(source.getPage(1))));
+            PDAnnotationLink link = new PDAnnotationLink();
+            link.setRectangle(new PDRectangle(50, 650, 100, 20));
+            link.setAction(first);
+            List<PDAnnotation> annotations = new ArrayList<>(source.getPage(0).getAnnotations());
+            annotations.add(link);
+            source.getPage(0).setAnnotations(annotations);
+
+            try (PDDocument part = PdfSplitUtils.extractPages(source, 0, 2); PDDocument reloaded = saveAndReload(part)) {
+                assertOnlyFirstTwoPages(reloaded);
+                // the next action still leads to page 2, now the one of the part
+                PDAnnotationLink reloadedLink = (PDAnnotationLink) reloaded.getPage(0).getAnnotations().get(1);
+                PDActionGoTo next = (PDActionGoTo) reloadedLink.getAction().getNext().get(0);
+                PDPageDestination dest = (PDPageDestination) next.getDestination();
+                assertSame(reloaded.getPage(1).getCOSObject(), dest.getPage().getCOSObject());
+            }
+        }
+    }
+
+    @Test
+    public void testArticleThreadAcrossParts() throws Exception {
+        try (PDDocument source = createLinkedDocument(5)) {
+            // an article starting on page 1 and continued on page 5
+            PDThread thread = new PDThread();
+            PDThreadBead bead1 = new PDThreadBead();
+            bead1.setRectangle(new PDRectangle(50, 50, 500, 700));
+            bead1.setPage(source.getPage(0));
+            bead1.setThread(thread);
+            thread.setFirstBead(bead1);
+            PDThreadBead bead5 = new PDThreadBead();
+            bead5.setRectangle(new PDRectangle(50, 50, 500, 700));
+            bead5.setPage(source.getPage(4));
+            bead5.setThread(thread);
+            bead1.appendBead(bead5);
+            source.getPage(0).setThreadBeads(Collections.singletonList(bead1));
+            source.getPage(4).setThreadBeads(Collections.singletonList(bead5));
+            source.getDocumentCatalog().setThreads(Collections.singletonList(thread));
+
+            try (PDDocument part = PdfSplitUtils.extractPages(source, 0, 2); PDDocument reloaded = saveAndReload(part)) {
+                assertOnlyFirstTwoPages(reloaded);
+                // the bead on page 1 now refers to page 1 of the part
+                assertSame(reloaded.getPage(0).getCOSObject(), reloaded.getPage(0).getThreadBeads().get(0).getPage().getCOSObject());
+            }
+        }
+    }
+
+    @Test
+    public void testPageActionsToOtherPages() throws Exception {
+        try (PDDocument source = createLinkedDocument(5)) {
+            // opening page 1 jumps to page 5, closing page 2 jumps to page 1
+            source.getPage(0).getActions().setO(goTo(source.getPage(4)));
+            source.getPage(1).getActions().setC(goTo(source.getPage(0)));
+
+            try (PDDocument part = PdfSplitUtils.extractPages(source, 0, 2); PDDocument reloaded = saveAndReload(part)) {
+                assertOnlyFirstTwoPages(reloaded);
+                PDPageDestination dest = (PDPageDestination) ((PDActionGoTo) reloaded.getPage(1).getActions().getC()).getDestination();
+                assertSame(reloaded.getPage(0).getCOSObject(), dest.getPage().getCOSObject());
+            }
+        }
+    }
+
+    @Test
+    public void testSecondPartOfTheSameSource() throws Exception {
+        try (PDDocument source = createLinkedDocument(5)) {
+            source.getPage(0).getActions().setO(goTo(source.getPage(4)));
+            source.getPage(4).getActions().setO(goTo(source.getPage(3)));
+
+            try (PDDocument part = PdfSplitUtils.extractPages(source, 2, 5); PDDocument reloaded = saveAndReload(part)) {
+                assertEquals(3, reloaded.getNumberOfPages());
+                assertEquals(3, reloaded.getDocument().getObjectsByType(COSName.PAGE).size());
+                assertFalse(containsText(reloaded, "Seite 1 Zeile 0"));
+                assertFalse(containsText(reloaded, "Seite 2 Zeile 0"));
+                PDPageDestination dest = (PDPageDestination) ((PDActionGoTo) reloaded.getPage(2).getActions().getO()).getDestination();
+                assertSame(reloaded.getPage(1).getCOSObject(), dest.getPage().getCOSObject());
+            }
+        }
+    }
+
+    /**
+     * A document with all kinds of references between its pages: link, form field with widgets on page 1 and 5,
+     * chained action, article thread from page 1 to page 5 and page actions.
+     */
+    private static PDDocument createDocumentWithReferences() throws IOException {
+        PDDocument source = createLinkedDocument(5);
+        PDAcroForm acroForm = new PDAcroForm(source);
+        source.getDocumentCatalog().setAcroForm(acroForm);
+        PDTextField field = new PDTextField(acroForm);
+        field.setPartialName("aktenzeichen");
+        List<PDAnnotationWidget> widgets = new ArrayList<>();
+        for (int pageIndex : new int[]{0, 4}) {
+            PDAnnotationWidget widget = new PDAnnotationWidget();
+            widget.setRectangle(new PDRectangle(400, 800, 150, 20));
+            widget.setPage(source.getPage(pageIndex));
+            widget.setParent(field);
+            List<PDAnnotation> annotations = new ArrayList<>(source.getPage(pageIndex).getAnnotations());
+            annotations.add(widget);
+            source.getPage(pageIndex).setAnnotations(annotations);
+            widgets.add(widget);
+        }
+        field.setWidgets(widgets);
+        acroForm.getFields().add(field);
+
+        PDActionGoTo first = goTo(source.getPage(1));
+        first.setNext(Arrays.<PDAction>asList(goTo(source.getPage(4))));
+        PDAnnotationLink link = new PDAnnotationLink();
+        link.setRectangle(new PDRectangle(50, 650, 100, 20));
+        link.setAction(first);
+        List<PDAnnotation> annotations = new ArrayList<>(source.getPage(2).getAnnotations());
+        annotations.add(link);
+        source.getPage(2).setAnnotations(annotations);
+
+        PDThread thread = new PDThread();
+        PDThreadBead bead1 = new PDThreadBead();
+        bead1.setRectangle(new PDRectangle(50, 50, 500, 700));
+        bead1.setPage(source.getPage(0));
+        bead1.setThread(thread);
+        thread.setFirstBead(bead1);
+        PDThreadBead bead5 = new PDThreadBead();
+        bead5.setRectangle(new PDRectangle(50, 50, 500, 700));
+        bead5.setPage(source.getPage(4));
+        bead5.setThread(thread);
+        bead1.appendBead(bead5);
+        source.getPage(0).setThreadBeads(Collections.singletonList(bead1));
+        source.getPage(4).setThreadBeads(Collections.singletonList(bead5));
+        source.getDocumentCatalog().setThreads(Collections.singletonList(thread));
+
+        source.getPage(0).getActions().setO(goTo(source.getPage(4)));
+        source.getPage(3).getActions().setC(goTo(source.getPage(1)));
+        return source;
+    }
+
+    @Test
+    public void testAllRangesKeepExactlyTheirPages() throws Exception {
+        for (int from = 0; from < 5; from++) {
+            for (int to = from + 1; to <= 5; to++) {
+                // the source is changed by extractPages, so a fresh one for each part
+                try (PDDocument source = createDocumentWithReferences();
+                        PDDocument part = PdfSplitUtils.extractPages(source, from, to); PDDocument reloaded = saveAndReload(part)) {
+                    String range = "pages " + (from + 1) + " - " + to;
+                    assertEquals(range, to - from, reloaded.getNumberOfPages());
+                    assertEquals(range, to - from, reloaded.getDocument().getObjectsByType(COSName.PAGE).size());
+                    for (int i = 0; i < to - from; i++) {
+                        try (InputStream in = reloaded.getPage(i).getContents()) {
+                            String content = new String(in.readAllBytes(), StandardCharsets.ISO_8859_1);
+                            assertTrue(range + ", page " + (i + 1), content.contains("Seite " + (from + i + 1) + " Zeile 0"));
+                        }
+                    }
+                    for (int page = 1; page <= 5; page++) {
+                        boolean inPart = page > from && page <= to;
+                        assertEquals(range + ", content of page " + page, inPart, containsText(reloaded, "Seite " + page + " Zeile 0"));
+                    }
+                }
             }
         }
     }
