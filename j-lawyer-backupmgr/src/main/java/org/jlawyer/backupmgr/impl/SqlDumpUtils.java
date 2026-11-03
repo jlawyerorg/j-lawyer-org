@@ -672,7 +672,10 @@ import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -717,8 +720,16 @@ public class SqlDumpUtils {
      * depend on the length of a line or statement, so rows with large values are no problem.
      * <p>
      * The file is processed as ISO-8859-1, so that every byte is written back unchanged - dumps may contain binary
-     * data that is not valid UTF-8. The file is only replaced if the collation was found. If the dump ends inside a
-     * string literal, quoted identifier or comment, it is not valid SQL and is left unchanged.
+     * data that is not valid UTF-8. The file is only replaced if the collation was found, the replaced file keeps the
+     * access rights of the original one, and the temporary file is created so that only its owner can read it. If the
+     * dump ends inside a string literal, quoted identifier, comment or executable comment, it is not valid SQL and is
+     * left unchanged. It is also left unchanged if it changes sql_mode in an executable comment that the target server
+     * may ignore (MySQL versions from 5.7.0 on, which MariaDB ignores, or MariaDB-only comments), because then the
+     * meaning of backslashes in later strings is not known.
+     * <p>
+     * Only collation names written as SQL are replaced: after COLLATE (comments between count as whitespace) and in
+     * assignments to collation_connection, collation_server and collation_database. A quoted collation name is left
+     * as it is, mysqldump writes them unquoted.
      *
      * @param file the dump to process
      * @param collation the collation to replace (ASCII)
@@ -728,21 +739,73 @@ public class SqlDumpUtils {
      */
     public static long replaceCollation(File file, String collation, String replacement) throws IOException {
         File tmp = new File(file.getAbsolutePath() + ".tmp");
+        long count = writeWithReplacedCollation(file, tmp, collation, replacement);
+        if (count > 0) {
+            // the replaced dump gets the access rights of the original one
+            copyPosixPermissions(file.toPath(), tmp.toPath());
+            Files.move(tmp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        }
+        return count;
+    }
+
+    /**
+     * Writes a copy of a dump in which the collation is replaced like {@link #replaceCollation(File, String, String)},
+     * the dump itself is not changed. The copy is created so that only its owner can read it (where the file system
+     * supports POSIX permissions), it holds the whole database. It is only kept if the collation was found.
+     *
+     * @param dump the dump to read
+     * @param target the copy to write, replaced if it exists
+     * @param collation the collation to replace (ASCII)
+     * @param replacement the new collation (ASCII)
+     * @return the number of replaced occurrences, 0 if no copy was kept
+     * @throws IOException if a file can not be read or written, no copy is kept then
+     */
+    public static long writeWithReplacedCollation(File dump, File target, String collation, String replacement) throws IOException {
+        createForOwnerOnly(target.toPath());
         long count;
-        try (Reader in = new InputStreamReader(new FileInputStream(file), StandardCharsets.ISO_8859_1);
-                Writer out = new OutputStreamWriter(new FileOutputStream(tmp), StandardCharsets.ISO_8859_1)) {
+        try (Reader in = new InputStreamReader(new FileInputStream(dump), StandardCharsets.ISO_8859_1);
+                Writer out = new OutputStreamWriter(Files.newOutputStream(target.toPath(), StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING), StandardCharsets.ISO_8859_1)) {
             count = replaceCollation(in, out, collation, replacement);
         } catch (IOException ex) {
-            Files.deleteIfExists(tmp.toPath());
+            Files.deleteIfExists(target.toPath());
             throw ex;
         }
-
         if (count > 0) {
-            Files.move(tmp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
             return count;
         }
-        Files.delete(tmp.toPath());
+        Files.delete(target.toPath());
         return 0;
+    }
+
+    /**
+     * Counts where a dump uses a collation as a collation, without writing anything, e.g. to find out whether a
+     * rewritten copy is needed at all.
+     *
+     * @param dump the dump to read
+     * @param collation the collation to look for (ASCII)
+     * @return the number of occurrences that would be replaced, or -1 if the dump ends inside a string literal, quoted
+     * identifier or comment, or contains a change of sql_mode that can not be followed (then nothing would be replaced)
+     * @throws IOException if the dump can not be read
+     */
+    public static long countCollationUsages(File dump, String collation) throws IOException {
+        try (Reader in = new InputStreamReader(new FileInputStream(dump), StandardCharsets.ISO_8859_1)) {
+            return replaceCollation(in, Writer.nullWriter(), collation, collation);
+        }
+    }
+
+    private static void createForOwnerOnly(Path file) throws IOException {
+        Files.deleteIfExists(file);
+        if (file.getFileSystem().supportedFileAttributeViews().contains("posix")) {
+            Files.createFile(file, PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-------")));
+        } else {
+            Files.createFile(file);
+        }
+    }
+
+    private static void copyPosixPermissions(Path from, Path to) throws IOException {
+        if (from.getFileSystem().supportedFileAttributeViews().contains("posix")) {
+            Files.setPosixFilePermissions(to, Files.getPosixFilePermissions(from));
+        }
     }
 
     /**
@@ -753,7 +816,8 @@ public class SqlDumpUtils {
      * @param collation the collation to replace
      * @param replacement the new collation
      * @return the number of replaced occurrences, or -1 if the dump ends inside a string literal, quoted identifier or
-     * comment (then the output must not be used)
+     * comment, or contains a change of sql_mode in an executable comment that the target server may ignore (then the
+     * output must not be used)
      * @throws IOException if reading or writing fails
      */
     public static long replaceCollation(Reader in, Writer out, String collation, String replacement) throws IOException {
@@ -800,7 +864,7 @@ public class SqlDumpUtils {
         /**
          * What has to come right before the collation for it to be used as a collation.
          */
-        private static final Pattern USAGE = Pattern.compile("(?i)(?:\\bCOLLATE\\s*=?\\s*|\\b\\w*collation\\w*\\s*=\\s*)\\z");
+        private static final Pattern USAGE = Pattern.compile("(?i)(?:\\bCOLLATE\\s*=?\\s*|(?<![\\w.@$])(?:@@(?:(?:global|session|local)\\.)?|\\b(?:global|session|local)\\s+)?(?:collation_connection|collation_server|collation_database)\\s*:?=\\s*)\\z");
 
         private final Reader in;
         private final Writer out;
@@ -826,6 +890,22 @@ public class SqlDumpUtils {
          * The next word is the version number of an executable comment, not part of the statement.
          */
         private boolean versionNumber = false;
+        /**
+         * Inside an executable comment (/*!NNNNN ... *&#47; or /*M!NNNNNN ... *&#47;), with its version and whether it is
+         * one for MariaDB only.
+         */
+        private boolean executableComment = false;
+        private long commentVersion = 0;
+        private boolean mariaDbComment = false;
+        /**
+         * The current statement started in an executable comment that the target server may ignore.
+         */
+        private boolean statementMayBeIgnored = false;
+        /**
+         * A change of sql_mode was found that the target server may ignore - the mode, and with it the meaning of
+         * backslashes in strings, can not be followed.
+         */
+        private boolean modeUnknown = false;
 
         /**
          * Ends a statement, as set by the DELIMITER command of the mysql client.
@@ -914,7 +994,7 @@ public class SqlDumpUtils {
             endWord();
             endStatement();
             flush();
-            complete = state == NORMAL || state == LINE_COMMENT;
+            complete = (state == NORMAL || state == LINE_COMMENT) && !executableComment && !modeUnknown;
         }
 
         private void normal(char ch) throws IOException {
@@ -950,7 +1030,15 @@ public class SqlDumpUtils {
                 return;
             }
             endWord();
-            if (ch == '\'' || ch == '"' || ch == '`') {
+            if (executableComment && ch == '*' && peek(0) == '/') {
+                // end of an executable comment
+                write(ch);
+                appendContext(ch);
+                char c = (char) read();
+                write(c);
+                appendContext(c);
+                executableComment = false;
+            } else if (ch == '\'' || ch == '"' || ch == '`') {
                 state = ch == '\'' ? SINGLE_QUOTED : (ch == '"' ? DOUBLE_QUOTED : BACKTICK_QUOTED);
                 appendContext(BREAK);
                 if (ch != '`') {
@@ -959,7 +1047,8 @@ public class SqlDumpUtils {
                 write(ch);
             } else if (ch == '#' || (ch == '-' && peek(0) == '-' && (peek(1) == -1 || peek(1) <= ' '))) {
                 state = LINE_COMMENT;
-                appendContext(BREAK);
+                // a comment separates tokens like whitespace, e.g. COLLATE -- ... followed by the name on the next line
+                appendContext(' ');
                 write(ch);
             } else if (ch == '/' && peek(0) == '*' && (peek(1) == '!' || (peek(1) == 'M' && peek(2) == '!'))) {
                 // an executable comment like /*!50003 ... */ - its content is SQL, the version number is not part of it
@@ -972,9 +1061,12 @@ public class SqlDumpUtils {
                     appendContext(c);
                 }
                 versionNumber = true;
+                executableComment = true;
+                mariaDbComment = rest == 3;
+                commentVersion = 0;
             } else if (ch == '/' && peek(0) == '*') {
                 state = BLOCK_COMMENT;
-                appendContext(BREAK);
+                appendContext(' ');
                 write(ch);
                 write((char) read());
             } else {
@@ -1012,6 +1104,9 @@ public class SqlDumpUtils {
             }
             boolean version = versionNumber && isDigits(word);
             versionNumber = false;
+            if (version) {
+                commentVersion = word.length() <= 9 ? Long.parseLong(word.toString()) : Long.MAX_VALUE;
+            }
             if (!version) {
                 noteWord(word);
                 addToSetStatement(word);
@@ -1058,6 +1153,9 @@ public class SqlDumpUtils {
         private void noteWord(CharSequence w) {
             if (!statementHasWord) {
                 statementHasWord = true;
+                // MariaDB ignores executable comments for MySQL 5.7 and later, MySQL ignores the ones for MariaDB -
+                // which of them the target server executes is not known here
+                statementMayBeIgnored = executableComment && (mariaDbComment || commentVersion >= 50700);
                 String first = w.toString();
                 dataStatement = first.equalsIgnoreCase("INSERT") || first.equalsIgnoreCase("REPLACE");
                 if (first.equalsIgnoreCase("DELIMITER")) {
@@ -1139,6 +1237,11 @@ public class SqlDumpUtils {
                         savedModes.put(name, noBackslashEscapes);
                     }
                 } else if (name.equals("sql_mode")) {
+                    if (statementMayBeIgnored) {
+                        // the target server may or may not execute this - fail safe, the dump is not changed
+                        modeUnknown = true;
+                        continue;
+                    }
                     if (value.charAt(0) == LITERAL) {
                         int index = 0;
                         for (int i = 0; i < m.start(5); i++) {

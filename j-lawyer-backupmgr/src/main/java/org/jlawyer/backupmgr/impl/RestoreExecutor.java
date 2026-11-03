@@ -665,6 +665,7 @@ package org.jlawyer.backupmgr.impl;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.nio.file.Files;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -1059,9 +1060,48 @@ public class RestoreExecutor {
 
     public void restore(BackupProgressCallback progress) throws Exception {
         fileFailures = 0;
-        this.clearDataDirectory(progress);
-        this.restoreFiles(progress);
-        this.restoreDatabase(this.dbPassword, progress);
+        // the database dump is prepared before anything is changed: if that fails (e.g. the disk is full while writing
+        // a rewritten copy), the data directory and the database are both left as they were
+        File dump = this.prepareDatabaseDump(progress);
+        try {
+            this.clearDataDirectory(progress);
+            this.restoreFiles(progress);
+            this.restoreDatabase(this.dbPassword, dump, progress);
+        } finally {
+            if (!dump.getName().equals(DATABASE_DUMP)) {
+                Files.deleteIfExists(dump.toPath());
+            }
+        }
+    }
+
+    private static final String DATABASE_DUMP = "jlawyerdb-dump.sql";
+
+    /**
+     * Unpacks the database dump of the backup and, if the target database server does not know the default
+     * collation of MySQL 8 and the dump uses it, writes a copy with a collation the server knows.
+     *
+     * @return the dump to import - the copy, which has to be deleted afterwards, or the dump of the backup
+     */
+    private File prepareDatabaseDump(BackupProgressCallback progress) throws Exception {
+        this.restoreFromTo(this.backupDirectory, this.backupDirectory, progress);
+        File dump = new File(this.backupDirectory, DATABASE_DUMP);
+        if (this.isCollationUnknown(SqlDumpUtils.MYSQL8_DEFAULT_COLLATION)) {
+            // e.g. MariaDB before 11.4.5 does not know the default collation of MySQL 8, dumps created on MySQL 8 can not be imported otherwise
+            long found = SqlDumpUtils.countCollationUsages(dump, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION);
+            if (found > 0) {
+                File copy = new File(this.backupDirectory, "jlawyerdb-dump-restore.sql");
+                long replaced = SqlDumpUtils.writeWithReplacedCollation(dump, copy, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION, SqlDumpUtils.PORTABLE_COLLATION);
+                if (replaced > 0) {
+                    if (progress != null) {
+                        progress.onProgress("Kollation " + SqlDumpUtils.MYSQL8_DEFAULT_COLLATION + " ist auf dem Datenbankserver unbekannt und wird beim Einspielen durch " + SqlDumpUtils.PORTABLE_COLLATION + " ersetzt (" + replaced + " Stellen)");
+                    }
+                    return copy;
+                }
+            } else if (found < 0 && progress != null) {
+                progress.onProgress("Kollation " + SqlDumpUtils.MYSQL8_DEFAULT_COLLATION + " ist auf dem Datenbankserver unbekannt, die Datenbanksicherung kann aber nicht sicher angepasst werden und wird unverändert eingespielt");
+            }
+        }
+        return dump;
     }
 
     private void restoreFiles(BackupProgressCallback progress) throws Exception {
@@ -1217,29 +1257,16 @@ public class RestoreExecutor {
         }
     }
 
-    private void restoreDatabase(String password, BackupProgressCallback progress) throws Exception {
+    private void restoreDatabase(String password, File dump, BackupProgressCallback progress) throws Exception {
         if (progress != null) {
             progress.onProgress("Wiederherstellung der Datenbank...");
         }
 
-        this.restoreFromTo(this.backupDirectory, this.backupDirectory, progress);
-        String backup = this.backupDirectory;
-        if (!backup.endsWith(File.separator)) {
-            backup = backup + File.separator;
-        }
-
-        if (this.isCollationUnknown(SqlDumpUtils.MYSQL8_DEFAULT_COLLATION)) {
-            // e.g. MariaDB before 11.4.5 does not know the default collation of MySQL 8, dumps created on MySQL 8 can not be imported otherwise
-            long replaced = SqlDumpUtils.replaceCollation(new File(backup + "jlawyerdb-dump.sql"), SqlDumpUtils.MYSQL8_DEFAULT_COLLATION, SqlDumpUtils.PORTABLE_COLLATION);
-            if (replaced > 0 && progress != null) {
-                progress.onProgress("Kollation " + SqlDumpUtils.MYSQL8_DEFAULT_COLLATION + " ist auf dem Datenbankserver unbekannt und wurde durch " + SqlDumpUtils.PORTABLE_COLLATION + " ersetzt (" + replaced + " Stellen)");
-            }
-        }
-
+        String dumpPath = dump.getAbsolutePath();
         String osName = System.getProperty("os.name").toLowerCase();
         String path = "";
         if (osName.contains("win")) {
-            backup = backup.replace("\\", "/");
+            dumpPath = dumpPath.replace("\\", "/");
         } else if (osName.contains("linux")) {
 
         } else if (osName.startsWith("mac")) {
@@ -1258,7 +1285,7 @@ public class RestoreExecutor {
             "-p" + this.dbPassword,
             "-e",
             //"\"drop database if exists jlawyerdb;create database jlawyerdb;use jlawyerdb;source " + backup + "jlawyerdb-dump.sql;commit;\""
-            "drop database if exists " + this.dbName + ";create database " + this.dbName + ";use " + this.dbName + ";source " + backup + "jlawyerdb-dump.sql;commit;"
+            "drop database if exists " + this.dbName + ";create database " + this.dbName + ";use " + this.dbName + ";source " + dumpPath + ";commit;"
         //"\"drop database if exists jlawyerdb;quit;\""    
         };
 

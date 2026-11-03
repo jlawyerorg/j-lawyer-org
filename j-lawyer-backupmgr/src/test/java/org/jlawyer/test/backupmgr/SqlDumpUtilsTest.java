@@ -674,6 +674,7 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Arrays;
 import org.jlawyer.backupmgr.impl.SqlDumpUtils;
 import org.junit.Rule;
@@ -972,6 +973,106 @@ public class SqlDumpUtilsTest {
                 + "DELIMITER ;\n"
                 + TABLE_U;
         assertOnlyTablesReplaced(dump, 3);
+    }
+
+    private static long replace(String sql) throws Exception {
+        return SqlDumpUtils.replaceCollation(new StringReader(sql), new StringWriter(), SqlDumpUtils.MYSQL8_DEFAULT_COLLATION, SqlDumpUtils.PORTABLE_COLLATION);
+    }
+
+    private static String replaced(String sql, long expected) throws Exception {
+        StringWriter out = new StringWriter();
+        assertEquals(expected, SqlDumpUtils.replaceCollation(new StringReader(sql), out, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION, SqlDumpUtils.PORTABLE_COLLATION));
+        return out.toString();
+    }
+
+    @Test
+    public void testUnterminatedExecutableCommentAtTheEnd() throws Exception {
+        // a truncated dump - not complete, nothing is replaced
+        assertEquals(-1, replace(TABLE + "/*!50001 CREATE VIEW `v` AS select 1 AS `a`"));
+        byte[] content = (TABLE + "/*!40101 SET character_set_client = utf8mb4").getBytes(StandardCharsets.UTF_8);
+        File f = write("jlawyerdb-dump.sql", content);
+        assertEquals(0, replace(f));
+        assertArrayEquals(content, Files.readAllBytes(f.toPath()));
+    }
+
+    @Test
+    public void testOnlyCollationSystemVariablesAreReplaced() throws Exception {
+        String sql = "/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;\n"
+                + "SET @@session.collation_connection = utf8mb4_0900_ai_ci, GLOBAL collation_server=utf8mb4_0900_ai_ci;\n"
+                + "SET @@global.collation_database := utf8mb4_0900_ai_ci;\n"
+                // a user variable, a column and a local variable that happen to be called like the collation
+                + "SET @my_collation = utf8mb4_0900_ai_ci;\n"
+                + "DELIMITER ;;\n"
+                + "CREATE TRIGGER `t_bi` BEFORE INSERT ON `t` FOR EACH ROW BEGIN DECLARE utf8mb4_0900_ai_ci VARCHAR(10) DEFAULT 'x'; SET NEW.collation = utf8mb4_0900_ai_ci; SET NEW.connection_collation = utf8mb4_0900_ai_ci; END ;;\n"
+                + "DELIMITER ;\n";
+        String expected = sql.replace("collation_connection  = utf8mb4_0900_ai_ci", "collation_connection  = utf8mb4_unicode_ci")
+                .replace("collation_connection = utf8mb4_0900_ai_ci", "collation_connection = utf8mb4_unicode_ci")
+                .replace("collation_server=utf8mb4_0900_ai_ci", "collation_server=utf8mb4_unicode_ci")
+                .replace("collation_database := utf8mb4_0900_ai_ci", "collation_database := utf8mb4_unicode_ci");
+        assertEquals(expected, replaced(sql, 4));
+    }
+
+    @Test
+    public void testCommentBetweenCollateAndName() throws Exception {
+        String sql = "CREATE TABLE `t` (`a` varchar(10) COLLATE /* MySQL 8 */ utf8mb4_0900_ai_ci,\n"
+                + "  `b` varchar(10) COLLATE -- MySQL 8\n utf8mb4_0900_ai_ci,\n"
+                + "  `c` varchar(10) COLLATE # utf8mb4_0900_ai_ci\n utf8mb4_0900_ai_ci) COLLATE=utf8mb4_0900_ai_ci;\n";
+        String expected = sql.replace("*/ utf8mb4_0900_ai_ci", "*/ utf8mb4_unicode_ci").replace("8\n utf8mb4_0900_ai_ci", "8\n utf8mb4_unicode_ci")
+                .replace("ci\n utf8mb4_0900_ai_ci)", "ci\n utf8mb4_unicode_ci)").replace("COLLATE=utf8mb4_0900_ai_ci", "COLLATE=utf8mb4_unicode_ci");
+        // the comment itself is not changed
+        assertTrue(expected.contains("# utf8mb4_0900_ai_ci\n"));
+        assertEquals(expected, replaced(sql, 4));
+    }
+
+    @Test
+    public void testSqlModeTheTargetMayIgnore() throws Exception {
+        // MariaDB ignores executable comments for MySQL 5.7.0 and later, MySQL ignores the ones for MariaDB - whether
+        // backslashes escape is not known after these, so nothing is replaced
+        // with backslash escapes the literals below are "it's" and "COLLATE utf8mb4_0900_ai_ci 'x", without them the
+        // collation in the second literal would look like SQL
+        String table = "CREATE TABLE `w` (`b` varchar(40) DEFAULT 'it\\'s', `c` varchar(40) DEFAULT 'COLLATE utf8mb4_0900_ai_ci \\'x') COLLATE=utf8mb4_0900_ai_ci;\n";
+        for (String guard : new String[]{"/*!80000", "/*!50700", "/*M!100100"}) {
+            String sql = guard + " SET sql_mode = 'NO_BACKSLASH_ESCAPES' */;\n" + table;
+            assertEquals(guard, -1, replace(sql));
+            File f = write("dump" + guard.length() + guard.charAt(3) + ".sql", sql.getBytes(StandardCharsets.UTF_8));
+            assertEquals(guard, 0, replace(f));
+            assertEquals(guard, sql, new String(Files.readAllBytes(f.toPath()), StandardCharsets.UTF_8));
+        }
+        // executed by every server that lacks the collation, as mysqldump writes it
+        assertEquals(1, replace("/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;\n" + table));
+    }
+
+    private static boolean posix(File f) {
+        return f.toPath().getFileSystem().supportedFileAttributeViews().contains("posix");
+    }
+
+    @Test
+    public void testReplacedDumpKeepsItsPermissions() throws Exception {
+        File f = write("jlawyerdb-dump.sql", TABLE.getBytes(StandardCharsets.UTF_8));
+        org.junit.Assume.assumeTrue(posix(f));
+        Files.setPosixFilePermissions(f.toPath(), PosixFilePermissions.fromString("rw-r-----"));
+        assertEquals(2, replace(f));
+        assertEquals("rw-r-----", PosixFilePermissions.toString(Files.getPosixFilePermissions(f.toPath())));
+    }
+
+    @Test
+    public void testCopyIsOnlyReadableByItsOwner() throws Exception {
+        File dump = write("jlawyerdb-dump.sql", TABLE.getBytes(StandardCharsets.UTF_8));
+        File copy = new File(tmp.getRoot(), "copy.sql");
+        assertEquals(2, SqlDumpUtils.countCollationUsages(dump, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION));
+        assertFalse(copy.exists());
+        assertEquals(2, SqlDumpUtils.writeWithReplacedCollation(dump, copy, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION, SqlDumpUtils.PORTABLE_COLLATION));
+        // the dump of the backup is not changed
+        assertEquals(TABLE, new String(Files.readAllBytes(dump.toPath()), StandardCharsets.UTF_8));
+        assertEquals(TABLE.replace("utf8mb4_0900_ai_ci", "utf8mb4_unicode_ci"), new String(Files.readAllBytes(copy.toPath()), StandardCharsets.UTF_8));
+        if (posix(copy)) {
+            assertEquals("rw-------", PosixFilePermissions.toString(Files.getPosixFilePermissions(copy.toPath())));
+        }
+        // nothing to replace - no copy
+        File other = write("other.sql", TABLE_U.replace("utf8mb4_0900_ai_ci", "utf8mb4_unicode_ci").getBytes(StandardCharsets.UTF_8));
+        File otherCopy = new File(tmp.getRoot(), "other-copy.sql");
+        assertEquals(0, SqlDumpUtils.writeWithReplacedCollation(other, otherCopy, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION, SqlDumpUtils.PORTABLE_COLLATION));
+        assertFalse(otherCopy.exists());
     }
 
     private static final String ROW_TEXT = "Lorem ipsum dolor sit amet, \\'consetetur\\' sadipscing elitr COLLATE utf8mb4_0900_ai_ci ";
