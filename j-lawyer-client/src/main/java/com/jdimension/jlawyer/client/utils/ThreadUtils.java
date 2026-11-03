@@ -1059,12 +1059,14 @@ public class ThreadUtils {
      */
     public static <T> T callWithProgressIndicator(JFrame owner, String message, Callable<T> task) throws Exception {
         ProgressIndicator pi = new ProgressIndicator(owner, true);
+        // the indicator must not be closable (e.g. Alt+F4) while the task is running
+        pi.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         pi.setShowCancelButton(false);
         pi.setInfinite(true);
         pi.setProgressString(message);
         AtomicReference<T> result = new AtomicReference<>();
         AtomicReference<Exception> failure = new AtomicReference<>();
-        new Thread(() -> {
+        Thread worker = new Thread(() -> {
             try {
                 result.set(task.call());
             } catch (Exception ex) {
@@ -1076,8 +1078,11 @@ public class ThreadUtils {
                     pi.dispose();
                 });
             }
-        }).start();
+        });
+        worker.start();
         pi.setVisible(true);
+        // normally finished already - waits only if the indicator was hidden in some other way
+        worker.join();
         if (failure.get() != null) {
             throw failure.get();
         }
