@@ -1739,8 +1739,8 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     }
 
     /**
-     * Creates a new (empty) document-folder template with a root folder. Requires administrator
-     * permission. The created template is returned.
+     * Creates a new (empty) document-folder template with a root folder. Requires an authenticated
+     * user. The created template is returned.
      *
      * @param template the template to create (only the name is used)
      * @response 401 User not authorized
@@ -1752,8 +1752,8 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
-    @RolesAllowed({"adminRole"})
-    @io.swagger.annotations.ApiOperation(value = "Creates a new document-folder template. Requires administrator permission.", response = RestfulFolderTemplateV7.class)
+    @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value = "Creates a new document-folder template. Requires an authenticated user.", response = RestfulFolderTemplateV7.class)
     public Response createFolderTemplate(@io.swagger.annotations.ApiParam RestfulFolderTemplateV7 template) {
         try {
             InitialContext ic = new InitialContext();
@@ -1770,7 +1770,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     }
 
     /**
-     * Renames an existing document-folder template. Requires administrator permission. The template is
+     * Renames an existing document-folder template. Requires an authenticated user. The template is
      * identified by its id.
      *
      * @param template the template to rename (id + new name)
@@ -1783,8 +1783,8 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
-    @RolesAllowed({"adminRole"})
-    @io.swagger.annotations.ApiOperation(value = "Renames a document-folder template. Requires administrator permission.", response = RestfulFolderTemplateV7.class)
+    @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value = "Renames a document-folder template. Requires an authenticated user.", response = RestfulFolderTemplateV7.class)
     public Response renameFolderTemplate(@io.swagger.annotations.ApiParam RestfulFolderTemplateV7 template) {
         try {
             InitialContext ic = new InitialContext();
@@ -1805,7 +1805,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     }
 
     /**
-     * Deletes a document-folder template. Requires administrator permission. The template is
+     * Deletes a document-folder template. Requires an authenticated user. The template is
      * identified by its name.
      *
      * @param template the template to delete (name)
@@ -1817,8 +1817,8 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     @DELETE
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
-    @RolesAllowed({"adminRole"})
-    @io.swagger.annotations.ApiOperation(value = "Deletes a document-folder template. Requires administrator permission.")
+    @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value = "Deletes a document-folder template. Requires an authenticated user.")
     public Response deleteFolderTemplate(@io.swagger.annotations.ApiParam RestfulFolderTemplateV7 template) {
         try {
             InitialContext ic = new InitialContext();
@@ -1833,7 +1833,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
 
     /**
      * Clones a document-folder template under a new name (including its whole folder tree). Requires
-     * administrator permission. The new template is returned.
+     * an authenticated user. The new template is returned.
      *
      * @param request the clone request ({@code templateName} = source, {@code targetName} = new name)
      * @response 401 User not authorized
@@ -1845,8 +1845,8 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
-    @RolesAllowed({"adminRole"})
-    @io.swagger.annotations.ApiOperation(value = "Clones a document-folder template under a new name. Requires administrator permission.", response = RestfulFolderTemplateV7.class)
+    @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value = "Clones a document-folder template under a new name. Requires an authenticated user.", response = RestfulFolderTemplateV7.class)
     public Response cloneFolderTemplate(@io.swagger.annotations.ApiParam RestfulFolderTemplateFolderV7 request) {
         try {
             InitialContext ic = new InitialContext();
@@ -1860,7 +1860,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     }
 
     /**
-     * Adds a folder to a document-folder template. Requires administrator permission. The created
+     * Adds a folder to a document-folder template. Requires an authenticated user. The created
      * folder is returned.
      *
      * @param request the folder to add ({@code templateName} + {@code parentId} + {@code name})
@@ -1873,8 +1873,8 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
-    @RolesAllowed({"adminRole"})
-    @io.swagger.annotations.ApiOperation(value = "Adds a folder to a document-folder template. Requires administrator permission.", response = RestfulFolderNodeV7.class)
+    @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value = "Adds a folder to a document-folder template. Requires an authenticated user.", response = RestfulFolderNodeV7.class)
     public Response addTemplateFolder(@io.swagger.annotations.ApiParam RestfulFolderTemplateFolderV7 request) {
         try {
             InitialContext ic = new InitialContext();
@@ -1891,7 +1891,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     }
 
     /**
-     * Renames a folder within a document-folder template. Requires administrator permission. The
+     * Renames a folder within a document-folder template. Requires an authenticated user. The
      * renamed folder is returned.
      *
      * @param request the folder to rename ({@code folderId} + new {@code name})
@@ -1904,8 +1904,8 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
-    @RolesAllowed({"adminRole"})
-    @io.swagger.annotations.ApiOperation(value = "Renames a folder within a document-folder template. Requires administrator permission.", response = RestfulFolderNodeV7.class)
+    @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value = "Renames a folder within a document-folder template. Requires an authenticated user.", response = RestfulFolderNodeV7.class)
     public Response renameTemplateFolder(@io.swagger.annotations.ApiParam RestfulFolderTemplateFolderV7 request) {
         try {
             InitialContext ic = new InitialContext();
@@ -1919,8 +1919,8 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     }
 
     /**
-     * Removes a folder (and its sub-folders) from a document-folder template. Requires administrator
-     * permission.
+     * Removes a folder (and its sub-folders) from a document-folder template. Requires an authenticated
+     * user.
      *
      * @param request the folder to remove ({@code folderId})
      * @response 401 User not authorized
@@ -1932,8 +1932,8 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     @DELETE
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
-    @RolesAllowed({"adminRole"})
-    @io.swagger.annotations.ApiOperation(value = "Removes a folder from a document-folder template. Requires administrator permission.")
+    @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value = "Removes a folder from a document-folder template. Requires an authenticated user.")
     public Response removeTemplateFolder(@io.swagger.annotations.ApiParam RestfulFolderTemplateFolderV7 request) {
         try {
             InitialContext ic = new InitialContext();
@@ -2030,8 +2030,9 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             b.setDbPort(readIntSetting(system, ServerSettingsKeys.SERVERCONF_BACKUP_DBPORT, 3306));
             b.setDbName(readSetting(system, ServerSettingsKeys.SERVERCONF_BACKUP_DBNAME, "jlawyerdb"));
             b.setDbUser(readSetting(system, ServerSettingsKeys.SERVERCONF_BACKUP_DBUSER, "root"));
-            b.setDbPasswordSet(!readSetting(system, ServerSettingsKeys.SERVERCONF_BACKUP_DBPWD, "").isEmpty());
-            b.setEncryptionPasswordSet(!readSetting(system, ServerSettingsKeys.SERVERCONF_BACKUP_ENCRYPTPWD, "").isEmpty());
+            b.setDbPasswordSet(system.hasSetting(ServerSettingsKeys.SERVERCONF_BACKUP_DBPWD));
+            b.setEncryptionPasswordSet(system.hasSetting(ServerSettingsKeys.SERVERCONF_BACKUP_ENCRYPTPWD));
+            b.setEncryptionDisabled(!b.isEncryptionPasswordSet());
             b.setSyncTarget(readSetting(system, ServerSettingsKeys.SERVERCONF_BACKUP_SYNCTARGET, ""));
             b.setExportTarget(readSetting(system, ServerSettingsKeys.SERVERCONF_BACKUP_EXPORTTARGET, ""));
             return Response.ok(b).build();
@@ -2043,8 +2044,9 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
 
     /**
      * Updates the server data-backup configuration. Passwords are only (re)stored when a non-empty
-     * value is submitted (leaving them blank keeps the current value). Requires system administrator
-     * permission.
+     * value is submitted (leaving them blank keeps the current value). Setting
+     * {@code encryptionDisabled} removes the encryption password, so backups are no longer
+     * encrypted. Requires system administrator permission.
      *
      * @param settings the backup settings to store
      * @response 401 User not authorized
@@ -2081,8 +2083,15 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             if (settings.getDbPassword() != null && !settings.getDbPassword().isEmpty()) {
                 system.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_DBPWD, settings.getDbPassword());
             }
-            if (settings.getEncryptionPassword() != null && !settings.getEncryptionPassword().isEmpty()) {
-                String oldEncryptionPassword = readSetting(system, ServerSettingsKeys.SERVERCONF_BACKUP_ENCRYPTPWD, "");
+            if (settings.isEncryptionDisabled()) {
+                // an empty encryption password disables encryption of the backup
+                if (system.hasSetting(ServerSettingsKeys.SERVERCONF_BACKUP_ENCRYPTPWD)) {
+                    system.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_ENCRYPTPWD, "");
+                    // existing backups were encrypted, so the current backup must be cleared
+                    system.clearCurrentBackup();
+                }
+            } else if (settings.getEncryptionPassword() != null && !settings.getEncryptionPassword().isEmpty()) {
+                String oldEncryptionPassword = readSecretSetting(system, ServerSettingsKeys.SERVERCONF_BACKUP_ENCRYPTPWD);
                 system.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_ENCRYPTPWD, settings.getEncryptionPassword());
                 if (!oldEncryptionPassword.equals(settings.getEncryptionPassword())) {
                     // The encryption password changed: existing backups were encrypted with the old
@@ -2092,6 +2101,12 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             }
             system.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_SYNCTARGET, nz(settings.getSyncTarget()));
             system.setSetting(ServerSettingsKeys.SERVERCONF_BACKUP_EXPORTTARGET, nz(settings.getExportTarget()));
+            // never echo passwords back to the client
+            settings.setDbPassword(null);
+            settings.setEncryptionPassword(null);
+            settings.setDbPasswordSet(system.hasSetting(ServerSettingsKeys.SERVERCONF_BACKUP_DBPWD));
+            settings.setEncryptionPasswordSet(system.hasSetting(ServerSettingsKeys.SERVERCONF_BACKUP_ENCRYPTPWD));
+            settings.setEncryptionDisabled(!settings.isEncryptionPasswordSet());
             return Response.ok(settings).build();
         } catch (Exception ex) {
             log.error("can not update backup settings", ex);
@@ -2521,7 +2536,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             c.setPath(readSetting(system, ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PATH, ""));
             c.setUser(readSetting(system, ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_USER, ""));
             c.setHref(readSetting(system, ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_HREF, ""));
-            c.setPasswordSet(!readSetting(system, ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PWD, "").isEmpty());
+            c.setPasswordSet(system.hasSetting(ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PWD));
             return Response.ok(c).build();
         } catch (Exception ex) {
             log.error("can not determine carddav sync settings", ex);
@@ -2555,6 +2570,9 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             if (settings.getPassword() != null && !settings.getPassword().isEmpty()) {
                 system.setSetting(ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PWD, CryptoProvider.newCrypto().encrypt(settings.getPassword()));
             }
+            // never echo the password back to the client
+            settings.setPassword(null);
+            settings.setPasswordSet(system.hasSetting(ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PWD));
             return Response.ok(settings).build();
         } catch (Exception ex) {
             log.error("can not update carddav sync settings", ex);
@@ -2579,8 +2597,14 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
             String pwd = connection.getPassword();
             if (pwd == null || pwd.isEmpty()) {
-                String stored = readSetting(system, ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PWD, "");
-                pwd = stored.isEmpty() ? "" : CryptoProvider.newCrypto().decrypt(stored);
+                // the stored password is only used for the stored server and user - otherwise it could be sent anywhere
+                if (sameValue(connection.getHost(), readSetting(system, ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_HOST, ""))
+                        && sameValue(connection.getUser(), readSetting(system, ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_USER, ""))) {
+                    String stored = readSecretSetting(system, ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PWD);
+                    pwd = stored.isEmpty() ? "" : CryptoProvider.newCrypto().decrypt(stored);
+                } else {
+                    pwd = "";
+                }
             }
             NextcloudContactsConnector nc = new NextcloudContactsConnector(connection.getHost(), connection.isSsl(), connection.getPort(), connection.getUser(), pwd);
             if (connection.getPath() != null && !connection.getPath().trim().isEmpty()) {
@@ -2641,7 +2665,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
         r.setCloudSsl(cs.isCloudSsl());
         r.setCloudPath(cs.getCloudPath());
         r.setCloudUser(cs.getCloudUser());
-        r.setPasswordSet(cs.getCloudPassword() != null && !cs.getCloudPassword().isEmpty());
+        r.setPasswordSet(cs.isCloudPasswordSet());
         return r;
     }
 
@@ -2720,8 +2744,8 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             CalendarSetup cs = new CalendarSetup();
             cs.setId(setup.getId());
             applyCalendarSetup(cs, setup, existing.getCloudPassword());
-            cal.updateCalendarSetup(cs);
-            return Response.ok(toCalendarSetupPojo(cs)).build();
+            CalendarSetup updated = cal.updateCalendarSetup(cs);
+            return Response.ok(toCalendarSetupPojo(updated)).build();
         } catch (Exception ex) {
             log.error("can not update calendar setup", ex);
             return Response.status(Response.Status.CONFLICT).entity(ex.getMessage()).build();
@@ -2782,17 +2806,9 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
         try {
             InitialContext ic = new InitialContext();
             CalendarServiceLocal cal = (CalendarServiceLocal) ic.lookup(LOOKUP_CALENDAR);
-            String pwd = connection.getCloudPassword();
-            if (pwd == null || pwd.isEmpty()) {
-                CalendarSetup existing = findCalendarSetup(cal, connection.getId());
-                if (existing != null && existing.getCloudPassword() != null && !existing.getCloudPassword().isEmpty()) {
-                    pwd = CryptoProvider.newCrypto().decrypt(existing.getCloudPassword());
-                } else {
-                    pwd = "";
-                }
-            }
+            // an empty password makes the server use the one stored with the setup
             List<RestfulCloudCalendarV7> result = new ArrayList<>();
-            for (Object o : cal.listCalendars(connection.getCloudHost(), connection.isCloudSsl(), connection.getCloudPort(), connection.getCloudUser(), pwd, connection.getCloudPath())) {
+            for (Object o : cal.listCalendarsForSetup(connection.getId(), connection.getCloudHost(), connection.isCloudSsl(), connection.getCloudPort(), connection.getCloudUser(), connection.getCloudPassword(), connection.getCloudPath())) {
                 CloudCalendar cc = (CloudCalendar) o;
                 result.add(new RestfulCloudCalendarV7(cc.getHref(), cc.getDisplayName()));
             }
@@ -3099,7 +3115,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             m.setRecipient(readSetting(system, ServerSettingsKeys.SERVERCONF_MONITOR_SMTPTO));
             m.setSsl(readBoolSetting(system, ServerSettingsKeys.SERVERCONF_MONITOR_SMTPSSL));
             m.setStartTls(readBoolSetting(system, ServerSettingsKeys.SERVERCONF_MONITOR_SMTPSTARTTLS));
-            m.setPasswordSet(!readSetting(system, ServerSettingsKeys.SERVERCONF_MONITOR_SMTPPASSWORD).isEmpty());
+            m.setPasswordSet(system.hasSetting(ServerSettingsKeys.SERVERCONF_MONITOR_SMTPPASSWORD));
             return Response.ok(m).build();
         } catch (Exception ex) {
             log.error("can not get system mailbox", ex);
@@ -3139,7 +3155,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
                 system.setSetting(ServerSettingsKeys.SERVERCONF_MONITOR_SMTPPASSWORD, mailbox.getPassword());
             }
             mailbox.setPassword(null);
-            mailbox.setPasswordSet(!readSetting(system, ServerSettingsKeys.SERVERCONF_MONITOR_SMTPPASSWORD).isEmpty());
+            mailbox.setPasswordSet(system.hasSetting(ServerSettingsKeys.SERVERCONF_MONITOR_SMTPPASSWORD));
             return Response.ok(mailbox).build();
         } catch (Exception ex) {
             log.error("can not update system mailbox", ex);
@@ -3170,7 +3186,13 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
             SystemManagementLocal system = (SystemManagementLocal) ic.lookup(LOOKUP_SYSMAN);
             String pwd = mailbox.getPassword();
             if (pwd == null || pwd.isEmpty()) {
-                pwd = readSetting(system, ServerSettingsKeys.SERVERCONF_MONITOR_SMTPPASSWORD);
+                // the stored password is only used for the stored server and user - otherwise it could be sent anywhere
+                if (sameValue(mailbox.getSmtpServer(), readSetting(system, ServerSettingsKeys.SERVERCONF_MONITOR_SMTPSERVER))
+                        && sameValue(mailbox.getSmtpUser(), readSetting(system, ServerSettingsKeys.SERVERCONF_MONITOR_SMTPUSER))) {
+                    pwd = readSecretSetting(system, ServerSettingsKeys.SERVERCONF_MONITOR_SMTPPASSWORD);
+                } else {
+                    pwd = "";
+                }
             }
             int port = -1;
             String portStr = mailbox.getSmtpPort();
@@ -3419,10 +3441,25 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
         }
     }
 
+    /**
+     * Reads the clear-text value of a secret setting, or "" when it is not set. Only for endpoints
+     * that are restricted to the role allowed to write the secret; the generic getSetting never
+     * returns secret values.
+     */
+    private String readSecretSetting(SystemManagementLocal system, String key) {
+        ServerSettingsBean b = system.getSettingUnrestricted(key);
+        return (b == null || b.getSettingValue() == null) ? "" : b.getSettingValue();
+    }
+
     /** Reads a server setting's value, or "" when it is not set. */
     private String readSetting(SystemManagementLocal system, String key) {
         ServerSettingsBean b = system.getSetting(key);
         return (b == null || b.getSettingValue() == null) ? "" : b.getSettingValue();
+    }
+
+    /** Whether two configuration values are equal, ignoring surrounding whitespace; null equals "". */
+    private static boolean sameValue(String a, String b) {
+        return (a == null ? "" : a.trim()).equals(b == null ? "" : b.trim());
     }
 
     /** Null-safe: maps null to an empty string for storage. */

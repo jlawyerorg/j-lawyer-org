@@ -1080,15 +1080,16 @@ public class MicrosoftOfficeAccess {
             String scriptRegExKey = "\\[\\[SCRIPT:[^\\]]*\\]\\]";
             ArrayList<XWPFParagraph> removeParagraphs=new ArrayList<>();
             Pattern pattern = Pattern.compile(scriptRegExKey);
+            String scriptCheckMode = SmartTemplateEvaluator.readMode();
             // header
             for (XWPFHeader header : outputDocx.getHeaderList()) {
-                replaceScriptsInBodyElements(caseId, pattern, values, formsPrefixes, header.getBodyElements(), removeParagraphs);
+                replaceScriptsInBodyElements(caseId, scriptCheckMode, pattern, values, formsPrefixes, header.getBodyElements(), removeParagraphs);
             }
             // body
-            replaceScriptsInBodyElements(caseId, pattern, values, formsPrefixes, outputDocx.getBodyElements(), removeParagraphs);
+            replaceScriptsInBodyElements(caseId, scriptCheckMode, pattern, values, formsPrefixes, outputDocx.getBodyElements(), removeParagraphs);
             // footer
             for (XWPFFooter footer : outputDocx.getFooterList()) {
-                replaceScriptsInBodyElements(caseId, pattern, values, formsPrefixes, footer.getBodyElements(), removeParagraphs);
+                replaceScriptsInBodyElements(caseId, scriptCheckMode, pattern, values, formsPrefixes, footer.getBodyElements(), removeParagraphs);
             }
 
             for(int i=removeParagraphs.size()-1;i>=0;i--) {
@@ -1233,13 +1234,13 @@ public class MicrosoftOfficeAccess {
         }
     }
 
-    private static void replaceScriptsInBodyElements(String caseId, Pattern pattern, HashMap<String, Object> values, ArrayList<String> formsPrefixes, List<IBodyElement> bodyElements, ArrayList<XWPFParagraph> removeParagraphs) {
+    private static void replaceScriptsInBodyElements(String caseId, String scriptCheckMode, Pattern pattern, HashMap<String, Object> values, ArrayList<String> formsPrefixes, List<IBodyElement> bodyElements, ArrayList<XWPFParagraph> removeParagraphs) {
         for (IBodyElement bodyElement : bodyElements) {
             if (bodyElement.getElementType().compareTo(BodyElementType.PARAGRAPH) == 0) {
-                replaceScriptsInParagraph(caseId, pattern, values, formsPrefixes, (XWPFParagraph) bodyElement, removeParagraphs);
-                replaceScriptsInTextfield(caseId, pattern, values, formsPrefixes, (XWPFParagraph) bodyElement);
+                replaceScriptsInParagraph(caseId, scriptCheckMode, pattern, values, formsPrefixes, (XWPFParagraph) bodyElement, removeParagraphs);
+                replaceScriptsInTextfield(caseId, scriptCheckMode, pattern, values, formsPrefixes, (XWPFParagraph) bodyElement);
             } else if (bodyElement.getElementType().compareTo(BodyElementType.TABLE) == 0) {
-                replaceScriptsInTable(caseId, pattern, values, formsPrefixes, (XWPFTable) bodyElement, removeParagraphs);
+                replaceScriptsInTable(caseId, scriptCheckMode, pattern, values, formsPrefixes, (XWPFTable) bodyElement, removeParagraphs);
             }
         }
     }
@@ -1353,7 +1354,7 @@ public class MicrosoftOfficeAccess {
 
     }
 
-    private static void replaceScriptsInParagraph(String caseId, Pattern pattern, HashMap<String, Object> values, ArrayList<String> formsPrefixes, XWPFParagraph xwpfParagraph, ArrayList<XWPFParagraph> removeParagraphs) {
+    private static void replaceScriptsInParagraph(String caseId, String scriptCheckMode, Pattern pattern, HashMap<String, Object> values, ArrayList<String> formsPrefixes, XWPFParagraph xwpfParagraph, ArrayList<XWPFParagraph> removeParagraphs) {
 
         ArrayList<String> scriptList = new ArrayList<>();
 
@@ -1369,7 +1370,7 @@ public class MicrosoftOfficeAccess {
 
         for (String script : scriptList) {
             String find = script;
-            String repl = LibreOfficeAccess.evaluateScript(caseId, script, values, formsPrefixes);
+            String repl = LibreOfficeAccess.evaluateScript(caseId, script, values, formsPrefixes, scriptCheckMode);
 
             TextSegment found = xwpfParagraph.searchText(find, new PositionInParagraph());
             
@@ -1539,15 +1540,15 @@ public class MicrosoftOfficeAccess {
         }
     }
 
-    private static void replaceScriptsInTable(String caseId, Pattern pattern, HashMap<String, Object> values, ArrayList<String> formsPrefixes, XWPFTable table, ArrayList<XWPFParagraph> removeParagraphs) {
+    private static void replaceScriptsInTable(String caseId, String scriptCheckMode, Pattern pattern, HashMap<String, Object> values, ArrayList<String> formsPrefixes, XWPFTable table, ArrayList<XWPFParagraph> removeParagraphs) {
         for (XWPFTableRow row : table.getRows()) {
             for (XWPFTableCell cell : row.getTableCells()) {
                 for (IBodyElement bodyElement : cell.getBodyElements()) {
                     if (bodyElement.getElementType().compareTo(BodyElementType.PARAGRAPH) == 0) {
-                        replaceScriptsInParagraph(caseId, pattern, values, formsPrefixes, (XWPFParagraph) bodyElement, removeParagraphs);
+                        replaceScriptsInParagraph(caseId, scriptCheckMode, pattern, values, formsPrefixes, (XWPFParagraph) bodyElement, removeParagraphs);
                     }
                     if (bodyElement.getElementType().compareTo(BodyElementType.TABLE) == 0) {
-                        replaceScriptsInTable(caseId, pattern, values, formsPrefixes, (XWPFTable) bodyElement, removeParagraphs);
+                        replaceScriptsInTable(caseId, scriptCheckMode, pattern, values, formsPrefixes, (XWPFTable) bodyElement, removeParagraphs);
                     }
                 }
             }
@@ -1685,7 +1686,7 @@ public class MicrosoftOfficeAccess {
 
     }
 
-    private static void replaceScriptsInTextfield(String caseId, Pattern pattern, HashMap<String, Object> values, ArrayList<String> formsPrefixes, XWPFParagraph xwpfParagraph) {
+    private static void replaceScriptsInTextfield(String caseId, String scriptCheckMode, Pattern pattern, HashMap<String, Object> values, ArrayList<String> formsPrefixes, XWPFParagraph xwpfParagraph) {
 
         XmlCursor cursor = xwpfParagraph.getCTP().newCursor();
         cursor.selectPath(CURSOR_TEXTFIELD);
@@ -1708,7 +1709,7 @@ public class MicrosoftOfficeAccess {
                     Matcher m = pattern.matcher(text);
                     while (m.find()) {
                         String itemText = m.group();
-                        String scriptResult = LibreOfficeAccess.evaluateScript(caseId, itemText, values, formsPrefixes);
+                        String scriptResult = LibreOfficeAccess.evaluateScript(caseId, itemText, values, formsPrefixes, scriptCheckMode);
                         text = text.replace(itemText, scriptResult);
                         bufferrun.setText(text, 0);
 

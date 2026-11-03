@@ -1973,6 +1973,8 @@
     "empty": "Papierkorb leeren",
     "retention": "automatisch löschen nach",
     "days": "Tagen",
+    "retentionDisabled": "keine automatische Löschung",
+    "retentionHint": "0 = keine automatische Löschung",
     "emptyState": "Der Papierkorb ist leer.",
     "restore": "Wiederherstellen",
     "deleteForever": "Endgültig löschen",

@@ -2431,7 +2431,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     private boolean skipSearchIndex() {
         if ((System.currentTimeMillis() - lastSearchIndexSkipCheck) > (1000l * 60l * 5l)) {
             skipSearchIndex = false;
-            ServerSettingsBean s = this.settingsFacade.find("jlawyer.server.searchindex.skip");
+            ServerSettingsBean s = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_SEARCHINDEX_SKIP);
             if (s != null) {
                 skipSearchIndex = "1".equals(s.getSettingValue()) || "true".equalsIgnoreCase(s.getSettingValue());
             }
@@ -2849,6 +2849,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    @RolesAllowed({"readArchiveFileRole"})
     public Collection<ArchiveFileAddressesBean> getArchiveFileAddressesForAddress(String adressId) {
 
         List<Group> userGroups = new ArrayList<>();
@@ -2910,7 +2911,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
             File prvFile = new File(prvName);
             File prvFileId = new File(prvId);
-            if (prvFile.exists()) {
+            if (ServerFileUtils.isSimpleName(db.getName()) && prvFile.exists()) {
                 prvFile.renameTo(prvFileId);
             }
 
@@ -3933,6 +3934,21 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @RolesAllowed({"readArchiveFileRole"})
     public DocumentPreview getDocumentPreview(String id, String previewType) throws Exception {
 
+        ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(id);
+        if (db == null) {
+            log.error("Document with id " + id + " does not exist");
+            throw new Exception("Dokument mit ID " + id + " existiert nicht!");
+        }
+        SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), db.getArchiveFileKey(), this.securityFacade, this.getAllowedGroups(db.getArchiveFileKey()));
+
+        return this.getDocumentPreviewImpl(id, previewType);
+    }
+
+    /**
+     * Returns a document preview without any permission check - callers must have checked case access before.
+     */
+    private DocumentPreview getDocumentPreviewImpl(String id, String previewType) throws Exception {
+
         ServerSettingsBean sb = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_STIRLINGPDF_ENDPOINT);
         StirlingPdfAPI pdfApi = null;
         if (sb != null && !ServerStringUtils.isEmpty(sb.getSettingValue())) {
@@ -4003,11 +4019,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    @RolesAllowed({"readArchiveFileRole"})
     public List<ArchiveFileHistoryBean> getHistoryByDateInterval(Date fromDate, Date toDate, int limit) {
         return filterHistory(this.archiveFileHistoryFacade.findByDateInterval(fromDate, toDate, limit), context.getCallerPrincipal().getName());
     }
 
     @Override
+    @RolesAllowed({"readArchiveFileRole"})
     public List<ArchiveFileHistoryBean> getHistoryByPrincipalAndDateInterval(String principal, Date fromDate, Date toDate, int limit) {
         return filterHistory(this.archiveFileHistoryFacade.findByPrincipalAndDateInterval(principal, fromDate, toDate, limit), context.getCallerPrincipal().getName());
     }
@@ -5134,7 +5152,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             localBaseDir = localBaseDir + System.getProperty("file.separator");
         }
 
-        String src = localBaseDir + "templates" + templateFolder + System.getProperty("file.separator") + templateName;
+        // template folder and name come from the caller - they must not lead out of the template directory
+        String src = localBaseDir + "templates" + templateFolder + System.getProperty("file.separator") + ServerFileUtils.requireSimpleName(templateName);
+        ServerFileUtils.requireWithin(localBaseDir + "templates", src);
         String dst = localBaseDir + "archivefiles" + System.getProperty("file.separator") + aFile.getId() + System.getProperty("file.separator");
 
         String ext = "";
@@ -5164,7 +5184,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             ServerFileUtils.copyFile(src, dstId);
         } else if (letterHead.toLowerCase().endsWith(".png") || letterHead.toLowerCase().endsWith(".jpg") || letterHead.toLowerCase().endsWith(".jpeg")) {
             ServerFileUtils.copyFile(src, dstId);
-            String srcHead = localBaseDir + "letterheads" + System.getProperty("file.separator") + letterHead;
+            String srcHead = localBaseDir + "letterheads" + System.getProperty("file.separator") + ServerFileUtils.requireSimpleName(letterHead);
             if (!(new File(srcHead).exists())) {
                 throw new Exception("Briefkopf " + letterHead + " existiert nicht!");
             }
@@ -5172,7 +5192,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             LibreOfficeAccess.applyHeaderGraphic(srcHead, dstId, templateName);
         } else {
             // new document equals the head template
-            String srcHead = localBaseDir + "letterheads" + System.getProperty("file.separator") + letterHead;
+            String srcHead = localBaseDir + "letterheads" + System.getProperty("file.separator") + ServerFileUtils.requireSimpleName(letterHead);
             ServerFileUtils.copyFile(srcHead, dstId);
             if (!(new File(srcHead).exists())) {
                 throw new Exception("Briefkopf " + letterHead + " existiert nicht!");
@@ -5784,7 +5804,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
-    @RolesAllowed({"adminRole"})
+    @RolesAllowed({"loginRole"})
     public void addFolderTemplate(DocumentFolderTemplate template) throws Exception {
         Object o = this.folderTemplateFacade.findByName(template.getName());
         if (o != null) {
@@ -5807,7 +5827,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
-    @RolesAllowed({"adminRole"})
+    @RolesAllowed({"loginRole"})
     public void removeFolderTemplate(String name) {
         DocumentFolderTemplate t = this.folderTemplateFacade.findByName(name);
         if (t != null) {
@@ -5817,7 +5837,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
-    @RolesAllowed({"adminRole"})
+    @RolesAllowed({"loginRole"})
     public void updateFolderTemplate(DocumentFolderTemplate template) {
         DocumentFolderTemplate t = this.folderTemplateFacade.find(template.getId());
         if (t != null) {
@@ -5833,6 +5853,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    @RolesAllowed({"loginRole"})
     public DocumentFolder addFolderToTemplate(String templateName, DocumentFolder folder) throws Exception {
 
         DocumentFolderTemplate t = this.folderTemplateFacade.findByName(templateName);
@@ -5865,6 +5886,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    @RolesAllowed({"loginRole"})
     public void removeFolderFromTemplate(String folderId) throws Exception {
 
         if (folderId == null || "".equals(folderId)) {
@@ -5881,6 +5903,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    @RolesAllowed({"loginRole"})
     public DocumentFolder renameFolderInTemplate(String folderId, String newName) throws Exception {
 
         if (folderId == null || "".equals(folderId)) {
@@ -5899,6 +5922,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    @RolesAllowed({"loginRole"})
     public void cloneFolderTemplate(String sourceTemplateName, String targetTemplateName) throws Exception {
         DocumentFolderTemplate source = this.getFolderTemplate(sourceTemplateName);
         DocumentFolderTemplate target = new DocumentFolderTemplate();
@@ -6256,7 +6280,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } else {
             String dstByName = dst + db.getName();
             dbFile = new File(dstByName);
-            if (dbFile.exists()) {
+            // legacy files were stored under their name - a name with path elements cannot be one of them
+            if (ServerFileUtils.isSimpleName(db.getName()) && dbFile.exists()) {
                 boolean deleted = dbFile.delete();
                 if (!deleted) {
                     // could not delete document, but still let's continue with removal
@@ -6359,6 +6384,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             }
         }
 
+        // a retention of 0 or less disables automatic purging - without this guard, 0 would purge the whole bin
+        if (retentionDays <= 0) {
+            log.info("automatic purging of the documents bin is disabled (retention days: " + retentionDays + ")");
+            return;
+        }
+
         Collection<ArchiveFileDocumentsBean> deleted = this.archiveFileDocumentsFacade.findDeleted();
         long retentionMillis = (long) retentionDays * 24l * 60l * 60l * 1000l;
         long now = System.currentTimeMillis();
@@ -6388,7 +6419,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), db.getArchiveFileKey(), this.securityFacade, this.getAllowedGroups(db.getArchiveFileKey()));
 
-        DocumentPreview preview = this.getDocumentPreview(docId, DocumentPreview.TYPE_TEXT);
+        DocumentPreview preview = this.getDocumentPreviewImpl(docId, DocumentPreview.TYPE_TEXT);
         if (preview == null || ServerStringUtils.isEmpty(preview.getText())) {
             return new ArrayList<>();
         }
@@ -6527,6 +6558,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     private void migrateDocument(String dir, String docId, String docName) {
 
         if (new File(dir + docId).exists()) {
+            return;
+        }
+        if (!ServerFileUtils.isSimpleName(docName)) {
+            // legacy files were stored under their name - a name with path elements cannot be one of them
             return;
         }
 
@@ -7274,7 +7309,14 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public Invoice copyInvoice(String invoiceId, String toCaseId, InvoicePool invoicePool, boolean asCredit, boolean markAsCopy, Date periodFrom, Date periodTo, Date due) throws Exception {
 
         Invoice oldInvoice = this.invoicesFacade.find(invoiceId);
-        
+        if (oldInvoice == null) {
+            throw new Exception("Rechnung " + invoiceId + " existiert nicht.");
+        }
+
+        // the caller must be allowed to see the source case, not only the target case
+        ArchiveFileBean sourceCase = oldInvoice.getArchiveFileKey();
+        SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), sourceCase, this.securityFacade, this.getAllowedGroups(sourceCase));
+
         if(invoicePool==null) {
             invoicePool=this.invoicesPoolsFacade.find(oldInvoice.getLastPoolId());
         }
@@ -8545,7 +8587,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (locked) {
 
             // check if locking is enabled for this file type
-            ServerSettingsBean s = this.settingsFacade.find("jlawyer.server.documents.lock.filetypes");
+            ServerSettingsBean s = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_DOCUMENTS_LOCK_FILETYPES);
             String extensionList = null;
             if (s != null) {
                 extensionList = s.getSettingValue();

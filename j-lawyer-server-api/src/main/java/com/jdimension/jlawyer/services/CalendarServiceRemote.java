@@ -761,14 +761,57 @@ public interface CalendarServiceRemote {
     Collection<ArchiveFileReviewsBean> getReviews(String archiveFileKey, boolean done) throws Exception;
     ArchiveFileReviewsBean getReview(String eventId) throws Exception;
 
+    /**
+     * Returns all calendar setups. The setups are copies without the cloud password - use
+     * {@link CalendarSetup#isCloudPasswordSet()} to find out whether one is stored.
+     *
+     * @return all calendar setups without passwords
+     */
     List<CalendarSetup> getAllCalendarSetups();
     
+    /**
+     * Returns the calendar setups a user has access to. The setups are copies without the cloud
+     * password.
+     *
+     * @param principalId the user
+     * @return the user's calendar setups without passwords
+     */
     List<CalendarSetup> getCalendarSetupsForUser(String principalId);
 
+    /**
+     * Creates a calendar setup. Requires adminRole.
+     *
+     * @param cs the setup, the cloud password encrypted
+     * @return the created setup, without the cloud password
+     */
     CalendarSetup addCalendarSetup(CalendarSetup cs);
     
     List listCalendars(String host, boolean ssl, int port, String user, String password, String path) throws Exception;
+
+    /**
+     * Lists the calendars available on a calendar server for an existing calendar setup. If no
+     * password is given, the password stored with the setup is used, so clients can list calendars
+     * without knowing the stored password. The stored password is only used if host and user match
+     * the stored setup. Requires adminRole.
+     *
+     * @param setupId id of the existing calendar setup, may be null for a new setup
+     * @param host calendar server host
+     * @param ssl whether to use SSL
+     * @param port calendar server port
+     * @param user user name on the calendar server
+     * @param password clear-text password, or null/empty to use the stored one
+     * @param path optional sub path on the calendar server
+     * @return the calendars found
+     * @throws Exception if the calendar server cannot be queried
+     */
+    List listCalendarsForSetup(String setupId, String host, boolean ssl, int port, String user, String password, String path) throws Exception;
     
+    /**
+     * Updates a calendar setup. Requires adminRole. An empty cloud password keeps the stored one.
+     *
+     * @param cs the setup; the cloud password encrypted, or empty to keep the stored one
+     * @return the updated setup, without the cloud password
+     */
     CalendarSetup updateCalendarSetup(CalendarSetup cs);
 
     void removeCalendarSetup(CalendarSetup cs);

@@ -690,6 +690,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Resource;
+import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
 import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
@@ -706,10 +707,12 @@ import org.apache.log4j.Logger;
  * calling user is identified via the EJB principal. Credentials (beA
  * certificate and password) are read from AppUserBean and sent to beAstie for
  * authentication. Bearer tokens are managed server-side in BeaSessionRegistry.
+ * All business methods require an authenticated user (loginRole).
  *
  * @author jens
  */
 @Stateless
+@RolesAllowed({"loginRole"})
 public class BeaService implements BeaServiceRemote, BeaServiceLocal {
 
     private static final Logger log = Logger.getLogger(BeaService.class.getName());

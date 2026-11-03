@@ -681,6 +681,8 @@ import com.jdimension.jlawyer.security.PasswordsUtil;
 import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
 import com.jdimension.jlawyer.server.services.ServerInformation;
 import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
+import com.jdimension.jlawyer.server.services.settings.SettingRole;
+import com.jdimension.jlawyer.server.services.settings.ServerSettingsAccessCatalog;
 import com.jdimension.jlawyer.server.utils.FileNameGenerator;
 import com.jdimension.jlawyer.server.utils.InvalidSchemaPatternException;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
@@ -713,6 +715,7 @@ import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Asynchronous;
 import javax.ejb.EJB;
+import javax.ejb.EJBAccessException;
 import javax.ejb.EJBException;
 import javax.ejb.Schedule;
 import javax.ejb.SessionContext;
@@ -728,17 +731,6 @@ import javax.mail.Store;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
-import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathFactory;
 import org.apache.log4j.Logger;
 import org.apache.tika.Tika;
 import org.jboss.ejb3.annotation.TransactionTimeout;
@@ -748,10 +740,6 @@ import org.jlawyer.plugins.calculation.GenericCalculationTable;
 import org.jlawyer.utils.PlaceHolderServerUtils;
 import org.jlawyer.utils.ocr.OcrRequest;
 import org.jlawyer.utils.ocr.OcrUtils;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 /**
  *
@@ -1063,8 +1051,9 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         String localBaseDirFrom = localBaseDir + "mastertemplates" + System.getProperty("file.separator");
         String localBaseDirTo = localBaseDir + getTypedFolderName(templateType) + System.getProperty("file.separator");
 
-        String src = localBaseDirFrom + basedOnFileName;
-        String dst = localBaseDirTo + fileName;
+        String src = localBaseDirFrom + ServerFileUtils.requireSimpleName(basedOnFileName);
+        String dst = localBaseDirTo + ServerFileUtils.requireSimpleName(fileName);
+        ServerFileUtils.requireWithin(localBaseDir + getTypedFolderName(templateType), dst);
 
         ServerFileUtils.copyFile(src, dst);
 
@@ -1313,14 +1302,77 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @RolesAllowed({"loginRole"})
     public ServerSettingsBean getSetting(String key) {
-        return this.settingsFacade.find(key);
+        ServerSettingsAccessCatalog.Rule rule = ServerSettingsAccessCatalog.resolve(key);
+        this.requireSettingRole(rule.getRead(), key, "read");
+        ServerSettingsBean b = this.settingsFacade.find(key);
+        if (b != null && rule.isSecret()) {
+            // secrets are write-only: return a detached copy without the value, never touch the managed entity
+            ServerSettingsBean masked = new ServerSettingsBean(key);
+            masked.setSettingValue("");
+            return masked;
+        }
+        return b;
+    }
 
+    @Override
+    @RolesAllowed({"loginRole"})
+    public boolean hasSetting(String key) {
+        ServerSettingsAccessCatalog.Rule rule = ServerSettingsAccessCatalog.resolve(key);
+        this.requireSettingRole(rule.getRead(), key, "read");
+        ServerSettingsBean b = this.settingsFacade.find(key);
+        return b != null && b.getSettingValue() != null && !b.getSettingValue().isEmpty();
+    }
+
+    @Override
+    @PermitAll
+    public ServerSettingsBean getSettingUnrestricted(String key) {
+        return this.settingsFacade.find(key);
+    }
+
+    @Override
+    @PermitAll
+    public boolean setSettingUnrestricted(String key, String value) {
+        return this.storeSetting(key, value);
+    }
+
+    /**
+     * Throws if the caller does not have the role required by the access rules of a setting.
+     *
+     * @param required the role required
+     * @param key the setting key
+     * @param operation read or write, for logging
+     */
+    private void requireSettingRole(SettingRole required, String key, String operation) {
+        boolean allowed;
+        switch (required) {
+            case LOGIN:
+                allowed = true; // the methods themselves require loginRole
+                break;
+            case ADMIN:
+                allowed = this.context.isCallerInRole("adminRole") || this.context.isCallerInRole("sysAdminRole");
+                break;
+            case SYSADMIN:
+                allowed = this.context.isCallerInRole("sysAdminRole");
+                break;
+            default:
+                // SYSTEM: maintained by the server only
+                allowed = false;
+                break;
+        }
+        if (!allowed) {
+            log.warn("user " + this.context.getCallerPrincipal().getName() + " is not allowed to " + operation + " server setting " + key);
+            throw new EJBAccessException("Keine Berechtigung für die Einstellung " + key);
+        }
     }
 
     @Override
     @RolesAllowed({"loginRole"})
     public boolean setSetting(String key, String value) {
+        this.requireSettingRole(ServerSettingsAccessCatalog.resolve(key).getWrite(), key, "write");
+        return this.storeSetting(key, value);
+    }
 
+    private boolean storeSetting(String key, String value) {
         ServerSettingsBean s = this.settingsFacade.find(key);
         if (s == null) {
             s = new ServerSettingsBean();
@@ -1349,12 +1401,12 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @RolesAllowed({"loginRole"})
     public MonitoringSnapshot getMonitoringSnapshot() {
         MonitoringSnapshot s = new MonitoringSnapshot();
-        ServerSettingsBean avg = this.settingsFacade.find("jlawyer.server.monitor.avgcpu");
+        ServerSettingsBean avg = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_MONITOR_AVGCPU);
         if (avg != null) {
             s.setCpuAverage(Double.parseDouble(avg.getSettingValue()));
         }
 
-        ServerSettingsBean status = this.settingsFacade.find("jlawyer.server.monitor.laststatus");
+        ServerSettingsBean status = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_MONITOR_LASTSTATUS);
         if (status != null) {
             s.setLastStatus(status.getSettingValue());
         }
@@ -1403,7 +1455,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     @Override
-    //@RolesAllowed({"loginRole"})
+    // intentionally unsecured: Local-only, called by IterativeBackupTask without a security context
     public void statusMail(String subject, String body) {
 
         ServerSettingsBean enabled = this.settingsFacade.find("jlawyer.server.monitor.notify");
@@ -1802,117 +1854,11 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     @Override
-    public String getServerInterfacesBoundTo() throws Exception {
-        File data = new File(System.getProperty("jlawyer.server.basedirectory"));
-        File jlawyer = data.getParentFile();
-        File wildFlyConf = new File(jlawyer.getAbsolutePath() + File.separator + "wildfly" + File.separator + "standalone" + File.separator + "configuration" + File.separator + "standalone-full.xml");
-        Document dom;
-        // Make an  instance of the DocumentBuilderFactory
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        try {
-            dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-            dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
-        } catch (IllegalArgumentException iae) {
-            // only available from JAXP 1.5+, but Wildfly still ships 1.4
-            log.warn("Unable to set external entity restrictions in XML parser: " + iae.getMessage());
-        }
-
-        // use the factory to take an instance of the document builder
-        DocumentBuilder db = dbf.newDocumentBuilder();
-        // parse using the builder to get the DOM mapping of the    
-        // XML file
-        dom = db.parse(wildFlyConf);
-
-        Element doc = dom.getDocumentElement();
-
-        XPath xpath = XPathFactory.newInstance().newXPath();
-        XPathExpression expr1 = xpath.compile("//server/interfaces/interface/inet-address");
-        NodeList nodes = (NodeList) expr1.evaluate(doc, XPathConstants.NODESET);
-        String bindString = "";
-        for (int i = 0; i < nodes.getLength(); i++) {
-            Node n = nodes.item(i);
-
-            String interfaceType = ((Element) n.getParentNode()).getAttribute("name");
-
-            String interfaceBound = (((Element) n).getAttribute("value"));
-            bindString = bindString + interfaceType + "=" + interfaceBound + ", ";
-
-        }
-        if (bindString.length() >= 2) {
-            bindString = bindString.substring(0, bindString.length() - 2);
-        }
-
-        return bindString;
-    }
-
-    @Override
-    public boolean setServerInterfaceBindings(String ip) throws Exception {
-        File data = new File(System.getProperty("jlawyer.server.basedirectory"));
-        File jlawyer = data.getParentFile();
-        File wildFlyConf = new File(jlawyer.getAbsolutePath() + File.separator + "wildfly" + File.separator + "standalone" + File.separator + "configuration" + File.separator + "standalone-full.xml");
-
-        if (!wildFlyConf.exists()) {
-            throw new Exception("server configuration not found: " + wildFlyConf.getAbsolutePath());
-        }
-
-        ServerFileUtils.copyFile(wildFlyConf.getAbsolutePath(), new File(wildFlyConf.getAbsolutePath() + ".bak." + System.currentTimeMillis()).getAbsolutePath());
-
-        Document dom;
-        // Make an  instance of the DocumentBuilderFactory
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        try {
-            dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-            dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
-        } catch (IllegalArgumentException iae) {
-            // only available from JAXP 1.5+, but Wildfly still ships 1.4
-            log.warn("Unable to set external entity restrictions in XML parser", iae);
-        }
-
-        // use the factory to take an instance of the document builder
-        DocumentBuilder db = dbf.newDocumentBuilder();
-        // parse using the builder to get the DOM mapping of the    
-        // XML file
-        dom = db.parse(wildFlyConf);
-
-        Element doc = dom.getDocumentElement();
-
-        XPath xpath = XPathFactory.newInstance().newXPath();
-        XPathExpression expr1 = xpath.compile("//server/interfaces/interface/inet-address");
-        NodeList nodes = (NodeList) expr1.evaluate(doc, XPathConstants.NODESET);
-        for (int i = 0; i < nodes.getLength(); i++) {
-            Node n = nodes.item(i);
-
-            String interfaceType = ((Element) n.getParentNode()).getAttribute("name");
-
-            String interfaceBound = (((Element) n).getAttribute("value"));
-            ((Element) n).setAttribute("value", ip);
-
-        }
-
-        TransformerFactory transformerFactory = TransformerFactory.newInstance();
-        try {
-            transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, ""); // Compliant
-            transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, ""); // Compliant
-        } catch (IllegalArgumentException iae) {
-            // only available from JAXP 1.5+, but Wildfly still ships 1.4
-            log.warn("Unable to set external entity restrictions in XML parser", iae);
-        }
-
-        Transformer transformer = transformerFactory.newTransformer();
-        DOMSource source = new DOMSource(doc);
-        StreamResult result = new StreamResult(wildFlyConf);
-
-        transformer.transform(source, result);
-
-        return true;
-    }
-
-    @Override
     @RolesAllowed({"loginRole"})
     public boolean addTemplate(int templateType, GenericNode folder, String fileName, byte[] data) throws Exception {
         String localBaseDir = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(folder));
 
-        String dst = localBaseDir + File.separator + fileName;
+        String dst = localBaseDir + File.separator + ServerFileUtils.requireSimpleName(fileName);
 
         File f2 = new File(dst);
 
@@ -1934,8 +1880,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     public boolean addTemplateFromTemplate(int templateType, GenericNode folder, String fileName, String basedOnTemplateFileName) throws Exception {
         String localBaseDir = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(folder));
 
-        String src = localBaseDir + File.separator + basedOnTemplateFileName;
-        String dst = localBaseDir + File.separator + fileName;
+        String src = localBaseDir + File.separator + ServerFileUtils.requireSimpleName(basedOnTemplateFileName);
+        String dst = localBaseDir + File.separator + ServerFileUtils.requireSimpleName(fileName);
 
         ServerFileUtils.copyFile(src, dst);
 
@@ -1947,7 +1893,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     public boolean deleteTemplate(int templateType, GenericNode folder, String fileName) throws Exception {
         String localBaseDir = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(folder));
 
-        String del = localBaseDir + File.separator + fileName;
+        String del = localBaseDir + File.separator + ServerFileUtils.requireSimpleName(fileName);
 
         File f = new File(del);
         return f.delete();
@@ -2006,7 +1952,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     public byte[] getTemplateData(int templateType, GenericNode folder, String fileName) throws Exception {
         String localBaseDir = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(folder));
 
-        String read = localBaseDir + File.separator + fileName;
+        String read = localBaseDir + File.separator + ServerFileUtils.requireSimpleName(fileName);
 
         File f = new File(read);
         return ServerFileUtils.readFile(f);
@@ -2017,7 +1963,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     public void setTemplateData(int templateType, GenericNode folder, String fileName, byte[] content) throws Exception {
         String localBaseDir = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(folder));
 
-        String upd = localBaseDir + File.separator + fileName;
+        String upd = localBaseDir + File.separator + ServerFileUtils.requireSimpleName(fileName);
 
         File f = new File(upd);
         ServerFileUtils.writeFile(f, content);
@@ -2026,6 +1972,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @RolesAllowed({"loginRole"})
     public boolean addTemplateFolder(int templateType, GenericNode parent, String folderName) throws Exception {
+        ServerFileUtils.requireSimpleName(folderName);
         String localBaseDir = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(parent) + File.separator + folderName);
 
         return new File(localBaseDir).mkdirs();
@@ -2035,6 +1982,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @RolesAllowed({"loginRole"})
     public boolean deleteTemplateFolder(int templateType, GenericNode parent, String folderName) throws Exception {
+        ServerFileUtils.requireSimpleName(folderName);
         String localBaseDir = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(parent) + File.separator + folderName);
 
         ServerFileUtils.getInstance().delete(new File(localBaseDir));
@@ -2044,6 +1992,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @RolesAllowed({"loginRole"})
     public boolean renameTemplateFolder(int templateType, GenericNode parent, String oldFolderName, String newFolderName) throws Exception {
+        ServerFileUtils.requireSimpleName(oldFolderName);
+        ServerFileUtils.requireSimpleName(newFolderName);
         String oldName = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(parent) + File.separator + oldFolderName);
         String newName = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(parent) + File.separator + newFolderName);
 
@@ -2089,8 +2039,9 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         String localBaseDirFrom = localBaseDir + "mastertemplates" + System.getProperty("file.separator");
         String localBaseDirTo = localBaseDir + getTypedFolderName(templateType) + TreeNodeUtils.buildNodePath(folder) + File.separator;
 
-        String src = localBaseDirFrom + basedOnFileName;
-        String dst = localBaseDirTo + fileName;
+        String src = localBaseDirFrom + ServerFileUtils.requireSimpleName(basedOnFileName);
+        String dst = localBaseDirTo + ServerFileUtils.requireSimpleName(fileName);
+        ServerFileUtils.requireWithin(localBaseDir + getTypedFolderName(templateType), dst);
 
         ServerFileUtils.copyFile(src, dst);
 
@@ -2106,7 +2057,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         }
         String localBaseDir = this.getTemplatesBaseDir(templateType, templatePath);
 
-        String tpl = localBaseDir + File.separator + templateName;
+        String tpl = localBaseDir + File.separator + ServerFileUtils.requireSimpleName(templateName);
 
         List<PartyTypeBean> partyTypes = this.getPartyTypes();
         ArrayList<String> allPartyTypesPlaceholders = new ArrayList<>();
@@ -2122,6 +2073,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @RolesAllowed({"loginRole"})
     public List<String> getPlaceHoldersForTemplate(int templateType, GenericNode folder, String templateName, Collection<String> formsPlaceHolders) throws Exception {
+        ServerFileUtils.requireSimpleName(templateName);
         String localBaseDir = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(folder) + System.getProperty("file.separator") + templateName);
 
         List<PartyTypeBean> partyTypes = this.getPartyTypes();
@@ -2153,7 +2105,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     public DocumentPreview getTemplatePreview(int templateType, GenericNode folder, String fileName) throws Exception {
         String localBaseDir = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(folder));
 
-        String read = localBaseDir + File.separator + fileName;
+        String read = localBaseDir + File.separator + ServerFileUtils.requireSimpleName(fileName);
 
         ServerSettingsBean sb = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_STIRLINGPDF_ENDPOINT);
         StirlingPdfAPI pdfApi = null;
@@ -2198,8 +2150,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     public void renameTemplate(int templateType, GenericNode folder, String fromName, String toName) throws Exception {
         String localBaseDir = this.getTemplatesBaseDir(templateType, TreeNodeUtils.buildNodePath(folder));
 
-        String from = localBaseDir + File.separator + fromName;
-        String to = localBaseDir + File.separator + toName;
+        String from = localBaseDir + File.separator + ServerFileUtils.requireSimpleName(fromName);
+        String to = localBaseDir + File.separator + ServerFileUtils.requireSimpleName(toName);
 
         File fromFile = new File(from);
         if (!fromFile.exists()) {
@@ -2210,7 +2162,13 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     @Override
+    @RolesAllowed({"loginRole"})
     public List<PartyTypeBean> getPartyTypes() {
+        return this.getPartyTypesUnrestricted();
+    }
+
+    @Override
+    public List<PartyTypeBean> getPartyTypesUnrestricted() {
         return this.partyTypesFacade.findAllInSequence();
     }
 
@@ -2321,6 +2279,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     @Override
+    @RolesAllowed({"adminRole"})
     public PartyTypeBean addPartyType(PartyTypeBean partyType) throws Exception {
         List<PartyTypeBean> allTypes = this.partyTypesFacade.findAll();
         for (PartyTypeBean ptb : allTypes) {
@@ -2352,6 +2311,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     @Override
+    @RolesAllowed({"adminRole"})
     public void removePartyType(PartyTypeBean partyType) throws Exception {
 
         List<ArchiveFileAddressesBean> list = this.archiveFileAddressesFacade.findByReferenceType(partyType);
@@ -2363,6 +2323,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     }
 
+    @Override
+    @RolesAllowed({"adminRole"})
     public PartyTypeBean updatePartyType(PartyTypeBean partyType) throws Exception {
         List<PartyTypeBean> allTypes = this.partyTypesFacade.findAll();
         for (PartyTypeBean ptb : allTypes) {
@@ -2616,7 +2578,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
         localBaseDir = localBaseDir + getTypedFolderName(templateType);
         if (!ServerStringUtils.isEmpty(appendDirectories)) {
-            return localBaseDir + appendDirectories;
+            // folders come from the caller - they must not lead out of the template directory
+            return ServerFileUtils.requireWithin(localBaseDir, localBaseDir + appendDirectories);
         } else {
             return localBaseDir + System.getProperty("file.separator");
         }
@@ -2640,9 +2603,14 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     @Override
-    @RolesAllowed({"loginRole"})
+    @RolesAllowed({"adminRole"})
     public List<AssistantConfig> getAssistants() {
-        return this.assistantFacade.findAll();
+        // never hand out the stored password, the server talks to the assistant backends itself
+        List<AssistantConfig> result = new ArrayList<>();
+        for (AssistantConfig ac : this.assistantFacade.findAll()) {
+            result.add(ac.copyWithoutPassword());
+        }
+        return result;
     }
 
     @Override

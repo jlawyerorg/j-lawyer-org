@@ -872,7 +872,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         }
 
         File scanDirectory = new File(scanDir);
-        if (!scanDirectory.exists() && scanDirectory.isDirectory()) {
+        if (!scanDirectory.exists() || !scanDirectory.isDirectory()) {
             log.error("observed directory does not exist / is not a directory");
             return false;
         }
@@ -917,7 +917,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         }
 
         File scanDirectory = new File(scanDir);
-        if (!scanDirectory.exists() && scanDirectory.isDirectory()) {
+        if (!scanDirectory.exists() || !scanDirectory.isDirectory()) {
             log.error("observed directory does not exist / is not a directory");
             return null;
         }
@@ -961,7 +961,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         }
 
         File scanDirectory = new File(scanDir);
-        if (!scanDirectory.exists() && scanDirectory.isDirectory()) {
+        if (!scanDirectory.exists() || !scanDirectory.isDirectory()) {
             log.error("observed directory does not exist / is not a directory");
             return null;
         }
@@ -1013,7 +1013,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
 
         localBaseDir = localBaseDir + "emailtemplates" + System.getProperty("file.separator");
 
-        File f = new File(localBaseDir + template.getFileName());
+        File f = new File(localBaseDir + ServerFileUtils.requireSimpleName(template.getFileName()));
 
         if (f.exists() && !replace) {
             throw new Exception("Datei existiert bereits: " + template.getFileName());
@@ -1035,7 +1035,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
 
         localBaseDir = localBaseDir + "emailtemplates" + System.getProperty("file.separator");
 
-        File f = new File(localBaseDir + fileName);
+        File f = new File(localBaseDir + ServerFileUtils.requireSimpleName(fileName));
         if (f.exists()) {
             f.delete();
         }
@@ -1053,7 +1053,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
 
         localBaseDir = localBaseDir + "emailtemplates" + System.getProperty("file.separator");
 
-        File f = new File(localBaseDir + fileName);
+        File f = new File(localBaseDir + ServerFileUtils.requireSimpleName(fileName));
         if (f.exists()) {
             StringBuilder sb = new StringBuilder();
             try (FileReader fr = new FileReader(f)) {
@@ -1147,6 +1147,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     }
 
     @Override
+    @RolesAllowed(value = {"readArchiveFileRole"})
     public DocumentPreview getObservedFilePreview(String fileName) throws Exception {
         byte[] data = this.getObservedFile(fileName);
         if (data == null) {
@@ -1265,6 +1266,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     }
 
     @Override
+    @RolesAllowed(value = {"sysAdminRole"})
     public boolean validateExternalStorageLocation(String location) throws Exception {
         try {
             VirtualFile vf = VirtualFile.getFile(location);
@@ -1343,7 +1345,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         }
 
         File scanDirectory = new File(scanDir);
-        if (!scanDirectory.exists() && scanDirectory.isDirectory()) {
+        if (!scanDirectory.exists() || !scanDirectory.isDirectory()) {
             log.error("observed directory does not exist / is not a directory");
             return false;
         }
@@ -1366,7 +1368,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
                         scanDir = scanDir + File.separator;
                     }
                     File oldMetadata = new File(f.getAbsolutePath() + ".metadata");
-                    File toFile = new File(scanDir + toName);
+                    File toFile = new File(scanDir + ServerFileUtils.requireSimpleName(toName));
                     File newMetadata = new File(toFile.getAbsolutePath() + ".metadata");
                     oldMetadata.renameTo(newMetadata);
                     return f.renameTo(toFile);
@@ -1397,7 +1399,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         }
 
         File scanDirectory = new File(scanDir);
-        if (!scanDirectory.exists() && scanDirectory.isDirectory()) {
+        if (!scanDirectory.exists() || !scanDirectory.isDirectory()) {
             log.error("observed directory does not exist / is not a directory");
             return false;
         }
@@ -1415,7 +1417,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         if (!scanDir.endsWith(File.separator)) {
             scanDir = scanDir + File.separator;
         }
-        try (FileOutputStream fout = new FileOutputStream(scanDir + fileName)) {
+        try (FileOutputStream fout = new FileOutputStream(scanDir + ServerFileUtils.requireSimpleName(fileName))) {
             fout.write(data);
         }
 
@@ -1444,12 +1446,12 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
 
         localBaseDir = localBaseDir + "emailtemplates" + System.getProperty("file.separator");
 
-        File f = new File(localBaseDir + oldName);
+        File f = new File(localBaseDir + ServerFileUtils.requireSimpleName(oldName));
         if (!f.exists()) {
             throw new Exception("Datei existiert nicht: " + oldName);
         }
 
-        File fNew = new File(localBaseDir + newName);
+        File fNew = new File(localBaseDir + ServerFileUtils.requireSimpleName(newName));
         if (fNew.exists()) {
             throw new Exception("Dateiname bereits vergeben: " + newName);
         }
@@ -1471,12 +1473,12 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
 
         localBaseDir = localBaseDir + "emailtemplates" + System.getProperty("file.separator");
 
-        File f = new File(localBaseDir + templateName);
+        File f = new File(localBaseDir + ServerFileUtils.requireSimpleName(templateName));
         if (!f.exists()) {
             throw new Exception("Datei existiert nicht: " + templateName);
         }
 
-        File fNew = new File(localBaseDir + duplicateName);
+        File fNew = new File(localBaseDir + ServerFileUtils.requireSimpleName(duplicateName));
         if (fNew.exists()) {
             throw new Exception("Dateiname bereits vergeben: " + duplicateName);
         }
@@ -1507,7 +1509,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         }
 
         File scanDirectory = new File(scanDir);
-        if (!scanDirectory.exists() && scanDirectory.isDirectory()) {
+        if (!scanDirectory.exists() || !scanDirectory.isDirectory()) {
             log.error("observed directory does not exist / is not a directory");
             return null;
         }
@@ -1553,7 +1555,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         }
 
         File scanDirectory = new File(scanDir);
-        if (!scanDirectory.exists() && scanDirectory.isDirectory()) {
+        if (!scanDirectory.exists() || !scanDirectory.isDirectory()) {
             log.error("observed directory does not exist / is not a directory");
             return false;
         }
@@ -1579,7 +1581,12 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     @Override
     @RolesAllowed(value = {"adminRole"})
     public List<AssistantConfig> getAllAssistantConfigs() throws Exception {
-        return this.assistantFacade.findAll();
+        // passwords are write-only, the server talks to the assistant backends itself
+        List<AssistantConfig> result = new ArrayList<>();
+        for (AssistantConfig ac : this.assistantFacade.findAll()) {
+            result.add(ac.copyWithoutPassword());
+        }
+        return result;
     }
 
     @Override
@@ -1589,14 +1596,21 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         String id = idGen.getID().toString();
         ac.setId(id);
         this.assistantFacade.create(ac);
-        return this.assistantFacade.find(id);
+        return this.assistantFacade.find(id).copyWithoutPassword();
     }
 
     @Override
     @RolesAllowed(value = {"adminRole"})
     public AssistantConfig updateAssistantConfig(AssistantConfig ac) throws Exception {
+        if (ServerStringUtils.isEmpty(ac.getPassword())) {
+            // passwords are write-only: an empty password keeps the stored one
+            AssistantConfig stored = this.assistantFacade.find(ac.getId());
+            if (stored != null) {
+                ac.setPassword(stored.getPassword());
+            }
+        }
         this.assistantFacade.edit(ac);
-        return ac;
+        return ac.copyWithoutPassword();
     }
 
     @Override
@@ -1620,7 +1634,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
 
             try {
                 AssistantAPI api = new AssistantAPI(c.getUrl(), c.getUserName(), pwd, c.getConnectionTimeout(), c.getReadTimeout());
-                allCapabilities.put(c, api.getCapabilities());
+                allCapabilities.put(c.copyWithoutPassword(), api.getCapabilities());
             } catch (Exception ex) {
                 log.error("Can not determine assistant capabilities for " + c.getName(), ex);
             }
@@ -1644,7 +1658,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
 
             try {
                 AssistantAPI api = new AssistantAPI(c.getUrl(), c.getUserName(), pwd, c.getConnectionTimeout(), c.getReadTimeout());
-                allModels.put(c, api.getModels());
+                allModels.put(c.copyWithoutPassword(), api.getModels());
             } catch (Exception ex) {
                 log.error("Can not determine assistant models for " + c.getName(), ex);
             }
@@ -1833,7 +1847,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         }
 
         File scanDirectory = new File(scanDir);
-        if (!scanDirectory.exists() && scanDirectory.isDirectory()) {
+        if (!scanDirectory.exists() || !scanDirectory.isDirectory()) {
             log.error("observed directory does not exist / is not a directory");
             return false;
         }
@@ -1847,7 +1861,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             throw new Exception("Datei " + fileName + " existiert nicht!");
         }
 
-        try (FileOutputStream fout = new FileOutputStream(scanDir + fileName)) {
+        try (FileOutputStream fout = new FileOutputStream(scanDir + ServerFileUtils.requireSimpleName(fileName))) {
             fout.write(data);
         }
 
@@ -1931,7 +1945,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
 
                 AssistantAPI api = new AssistantAPI(c.getUrl(), c.getUserName(), pwd, c.getConnectionTimeout(), c.getReadTimeout());
                 AiUser user = api.getUserInformation();
-                userInfos.put(c, user);
+                userInfos.put(c.copyWithoutPassword(), user);
             } catch (Exception ex) {
                 log.error("Unable to query user information for assistant at " + c.getUrl() + " with username " + c.getUserName());
             }

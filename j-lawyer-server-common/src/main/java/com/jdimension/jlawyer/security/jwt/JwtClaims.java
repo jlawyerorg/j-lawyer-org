@@ -37,9 +37,15 @@ public final class JwtClaims {
     private final long issuedAt;
     private final long expiresAt;
     private final String tokenId;
+    private final long authTime;
 
     public JwtClaims(String subject, List<String> roles, String issuer, String audience,
             long issuedAt, long expiresAt, String tokenId) {
+        this(subject, roles, issuer, audience, issuedAt, expiresAt, tokenId, 0L);
+    }
+
+    public JwtClaims(String subject, List<String> roles, String issuer, String audience,
+            long issuedAt, long expiresAt, String tokenId, long authTime) {
         this.subject = subject;
         this.roles = roles == null ? Collections.emptyList() : Collections.unmodifiableList(roles);
         this.issuer = issuer;
@@ -47,6 +53,7 @@ public final class JwtClaims {
         this.issuedAt = issuedAt;
         this.expiresAt = expiresAt;
         this.tokenId = tokenId;
+        this.authTime = authTime;
     }
 
     /** The authenticated principal (the {@code sub} claim). */
@@ -82,5 +89,10 @@ public final class JwtClaims {
     /** The unique token id ({@code jti}), or {@code null} if absent. */
     public String getTokenId() {
         return tokenId;
+    }
+
+    /** Time of the original interactive authentication as epoch seconds ({@code auth_time}), or 0 if absent. */
+    public long getAuthTime() {
+        return authTime;
     }
 }

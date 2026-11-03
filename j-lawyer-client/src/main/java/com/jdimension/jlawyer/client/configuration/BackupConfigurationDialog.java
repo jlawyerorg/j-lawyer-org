@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.configuration;
 
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
@@ -689,6 +690,9 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
 
     private static final Logger log = Logger.getLogger(BackupConfigurationDialog.class.getName());
 
+    private boolean dbPasswordSet = false;
+    private boolean encryptionPasswordSet = false;
+
     /**
      * Creates new form BackupConfigurationDialog
      * @param parent
@@ -710,10 +714,15 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
         this.cmbHour.setSelectedItem(hour);
         String dbUser = set.getSetting(ServerSettings.SERVERCONF_BACKUP_DBUSER, "root");
         this.txtDbUser.setText(dbUser);
-        String encryptPwd = set.getSetting(ServerSettings.SERVERCONF_BACKUP_ENCRYPTPWD, "");
-        this.txtEncryptionPassword.setText(encryptPwd);
-        String dbPwd = set.getSetting(ServerSettings.SERVERCONF_BACKUP_DBPWD, "");
-        this.txtDbPwd.setText(dbPwd);
+        // passwords are write-only: the server never returns them, an empty field keeps the stored value
+        this.encryptionPasswordSet = set.hasSetting(ServerSettings.SERVERCONF_BACKUP_ENCRYPTPWD);
+        this.dbPasswordSet = set.hasSetting(ServerSettings.SERVERCONF_BACKUP_DBPWD);
+        this.txtEncryptionPassword.setText("");
+        this.txtDbPwd.setText("");
+        ComponentUtils.setStoredSecretHint(this.txtEncryptionPassword, this.encryptionPasswordSet);
+        this.chkNoEncryption.setSelected(!this.encryptionPasswordSet);
+        this.txtEncryptionPassword.setEnabled(this.encryptionPasswordSet);
+        ComponentUtils.setStoredSecretHint(this.txtDbPwd, this.dbPasswordSet);
         String dbPort = set.getSetting(ServerSettings.SERVERCONF_BACKUP_DBPORT, "3306");
         this.txtDbPort.setText(dbPort);
         String dbHost = set.getSetting(ServerSettings.SERVERCONF_BACKUP_DBHOST, "localhost");
@@ -781,6 +790,7 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
         txtEncryptionPassword = new javax.swing.JPasswordField();
         jLabel13 = new javax.swing.JLabel();
         jLabel14 = new javax.swing.JLabel();
+        chkNoEncryption = new javax.swing.JCheckBox();
         txtDbHost = new javax.swing.JTextField();
         jLabel15 = new javax.swing.JLabel();
         txtDbName = new javax.swing.JTextField();
@@ -874,6 +884,13 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
         jLabel14.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/info.png"))); // NOI18N
         jLabel14.setToolTipText("bei Angabe eines Passwortes wird die Datensicherung verschlüsselt und passwortgeschützt");
 
+        chkNoEncryption.setText("Datensicherung nicht verschlüsseln");
+        chkNoEncryption.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkNoEncryptionActionPerformed(evt);
+            }
+        });
+
         jLabel15.setText("DB-Host:");
 
         jLabel16.setText("DB-Name:");
@@ -954,6 +971,7 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addComponent(jLabel14)
                                         .addGap(1, 1, 1))
+                                    .addComponent(chkNoEncryption, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                     .addComponent(txtDbPort)
                                     .addComponent(txtDbName))))
                         .addContainerGap())))
@@ -1007,6 +1025,8 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
                     .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(txtEncryptionPassword, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(jLabel13)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(chkNoEncryption)
                 .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
@@ -1219,7 +1239,7 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
 
-        if (this.optBackupOn.isSelected() && this.txtDbPwd.getText().length() == 0) {
+        if (this.optBackupOn.isSelected() && this.txtDbPwd.getText().length() == 0 && !this.dbPasswordSet) {
             int response = JOptionPane.showConfirmDialog(this, "Es wurde ein leeres Datenbankpasswort vergeben - trotzdem fortfahren?", "Leeres Datenbankpasswort", JOptionPane.YES_NO_OPTION);
             if (response == JOptionPane.NO_OPTION) {
                 return;
@@ -1241,17 +1261,35 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
             return;
         }
 
+        if (!this.chkNoEncryption.isSelected() && !this.encryptionPasswordSet && this.txtEncryptionPassword.getPassword().length == 0) {
+            JOptionPane.showMessageDialog(this, "Bitte ein Verschlüsselungspasswort eingeben oder 'Datensicherung nicht verschlüsseln' wählen.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
         ServerSettings set = ServerSettings.getInstance();
-        set.setSetting(ServerSettings.SERVERCONF_BACKUP_DBPWD, this.txtDbPwd.getText());
+        if (this.txtDbPwd.getText().length() > 0) {
+            set.setSetting(ServerSettings.SERVERCONF_BACKUP_DBPWD, this.txtDbPwd.getText());
+        }
         set.setSetting(ServerSettings.SERVERCONF_BACKUP_DBUSER, this.txtDbUser.getText());
         set.setSetting(ServerSettings.SERVERCONF_BACKUP_DBPORT, this.txtDbPort.getText());
         set.setSetting(ServerSettings.SERVERCONF_BACKUP_DBHOST, this.txtDbHost.getText());
         set.setSetting(ServerSettings.SERVERCONF_BACKUP_DBNAME, this.txtDbName.getText());
         set.setSetting(ServerSettings.SERVERCONF_BACKUP_HOUR, this.cmbHour.getSelectedItem().toString());
-        String oldEncryptionPassword = set.getSetting(ServerSettings.SERVERCONF_BACKUP_ENCRYPTPWD, "");
-        set.setSetting(ServerSettings.SERVERCONF_BACKUP_ENCRYPTPWD, new String(this.txtEncryptionPassword.getPassword()));
+        String newEncryptionPassword = new String(this.txtEncryptionPassword.getPassword());
+        boolean encryptionChanged = false;
+        if (this.chkNoEncryption.isSelected()) {
+            // an empty encryption password disables encryption of the backup
+            if (this.encryptionPasswordSet) {
+                set.setSetting(ServerSettings.SERVERCONF_BACKUP_ENCRYPTPWD, "");
+                encryptionChanged = true;
+            }
+        } else if (newEncryptionPassword.length() > 0) {
+            set.setSetting(ServerSettings.SERVERCONF_BACKUP_ENCRYPTPWD, newEncryptionPassword);
+            // the stored password is not known to the client - any newly entered password counts as a change
+            encryptionChanged = true;
+        }
 
-        if (!oldEncryptionPassword.equals(new String(this.txtEncryptionPassword.getPassword()))) {
+        if (encryptionChanged) {
             // encryption password has changed, need to remove current backup
             try {
                 ClientSettings settings = ClientSettings.getInstance();
@@ -1400,6 +1438,13 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
         this.txtExportTarget.setText("");
     }//GEN-LAST:event_cmdResetExportActionPerformed
 
+    private void chkNoEncryptionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkNoEncryptionActionPerformed
+        this.txtEncryptionPassword.setEnabled(!this.chkNoEncryption.isSelected());
+        if (this.chkNoEncryption.isSelected()) {
+            this.txtEncryptionPassword.setText("");
+        }
+    }//GEN-LAST:event_chkNoEncryptionActionPerformed
+
     private void txtEncryptionPasswordKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtEncryptionPasswordKeyReleased
         this.txtEncryptionPassword.setToolTipText(new String(this.txtEncryptionPassword.getPassword()));
     }//GEN-LAST:event_txtEncryptionPasswordKeyReleased
@@ -1454,6 +1499,7 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
     private javax.swing.ButtonGroup backupMode;
     private javax.swing.JCheckBox chkFri;
     private javax.swing.JCheckBox chkMon;
+    private javax.swing.JCheckBox chkNoEncryption;
     private javax.swing.JCheckBox chkSat;
     private javax.swing.JCheckBox chkSun;
     private javax.swing.JCheckBox chkThu;

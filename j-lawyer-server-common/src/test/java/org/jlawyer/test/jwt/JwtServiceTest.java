@@ -117,6 +117,17 @@ public class JwtServiceTest {
     }
 
     @Test
+    public void authTimeIsCarriedWhenSetAndZeroOtherwise() throws Exception {
+        String withAuthTime = jwt.issue(keyPair.getPrivate(), "admin",
+                Collections.singletonList("loginRole"), ISSUER, AUDIENCE, NOW, 900, "tok-6", NOW - 3600);
+        assertEquals(NOW - 3600, jwt.verify(keyPair.getPublic(), withAuthTime, ISSUER, AUDIENCE, NOW + 10, 30).getAuthTime());
+
+        String withoutAuthTime = jwt.issue(keyPair.getPrivate(), "admin",
+                Collections.singletonList("loginRole"), ISSUER, AUDIENCE, NOW, 900, "tok-7");
+        assertEquals(0L, jwt.verify(keyPair.getPublic(), withoutAuthTime, ISSUER, AUDIENCE, NOW + 10, 30).getAuthTime());
+    }
+
+    @Test
     public void malformedTokenIsRejected() {
         expectFailure("not-a-jwt", ISSUER, AUDIENCE, NOW, 30, "malformed");
     }

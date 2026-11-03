@@ -788,7 +788,9 @@ public class CustomerRelationsService implements CustomerRelationsServiceRemote,
             localBaseDir = localBaseDir + System.getProperty("file.separator");
         }
 
-        String src = localBaseDir + "templates" + TreeNodeUtils.buildNodePath(templateFolder) + System.getProperty("file.separator") + templateName;
+        // template folder and name come from the caller - they must not lead out of the template directory
+        String src = localBaseDir + "templates" + TreeNodeUtils.buildNodePath(templateFolder) + System.getProperty("file.separator") + ServerFileUtils.requireSimpleName(templateName);
+        ServerFileUtils.requireWithin(localBaseDir + "templates", src);
         String dst = System.getProperty("java.io.tmpdir") + File.separator;
 
         String ext = "";
