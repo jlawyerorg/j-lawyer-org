@@ -1800,6 +1800,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         // Execute deletion in background
         new javax.swing.SwingWorker<java.util.List<Integer>, Void>() {
             private Exception error = null;
+            private int failed = 0;
+            private String lastFailure = "";
 
             @Override
             protected java.util.List<Integer> doInBackground() throws Exception {
@@ -1826,9 +1828,13 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                             }
                             if (success) {
                                 successfulIndices.add(modelIndices[i]);
+                            } else {
+                                failed++;
                             }
                         } catch (Throwable ex) {
                             log.error(ex);
+                            failed++;
+                            lastFailure = ex.getMessage() != null ? ex.getMessage() : ex.toString();
                         }
                     }
                 } catch (Exception ex) {
@@ -1845,6 +1851,9 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
                 if (error != null) {
                     JOptionPane.showMessageDialog(BeaInboxPanel.this, "Fehler beim Löschen: " + error.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                } else if (failed > 0) {
+                    // same feedback as when emptying the trash - otherwise the messages just stay without any hint
+                    JOptionPane.showMessageDialog(BeaInboxPanel.this, "" + failed + " Nachricht(en) konnten nicht gelöscht werden" + (lastFailure.isEmpty() ? "." : ", letzte Meldung: " + lastFailure), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 }
 
                 try {
