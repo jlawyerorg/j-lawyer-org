@@ -1093,10 +1093,15 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
                 boolean confirmed = this.caseView.addAccountEntry(entry);
 
                 if (confirmed) {
+                    // the amount may have been changed to a partial payment in the booking dialog - show what has actually been booked
+                    BigDecimal paidAfterBooking = BigDecimal.ZERO;
+                    for (CaseAccountEntry ce : locator.lookupArchiveFileServiceRemote().getAccountEntriesForInvoice(invoice.getId())) {
+                        paidAfterBooking = paidAfterBooking.add(ce.calculateEarningsTotal());
+                    }
                     if(invoice.isSmallBusiness())
-                        this.setPaidTotal(invoice.getTotalGross(), invoice.getTotalGross(), invoice.getCurrency());
+                        this.setPaidTotal(invoice.getTotalGross(), paidAfterBooking, invoice.getCurrency());
                     else
-                        this.setPaidTotal(invoice.getTotal(), invoice.getTotal(), invoice.getCurrency());
+                        this.setPaidTotal(invoice.getTotal(), paidAfterBooking, invoice.getCurrency());
                 }
             }
             
