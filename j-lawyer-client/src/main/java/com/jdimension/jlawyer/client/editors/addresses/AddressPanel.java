@@ -1032,6 +1032,21 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
     }
 
     /**
+     * Takes over text typed into the editable insurance fields. Unlike the
+     * other editable dropdowns they have no autocompletion, which takes over
+     * every keystroke, so typed text only reaches the selection when the field
+     * loses the focus - e.g. clicking the sidebar does not take it.
+     */
+    protected void commitEditableComboBoxes() {
+        for (javax.swing.JComboBox cmb : new javax.swing.JComboBox[]{this.cmbInsurance, this.cmbMotorInsurance}) {
+            Object typed = cmb.getEditor().getItem();
+            if (typed != null && !typed.equals(cmb.getSelectedItem())) {
+                cmb.setSelectedItem(typed);
+            }
+        }
+    }
+
+    /**
      * @return true if the displayed contact has already been saved on the
      * server
      */
@@ -1479,6 +1494,9 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.txtCustom2.setText("");
         this.taCustom3.setText("");
         this.txtBirthDate.setText("");
+        // age, deceased and minor hints are calculated by updateAge() and would otherwise stay from the previous contact
+        this.lblAge.setText("");
+        this.lblAge.setIcon(null);
 
         this.txtDistrict.setText("");
         this.txtNotice.setText("");
@@ -5274,6 +5292,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
 
     @Override
     public boolean isDirty() {
+        this.commitEditableComboBoxes();
         if (!this.cmdSave.isEnabled()) {
             return false;
         }

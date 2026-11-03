@@ -693,11 +693,19 @@ public class AddressPanelClearInputsTest {
     private static final Pattern RESET = Pattern.compile("this\\.(\\w+)\\.(?:setText|setSelectedItem|setSelected)\\(");
 
     private String source() throws IOException {
+        return source("AddressPanel");
+    }
+
+    private String source(String className) throws IOException {
         String dir = System.getProperty("basedir");
         File base = dir == null ? new File(".").getAbsoluteFile().getParentFile() : new File(dir);
-        File file = new File(base, "src/main/java/com/jdimension/jlawyer/client/editors/addresses/AddressPanel.java");
-        Assume.assumeTrue("AddressPanel source not found at " + file, file.isFile());
+        File file = new File(base, "src/main/java/com/jdimension/jlawyer/client/editors/addresses/" + className + ".java");
+        Assume.assumeTrue(className + " source not found at " + file, file.isFile());
         return new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
+    }
+
+    private static String withoutLineComments(String code) {
+        return code.replaceAll("(?m)^\\s*//.*$", "");
     }
 
     /**
@@ -761,5 +769,39 @@ public class AddressPanelClearInputsTest {
         int addressCheck = load.indexOf("if (this.dto != null && this.dto.getId() != null)");
         int modelSet = load.indexOf("this.tblContents.setModel(model);");
         assertTrue(cacheCleared >= 0 && addressCheck > cacheCleared && modelSet > addressCheck);
+    }
+
+    @Test
+    public void clearInputsResetsTheAgeHints() throws IOException {
+        String source = source();
+        String clear = body(source, "public void clearInputs()");
+        String age = body(source, "private void updateAge()");
+        // whatever updateAge() shows (age, deceased, minor icon) must not stay from the previous contact
+        for (String label : fields(Pattern.compile("this\\.(\\w+)\\.setText\\("), age)) {
+            assertTrue(label + " text kept by clearInputs()", clear.contains("this." + label + ".setText(\"\");"));
+        }
+        for (String label : fields(Pattern.compile("this\\.(\\w+)\\.setIcon\\("), age)) {
+            assertTrue(label + " icon kept by clearInputs()", clear.contains("this." + label + ".setIcon(null);"));
+        }
+    }
+
+    @Test
+    public void typedTextInEditableDropdownsIsTakenOverBeforeTheDirtyChecks() throws IOException {
+        String source = withoutLineComments(source());
+        // dropdowns with autocompletion take over every keystroke, the other editable ones only on focus loss
+        Set<String> editable = fields(Pattern.compile("(cmb\\w+)\\.setEditable\\(true\\)"), source);
+        editable.removeAll(fields(Pattern.compile("ComponentUtils\\.addAutoComplete\\(this\\.(cmb\\w+)\\)"), source));
+        assertTrue("no editable dropdown without autocompletion found", !editable.isEmpty());
+
+        String commit = body(source, "protected void commitEditableComboBoxes()");
+        for (String cmb : editable) {
+            assertTrue(cmb + " is not taken over before the dirty check", commit.contains("this." + cmb));
+        }
+
+        for (String cls : new String[]{"AddressPanel", "NewAddressPanel"}) {
+            String dirty = body(withoutLineComments(source(cls)), "public boolean isDirty()");
+            int committed = dirty.indexOf("this.commitEditableComboBoxes();");
+            assertTrue(cls + ".isDirty() must take over typed text first", committed >= 0 && committed < dirty.indexOf("getSelectedItem()"));
+        }
     }
 }

@@ -747,6 +747,7 @@ public class NewAddressPanel extends AddressPanel implements ResetOnDisplayEdito
 
     @Override
     public boolean isDirty() {
+        this.commitEditableComboBoxes();
         if (this.isContactSaved()) {
             // compare against the saved contact instead of checking for non-empty fields
             return super.isDirty();
