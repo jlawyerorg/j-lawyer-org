@@ -898,6 +898,10 @@ public class DocumentReplacementTest {
                     if (((String) args[1]).length() > 250) {
                         throw new Exception("Data too long for column 'name'");
                     }
+                    // like the server: the case history gets "Dokument umbenannt: old (neuer Name: new)", 500 characters at most
+                    if (("Dokument umbenannt: " + d.getName() + " (neuer Name: " + args[1] + ")").length() > 500) {
+                        throw new Exception("Data too long for column 'changeDescription'");
+                    }
                     d.setName((String) args[1]);
                     applyTagRule(d);
                     return true;
@@ -1119,14 +1123,15 @@ public class DocumentReplacementTest {
         DocumentReplacement.Outcome r = DocumentReplacement.addReplacing(server.remote(), "case1", name, new byte[]{1}, null, true);
         assertNull(r.getProblems());
         assertEquals(name, server.byName("case1", name).getName());
-        // the replaced document got a shortened name that still has its extension
-        assertTrue(server.docs.get("old").getName().length() <= 250);
+        // the replaced document got a shortened name that still has its extension - short enough for the history entry
+        // of renaming it (found against a real server, case_history.changeDescription has 500 characters)
+        assertTrue(server.docs.get("old").getName().length() <= DocumentReplacement.MAX_REPLACED_NAME_LENGTH);
         assertTrue(server.docs.get("old").getName().endsWith("x.pdf"));
 
         String staging = DocumentReplacement.stagingName(name);
         assertTrue(staging.length() < 50);
         assertTrue(staging.endsWith(".pdf"));
-        assertEquals(250, DocumentReplacement.replacedName(name).length());
+        assertEquals(DocumentReplacement.MAX_REPLACED_NAME_LENGTH, DocumentReplacement.replacedName(name).length());
     }
 
     private DocumentReplacement.ReplacementException assertFails() throws Exception {

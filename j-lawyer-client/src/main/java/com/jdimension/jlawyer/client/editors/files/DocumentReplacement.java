@@ -691,9 +691,12 @@ import java.util.Objects;
 public class DocumentReplacement {
 
     /**
-     * Longest document name the server can store.
+     * Longest name a replaced document gets. Renaming writes "Dokument umbenannt: old (neuer Name: new)" into the case
+     * history, whose column holds 500 characters - with 35 fixed characters, old and new name together must not exceed
+     * 465. A document name has at most 250 characters, so the replaced name must stay at 215 or below, also when it is
+     * renamed back after a failure.
      */
-    static final int MAX_NAME_LENGTH = 250;
+    static final int MAX_REPLACED_NAME_LENGTH = 200;
 
     /**
      * Longest extension that is kept for the temporary name.
@@ -839,7 +842,7 @@ public class DocumentReplacement {
 
     /**
      * Name for an existing document that is replaced: shows that it was replaced and what it was called, at most
-     * {@link #MAX_NAME_LENGTH} characters, with its extension.
+     * {@link #MAX_REPLACED_NAME_LENGTH} characters, with its extension.
      *
      * @param fileName the current name of the replaced document
      * @return the new name of the replaced document
@@ -847,11 +850,11 @@ public class DocumentReplacement {
     static String replacedName(String fileName) {
         String prefix = "Ersetzt_" + nextStamp() + "_";
         String name = prefix + fileName;
-        if (name.length() <= MAX_NAME_LENGTH) {
+        if (name.length() <= MAX_REPLACED_NAME_LENGTH) {
             return name;
         }
         String ext = extension(fileName);
-        return prefix + fileName.substring(0, MAX_NAME_LENGTH - prefix.length() - ext.length()) + ext;
+        return prefix + fileName.substring(0, MAX_REPLACED_NAME_LENGTH - prefix.length() - ext.length()) + ext;
     }
 
     /**

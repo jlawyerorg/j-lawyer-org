@@ -8578,10 +8578,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         }
 
                         if (doc.getFolder() != null) {
-                            newDoc.setFolder(doc.getFolder());
                             ArrayList<String> documentIds = new ArrayList<>();
                             documentIds.add(newDoc.getId());
-                            remote.moveDocumentsToFolder(documentIds, doc.getFolder().getId());
+                            try {
+                                remote.moveDocumentsToFolder(documentIds, doc.getFolder().getId());
+                                newDoc.setFolder(doc.getFolder());
+                            } catch (Exception moveFailed) {
+                                // the document is stored, e.g. the folder was deleted in the meantime - the list is still brought in line below
+                                log.error("Unable to move " + newDoc.getName() + " to the folder of " + doc.getName(), moveFailed);
+                                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "'" + newDoc.getName() + "' wurde abgelegt, konnte aber nicht in den Ordner von '" + doc.getName() + "' verschoben werden: " + moveFailed.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
+                            }
                         } else {
                             log.warn("document folder of source document is null when duplicating as " + targetFormat);
                         }
