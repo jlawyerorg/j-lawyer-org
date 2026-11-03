@@ -691,8 +691,8 @@ public class DocumentReplacementTest {
     /**
      * In-memory server with the behaviour that matters here, modelled on ArchiveFileService: one name per case across
      * the case and its bin (ignoring case), names up to 250 characters, tagging rules applied when adding and
-     * renaming, removeDocument unlinks invoices and moves the document to the root folder, removeDocumentFromBin
-     * deletes the file before the database entry, detached copies returned.
+     * renaming (also in the bin), removeDocument unlinks invoices and moves the document to the root folder, detached
+     * copies returned. Deleting for good is not allowed, the replacement must never do it.
      */
     private static class FakeServer implements InvocationHandler {
 
@@ -712,12 +712,14 @@ public class DocumentReplacementTest {
         /** documents created by addDocument */
         private final Set<String> added = new HashSet<>();
         private final List<String> calls = new ArrayList<>();
-        /** "method", "method:documentId" or "method:documentId:newName" that fails, "removeDocumentFromBin-entry:id" fails after deleting the file */
+        /** "method", "method:documentId" or "method:documentId:newName" that fails */
         private final Set<String> failOn = new HashSet<>();
         /** tags ("name" or "name=value", comma separated) the tagging rules set for a document name, or null */
         private Function<String, String> tagRule = name -> null;
         /** called before getDocument returns, to simulate another client */
         private Runnable beforeGetDocument;
+        /** called after getDocument has read the document, to simulate another client */
+        private Runnable afterGetDocument;
         private int nextId = 1;
 
         ArchiveFileServiceRemote remote() {
@@ -867,7 +869,11 @@ public class DocumentReplacementTest {
                     if (d == null) {
                         throw new Exception("Dokument mit ID " + args[0] + " existiert nicht!");
                     }
-                    return copy(d);
+                    ArchiveFileDocumentsBean result = copy(d);
+                    if (afterGetDocument != null) {
+                        afterGetDocument.run();
+                    }
+                    return result;
                 }
                 case "removeDocument": {
                     maybeFail(m, m + ":" + args[0]);
@@ -877,17 +883,8 @@ public class DocumentReplacementTest {
                     d.setDeleted(true);
                     return null;
                 }
-                case "removeDocumentFromBin": {
-                    maybeFail(m, m + ":" + args[0]);
-                    ArchiveFileDocumentsBean d = docs.get((String) args[0]);
-                    assertTrue("only documents in the bin can be removed from it", d.isDeleted());
-                    // like the server: the file first, then the database entry
-                    files.remove(d.getId());
-                    maybeFail("removeDocumentFromBin-entry:" + args[0]);
-                    docs.remove(d.getId());
-                    tags.remove(d.getId());
-                    return null;
-                }
+                case "removeDocumentFromBin":
+                    throw new AssertionError("the replacement must not delete anything for good");
                 case "renameDocument": {
                     maybeFail(m, m + ":" + args[0], m + ":" + args[0] + ":" + args[1]);
                     ArchiveFileDocumentsBean d = docs.get((String) args[0]);
@@ -1049,10 +1046,40 @@ public class DocumentReplacementTest {
         DocumentReplacement.Outcome r = DocumentReplacement.addReplacing(server.remote(), "case1", "Brief.pdf", new byte[]{1}, null, true);
         assertNull(r.getProblems());
         assertEquals("Brief.pdf", r.getDocument().getName());
-        assertFalse(server.docs.containsKey("binOld"));
+        // renamed and left in the bin with its content, the retention of the bin removes it later
+        assertTrue(server.docs.get("binOld").getName().startsWith("Ersetzt_"));
+        assertTrue(server.docs.get("binOld").getName().endsWith("_BRIEF.pdf"));
+        assertTrue(server.docs.get("binOld").isDeleted());
+        assertTrue(server.files.contains("binOld"));
+        assertFalse(server.calls.contains("removeDocument binOld"));
         // the bin of another case is not touched
-        assertTrue(server.docs.containsKey("binOtherCase"));
-        assertFalse(server.calls.contains("renameDocument binOld"));
+        assertEquals("Brief.pdf", server.docs.get("binOtherCase").getName());
+    }
+
+    @Test
+    public void testDocumentInBinGetsItsNameBack() throws Exception {
+        server.put("binOld", "Brief.pdf", "case1", true);
+        server.failOn.add("renameDocument:new1:Brief.pdf");
+        assertFails();
+        assertEquals("Brief.pdf", server.docs.get("binOld").getName());
+        assertTrue(server.docs.get("binOld").isDeleted());
+        assertTrue(server.files.contains("binOld"));
+    }
+
+    @Test
+    public void testDocumentRestoredFromTheBinWhileReplacing() throws Exception {
+        // another client restores the document after it was read: it stays in the case under its new name
+        server.put("binOld", "Brief.pdf", "case1", true);
+        server.afterGetDocument = () -> server.docs.get("binOld").setDeleted(false);
+        DocumentReplacement.Outcome r = DocumentReplacement.addReplacing(server.remote(), "case1", "Brief.pdf", new byte[]{1}, null, true);
+        assertEquals("Brief.pdf", r.getDocument().getName());
+        String oldName = server.docs.get("binOld").getName();
+        assertTrue(oldName.startsWith("Ersetzt_"));
+        assertFalse(server.docs.get("binOld").isDeleted());
+        assertTrue(server.files.contains("binOld"));
+        assertNotNull(r.getProblems());
+        assertTrue(r.getProblems().contains("'Brief.pdf': in der Akte als '" + oldName + "'"));
+        assertEquals("binOld=" + oldName, ids(r.getActiveDocuments()));
     }
 
     @Test
@@ -1238,16 +1265,6 @@ public class DocumentReplacementTest {
         assertFalse(server.docs.get("old").isDeleted());
         assertTrue(server.files.contains("old"));
         assertTrue(rex.getMessage().contains("'Brief.pdf': in der Akte als '" + oldName + "'"));
-    }
-
-    @Test
-    public void testDeletingTheDocumentInTheBinFailsAfterItsFileIsGone() throws Exception {
-        // the server deletes the file, then storing the deletion fails
-        server.put("binOld", "Brief.pdf", "case1", true);
-        server.failOn.add("removeDocumentFromBin-entry:binOld");
-        DocumentReplacement.ReplacementException rex = assertFails();
-        assertTrue(server.docs.get("binOld").isDeleted());
-        assertTrue(rex.getMessage().contains("'Brief.pdf': im Papierkorb der Akte als 'Brief.pdf'"));
     }
 
     @Test

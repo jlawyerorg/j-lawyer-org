@@ -677,12 +677,12 @@ import java.util.Objects;
 /**
  * Replaces a document of a case by a new one with the same name.
  * <p>
- * The new document is never removed again, also not if a step fails. An existing document in the case is not deleted
- * for good: it is renamed to a name that shows that it was replaced, and only moved to the bin after the new document
- * has its name. Its tags are kept as they were (renaming applies the tagging rules of the server for the new name). An
- * existing document that is already in the bin is deleted for good right away, because the user confirmed to replace
- * it. If a step fails, giving a renamed document its name and tags back is attempted, and the state of every document
- * involved is read again from the server and reported.
+ * The new document is never removed again, also not if a step fails, and nothing is deleted for good. The existing
+ * document is renamed to a name that shows that it was replaced. One in the case is only moved to the bin after the
+ * new document has its name, one that is already in the bin stays there until the bin's retention removes it. Its tags
+ * are kept as they were (renaming applies the tagging rules of the server for the new name). If a step fails, giving a
+ * renamed document its name and tags back is attempted, and the state of every document involved is read again from
+ * the server and reported.
  * <p>
  * The document to replace is always determined from the current data of the server, right before it is changed, never
  * from what a client has cached: the user confirms to replace the document with a given name, so that is the document
@@ -863,13 +863,14 @@ public class DocumentReplacement {
      * <p>
      * When replacing: the new document is stored under a temporary name, the tags the tagging rules set for that name
      * are removed again (renaming applies the rules for the final name). Then the document that has the name on the
-     * server now is looked up and its name is checked once more. A document in the case is renamed to
-     * {@link #replacedName(String)} and gets the tags back it had before, a document in the bin is deleted for good.
-     * The new document gets its name, and finally the renamed document is moved to the bin.
+     * server now is looked up and its name is checked once more. It is renamed to {@link #replacedName(String)} and
+     * gets the tags back it had before, in the case or in the bin. The new document gets its name, and finally a renamed
+     * document from the case is moved to the bin. One from the bin stays there, if someone restored it in the meantime
+     * it stays in the case under its new name and {@link Outcome#getProblems()} says so.
      * <p>
      * If storing the new document fails, nothing is changed and that error is thrown. If a later step fails, the new
      * document is kept under its temporary name, giving a renamed document its name and tags back is attempted (this
-     * may fail as well), a document from the bin that was deleted stays deleted, and a {@link ReplacementException}
+     * may fail as well), and a {@link ReplacementException}
      * tells where each document is now. If only moving the replaced document to the bin or restoring its tags fails,
      * the replacement is done and {@link Outcome#getProblems()} says what is left.
      *
@@ -906,14 +907,10 @@ public class DocumentReplacement {
                     continue;
                 }
                 targets.add(current);
-                if (current.isDeleted()) {
-                    remote.removeDocumentFromBin(current.getId());
-                } else {
-                    savedTags.put(current.getId(), tagsOf(remote, current.getId()));
-                    remote.renameDocument(current.getId(), replacedName(current.getName()));
-                    renamed.add(current);
-                    restoreTags(remote, current, savedTags.get(current.getId()), tagProblems);
-                }
+                savedTags.put(current.getId(), tagsOf(remote, current.getId()));
+                remote.renameDocument(current.getId(), replacedName(current.getName()));
+                renamed.add(current);
+                restoreTags(remote, current, savedTags.get(current.getId()), tagProblems);
             }
             remote.renameDocument(staged.getId(), fileName);
         } catch (Exception ex) {
@@ -932,16 +929,26 @@ public class DocumentReplacement {
         }
         staged.setName(fileName);
 
-        // the replacement is done, the replaced documents go to the bin, where they can be restored
+        // the replacement is done, replaced documents from the case go to the bin, where they can be restored
         Exception binFailure = null;
+        boolean restored = false;
         for (ArchiveFileDocumentsBean d : renamed) {
             try {
-                remote.removeDocument(d.getId());
+                if (!d.isDeleted()) {
+                    remote.removeDocument(d.getId());
+                } else {
+                    // stays in the bin - unless someone restored it in the meantime, then it stays in the case
+                    restored |= !remote.getDocument(d.getId()).isDeleted();
+                }
             } catch (Exception ex) {
-                binFailure = ex;
+                if (d.isDeleted()) {
+                    restored = true;
+                } else {
+                    binFailure = ex;
+                }
             }
         }
-        if (binFailure == null && tagProblems.isEmpty()) {
+        if (binFailure == null && tagProblems.isEmpty() && !restored) {
             return new Outcome(staged, targets, new ArrayList<>(), null);
         }
         String problem = binFailure != null
