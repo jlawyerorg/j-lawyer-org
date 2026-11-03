@@ -662,8 +662,6 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.backupmgr.impl;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -675,7 +673,6 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -699,40 +696,31 @@ public class SqlDumpUtils {
     }
 
     /**
-     * Replaces a collation where the statements of a (possibly very large) dump use it as a collation: after COLLATE
-     * and in collation variables such as collation_connection. Lines with data (INSERT / REPLACE statements, one line
-     * each in a mysqldump file) are written back unchanged, also if their values contain the name of the collation.
+     * Replaces a collation where the SQL of a (possibly very large) dump uses it as a collation: after COLLATE and in
+     * collation variables such as collation_connection.
+     * <p>
+     * The dump is read as a stream of SQL: string literals ('...' and "...", with backslash escapes and doubled
+     * quotes), quoted identifiers (`...`) and comments (--, # and /* *&#47;) are never changed. Executable comments
+     * (/*!50003 ... *&#47;, as mysqldump writes them) are SQL and are processed. INSERT and REPLACE statements are
+     * written back unchanged as a whole. Memory use does not depend on the length of a line or statement, so rows
+     * with large values are no problem.
+     * <p>
      * The file is processed as ISO-8859-1, so that every byte is written back unchanged - dumps may contain binary
-     * data that is not valid UTF-8. The file is only replaced if the collation was found.
+     * data that is not valid UTF-8. The file is only replaced if the collation was found. If the dump ends inside a
+     * string literal, quoted identifier or comment, it is not valid SQL and is left unchanged.
      *
      * @param file the dump to process
      * @param collation the collation to replace (ASCII)
      * @param replacement the new collation (ASCII)
-     * @return the number of replaced occurrences
+     * @return the number of replaced occurrences, 0 if the file was left unchanged
      * @throws IOException if the file can not be read or written
      */
     public static long replaceCollation(File file, String collation, String replacement) throws IOException {
-        Pattern usage = Pattern.compile("(?i)(\\bCOLLATE\\s*=?\\s*|\\b\\w*collation\\w*\\s*=\\s*)" + Pattern.quote(collation) + "\\b");
         File tmp = new File(file.getAbsolutePath() + ".tmp");
-        long count = 0;
-        try (Reader in = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.ISO_8859_1), BUFFER_SIZE);
-                Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(tmp), StandardCharsets.ISO_8859_1), BUFFER_SIZE)) {
-            char[] buffer = new char[BUFFER_SIZE];
-            StringBuilder line = new StringBuilder();
-            int read;
-            while ((read = in.read(buffer)) != -1) {
-                int start = 0;
-                for (int i = 0; i < read; i++) {
-                    if (buffer[i] == '\n') {
-                        line.append(buffer, start, i + 1 - start);
-                        count += writeLine(line, out, usage, replacement);
-                        line.setLength(0);
-                        start = i + 1;
-                    }
-                }
-                line.append(buffer, start, read - start);
-            }
-            count += writeLine(line, out, usage, replacement);
+        long count;
+        try (Reader in = new InputStreamReader(new FileInputStream(file), StandardCharsets.ISO_8859_1);
+                Writer out = new OutputStreamWriter(new FileOutputStream(tmp), StandardCharsets.ISO_8859_1)) {
+            count = replaceCollation(in, out, collation, replacement);
         } catch (IOException ex) {
             Files.deleteIfExists(tmp.toPath());
             throw ex;
@@ -740,32 +728,287 @@ public class SqlDumpUtils {
 
         if (count > 0) {
             Files.move(tmp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        } else {
-            Files.delete(tmp.toPath());
+            return count;
         }
-        return count;
+        Files.delete(tmp.toPath());
+        return 0;
     }
 
-    private static long writeLine(StringBuilder line, Writer out, Pattern usage, String replacement) throws IOException {
-        if (isDataStatement(line)) {
-            out.append(line);
-            return 0;
-        }
-        long count = 0;
-        Matcher m = usage.matcher(line);
-        StringBuffer result = new StringBuffer();
-        while (m.find()) {
-            m.appendReplacement(result, Matcher.quoteReplacement(m.group(1) + replacement));
-            count++;
-        }
-        m.appendTail(result);
-        out.append(result);
-        return count;
+    /**
+     * Copies a dump from in to out and replaces the collation like {@link #replaceCollation(File, String, String)}.
+     *
+     * @param in the dump
+     * @param out receives the processed dump
+     * @param collation the collation to replace
+     * @param replacement the new collation
+     * @return the number of replaced occurrences, or -1 if the dump ends inside a string literal, quoted identifier or
+     * comment (then the output must not be used)
+     * @throws IOException if reading or writing fails
+     */
+    public static long replaceCollation(Reader in, Writer out, String collation, String replacement) throws IOException {
+        CollationRewriter rewriter = new CollationRewriter(in, out, collation, replacement);
+        rewriter.run();
+        return rewriter.complete ? rewriter.count : -1;
     }
 
-    private static boolean isDataStatement(StringBuilder line) {
-        String start = line.substring(0, Math.min(line.length(), 8)).toUpperCase();
-        return start.startsWith("INSERT ") || start.startsWith("REPLACE ");
+    /**
+     * Streams a dump from in to out, character by character, and replaces the collation where SQL code uses it.
+     */
+    private static final class CollationRewriter {
+
+        private static final int NORMAL = 0;
+        private static final int SINGLE_QUOTED = 1;
+        private static final int DOUBLE_QUOTED = 2;
+        private static final int BACKTICK_QUOTED = 3;
+        private static final int LINE_COMMENT = 4;
+        private static final int BLOCK_COMMENT = 5;
+
+        /**
+         * Longer words can not be the collation, they are written through.
+         */
+        private static final int MAX_WORD = 64;
+        private static final int MAX_CONTEXT = 512;
+        /**
+         * Marks quoted text or a comment in the context, so that e.g. COLLATE 'x' utf8mb4_0900_ai_ci does not match.
+         */
+        private static final char BREAK = '\0';
+        /**
+         * What has to come right before the collation for it to be used as a collation.
+         */
+        private static final Pattern USAGE = Pattern.compile("(?i)(?:\\bCOLLATE\\s*=?\\s*|\\b\\w*collation\\w*\\s*=\\s*)\\z");
+
+        private final Reader in;
+        private final Writer out;
+        private final String collation;
+        private final String replacement;
+
+        private final char[] inBuffer = new char[BUFFER_SIZE];
+        private int inPos = 0;
+        private int inLen = 0;
+        private final char[] outBuffer = new char[BUFFER_SIZE];
+        private int outLen = 0;
+
+        private int state = NORMAL;
+        private final StringBuilder word = new StringBuilder();
+        private boolean longWord = false;
+        /**
+         * The last characters of SQL code (outside of quotes and comments).
+         */
+        private final StringBuilder context = new StringBuilder();
+        private boolean statementHasWord = false;
+        private boolean dataStatement = false;
+
+        private long count = 0;
+        private boolean complete = false;
+
+        private CollationRewriter(Reader in, Writer out, String collation, String replacement) {
+            this.in = in;
+            this.out = out;
+            this.collation = collation;
+            this.replacement = replacement;
+        }
+
+        private void run() throws IOException {
+            int c;
+            while ((c = read()) != -1) {
+                char ch = (char) c;
+                switch (state) {
+                    case NORMAL:
+                        normal(ch);
+                        break;
+                    case SINGLE_QUOTED:
+                    case DOUBLE_QUOTED:
+                        write(ch);
+                        char quote = state == SINGLE_QUOTED ? '\'' : '"';
+                        if (ch == '\\') {
+                            int escaped = read();
+                            if (escaped != -1) {
+                                write((char) escaped);
+                            }
+                        } else if (ch == quote) {
+                            if (peek(0) == quote) {
+                                write((char) read());
+                            } else {
+                                state = NORMAL;
+                            }
+                        }
+                        break;
+                    case BACKTICK_QUOTED:
+                        write(ch);
+                        if (ch == '`') {
+                            if (peek(0) == '`') {
+                                write((char) read());
+                            } else {
+                                state = NORMAL;
+                            }
+                        }
+                        break;
+                    case LINE_COMMENT:
+                        write(ch);
+                        if (ch == '\n') {
+                            state = NORMAL;
+                        }
+                        break;
+                    default:
+                        write(ch);
+                        if (ch == '*' && peek(0) == '/') {
+                            write((char) read());
+                            state = NORMAL;
+                        }
+                        break;
+                }
+            }
+            endWord();
+            flush();
+            complete = state == NORMAL || state == LINE_COMMENT;
+        }
+
+        private void normal(char ch) throws IOException {
+            if (Character.isLetterOrDigit(ch) || ch == '_' || ch == '$') {
+                addWordChar(ch);
+                return;
+            }
+            endWord();
+            if (ch == '\'' || ch == '"' || ch == '`') {
+                state = ch == '\'' ? SINGLE_QUOTED : (ch == '"' ? DOUBLE_QUOTED : BACKTICK_QUOTED);
+                appendContext(BREAK);
+                write(ch);
+            } else if (ch == '#' || (ch == '-' && peek(0) == '-' && (peek(1) == -1 || peek(1) <= ' '))) {
+                state = LINE_COMMENT;
+                appendContext(BREAK);
+                write(ch);
+            } else if (ch == '/' && peek(0) == '*' && !(peek(1) == '!' || (peek(1) == 'M' && peek(2) == '!'))) {
+                // a comment - unlike executable comments like /*!50003 ... */, which contain SQL
+                state = BLOCK_COMMENT;
+                appendContext(BREAK);
+                write(ch);
+                write((char) read());
+            } else {
+                if (ch == ';') {
+                    statementHasWord = false;
+                    dataStatement = false;
+                }
+                appendContext(ch);
+                write(ch);
+            }
+        }
+
+        private void addWordChar(char ch) throws IOException {
+            if (longWord) {
+                appendContext(ch);
+                write(ch);
+                return;
+            }
+            word.append(ch);
+            if (word.length() > MAX_WORD) {
+                noteWord(word);
+                appendContext(word);
+                write(word);
+                word.setLength(0);
+                longWord = true;
+            }
+        }
+
+        private void endWord() throws IOException {
+            if (longWord) {
+                longWord = false;
+                return;
+            }
+            if (word.length() == 0) {
+                return;
+            }
+            noteWord(word);
+            if (!dataStatement && word.length() == collation.length() && word.toString().equalsIgnoreCase(collation) && USAGE.matcher(context).find()) {
+                appendContext(replacement);
+                write(replacement);
+                count++;
+            } else {
+                appendContext(word);
+                write(word);
+            }
+            word.setLength(0);
+        }
+
+        /**
+         * Remembers whether the current statement is an INSERT or REPLACE statement, by its first word.
+         */
+        private void noteWord(CharSequence w) {
+            if (!statementHasWord) {
+                statementHasWord = true;
+                String first = w.toString();
+                dataStatement = first.equalsIgnoreCase("INSERT") || first.equalsIgnoreCase("REPLACE");
+            }
+        }
+
+        private void appendContext(char ch) {
+            context.append(ch);
+            trimContext();
+        }
+
+        private void appendContext(CharSequence s) {
+            context.append(s);
+            trimContext();
+        }
+
+        private void trimContext() {
+            if (context.length() > MAX_CONTEXT) {
+                context.delete(0, context.length() - MAX_CONTEXT / 2);
+            }
+        }
+
+        private int read() throws IOException {
+            if (inPos >= inLen && !fill(1)) {
+                return -1;
+            }
+            return inBuffer[inPos++];
+        }
+
+        /**
+         * @return the character offset characters after the current position, without consuming it, or -1 at the end
+         */
+        private int peek(int offset) throws IOException {
+            if (inPos + offset >= inLen && !fill(offset + 1)) {
+                return -1;
+            }
+            return inBuffer[inPos + offset];
+        }
+
+        /**
+         * Makes sure that at least needed characters are available from the current position on.
+         */
+        private boolean fill(int needed) throws IOException {
+            if (inPos > 0) {
+                System.arraycopy(inBuffer, inPos, inBuffer, 0, inLen - inPos);
+                inLen -= inPos;
+                inPos = 0;
+            }
+            while (inLen < needed) {
+                int n = in.read(inBuffer, inLen, inBuffer.length - inLen);
+                if (n == -1) {
+                    return false;
+                }
+                inLen += n;
+            }
+            return true;
+        }
+
+        private void write(char ch) throws IOException {
+            if (outLen == outBuffer.length) {
+                flush();
+            }
+            outBuffer[outLen++] = ch;
+        }
+
+        private void write(CharSequence s) throws IOException {
+            for (int i = 0; i < s.length(); i++) {
+                write(s.charAt(i));
+            }
+        }
+
+        private void flush() throws IOException {
+            out.write(outBuffer, 0, outLen);
+            outLen = 0;
+        }
     }
 
 }

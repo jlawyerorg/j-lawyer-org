@@ -664,6 +664,10 @@ package org.jlawyer.test.backupmgr;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
@@ -732,24 +736,146 @@ public class SqlDumpUtilsTest {
         }
     }
 
+    /**
+     * Escapes a value the way mysqldump does (mysql_real_escape_string).
+     */
+    private static byte[] mysqldumpEscape(byte[] value) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        for (byte b : value) {
+            switch (b) {
+                case 0:
+                    out.write('\\');
+                    out.write('0');
+                    break;
+                case '\n':
+                    out.write('\\');
+                    out.write('n');
+                    break;
+                case '\r':
+                    out.write('\\');
+                    out.write('r');
+                    break;
+                case 0x1a:
+                    out.write('\\');
+                    out.write('Z');
+                    break;
+                case '\\':
+                case '\'':
+                case '"':
+                    out.write('\\');
+                    out.write(b);
+                    break;
+                default:
+                    out.write(b);
+            }
+        }
+        return out.toByteArray();
+    }
+
     @Test
     public void testBinaryContentIsPreserved() throws Exception {
-        byte[] binary = new byte[256];
-        for (int i = 0; i < binary.length; i++) {
-            binary[i] = (byte) i;
+        // all byte values (including quotes, backslash and invalid UTF-8) and the collation in a binary value, escaped
+        // like mysqldump does it, line ends (\r\n, \n) and umlauts must survive unchanged
+        ByteArrayOutputStream binary = new ByteArrayOutputStream();
+        for (int i = 0; i < 256; i++) {
+            binary.write(i);
+        }
+        binary.write("COLLATE utf8mb4_0900_ai_ci' COLLATE=utf8mb4_0900_ai_ci".getBytes(StandardCharsets.ISO_8859_1));
+        for (int i = 255; i >= 0; i--) {
+            binary.write(i);
         }
         ByteArrayOutputStream content = new ByteArrayOutputStream();
         ByteArrayOutputStream expected = new ByteArrayOutputStream();
-        // invalid UTF-8 sequences, line ends (\r\n, \n) and umlauts must survive unchanged
-        content.write("INSERT INTO `blobs` VALUES ('".getBytes(StandardCharsets.UTF_8));
-        content.write(binary);
-        content.write("');\r\n".getBytes(StandardCharsets.UTF_8));
+        content.write("INSERT INTO `blobs` VALUES (1,'".getBytes(StandardCharsets.UTF_8));
+        content.write(mysqldumpEscape(binary.toByteArray()));
+        content.write("',0x434F4C4C41544520,\"COLLATE utf8mb4_0900_ai_ci\");\r\n".getBytes(StandardCharsets.UTF_8));
         expected.write(content.toByteArray());
         content.write("-- Müller\r\nCREATE TABLE x (a int) COLLATE utf8mb4_0900_ai_ci;\r\n".getBytes(StandardCharsets.UTF_8));
         expected.write("-- Müller\r\nCREATE TABLE x (a int) COLLATE utf8mb4_unicode_ci;\r\n".getBytes(StandardCharsets.UTF_8));
         File f = write("jlawyerdb-dump.sql", content.toByteArray());
         assertEquals(1, replace(f));
         assertArrayEquals(expected.toByteArray(), Files.readAllBytes(f.toPath()));
+    }
+
+    /**
+     * A table, a view and a trigger setting as mysqldump writes them, with the collation also in quoted values,
+     * identifiers and comments.
+     */
+    private static final String STATEMENTS = "CREATE TABLE `notes` (\n"
+            + "  `a` varchar(50) COLLATE utf8mb4_0900_ai_ci DEFAULT 'COLLATE utf8mb4_0900_ai_ci',\n"
+            + "  `b` varchar(50) COLLATE utf8mb4_0900_ai_ci DEFAULT 'it\\'s COLLATE=utf8mb4_0900_ai_ci' COMMENT 'collation_connection = utf8mb4_0900_ai_ci',\n"
+            + "  `c` varchar(50) DEFAULT 'it''s COLLATE utf8mb4_0900_ai_ci \\\\',\n"
+            + "  `COLLATE utf8mb4_0900_ai_ci` int DEFAULT NULL\n"
+            + ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='siehe COLLATE utf8mb4_0900_ai_ci';\n"
+            + "/* COLLATE utf8mb4_0900_ai_ci */\n"
+            + "-- COLLATE utf8mb4_0900_ai_ci\n"
+            + "# COLLATE utf8mb4_0900_ai_ci\n"
+            + "/*!50001 CREATE VIEW `v` AS select 'COLLATE utf8mb4_0900_ai_ci' AS `x`,`notes`.`a` COLLATE utf8mb4_0900_ai_ci AS `y`,\"COLLATE utf8mb4_0900_ai_ci\" AS `z` from `notes` */;\n"
+            + "/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;\n";
+
+    private static final String STATEMENTS_EXPECTED = "CREATE TABLE `notes` (\n"
+            + "  `a` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT 'COLLATE utf8mb4_0900_ai_ci',\n"
+            + "  `b` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT 'it\\'s COLLATE=utf8mb4_0900_ai_ci' COMMENT 'collation_connection = utf8mb4_0900_ai_ci',\n"
+            + "  `c` varchar(50) DEFAULT 'it''s COLLATE utf8mb4_0900_ai_ci \\\\',\n"
+            + "  `COLLATE utf8mb4_0900_ai_ci` int DEFAULT NULL\n"
+            + ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='siehe COLLATE utf8mb4_0900_ai_ci';\n"
+            + "/* COLLATE utf8mb4_0900_ai_ci */\n"
+            + "-- COLLATE utf8mb4_0900_ai_ci\n"
+            + "# COLLATE utf8mb4_0900_ai_ci\n"
+            + "/*!50001 CREATE VIEW `v` AS select 'COLLATE utf8mb4_0900_ai_ci' AS `x`,`notes`.`a` COLLATE utf8mb4_unicode_ci AS `y`,\"COLLATE utf8mb4_0900_ai_ci\" AS `z` from `notes` */;\n"
+            + "/*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;\n";
+
+    @Test
+    public void testQuotedValuesAndCommentsInStatementsAreNotChanged() throws Exception {
+        File f = write("jlawyerdb-dump.sql", STATEMENTS.getBytes(StandardCharsets.UTF_8));
+        assertEquals(5, replace(f));
+        assertEquals(STATEMENTS_EXPECTED, new String(Files.readAllBytes(f.toPath()), StandardCharsets.UTF_8));
+    }
+
+    /**
+     * Returns at most chunk characters per read, so that every position is at the end of a block once.
+     */
+    private static Reader chunked(String s, int chunk) {
+        return new StringReader(s) {
+            @Override
+            public int read(char[] cbuf, int off, int len) throws IOException {
+                return super.read(cbuf, off, Math.min(len, chunk));
+            }
+        };
+    }
+
+    @Test
+    public void testAnyBlockBoundary() throws Exception {
+        for (int chunk = 1; chunk <= 7; chunk++) {
+            StringWriter out = new StringWriter();
+            assertEquals("chunk " + chunk, 5, SqlDumpUtils.replaceCollation(chunked(STATEMENTS, chunk), out, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION, SqlDumpUtils.PORTABLE_COLLATION));
+            assertEquals("chunk " + chunk, STATEMENTS_EXPECTED, out.toString());
+        }
+    }
+
+    @Test
+    public void testLargeRowIsStreamed() throws Exception {
+        // a row with a large value, as a single line - its length must not matter
+        StringBuilder value = new StringBuilder("COLLATE utf8mb4_0900_ai_ci ");
+        while (value.length() < 16 * 1024 * 1024) {
+            value.append("Lorem ipsum dolor sit amet, \\'consetetur\\' sadipscing elitr ");
+        }
+        value.append("COLLATE=utf8mb4_0900_ai_ci");
+        String data = "INSERT INTO `case_documents` VALUES ('1','" + value + "');\n";
+        File f = write("jlawyerdb-dump.sql", (data + TABLE).getBytes(StandardCharsets.ISO_8859_1));
+        assertEquals(2, replace(f));
+        assertEquals(data + TABLE.replace("utf8mb4_0900_ai_ci", "utf8mb4_unicode_ci"), new String(Files.readAllBytes(f.toPath()), StandardCharsets.ISO_8859_1));
+    }
+
+    @Test
+    public void testIncompleteDumpIsUntouched() throws Exception {
+        // ends inside a string - not valid SQL, so nothing is replaced
+        byte[] content = (TABLE + "INSERT INTO `x` VALUES ('abc").getBytes(StandardCharsets.UTF_8);
+        File f = write("jlawyerdb-dump.sql", content);
+        assertEquals(0, replace(f));
+        assertArrayEquals(content, Files.readAllBytes(f.toPath()));
+        assertFalse(new File(f.getAbsolutePath() + ".tmp").exists());
+        assertEquals(-1, SqlDumpUtils.replaceCollation(new StringReader(new String(content, StandardCharsets.UTF_8)), new StringWriter(), SqlDumpUtils.MYSQL8_DEFAULT_COLLATION, SqlDumpUtils.PORTABLE_COLLATION));
     }
 
     @Test
