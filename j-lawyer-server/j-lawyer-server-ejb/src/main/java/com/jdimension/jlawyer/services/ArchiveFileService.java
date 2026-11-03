@@ -2431,7 +2431,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     private boolean skipSearchIndex() {
         if ((System.currentTimeMillis() - lastSearchIndexSkipCheck) > (1000l * 60l * 5l)) {
             skipSearchIndex = false;
-            ServerSettingsBean s = this.settingsFacade.find("jlawyer.server.searchindex.skip");
+            ServerSettingsBean s = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_SEARCHINDEX_SKIP);
             if (s != null) {
                 skipSearchIndex = "1".equals(s.getSettingValue()) || "true".equalsIgnoreCase(s.getSettingValue());
             }
@@ -8577,7 +8577,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (locked) {
 
             // check if locking is enabled for this file type
-            ServerSettingsBean s = this.settingsFacade.find("jlawyer.server.documents.lock.filetypes");
+            ServerSettingsBean s = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_DOCUMENTS_LOCK_FILETYPES);
             String extensionList = null;
             if (s != null) {
                 extensionList = s.getSettingValue();

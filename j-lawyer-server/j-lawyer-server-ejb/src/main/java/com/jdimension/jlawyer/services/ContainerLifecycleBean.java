@@ -682,7 +682,11 @@ package com.jdimension.jlawyer.services;
 
 
 
+import com.jdimension.jlawyer.persistence.ServerSettingsBean;
+import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.referencedata.ReferenceData;
+import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.ejb.EJB;
@@ -706,6 +710,9 @@ public class ContainerLifecycleBean implements ContainerLifecycleBeanRemote, Con
     @EJB
     private com.jdimension.jlawyer.persistence.DunningCourtRuleFacadeLocal dunningCourtRulesFacade;
 
+    @EJB
+    private ServerSettingsBeanFacadeLocal settingsFacade;
+
     @PostConstruct
     public void initialize() {
         // From here on the dunning courts come from this installation's master data instead of the
@@ -714,7 +721,26 @@ public class ContainerLifecycleBean implements ContainerLifecycleBeanRemote, Con
         ReferenceData.setDunningCourtDirectory(
                 new MasterDataDunningCourtDirectory(this.courtsFacade, this.dunningCourtRulesFacade));
 
+        this.ensureInstallationId();
+
         log.info("j-lawyer.org Server initialized");
+    }
+
+    /**
+     * Creates the installation id if it does not exist yet. Clients may only read it (it is a
+     * server-maintained setting), so the server has to create it.
+     */
+    private void ensureInstallationId() {
+        try {
+            if (this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_INSTALLATION_ID) == null) {
+                ServerSettingsBean instId = new ServerSettingsBean(ServerSettingsKeys.SERVERCONF_INSTALLATION_ID);
+                instId.setSettingValue(new StringGenerator().getID().toString());
+                this.settingsFacade.create(instId);
+                log.info("created installation id");
+            }
+        } catch (Throwable t) {
+            log.error("unable to create installation id", t);
+        }
     }
 
     @PreDestroy

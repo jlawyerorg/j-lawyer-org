@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jdimension.jlawyer.email.CommonMailUtils;
 import com.jdimension.jlawyer.persistence.MailboxAccessFacadeLocal;
@@ -1912,7 +1913,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         try {
             InitialContext ic = new InitialContext();
             ServerSettingsBeanFacadeLocal settings = (ServerSettingsBeanFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ServerSettingsBeanFacade!com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal");
-            ServerSettingsBean trustedServers = settings.find("mail.imaps.ssl.trust");
+            ServerSettingsBean trustedServers = settings.find(ServerSettingsKeys.SERVERCONF_MAIL_IMAPS_SSLTRUST);
             if (trustedServers != null) {
                 props.put("mail.imaps.ssl.trust", trustedServers.getSettingValue());
             }

@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.configuration;
 
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.UserUtils;
@@ -709,7 +710,9 @@ public class SystemMailboxDialog extends javax.swing.JDialog {
 
         ServerSettings set = ServerSettings.getInstance();
         
-            this.txtPassword.setText(set.getSetting(ServerSettings.SERVERCONF_MONITOR_SMTPPASSWORD, ""));
+            // the password is write-only: the server never returns it, an empty field keeps the stored value
+            this.txtPassword.setText("");
+            ComponentUtils.setStoredSecretHint(this.txtPassword, set.hasSetting(ServerSettings.SERVERCONF_MONITOR_SMTPPASSWORD));
             this.txtSmtp.setText(set.getSetting(ServerSettings.SERVERCONF_MONITOR_SMTPSERVER, ""));
             this.txtSmtpPort.setText(set.getSetting(ServerSettings.SERVERCONF_MONITOR_SMTPPORT, ""));
             this.txtUser.setText(set.getSetting(ServerSettings.SERVERCONF_MONITOR_SMTPUSER, ""));
@@ -909,7 +912,9 @@ public class SystemMailboxDialog extends javax.swing.JDialog {
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
         ServerSettings set = ServerSettings.getInstance();
 
-        set.setSetting(ServerSettings.SERVERCONF_MONITOR_SMTPPASSWORD, new String(this.txtPassword.getPassword()));
+        if (this.txtPassword.getPassword().length > 0) {
+            set.setSetting(ServerSettings.SERVERCONF_MONITOR_SMTPPASSWORD, new String(this.txtPassword.getPassword()));
+        }
         set.setSetting(ServerSettings.SERVERCONF_MONITOR_SMTPUSER, this.txtUser.getText());
         set.setSetting(ServerSettings.SERVERCONF_MONITOR_SMTPFROM, this.txtSenderEmail.getText());
         set.setSetting(ServerSettings.SERVERCONF_MONITOR_SMTPSENDERNAME, this.txtSenderName.getText());
@@ -938,6 +943,11 @@ public class SystemMailboxDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdCancelActionPerformed
 
     private void cmdTestMailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdTestMailActionPerformed
+        if (this.txtPassword.getPassword().length == 0) {
+            // the stored password is never sent to the client, so a test needs the password to be entered
+            JOptionPane.showMessageDialog(this, "Bitte für den Test das Passwort eingeben.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());

@@ -680,6 +680,8 @@ import com.jdimension.jlawyer.security.PasswordsUtil;
 import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
 import com.jdimension.jlawyer.server.services.ServerInformation;
 import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
+import com.jdimension.jlawyer.server.services.settings.SettingRole;
+import com.jdimension.jlawyer.server.services.settings.ServerSettingsAccessCatalog;
 import com.jdimension.jlawyer.server.utils.FileNameGenerator;
 import com.jdimension.jlawyer.server.utils.InvalidSchemaPatternException;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
@@ -712,6 +714,7 @@ import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Asynchronous;
 import javax.ejb.EJB;
+import javax.ejb.EJBAccessException;
 import javax.ejb.EJBException;
 import javax.ejb.Schedule;
 import javax.ejb.SessionContext;
@@ -1297,14 +1300,77 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @RolesAllowed({"loginRole"})
     public ServerSettingsBean getSetting(String key) {
-        return this.settingsFacade.find(key);
+        ServerSettingsAccessCatalog.Rule rule = ServerSettingsAccessCatalog.resolve(key);
+        this.requireSettingRole(rule.getRead(), key, "read");
+        ServerSettingsBean b = this.settingsFacade.find(key);
+        if (b != null && rule.isSecret()) {
+            // secrets are write-only: return a detached copy without the value, never touch the managed entity
+            ServerSettingsBean masked = new ServerSettingsBean(key);
+            masked.setSettingValue("");
+            return masked;
+        }
+        return b;
+    }
 
+    @Override
+    @RolesAllowed({"loginRole"})
+    public boolean hasSetting(String key) {
+        ServerSettingsAccessCatalog.Rule rule = ServerSettingsAccessCatalog.resolve(key);
+        this.requireSettingRole(rule.getRead(), key, "read");
+        ServerSettingsBean b = this.settingsFacade.find(key);
+        return b != null && b.getSettingValue() != null && !b.getSettingValue().isEmpty();
+    }
+
+    @Override
+    @PermitAll
+    public ServerSettingsBean getSettingUnrestricted(String key) {
+        return this.settingsFacade.find(key);
+    }
+
+    @Override
+    @PermitAll
+    public boolean setSettingUnrestricted(String key, String value) {
+        return this.storeSetting(key, value);
+    }
+
+    /**
+     * Throws if the caller does not have the role required by the access rules of a setting.
+     *
+     * @param required the role required
+     * @param key the setting key
+     * @param operation read or write, for logging
+     */
+    private void requireSettingRole(SettingRole required, String key, String operation) {
+        boolean allowed;
+        switch (required) {
+            case LOGIN:
+                allowed = true; // the methods themselves require loginRole
+                break;
+            case ADMIN:
+                allowed = this.context.isCallerInRole("adminRole") || this.context.isCallerInRole("sysAdminRole");
+                break;
+            case SYSADMIN:
+                allowed = this.context.isCallerInRole("sysAdminRole");
+                break;
+            default:
+                // SYSTEM: maintained by the server only
+                allowed = false;
+                break;
+        }
+        if (!allowed) {
+            log.warn("user " + this.context.getCallerPrincipal().getName() + " is not allowed to " + operation + " server setting " + key);
+            throw new EJBAccessException("Keine Berechtigung für die Einstellung " + key);
+        }
     }
 
     @Override
     @RolesAllowed({"loginRole"})
     public boolean setSetting(String key, String value) {
+        this.requireSettingRole(ServerSettingsAccessCatalog.resolve(key).getWrite(), key, "write");
+        return this.storeSetting(key, value);
+    }
 
+    private boolean storeSetting(String key, String value) {
         ServerSettingsBean s = this.settingsFacade.find(key);
         if (s == null) {
             s = new ServerSettingsBean();
@@ -1333,12 +1399,12 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @RolesAllowed({"loginRole"})
     public MonitoringSnapshot getMonitoringSnapshot() {
         MonitoringSnapshot s = new MonitoringSnapshot();
-        ServerSettingsBean avg = this.settingsFacade.find("jlawyer.server.monitor.avgcpu");
+        ServerSettingsBean avg = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_MONITOR_AVGCPU);
         if (avg != null) {
             s.setCpuAverage(Double.parseDouble(avg.getSettingValue()));
         }
 
-        ServerSettingsBean status = this.settingsFacade.find("jlawyer.server.monitor.laststatus");
+        ServerSettingsBean status = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_MONITOR_LASTSTATUS);
         if (status != null) {
             s.setLastStatus(status.getSettingValue());
         }
@@ -2526,9 +2592,14 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     @Override
-    @RolesAllowed({"loginRole"})
+    @RolesAllowed({"adminRole"})
     public List<AssistantConfig> getAssistants() {
-        return this.assistantFacade.findAll();
+        // never hand out the stored password, the server talks to the assistant backends itself
+        List<AssistantConfig> result = new ArrayList<>();
+        for (AssistantConfig ac : this.assistantFacade.findAll()) {
+            result.add(ac.copyWithoutPassword());
+        }
+        return result;
     }
 
     @Override

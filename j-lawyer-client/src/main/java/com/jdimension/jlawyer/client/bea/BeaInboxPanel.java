@@ -789,7 +789,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             new Thread(() -> {
                 try {
                     int tempFolders = BeaAccess.countTempFolders();
-                    int tempFoldersLimit = ServerSettings.getInstance().getSettingAsInt("jlawyer.server.bea.maxtempfolders", 500);
+                    int tempFoldersLimit = ServerSettings.getInstance().getSettingAsInt(ServerSettings.SERVERCONF_BEA_MAXTEMPFOLDERS, 500);
                     if (tempFolders > tempFoldersLimit) {
                         SwingUtilities.invokeLater(() -> {
                             lblTempFilesWarning.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/messagebox_warning.png"))); // NOI18N

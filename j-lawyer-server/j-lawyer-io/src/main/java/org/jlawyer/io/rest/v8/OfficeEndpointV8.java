@@ -89,9 +89,8 @@ public class OfficeEndpointV8 implements OfficeEndpointLocalV8 {
             s.setProvider(orDefault(readSetting(system, ServerSettingsKeys.SERVERCONF_OFFICE_PROVIDER), "none"));
             s.setBaseUrl(orEmpty(readSetting(system, ServerSettingsKeys.SERVERCONF_OFFICE_BASEURL)));
             s.setWopiPublicUrl(orEmpty(readSetting(system, ServerSettingsKeys.SERVERCONF_OFFICE_WOPIPUBLICURL)));
-            String secret = readSetting(system, ServerSettingsKeys.SERVERCONF_OFFICE_SECRET);
             s.setSecret("");
-            s.setSecretSet(secret != null && !secret.isEmpty());
+            s.setSecretSet(system.hasSetting(ServerSettingsKeys.SERVERCONF_OFFICE_SECRET));
             return Response.ok(s).build();
         } catch (Exception ex) {
             log.error("Cannot read office settings", ex);

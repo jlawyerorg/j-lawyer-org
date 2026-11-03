@@ -1581,7 +1581,12 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     @Override
     @RolesAllowed(value = {"adminRole"})
     public List<AssistantConfig> getAllAssistantConfigs() throws Exception {
-        return this.assistantFacade.findAll();
+        // passwords are write-only, the server talks to the assistant backends itself
+        List<AssistantConfig> result = new ArrayList<>();
+        for (AssistantConfig ac : this.assistantFacade.findAll()) {
+            result.add(ac.copyWithoutPassword());
+        }
+        return result;
     }
 
     @Override
@@ -1591,14 +1596,21 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         String id = idGen.getID().toString();
         ac.setId(id);
         this.assistantFacade.create(ac);
-        return this.assistantFacade.find(id);
+        return this.assistantFacade.find(id).copyWithoutPassword();
     }
 
     @Override
     @RolesAllowed(value = {"adminRole"})
     public AssistantConfig updateAssistantConfig(AssistantConfig ac) throws Exception {
+        if (ServerStringUtils.isEmpty(ac.getPassword())) {
+            // passwords are write-only: an empty password keeps the stored one
+            AssistantConfig stored = this.assistantFacade.find(ac.getId());
+            if (stored != null) {
+                ac.setPassword(stored.getPassword());
+            }
+        }
         this.assistantFacade.edit(ac);
-        return ac;
+        return ac.copyWithoutPassword();
     }
 
     @Override
@@ -1622,7 +1634,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
 
             try {
                 AssistantAPI api = new AssistantAPI(c.getUrl(), c.getUserName(), pwd, c.getConnectionTimeout(), c.getReadTimeout());
-                allCapabilities.put(c, api.getCapabilities());
+                allCapabilities.put(c.copyWithoutPassword(), api.getCapabilities());
             } catch (Exception ex) {
                 log.error("Can not determine assistant capabilities for " + c.getName(), ex);
             }
@@ -1646,7 +1658,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
 
             try {
                 AssistantAPI api = new AssistantAPI(c.getUrl(), c.getUserName(), pwd, c.getConnectionTimeout(), c.getReadTimeout());
-                allModels.put(c, api.getModels());
+                allModels.put(c.copyWithoutPassword(), api.getModels());
             } catch (Exception ex) {
                 log.error("Can not determine assistant models for " + c.getName(), ex);
             }
@@ -1933,7 +1945,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
 
                 AssistantAPI api = new AssistantAPI(c.getUrl(), c.getUserName(), pwd, c.getConnectionTimeout(), c.getReadTimeout());
                 AiUser user = api.getUserInformation();
-                userInfos.put(c, user);
+                userInfos.put(c.copyWithoutPassword(), user);
             } catch (Exception ex) {
                 log.error("Unable to query user information for assistant at " + c.getUrl() + " with username " + c.getUserName());
             }

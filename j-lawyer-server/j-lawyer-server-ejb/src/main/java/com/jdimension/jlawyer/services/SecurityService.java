@@ -974,13 +974,15 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
     }
     
     @Override
+    @RolesAllowed({"loginRole"})
     public List<CalendarSetup> getCalendarsForUser(String principalId) throws Exception {
         List<CalendarAccess> calendarAccesses = this.calendarAccessFacade.findByUser(principalId);
         ArrayList<CalendarSetup> calendars = new ArrayList<>();
         for (CalendarAccess ca : calendarAccesses) {
             CalendarSetup cs = this.calendarSetupFacade.find(ca.getCalendarId());
             if (cs != null) {
-                calendars.add(cs);
+                // cloud passwords are write-only, the server reads them itself when syncing
+                calendars.add(cs.copyWithoutPassword());
             }
         }
         return calendars;

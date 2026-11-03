@@ -842,9 +842,9 @@ public interface SystemManagementLocal {
     List<DocumentTagRule> getAllDocumentTagRules();
 
     /**
-     * Returns a single server setting by its key, or {@code null} if it is not set. Already
-     * implemented for the remote interface; exposed on the local interface so REST endpoints can
-     * read server-wide settings (e.g. the firm profile).
+     * Returns a single server setting by its key, or {@code null} if it is not set. The caller must
+     * have the read role defined for the key (see ServerSettingsAccessCatalog); secrets are
+     * returned with an empty value.
      *
      * @param key the setting key
      * @return the setting, or {@code null}
@@ -852,13 +852,43 @@ public interface SystemManagementLocal {
     ServerSettingsBean getSetting(String key);
 
     /**
-     * Creates or updates a single server setting.
+     * Creates or updates a single server setting. The caller must have the write role defined for
+     * the key (see ServerSettingsAccessCatalog).
      *
      * @param key the setting key
      * @param value the value to store
      * @return {@code true} on success
      */
     boolean setSetting(String key, String value);
+
+    /**
+     * Whether a non-empty value is stored for a setting - also for secrets. The caller must have
+     * the read role defined for the key.
+     *
+     * @param key the setting key
+     * @return true if a non-empty value is stored
+     */
+    boolean hasSetting(String key);
+
+    /**
+     * Returns a setting including the value of secrets, without any permission check. Local only,
+     * for server-side callers that checked the caller's role themselves (e.g. testing a stored SMTP
+     * password from a sysAdmin-only REST endpoint).
+     *
+     * @param key the setting key
+     * @return the setting, or {@code null}
+     */
+    ServerSettingsBean getSettingUnrestricted(String key);
+
+    /**
+     * Creates or updates a setting without any permission check. Local only, for server-side
+     * callers that checked the caller's role themselves.
+     *
+     * @param key the setting key
+     * @param value the value to store
+     * @return {@code true} on success
+     */
+    boolean setSettingUnrestricted(String key, String value);
 
     /**
      * Changes the password of the currently authenticated caller. Already implemented for the remote
