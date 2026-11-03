@@ -901,6 +901,49 @@ public class SqlDumpUtilsTest {
     }
 
     @Test
+    public void testSettingNamesInIdentifiersAndComments() throws Exception {
+        // a column named sql_mode and a comment that mentions sql_mode or collation_ change no setting
+        String dump = "CREATE TABLE `settings` (\n  `sql_mode` varchar(255) DEFAULT NULL\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;\n"
+                + "CREATE TABLE `t` (\n  `a` varchar(255) DEFAULT NULL COMMENT 'sql_mode used when saving, see collation_connection'\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;\n";
+        assertEquals(2, replace(write("settings.sql", dump.getBytes(StandardCharsets.UTF_8))));
+        assertEquals(dump.replace("utf8mb4_0900_ai_ci", "utf8mb4_unicode_ci"), new String(Files.readAllBytes(copy.toPath()), StandardCharsets.UTF_8));
+    }
+
+    @Test
+    public void testCollateInTableData() throws Exception {
+        assertUncertain("INSERT INTO t VALUES ('a' COLLATE 'utf8mb4_0900_ai_ci');\n", "INSERT INTO t VALUES ('a' COLLATE utf8mb4_unicode_ci);\n");
+    }
+
+    @Test
+    public void testOneStatementPerLineOfTableData() throws Exception {
+        assertUncertain("INSERT INTO t VALUES ('ok'); SET sql_mode='NO_BACKSLASH_ESCAPES'; INSERT INTO t VALUES ('ok');\n"
+                + "CREATE VIEW v AS SELECT 'a\\' AS a, 'COLLATE utf8mb4_0900_ai_ci #s' AS s;\n");
+    }
+
+    @Test
+    public void testOnlyTriggersBetweenDelimiters() throws Exception {
+        assertUncertain("DELIMITER ;;\nSET sql_mode='NO_BACKSLASH_ESCAPES';;\nDELIMITER ;\n"
+                + "CREATE VIEW v AS SELECT 'a\\' AS a, 'COLLATE utf8mb4_0900_ai_ci #s' AS s;\n");
+    }
+
+    private static final String TRIGGER_HEADER = "DELIMITER ;;\n/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `t_bi` BEFORE INSERT ON `t` FOR EACH ROW BEGIN\n";
+
+    @Test
+    public void testStringsInTriggers() throws Exception {
+        // a string of the trigger with ;; and DELIMITER lines in it, mysqldump writes the body as it is
+        String dump = TABLE + TRIGGER_HEADER + "  SET NEW.a = 'a;;\nDELIMITER ;\nb*/;;\n';\nEND */;;\nDELIMITER ;\n" + TABLE;
+        assertEquals(4, replace(write("strings.sql", dump.getBytes(StandardCharsets.UTF_8))));
+        assertUncertain(TRIGGER_HEADER + "  SET NEW.a = 'a;;\nDELIMITER ;\nCOLLATE utf8mb4_0900_ai_ci;\nDELIMITER ;;\nz';\nEND */;;\nDELIMITER ;\n",
+                TRIGGER_HEADER + "  SET NEW.a = 'a';\nEND */;;\nSELECT 1;\n",
+                TRIGGER_HEADER + "  SET NEW.a = 'a;\nEND */;;\nDELIMITER ;\n");
+    }
+
+    @Test
+    public void testIncompleteStatementAtTheEnd() throws Exception {
+        assertUncertain("CREATE TABLE t(a TEXT COLLATE utf8mb4_0900_ai_ci\n", "CREATE TABLE t(a TEXT COLLATE utf8mb4_0900_ai_ci");
+    }
+
+    @Test
     public void testContainsTextIgnoresCase() throws Exception {
         StringBuilder sb = new StringBuilder();
         while (sb.length() < 64 * 1024 - 5) {
