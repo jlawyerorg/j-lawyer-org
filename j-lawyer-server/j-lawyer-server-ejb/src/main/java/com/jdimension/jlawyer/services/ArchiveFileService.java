@@ -7012,7 +7012,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             this.invoicesFacade.edit(updatedInvoice);
             this.updateInvoiceTotal(invoice.getId());
 
-            this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Beleg geändert (" + updatedInvoice.getInvoiceNumber() + ", " + updatedInvoice.getStatusString() + ", " + updatedInvoice.getInvoiceType().getDisplayName() + ")");
+            // invoices may have no type yet, the type is assigned afterwards via updateInvoiceType
+            String typeName = updatedInvoice.getInvoiceType() != null ? updatedInvoice.getInvoiceType().getDisplayName() : "ohne Belegart";
+            this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Beleg geändert (" + updatedInvoice.getInvoiceNumber() + ", " + updatedInvoice.getStatusString() + ", " + typeName + ")");
 
             return this.invoicesFacade.find(updatedInvoice.getId());
         } else {
