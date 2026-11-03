@@ -710,6 +710,16 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         this.caseView = caseView;
     }
 
+    /**
+     * Re-applies the sort order and filter of the invoice list in the case
+     * view, e.g. after status or due date of this invoice changed.
+     */
+    private void refreshCaseViewSortAndFilter() {
+        if (this.caseView != null) {
+            this.caseView.applyInvoiceSortAndFilter();
+        }
+    }
+
     public void setPaidTotal(BigDecimal totalGross, BigDecimal paid, String currency) {
         if (paid != BigDecimal.valueOf(Float.MIN_VALUE)) {
             this.paid = paid;
@@ -1016,6 +1026,7 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
                 this.setPaidTotal(dlg.getEntry().getTotalGross(), BigDecimal.valueOf(Float.MIN_VALUE), dlg.getEntry().getCurrency());
             else
                 this.setPaidTotal(dlg.getEntry().getTotal(), BigDecimal.valueOf(Float.MIN_VALUE), dlg.getEntry().getCurrency());
+            this.refreshCaseViewSortAndFilter();
         }
     }//GEN-LAST:event_cmdOpenActionPerformed
 
@@ -1030,6 +1041,7 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
                 parent.remove(this);
                 parent.invalidate();
                 parent.repaint();
+                this.refreshCaseViewSortAndFilter();
             } catch (Exception ex) {
                 log.error("Error deleting invoice", ex);
                 JOptionPane.showMessageDialog(this, "Fehler beim Löschen der Rechnung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -1062,6 +1074,7 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
             }
 
             this.setEntry(caseDto, this.invoice, addresses);
+            this.refreshCaseViewSortAndFilter();
 
             if(this.invoice.getTotalGross().subtract(currentPaid).compareTo(BigDecimal.ZERO) > 0) {
                 CaseAccountEntry entry = new CaseAccountEntry();

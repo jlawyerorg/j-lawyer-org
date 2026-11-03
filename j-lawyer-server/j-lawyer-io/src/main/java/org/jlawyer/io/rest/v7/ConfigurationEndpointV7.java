@@ -1739,8 +1739,8 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     }
 
     /**
-     * Creates a new (empty) document-folder template with a root folder. Requires administrator
-     * permission. The created template is returned.
+     * Creates a new (empty) document-folder template with a root folder. Requires an authenticated
+     * user. The created template is returned.
      *
      * @param template the template to create (only the name is used)
      * @response 401 User not authorized
@@ -1752,8 +1752,8 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
-    @RolesAllowed({"adminRole"})
-    @io.swagger.annotations.ApiOperation(value = "Creates a new document-folder template. Requires administrator permission.", response = RestfulFolderTemplateV7.class)
+    @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value = "Creates a new document-folder template. Requires an authenticated user.", response = RestfulFolderTemplateV7.class)
     public Response createFolderTemplate(@io.swagger.annotations.ApiParam RestfulFolderTemplateV7 template) {
         try {
             InitialContext ic = new InitialContext();
@@ -1770,7 +1770,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     }
 
     /**
-     * Renames an existing document-folder template. Requires administrator permission. The template is
+     * Renames an existing document-folder template. Requires an authenticated user. The template is
      * identified by its id.
      *
      * @param template the template to rename (id + new name)
@@ -1783,8 +1783,8 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
-    @RolesAllowed({"adminRole"})
-    @io.swagger.annotations.ApiOperation(value = "Renames a document-folder template. Requires administrator permission.", response = RestfulFolderTemplateV7.class)
+    @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value = "Renames a document-folder template. Requires an authenticated user.", response = RestfulFolderTemplateV7.class)
     public Response renameFolderTemplate(@io.swagger.annotations.ApiParam RestfulFolderTemplateV7 template) {
         try {
             InitialContext ic = new InitialContext();
@@ -1805,7 +1805,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     }
 
     /**
-     * Deletes a document-folder template. Requires administrator permission. The template is
+     * Deletes a document-folder template. Requires an authenticated user. The template is
      * identified by its name.
      *
      * @param template the template to delete (name)
@@ -1817,8 +1817,8 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     @DELETE
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
-    @RolesAllowed({"adminRole"})
-    @io.swagger.annotations.ApiOperation(value = "Deletes a document-folder template. Requires administrator permission.")
+    @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value = "Deletes a document-folder template. Requires an authenticated user.")
     public Response deleteFolderTemplate(@io.swagger.annotations.ApiParam RestfulFolderTemplateV7 template) {
         try {
             InitialContext ic = new InitialContext();
@@ -1833,7 +1833,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
 
     /**
      * Clones a document-folder template under a new name (including its whole folder tree). Requires
-     * administrator permission. The new template is returned.
+     * an authenticated user. The new template is returned.
      *
      * @param request the clone request ({@code templateName} = source, {@code targetName} = new name)
      * @response 401 User not authorized
@@ -1845,8 +1845,8 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
-    @RolesAllowed({"adminRole"})
-    @io.swagger.annotations.ApiOperation(value = "Clones a document-folder template under a new name. Requires administrator permission.", response = RestfulFolderTemplateV7.class)
+    @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value = "Clones a document-folder template under a new name. Requires an authenticated user.", response = RestfulFolderTemplateV7.class)
     public Response cloneFolderTemplate(@io.swagger.annotations.ApiParam RestfulFolderTemplateFolderV7 request) {
         try {
             InitialContext ic = new InitialContext();
@@ -1860,7 +1860,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     }
 
     /**
-     * Adds a folder to a document-folder template. Requires administrator permission. The created
+     * Adds a folder to a document-folder template. Requires an authenticated user. The created
      * folder is returned.
      *
      * @param request the folder to add ({@code templateName} + {@code parentId} + {@code name})
@@ -1873,8 +1873,8 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
-    @RolesAllowed({"adminRole"})
-    @io.swagger.annotations.ApiOperation(value = "Adds a folder to a document-folder template. Requires administrator permission.", response = RestfulFolderNodeV7.class)
+    @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value = "Adds a folder to a document-folder template. Requires an authenticated user.", response = RestfulFolderNodeV7.class)
     public Response addTemplateFolder(@io.swagger.annotations.ApiParam RestfulFolderTemplateFolderV7 request) {
         try {
             InitialContext ic = new InitialContext();
@@ -1891,7 +1891,7 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     }
 
     /**
-     * Renames a folder within a document-folder template. Requires administrator permission. The
+     * Renames a folder within a document-folder template. Requires an authenticated user. The
      * renamed folder is returned.
      *
      * @param request the folder to rename ({@code folderId} + new {@code name})
@@ -1904,8 +1904,8 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
-    @RolesAllowed({"adminRole"})
-    @io.swagger.annotations.ApiOperation(value = "Renames a folder within a document-folder template. Requires administrator permission.", response = RestfulFolderNodeV7.class)
+    @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value = "Renames a folder within a document-folder template. Requires an authenticated user.", response = RestfulFolderNodeV7.class)
     public Response renameTemplateFolder(@io.swagger.annotations.ApiParam RestfulFolderTemplateFolderV7 request) {
         try {
             InitialContext ic = new InitialContext();
@@ -1919,8 +1919,8 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     }
 
     /**
-     * Removes a folder (and its sub-folders) from a document-folder template. Requires administrator
-     * permission.
+     * Removes a folder (and its sub-folders) from a document-folder template. Requires an authenticated
+     * user.
      *
      * @param request the folder to remove ({@code folderId})
      * @response 401 User not authorized
@@ -1932,8 +1932,8 @@ public class ConfigurationEndpointV7 implements ConfigurationEndpointLocalV7 {
     @DELETE
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
-    @RolesAllowed({"adminRole"})
-    @io.swagger.annotations.ApiOperation(value = "Removes a folder from a document-folder template. Requires administrator permission.")
+    @RolesAllowed({"loginRole"})
+    @io.swagger.annotations.ApiOperation(value = "Removes a folder from a document-folder template. Requires an authenticated user.")
     public Response removeTemplateFolder(@io.swagger.annotations.ApiParam RestfulFolderTemplateFolderV7 request) {
         try {
             InitialContext ic = new InitialContext();

@@ -681,8 +681,6 @@ public class CommandHandlerFactory {
         handlerList.add(new ServerInfoHandler(true));
         handlerList.add(new GetSettingHandler(true));
         handlerList.add(new SetSettingHandler(true));
-        handlerList.add(new GetBindingsHandler(true));
-        handlerList.add(new SetBindingsHandler(true));
         handlerList.add(new SysPropertiesHandler(true));
         handlerList.add(new SetReferenceNumberHandler(true));
         handlerList.add(new UnlockDocumentsHandler(true));

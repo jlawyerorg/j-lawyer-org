@@ -1890,7 +1890,14 @@
                                       <Component id="cmdNewInvoice" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace type="separate" max="-2" attributes="0"/>
                                       <Component id="jLabel32" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace min="0" pref="571" max="32767" attributes="0"/>
+                                      <EmptySpace min="0" pref="18" max="32767" attributes="0"/>
+                                      <Component id="lblInvoiceCount" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="txtFilterInvoices" min="-2" pref="180" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="cmbInvoiceStatusFilter" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="cmbInvoiceSort" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <Component id="jScrollPane5" alignment="0" max="32767" attributes="0"/>
                               </Group>
@@ -1906,6 +1913,10 @@
                                   <Component id="jLabel7" alignment="0" max="32767" attributes="0"/>
                                   <Component id="cmdNewInvoice" alignment="0" max="32767" attributes="0"/>
                                   <Component id="jLabel32" max="32767" attributes="0"/>
+                                  <Component id="lblInvoiceCount" max="32767" attributes="0"/>
+                                  <Component id="txtFilterInvoices" max="32767" attributes="0"/>
+                                  <Component id="cmbInvoiceStatusFilter" max="32767" attributes="0"/>
+                                  <Component id="cmbInvoiceSort" max="32767" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="jScrollPane5" max="32767" attributes="0"/>
@@ -1968,6 +1979,53 @@
                       <Properties>
                         <Property name="text" type="java.lang.String" value="erstellte Rechnungen und Belege"/>
                       </Properties>
+                    </Component>
+                    <Component class="javax.swing.JLabel" name="lblInvoiceCount">
+                      <Properties>
+                        <Property name="text" type="java.lang.String" value="0 Belege"/>
+                      </Properties>
+                    </Component>
+                    <Component class="javax.swing.JTextField" name="txtFilterInvoices">
+                      <Properties>
+                        <Property name="toolTipText" type="java.lang.String" value="Belegnummer, Bezeichnung, Empf&#xe4;nger oder Belegart"/>
+                      </Properties>
+                    </Component>
+                    <Component class="javax.swing.JComboBox" name="cmbInvoiceStatusFilter">
+                      <Properties>
+                        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+                          <StringArray count="6">
+                            <StringItem index="0" value="alle"/>
+                            <StringItem index="1" value="offen (inkl. Mahnstufen)"/>
+                            <StringItem index="2" value="&#xfc;berf&#xe4;llig"/>
+                            <StringItem index="3" value="neu"/>
+                            <StringItem index="4" value="bezahlt"/>
+                            <StringItem index="5" value="storniert"/>
+                          </StringArray>
+                        </Property>
+                        <Property name="toolTipText" type="java.lang.String" value="Belege nach Status filtern"/>
+                      </Properties>
+                      <Events>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmbInvoiceStatusFilterActionPerformed"/>
+                      </Events>
+                    </Component>
+                    <Component class="javax.swing.JComboBox" name="cmbInvoiceSort">
+                      <Properties>
+                        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+                          <StringArray count="7">
+                            <StringItem index="0" value="Erstellt &#x2193;"/>
+                            <StringItem index="1" value="Erstellt &#x2191;"/>
+                            <StringItem index="2" value="F&#xe4;llig &#x2193;"/>
+                            <StringItem index="3" value="F&#xe4;llig &#x2191;"/>
+                            <StringItem index="4" value="Status"/>
+                            <StringItem index="5" value="Belegnummer"/>
+                            <StringItem index="6" value="Betrag &#x2193;"/>
+                          </StringArray>
+                        </Property>
+                        <Property name="toolTipText" type="java.lang.String" value="Belege sortieren"/>
+                      </Properties>
+                      <Events>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmbInvoiceSortActionPerformed"/>
+                      </Events>
                     </Component>
                   </SubComponents>
                 </Container>

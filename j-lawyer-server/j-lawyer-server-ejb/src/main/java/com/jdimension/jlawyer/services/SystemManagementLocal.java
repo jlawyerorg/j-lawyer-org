@@ -694,7 +694,20 @@ public interface SystemManagementLocal {
     public static final int TEMPLATE_TYPE_HEAD=20;
     
     public String getServerVersion();
+
+    /**
+     * Sends a status notification mail to the monitoring recipient configured in the
+     * server settings (jlawyer.server.monitor.*). Does nothing if notifications are
+     * disabled or the SMTP configuration is incomplete.
+     * <p>
+     * Intentionally not secured and not exposed remotely: it is called by
+     * IterativeBackupTask, which runs without a security context.
+     *
+     * @param subject mail subject
+     * @param body plain text mail body
+     */
     public void statusMail(String subject, String body);
+
     public MonitoringSnapshot getMonitoringSnapshot();
 
     /**
@@ -736,11 +749,16 @@ public interface SystemManagementLocal {
 
     String getServerIpV4() throws Exception;
 
-    String getServerInterfacesBoundTo() throws Exception;
-
-    boolean setServerInterfaceBindings(String ip) throws Exception;
-
     List<PartyTypeBean> getPartyTypes();
+
+    /**
+     * Returns all party types in sequence order without any security check.
+     * Intended for server-internal callers that run without a security context
+     * (e.g. MailboxScannerTask).
+     *
+     * @return all party types, ordered by sequence number
+     */
+    List<PartyTypeBean> getPartyTypesUnrestricted();
 
     PartyTypeBean getPartyType(String id);
 
