@@ -2313,16 +2313,38 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }
 
     /**
-     * Brings the document list in line with what a document replacement left on the server.
+     * Brings the document list in line with the server after a document replacement: the documents of the case are
+     * loaded again, because other documents than the ones of the outcome may have been renamed on the server in the
+     * meantime. Known links to invoices are kept, renaming and replacing do not change them. If loading fails, only the
+     * documents of the outcome are updated.
      *
+     * @param remote the case service
      * @param outcome the outcome of the replacement
      */
-    private void showReplacementOutcome(DocumentReplacement.Outcome outcome) {
-        for (ArchiveFileDocumentsBean affected : outcome.getAffectedDocuments()) {
-            this.caseFolderPanel1.removeDocument(affected);
-        }
-        for (ArchiveFileDocumentsBean active : outcome.getActiveDocuments()) {
-            this.caseFolderPanel1.addDocument(active, null);
+    private void showDocumentsAfterReplacement(ArchiveFileServiceRemote remote, DocumentReplacement.Outcome outcome) {
+        try {
+            ArrayList<ArchiveFileDocumentsBean> documents = new ArrayList<>(remote.getDocuments(this.dto.getId()));
+            java.util.HashMap<String, com.jdimension.jlawyer.persistence.Invoice> invoices = new java.util.HashMap<>();
+            for (ArchiveFileDocumentsBean d : documents) {
+                com.jdimension.jlawyer.persistence.Invoice invoice = this.caseFolderPanel1.getLinkedInvoice(d.getId());
+                if (invoice != null) {
+                    invoices.put(d.getId(), invoice);
+                }
+            }
+            this.caseFolderPanel1.setAllDocumentTags(remote.getDocumentTagsForCase(this.dto.getId()));
+            this.caseFolderPanel1.setDocuments(documents, invoices);
+            this.caseFolderPanel1.sort();
+        } catch (Exception ex) {
+            log.error("Unable to load the documents of the case after a replacement", ex);
+            for (ArchiveFileDocumentsBean affected : outcome.getAffectedDocuments()) {
+                this.caseFolderPanel1.removeDocument(affected);
+            }
+            for (ArchiveFileDocumentsBean active : outcome.getActiveDocuments()) {
+                this.caseFolderPanel1.addDocument(active, this.caseFolderPanel1.getLinkedInvoice(active.getId()));
+            }
+            if (outcome.getDocument() != null) {
+                this.caseFolderPanel1.addDocument(outcome.getDocument(), null);
+            }
         }
     }
 
@@ -8546,12 +8568,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         } catch (DocumentReplacement.ReplacementException rex) {
                             log.error("Error replacing document " + newName, rex);
                             // show the documents as they are on the server now, the new one under its temporary name
-                            this.showReplacementOutcome(rex.getOutcome());
+                            this.showDocumentsAfterReplacement(remote, rex.getOutcome());
                             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), rex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                             return;
                         }
                         ArchiveFileDocumentsBean newDoc = replacement.getDocument();
-                        this.showReplacementOutcome(replacement);
                         if (replacement.getProblems() != null) {
                             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), replacement.getProblems(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
                         }
@@ -8565,7 +8586,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             log.warn("document folder of source document is null when duplicating as " + targetFormat);
                         }
 
-                        caseFolderPanel1.addDocument(newDoc, null);
+                        if (replaceDocument) {
+                            // documents may have been renamed on the server, show them as they are now
+                            this.showDocumentsAfterReplacement(remote, replacement);
+                        } else {
+                            caseFolderPanel1.addDocument(newDoc, null);
+                        }
 
                     } catch (Exception ioe) {
                         log.error("Error duplicating document", ioe);

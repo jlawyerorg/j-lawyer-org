@@ -697,8 +697,12 @@ public class DocumentReplacementTest {
     private static class FakeServer implements InvocationHandler {
 
         private final Map<String, ArchiveFileDocumentsBean> docs = new LinkedHashMap<>();
-        /** tags of each document, name to value */
-        private final Map<String, Map<String, String>> tags = new HashMap<>();
+        /** tags of each document by name */
+        private final Map<String, Map<String, DocumentTagsBean>> tags = new HashMap<>();
+        /** the server's clock, for the dates tags are set */
+        private long clock = 1000000L;
+        /** failures that happen only once */
+        private final Set<String> failOnce = new HashSet<>();
         /** documents whose file (content) exists */
         private final Set<String> files = new HashSet<>();
         /** folder of each document */
@@ -754,14 +758,44 @@ public class DocumentReplacementTest {
         }
 
         /**
-         * Like setDocumentTag on the server: a new tag is added with its value, an existing one gets a new value only
-         * if one is given.
+         * Like setDocumentTag on the server: a new tag is added with its value and the given date (now if none is
+         * given), an existing one gets a new value and the date now only if a value is given.
          */
-        private void setTag(String docId, String name, String value) {
-            Map<String, String> t = tags.get(docId);
-            if (!t.containsKey(name) || value != null) {
-                t.put(name, value);
+        private void setTag(String docId, String name, String value, java.util.Date dateSet) {
+            Map<String, DocumentTagsBean> t = tags.get(docId);
+            DocumentTagsBean existing = t.get(name);
+            if (existing == null) {
+                DocumentTagsBean created = new DocumentTagsBean();
+                created.setTagName(name);
+                created.setTagValue(value);
+                created.setDateSet(dateSet != null ? dateSet : new java.util.Date(clock++));
+                t.put(name, created);
+            } else if (value != null) {
+                existing.setTagValue(value);
+                existing.setDateSet(new java.util.Date(clock++));
             }
+        }
+
+        /**
+         * @return the tags of a document, name to value
+         */
+        Map<String, String> tagValues(String docId) {
+            Map<String, String> result = new LinkedHashMap<>();
+            for (DocumentTagsBean t : tags.get(docId).values()) {
+                result.put(t.getTagName(), t.getTagValue());
+            }
+            return result;
+        }
+
+        /**
+         * @return the tags of a document, name to the time they were set
+         */
+        Map<String, Long> tagDates(String docId) {
+            Map<String, Long> result = new LinkedHashMap<>();
+            for (DocumentTagsBean t : tags.get(docId).values()) {
+                result.put(t.getTagName(), t.getDateSet().getTime());
+            }
+            return result;
         }
 
         /**
@@ -772,13 +806,16 @@ public class DocumentReplacementTest {
             if (rule != null) {
                 for (String tag : rule.split(",")) {
                     int eq = tag.indexOf('=');
-                    setTag(d.getId(), eq > 0 ? tag.substring(0, eq) : tag, eq > 0 ? tag.substring(eq + 1) : null);
+                    setTag(d.getId(), eq > 0 ? tag.substring(0, eq) : tag, eq > 0 ? tag.substring(eq + 1) : null, null);
                 }
             }
         }
 
         private void maybeFail(String... keys) throws Exception {
             for (String k : keys) {
+                if (failOnce.remove(k)) {
+                    throw new Exception(keys[0] + " einmalig fehlgeschlagen");
+                }
                 if (failOn.contains(k)) {
                     throw new Exception(keys[0] + " fehlgeschlagen");
                 }
@@ -867,10 +904,11 @@ public class DocumentReplacementTest {
                 }
                 case "getDocumentTags": {
                     List<DocumentTagsBean> result = new ArrayList<>();
-                    for (Map.Entry<String, String> t : tags.get((String) args[0]).entrySet()) {
+                    for (DocumentTagsBean t : tags.get((String) args[0]).values()) {
                         DocumentTagsBean tb = new DocumentTagsBean();
-                        tb.setTagName(t.getKey());
-                        tb.setTagValue(t.getValue());
+                        tb.setTagName(t.getTagName());
+                        tb.setTagValue(t.getTagValue());
+                        tb.setDateSet(new java.util.Date(t.getDateSet().getTime()));
                         result.add(tb);
                     }
                     return result;
@@ -879,7 +917,7 @@ public class DocumentReplacementTest {
                     maybeFail(m, m + ":" + args[0]);
                     DocumentTagsBean t = (DocumentTagsBean) args[1];
                     if ((Boolean) args[2]) {
-                        setTag((String) args[0], t.getTagName(), t.getTagValue());
+                        setTag((String) args[0], t.getTagName(), t.getTagValue(), t.getDateSet());
                     } else {
                         tags.get((String) args[0]).remove(t.getTagName());
                     }
@@ -946,7 +984,27 @@ public class DocumentReplacementTest {
         DocumentReplacement.Outcome r = DocumentReplacement.addReplacing(server.remote(), "case1", "Brief.pdf", new byte[]{1}, null, true);
         assertNull(r.getProblems());
         assertTrue(server.docs.get("old").isDeleted());
-        assertEquals(tagsBefore, server.tags.get("old"));
+        assertTagsOfOldAsBefore(tagsBefore);
+    }
+
+    @Test
+    public void testTransientTagFailureIsNotReportedAfterSuccessfulRetry() throws Exception {
+        // restoring the tags after the first rename fails once, the new document can not be renamed, and restoring the
+        // tags after renaming the existing document back works - the message must not claim the tags are wrong
+        Map<String, String> tagsBefore = tagRulesAndTaggedDocument();
+        server.failOnce.add("setDocumentTag:old");
+        server.failOn.add("renameDocument:new1:Brief.pdf");
+        DocumentReplacement.ReplacementException rex = assertFails();
+        assertFalse(rex.getMessage(), rex.getMessage().contains("Etiketten"));
+        assertTagsOfOldAsBefore(tagsBefore);
+        assertTrue(server.failOnce.isEmpty());
+    }
+
+    @Test
+    public void testBinIsNotLoadedIfTheDocumentIsInTheCase() throws Exception {
+        server.put("old", "Brief.pdf", "case1", false);
+        DocumentReplacement.addReplacing(server.remote(), "case1", "Brief.pdf", new byte[]{1}, null, true);
+        assertFalse(server.calls.contains("getDocumentsBin"));
     }
 
     @Test
@@ -1039,14 +1097,14 @@ public class DocumentReplacementTest {
         server.tagRule = name -> !name.equalsIgnoreCase("Brief.pdf") ? "Sonstiges" : null;
         server.put("old", "Brief.pdf", "case1", false);
         DocumentReplacement.Outcome r = DocumentReplacement.addReplacing(server.remote(), "case1", "Brief.pdf", new byte[]{1}, null, true);
-        assertTrue(server.tags.get(r.getDocument().getId()).isEmpty());
+        assertTrue(server.tagValues(r.getDocument().getId()).isEmpty());
 
         server.tagRule = name -> name.toLowerCase().contains("brief") ? "Brief" : null;
         // the first new document is the existing one now
         server.added.clear();
         r = DocumentReplacement.addReplacing(server.remote(), "case1", "Brief.pdf", new byte[]{2}, null, true);
-        assertEquals(1, server.tags.get(r.getDocument().getId()).size());
-        assertTrue(server.tags.get(r.getDocument().getId()).containsKey("Brief"));
+        assertEquals(1, server.tagValues(r.getDocument().getId()).size());
+        assertTrue(server.tagValues(r.getDocument().getId()).containsKey("Brief"));
     }
 
     @Test
@@ -1131,11 +1189,18 @@ public class DocumentReplacementTest {
             return t.isEmpty() ? null : String.join(",", t);
         };
         server.put("old", "Brief.pdf", "case1", false);
-        Map<String, String> before = new LinkedHashMap<>();
-        before.put("Status", "offen");
-        before.put("Mandant", null);
-        server.tags.get("old").putAll(before);
-        return before;
+        // set long ago, the dates must stay
+        server.setTag("old", "Status", "offen", new java.util.Date(10L));
+        server.setTag("old", "Mandant", null, new java.util.Date(20L));
+        return server.tagValues("old");
+    }
+
+    private void assertTagsOfOldAsBefore(Map<String, String> tagsBefore) {
+        assertEquals(tagsBefore, server.tagValues("old"));
+        Map<String, Long> dates = new LinkedHashMap<>();
+        dates.put("Status", 10L);
+        dates.put("Mandant", 20L);
+        assertEquals(dates, server.tagDates("old"));
     }
 
     @Test
@@ -1145,8 +1210,8 @@ public class DocumentReplacementTest {
         server.invoiceLinks.add("old");
         server.failOn.add("renameDocument:new1:Brief.pdf");
         DocumentReplacement.ReplacementException rex = assertFails();
-        // the tags are exactly the ones it had, although renaming it twice applied the rules
-        assertEquals(tagsBefore, server.tags.get("old"));
+        // the tags are exactly the ones it had, with the dates they were set, although renaming it twice applied the rules
+        assertTagsOfOldAsBefore(tagsBefore);
         // nothing was moved or unlinked
         assertEquals("Brief.pdf", server.docs.get("old").getName());
         assertFalse(server.docs.get("old").isDeleted());

@@ -891,8 +891,9 @@ public class DocumentReplacement {
         List<ArchiveFileDocumentsBean> targets = new ArrayList<>();
         // documents in the case that were renamed, with their former names, and their tags before
         List<ArchiveFileDocumentsBean> renamed = new ArrayList<>();
-        Map<String, Map<String, String>> savedTags = new HashMap<>();
-        List<String> tagProblems = new ArrayList<>();
+        Map<String, Map<String, DocumentTagsBean>> savedTags = new HashMap<>();
+        // per document, a later successful restoration removes an earlier failure
+        Map<String, String> tagProblems = new LinkedHashMap<>();
         try {
             removeTags(remote, staged);
             for (ArchiveFileDocumentsBean candidate : findDocumentsWithName(remote, caseId, fileName, staged.getId())) {
@@ -924,7 +925,7 @@ public class DocumentReplacement {
             }
             List<ArchiveFileDocumentsBean> affected = new ArrayList<>(targets);
             affected.add(staged);
-            throw new ReplacementException(describe(remote, "Ersetzen von '" + fileName + "' nicht abgeschlossen: " + ex.getMessage(), tagProblems, affected), ex);
+            throw new ReplacementException(describe(remote, "Ersetzen von '" + fileName + "' nicht abgeschlossen: " + ex.getMessage(), tagProblems.values(), affected), ex);
         }
         staged.setName(fileName);
 
@@ -943,63 +944,70 @@ public class DocumentReplacement {
         String problem = binFailure != null
                 ? "'" + fileName + "' wurde ersetzt, aber die bisherige Datei konnte nicht in den Papierkorb verschoben werden: " + binFailure.getMessage()
                 : "'" + fileName + "' wurde ersetzt.";
-        Outcome state = describe(remote, problem, tagProblems, targets);
+        Outcome state = describe(remote, problem, tagProblems.values(), targets);
         return new Outcome(staged, targets, state.getActiveDocuments(), state.getProblems());
     }
 
     /**
-     * @return the tags of a document, name to value, as stored on the server
+     * @return the tags of a document by name, as stored on the server (with value and the date it was set)
      */
-    private static Map<String, String> tagsOf(ArchiveFileServiceRemote remote, String documentId) throws Exception {
-        Map<String, String> result = new LinkedHashMap<>();
+    private static Map<String, DocumentTagsBean> tagsOf(ArchiveFileServiceRemote remote, String documentId) throws Exception {
+        Map<String, DocumentTagsBean> result = new LinkedHashMap<>();
         Collection<DocumentTagsBean> tags = remote.getDocumentTags(documentId);
         if (tags != null) {
             for (DocumentTagsBean t : tags) {
-                result.put(t.getTagName(), t.getTagValue());
+                result.put(t.getTagName(), t);
             }
         }
         return result;
     }
 
-    private static void setTag(ArchiveFileServiceRemote remote, String documentId, String name, String value, boolean active) throws Exception {
+    private static void setTag(ArchiveFileServiceRemote remote, String documentId, String name, String value, java.util.Date dateSet, boolean active) throws Exception {
         DocumentTagsBean tag = new DocumentTagsBean();
         tag.setTagName(name);
         tag.setTagValue(value);
+        tag.setDateSet(dateSet);
         remote.setDocumentTag(documentId, tag, active);
     }
 
+    private static boolean sameDate(java.util.Date a, java.util.Date b) {
+        return a == null ? b == null : b != null && a.getTime() == b.getTime();
+    }
+
     /**
-     * Gives a document exactly the tags it had before: tags that renaming added are removed, tags it had are set
-     * again with their values. A failure is added to problems.
+     * Gives a document exactly the tags it had before: tags that renaming added are removed, a tag whose value or date
+     * changed is removed and set again with its former value and date (the server only keeps a given date when it
+     * creates a tag, changing the value of an existing tag sets the date to now). A failure is recorded in problems
+     * for the document, a later successful restoration removes it again.
      */
-    private static void restoreTags(ArchiveFileServiceRemote remote, ArchiveFileDocumentsBean doc, Map<String, String> saved, List<String> problems) {
+    private static void restoreTags(ArchiveFileServiceRemote remote, ArchiveFileDocumentsBean doc, Map<String, DocumentTagsBean> saved, Map<String, String> problems) {
         try {
-            Map<String, String> current = tagsOf(remote, doc.getId());
+            Map<String, DocumentTagsBean> current = tagsOf(remote, doc.getId());
             for (String name : current.keySet()) {
                 if (!saved.containsKey(name)) {
-                    setTag(remote, doc.getId(), name, null, false);
+                    setTag(remote, doc.getId(), name, null, null, false);
                 }
             }
-            for (Map.Entry<String, String> tag : saved.entrySet()) {
-                boolean present = current.containsKey(tag.getKey());
-                if (present && Objects.equals(current.get(tag.getKey()), tag.getValue())) {
+            for (DocumentTagsBean tag : saved.values()) {
+                DocumentTagsBean now = current.get(tag.getTagName());
+                if (now != null && Objects.equals(now.getTagValue(), tag.getTagValue()) && sameDate(now.getDateSet(), tag.getDateSet())) {
                     continue;
                 }
-                if (present && tag.getValue() == null) {
-                    // the server keeps an existing value when setting a tag without value - remove it first
-                    setTag(remote, doc.getId(), tag.getKey(), null, false);
+                if (now != null) {
+                    setTag(remote, doc.getId(), tag.getTagName(), null, null, false);
                 }
-                setTag(remote, doc.getId(), tag.getKey(), tag.getValue(), true);
+                setTag(remote, doc.getId(), tag.getTagName(), tag.getTagValue(), tag.getDateSet(), true);
             }
+            problems.remove(doc.getId());
         } catch (Exception ex) {
-            problems.add("Die Etiketten von '" + doc.getName() + "' konnten nicht wiederhergestellt werden: " + ex.getMessage());
+            problems.put(doc.getId(), "Die Etiketten von '" + doc.getName() + "' konnten nicht wiederhergestellt werden: " + ex.getMessage());
         }
     }
 
     /**
      * Reads the current state of the given documents from the server and describes it.
      */
-    private static Outcome describe(ArchiveFileServiceRemote remote, String problem, List<String> moreProblems, List<ArchiveFileDocumentsBean> affected) {
+    private static Outcome describe(ArchiveFileServiceRemote remote, String problem, Collection<String> moreProblems, List<ArchiveFileDocumentsBean> affected) {
         StringBuilder sb = new StringBuilder(problem);
         for (String p : moreProblems) {
             sb.append(System.lineSeparator()).append(p);
@@ -1047,6 +1055,10 @@ public class DocumentReplacement {
                     result.add(d);
                 }
             }
+        }
+        if (!result.isEmpty()) {
+            // names are unique across the case and its bin - no need to load the bin
+            return result;
         }
         ArchiveFileDocumentsBean inBin = findInBin(remote, caseId, fileName);
         if (inBin != null && !inBin.getId().equals(excludeId) && !result.contains(inBin)) {
