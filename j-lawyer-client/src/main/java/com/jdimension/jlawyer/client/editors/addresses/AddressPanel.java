@@ -5646,6 +5646,8 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         ClientSettings settings = ClientSettings.getInstance();
         EditorsRegistry.getInstance().updateStatus("Adresse wird gespeichert...");
+        // the last saved state - restored if saving fails, so that isDirty() still compares against it
+        AddressBean lastSaved = this.dto;
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             AddressServiceRemote addressService = locator.lookupAddressServiceRemote();
@@ -5735,6 +5737,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
             EditorsRegistry.getInstance().updateStatus("Adresse gespeichert.", 5000);
 
         } catch (Exception ex) {
+            this.dto = lastSaved;
             log.error("Error saving address", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus();

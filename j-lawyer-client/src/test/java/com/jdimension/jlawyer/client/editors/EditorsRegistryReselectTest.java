@@ -824,6 +824,12 @@ public class EditorsRegistryReselectTest {
         EditorsRegistry.getInstance().setMainEditorsPaneView(editor);
         assertEquals(1, editor.saves);
         assertEquals(1, editor.resets);
+
+        // selecting it again asks again instead of discarding the unsaved changes
+        EditorsRegistry.getInstance().setMainEditorsPaneView(editor);
+        assertEquals(2, this.questions);
+        assertEquals(2, editor.saves);
+        assertEquals(1, editor.resets);
     }
 
     @Test
