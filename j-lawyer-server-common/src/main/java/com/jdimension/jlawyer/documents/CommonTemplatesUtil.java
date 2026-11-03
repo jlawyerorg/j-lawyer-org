@@ -667,6 +667,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.regex.Matcher;
 import org.apache.log4j.Logger;
 
 /**
@@ -699,7 +700,8 @@ public class CommonTemplatesUtil {
                 value = "";
             }
 
-            content = content.replaceAll(keyRegX, value.trim());
+            // the value is inserted literally - $ and \ have a special meaning in replacement strings
+            content = content.replaceAll(keyRegX, Matcher.quoteReplacement(value.trim()));
         }
 
         return content;
