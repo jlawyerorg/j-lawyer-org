@@ -6363,6 +6363,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             }
         }
 
+        // a retention of 0 or less disables automatic purging - without this guard, 0 would purge the whole bin
+        if (retentionDays <= 0) {
+            log.info("automatic purging of the documents bin is disabled (retention days: " + retentionDays + ")");
+            return;
+        }
+
         Collection<ArchiveFileDocumentsBean> deleted = this.archiveFileDocumentsFacade.findDeleted();
         long retentionMillis = (long) retentionDays * 24l * 60l * 60l * 1000l;
         long now = System.currentTimeMillis();
