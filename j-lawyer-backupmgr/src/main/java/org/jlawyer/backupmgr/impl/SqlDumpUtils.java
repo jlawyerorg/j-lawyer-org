@@ -853,7 +853,7 @@ public class SqlDumpUtils {
          */
         private static final Pattern TRIGGER_MODE = Pattern.compile("/\\*!50003 SET sql_mode\\s+= '[\\w,]*' \\*/ ;\\s*", Pattern.CASE_INSENSITIVE);
         private static final Pattern TRIGGER_START = Pattern.compile("DELIMITER ;;\\s*");
-        private static final Pattern TRIGGER_HEADER = Pattern.compile("/\\*!50003 CREATE\\*/ (/\\*!50017 DEFINER=[^*]*\\*/ )?/\\*!50003 TRIGGER .*");
+        private static final Pattern TRIGGER_HEADER = Pattern.compile("/\\*!50003 CREATE\\*/ (/\\*!50017 DEFINER=[^*]*\\*/ )?/\\*!50003 TRIGGER .*", Pattern.DOTALL);
         private static final Pattern TRIGGER_MODE_RESTORED = Pattern.compile("/\\*!50003 SET sql_mode\\s+= @saved_sql_mode \\*/ ;\\s*", Pattern.CASE_INSENSITIVE);
         /**
          * Modes of MySQL 8.0 and MariaDB that do not change how strings, identifiers and comments are read (unlike

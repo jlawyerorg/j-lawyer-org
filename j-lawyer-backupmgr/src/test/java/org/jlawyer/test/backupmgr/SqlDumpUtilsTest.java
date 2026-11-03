@@ -939,6 +939,13 @@ public class SqlDumpUtilsTest {
     }
 
     @Test
+    public void testTriggerWithNonAsciiText() throws Exception {
+        // the dump is read byte by byte: the second byte of \u00c5 in UTF-8 is a line end for . in a Pattern
+        String trigger = "DELIMITER ;;\n/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `t_bi` BEFORE INSERT ON `t` FOR EACH ROW SET NEW.a = '\u00c5land' */;;\nDELIMITER ;\n";
+        assertEquals(4, replace(write("utf8.sql", (TABLE + trigger + TABLE).getBytes(StandardCharsets.UTF_8))));
+    }
+
+    @Test
     public void testIncompleteStatementAtTheEnd() throws Exception {
         assertUncertain("CREATE TABLE t(a TEXT COLLATE utf8mb4_0900_ai_ci\n", "CREATE TABLE t(a TEXT COLLATE utf8mb4_0900_ai_ci");
     }
