@@ -908,6 +908,72 @@ public class SqlDumpUtilsTest {
         }
     }
 
+    private static final String TABLE_T = "CREATE TABLE `t` (`a` varchar(100) COLLATE utf8mb4_0900_ai_ci DEFAULT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;\n";
+    private static final String TABLE_U = "CREATE TABLE `u` (`b` varchar(10) DEFAULT 'it\\'s') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;\n";
+
+    private static String replaced(String sql) {
+        return sql.replace("COLLATE utf8mb4_0900_ai_ci DEFAULT", "COLLATE utf8mb4_unicode_ci DEFAULT").replace("COLLATE=utf8mb4_0900_ai_ci;", "COLLATE=utf8mb4_unicode_ci;");
+    }
+
+    /**
+     * A stored program as mysqldump writes it: its sql_mode is set before, its body is one statement up to the
+     * delimiter ;; and is not executed when it is created, the saved sql_mode is restored after.
+     */
+    private static String storedProgram(String mode, String definition) {
+        return "/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;\n"
+                + "/*!50003 SET sql_mode              = '" + mode + "' */ ;\n"
+                + "DELIMITER ;;\n"
+                + definition
+                + "DELIMITER ;\n"
+                + "/*!50003 SET sql_mode              = @saved_sql_mode */ ;\n";
+    }
+
+    private static void assertOnlyTablesReplaced(String dump, int expected) throws Exception {
+        String result = replaced(dump);
+        for (int chunk = 1; chunk <= 64 * 1024; chunk *= 8) {
+            StringWriter out = new StringWriter();
+            assertEquals("chunk " + chunk, expected, SqlDumpUtils.replaceCollation(chunked(dump, chunk), out, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION, SqlDumpUtils.PORTABLE_COLLATION));
+            assertEquals("chunk " + chunk, result, out.toString());
+        }
+    }
+
+    @Test
+    public void testSetInProcedureBodyDoesNotChangeTheMode() throws Exception {
+        // the SET sql_mode in the body runs when the procedure is called, not when it is created - the literals after
+        // it are read with backslash escapes, like the server does when creating the procedure
+        String body = "CREATE DEFINER=`root`@`localhost` PROCEDURE `p`()\n"
+                + "BEGIN\n"
+                + "  SET @dummy = 1;\n"
+                + "  SET sql_mode = 'NO_BACKSLASH_ESCAPES';\n"
+                + "  SELECT 'it\\'s COLLATE utf8mb4_0900_ai_ci',\n"
+                + "         'it\\'s COLLATE utf8mb4_0900_ai_ci';\n"
+                + "END ;;\n";
+        assertOnlyTablesReplaced(TABLE_T + storedProgram("", body) + TABLE_U, 3);
+        // with a single literal the dump must not be taken for incomplete
+        assertOnlyTablesReplaced(TABLE_T + storedProgram("", body.replace(",\n         'it\\'s COLLATE utf8mb4_0900_ai_ci'", "")) + TABLE_U, 3);
+    }
+
+    @Test
+    public void testCompoundTriggerAssigningAColumnNamedSqlMode() throws Exception {
+        String trigger = "/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `t_bi` BEFORE INSERT ON `t` FOR EACH ROW BEGIN\n"
+                + "  SET NEW.a = 'x';\n"
+                + "  SET NEW.sql_mode = 'NO_BACKSLASH_ESCAPES';\n"
+                + "  SET NEW.a = CONCAT('it\\'s COLLATE utf8mb4_0900_ai_ci',\n"
+                + "                     'it\\'s COLLATE utf8mb4_0900_ai_ci');\n"
+                + "END */;;\n";
+        assertOnlyTablesReplaced(TABLE_T + storedProgram("", trigger) + TABLE_U, 3);
+    }
+
+    @Test
+    public void testOtherDelimiter() throws Exception {
+        String dump = TABLE_T
+                + "DELIMITER $$\n"
+                + "CREATE PROCEDURE `q`() BEGIN SET @d = 1; SET sql_mode = 'NO_BACKSLASH_ESCAPES'; SELECT 'a\\'b COLLATE utf8mb4_0900_ai_ci', 'a\\'b COLLATE utf8mb4_0900_ai_ci'; END $$\n"
+                + "DELIMITER ;\n"
+                + TABLE_U;
+        assertOnlyTablesReplaced(dump, 3);
+    }
+
     private static final String ROW_TEXT = "Lorem ipsum dolor sit amet, \\'consetetur\\' sadipscing elitr COLLATE utf8mb4_0900_ai_ci ";
 
     @Test

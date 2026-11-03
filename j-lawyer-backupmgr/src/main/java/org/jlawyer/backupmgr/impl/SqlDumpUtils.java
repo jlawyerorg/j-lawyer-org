@@ -708,9 +708,12 @@ public class SqlDumpUtils {
      * The dump is read as a stream of SQL: string literals ('...' and "...", with backslash escapes and doubled
      * quotes), quoted identifiers (`...`) and comments (--, # and /* *&#47;) are never changed. Executable comments
      * (/*!50003 ... *&#47;, as mysqldump writes them) are SQL and are processed. INSERT and REPLACE statements are
-     * written back unchanged as a whole. Changes of the session's sql_mode (SET sql_mode = '...', saving it in and
-     * restoring it from a user variable, as mysqldump does around triggers and routines) are followed: while
-     * NO_BACKSLASH_ESCAPES is set, a backslash in a string literal is an ordinary character. Memory use does not
+     * written back unchanged as a whole. Statements end at the client's delimiter, which a DELIMITER command changes
+     * (mysqldump writes DELIMITER ;; around triggers and routines, so their bodies are one statement). Changes of the
+     * session's sql_mode by top-level SET statements (SET sql_mode = '...', saving it in and restoring it from a user
+     * variable, as mysqldump does around triggers and routines) are followed: while NO_BACKSLASH_ESCAPES is set, a
+     * backslash in a string literal is an ordinary character. SET statements inside the body of a trigger or routine
+     * are not executed when it is created and are ignored. Memory use does not
      * depend on the length of a line or statement, so rows with large values are no problem.
      * <p>
      * The file is processed as ISO-8859-1, so that every byte is written back unchanged - dumps may contain binary
@@ -790,9 +793,10 @@ public class SqlDumpUtils {
         private static final char LITERAL = '\u0001';
         /**
          * One assignment in a SET statement: scope or user variable marker, variable name, and a value that matters
-         * for sql_mode (a string literal, @@sql_mode or a user variable).
+         * for sql_mode (a string literal, @@sql_mode or a user variable). Not after a dot, so NEW.sql_mode or
+         * t.sql_mode is not taken for the system variable.
          */
-        private static final Pattern ASSIGNMENT = Pattern.compile("(?i)(@@(?:(global|session|local)\\.)?|@|\\b(global|session|local)\\s+)?\\b([A-Za-z0-9_$]+)\\s*:?=\\s*(\\u0001|@@(?:(?:global|session|local)\\.)?sql_mode\\b|@[A-Za-z0-9_$]+)");
+        private static final Pattern ASSIGNMENT = Pattern.compile("(?i)(?<![\\w.@$])(@@(?:(global|session|local)\\.)?|@|\\b(global|session|local)\\s+)?([A-Za-z0-9_$]+)\\s*:?=\\s*(\\u0001|@@(?:(?:global|session|local)\\.)?sql_mode\\b|@[A-Za-z0-9_$]+)");
         /**
          * What has to come right before the collation for it to be used as a collation.
          */
@@ -822,6 +826,15 @@ public class SqlDumpUtils {
          * The next word is the version number of an executable comment, not part of the statement.
          */
         private boolean versionNumber = false;
+
+        /**
+         * Ends a statement, as set by the DELIMITER command of the mysql client.
+         */
+        private String delimiter = ";";
+        /**
+         * The rest of the line is the new delimiter of a DELIMITER command, collected here.
+         */
+        private StringBuilder delimiterCommand = null;
 
         private boolean noBackslashEscapes = false;
         private final Map<String, Boolean> savedModes = new HashMap<>();
@@ -905,6 +918,33 @@ public class SqlDumpUtils {
         }
 
         private void normal(char ch) throws IOException {
+            if (delimiterCommand != null) {
+                // the rest of a DELIMITER line, written through
+                write(ch);
+                if (ch == '\n') {
+                    String[] parts = delimiterCommand.toString().trim().split("\\s+");
+                    if (parts.length > 0 && !parts[0].isEmpty()) {
+                        delimiter = parts[0];
+                    }
+                    delimiterCommand = null;
+                    endStatement();
+                } else {
+                    delimiterCommand.append(ch);
+                }
+                return;
+            }
+            if (isDelimiterAt(ch)) {
+                endWord();
+                write(ch);
+                appendContext(ch);
+                for (int i = 1; i < delimiter.length(); i++) {
+                    char c = (char) read();
+                    write(c);
+                    appendContext(c);
+                }
+                endStatement();
+                return;
+            }
             if (Character.isLetterOrDigit(ch) || ch == '_' || ch == '$') {
                 addWordChar(ch);
                 return;
@@ -938,11 +978,7 @@ public class SqlDumpUtils {
                 write(ch);
                 write((char) read());
             } else {
-                if (ch == ';') {
-                    endStatement();
-                } else {
-                    addToSetStatement(ch);
-                }
+                addToSetStatement(ch);
                 appendContext(ch);
                 write(ch);
             }
@@ -991,6 +1027,21 @@ public class SqlDumpUtils {
             word.setLength(0);
         }
 
+        /**
+         * @return true if the delimiter starts with the given character, followed by the rest of it in the input
+         */
+        private boolean isDelimiterAt(char ch) throws IOException {
+            if (ch != delimiter.charAt(0)) {
+                return false;
+            }
+            for (int i = 1; i < delimiter.length(); i++) {
+                if (peek(i - 1) != delimiter.charAt(i)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         private static boolean isDigits(CharSequence w) {
             for (int i = 0; i < w.length(); i++) {
                 if (!Character.isDigit(w.charAt(i))) {
@@ -1009,6 +1060,9 @@ public class SqlDumpUtils {
                 statementHasWord = true;
                 String first = w.toString();
                 dataStatement = first.equalsIgnoreCase("INSERT") || first.equalsIgnoreCase("REPLACE");
+                if (first.equalsIgnoreCase("DELIMITER")) {
+                    delimiterCommand = new StringBuilder();
+                }
                 if (first.equalsIgnoreCase("SET")) {
                     setStatement = new StringBuilder();
                     setLiterals.clear();
