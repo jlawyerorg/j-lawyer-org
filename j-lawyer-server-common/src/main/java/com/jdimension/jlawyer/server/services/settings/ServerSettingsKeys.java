@@ -928,6 +928,11 @@ public class ServerSettingsKeys {
     @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSADMIN, secret = true)
     public static final String SERVERCONF_OFFICE_SECRET="jlawyer.server.office.secret";
 
+    // checking of [[SCRIPT:...]] expressions in document templates against the allow list:
+    // "log" (default) = violations are logged and the script still runs, "enforce" = violations are rejected
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSADMIN)
+    public static final String SERVERCONF_TEMPLATES_SCRIPTCHECK="jlawyer.server.templates.scriptcheck";
+
     // keys that were used as string literals before
     @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_BEA_MAXTEMPFOLDERS="jlawyer.server.bea.maxtempfolders";

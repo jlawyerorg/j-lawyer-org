@@ -887,68 +887,21 @@ public class LibreOfficeODFTest {
     @Test
     @Ignore
     public void testSmartTemplateClass() {
-//        Binding sharedData=new Binding();
-//        sharedData.setProperty("key1", "value1");
-//        GroovyShell gs=new GroovyShell(sharedData);
-//        gs.evaluate("System.out.println('test');"
-//                + "System.out.println('test2');");
-
         try {
-
-            InputStream is = getClass().getResourceAsStream("/templates/smart/smarttemplate.groovy");
-            InputStreamReader isr = new InputStreamReader(is);
-            BufferedReader br = new BufferedReader(isr);
-            StringBuilder sb = new StringBuilder();
-            String line = br.readLine();
-            while (line != null) {
-                sb.append(line).append(System.lineSeparator());
-                line = br.readLine();
-            }
-            br.close();
-
-            //String myclass="class Foo { double doIt(double d1) { println \"ok\"; return 42d-d1; } }";
-            String myclass = sb.toString();
-            GroovyClassLoader gcl = new GroovyClassLoader();
-            //Class calcClass = gcl.parseClass(new File("src/main/groovy/com/baeldung/", "CalcMath.groovy"));
-            Class calcClass = gcl.parseClass(myclass);
-            GroovyObject calc = (GroovyObject) calcClass.newInstance();
-            Double resultDouble = (Double) calc.invokeMethod("doIt", new Object[]{new Double(19)});
-            Assert.assertEquals(23d, resultDouble);
+            Assert.assertEquals("23.0", evaluateSmartTemplate("String.valueOf(42d - 19d)"));
         } catch (Throwable t) {
             Assert.fail(t.getMessage());
         }
-
     }
     
     @Test
     @Ignore
     public void testSmartTemplateMethod() {
         try {
-
-            InputStream is = getClass().getResourceAsStream("/templates/smart/smarttemplate.groovy");
-            InputStreamReader isr = new InputStreamReader(is);
-            BufferedReader br = new BufferedReader(isr);
-            StringBuilder sb = new StringBuilder();
-            String line = br.readLine();
-            while (line != null) {
-                sb.append(line).append(System.lineSeparator());
-                line = br.readLine();
-            }
-            br.close();
-            
-            String myclass = sb.toString();
-            myclass=myclass.replace("SMARTTEMPLATESCRIPT", "\"schnuffel\"");
-            myclass = myclass.replace("SMARTTEMPLATECASEID", "");
-            GroovyClassLoader gcl = new GroovyClassLoader();
-            Class calcClass = gcl.parseClass(myclass);
-            GroovyObject calc = (GroovyObject) calcClass.newInstance();
-            String resultString = (String) calc.invokeMethod("evaluateScript", new Object[]{});
-            System.out.println(resultString);
-            //Assert.assertEquals(23d, resultDouble);
+            Assert.assertEquals("schnuffel", evaluateSmartTemplate("\"schnuffel\""));
         } catch (Throwable t) {
             Assert.fail(t.getMessage());
         }
-
     }
     
     @Test
@@ -1194,24 +1147,7 @@ public class LibreOfficeODFTest {
     }
     
     private String evaluateSmartTemplate(String script) throws Exception {
-        InputStream is = getClass().getResourceAsStream("/templates/smart/smarttemplate.groovy");
-            InputStreamReader isr = new InputStreamReader(is);
-            BufferedReader br = new BufferedReader(isr);
-            StringBuilder sb = new StringBuilder();
-            String line = br.readLine();
-            while (line != null) {
-                sb.append(line).append(System.lineSeparator());
-                line = br.readLine();
-            }
-            br.close();
-            
-            String myclass = sb.toString();
-            myclass=myclass.replace("SMARTTEMPLATESCRIPT", script);
-            myclass = myclass.replace("SMARTTEMPLATECASEID", "");
-            GroovyClassLoader gcl = new GroovyClassLoader();
-            Class calcClass = gcl.parseClass(myclass);
-            GroovyObject calc = (GroovyObject) calcClass.newInstance();
-            return (String) calc.invokeMethod("evaluateScript", new Object[]{});
+        return com.jdimension.jlawyer.documents.SmartTemplateEvaluator.evaluate("", script, new HashMap<>(), new ArrayList<>(), com.jdimension.jlawyer.documents.SmartTemplateEvaluator.MODE_LOG);
     }
 
     @Test
