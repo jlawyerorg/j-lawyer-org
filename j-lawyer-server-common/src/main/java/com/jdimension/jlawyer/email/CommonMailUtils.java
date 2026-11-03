@@ -691,6 +691,31 @@ public class CommonMailUtils {
     private static final Logger log=Logger.getLogger(CommonMailUtils.class.getName());
     
     public static final String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
+
+    /**
+     * Connect timeout for SMTP connections in milliseconds.
+     */
+    public static final String SMTP_CONNECTION_TIMEOUT = "30000";
+
+    /**
+     * Read timeout for SMTP connections in milliseconds. RFC 5321 recommends waiting up to 10 minutes for the reply
+     * to the end of the message data, servers may scan large messages before replying.
+     */
+    public static final String SMTP_TIMEOUT = "600000";
+
+    /**
+     * Sets connect and read timeouts for SMTP connections. Without them, JavaMail waits forever for a server that does
+     * not respond, which blocks the sending thread. Call this before mailbox specific custom properties are applied,
+     * so that those can still override the values.
+     *
+     * @param props the session properties
+     */
+    public static void setSmtpTimeouts(java.util.Properties props) {
+        props.put("mail.smtp.connectiontimeout", SMTP_CONNECTION_TIMEOUT);
+        props.put("mail.smtps.connectiontimeout", SMTP_CONNECTION_TIMEOUT);
+        props.put("mail.smtp.timeout", SMTP_TIMEOUT);
+        props.put("mail.smtps.timeout", SMTP_TIMEOUT);
+    }
     public static final String INBOX = "INBOX";
     public static final String TRASH = "Trash";
     public static final String SENT = "Sent";

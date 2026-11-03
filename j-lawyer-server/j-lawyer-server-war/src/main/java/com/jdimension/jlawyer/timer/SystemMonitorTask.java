@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.timer;
 
+import com.jdimension.jlawyer.email.CommonMailUtils;
 import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
@@ -1104,6 +1105,7 @@ public class SystemMonitorTask extends java.util.TimerTask {
         props.put("mail.smtps.auth", true);
         props.put("mail.from", smtpUser);
         props.put("mail.password", smtpPwd);
+        CommonMailUtils.setSmtpTimeouts(props);
 
         javax.mail.Authenticator auth = new javax.mail.Authenticator() {
 
