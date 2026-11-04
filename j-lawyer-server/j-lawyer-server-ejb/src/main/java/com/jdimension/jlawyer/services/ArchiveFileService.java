@@ -4319,22 +4319,22 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public List<ArchiveFileBean> getManagedCasesPage(String search, Boolean archived, int offset, int limit) {
-        return this.archiveFileFacade.findOverviewPage(allowedCaseIdsForCaller(), search, archived, offset, limit);
+        return this.archiveFileFacade.findOverviewPage(groupIdsForCaller(), search, archived, offset, limit);
     }
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public long countManagedCases(String search, Boolean archived) {
-        return this.archiveFileFacade.countOverview(allowedCaseIdsForCaller(), search, archived);
+        return this.archiveFileFacade.countOverview(groupIdsForCaller(), search, archived);
     }
 
-    /** Case ids the current caller may access (owner group / allowed group / unprotected). */
-    private Set<String> allowedCaseIdsForCaller() {
+    /** Group ids of the current caller, for the case visibility rule (see SecurityUtils.caseVisibilityJpql). */
+    private List<String> groupIdsForCaller() {
         try {
-            return SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
+            return SecurityUtils.getGroupIdsForUser(context.getCallerPrincipal().getName(), this.securityFacade);
         } catch (Exception ex) {
-            log.error("Unable to determine allowed cases for user " + context.getCallerPrincipal().getName(), ex);
-            throw new EJBException("Akten für Nutzer '" + context.getCallerPrincipal().getName() + "' konnten nicht ermittelt werden.", ex);
+            log.error("Unable to determine groups for user " + context.getCallerPrincipal().getName(), ex);
+            throw new EJBException("Gruppen für Nutzer '" + context.getCallerPrincipal().getName() + "' konnten nicht ermittelt werden.", ex);
         }
     }
 
@@ -7567,7 +7567,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public Timesheet getTimesheet(String timesheetId) throws Exception {
-        return this.timesheetFacade.find(timesheetId);
+        Timesheet sheet = this.timesheetFacade.find(timesheetId);
+        if (sheet != null) {
+            this.checkTimesheetAccess(sheet);
+        }
+        return sheet;
     }
 
     @Override
@@ -7635,6 +7639,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public List<TimesheetPosition> getOpenTimesheetPositions(String principal) throws Exception {
+        this.checkOwnPrincipal(principal);
         return this.timesheetPositionsFacade.findOpenByPrincipal(principal);
 
     }
@@ -7692,6 +7697,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public List<TimesheetPosition> getLastTimesheetPositions(String caseId, String principal) throws Exception {
+        this.checkOwnPrincipal(principal);
         // returns the timesheet positions last used by the user
         //   any open position
         //   latest closed position for timesheets that have no open position (provide access to last used log)
@@ -7789,6 +7795,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (sheet == null) {
             throw new Exception(MSG_MISSING_TIMESHEET);
         }
+        this.checkTimesheetAccess(sheet);
 
         // Time can be logged for another user: honour an explicitly provided principal, otherwise
         // fall back to the authenticated caller (the desktop client always sends its own principal).
@@ -7901,12 +7908,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (sheet == null) {
             throw new Exception(MSG_MISSING_TIMESHEET);
         }
+        this.checkTimesheetAccess(sheet);
 
         if (position.getId() == null) {
             throw new Exception(MSG_MISSING_TIMESHEETPOS);
         } else {
             // stop existing position
-            TimesheetPosition existing = this.timesheetPositionsFacade.find(position.getId());
+            TimesheetPosition existing = this.findPositionOfTimesheet(position.getId(), timesheetId);
             if (existing.getStarted() == null) {
                 throw new Exception("Zeiterfassungsposition wurde nie gestartet, kann nicht beendet werden!");
             }
@@ -7953,13 +7961,14 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (sheet == null) {
             throw new Exception(MSG_MISSING_TIMESHEET);
         }
+        this.checkTimesheetAccess(sheet);
 
         if (position.getId() == null) {
             throw new Exception("Zeiterfassungsposition muss erst gestartet werden!");
 
         } else {
             // stop existing position
-            TimesheetPosition existing = this.timesheetPositionsFacade.find(position.getId());
+            TimesheetPosition existing = this.findPositionOfTimesheet(position.getId(), timesheetId);
             if (existing == null) {
                 throw new Exception(MSG_MISSING_TIMESHEETPOS);
             }
@@ -8027,7 +8036,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
 
         if (allowed) {
-            TimesheetPosition removePos = this.timesheetPositionsFacade.find(position.getId());
+            TimesheetPosition removePos = this.findPositionOfTimesheet(position.getId(), timesheetId);
             this.timesheetPositionsFacade.remove(removePos);
 
             if (timesheet.isLimited()) {
@@ -8069,7 +8078,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         if (allowed) {
             for (TimesheetPosition p : positions) {
-                TimesheetPosition updatePos = this.timesheetPositionsFacade.find(p.getId());
+                TimesheetPosition updatePos = this.findPositionOfTimesheet(p.getId(), timesheetId);
                 updatePos.setDescription(p.getDescription());
                 updatePos.setName(p.getName());
                 updatePos.setStarted(p.getStarted());
@@ -8159,6 +8168,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         for (String positionId : positionIds) {
             TimesheetPosition updatePos = this.timesheetPositionsFacade.find(positionId);
+            if (updatePos != null && updatePos.getTimesheet() != null) {
+                this.checkTimesheetAccess(updatePos.getTimesheet());
+            }
             if (updatePos.getInvoice() != null) {
                 throw new Exception("Mindestens eine Buchung ist aktuell einer Rechnung zugeordnet. Bitte Rechnung (oder deren Position(en)) löschen.");
             }
@@ -8204,7 +8216,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
 
         if (allowed) {
-            TimesheetPosition updatePos = this.timesheetPositionsFacade.find(position.getId());
+            TimesheetPosition updatePos = this.findPositionOfTimesheet(position.getId(), timesheetId);
             updatePos.setDescription(position.getDescription());
             if (invoiceId == null) {
                 updatePos.setInvoice(null);
@@ -8260,6 +8272,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (sheet == null) {
             throw new Exception(MSG_MISSING_TIMESHEET);
         }
+        this.checkTimesheetAccess(sheet);
 
         // only updates metadata, not the actual timestamps (which is done via start and stop methods)
         position.setId(new StringGenerator().getID().toString());
@@ -8385,6 +8398,79 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public CaseAccountEntry getAccountEntry(String entryId) throws Exception {
+        CaseAccountEntry entry = this.accountEntries.find(entryId);
+        if (entry == null) {
+            return null;
+        }
+        if (!this.isCaseAccessible(entry.getArchiveFileKey())) {
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+        }
+        return entry;
+    }
+
+    /**
+     * @param aFile a case, may be null
+     * @return true if the caller is allowed to access the case (or there is no case)
+     */
+    private boolean isCaseAccessible(ArchiveFileBean aFile) {
+        String principalId = context.getCallerPrincipal().getName();
+        if (aFile == null || principalId == null) {
+            return true;
+        }
+        List<Group> userGroups = new ArrayList<>();
+        try {
+            userGroups = this.securityFacade.getGroupsForUser(principalId);
+        } catch (Throwable t) {
+            log.error("Unable to determine groups for user " + principalId, t);
+        }
+        return SecurityUtils.checkGroupsForCase(userGroups, this.archiveFileFacade.find(aFile.getId()), this.caseGroupsFacade);
+    }
+
+    /**
+     * Throws if the caller is not allowed to access the case of the given timesheet.
+     */
+    private void checkTimesheetAccess(Timesheet sheet) throws Exception {
+        if (!this.isCaseAccessible(sheet.getArchiveFileKey())) {
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+        }
+    }
+
+    /**
+     * @param positionId ID of a timesheet position
+     * @param timesheetId the timesheet the position must belong to
+     * @return the position, or null if it does not exist
+     * @throws Exception if the position belongs to another timesheet
+     */
+    private TimesheetPosition findPositionOfTimesheet(String positionId, String timesheetId) throws Exception {
+        if (positionId == null) {
+            return null;
+        }
+        TimesheetPosition pos = this.timesheetPositionsFacade.find(positionId);
+        if (pos != null && (pos.getTimesheet() == null || !pos.getTimesheet().getId().equals(timesheetId))) {
+            log.warn("timesheet position " + positionId + " does not belong to timesheet " + timesheetId);
+            throw new Exception(MSG_MISSING_TIMESHEETPOS);
+        }
+        return pos;
+    }
+
+    /**
+     * Throws if the given principal is not the caller (administrators may query other users).
+     */
+    private void checkOwnPrincipal(String principal) throws Exception {
+        String caller = context.getCallerPrincipal().getName();
+        if (principal != null && principal.equals(caller)) {
+            return;
+        }
+        if (context.isCallerInRole("adminRole")) {
+            return;
+        }
+        log.warn("user " + caller + " requested timesheet positions of " + principal);
+        throw new Exception("Keine Berechtigung für die Zeiterfassung anderer Nutzer");
+    }
+
+    @Override
     public List<CaseAccountEntry> getAccountEntriesUnrestricted(String caseId) throws Exception {
         return getAccountEntriesImpl(caseId);
     }
@@ -8482,6 +8568,19 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (allowed) {
 
             CaseAccountEntry updatedEntry = this.accountEntries.find(accountEntry.getId());
+            if (updatedEntry == null) {
+                throw new Exception("Eintrag im Aktenkonto kann nicht gefunden werden");
+            }
+            if (updatedEntry.getArchiveFileKey() == null || !updatedEntry.getArchiveFileKey().getId().equals(caseId)) {
+                log.warn("user " + principalId + " tried to update account entry " + updatedEntry.getId() + " via case " + caseId);
+                throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+            }
+            if (accountEntry.getInvoice() != null) {
+                Invoice linkedInvoice = this.invoicesFacade.find(accountEntry.getInvoice().getId());
+                if (linkedInvoice == null || !this.isCaseAccessible(linkedInvoice.getArchiveFileKey())) {
+                    throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+                }
+            }
             updatedEntry.setContact(accountEntry.getContact());
             updatedEntry.setEntryDate(accountEntry.getEntryDate());
             updatedEntry.setDescription(accountEntry.getDescription());

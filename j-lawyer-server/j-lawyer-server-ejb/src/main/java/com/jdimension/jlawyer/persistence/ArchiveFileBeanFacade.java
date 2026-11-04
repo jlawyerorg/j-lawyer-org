@@ -718,32 +718,27 @@ public class ArchiveFileBeanFacade extends AbstractFacade<ArchiveFileBean> imple
     }
 
     @Override
-    public List<ArchiveFileBean> findOverviewPage(Collection<String> allowedIds, String search, Boolean archived, int offset, int limit) {
-        if (allowedIds == null || allowedIds.isEmpty()) {
-            return new java.util.ArrayList<>();
-        }
+    public List<ArchiveFileBean> findOverviewPage(Collection<String> groupIds, String search, Boolean archived, int offset, int limit) {
         javax.persistence.TypedQuery<ArchiveFileBean> q = em.createQuery(
                 overviewJpql("SELECT a", search, archived) + " ORDER BY a.dateChanged DESC", ArchiveFileBean.class);
-        applyOverviewParameters(q, allowedIds, search, archived);
+        applyOverviewParameters(q, groupIds, search, archived);
         q.setFirstResult(Math.max(0, offset));
         q.setMaxResults(limit <= 0 ? 50 : Math.min(limit, 200));
         return q.getResultList();
     }
 
     @Override
-    public long countOverview(Collection<String> allowedIds, String search, Boolean archived) {
-        if (allowedIds == null || allowedIds.isEmpty()) {
-            return 0L;
-        }
+    public long countOverview(Collection<String> groupIds, String search, Boolean archived) {
         javax.persistence.TypedQuery<Long> q = em.createQuery(
                 overviewJpql("SELECT COUNT(a)", search, archived), Long.class);
-        applyOverviewParameters(q, allowedIds, search, archived);
+        applyOverviewParameters(q, groupIds, search, archived);
         return q.getSingleResult();
     }
 
     /** Builds the shared WHERE clause for the overview page/count queries. */
     private static String overviewJpql(String select, String search, Boolean archived) {
-        StringBuilder jpql = new StringBuilder(select).append(" FROM ArchiveFileBean a WHERE a.id IN :ids");
+        StringBuilder jpql = new StringBuilder(select).append(" FROM ArchiveFileBean a LEFT JOIN a.group grp WHERE ")
+                .append(com.jdimension.jlawyer.server.utils.SecurityUtils.caseVisibilityJpql("a", "grp"));
         if (archived != null) {
             jpql.append(" AND a.archived = :archived");
         }
@@ -755,8 +750,8 @@ public class ArchiveFileBeanFacade extends AbstractFacade<ArchiveFileBean> imple
         return jpql.toString();
     }
 
-    private static void applyOverviewParameters(javax.persistence.TypedQuery<?> q, Collection<String> allowedIds, String search, Boolean archived) {
-        q.setParameter("ids", allowedIds);
+    private static void applyOverviewParameters(javax.persistence.TypedQuery<?> q, Collection<String> groupIds, String search, Boolean archived) {
+        q.setParameter("groupIds", com.jdimension.jlawyer.server.utils.SecurityUtils.groupIdsParameter(groupIds));
         if (archived != null) {
             q.setParameter("archived", archived);
         }

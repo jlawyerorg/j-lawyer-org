@@ -663,10 +663,10 @@
  */
 package com.jdimension.jlawyer.persistence;
 
+import com.jdimension.jlawyer.server.utils.SecurityUtils;
 import com.jdimension.jlawyer.services.CalendarEntryDTO;
 import com.jdimension.jlawyer.services.SingletonServiceLocal;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import javax.ejb.EJB;
@@ -702,20 +702,8 @@ public class ArchiveFileReviewsBeanFacade extends AbstractFacade<ArchiveFileRevi
             + "LEFT JOIN c.group grp "
             + "LEFT JOIN e.calendarSetup cal ";
 
-    /**
-     * The case visibility rule, as SecurityUtils.getAllowedCasesForUser applies it, expressed as a
-     * predicate instead of as a list of every case the user may see: the case is unprotected, or
-     * the user owns it through its owner group, or the user is in one of its allowed groups, or it
-     * restricts nothing although it has an owner.
-     *
-     * Note the last branch is written as NOT EXISTS where the original uses NOT IN. The two agree
-     * except when a case_groups row has no case, where NOT IN would collapse the whole branch to
-     * empty; NOT EXISTS expresses the intent.
-     */
-    private static final String VISIBILITY = "WHERE (grp IS NULL "
-            + "OR grp.id IN :groupIds "
-            + "OR EXISTS (SELECT g.id FROM ArchiveFileGroupsBean g WHERE g.archiveFileKey = c AND g.allowedGroup.id IN :groupIds) "
-            + "OR NOT EXISTS (SELECT g2.id FROM ArchiveFileGroupsBean g2 WHERE g2.archiveFileKey = c)) ";
+    /** Case visibility, see SecurityUtils.caseVisibilityJpql. */
+    private static final String VISIBILITY = "WHERE " + SecurityUtils.caseVisibilityJpql("c", "grp") + " ";
 
     @PersistenceContext(unitName = "j-lawyer-server-ejbPU")
     private EntityManager em;
@@ -808,12 +796,7 @@ public class ArchiveFileReviewsBeanFacade extends AbstractFacade<ArchiveFileRevi
 
         TypedQuery<CalendarEntryDTO> query = em.createQuery(ql.toString(), CalendarEntryDTO.class);
 
-        // an empty list would render as IN (), which is a syntax error; the original SQL guards
-        // this the same way, with a group id that cannot occur
-        List<String> effectiveGroupIds = (groupIds == null || groupIds.isEmpty())
-                ? Collections.singletonList("dummy")
-                : groupIds;
-        query.setParameter("groupIds", effectiveGroupIds);
+        query.setParameter("groupIds", SecurityUtils.groupIdsParameter(groupIds));
 
         if (fromDate != null) {
             query.setParameter("fromDate", fromDate);
