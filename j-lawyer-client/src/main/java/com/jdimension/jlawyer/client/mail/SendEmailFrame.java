@@ -3630,7 +3630,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                 
                 if (tpl.isText()) {
                     if (ms != null) {
-                        String t = TemplatesUtil.replacePlaceHolders(tpl.getBody(), htValues);
+                        String t = TemplatesUtil.replacePlaceHoldersInText(tpl.getBody(), htValues);
                         int cursorIndex = t.indexOf(EmailTemplate.PLACEHOLDER_CURSOR);
                         if (cursorIndex > -1) {
                             t = t.replace(EmailTemplate.PLACEHOLDER_CURSOR, "");

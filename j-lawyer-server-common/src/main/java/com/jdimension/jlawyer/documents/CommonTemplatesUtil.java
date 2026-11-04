@@ -707,4 +707,24 @@ public class CommonTemplatesUtil {
         return content;
     }
 
+    /**
+     * Like {@link #replacePlaceHolders(String, HashMap)}, for plain text such as e-mail templates in text/plain: a
+     * placeholder without a value between two spaces leaves one space instead of two (e.g. a salutation with a title
+     * that is empty). In HTML the two spaces are shown as one anyway.
+     *
+     * @param content the plain text with placeholders
+     * @param values the values of the placeholders
+     * @return the text with the placeholders replaced
+     */
+    public static String replacePlaceHoldersInText(String content, HashMap<String, Object> values) {
+        for (String key : values.keySet()) {
+            String value = (String) values.get(key);
+            if (value == null || value.trim().isEmpty()) {
+                String keyRegX = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}";
+                content = content.replaceAll("(?<= )" + keyRegX + " ", "");
+            }
+        }
+        return replacePlaceHolders(content, values);
+    }
+
 }
