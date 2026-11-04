@@ -706,6 +706,9 @@ public class ReportService implements ReportServiceRemote, ReportServiceLocal {
     private static final String PRIVILEGE_COMMON = "commonReportRole";
     private static final String PRIVILEGE_CONFIDENTIAL = "confidentialReportRole";
 
+    // hour of day at which a working day starts in the employee activity report (activities before belong to the previous day)
+    private static final int WORKDAY_START_HOUR = 4;
+
     @Resource
     private SessionContext context;
     @EJB
@@ -758,10 +761,16 @@ public class ReportService implements ReportServiceRemote, ReportServiceLocal {
             String query = "select * from (SELECT ch.principal as Nutzername, ch.changeDate as Zeit, ch.changeDescription as Nutzeraktion, concat(c.fileNumber, c.filenumberext) as AZ FROM case_history ch, cases c where c.id = ch.archiveFileKey and ch.changeDate>=? and ch.changeDate<=?) t1 order by Zeit desc";
             result.getTables().add(getTable(false, "alle Aktivitäten", query, null, params));
 
-            String query2 = "select Nutzername, dayname(Von) as Wochentag, Von, Bis, TIMESTAMPDIFF(MINUTE, Von, Bis) as Minuten from (SELECT ch.principal as Nutzername, min(changeDate) as Von, max(changeDate) as Bis FROM case_history ch, cases c where c.id = ch.archiveFileKey and ch.principal!='anonymous' and ch.changeDate>=? and ch.changeDate<=? group by date(ch.changeDate), principal) t1 order by Nutzername asc, Bis desc";
+            // a "working day" does not start at midnight but at WORKDAY_START_HOUR, so that work past midnight
+            // is attributed to the previous day instead of stretching the span of the following day.
+            // The date range is shifted accordingly: working day X covers X 04:00 until X+1 03:59.
+            String workDay = "date(ch.changeDate - INTERVAL " + WORKDAY_START_HOUR + " HOUR)";
+            String workDayRange = "ch.changeDate>=(? + INTERVAL " + WORKDAY_START_HOUR + " HOUR) and ch.changeDate<=(? + INTERVAL " + WORKDAY_START_HOUR + " HOUR)";
+
+            String query2 = "select Nutzername, Arbeitstag, dayname(Arbeitstag) as Wochentag, Von, Bis, TIMESTAMPDIFF(MINUTE, Von, Bis) as Minuten from (SELECT ch.principal as Nutzername, " + workDay + " as Arbeitstag, min(changeDate) as Von, max(changeDate) as Bis FROM case_history ch, cases c where c.id = ch.archiveFileKey and ch.principal!='anonymous' and " + workDayRange + " group by " + workDay + ", principal) t1 order by Nutzername asc, Bis desc";
             result.getTables().add(getTable(false, "Aktivitäten tageweise", query2, null, params));
 
-            String query3 = "select Nutzername, concat(date(Von), ' (', dayname(Von), ')') as Tag, TIMESTAMPDIFF(MINUTE, Von, Bis) as Minuten from (SELECT ch.principal as Nutzername, min(changeDate) as Von, max(changeDate) as Bis FROM case_history ch, cases c where c.id = ch.archiveFileKey and ch.principal!='anonymous' and ch.changeDate>=? and ch.changeDate<=? group by date(ch.changeDate), principal) t1 order by Tag asc, Bis desc";
+            String query3 = "select Nutzername, concat(Arbeitstag, ' (', dayname(Arbeitstag), ')') as Tag, TIMESTAMPDIFF(MINUTE, Von, Bis) as Minuten from (SELECT ch.principal as Nutzername, " + workDay + " as Arbeitstag, min(changeDate) as Von, max(changeDate) as Bis FROM case_history ch, cases c where c.id = ch.archiveFileKey and ch.principal!='anonymous' and " + workDayRange + " group by " + workDay + ", principal) t1 order by Tag asc, Bis desc";
             result.getBarCharts().add(getBarChart(false, "Aktivitäten tageweise", "Tag", "geleistete Zeit (min)", query3, 1, 2, 3, params));
         } else if (Reports.RPT_CASES_BYYEAR.equals(reportId)) {
             String query = "select year(date_created) as Jahr, count(*) as Akten from cases c where c.date_created>=? and c.date_created<=? group by Jahr order by Jahr asc";
