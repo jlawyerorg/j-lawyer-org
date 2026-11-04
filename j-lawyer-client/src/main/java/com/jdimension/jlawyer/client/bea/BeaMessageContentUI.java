@@ -2218,7 +2218,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                 EditorsRegistry.getInstance().registerFrame(dlg);
                 dlg.setVisible(true);
             } else {
-                DesktopUtils.openBrowser(url);
+                DesktopUtils.openExternalLink(url);
             }
         }
 
