@@ -754,11 +754,6 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.DataLine;
-import javax.sound.sampled.Mixer;
-import javax.sound.sampled.TargetDataLine;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -819,7 +814,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
     private String cloudLink = null;
 
     // transcription
-    private TargetDataLine targetDataLine;
+    private AudioUtils.MicrophoneLine targetDataLine;
     private ByteArrayOutputStream byteArrayOutputStream;
 
     private boolean ignoreTemplateSelectionEvent = false;
@@ -1860,32 +1855,10 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         return null; // Thunderbird wurde nicht gefunden
     }
 
-    private void startRecording() {
+    private boolean startRecording() {
         try {
-            AudioFormat audioFormat = AudioUtils.getAudioFormat();
-
-            // Get selected mixer device name from dropdown
             String selectedDeviceName = (String) this.cmbDevices.getSelectedItem();
-
-            Mixer.Info[] mixerInfos = AudioSystem.getMixerInfo();
-            Mixer.Info selectedMixerInfo = null;
-            for (Mixer.Info mixerInfo : mixerInfos) {
-                if (mixerInfo.getName().equals(selectedDeviceName)) {
-                    selectedMixerInfo = mixerInfo;
-                    break;
-                }
-            }
-
-            if (selectedMixerInfo == null) {
-                log.error("Selected mixer device not found.");
-                return;
-            }
-
-            Mixer mixer = AudioSystem.getMixer(selectedMixerInfo);
-
-            DataLine.Info dataLineInfo = new DataLine.Info(TargetDataLine.class, audioFormat);
-            targetDataLine = (TargetDataLine) mixer.getLine(dataLineInfo);
-            targetDataLine.open(audioFormat);
+            targetDataLine = AudioUtils.openMicrophone(selectedDeviceName);
             targetDataLine.start();
 
             byteArrayOutputStream = new ByteArrayOutputStream();
@@ -1913,9 +1886,11 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                     ThreadUtils.showErrorDialog(this, "Aufnahmefehler: " + e.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
                 }
             }).start();
+            return true;
         } catch (Exception ex) {
             log.error("Unable to start recording microphone audio stream", ex);
             JOptionPane.showMessageDialog(this, "Aufnahme konnte nicht gestartet werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return false;
         }
     }
 
@@ -3332,7 +3307,9 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
 
     private void cmdTranscribeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdTranscribeActionPerformed
         if (!isRecording) {
-            startRecording();
+            if (!startRecording()) {
+                return;
+            }
             ClientSettings.getInstance().setConfiguration(ClientSettings.CONF_SOUND_LASTRECORDINGDEVICE, (String) this.cmbDevices.getSelectedItem());
         } else {
             stopRecording();
