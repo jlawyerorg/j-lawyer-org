@@ -663,7 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.test.client.utils;
 
-import com.jdimension.jlawyer.client.utils.UserUtils;
+import com.jdimension.jlawyer.client.utils.ServerErrorUtils;
 import java.util.ResourceBundle;
 import javax.ejb.EJBAccessException;
 import static org.junit.Assert.assertEquals;
@@ -674,7 +674,7 @@ import org.junit.Test;
 /**
  * Tests for the user facing message of failed server calls.
  */
-public class UserUtilsTest {
+public class ServerErrorUtilsTest {
 
     private static final String SERVER_MESSAGE = "WFLYEJB0364: Invocation on method: public void com.jdimension.jlawyer.services.SystemManagement.removeOptionGroup(java.lang.String) of bean: SystemManagement is not allowed";
 
@@ -685,27 +685,27 @@ public class UserUtilsTest {
     @Test
     public void accessDeniedShowsPermissionHint() {
         EJBAccessException ex = new EJBAccessException(SERVER_MESSAGE);
-        assertTrue(UserUtils.isPermissionDenied(ex));
-        assertEquals(permissionMessage(), UserUtils.getServerErrorMessage(ex));
+        assertTrue(ServerErrorUtils.isPermissionDenied(ex));
+        assertEquals(permissionMessage(), ServerErrorUtils.getServerErrorMessage(ex));
     }
 
     @Test
     public void wrappedAccessDeniedShowsPermissionHint() {
         Exception ex = new Exception("wrapper", new RuntimeException(new EJBAccessException(SERVER_MESSAGE)));
-        assertTrue(UserUtils.isPermissionDenied(ex));
-        assertEquals(permissionMessage(), UserUtils.getServerErrorMessage(ex));
+        assertTrue(ServerErrorUtils.isPermissionDenied(ex));
+        assertEquals(permissionMessage(), ServerErrorUtils.getServerErrorMessage(ex));
     }
 
     @Test
     public void otherErrorsKeepTheirMessage() {
         Exception ex = new Exception("Verbindung zum Server fehlgeschlagen");
-        assertFalse(UserUtils.isPermissionDenied(ex));
-        assertEquals("Verbindung zum Server fehlgeschlagen", UserUtils.getServerErrorMessage(ex));
+        assertFalse(ServerErrorUtils.isPermissionDenied(ex));
+        assertEquals("Verbindung zum Server fehlgeschlagen", ServerErrorUtils.getServerErrorMessage(ex));
     }
 
     @Test
     public void noExceptionIsNoPermissionProblem() {
-        assertFalse(UserUtils.isPermissionDenied(null));
+        assertFalse(ServerErrorUtils.isPermissionDenied(null));
     }
 
     @Test(timeout = 5000)
@@ -713,7 +713,7 @@ public class UserUtilsTest {
         Exception first = new Exception("first");
         Exception second = new Exception("second", first);
         first.initCause(second);
-        assertFalse(UserUtils.isPermissionDenied(first));
-        assertEquals("first", UserUtils.getServerErrorMessage(first));
+        assertFalse(ServerErrorUtils.isPermissionDenied(first));
+        assertEquals("first", ServerErrorUtils.getServerErrorMessage(first));
     }
 }

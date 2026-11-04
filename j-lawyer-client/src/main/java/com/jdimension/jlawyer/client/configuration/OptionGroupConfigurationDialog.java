@@ -664,7 +664,7 @@
 package com.jdimension.jlawyer.client.configuration;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.utils.UserUtils;
+import com.jdimension.jlawyer.client.utils.ServerErrorUtils;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
@@ -859,7 +859,7 @@ public class OptionGroupConfigurationDialog extends javax.swing.JDialog {
                 }
             } catch (Exception ex) {
                 log.error("Error connecting to server", ex);
-                JOptionPane.showMessageDialog(this, UserUtils.getServerErrorMessage(ex), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, ServerErrorUtils.getServerErrorMessage(ex), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
         }
     }//GEN-LAST:event_mnuDeleteActionPerformed
@@ -892,7 +892,7 @@ public class OptionGroupConfigurationDialog extends javax.swing.JDialog {
             ((OptionGroupListModel) this.lstOptions.getModel()).addElement(dto);
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            JOptionPane.showMessageDialog(this, UserUtils.getServerErrorMessage(ex), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, ServerErrorUtils.getServerErrorMessage(ex), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return;
         }
         this.txtOption.setText("");
@@ -979,7 +979,7 @@ public class OptionGroupConfigurationDialog extends javax.swing.JDialog {
 
             } catch (Exception ex) {
                 log.error("Error connecting to server", ex);
-                JOptionPane.showMessageDialog(this, UserUtils.getServerErrorMessage(ex), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, ServerErrorUtils.getServerErrorMessage(ex), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
         }
     }//GEN-LAST:event_mnuRenameActionPerformed

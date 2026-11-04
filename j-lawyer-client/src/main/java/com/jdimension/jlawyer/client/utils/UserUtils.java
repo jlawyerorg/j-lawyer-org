@@ -666,7 +666,6 @@ package com.jdimension.jlawyer.client.utils;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
-import javax.ejb.EJBAccessException;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 
@@ -732,39 +731,5 @@ public class UserUtils {
             }
         }
         return currentUserSysAdmin;
-    }
-
-    /**
-     * Checks whether a server call was rejected because the current user lacks
-     * a required role.
-     *
-     * @param t exception caught from a server call
-     * @return true if the exception or one of its causes is an EJBAccessException
-     */
-    public static boolean isPermissionDenied(Throwable t) {
-        Throwable cause = t;
-        // limited depth, so a cyclic cause chain cannot loop forever
-        for (int depth = 0; cause != null && depth < 20; depth++) {
-            if (cause instanceof EJBAccessException) {
-                return true;
-            }
-            cause = cause.getCause();
-        }
-        return false;
-    }
-
-    /**
-     * Returns the message to display for an exception caught from a server
-     * call. A missing permission is reported as a plain hint instead of the
-     * technical server message.
-     *
-     * @param t exception caught from a server call
-     * @return the message to display
-     */
-    public static String getServerErrorMessage(Throwable t) {
-        if (isPermissionDenied(t)) {
-            return java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.permissionrequired");
-        }
-        return t.getMessage();
     }
 }
