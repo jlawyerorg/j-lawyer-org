@@ -662,6 +662,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.jdimension.jlawyer.client.editors.files.AddDocumentFromTemplateDialog.FileNameSuggestion;
+import javax.swing.JTextField;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -674,44 +676,62 @@ public class DocumentFileNameTest {
     private static final boolean TEMPLATE_CHANGED = false;
     private static final boolean PARTIES_CHANGED = true;
 
+    private final JTextField field = new JTextField();
+    private final FileNameSuggestion name = new FileNameSuggestion();
+
+    private String show(String generatedName, boolean keepEditedName) {
+        this.name.showIn(this.field, generatedName, keepEditedName);
+        return this.field.getText();
+    }
+
     @Test
-    public void testFirstName() {
-        assertEquals("2026-11-04_Brief", new AddDocumentFromTemplateDialog.FileNameSuggestion().nameToShow("", "2026-11-04_Brief", PARTIES_CHANGED));
-        assertEquals("2026-11-04_Brief", new AddDocumentFromTemplateDialog.FileNameSuggestion().nameToShow("", "2026-11-04_Brief", TEMPLATE_CHANGED));
+    public void testFirstNameAfterPartyChange() {
+        assertEquals("2026-11-04_Brief", show("2026-11-04_Brief", PARTIES_CHANGED));
+    }
+
+    @Test
+    public void testFirstNameAfterTemplateChange() {
+        assertEquals("2026-11-04_Brief", show("2026-11-04_Brief", TEMPLATE_CHANGED));
     }
 
     @Test
     public void testPartyChangeKeepsTypedName() {
-        AddDocumentFromTemplateDialog.FileNameSuggestion name = new AddDocumentFromTemplateDialog.FileNameSuggestion();
-        assertEquals("2026-11-04_Brief", name.nameToShow("", "2026-11-04_Brief", TEMPLATE_CHANGED));
-        assertEquals("Schreiben an Gegner", name.nameToShow("Schreiben an Gegner", "2026-11-04_Brief_Mueller", PARTIES_CHANGED));
+        assertEquals("2026-11-04_Brief", show("2026-11-04_Brief", TEMPLATE_CHANGED));
+        this.field.setText("Schreiben an Gegner");
+        assertEquals("Schreiben an Gegner", show("2026-11-04_Brief_Mueller", PARTIES_CHANGED));
     }
 
     @Test
     public void testPartyChangeUpdatesGeneratedName() {
         // names that contain a party are generated again as long as the user did not change them
-        AddDocumentFromTemplateDialog.FileNameSuggestion name = new AddDocumentFromTemplateDialog.FileNameSuggestion();
-        assertEquals("2026-11-04_Brief", name.nameToShow("", "2026-11-04_Brief", TEMPLATE_CHANGED));
-        assertEquals("2026-11-04_Brief_Mueller", name.nameToShow("2026-11-04_Brief", "2026-11-04_Brief_Mueller", PARTIES_CHANGED));
-        assertEquals("2026-11-04_Brief_Meier", name.nameToShow("2026-11-04_Brief_Mueller", "2026-11-04_Brief_Meier", PARTIES_CHANGED));
+        assertEquals("2026-11-04_Brief", show("2026-11-04_Brief", TEMPLATE_CHANGED));
+        assertEquals("2026-11-04_Brief_Mueller", show("2026-11-04_Brief_Mueller", PARTIES_CHANGED));
+        assertEquals("2026-11-04_Brief_Meier", show("2026-11-04_Brief_Meier", PARTIES_CHANGED));
     }
 
     @Test
     public void testNewTemplateGivesNewName() {
-        AddDocumentFromTemplateDialog.FileNameSuggestion name = new AddDocumentFromTemplateDialog.FileNameSuggestion();
-        assertEquals("2026-11-04_Brief", name.nameToShow("", "2026-11-04_Brief", TEMPLATE_CHANGED));
-        assertEquals("2026-11-04_Mahnung", name.nameToShow("Schreiben an Gegner", "2026-11-04_Mahnung", TEMPLATE_CHANGED));
+        assertEquals("2026-11-04_Brief", show("2026-11-04_Brief", TEMPLATE_CHANGED));
+        this.field.setText("Schreiben an Gegner");
+        assertEquals("2026-11-04_Mahnung", show("2026-11-04_Mahnung", TEMPLATE_CHANGED));
     }
 
     @Test
     public void testSeveralPartyChangesKeepTypedName() {
-        AddDocumentFromTemplateDialog.FileNameSuggestion name = new AddDocumentFromTemplateDialog.FileNameSuggestion();
-        assertEquals("Brief_Mueller", name.nameToShow("", "Brief_Mueller", TEMPLATE_CHANGED));
+        assertEquals("Brief_Mueller", show("Brief_Mueller", TEMPLATE_CHANGED));
         // the user types Brief_Schmidt, then selects Schmidt and then Meier
-        assertEquals("Brief_Schmidt", name.nameToShow("Brief_Schmidt", "Brief_Schmidt", PARTIES_CHANGED));
-        assertEquals("Brief_Schmidt", name.nameToShow("Brief_Schmidt", "Brief_Meier", PARTIES_CHANGED));
+        this.field.setText("Brief_Schmidt");
+        assertEquals("Brief_Schmidt", show("Brief_Schmidt", PARTIES_CHANGED));
+        assertEquals("Brief_Schmidt", show("Brief_Meier", PARTIES_CHANGED));
         // another template gives the generated name again, and party changes update it from then on
-        assertEquals("Mahnung_Meier", name.nameToShow("Brief_Schmidt", "Mahnung_Meier", TEMPLATE_CHANGED));
-        assertEquals("Mahnung_Schmidt", name.nameToShow("Mahnung_Meier", "Mahnung_Schmidt", PARTIES_CHANGED));
+        assertEquals("Mahnung_Meier", show("Mahnung_Meier", TEMPLATE_CHANGED));
+        assertEquals("Mahnung_Schmidt", show("Mahnung_Schmidt", PARTIES_CHANGED));
+    }
+
+    @Test
+    public void testGeneratedNameWithLineBreakIsNotSeenAsEdited() {
+        // a multi-line placeholder value puts a line break into the generated name, the field shows a space instead
+        assertEquals("Brief_Akte Mueller", show("Brief_Akte\nMueller", TEMPLATE_CHANGED));
+        assertEquals("Brief_Akte Meier", show("Brief_Akte\nMeier", PARTIES_CHANGED));
     }
 }

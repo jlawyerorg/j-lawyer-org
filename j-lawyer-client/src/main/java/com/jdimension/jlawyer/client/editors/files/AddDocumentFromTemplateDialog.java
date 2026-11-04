@@ -697,6 +697,7 @@ import java.util.*;
 import javax.swing.DefaultListModel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JTextField;
 import javax.swing.table.TableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
@@ -1791,25 +1792,27 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     static final class FileNameSuggestion {
 
         /**
-         * The generated name that was shown last, null before the first evaluation.
+         * The generated name as the field showed it last, null before the first evaluation.
          */
         private String shownGeneratedName = null;
 
         /**
-         * @param currentName the name in the file name field
+         * Shows the generated name in the field, unless keepEditedName is set and the user has changed the generated
+         * name that was shown last.
+         *
+         * @param field the file name field
          * @param generatedName the name generated from the template
          * @param keepEditedName true if only the parties or the letterhead changed
-         * @return the file name to show: the generated one, unless keepEditedName is set and the user has changed the
-         * generated name that was shown last
          */
-        String nameToShow(String currentName, String generatedName, boolean keepEditedName) {
-            boolean edited = this.shownGeneratedName != null && !this.shownGeneratedName.equals(currentName);
+        void showIn(JTextField field, String generatedName, boolean keepEditedName) {
+            boolean edited = this.shownGeneratedName != null && !this.shownGeneratedName.equals(field.getText());
             if (keepEditedName && edited) {
                 // the generated name is not shown, so the next change still sees the typed name as edited
-                return currentName;
+                return;
             }
-            this.shownGeneratedName = generatedName;
-            return generatedName;
+            field.setText(generatedName);
+            // remember what the field shows - it turns line breaks, e.g. from a multi-line placeholder, into spaces
+            this.shownGeneratedName = field.getText();
         }
     }
 
@@ -1890,7 +1893,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                 }
 
                 docName = FileUtils.sanitizeFileName(docName);
-                this.txtFileName.setText(this.fileNameSuggestion.nameToShow(this.txtFileName.getText(), docName, keepEditedName));
+                this.fileNameSuggestion.showIn(this.txtFileName, docName, keepEditedName);
 
             } catch (Exception ex) {
                 log.error("Error getting new document name", ex);
