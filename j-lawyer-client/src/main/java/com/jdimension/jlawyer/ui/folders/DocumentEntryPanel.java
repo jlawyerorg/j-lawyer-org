@@ -1405,7 +1405,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         this.updateMetadata();
     }
 
-    // second line: sender / recipient, received date, keywords, tags and - if a title is shown
+    // metadata line: sender / recipient, received date, tags, keywords and - if a title is shown
     // instead - the file name
     private void updateMetadata() {
         if (this.document == null) {
@@ -1423,9 +1423,6 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         if (this.document.getReceivedDate() != null) {
             parts.add("Eing. " + dfShortDate.format(this.document.getReceivedDate()));
         }
-        if (this.document.getTitle() != null && !this.document.getTitle().isBlank()) {
-            parts.add(escape(this.document.getName()));
-        }
         // tags first, then keywords
         StringBuilder chips = new StringBuilder();
         for (String t : this.tags) {
@@ -1436,6 +1433,9 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         }
         if (chips.length() > 0) {
             parts.add(chips.toString().trim());
+        }
+        if (this.document.getTitle() != null && !this.document.getTitle().isBlank()) {
+            parts.add(escape(this.document.getName()));
         }
         if (parts.isEmpty()) {
             this.lblMetadata.setText("");
