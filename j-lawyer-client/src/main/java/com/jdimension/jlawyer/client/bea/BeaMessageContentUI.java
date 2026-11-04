@@ -2070,7 +2070,9 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
 
             if (targetCase == null) {
-                SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, "" + this.msgContainer.getReferenceJustice() + this.msgContainer.getReferenceNumber() + response.getSubject() + response.getBody(), null);
+                // suggest cases from the incoming message, like when saving the message or its attachments - the
+                // file number is usually in its subject, not in the eEB response
+                SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, "" + this.msgContainer.getReferenceJustice() + this.msgContainer.getReferenceNumber() + this.msgContainer.getSubject() + this.msgContainer.getBody(), null);
                 dlg.setVisible(true);
                 targetCase = dlg.getCaseSelection();
                 targetFolder = dlg.getFolderSelection();
