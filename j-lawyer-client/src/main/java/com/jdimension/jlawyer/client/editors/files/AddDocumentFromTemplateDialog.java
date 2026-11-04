@@ -741,6 +741,11 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
     private DocumentNameTemplate nameTemplate = null;
 
+    /**
+     * The file name that was generated last, to tell whether the user changed it.
+     */
+    private String generatedFileName = null;
+
     public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, ArchiveFilePanel casePanel, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved) {
         this(parent, modal, casePanel, targetTable, aFile, involved, null, null, false, null, null, null, null, null, null);
     }
@@ -1778,7 +1783,23 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
     }//GEN-LAST:event_formComponentResized
 
+    /**
+     * @return the file name to show after the template was evaluated again: the generated one, unless only the parties
+     * or the letterhead changed and the user has changed the name that was generated last
+     */
+    static String fileNameAfterEvaluation(String currentName, String lastGeneratedName, String generatedName, boolean keepEditedName) {
+        boolean edited = lastGeneratedName != null && !lastGeneratedName.equals(currentName);
+        return keepEditedName && edited ? currentName : generatedName;
+    }
+
     private void templateSelection() {
+        this.templateSelection(false);
+    }
+
+    /**
+     * @param keepEditedName true if only the parties or the letterhead changed - a file name the user typed is kept then
+     */
+    private void templateSelection(boolean keepEditedName) {
         if (!(this.tblPlaceHolders.getModel() instanceof ArchiveFileTemplatePlaceHoldersTableModel)) {
             return;
         }
@@ -1848,7 +1869,8 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                 }
 
                 docName = FileUtils.sanitizeFileName(docName);
-                this.txtFileName.setText(docName);
+                this.txtFileName.setText(fileNameAfterEvaluation(this.txtFileName.getText(), this.generatedFileName, docName, keepEditedName));
+                this.generatedFileName = docName;
 
             } catch (Exception ex) {
                 log.error("Error getting new document name", ex);
@@ -1984,7 +2006,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             }
         }
 
-        this.templateSelection();
+        this.templateSelection(true);
     }//GEN-LAST:event_cmbLetterHeadsActionPerformed
 
     private void chkGeneratePDFActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkGeneratePDFActionPerformed
@@ -2163,7 +2185,8 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
     @Override
     public void selectedPartiesUpdated() {
-        this.templateSelection();
+        // a file name the user typed is kept (issue #3234)
+        this.templateSelection(true);
     }
 
     /**
