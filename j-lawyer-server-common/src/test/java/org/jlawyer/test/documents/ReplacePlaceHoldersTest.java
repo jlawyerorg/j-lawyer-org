@@ -698,4 +698,34 @@ public class ReplacePlaceHoldersTest {
         assertEquals("a  b", replace("a {{X}} b", "{{X}}", null));
     }
 
+    private static String replaceInText(String content, String... keysAndValues) {
+        HashMap<String, Object> values = new HashMap<>();
+        for (int i = 0; i < keysAndValues.length; i += 2) {
+            values.put(keysAndValues[i], keysAndValues[i + 1]);
+        }
+        return CommonTemplatesUtil.replacePlaceHoldersInText(content, values);
+    }
+
+    @Test
+    public void testEmptyPlaceholderInPlainText() {
+        // issue #2888: a client without a title
+        assertEquals("Sehr geehrter Herr Müller,", replaceInText("Sehr geehrter Herr {{MANDANT_TITEL}} {{MANDANT_NAME}},", "{{MANDANT_TITEL}}", "", "{{MANDANT_NAME}}", "Müller"));
+        assertEquals("Sehr geehrter Herr Müller,", replaceInText("Sehr geehrter Herr {{MANDANT_TITEL}} {{MANDANT_NAME}},", "{{MANDANT_TITEL}}", null, "{{MANDANT_NAME}}", "Müller"));
+        assertEquals("Sehr geehrter Herr Müller,", replaceInText("Sehr geehrter Herr {{MANDANT_TITEL}} {{MANDANT_NAME}},", "{{MANDANT_TITEL}}", " ", "{{MANDANT_NAME}}", "Müller"));
+        // several empty placeholders in a row
+        assertEquals("a b", replaceInText("a {{X}} {{Y}} b", "{{X}}", "", "{{Y}}", ""));
+        // with a value nothing changes
+        assertEquals("Sehr geehrter Herr Dr. Müller,", replaceInText("Sehr geehrter Herr {{MANDANT_TITEL}} {{MANDANT_NAME}},", "{{MANDANT_TITEL}}", "Dr.", "{{MANDANT_NAME}}", "Müller"));
+    }
+
+    @Test
+    public void testOtherSpacesInPlainTextStay() {
+        // spaces the template itself has, and empty placeholders that are not between two spaces
+        assertEquals("Betrag:  100 EUR", replaceInText("Betrag:  {{X}} EUR", "{{X}}", "100"));
+        assertEquals("(),  x", replaceInText("({{X}}),  x", "{{X}}", ""));
+        assertEquals(" Text", replaceInText("{{X}} Text", "{{X}}", ""));
+        assertEquals("Text ", replaceInText("Text {{X}}", "{{X}}", ""));
+        assertEquals("a\n b", replaceInText("a\n{{X}} b", "{{X}}", ""));
+    }
+
 }
