@@ -671,25 +671,47 @@ import org.junit.Test;
  */
 public class DocumentFileNameTest {
 
+    private static final boolean TEMPLATE_CHANGED = false;
+    private static final boolean PARTIES_CHANGED = true;
+
     @Test
     public void testFirstName() {
-        assertEquals("2026-11-04_Brief", AddDocumentFromTemplateDialog.fileNameAfterEvaluation("", null, "2026-11-04_Brief", true));
-        assertEquals("2026-11-04_Brief", AddDocumentFromTemplateDialog.fileNameAfterEvaluation("", null, "2026-11-04_Brief", false));
+        assertEquals("2026-11-04_Brief", new AddDocumentFromTemplateDialog.FileNameSuggestion().nameToShow("", "2026-11-04_Brief", PARTIES_CHANGED));
+        assertEquals("2026-11-04_Brief", new AddDocumentFromTemplateDialog.FileNameSuggestion().nameToShow("", "2026-11-04_Brief", TEMPLATE_CHANGED));
     }
 
     @Test
     public void testPartyChangeKeepsTypedName() {
-        assertEquals("Schreiben an Gegner", AddDocumentFromTemplateDialog.fileNameAfterEvaluation("Schreiben an Gegner", "2026-11-04_Brief", "2026-11-04_Brief_Mueller", true));
+        AddDocumentFromTemplateDialog.FileNameSuggestion name = new AddDocumentFromTemplateDialog.FileNameSuggestion();
+        assertEquals("2026-11-04_Brief", name.nameToShow("", "2026-11-04_Brief", TEMPLATE_CHANGED));
+        assertEquals("Schreiben an Gegner", name.nameToShow("Schreiben an Gegner", "2026-11-04_Brief_Mueller", PARTIES_CHANGED));
     }
 
     @Test
     public void testPartyChangeUpdatesGeneratedName() {
         // names that contain a party are generated again as long as the user did not change them
-        assertEquals("2026-11-04_Brief_Mueller", AddDocumentFromTemplateDialog.fileNameAfterEvaluation("2026-11-04_Brief", "2026-11-04_Brief", "2026-11-04_Brief_Mueller", true));
+        AddDocumentFromTemplateDialog.FileNameSuggestion name = new AddDocumentFromTemplateDialog.FileNameSuggestion();
+        assertEquals("2026-11-04_Brief", name.nameToShow("", "2026-11-04_Brief", TEMPLATE_CHANGED));
+        assertEquals("2026-11-04_Brief_Mueller", name.nameToShow("2026-11-04_Brief", "2026-11-04_Brief_Mueller", PARTIES_CHANGED));
+        assertEquals("2026-11-04_Brief_Meier", name.nameToShow("2026-11-04_Brief_Mueller", "2026-11-04_Brief_Meier", PARTIES_CHANGED));
     }
 
     @Test
     public void testNewTemplateGivesNewName() {
-        assertEquals("2026-11-04_Mahnung", AddDocumentFromTemplateDialog.fileNameAfterEvaluation("Schreiben an Gegner", "2026-11-04_Brief", "2026-11-04_Mahnung", false));
+        AddDocumentFromTemplateDialog.FileNameSuggestion name = new AddDocumentFromTemplateDialog.FileNameSuggestion();
+        assertEquals("2026-11-04_Brief", name.nameToShow("", "2026-11-04_Brief", TEMPLATE_CHANGED));
+        assertEquals("2026-11-04_Mahnung", name.nameToShow("Schreiben an Gegner", "2026-11-04_Mahnung", TEMPLATE_CHANGED));
+    }
+
+    @Test
+    public void testSeveralPartyChangesKeepTypedName() {
+        AddDocumentFromTemplateDialog.FileNameSuggestion name = new AddDocumentFromTemplateDialog.FileNameSuggestion();
+        assertEquals("Brief_Mueller", name.nameToShow("", "Brief_Mueller", TEMPLATE_CHANGED));
+        // the user types Brief_Schmidt, then selects Schmidt and then Meier
+        assertEquals("Brief_Schmidt", name.nameToShow("Brief_Schmidt", "Brief_Schmidt", PARTIES_CHANGED));
+        assertEquals("Brief_Schmidt", name.nameToShow("Brief_Schmidt", "Brief_Meier", PARTIES_CHANGED));
+        // another template gives the generated name again, and party changes update it from then on
+        assertEquals("Mahnung_Meier", name.nameToShow("Brief_Schmidt", "Mahnung_Meier", TEMPLATE_CHANGED));
+        assertEquals("Mahnung_Schmidt", name.nameToShow("Mahnung_Meier", "Mahnung_Schmidt", PARTIES_CHANGED));
     }
 }

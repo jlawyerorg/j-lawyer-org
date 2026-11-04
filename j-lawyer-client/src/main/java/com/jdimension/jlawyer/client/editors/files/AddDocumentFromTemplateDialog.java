@@ -742,9 +742,9 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private DocumentNameTemplate nameTemplate = null;
 
     /**
-     * The file name that was generated last, to tell whether the user changed it.
+     * Decides which file name is shown after the template was evaluated again.
      */
-    private String generatedFileName = null;
+    private final FileNameSuggestion fileNameSuggestion = new FileNameSuggestion();
 
     public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, ArchiveFilePanel casePanel, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved) {
         this(parent, modal, casePanel, targetTable, aFile, involved, null, null, false, null, null, null, null, null, null);
@@ -1784,12 +1784,33 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     }//GEN-LAST:event_formComponentResized
 
     /**
-     * @return the file name to show after the template was evaluated again: the generated one, unless only the parties
-     * or the letterhead changed and the user has changed the name that was generated last
+     * Decides which file name the dialog shows after the template was evaluated again. A name the user typed is kept
+     * when only the parties or the letterhead change, also over several changes, until another template or name
+     * template is chosen (issue #3234).
      */
-    static String fileNameAfterEvaluation(String currentName, String lastGeneratedName, String generatedName, boolean keepEditedName) {
-        boolean edited = lastGeneratedName != null && !lastGeneratedName.equals(currentName);
-        return keepEditedName && edited ? currentName : generatedName;
+    static final class FileNameSuggestion {
+
+        /**
+         * The generated name that was shown last, null before the first evaluation.
+         */
+        private String shownGeneratedName = null;
+
+        /**
+         * @param currentName the name in the file name field
+         * @param generatedName the name generated from the template
+         * @param keepEditedName true if only the parties or the letterhead changed
+         * @return the file name to show: the generated one, unless keepEditedName is set and the user has changed the
+         * generated name that was shown last
+         */
+        String nameToShow(String currentName, String generatedName, boolean keepEditedName) {
+            boolean edited = this.shownGeneratedName != null && !this.shownGeneratedName.equals(currentName);
+            if (keepEditedName && edited) {
+                // the generated name is not shown, so the next change still sees the typed name as edited
+                return currentName;
+            }
+            this.shownGeneratedName = generatedName;
+            return generatedName;
+        }
     }
 
     private void templateSelection() {
@@ -1869,8 +1890,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                 }
 
                 docName = FileUtils.sanitizeFileName(docName);
-                this.txtFileName.setText(fileNameAfterEvaluation(this.txtFileName.getText(), this.generatedFileName, docName, keepEditedName));
-                this.generatedFileName = docName;
+                this.txtFileName.setText(this.fileNameSuggestion.nameToShow(this.txtFileName.getText(), docName, keepEditedName));
 
             } catch (Exception ex) {
                 log.error("Error getting new document name", ex);
