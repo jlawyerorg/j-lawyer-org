@@ -692,11 +692,15 @@ public class SortedBeaFolderNode extends DefaultMutableTreeNode {
                 
                 Object u1=o1.getUserObject();
                 Object u2=o2.getUserObject();
+                if(u1==null && u2==null)
+                    return 0;
                 if(u1==null)
                     return -1;
                 if(u2==null)
                     return 1;
                 
+                if(!(u1 instanceof BeaFolder) && !(u2 instanceof BeaFolder))
+                    return 0;
                 if(!(u1 instanceof BeaFolder))
                     return -1;
                 if(!(u2 instanceof BeaFolder))
