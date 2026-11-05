@@ -782,9 +782,8 @@ public class DatabaseImport {
             throw new Exception("Datenbankwiederherstellung fehlgeschlagen: " + (prepared.errors.isEmpty() ? "Die Datenbank konnte nicht neu angelegt werden." : prepared.errors.get(0)));
         }
         List<String> command = new ArrayList<>(Arrays.asList(importDump));
-        if (force) {
-            command.add(1, "--force");
-        }
+        // in both cases: force in an option file of the client (e.g. [mysql] in my.cnf) would apply otherwise
+        command.add(1, force ? "--force" : "--skip-force");
         return runClient(command, dump);
     }
 

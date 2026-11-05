@@ -841,8 +841,8 @@ public class DatabaseImportTest {
     }
 
     // a stand-in for the mysql client: "prepare" empties the database, "import" reads the dump from its input, imports
-    // GOOD lines and refuses BAD lines - it stops there unless --force is the first argument, as the mysql client in
-    // batch mode does
+    // GOOD lines and refuses BAD lines - it stops there unless force is on, as the mysql client in batch mode does.
+    // Force is on with --force, off with --skip-force and otherwise as in the option files of the client.
     private File script(String name, String body) throws Exception {
         File script = this.tmp.newFile(name);
         Files.write(script.toPath(), ("#!/bin/sh\n" + body).getBytes(StandardCharsets.UTF_8));
@@ -856,6 +856,16 @@ public class DatabaseImportTest {
 
     @Test(timeout = 60000)
     public void testNothingAfterTheErrorRunsBeforeTheAnswer() throws Exception {
+        assertNothingAfterTheErrorRunsBeforeTheAnswer(false);
+    }
+
+    @Test(timeout = 60000)
+    public void testForceFromTheOptionFilesIsSwitchedOff() throws Exception {
+        // e.g. force in the [mysql] section of my.cnf
+        assertNothingAfterTheErrorRunsBeforeTheAnswer(true);
+    }
+
+    private void assertNothingAfterTheErrorRunsBeforeTheAnswer(boolean forceInOptionFiles) throws Exception {
         assumeTrue(new File("/bin/sh").canExecute());
         File database = new File(this.tmp.getRoot(), "database");
         File log = new File(this.tmp.getRoot(), "log");
@@ -863,8 +873,10 @@ public class DatabaseImportTest {
         Files.write(dump.toPath(), "GOOD 1\nBAD\nGOOD 2\n".getBytes(StandardCharsets.UTF_8));
         String[] prepare = new String[]{script("prepare", ": > " + database + "\necho prepare >> " + log + "\n").getAbsolutePath()};
         String[] importCmd = new String[]{script("import", "echo \"import $1 $2\" >> " + log + "\n"
+                + "force=" + (forceInOptionFiles ? "yes" : "no") + "\n"
+                + "case \"$1\" in --force) force=yes;; --skip-force) force=no;; esac\n"
                 + "n=0\nwhile IFS= read -r l; do n=$((n+1)); case \"$l\" in\n"
-                + "  BAD*) echo \"ERROR 1064 (42000) at line $n: bad\" 1>&2; [ \"$1\" = --force ] || exit 1;;\n"
+                + "  BAD*) echo \"ERROR 1064 (42000) at line $n: bad\" 1>&2; [ $force = yes ] || exit 1;;\n"
                 + "  *) echo \"$l\" >> " + database + ";;\n"
                 + "esac; done\n").getAbsolutePath(), "jlawyerdb"};
 
@@ -881,7 +893,7 @@ public class DatabaseImportTest {
         assertEquals("the rest of the dump has not run when the user is asked", Collections.singletonList("GOOD 1"), atQuestion);
         assertEquals(Collections.singletonList("ERROR 1064 (42000) at line 2: bad"), errors);
         assertEquals("the second run starts from an empty database", Arrays.asList("GOOD 1", "GOOD 2"), lines(database));
-        assertEquals(Arrays.asList("prepare", "import jlawyerdb ", "prepare", "import --force jlawyerdb"), lines(log));
+        assertEquals(Arrays.asList("prepare", "import --skip-force jlawyerdb", "prepare", "import --force jlawyerdb"), lines(log));
     }
 
     @Test(timeout = 60000)
