@@ -707,7 +707,7 @@ public class RestoreExecutor {
 
     private boolean ignoreDatabaseErrors = false;
     private DatabaseImport.ErrorHandler databaseErrorHandler = null;
-    private List<String> databaseErrors = new ArrayList<>();
+    private String databaseErrorMessage = null;
 
     public RestoreExecutor(String dataDir, String backupDir, String encryptionPassword, String dbHost, String dbPort, String dbName, String dbUser, String dbPassword) {
 
@@ -775,11 +775,11 @@ public class RestoreExecutor {
     }
 
     /**
-     * @return the errors of the statements of the database dump that the last restore skipped, empty if there were
-     * none
+     * @return the message listing the statements of the database dump that the last restore skipped, null if it
+     * skipped none
      */
-    public List<String> getDatabaseErrors() {
-        return this.databaseErrors;
+    public String getDatabaseErrorMessage() {
+        return this.databaseErrorMessage;
     }
 
     private void validateDatabaseConnection(BackupProgressCallback progress) throws Exception {
@@ -1275,14 +1275,21 @@ public class RestoreExecutor {
             "-p" + this.dbPassword,
             "-e",
             //"\"drop database if exists jlawyerdb;create database jlawyerdb;use jlawyerdb;source " + backup + "jlawyerdb-dump.sql;commit;\""
-            "drop database if exists " + this.dbName + ";create database " + this.dbName + ";use " + this.dbName + ";source " + backup + "jlawyerdb-dump.sql;commit;"
+            "drop database if exists " + this.dbName + ";create database " + this.dbName + ";"
         //"\"drop database if exists jlawyerdb;quit;\""    
         };
 
-        // the files are restored at this point: after an error in the dump, the user may let the import go on to the end
-        this.databaseErrors = new ArrayList<>();
-        final String[] command = cmd;
-        this.databaseErrors = DatabaseImport.importDump(force -> DatabaseImport.runClient(command, force), this.ignoreDatabaseErrors, this.databaseErrorHandler, progress);
+        // the dump is the input of a second call: in batch mode, both the MySQL and the MariaDB client stop at the first
+        // failing statement. The files are restored at this point, after such an error the user may let the import go
+        // on to the end.
+        File dump = new File(backup + "jlawyerdb-dump.sql");
+        String[] importCmd = new String[]{path + "mysql", "-h", this.dbHost, "-P", this.dbPort, "-u", this.dbUser, "-p" + this.dbPassword, this.dbName};
+        final String[] prepareCmd = cmd;
+        this.databaseErrorMessage = null;
+        List<String> errors = DatabaseImport.importDump(force -> DatabaseImport.runImport(prepareCmd, importCmd, dump, force), this.ignoreDatabaseErrors, this.databaseErrorHandler, dump.getAbsolutePath(), progress);
+        if (!errors.isEmpty()) {
+            this.databaseErrorMessage = DatabaseImport.completedWithErrorsMessage(errors, dump.getAbsolutePath());
+        }
     }
 
 }

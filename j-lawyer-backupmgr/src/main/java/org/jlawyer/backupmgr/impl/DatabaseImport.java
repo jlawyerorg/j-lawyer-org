@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package org.jlawyer.backupmgr.impl;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -692,7 +693,7 @@ public class DatabaseImport {
     }
 
     /**
-     * One run of the mysql client over the whole dump. Each run drops and creates the database first.
+     * One run of the mysql client over the whole dump, into a database that was dropped and created again.
      */
     interface Run {
 
@@ -717,63 +718,90 @@ public class DatabaseImport {
         }
     }
 
-    // e.g. "ERROR 1273 (HY000) at line 6 in file: '/backup/jlawyerdb-dump.sql': Unknown collation: 'utf8mb4_0900_ai_ci'"
-    private static final Pattern ERROR_LINE = Pattern.compile("^ERROR \\d+");
-    private static final Pattern DUMP_FILE = Pattern.compile(" at line \\d+ in file: '(.+?)': ");
+    // any error line, also of the client itself, e.g. "ERROR at line 3: Unknown command '\x'."
+    private static final Pattern ERROR_LINE = Pattern.compile("^ERROR\\b");
+    // a statement of the dump the server refused, e.g. "ERROR 1273 (HY000) at line 6: Unknown collation: 'utf8mb4_0900_ai_ci'"
+    private static final Pattern STATEMENT_ERROR = Pattern.compile("^ERROR (\\d+) \\(\\w+\\) at line \\d+: ");
 
     private DatabaseImport() {
     }
 
     /**
-     * Imports the dump. The first run does not skip failing statements. If a statement of the dump fails, the handler
-     * decides: abort the restore, or import the dump to the end with failing statements skipped.
+     * Imports the dump. The first run stops at the first failing statement. The handler then decides: abort the
+     * restore, or import the dump again from the start with failing statements skipped.
      *
      * @param run runs the mysql client over the whole dump
      * @param ignoreErrors true to skip failing statements without asking
      * @param handler asks whether to continue after an error, null to abort
+     * @param dumpFile the unpacked dump, for the messages
      * @param progress progress messages, may be null
      * @return the errors of the statements that were skipped, empty if there were none
      * @throws Exception if the import failed or was aborted
      */
-    static List<String> importDump(Run run, boolean ignoreErrors, ErrorHandler handler, BackupProgressCallback progress) throws Exception {
+    static List<String> importDump(Run run, boolean ignoreErrors, ErrorHandler handler, String dumpFile, BackupProgressCallback progress) throws Exception {
         Result result = run.run(ignoreErrors);
         if (!ignoreErrors && !result.errors.isEmpty()) {
+            // the client stopped at this error, nothing after it was imported
             String error = result.errors.get(0);
-            // other errors, e.g. a refused connection, can not be skipped
-            if (dumpFile(error) == null || handler == null || !handler.continueAfterError(questionMessage(error))) {
-                throw new Exception(failedMessage(error));
+            if (!isStatementError(error) || handler == null || !handler.continueAfterError(questionMessage(error, dumpFile))) {
+                throw new Exception(failedMessage(error, dumpFile));
             }
-            if (result.exitCode != 0) {
-                // the MySQL client stops at the first error, the MariaDB client goes on by itself and exits with 0.
-                // The second run drops and creates the database again first, so no statement is applied twice.
-                if (progress != null) {
-                    progress.onProgress("Datenbank wird erneut eingespielt, Anweisungen mit Fehlern werden übersprungen...");
-                }
-                result = run.run(true);
+            if (progress != null) {
+                progress.onProgress("Datenbank wird neu angelegt und bis zum Ende eingespielt, Anweisungen mit Fehlern werden übersprungen...");
+            }
+            result = run.run(true);
+        }
+        for (String error : result.errors) {
+            if (!isStatementError(error)) {
+                // e.g. the client could not read the dump or lost the connection: the rest of the dump may be missing
+                throw new Exception(failedMessage(error, dumpFile));
             }
         }
         if (result.exitCode != 0) {
-            // with --force the client only stops on errors it can not skip, e.g. a lost connection
-            throw new Exception(result.errors.isEmpty() ? "Datenbankwiederherstellung fehlgeschlagen!" : failedMessage(result.errors.get(result.errors.size() - 1)));
+            throw new Exception(result.errors.isEmpty() ? "Datenbankwiederherstellung fehlgeschlagen!" : failedMessage(result.errors.get(result.errors.size() - 1), dumpFile));
         }
         return result.errors;
     }
 
     /**
+     * One run: drops and creates the database, then imports the dump as the input of the client. In batch mode, both
+     * the MySQL and the MariaDB client stop at the first failing statement unless force is set.
+     *
+     * @param prepare the mysql command line that drops and creates the database, any error there fails the restore
+     * @param importDump the mysql command line that imports into the database, with the database as last argument
+     * @param dump the unpacked dump
+     * @param force true to skip failing statements of the dump
+     * @return the exit code and the error lines of the import
+     */
+    static Result runImport(String[] prepare, String[] importDump, File dump, boolean force) throws Exception {
+        if (!dump.isFile()) {
+            throw new Exception("Datenbankwiederherstellung fehlgeschlagen: Die Datenbanksicherung " + dump.getAbsolutePath() + " fehlt.");
+        }
+        Result prepared = runClient(Arrays.asList(prepare), null);
+        if (prepared.exitCode != 0 || !prepared.errors.isEmpty()) {
+            throw new Exception("Datenbankwiederherstellung fehlgeschlagen: " + (prepared.errors.isEmpty() ? "Die Datenbank konnte nicht neu angelegt werden." : prepared.errors.get(0)));
+        }
+        List<String> command = new ArrayList<>(Arrays.asList(importDump));
+        if (force) {
+            command.add(1, "--force");
+        }
+        return runClient(command, dump);
+    }
+
+    /**
      * Runs the mysql client and shows its output on the console.
      *
-     * @param command the mysql command line, with -e
-     * @param force true to add --force, so the client skips failing statements
+     * @param command the mysql command line
+     * @param input the input of the client, null for none
      * @return the exit code and the error lines of the client
      */
-    static Result runClient(String[] command, boolean force) throws Exception {
-        List<String> commandLine = new ArrayList<>(Arrays.asList(command));
-        if (force) {
-            // at the end: the MySQL client resets --force for the first -e that follows it
-            commandLine.add("--force");
-        }
+    static Result runClient(List<String> command, File input) throws Exception {
         // one stream for both: the MariaDB client writes each failing statement to stderr, a full and unread pipe would block it
-        Process process = new ProcessBuilder(commandLine).redirectErrorStream(true).start();
+        ProcessBuilder builder = new ProcessBuilder(command).redirectErrorStream(true);
+        if (input != null) {
+            builder.redirectInput(input);
+        }
+        Process process = builder.start();
         List<String> errors = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
             String line = null;
@@ -788,53 +816,53 @@ public class DatabaseImport {
     }
 
     /**
-     * @return true for an error line of the mysql client, its warnings do not count
+     * @return true for an error line of the mysql client, also for errors of the client itself. Its warnings do not
+     * count.
      */
     static boolean isError(String line) {
         return ERROR_LINE.matcher(line).find();
     }
 
     /**
-     * @return the dump file the mysql client names in the error of one of its statements, null for other errors
+     * @return true if the server refused a statement of the dump. Errors of the client itself (no error number, or
+     * 2000 to 2999 such as a lost connection) and errors without a line of the dump are not.
      */
-    static String dumpFile(String error) {
-        Matcher m = DUMP_FILE.matcher(error);
-        return m.find() ? m.group(1) : null;
+    static boolean isStatementError(String error) {
+        Matcher m = STATEMENT_ERROR.matcher(error);
+        if (!m.find()) {
+            return false;
+        }
+        int code = Integer.parseInt(m.group(1));
+        return code < 2000 || code > 2999;
     }
 
-    static String questionMessage(String error) {
+    static String questionMessage(String error, String dumpFile) {
         return "Beim Einspielen der Datenbanksicherung ist ein Fehler aufgetreten:\n" + error + "\n\n"
-                + "Die Dateien sind bereits wiederhergestellt. Beim Abbrechen bleibt die Datenbank unvollständig. "
-                + "Beim Fortsetzen wird die Datenbanksicherung bis zum Ende eingespielt, Anweisungen mit Fehlern werden übersprungen und am Ende aufgelistet."
-                + dumpFileHint(dumpFile(error));
+                + "Die Dateien sind bereits wiederhergestellt, die Datenbank ist bis vor diese Anweisung eingespielt. Beim Abbrechen bleibt sie so. "
+                + "Beim Fortsetzen wird die Datenbank neu angelegt und die Datenbanksicherung bis zum Ende eingespielt, Anweisungen mit Fehlern werden übersprungen und am Ende aufgelistet."
+                + dumpFileHint(dumpFile);
     }
 
-    static String failedMessage(String error) {
-        return "Datenbankwiederherstellung fehlgeschlagen: " + error + dumpFileHint(dumpFile(error));
+    static String failedMessage(String error, String dumpFile) {
+        return "Datenbankwiederherstellung fehlgeschlagen: " + error + (error.contains(" at line ") ? dumpFileHint(dumpFile) : "");
     }
 
     /**
      * @param errors the errors of the statements that were skipped
+     * @param dumpFile the unpacked dump
      * @return the message at the end of a restore that skipped failing statements of the database dump
      */
-    public static String completedWithErrorsMessage(List<String> errors) {
+    static String completedWithErrorsMessage(List<String> errors, String dumpFile) {
         StringBuilder message = new StringBuilder("Wiederherstellung mit Fehlern abgeschlossen. Beim Einspielen der Datenbanksicherung ");
         message.append(errors.size() == 1 ? "ist 1 Fehler" : "sind " + errors.size() + " Fehler").append(" aufgetreten, die betroffenen Anweisungen wurden übersprungen:");
-        String dumpFile = null;
         for (String error : errors) {
             message.append('\n').append(error);
-            if (dumpFile == null) {
-                dumpFile = dumpFile(error);
-            }
         }
         return message.append(dumpFileHint(dumpFile)).toString();
     }
 
     private static String dumpFileHint(String dumpFile) {
-        if (dumpFile == null) {
-            return "";
-        }
-        return "\n\nDie ausgepackte Datenbanksicherung liegt in " + dumpFile + ". Sie kann dort korrigiert und ganz oder in Teilen erneut eingespielt werden.";
+        return "\n\nDie ausgepackte Datenbanksicherung liegt in " + dumpFile + ", die Zeilennummern beziehen sich auf diese Datei. Sie kann dort korrigiert und ganz oder in Teilen erneut eingespielt werden.";
     }
 
 }

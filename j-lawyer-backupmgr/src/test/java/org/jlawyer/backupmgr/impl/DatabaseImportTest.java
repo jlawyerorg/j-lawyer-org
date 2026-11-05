@@ -664,24 +664,33 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package org.jlawyer.backupmgr.impl;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * After an error in a statement of the database dump, the user may abort the restore or import the dump to the end,
- * all errors are listed afterwards.
+ * all errors are listed afterwards. Errors outside the statements of the dump always fail the restore.
  */
 public class DatabaseImportTest {
 
     private static final String DUMP = "/backup/jlawyerdb-dump.sql";
-    private static final String COLLATION_ERROR = "ERROR 1273 (HY000) at line 6 in file: '" + DUMP + "': Unknown collation: 'utf8mb4_0900_ai_ci'";
-    private static final String TABLE_ERROR = "ERROR 1146 (42S02) at line 9 in file: '" + DUMP + "': Table 'jlawyerdb.t2' doesn't exist";
+    private static final String COLLATION_ERROR = "ERROR 1273 (HY000) at line 6: Unknown collation: 'utf8mb4_0900_ai_ci'";
+    private static final String TABLE_ERROR = "ERROR 1146 (42S02) at line 9: Table 'jlawyerdb.t2' doesn't exist";
     private static final String ACCESS_ERROR = "ERROR 1045 (28000): Access denied for user 'root'@'localhost' (using password: YES)";
+    private static final String OPEN_ERROR = "ERROR at line 1: Failed to open file '" + DUMP + "', error: 2";
+    private static final String LOST_CONNECTION = "ERROR 2013 (HY000) at line 120: Lost connection to MySQL server during query";
+
+    @Rule
+    public TemporaryFolder tmp = new TemporaryFolder();
 
     /**
      * Records the runs of the mysql client and answers them in order.
@@ -725,33 +734,47 @@ public class DatabaseImportTest {
         return new DatabaseImport.Result(exitCode, Arrays.asList(errors));
     }
 
+    private static void assertFails(DatabaseImport.Run run, boolean ignoreErrors, DatabaseImport.ErrorHandler handler, String expectedStart) {
+        try {
+            DatabaseImport.importDump(run, ignoreErrors, handler, DUMP, null);
+            fail("the import must fail");
+        } catch (Exception ex) {
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith(expectedStart));
+        }
+    }
+
     @Test
     public void testErrorLines() {
         assertTrue(DatabaseImport.isError(COLLATION_ERROR));
         assertTrue(DatabaseImport.isError(ACCESS_ERROR));
+        assertTrue(DatabaseImport.isError(OPEN_ERROR));
+        assertTrue(DatabaseImport.isError("ERROR at line 3: Unknown command '\\x'."));
         assertFalse(DatabaseImport.isError("mysql: [Warning] Using a password on the command line interface can be insecure."));
         assertFalse(DatabaseImport.isError("--------------"));
         assertFalse(DatabaseImport.isError("INSERT INTO t VALUES ('ERROR 1')"));
-        assertEquals(DUMP, DatabaseImport.dumpFile(COLLATION_ERROR));
-        assertNull(DatabaseImport.dumpFile(ACCESS_ERROR));
-        assertNull(DatabaseImport.dumpFile("ERROR 1010 (HY000) at line 1: Error dropping database (can't rmdir './jlawyerdb')"));
+
+        assertTrue(DatabaseImport.isStatementError(COLLATION_ERROR));
+        assertTrue(DatabaseImport.isStatementError("ERROR 3780 (HY000) at line 12: Referencing column 'a' and referenced column 'b' are incompatible."));
+        assertFalse("no line of the dump", DatabaseImport.isStatementError(ACCESS_ERROR));
+        assertFalse("error of the client", DatabaseImport.isStatementError(OPEN_ERROR));
+        assertFalse("error of the client", DatabaseImport.isStatementError(LOST_CONNECTION));
     }
 
     @Test
     public void testNoErrors() throws Exception {
         Client client = new Client(result(0));
         User user = new User(false);
-        assertTrue(DatabaseImport.importDump(client, false, user, null).isEmpty());
+        assertTrue(DatabaseImport.importDump(client, false, user, DUMP, null).isEmpty());
         assertEquals(Collections.singletonList(false), client.runs);
         assertTrue(user.questions.isEmpty());
     }
 
     @Test
-    public void testContinueAfterTheClientStopped() throws Exception {
-        // the MySQL client stops at the first error, the dump is imported again with failing statements skipped
+    public void testContinue() throws Exception {
+        // the client stopped at the first error, the dump is imported again with failing statements skipped
         Client client = new Client(result(1, COLLATION_ERROR), result(0, COLLATION_ERROR, TABLE_ERROR));
         User user = new User(true);
-        assertEquals(Arrays.asList(COLLATION_ERROR, TABLE_ERROR), DatabaseImport.importDump(client, false, user, null));
+        assertEquals(Arrays.asList(COLLATION_ERROR, TABLE_ERROR), DatabaseImport.importDump(client, false, user, DUMP, null));
         assertEquals(Arrays.asList(false, true), client.runs);
         assertEquals(1, user.questions.size());
         assertTrue(user.questions.get(0).contains(COLLATION_ERROR));
@@ -759,46 +782,24 @@ public class DatabaseImportTest {
     }
 
     @Test
-    public void testContinueAfterTheClientWentOn() throws Exception {
-        // the MariaDB client goes on by itself and exits with 0, there is no second run
-        Client client = new Client(result(0, COLLATION_ERROR, TABLE_ERROR));
-        User user = new User(true);
-        assertEquals(Arrays.asList(COLLATION_ERROR, TABLE_ERROR), DatabaseImport.importDump(client, false, user, null));
-        assertEquals(Collections.singletonList(false), client.runs);
-        assertEquals(1, user.questions.size());
-    }
-
-    @Test
     public void testAbort() {
         Client client = new Client(result(1, COLLATION_ERROR));
         User user = new User(false);
-        try {
-            DatabaseImport.importDump(client, false, user, null);
-            fail("the user aborted");
-        } catch (Exception ex) {
-            assertTrue(ex.getMessage().startsWith("Datenbankwiederherstellung fehlgeschlagen: " + COLLATION_ERROR));
-            assertTrue(ex.getMessage().contains("Die ausgepackte Datenbanksicherung liegt in " + DUMP));
-        }
+        assertFails(client, false, user, "Datenbankwiederherstellung fehlgeschlagen: " + COLLATION_ERROR + "\n\nDie ausgepackte Datenbanksicherung liegt in " + DUMP);
         assertEquals(Collections.singletonList(false), client.runs);
         assertEquals(1, user.questions.size());
     }
 
     @Test
     public void testWithoutHandlerAnErrorAborts() {
-        Client client = new Client(result(0, COLLATION_ERROR));
-        try {
-            DatabaseImport.importDump(client, false, null, null);
-            fail("nobody can be asked");
-        } catch (Exception ex) {
-            assertTrue(ex.getMessage().startsWith("Datenbankwiederherstellung fehlgeschlagen: " + COLLATION_ERROR));
-        }
+        assertFails(new Client(result(1, COLLATION_ERROR)), false, null, "Datenbankwiederherstellung fehlgeschlagen: " + COLLATION_ERROR);
     }
 
     @Test
     public void testIgnoreErrorsWithoutAsking() throws Exception {
         Client client = new Client(result(0, COLLATION_ERROR, TABLE_ERROR));
         User user = new User(false);
-        assertEquals(Arrays.asList(COLLATION_ERROR, TABLE_ERROR), DatabaseImport.importDump(client, true, user, null));
+        assertEquals(Arrays.asList(COLLATION_ERROR, TABLE_ERROR), DatabaseImport.importDump(client, true, user, DUMP, null));
         assertEquals(Collections.singletonList(true), client.runs);
         assertTrue(user.questions.isEmpty());
     }
@@ -808,62 +809,127 @@ public class DatabaseImportTest {
         // e.g. a refused login: there is nothing to skip
         Client client = new Client(result(1, ACCESS_ERROR));
         User user = new User(true);
-        try {
-            DatabaseImport.importDump(client, false, user, null);
-            fail("the login failed");
-        } catch (Exception ex) {
-            assertEquals("Datenbankwiederherstellung fehlgeschlagen: " + ACCESS_ERROR, ex.getMessage());
-        }
+        assertFails(client, false, user, "Datenbankwiederherstellung fehlgeschlagen: " + ACCESS_ERROR);
         assertTrue(user.questions.isEmpty());
-        assertEquals(Collections.singletonList(false), client.runs);
     }
 
     @Test
-    public void testClientFailsWhileSkippingErrors() {
-        String lost = "ERROR 2013 (HY000) at line 120 in file: '" + DUMP + "': Lost connection to MySQL server during query";
-        Client client = new Client(result(1, COLLATION_ERROR), result(1, COLLATION_ERROR, lost));
-        try {
-            DatabaseImport.importDump(client, false, new User(true), null);
-            fail("the client stopped");
-        } catch (Exception ex) {
-            assertTrue(ex.getMessage().startsWith("Datenbankwiederherstellung fehlgeschlagen: " + lost));
-        }
+    public void testClientErrorFailsEvenWithForce() {
+        // the client could not read the dump: with --force it may still exit with 0, the database is empty
+        assertFails(new Client(result(0, OPEN_ERROR)), true, new User(true), "Datenbankwiederherstellung fehlgeschlagen: " + OPEN_ERROR);
+        assertFails(new Client(result(0, ACCESS_ERROR)), true, new User(true), "Datenbankwiederherstellung fehlgeschlagen: " + ACCESS_ERROR);
+        // and after continuing
+        Client client = new Client(result(1, COLLATION_ERROR), result(0, COLLATION_ERROR, LOST_CONNECTION));
+        assertFails(client, false, new User(true), "Datenbankwiederherstellung fehlgeschlagen: " + LOST_CONNECTION);
         assertEquals(Arrays.asList(false, true), client.runs);
     }
 
     @Test
     public void testClientFailsWithoutErrorLine() {
-        try {
-            DatabaseImport.importDump(new Client(result(1)), false, new User(true), null);
-            fail("the client failed");
-        } catch (Exception ex) {
-            assertEquals("Datenbankwiederherstellung fehlgeschlagen!", ex.getMessage());
-        }
+        assertFails(new Client(result(1)), false, new User(true), "Datenbankwiederherstellung fehlgeschlagen!");
+        assertFails(new Client(result(1)), true, new User(true), "Datenbankwiederherstellung fehlgeschlagen!");
     }
 
     @Test
     public void testCompletedWithErrorsMessage() {
-        String message = DatabaseImport.completedWithErrorsMessage(Arrays.asList(COLLATION_ERROR, TABLE_ERROR));
+        String message = DatabaseImport.completedWithErrorsMessage(Arrays.asList(COLLATION_ERROR, TABLE_ERROR), DUMP);
         assertTrue(message.startsWith("Wiederherstellung mit Fehlern abgeschlossen. Beim Einspielen der Datenbanksicherung sind 2 Fehler aufgetreten"));
         assertTrue(message.contains("\n" + COLLATION_ERROR + "\n" + TABLE_ERROR + "\n"));
         assertTrue(message.contains("Die ausgepackte Datenbanksicherung liegt in " + DUMP));
         assertFalse(message.contains("erfolgreich"));
-        assertTrue(DatabaseImport.completedWithErrorsMessage(Collections.singletonList(TABLE_ERROR)).contains("ist 1 Fehler aufgetreten"));
+        assertTrue(DatabaseImport.completedWithErrorsMessage(Collections.singletonList(TABLE_ERROR), DUMP).contains("ist 1 Fehler aufgetreten"));
+    }
+
+    // a stand-in for the mysql client: "prepare" empties the database, "import" reads the dump from its input, imports
+    // GOOD lines and refuses BAD lines - it stops there unless --force is the first argument, as the mysql client in
+    // batch mode does
+    private File script(String name, String body) throws Exception {
+        File script = this.tmp.newFile(name);
+        Files.write(script.toPath(), ("#!/bin/sh\n" + body).getBytes(StandardCharsets.UTF_8));
+        assertTrue(script.setExecutable(true));
+        return script;
+    }
+
+    private static List<String> lines(File f) throws Exception {
+        return f.exists() ? Files.readAllLines(f.toPath()) : Collections.emptyList();
     }
 
     @Test(timeout = 60000)
-    public void testRunClient() throws Exception {
+    public void testNothingAfterTheErrorRunsBeforeTheAnswer() throws Exception {
         assumeTrue(new File("/bin/sh").canExecute());
-        // stands in for the mysql client: --force must come last, error lines are on stderr, which is filled beyond
-        // the size of a pipe before anything else is read
-        String[] command = new String[]{"/bin/sh", "-c", "i=0; while [ $i -lt 2000 ]; do echo '--------------  INSERT INTO t VALUES (1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25)' 1>&2; i=$((i+1)); done; "
-            + "echo \"" + COLLATION_ERROR + "\" 1>&2; echo \"last argument: $0\"; exit 1"};
-        DatabaseImport.Result run = DatabaseImport.runClient(command, true);
+        File database = new File(this.tmp.getRoot(), "database");
+        File log = new File(this.tmp.getRoot(), "log");
+        File dump = this.tmp.newFile("dump.sql");
+        Files.write(dump.toPath(), "GOOD 1\nBAD\nGOOD 2\n".getBytes(StandardCharsets.UTF_8));
+        String[] prepare = new String[]{script("prepare", ": > " + database + "\necho prepare >> " + log + "\n").getAbsolutePath()};
+        String[] importCmd = new String[]{script("import", "echo \"import $1 $2\" >> " + log + "\n"
+                + "n=0\nwhile IFS= read -r l; do n=$((n+1)); case \"$l\" in\n"
+                + "  BAD*) echo \"ERROR 1064 (42000) at line $n: bad\" 1>&2; [ \"$1\" = --force ] || exit 1;;\n"
+                + "  *) echo \"$l\" >> " + database + ";;\n"
+                + "esac; done\n").getAbsolutePath(), "jlawyerdb"};
+
+        List<String> atQuestion = new ArrayList<>();
+        DatabaseImport.ErrorHandler user = message -> {
+            try {
+                atQuestion.addAll(lines(database));
+            } catch (Exception ex) {
+                throw new IllegalStateException(ex);
+            }
+            return true;
+        };
+        List<String> errors = DatabaseImport.importDump(force -> DatabaseImport.runImport(prepare, importCmd, dump, force), false, user, dump.getAbsolutePath(), null);
+        assertEquals("the rest of the dump has not run when the user is asked", Collections.singletonList("GOOD 1"), atQuestion);
+        assertEquals(Collections.singletonList("ERROR 1064 (42000) at line 2: bad"), errors);
+        assertEquals("the second run starts from an empty database", Arrays.asList("GOOD 1", "GOOD 2"), lines(database));
+        assertEquals(Arrays.asList("prepare", "import jlawyerdb ", "prepare", "import --force jlawyerdb"), lines(log));
+    }
+
+    @Test(timeout = 60000)
+    public void testPreparationErrorsAlwaysFail() throws Exception {
+        assumeTrue(new File("/bin/sh").canExecute());
+        File log = new File(this.tmp.getRoot(), "log");
+        File dump = this.tmp.newFile("dump.sql");
+        String[] importCmd = new String[]{script("import", "echo import >> " + log + "\n").getAbsolutePath(), "jlawyerdb"};
+        String denied = "ERROR 1044 (42000) at line 1: Access denied for user 'jlawyer'@'%' to database 'jlawyerdb'";
+        // the client reports the error and exits with 1, or only reports it
+        for (String exit : new String[]{"exit 1", "exit 0"}) {
+            String[] prepare = new String[]{script("prepare-" + exit.replace(' ', '-'), "echo \"" + denied + "\" 1>&2\n" + exit + "\n").getAbsolutePath()};
+            for (boolean force : new boolean[]{false, true}) {
+                try {
+                    DatabaseImport.runImport(prepare, importCmd, dump, force);
+                    fail("dropping or creating the database failed");
+                } catch (Exception ex) {
+                    assertEquals("Datenbankwiederherstellung fehlgeschlagen: " + denied, ex.getMessage());
+                }
+            }
+        }
+        assertTrue("the dump is not imported", lines(log).isEmpty());
+    }
+
+    @Test(timeout = 60000)
+    public void testMissingDumpFailsBeforeTheDatabaseIsDropped() throws Exception {
+        assumeTrue(new File("/bin/sh").canExecute());
+        File log = new File(this.tmp.getRoot(), "log");
+        String[] prepare = new String[]{script("prepare", "echo prepare >> " + log + "\n").getAbsolutePath()};
+        String[] importCmd = new String[]{script("import", "echo import >> " + log + "\n").getAbsolutePath(), "jlawyerdb"};
+        File missing = new File(this.tmp.getRoot(), "jlawyerdb-dump.sql");
+        try {
+            DatabaseImport.runImport(prepare, importCmd, missing, true);
+            fail("there is no dump");
+        } catch (Exception ex) {
+            assertEquals("Datenbankwiederherstellung fehlgeschlagen: Die Datenbanksicherung " + missing.getAbsolutePath() + " fehlt.", ex.getMessage());
+        }
+        assertTrue(lines(log).isEmpty());
+    }
+
+    @Test(timeout = 60000)
+    public void testRunClientReadsStderrWithoutBlocking() throws Exception {
+        assumeTrue(new File("/bin/sh").canExecute());
+        // more than a pipe holds on stderr before anything else, as the MariaDB client writes failing statements
+        List<String> command = Arrays.asList("/bin/sh", "-c", "i=0; while [ $i -lt 2000 ]; do echo '--------------  INSERT INTO t VALUES (1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25)' 1>&2; i=$((i+1)); done; "
+                + "echo \"" + COLLATION_ERROR + "\" 1>&2; exit 1");
+        DatabaseImport.Result run = DatabaseImport.runClient(command, null);
         assertEquals(1, run.exitCode);
         assertEquals(Collections.singletonList(COLLATION_ERROR), run.errors);
-        run = DatabaseImport.runClient(new String[]{"/bin/sh", "-c", "echo \"last argument: $0\"; [ \"$0\" != --force ]"}, false);
-        assertEquals("without force there is no --force", 0, run.exitCode);
-        run = DatabaseImport.runClient(new String[]{"/bin/sh", "-c", "[ \"$0\" = --force ]"}, true);
-        assertEquals("--force is the last argument", 0, run.exitCode);
     }
 }

@@ -7,10 +7,7 @@ package org.jlawyer.backupmgr.controller;
 
 import java.io.File;
 import java.net.URL;
-import java.util.List;
 import java.util.ResourceBundle;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.FutureTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Platform;
@@ -27,7 +24,6 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.stage.DirectoryChooser;
 import org.jlawyer.backupmgr.BackupProgressUiCallback;
-import org.jlawyer.backupmgr.impl.DatabaseImport;
 import org.jlawyer.backupmgr.impl.RestoreExecutor;
 
 /**
@@ -55,6 +51,8 @@ public class BackupMgrController implements Initializable {
     private Button cmdBrowseDataDir;
     @FXML
     private TextField txtDataDir;
+
+    private final UiQuestion databaseErrorQuestion = new UiQuestion(Platform::runLater);
 
     /**
      * Initializes the controller class.
@@ -131,14 +129,14 @@ public class BackupMgrController implements Initializable {
             if(failed)
                 return;
             
-            List<String> databaseErrors = re.getDatabaseErrors();
+            String databaseErrors = re.getDatabaseErrorMessage();
             Platform.runLater(() -> {
                 prgRestore.setProgress(1.0d);
-                if (databaseErrors.isEmpty()) {
+                if (databaseErrors == null) {
                     lblProgress.setText("Wiederherstellung abgeschlossen.");
                 } else {
                     lblProgress.setText("Wiederherstellung mit Fehlern abgeschlossen.");
-                    showDatabaseErrors(DatabaseImport.completedWithErrorsMessage(databaseErrors));
+                    showDatabaseErrors(databaseErrors);
                 }
                 cmdRestore.disableProperty().set(false);
             });
@@ -148,10 +146,10 @@ public class BackupMgrController implements Initializable {
 
     /**
      * Asks on the JavaFX thread whether the restore goes on after an error in the database dump, and waits for the
-     * answer. Closing the dialog aborts.
+     * answer. Closing the dialog or the application aborts.
      */
     private boolean continueAfterDatabaseError(String message) {
-        FutureTask<Boolean> question = new FutureTask<>(() -> {
+        return this.databaseErrorQuestion.ask(() -> {
             ButtonType abort = new ButtonType("Abbrechen", ButtonBar.ButtonData.CANCEL_CLOSE);
             ButtonType proceed = new ButtonType("Fehler ignorieren und fortsetzen", ButtonBar.ButtonData.OK_DONE);
             Alert alert = new Alert(Alert.AlertType.WARNING, message, abort, proceed);
@@ -160,16 +158,13 @@ public class BackupMgrController implements Initializable {
             alert.setResizable(true);
             return alert.showAndWait().orElse(abort) == proceed;
         });
-        Platform.runLater(question);
-        try {
-            return question.get();
-        } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
-            return false;
-        } catch (ExecutionException ex) {
-            Logger.getLogger(BackupMgrController.class.getName()).log(Level.SEVERE, null, ex);
-            return false;
-        }
+    }
+
+    /**
+     * Called when the application stops: a restore waiting for an answer is aborted instead of waiting forever.
+     */
+    public void shutdown() {
+        this.databaseErrorQuestion.close();
     }
 
     /**

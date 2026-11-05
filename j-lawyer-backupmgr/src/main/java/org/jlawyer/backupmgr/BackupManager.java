@@ -671,12 +671,15 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import org.jlawyer.backupmgr.controller.BackupMgrController;
 
 /**
  *
  * @author jens
  */
 public class BackupManager extends Application {
+
+    private BackupMgrController controller = null;
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -686,12 +689,22 @@ public class BackupManager extends Application {
         FXMLLoader fxmlLoader = new FXMLLoader(location);
 
         Scene scene = new Scene(fxmlLoader.load());
+        this.controller = fxmlLoader.getController();
 
         primaryStage.setTitle("j-lawyer.org Backupmanager");
         primaryStage.setScene(scene);
         primaryStage.setResizable(false);
         primaryStage.show();
 
+    }
+
+    @Override
+    public void stop() throws Exception {
+        // a restore waiting for an answer in a dialog is aborted, it would otherwise keep the process alive
+        if (this.controller != null) {
+            this.controller.shutdown();
+        }
+        super.stop();
     }
 
     /**

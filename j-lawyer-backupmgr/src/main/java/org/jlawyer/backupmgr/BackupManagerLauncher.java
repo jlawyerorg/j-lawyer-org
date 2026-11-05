@@ -668,7 +668,6 @@ import java.awt.GraphicsEnvironment;
 import java.awt.HeadlessException;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
-import org.jlawyer.backupmgr.impl.DatabaseImport;
 import org.jlawyer.backupmgr.impl.RestoreExecutor;
 
 /**
@@ -769,8 +768,8 @@ public class BackupManagerLauncher {
             if (failed) {
                 System.exit(1);
             }
-            if (!re.getDatabaseErrors().isEmpty()) {
-                System.out.println(DatabaseImport.completedWithErrorsMessage(re.getDatabaseErrors()));
+            if (re.getDatabaseErrorMessage() != null) {
+                System.out.println(re.getDatabaseErrorMessage());
                 System.exit(2);
             }
             System.out.println("Backup erfolgreich wiederhergestellt.");
