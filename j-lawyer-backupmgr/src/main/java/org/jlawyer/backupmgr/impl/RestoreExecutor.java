@@ -705,6 +705,10 @@ public class RestoreExecutor {
 
     private long validationTempCounter = 0;
 
+    private boolean ignoreDatabaseErrors = false;
+    private DatabaseImport.ErrorHandler databaseErrorHandler = null;
+    private List<String> databaseErrors = new ArrayList<>();
+
     public RestoreExecutor(String dataDir, String backupDir, String encryptionPassword, String dbHost, String dbPort, String dbName, String dbUser, String dbPassword) {
 
         this.dbHost=dbHost;
@@ -753,6 +757,29 @@ public class RestoreExecutor {
 
     public String getFilenameEncoding() {
         return this.filenameEncoding;
+    }
+
+    /**
+     * @param ignore true to skip failing statements of the database dump without asking, for unattended restores
+     */
+    public void setIgnoreDatabaseErrors(boolean ignore) {
+        this.ignoreDatabaseErrors = ignore;
+    }
+
+    /**
+     * @param handler asks whether the restore goes on after an error in a statement of the database dump. Without a
+     * handler, such an error aborts the restore.
+     */
+    public void setDatabaseErrorHandler(DatabaseImport.ErrorHandler handler) {
+        this.databaseErrorHandler = handler;
+    }
+
+    /**
+     * @return the errors of the statements of the database dump that the last restore skipped, empty if there were
+     * none
+     */
+    public List<String> getDatabaseErrors() {
+        return this.databaseErrors;
     }
 
     private void validateDatabaseConnection(BackupProgressCallback progress) throws Exception {
@@ -1252,43 +1279,10 @@ public class RestoreExecutor {
         //"\"drop database if exists jlawyerdb;quit;\""    
         };
 
-        Runtime shell = Runtime.getRuntime();
-        Process process = null;
-
-        process = shell.exec(cmd);
-
-        //process.waitFor();
-        BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        String line = null;
-
-        while ((line = br.readLine()) != null) {
-            System.out.println(line);
-        }
-        br.close();
-
-        br = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-        line = null;
-        String firstError = null;
-
-        while ((line = br.readLine()) != null) {
-            System.out.println(line);
-            // errors in statements of the sourced dump do not change the exit code of the mysql client
-            if (firstError == null && line.startsWith("ERROR")) {
-                firstError = line;
-            }
-        }
-        br.close();
-        try {
-            process.waitFor();
-        } catch (Throwable t) {
-            t.printStackTrace();
-        }
-        if (process.exitValue() != 0) {
-            throw new Exception("Datenbankwiederherstellung fehlgeschlagen!");
-        }
-        if (firstError != null) {
-            throw new Exception("Datenbankwiederherstellung fehlgeschlagen: " + firstError);
-        }
+        // the files are restored at this point: after an error in the dump, the user may let the import go on to the end
+        this.databaseErrors = new ArrayList<>();
+        final String[] command = cmd;
+        this.databaseErrors = DatabaseImport.importDump(force -> DatabaseImport.runClient(command, force), this.ignoreDatabaseErrors, this.databaseErrorHandler, progress);
     }
 
 }
