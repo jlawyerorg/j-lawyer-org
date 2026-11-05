@@ -663,43 +663,65 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.modulebar;
 
-import java.awt.Color;
 import java.awt.Font;
-import org.apache.log4j.Logger;
-import themes.colors.DefaultColorTheme;
+import java.awt.Graphics;
+import java.awt.font.TextAttribute;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 
 /**
+ * Caption of a group of modules in the dark sidebar: small, letter-spaced capitals. In collapsed
+ * mode the caption is replaced by a thin separator line.
  *
  * @author jens
  */
 public class ModuleGroupLabel extends javax.swing.JPanel {
 
-    private static final Logger log = Logger.getLogger(ModuleGroupLabel.class.getName());
+    private boolean collapsed = false;
 
     /**
-     * Creates new form ModuleButton
+     * Creates new form ModuleGroupLabel
+     *
+     * @param groupCaption the caption of the group
      */
     public ModuleGroupLabel(String groupCaption) {
         initComponents();
-        this.lblModuleName.setText(groupCaption);
-        this.lblModuleName.setFont(this.lblModuleName.getFont().deriveFont(Font.BOLD));
-        //this.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
-        
-        
-//        this.setBackground(Color.WHITE);
-//        this.lblModuleName.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE.darker());
-
-        this.lblModuleName.setForeground(Color.WHITE);
-        this.setBackground(DefaultColorTheme.COLOR_LOGO_BLUE);
-
+        this.setText(groupCaption);
+        Map<TextAttribute, Object> attrs = new HashMap<>();
+        attrs.put(TextAttribute.TRACKING, 0.08f);
+        Font f = this.lblModuleName.getFont();
+        this.lblModuleName.setFont(f.deriveFont(Font.BOLD, f.getSize2D() - 2f).deriveFont(attrs));
+        this.lblModuleName.setForeground(SidebarColors.TEXT_GROUP);
     }
 
-    public void setText(String text) {
-        this.lblModuleName.setText(text);
+    public final void setText(String text) {
+        this.lblModuleName.setText(text == null ? "" : text.toUpperCase(Locale.GERMAN));
+        this.lblModuleName.setToolTipText(text);
     }
 
     public String getText() {
         return this.lblModuleName.getText();
+    }
+
+    /**
+     * @param collapsed true to show a separator line instead of the caption
+     */
+    public void setCollapsed(boolean collapsed) {
+        this.collapsed = collapsed;
+        this.lblModuleName.setVisible(!collapsed);
+        this.revalidate();
+        this.repaint();
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        if (this.collapsed) {
+            g.setColor(SidebarColors.SEPARATOR);
+            int y = this.getHeight() / 2;
+            g.fillRect(12, y, Math.max(0, this.getWidth() - 24), 1);
+        }
     }
 
     /**
@@ -713,31 +735,32 @@ public class ModuleGroupLabel extends javax.swing.JPanel {
 
         lblModuleName = new javax.swing.JLabel();
 
+        setOpaque(false);
+
+        lblModuleName.setForeground(new java.awt.Color(255, 255, 255));
         lblModuleName.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         lblModuleName.setText("jLabel1");
-        lblModuleName.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(lblModuleName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(layout.createSequentialGroup()
+                .addGap(16, 16, 16)
+                .addComponent(lblModuleName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(8, 8, 8))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(lblModuleName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(12, 12, 12)
+                .addComponent(lblModuleName)
+                .addGap(4, 4, 4))
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel lblModuleName;
     // End of variables declaration//GEN-END:variables
-
-    
-
 }
