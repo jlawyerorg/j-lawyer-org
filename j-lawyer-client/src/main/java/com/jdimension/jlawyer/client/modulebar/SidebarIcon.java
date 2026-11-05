@@ -746,17 +746,25 @@ public class SidebarIcon implements Icon {
 
         int rgb = color.getRGB() & 0x00FFFFFF;
         float colorAlpha = color.getAlpha() / 255f;
+        // icons with a transparent background carry their shape in the alpha channel (this also
+        // covers white glyphs); icons with an opaque (white) background need the distance to white
+        boolean transparentBackground = hasTransparentBackground(src);
         BufferedImage mask = new BufferedImage(sw, sh, BufferedImage.TYPE_INT_ARGB);
         for (int y = 0; y < sh; y++) {
             for (int x = 0; x < sw; x++) {
                 int p = src.getRGB(x, y);
                 int a = (p >>> 24) & 0xFF;
-                int r = (p >> 16) & 0xFF;
-                int g = (p >> 8) & 0xFF;
-                int b = p & 0xFF;
-                // distance to white: white background -> 0, colored glyph -> ~1
-                float ink = (1f - Math.min(r, Math.min(g, b)) / 255f) * 1.15f;
-                ink = Math.max(0f, Math.min(1f, ink));
+                float ink;
+                if (transparentBackground) {
+                    ink = 1f;
+                } else {
+                    int r = (p >> 16) & 0xFF;
+                    int g = (p >> 8) & 0xFF;
+                    int b = p & 0xFF;
+                    // distance to white: white background -> 0, colored glyph -> ~1
+                    ink = (1f - Math.min(r, Math.min(g, b)) / 255f) * 1.15f;
+                    ink = Math.max(0f, Math.min(1f, ink));
+                }
                 int alpha = Math.round(a * ink * colorAlpha);
                 mask.setRGB(x, y, (alpha << 24) | rgb);
             }
@@ -774,6 +782,33 @@ public class SidebarIcon implements Icon {
         g2.drawImage(mask, (size - w) / 2, (size - h) / 2, w, h, null);
         g2.dispose();
         return out;
+    }
+
+    /**
+     * @return true if most pixels of the image border are transparent
+     */
+    private static boolean hasTransparentBackground(BufferedImage img) {
+        int w = img.getWidth();
+        int h = img.getHeight();
+        int transparent = 0;
+        int total = 0;
+        for (int x = 0; x < w; x++) {
+            for (int y : new int[]{0, h - 1}) {
+                total++;
+                if (((img.getRGB(x, y) >>> 24) & 0xFF) < 32) {
+                    transparent++;
+                }
+            }
+        }
+        for (int y = 0; y < h; y++) {
+            for (int x : new int[]{0, w - 1}) {
+                total++;
+                if (((img.getRGB(x, y) >>> 24) & 0xFF) < 32) {
+                    transparent++;
+                }
+            }
+        }
+        return transparent * 2 > total;
     }
 
     @Override
