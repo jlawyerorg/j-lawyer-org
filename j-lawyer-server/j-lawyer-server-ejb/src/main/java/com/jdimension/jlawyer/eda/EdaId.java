@@ -662,6 +662,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.eda;
 
+import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import java.util.Locale;
 
 /**
@@ -745,7 +746,7 @@ public class EdaId {
      * @return the key, with the code in capitals so one code does not end up with two counters
      */
     public static String settingKey(String prefix) {
-        return "eda." + normalizePrefix(prefix) + ".lastused";
+        return ServerSettingsKeys.EDA_PREFIX + normalizePrefix(prefix) + ".lastused";
     }
 
     /**

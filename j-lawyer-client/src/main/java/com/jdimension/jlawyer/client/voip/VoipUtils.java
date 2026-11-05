@@ -730,7 +730,10 @@ public class VoipUtils {
             // use user-specified executable
 //            String osName = System.getProperty("os.name").toLowerCase();
             log.debug("launching softphone using specific executable");
-            phoneNr = SipUtils.E164Number(phoneNr);
+            phoneNr = dialableNumber(phoneNr);
+            if (phoneNr == null) {
+                return;
+            }
             phoneNr = "00" + phoneNr;
             executable(phoneNr);
 //            if (osName.indexOf("win") > -1) {
@@ -743,7 +746,10 @@ public class VoipUtils {
         } else {
             // use protocolhandler
             String protocol = set.getConfiguration(ClientSettings.CONF_VOIP_SOFTPHONE_PROTOCOL_NAME, "tel://");
-            phoneNr = SipUtils.E164Number(phoneNr);
+            phoneNr = dialableNumber(phoneNr);
+            if (phoneNr == null) {
+                return;
+            }
             phoneNr = "00" + phoneNr;
             phoneNr = protocol + phoneNr;
             log.debug("launching softphone using protocolhandler");
@@ -755,6 +761,24 @@ public class VoipUtils {
                 macosProtocolHandler(phoneNr);
             }
         }
+    }
+
+    /**
+     * Normalizes a phone number for dialing with a softphone: E.164 without the leading plus sign,
+     * digits only.
+     *
+     * @param phoneNr the phone number as entered
+     * @return the digits to dial, or null if the number contains no digits (an error message has
+     * been shown then)
+     */
+    static String dialableNumber(String phoneNr) {
+        String digits = phoneNr == null ? "" : SipUtils.E164Number(phoneNr).replaceAll("[^0-9]", "");
+        if (digits.isEmpty()) {
+            log.warn("not dialing invalid phone number: " + phoneNr);
+            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Ungültige Telefonnummer: " + phoneNr, com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return null;
+        }
+        return digits;
     }
 
     private static void executable(String phoneNr) {

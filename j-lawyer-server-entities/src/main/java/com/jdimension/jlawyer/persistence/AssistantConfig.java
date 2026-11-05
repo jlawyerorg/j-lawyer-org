@@ -705,6 +705,24 @@ public class AssistantConfig implements Serializable {
         this.id = id;
     }
 
+    /**
+     * Returns a detached copy of this configuration without the password, for handing it out to
+     * clients. The server always loads the stored configuration by id before calling an assistant.
+     *
+     * @return a copy with an empty password
+     */
+    public AssistantConfig copyWithoutPassword() {
+        AssistantConfig c = new AssistantConfig(this.id);
+        c.setName(this.name);
+        c.setUrl(this.url);
+        c.setUserName(this.userName);
+        c.setPassword(null);
+        c.setConnectionTimeout(this.connectionTimeout);
+        c.setReadTimeout(this.readTimeout);
+        c.setConfiguration(this.configuration);
+        return c;
+    }
+
     public String getId() {
         return id;
     }

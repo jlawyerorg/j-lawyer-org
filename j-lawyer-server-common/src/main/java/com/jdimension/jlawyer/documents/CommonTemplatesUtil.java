@@ -667,6 +667,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.regex.Matcher;
 import org.apache.log4j.Logger;
 
 /**
@@ -699,10 +700,31 @@ public class CommonTemplatesUtil {
                 value = "";
             }
 
-            content = content.replaceAll(keyRegX, value.trim());
+            // the value is inserted literally - $ and \ have a special meaning in replacement strings
+            content = content.replaceAll(keyRegX, Matcher.quoteReplacement(value.trim()));
         }
 
         return content;
+    }
+
+    /**
+     * Like {@link #replacePlaceHolders(String, HashMap)}, for plain text such as e-mail templates in text/plain: a
+     * placeholder without a value between two spaces leaves one space instead of two (e.g. a salutation with a title
+     * that is empty). In HTML the two spaces are shown as one anyway.
+     *
+     * @param content the plain text with placeholders
+     * @param values the values of the placeholders
+     * @return the text with the placeholders replaced
+     */
+    public static String replacePlaceHoldersInText(String content, HashMap<String, Object> values) {
+        for (String key : values.keySet()) {
+            String value = (String) values.get(key);
+            if (value == null || value.trim().isEmpty()) {
+                String keyRegX = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}";
+                content = content.replaceAll("(?<= )" + keyRegX + " ", "");
+            }
+        }
+        return replacePlaceHolders(content, values);
     }
 
 }

@@ -918,6 +918,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.initializing = true;
         initComponents();
 
+        this.initInvoiceSortAndFilter();
+
         this.txtFilterParties.putClientProperty("JTextField.placeholderText", "Beteiligte filtern...");
         this.txtFilterParties.putClientProperty("JTextField.showClearButton", true);
         this.txtFilterParties.getDocument().addDocumentListener(new DocumentListener() {
@@ -1254,6 +1256,201 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         return this.lastPopupClosed;
     }
 
+    // indexes of cmbInvoiceStatusFilter
+    private static final int INVOICE_FILTER_ALL = 0;
+    private static final int INVOICE_FILTER_OPEN = 1;
+    private static final int INVOICE_FILTER_OVERDUE = 2;
+    private static final int INVOICE_FILTER_NEW = 3;
+    private static final int INVOICE_FILTER_PAID = 4;
+    private static final int INVOICE_FILTER_CANCELLED = 5;
+
+    // indexes of cmbInvoiceSort
+    private static final int INVOICE_SORT_CREATED_DESC = 0;
+    private static final int INVOICE_SORT_CREATED_ASC = 1;
+    private static final int INVOICE_SORT_DUE_DESC = 2;
+    private static final int INVOICE_SORT_DUE_ASC = 3;
+    private static final int INVOICE_SORT_STATUS = 4;
+    private static final int INVOICE_SORT_NUMBER = 5;
+    private static final int INVOICE_SORT_AMOUNT_DESC = 6;
+
+    private boolean invoiceFilterInitializing = false;
+
+    private void initInvoiceSortAndFilter() {
+        this.invoiceFilterInitializing = true;
+        try {
+            this.txtFilterInvoices.putClientProperty("JTextField.placeholderText", "Belege filtern...");
+            this.txtFilterInvoices.putClientProperty("JTextField.showClearButton", true);
+            this.txtFilterInvoices.getDocument().addDocumentListener(new DocumentListener() {
+                @Override
+                public void insertUpdate(DocumentEvent e) {
+                    applyInvoiceSortAndFilter();
+                }
+
+                @Override
+                public void removeUpdate(DocumentEvent e) {
+                    applyInvoiceSortAndFilter();
+                }
+
+                @Override
+                public void changedUpdate(DocumentEvent e) {
+                    // Not called for plain text components
+                }
+            });
+
+            UserSettings us = UserSettings.getInstance();
+            this.cmbInvoiceSort.setSelectedIndex(parseComboIndex(us.getSetting(UserSettings.CONF_CASE_INVOICES_SORT, "" + INVOICE_SORT_CREATED_DESC), this.cmbInvoiceSort.getItemCount()));
+            this.cmbInvoiceStatusFilter.setSelectedIndex(parseComboIndex(us.getSetting(UserSettings.CONF_CASE_INVOICES_STATUSFILTER, "" + INVOICE_FILTER_ALL), this.cmbInvoiceStatusFilter.getItemCount()));
+        } catch (Throwable t) {
+            log.error("Could not restore invoice sort / filter settings", t);
+        } finally {
+            this.invoiceFilterInitializing = false;
+        }
+    }
+
+    private static int parseComboIndex(String value, int itemCount) {
+        try {
+            int i = Integer.parseInt(value);
+            if (i >= 0 && i < itemCount) {
+                return i;
+            }
+        } catch (Exception ex) {
+            // fall through to default
+        }
+        return 0;
+    }
+
+    /**
+     * Sorts the invoice entries in the "Belege" tab according to the selected
+     * sort order and hides all entries not matching the status / text filter.
+     * Entries are never removed from the panel, because other functions iterate
+     * over all invoices of the case using the panels components.
+     */
+    public void applyInvoiceSortAndFilter() {
+        if (this.invoiceFilterInitializing) {
+            return;
+        }
+
+        ArrayList<InvoiceEntryPanel> entries = new ArrayList<>();
+        for (Component c : this.pnlInvoices.getComponents()) {
+            if (c instanceof InvoiceEntryPanel && ((InvoiceEntryPanel) c).getInvoice() != null) {
+                entries.add((InvoiceEntryPanel) c);
+            }
+        }
+        // only touch the panel if it exclusively contains invoice entries
+        boolean reorder = entries.size() == this.pnlInvoices.getComponentCount();
+
+        if (reorder) {
+            Comparator<InvoiceEntryPanel> comp = getInvoiceComparator(this.cmbInvoiceSort.getSelectedIndex());
+            entries.sort(comp);
+            this.pnlInvoices.removeAll();
+            for (InvoiceEntryPanel ie : entries) {
+                this.pnlInvoices.add(ie);
+            }
+        }
+
+        int statusFilter = this.cmbInvoiceStatusFilter.getSelectedIndex();
+        String search = this.txtFilterInvoices.getText();
+        search = (search == null) ? "" : search.trim().toLowerCase();
+        Date now = new Date();
+        int visible = 0;
+        for (InvoiceEntryPanel ie : entries) {
+            Invoice inv = ie.getInvoice();
+            boolean match = matchesInvoiceStatusFilter(inv, statusFilter, now) && matchesInvoiceTextFilter(inv, search);
+            ie.setVisible(match);
+            if (match) {
+                visible++;
+            }
+        }
+
+        int total = entries.size();
+        if (visible == total) {
+            this.lblInvoiceCount.setText(total + (total == 1 ? " Beleg" : " Belege"));
+        } else {
+            this.lblInvoiceCount.setText(visible + " von " + total + (total == 1 ? " Beleg" : " Belegen"));
+        }
+
+        this.pnlInvoices.revalidate();
+        this.pnlInvoices.repaint();
+    }
+
+    private static boolean isInvoiceOverdue(Invoice inv, Date now) {
+        return inv.getStatus() != Invoice.STATUS_PAID && inv.getStatus() != Invoice.STATUS_CANCELLED
+                && inv.getDueDate() != null && inv.getDueDate().before(now);
+    }
+
+    private static boolean matchesInvoiceStatusFilter(Invoice inv, int filter, Date now) {
+        switch (filter) {
+            case INVOICE_FILTER_OPEN:
+                return inv.getStatus() >= Invoice.STATUS_OPEN && inv.getStatus() <= Invoice.STATUS_OPEN_NONENFORCEABLE;
+            case INVOICE_FILTER_OVERDUE:
+                return isInvoiceOverdue(inv, now);
+            case INVOICE_FILTER_NEW:
+                return inv.getStatus() == Invoice.STATUS_NEW;
+            case INVOICE_FILTER_PAID:
+                return inv.getStatus() == Invoice.STATUS_PAID;
+            case INVOICE_FILTER_CANCELLED:
+                return inv.getStatus() == Invoice.STATUS_CANCELLED;
+            case INVOICE_FILTER_ALL:
+            default:
+                return true;
+        }
+    }
+
+    private static boolean matchesInvoiceTextFilter(Invoice inv, String search) {
+        if (search.isEmpty()) {
+            return true;
+        }
+        if (inv.getInvoiceNumber() != null && inv.getInvoiceNumber().toLowerCase().contains(search)) {
+            return true;
+        }
+        if (inv.getName() != null && inv.getName().toLowerCase().contains(search)) {
+            return true;
+        }
+        if (inv.getContact() != null) {
+            String contact = inv.getContact().toDisplayName();
+            if (contact != null && contact.toLowerCase().contains(search)) {
+                return true;
+            }
+        }
+        if (inv.getInvoiceType() != null && inv.getInvoiceType().getDisplayName() != null && inv.getInvoiceType().getDisplayName().toLowerCase().contains(search)) {
+            return true;
+        }
+        return false;
+    }
+
+    private static BigDecimal getInvoiceDisplayAmount(Invoice inv) {
+        // same logic as in InvoiceEntryPanel
+        BigDecimal amount = inv.isSmallBusiness() ? inv.getTotalGross() : inv.getTotal();
+        return amount == null ? BigDecimal.ZERO : amount;
+    }
+
+    private static Comparator<InvoiceEntryPanel> getInvoiceComparator(int sortMode) {
+        Comparator<Date> dateAsc = Comparator.nullsLast(Comparator.naturalOrder());
+        Comparator<Date> dateDesc = Comparator.nullsLast(Comparator.<Date>reverseOrder());
+        Comparator<InvoiceEntryPanel> createdDesc = Comparator.comparing(ie -> ie.getInvoice().getCreationDate(), dateDesc);
+        switch (sortMode) {
+            case INVOICE_SORT_CREATED_ASC:
+                return Comparator.comparing(ie -> ie.getInvoice().getCreationDate(), dateAsc);
+            case INVOICE_SORT_DUE_DESC:
+                return Comparator.<InvoiceEntryPanel, Date>comparing(ie -> ie.getInvoice().getDueDate(), dateDesc).thenComparing(createdDesc);
+            case INVOICE_SORT_DUE_ASC:
+                return Comparator.<InvoiceEntryPanel, Date>comparing(ie -> ie.getInvoice().getDueDate(), dateAsc).thenComparing(createdDesc);
+            case INVOICE_SORT_STATUS:
+                return Comparator.<InvoiceEntryPanel>comparingInt(ie -> ie.getInvoice().getStatus())
+                        .thenComparing(ie -> ie.getInvoice().getDueDate(), dateAsc)
+                        .thenComparing(createdDesc);
+            case INVOICE_SORT_NUMBER:
+                return Comparator.<InvoiceEntryPanel, String>comparing(ie -> ie.getInvoice().getInvoiceNumber(), Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER))
+                        .thenComparing(createdDesc);
+            case INVOICE_SORT_AMOUNT_DESC:
+                return Comparator.<InvoiceEntryPanel, BigDecimal>comparing(ie -> getInvoiceDisplayAmount(ie.getInvoice()), Comparator.reverseOrder())
+                        .thenComparing(createdDesc);
+            case INVOICE_SORT_CREATED_DESC:
+            default:
+                return createdDesc;
+        }
+    }
+
     public void duplicateInvoice(String caseId, String invoiceId, boolean asCredit) {
         if (caseId == null) {
             SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, null, null);
@@ -1305,7 +1502,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     ip.setPaidTotal(invoiceCopy.getTotal(), BigDecimal.ZERO, invoiceCopy.getCurrency());
                 }
                 this.pnlInvoices.add(ip);
-                this.pnlInvoices.revalidate();
+                this.applyInvoiceSortAndFilter();
             }
         } catch (Exception ex) {
             log.error("Error determining invoice pools", ex);
@@ -2328,6 +2525,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.aiChatHistoryPanel.setCaseContext(this.dto, this);
 
         this.txtFilterParties.setText("");
+        this.txtFilterInvoices.setText("");
 
         this.groupPrivilegesChanged = false;
         this.tabPrivileges.setSelectedIndex(0);
@@ -2555,6 +2753,21 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             a.start();
         }
 
+    }
+
+    /**
+     * Like waitForOpenDocument, for several documents one after the other. The callback is not invoked if
+     * the user cancels waiting for one of them.
+     */
+    private void waitForOpenDocuments(List<ArchiveFileDocumentsBean> docs, ProgressableActionCallback callback) {
+        for (int i = 0; i < docs.size(); i++) {
+            if (this.isOpenForWrite(docs.get(i).getId())) {
+                List<ArchiveFileDocumentsBean> remaining = docs.subList(i + 1, docs.size());
+                this.waitForOpenDocument(docs.get(i), () -> this.waitForOpenDocuments(remaining, callback));
+                return;
+            }
+        }
+        callback.actionFinished();
     }
 
     public void clearInputs() {
@@ -2988,6 +3201,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         jScrollPane5 = new javax.swing.JScrollPane();
         pnlInvoices = new javax.swing.JPanel();
         jLabel32 = new javax.swing.JLabel();
+        lblInvoiceCount = new javax.swing.JLabel();
+        txtFilterInvoices = new javax.swing.JTextField();
+        cmbInvoiceStatusFilter = new javax.swing.JComboBox();
+        cmbInvoiceSort = new javax.swing.JComboBox();
         jPanel15 = new javax.swing.JPanel();
         cmdAddAccountEntry = new javax.swing.JButton();
         jScrollPane10 = new javax.swing.JScrollPane();
@@ -4196,6 +4413,26 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         jLabel32.setText("erstellte Rechnungen und Belege");
 
+        lblInvoiceCount.setText("0 Belege");
+
+        txtFilterInvoices.setToolTipText("Belegnummer, Bezeichnung, Empfänger oder Belegart");
+
+        cmbInvoiceStatusFilter.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "alle", "offen (inkl. Mahnstufen)", "überfällig", "neu", "bezahlt", "storniert" }));
+        cmbInvoiceStatusFilter.setToolTipText("Belege nach Status filtern");
+        cmbInvoiceStatusFilter.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbInvoiceStatusFilterActionPerformed(evt);
+            }
+        });
+
+        cmbInvoiceSort.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Erstellt ↓", "Erstellt ↑", "Fällig ↓", "Fällig ↑", "Status", "Belegnummer", "Betrag ↓" }));
+        cmbInvoiceSort.setToolTipText("Belege sortieren");
+        cmbInvoiceSort.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbInvoiceSortActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel8Layout = new org.jdesktop.layout.GroupLayout(jPanel8);
         jPanel8.setLayout(jPanel8Layout);
         jPanel8Layout.setHorizontalGroup(
@@ -4209,7 +4446,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(cmdNewInvoice)
                         .add(18, 18, 18)
                         .add(jLabel32)
-                        .add(0, 571, Short.MAX_VALUE))
+                        .add(0, 18, Short.MAX_VALUE)
+                        .add(lblInvoiceCount)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(txtFilterInvoices, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 180, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmbInvoiceStatusFilter, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmbInvoiceSort, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .add(jScrollPane5))
                 .addContainerGap())
         );
@@ -4220,7 +4464,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
                     .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel7, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(org.jdesktop.layout.GroupLayout.LEADING, cmdNewInvoice, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(jLabel32, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(jLabel32, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(lblInvoiceCount, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(txtFilterInvoices, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(cmbInvoiceStatusFilter, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(cmbInvoiceSort, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jScrollPane5)
                 .addContainerGap())
@@ -6583,37 +6831,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-            HashMap<String, BigDecimal> invoiceTotals = new HashMap<>();
             List<CaseAccountEntry> accountEntries = fileService.getAccountEntries(this.dto.getId());
             for (CaseAccountEntry cae : accountEntries) {
                 this.addAccountEntryRow(cae);
-                if (cae.getInvoice() != null) {
-                    if (!invoiceTotals.containsKey(cae.getInvoice().getId())) {
-                        invoiceTotals.put(cae.getInvoice().getId(), BigDecimal.ZERO);
-                    }
-                    invoiceTotals.put(cae.getInvoice().getId(), invoiceTotals.get(cae.getInvoice().getId()).add(cae.calculateEarningsTotal()));
-                }
             }
             ComponentUtils.autoSizeColumns(tblAccountEntries);
             this.updateAccountTotals();
-
-            for (int i = 0; i < this.pnlInvoices.getComponentCount(); i++) {
-                InvoiceEntryPanel ie = (InvoiceEntryPanel) this.pnlInvoices.getComponent(i);
-                Invoice inv = ie.getInvoice();
-                if (invoiceTotals.containsKey(inv.getId())) {
-                    if (inv.isSmallBusiness()) {
-                        ie.setPaidTotal(inv.getTotalGross(), invoiceTotals.get(inv.getId()), inv.getCurrency());
-                    } else {
-                        ie.setPaidTotal(inv.getTotal(), invoiceTotals.get(inv.getId()), inv.getCurrency());
-                    }
-                } else {
-                    if (inv.isSmallBusiness()) {
-                        ie.setPaidTotal(inv.getTotalGross(), BigDecimal.ZERO, inv.getCurrency());
-                    } else {
-                        ie.setPaidTotal(inv.getTotal(), BigDecimal.ZERO, inv.getCurrency());
-                    }
-                }
-            }
+            this.updateInvoicePaidTotals();
 
         } catch (Exception ex) {
             log.error("Error loading account entries", ex);
@@ -7330,6 +7554,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         }
 
+        // wait for open documents with the same logic as "Ablegen als PDF" (convertDocumentToPdf)
+        this.waitForOpenDocuments(selectedDocs, () -> this.sendDocumentsAsPdfByEmail(selectedDocs));
+    }//GEN-LAST:event_mnuSendDocumentPDFActionPerformed
+
+    private void sendDocumentsAsPdfByEmail(ArrayList<ArchiveFileDocumentsBean> selectedDocs) {
         // save form data so changes are available immediately for mail templates
         if (!this.readOnly) {
             this.saveFormData();
@@ -7363,7 +7592,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         a.start();
 
-    }//GEN-LAST:event_mnuSendDocumentPDFActionPerformed
+    }
 
     private void mnuOpenInExternalMailerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuOpenInExternalMailerActionPerformed
         try {
@@ -8070,6 +8299,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         }
 
+        // wait for open documents with the same logic as "Ablegen als PDF" (convertDocumentToPdf)
+        this.waitForOpenDocuments(selectedDocs, () -> this.sendDocumentsAsPdfByBea(selectedDocs));
+    }//GEN-LAST:event_mnuSendBeaDocumentPDFActionPerformed
+
+    private void sendDocumentsAsPdfByBea(ArrayList<ArchiveFileDocumentsBean> selectedDocs) {
         try {
             if (!BeaAccess.getInstance().ensureLoggedIn()) return;
         } catch (Exception ex) {
@@ -8097,7 +8331,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         SendPDFAction a = new SendPDFAction(pi, this.caseFolderPanel1, dlg, dlg);
 
         a.start();
-    }//GEN-LAST:event_mnuSendBeaDocumentPDFActionPerformed
+    }
 
     private CaseFolder resolveOutgoingDocumentFolder(List<ArchiveFileDocumentsBean> documents) {
         if (documents == null || documents.isEmpty()) {
@@ -8769,6 +9003,22 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
     }//GEN-LAST:event_togCaseSyncActionPerformed
 
+    private void cmbInvoiceStatusFilterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbInvoiceStatusFilterActionPerformed
+        if (this.invoiceFilterInitializing) {
+            return;
+        }
+        UserSettings.getInstance().setSetting(UserSettings.CONF_CASE_INVOICES_STATUSFILTER, "" + this.cmbInvoiceStatusFilter.getSelectedIndex());
+        this.applyInvoiceSortAndFilter();
+    }//GEN-LAST:event_cmbInvoiceStatusFilterActionPerformed
+
+    private void cmbInvoiceSortActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbInvoiceSortActionPerformed
+        if (this.invoiceFilterInitializing) {
+            return;
+        }
+        UserSettings.getInstance().setSetting(UserSettings.CONF_CASE_INVOICES_SORT, "" + this.cmbInvoiceSort.getSelectedIndex());
+        this.applyInvoiceSortAndFilter();
+    }//GEN-LAST:event_cmbInvoiceSortActionPerformed
+
     private void cmdNewInvoiceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewInvoiceActionPerformed
         InvoiceDialog dlg = new InvoiceDialog(this, this.dto, EditorsRegistry.getInstance().getMainWindow(), true, this.pnlInvolvedParties.getInvolvedPartiesAddress());
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
@@ -8777,7 +9027,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         InvoiceEntryPanel ip = new InvoiceEntryPanel(this);
         ip.setEntry(this.dto, dlg.getEntry(), this.pnlInvolvedParties.getInvolvedPartiesAddress());
         this.pnlInvoices.add(ip, 0);
-        this.pnlInvoices.revalidate();
+        this.applyInvoiceSortAndFilter();
 
     }//GEN-LAST:event_cmdNewInvoiceActionPerformed
 
@@ -9248,6 +9498,30 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     }
 
+    /**
+     * Recalculates paid / open of all invoices from the account entries currently shown in the case account table.
+     */
+    private void updateInvoicePaidTotals() {
+        HashMap<String, BigDecimal> invoiceTotals = new HashMap<>();
+        for (int r = 0; r < this.tblAccountEntries.getRowCount(); r++) {
+            CaseAccountEntry cae = ((AccountEntryRowIdentifier) this.tblAccountEntries.getValueAt(r, 0)).getAccountEntry();
+            if (cae.getInvoice() != null) {
+                invoiceTotals.merge(cae.getInvoice().getId(), cae.calculateEarningsTotal(), BigDecimal::add);
+            }
+        }
+
+        for (int i = 0; i < this.pnlInvoices.getComponentCount(); i++) {
+            InvoiceEntryPanel ie = (InvoiceEntryPanel) this.pnlInvoices.getComponent(i);
+            Invoice inv = ie.getInvoice();
+            BigDecimal paid = invoiceTotals.getOrDefault(inv.getId(), BigDecimal.ZERO);
+            if (inv.isSmallBusiness()) {
+                ie.setPaidTotal(inv.getTotalGross(), paid, inv.getCurrency());
+            } else {
+                ie.setPaidTotal(inv.getTotal(), paid, inv.getCurrency());
+            }
+        }
+    }
+
     public boolean addAccountEntry(CaseAccountEntry entry) {
         ArrayList<Invoice> invoices = new ArrayList<>();
         for (int i = 0; i < this.pnlInvoices.getComponentCount(); i++) {
@@ -9268,6 +9542,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 e = caseService.addAccountEntry(this.dto.getId(), e);
                 this.addAccountEntryRow(e);
                 this.updateAccountTotals();
+                this.updateInvoicePaidTotals();
             } catch (Throwable ex) {
                 log.error("Error saving account entry", ex);
                 JOptionPane.showMessageDialog(this, "Buchungseintrag konnte nicht erstellt werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -9305,6 +9580,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         this.updateAccountTotals();
+        this.updateInvoicePaidTotals();
 
 
     }//GEN-LAST:event_cmdRemoveAccountEntryActionPerformed
@@ -9326,7 +9602,23 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             invoices.add(inv);
         }
 
-        CaseAccountEntryDialog dlg = new CaseAccountEntryDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, ae.getAccountEntry(), this.pnlInvolvedParties.getInvolvedPartiesAddress(), invoices);
+        // the dialog writes its input into the entry it gets - edit a copy, the table keeps the stored values if saving fails
+        CaseAccountEntry original = ae.getAccountEntry();
+        CaseAccountEntry editedEntry = new CaseAccountEntry();
+        editedEntry.setId(original.getId());
+        editedEntry.setArchiveFileKey(original.getArchiveFileKey());
+        editedEntry.setEntryDate(original.getEntryDate());
+        editedEntry.setContact(original.getContact());
+        editedEntry.setInvoice(original.getInvoice());
+        editedEntry.setDescription(original.getDescription());
+        editedEntry.setEarnings(original.getEarnings());
+        editedEntry.setSpendings(original.getSpendings());
+        editedEntry.setEscrowIn(original.getEscrowIn());
+        editedEntry.setEscrowOut(original.getEscrowOut());
+        editedEntry.setExpendituresIn(original.getExpendituresIn());
+        editedEntry.setExpendituresOut(original.getExpendituresOut());
+
+        CaseAccountEntryDialog dlg = new CaseAccountEntryDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, editedEntry, this.pnlInvolvedParties.getInvolvedPartiesAddress(), invoices);
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
         if (dlg.getEntry() != null) {
@@ -9339,6 +9631,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 this.addAccountEntryRow(e);
 
                 this.updateAccountTotals();
+                this.updateInvoicePaidTotals();
             } catch (Throwable ex) {
                 log.error("Error saving account entry", ex);
                 JOptionPane.showMessageDialog(this, "Buchungseintrag konnte nicht aktualisiert werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -9504,6 +9797,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 this.addAccountEntryRow(e);
 
                 this.updateAccountTotals();
+                this.updateInvoicePaidTotals();
             } catch (Throwable ex) {
                 log.error("Error saving account entry", ex);
                 JOptionPane.showMessageDialog(this, "Buchungseintrag konnte nicht aktualisiert werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -10989,6 +11283,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JComboBox<Object> cmbFormType;
     protected javax.swing.JComboBox<String> cmbGroup;
     private javax.swing.JComboBox cmbHistoryTime;
+    private javax.swing.JComboBox cmbInvoiceSort;
+    private javax.swing.JComboBox cmbInvoiceStatusFilter;
     protected javax.swing.JComboBox cmbLawyer;
     protected javax.swing.JComboBox cmbSubjectField;
     private javax.swing.JButton cmdAddAccountEntry;
@@ -11120,6 +11416,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JLabel lblExpendituresOut;
     private javax.swing.JLabel lblExpendituresTotal;
     private javax.swing.JLabel lblHeaderInfo;
+    private javax.swing.JLabel lblInvoiceCount;
     protected javax.swing.JLabel lblPanelTitle;
     private javax.swing.JLabel lblSpendings;
     private com.jdimension.jlawyer.client.messenger.MessageSendPanel messageSendPanel1;
@@ -11224,6 +11521,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     protected javax.swing.JTextField txtCustom1;
     protected javax.swing.JTextField txtCustom2;
     protected javax.swing.JTextField txtFileNumber;
+    private javax.swing.JTextField txtFilterInvoices;
     private javax.swing.JTextField txtFilterParties;
     private javax.swing.JTextField txtFormDescription;
     private javax.swing.JTextField txtFormPrefix;

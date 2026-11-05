@@ -753,6 +753,8 @@ import themes.colors.DefaultColorTheme;
 public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor, EventConsumer {
 
     private static final Logger log = Logger.getLogger(DesktopPanel.class.getName());
+    // icon of the beA status label, shown greyed out while there are no unread messages
+    private javax.swing.Icon beaStatusIcon = null;
 
     private Image backgroundImage = null;
 
@@ -2816,11 +2818,17 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             this.revalidate();
             this.repaint();
         } else if(e instanceof BeaStatusEvent) {
+            // stays enabled (clickable) after login - only the icon is greyed out when there is nothing new
             this.lblUnreadBea.setEnabled(true);
+            if (this.beaStatusIcon == null) {
+                this.beaStatusIcon = this.lblUnreadBea.getIcon();
+            }
             if(((BeaStatusEvent) e).getUnread()>0) {
+                this.lblUnreadBea.setIcon(this.beaStatusIcon);
                 this.lblUnreadBea.setText("" + ((BeaStatusEvent) e).getUnread());
                 this.lblUnreadBea.setToolTipText("" + ((BeaStatusEvent) e).getUnread() + " ungelesene beA-Nachricht(en)");
             } else {
+                this.lblUnreadBea.setIcon(javax.swing.UIManager.getLookAndFeel().getDisabledIcon(this.lblUnreadBea, this.beaStatusIcon));
                 this.lblUnreadBea.setText("");
                 this.lblUnreadBea.setToolTipText("keine ungelesenen beA-Nachrichten");
             }

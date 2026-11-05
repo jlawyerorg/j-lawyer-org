@@ -680,6 +680,10 @@ import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragGestureEvent;
 import java.awt.dnd.DragGestureListener;
 import java.awt.dnd.DragSource;
+import java.awt.dnd.DragSourceAdapter;
+import java.awt.dnd.DragSourceDropEvent;
+import java.awt.dnd.DragSourceListener;
+import java.awt.dnd.InvalidDnDOperationException;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -1401,7 +1405,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         this.updateMetadata();
     }
 
-    // second line: sender / recipient, received date, keywords, tags and - if a title is shown
+    // metadata line: sender / recipient, received date, tags, keywords and - if a title is shown
     // instead - the file name
     private void updateMetadata() {
         if (this.document == null) {
@@ -1419,9 +1423,6 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         if (this.document.getReceivedDate() != null) {
             parts.add("Eing. " + dfShortDate.format(this.document.getReceivedDate()));
         }
-        if (this.document.getTitle() != null && !this.document.getTitle().isBlank()) {
-            parts.add(escape(this.document.getName()));
-        }
         // tags first, then keywords
         StringBuilder chips = new StringBuilder();
         for (String t : this.tags) {
@@ -1432,6 +1433,9 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         }
         if (chips.length() > 0) {
             parts.add(chips.toString().trim());
+        }
+        if (this.document.getTitle() != null && !this.document.getTitle().isBlank()) {
+            parts.add(escape(this.document.getName()));
         }
         if (parts.isEmpty()) {
             this.lblMetadata.setText("");
@@ -1451,7 +1455,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
     }
 
     private void documentClicked(MouseEvent evt, boolean deselectOthers) {
-        if (evt.getClickCount() == 2 && !evt.isConsumed()) {
+        if (evt.getClickCount() == 2 && javax.swing.SwingUtilities.isLeftMouseButton(evt) && !evt.isConsumed()) {
             evt.consume();
             this.caseContainer.openSelectedDocument(this.document);
         } else if (evt.getClickCount() == 1 && !evt.isConsumed()) {
@@ -1643,6 +1647,19 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
 
     @Override
     public void dragGestureRecognized(DragGestureEvent dge) {
+        // grabbing a document that is not checked drags only this document: check it alone, because the
+        // drop targets treat the selection as what is being dragged. Preview and tags are updated once the
+        // drag has ended, so the drag starts without waiting for them.
+        DragSourceListener refreshAfterDrag = null;
+        if (!this.isSelected()) {
+            this.documentsContainer.selectOnlyDocumentEntry(this);
+            refreshAfterDrag = new DragSourceAdapter() {
+                @Override
+                public void dragDropEnd(DragSourceDropEvent dsde) {
+                    caseContainer.documentSelectionChanged();
+                }
+            };
+        }
         ArrayList<ArchiveFileDocumentsBean> selDocs = this.documentsContainer.getSelectedDocuments();
         if (selDocs == null || selDocs.isEmpty()) {
             selDocs = new ArrayList<>();
@@ -1650,7 +1667,14 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         }
         // Use copy cursor during drag operation; internal folder moves still work because
         // FolderListCell reads the transfer data regardless of the drop action.
-        this.dragSource.startDrag(dge, DragSource.DefaultCopyDrop, new DocumentsTransferable(selDocs), null);
+        try {
+            this.dragSource.startDrag(dge, DragSource.DefaultCopyDrop, new DocumentsTransferable(selDocs), refreshAfterDrag);
+        } catch (InvalidDnDOperationException ex) {
+            if (refreshAfterDrag != null) {
+                this.caseContainer.documentSelectionChanged();
+            }
+            throw ex;
+        }
     }
 
 }

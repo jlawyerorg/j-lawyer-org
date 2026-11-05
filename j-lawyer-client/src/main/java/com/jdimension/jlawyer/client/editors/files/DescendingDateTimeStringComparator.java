@@ -697,9 +697,11 @@ public class DescendingDateTimeStringComparator implements Comparator {
             String s2 = t1.toString();
 
             
-            if("".equals(s1) && "".equals(s2))
+            // keep the comparator contract consistent: two empty values are equal
+            if ("".equals(s1) && "".equals(s2)) {
                 return 0;
-            
+            }
+
             if("".equals(s1))
                 return 1;
             

@@ -1223,17 +1223,10 @@ public class AssistantSetupDialog extends javax.swing.JDialog {
 
     private void updatedUI(AssistantConfig ac) {
         
-        try {
-            if (ac.getPassword() != null && !"".equalsIgnoreCase(ac.getPassword())) {
-                this.txtPwd.setText(CryptoProvider.defaultCrypto().decrypt(ac.getPassword()));
-            } else {
-                this.txtPwd.setText(null);
-            }
-        } catch (Exception ex) {
-            log.error("Error accessing assistant credentials", ex);
-            this.txtPwd.setText("");
-            JOptionPane.showMessageDialog(this, "Fehler bzgl. Authentifizierungsdaten: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-        }
+        // the server never returns the stored password; an empty field keeps it unchanged
+        this.txtPwd.setText(null);
+        // whether a password is stored is not known to the client - the hint applies to existing ones
+        ComponentUtils.setStoredSecretHint(this.txtPwd, true);
 
         this.txtName.setText(ac.getName());
         this.txtUrl.setText(ac.getUrl());

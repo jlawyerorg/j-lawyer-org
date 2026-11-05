@@ -714,7 +714,7 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
     private static final int MAXLEN_DESCRIPTION = 160;
     private static final int MAXLEN_REASON = 160;
     private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
-    private final DecimalFormat cf = new DecimalFormat(ServerSettings.getInstance().getSetting("plugins.global.tableproperties.numberFormat", "#,##0.00"));
+    private final DecimalFormat cf = new DecimalFormat(ServerSettings.getInstance().getSetting(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "numberFormat", "#,##0.00"));
     private final DecimalFormat accountEntryFormat = new DecimalFormat("#,##0.00");
     private final DecimalFormat percentageFormat = new DecimalFormat("0.0");
 

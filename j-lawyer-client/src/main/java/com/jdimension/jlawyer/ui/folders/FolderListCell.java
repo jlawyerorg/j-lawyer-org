@@ -1170,10 +1170,12 @@ public class FolderListCell extends javax.swing.JPanel implements DropTargetList
 
         if (this.readOnly) {
             dtde.rejectDrop();
+            return;
         }
 
         if (this.parent.getCaseFolderPanel().getCase() == null) {
             dtde.rejectDrop();
+            return;
         }
 
         try {

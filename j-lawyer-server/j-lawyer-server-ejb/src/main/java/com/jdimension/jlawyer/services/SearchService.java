@@ -759,6 +759,7 @@ public class SearchService implements SearchServiceRemote, SearchServiceLocal {
     // Add business logic below. (Right-click in editor and choose
     // "Insert Code > Add Business Method")
     @Override
+    @RolesAllowed({"sysAdminRole"})
     public void reIndexAll() {
 
         try {
@@ -794,11 +795,7 @@ public class SearchService implements SearchServiceRemote, SearchServiceLocal {
     }
 
     @Override
-    public void reOpenIndex() throws SearchException {
-        SearchAPI.getInstance().reOpen();
-    }
-
-    @Override
+    @RolesAllowed({"loginRole"})
     public int getNumberOfDocs() throws SearchException {
         return SearchAPI.getInstance().getNumberOfDocs();
     }

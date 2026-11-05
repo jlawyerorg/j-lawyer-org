@@ -23,6 +23,8 @@ package org.jlawyer.io.rest.v7.pojo;
  * schedule and hour, the database connection to dump, the encryption password, and the sync/export
  * targets. Both passwords are write-only: they are never returned (a {@code *Set} flag indicates
  * whether a value is stored) and are only (re)applied when a non-empty value is submitted.
+ * Encryption is switched off explicitly via {@code encryptionDisabled}, which removes the stored
+ * encryption password.
  */
 public class RestfulBackupSettingsV7 {
 
@@ -45,6 +47,7 @@ public class RestfulBackupSettingsV7 {
 
     private String encryptionPassword = "";
     private boolean encryptionPasswordSet = false;
+    private boolean encryptionDisabled = false;
 
     private String syncTarget = "";
     private String exportTarget = "";
@@ -90,6 +93,9 @@ public class RestfulBackupSettingsV7 {
     public void setEncryptionPassword(String encryptionPassword) { this.encryptionPassword = encryptionPassword; }
     public boolean isEncryptionPasswordSet() { return encryptionPasswordSet; }
     public void setEncryptionPasswordSet(boolean encryptionPasswordSet) { this.encryptionPasswordSet = encryptionPasswordSet; }
+    /** true if backups are not encrypted; when submitted as true, the stored encryption password is removed */
+    public boolean isEncryptionDisabled() { return encryptionDisabled; }
+    public void setEncryptionDisabled(boolean encryptionDisabled) { this.encryptionDisabled = encryptionDisabled; }
 
     public String getSyncTarget() { return syncTarget; }
     public void setSyncTarget(String syncTarget) { this.syncTarget = syncTarget; }

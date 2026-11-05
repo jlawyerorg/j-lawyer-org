@@ -1,17 +1,17 @@
 import templates.smart.SmartFunctions;
 
-class SmartTemplate {
+/**
+ * Base class of the [[SCRIPT:...]] expressions in document templates. Every expression is compiled
+ * as a script extending this class, so the functions below can be called directly. This class is
+ * trusted code and compiled once by SmartTemplateEvaluator; the expressions themselves are checked
+ * against an allow list before they are compiled.
+ */
+abstract class SmartTemplateBase extends groovy.lang.Script {
     
-    String caseId="SMARTTEMPLATECASEID";
-	
-    double doIt(double d1) {
-        System.out.println("ok");
-        return 42d-d1;
-    }
-    
-    String evaluateScript() {
-        return SMARTTEMPLATESCRIPT;
-    }
+    // set by SmartTemplateEvaluator before the script runs
+    String caseId = "";
+    // form prefixes of the case, formatted as -prefix1--prefix2-
+    String allFormPrefixes = "";
     
     String WENNETIKETT(String etikett, String then, String otherwise) {
         if(etikett==null)
@@ -96,8 +96,6 @@ class SmartTemplate {
     }
     
     String WENNFALLDATEN(String s1, String then, String otherwise) {
-        // this variable value will be replaced by LibreOfficeAccess before execution
-        String allFormPrefixes="ALLFORMPREFIXES";
         if(allFormPrefixes.contains("-" + s1 + "-")) {
             return then;
         } else {

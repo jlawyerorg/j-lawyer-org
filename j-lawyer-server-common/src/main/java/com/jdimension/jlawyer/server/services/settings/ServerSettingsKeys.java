@@ -664,154 +664,303 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.server.services.settings;
 
 /**
+ * Keys of the server settings (table server_settings). Every key constant MUST carry a
+ * {@link SettingAccess} annotation that defines who may read and write it through the generic
+ * settings API - see {@link ServerSettingsAccessCatalog}. New keys MUST be added here as an
+ * annotated constant instead of being used as string literals.
  *
  * @author jens
  */
 public class ServerSettingsKeys {
     
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String PROFILE_COMPANYNAME="profile.company.name";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String PROFILE_COMPANYSTREET="profile.company.street";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String PROFILE_COMPANYSTREET2="profile.company.street2";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String PROFILE_COMPANYZIP="profile.company.zip";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String PROFILE_COMPANYCITY="profile.company.city";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String PROFILE_COMPANYCOUNTRY="profile.company.country";
     
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String PROFILE_COMPANYPHONE="profile.company.phone";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String PROFILE_COMPANYFAX="profile.company.fax";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String PROFILE_COMPANYMOBILE="profile.company.mobile";
     
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String PROFILE_COMPANYEMAIL="profile.company.email";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String PROFILE_COMPANYWWW="profile.company.www";
     
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String PROFILE_COMPANYTAXID="profile.company.taxid";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String PROFILE_COMPANYUSTID="profile.company.ustid";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String PROFILE_COMPANYBANK="profile.company.bank";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String PROFILE_COMPANYBANKCODE="profile.company.bankcode";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String PROFILE_COMPANYACCOUNTNO="profile.company.accountno";
     
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String PROFILE_COMPANYBANK_AK="profile.company.ak.bank";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String PROFILE_COMPANYBANKCODE_AK="profile.company.ak.bankcode";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String PROFILE_COMPANYACCOUNTNO_AK="profile.company.ak.accountno";
     
     // largest file (MB) that is uploaded for text extraction when an assistant suggests metadata
     // for a document that is not saved yet (e.g. in the save-to-case dialog)
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String SERVERCONF_ASSISTANT_PRESAVE_MAXMB="jlawyer.server.assistant.presave.maxmb";
 
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_BEAMODE="jlawyer.server.bea.beamode";
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_BEAENDPOINT="jlawyer.server.bea.beaendpoint";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.LOGIN)
     public static final String SERVERCONF_BEAENABLEDVERSIONS="jlawyer.global.bea.enabledversions";
     
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_BACKUP_MODE="jlawyer.server.backup.backupmode";
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_BACKUP_DBUSER="jlawyer.server.backup.dbuser";
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSADMIN, secret = true)
     public static final String SERVERCONF_BACKUP_DBPWD="jlawyer.server.backup.dbpassword";
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_BACKUP_DBPORT="jlawyer.server.backup.dbport";
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_BACKUP_DBHOST="jlawyer.server.backup.dbhost";
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_BACKUP_DBNAME="jlawyer.server.backup.dbname";
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_BACKUP_HOUR="jlawyer.server.backup.hour";
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_BACKUP_MONDAY="jlawyer.server.backup.monday";
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_BACKUP_TUESDAY="jlawyer.server.backup.tuesday";
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_BACKUP_WEDNESDAY="jlawyer.server.backup.wednesday";
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_BACKUP_THURSDAY="jlawyer.server.backup.thursday";
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_BACKUP_FRIDAY="jlawyer.server.backup.friday";
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_BACKUP_SATURDAY="jlawyer.server.backup.saturday";
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_BACKUP_SUNDAY="jlawyer.server.backup.sunday";
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSADMIN, secret = true)
     public static final String SERVERCONF_BACKUP_ENCRYPTPWD="jlawyer.server.backup.encryptionpwd";
     
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_BACKUP_SYNCTARGET="jlawyer.server.backup.synctarget";
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_BACKUP_EXPORTTARGET="jlawyer.server.backup.exporttarget";
     
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_REPLICATION_ISTARGET="jlawyer.server.replication.istarget";
     
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_MONITOR_CPUWARN="jlawyer.server.monitor.cpuwarn";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_MONITOR_CPUERROR="jlawyer.server.monitor.cpuerror";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_MONITOR_MEMWARN="jlawyer.server.monitor.memwarn";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_MONITOR_MEMERROR="jlawyer.server.monitor.memerror";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_MONITOR_DISKWARN="jlawyer.server.monitor.diskwarn";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_MONITOR_DISKERROR="jlawyer.server.monitor.diskerror";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_MONITOR_VMWARN="jlawyer.server.monitor.vmwarn";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_MONITOR_VMERROR="jlawyer.server.monitor.vmerror";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_MONITOR_NOTIFY="jlawyer.server.monitor.notify";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_MONITOR_NOTIFY_BACKUPSUCCESS="jlawyer.server.monitor.notify.backupsuccess";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_MONITOR_NOTIFY_BACKUPFAILURE="jlawyer.server.monitor.notify.backupfailure";
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_MONITOR_SMTPSERVER="jlawyer.server.monitor.smtpserver";
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_MONITOR_SMTPPORT="jlawyer.server.monitor.smtpport";
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_MONITOR_SMTPUSER="jlawyer.server.monitor.smtpuser";
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSADMIN, secret = true)
     public static final String SERVERCONF_MONITOR_SMTPPASSWORD="jlawyer.server.monitor.smtppwd";
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_MONITOR_SMTPSENDERNAME="jlawyer.server.monitor.smtpsendername";
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_MONITOR_SMTPFROM="jlawyer.server.monitor.smtpfrom";
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_MONITOR_SMTPTO="jlawyer.server.monitor.smtpto";
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_MONITOR_SMTPSSL="jlawyer.server.monitor.smtpssl";
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_MONITOR_SMTPSTARTTLS="jlawyer.server.monitor.smtpstarttls";
     
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_MONITOR_ENABLED_CPU="jlawyer.server.monitor.enabled.cpu";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_MONITOR_ENABLED_RAM="jlawyer.server.monitor.enabled.ram";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_MONITOR_ENABLED_DISK="jlawyer.server.monitor.enabled.disk";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_MONITOR_ENABLED_JAVA="jlawyer.server.monitor.enabled.java";
     
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String SERVERCONF_CASENUMBERING_PATTERN="jlawyer.server.numbering.pattern";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String SERVERCONF_CASENUMBERING_STARTFROM="jlawyer.server.numbering.startfrom";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String SERVERCONF_CASENUMBERING_INCREMENT="jlawyer.server.numbering.increment";
     
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String SERVERCONF_CASENUMBERING_EXT_ENABLED="jlawyer.server.numbering.ext.enabled";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String SERVERCONF_CASENUMBERING_EXT_DIVIDER_MAIN="jlawyer.server.numbering.ext.divider.main";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String SERVERCONF_CASENUMBERING_EXT_DIVIDER_EXT="jlawyer.server.numbering.ext.divider.ext";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String SERVERCONF_CASENUMBERING_EXT_PREFIX_ENABLED="jlawyer.server.numbering.ext.prefix.enabled";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String SERVERCONF_CASENUMBERING_EXT_PREFIX="jlawyer.server.numbering.ext.prefix";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String SERVERCONF_CASENUMBERING_EXT_SUFFIX_ENABLED="jlawyer.server.numbering.ext.suffix.enabled";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String SERVERCONF_CASENUMBERING_EXT_SUFFIX="jlawyer.server.numbering.ext.suffix";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String SERVERCONF_CASENUMBERING_EXT_GROUP_ENABLED="jlawyer.server.numbering.ext.group.enabled";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String SERVERCONF_CASENUMBERING_EXT_LAWYER_ENABLED="jlawyer.server.numbering.ext.lawyer.enabled";
     
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_SCANNER_SERVERDIR="jlawyer.server.observe.directory";
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_SCANNER_OCRCMD="jlawyer.server.observe.ocrcmd";
     
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN, prefix = true)
     public static final String DATA_CUSTOMFIELD_ADDRESS_PREFIX="data.customfields.address.";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN, prefix = true)
     public static final String DATA_CUSTOMFIELD_ARCHIVEFILE_PREFIX="data.customfields.archivefile.";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN, prefix = true)
     public static final String DATA_CUSTOMFIELD_ARCHIVEFILE_INVOLVED_PREFIX="data.customfields.archivefile.involved.";
     
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String SERVERCONF_DOCUMENTS_WAITFOR_MAC="jlawyer.server.documents.waitforprocess.mac";
     
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String SERVERCONF_DOCUMENTS_BIN_RETENTIONDAYS="jlawyer.server.documents.bin.retentiondays";
     
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String SERVERCONF_SECURITY_FORCE_PASSWORDCOMPLEXITY="jlawyer.server.security.forcepasswordcomplexity";
     
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String SERVERCONF_FINANCE_GIROCODEPX="jlawyer.server.finance.girocodepx";
     
+    @SettingAccess(read = SettingRole.ADMIN, write = SettingRole.ADMIN)
     public static final String SERVERCONF_CLOUDSYNC_ADDRESSBOOK_ENABLED="jlawyer.server.cloudsync.addressbook.enabled";
+    @SettingAccess(read = SettingRole.ADMIN, write = SettingRole.ADMIN)
     public static final String SERVERCONF_CLOUDSYNC_ADDRESSBOOK_BIRTHDAYSYNC="jlawyer.server.cloudsync.addressbook.birthdaysync";
+    @SettingAccess(read = SettingRole.ADMIN, write = SettingRole.ADMIN)
     public static final String SERVERCONF_CLOUDSYNC_ADDRESSBOOK_HOST="jlawyer.server.cloudsync.addressbook.host";
+    @SettingAccess(read = SettingRole.ADMIN, write = SettingRole.ADMIN)
     public static final String SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PORT="jlawyer.server.cloudsync.addressbook.port";
+    @SettingAccess(read = SettingRole.ADMIN, write = SettingRole.ADMIN)
     public static final String SERVERCONF_CLOUDSYNC_ADDRESSBOOK_SSL="jlawyer.server.cloudsync.addressbook.ssl";
+    @SettingAccess(read = SettingRole.ADMIN, write = SettingRole.ADMIN)
     public static final String SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PATH="jlawyer.server.cloudsync.addressbook.path";
+    @SettingAccess(read = SettingRole.ADMIN, write = SettingRole.ADMIN)
     public static final String SERVERCONF_CLOUDSYNC_ADDRESSBOOK_USER="jlawyer.server.cloudsync.addressbook.user";
+    @SettingAccess(read = SettingRole.ADMIN, write = SettingRole.ADMIN, secret = true)
     public static final String SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PWD="jlawyer.server.cloudsync.addressbook.pwd";
+    @SettingAccess(read = SettingRole.ADMIN, write = SettingRole.ADMIN)
     public static final String SERVERCONF_CLOUDSYNC_ADDRESSBOOK_HREF="jlawyer.server.cloudsync.addressbook.href";
     
+    @SettingAccess(read = SettingRole.ADMIN, write = SettingRole.ADMIN)
     public static final String SERVERCONF_CLOUDSYNC_CALENDAR_FULLSYNC="jlawyer.server.cloudsync.calendar.fullsync";
     
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String SERVERCONF_CALENDAR_CONFLICTCHECK="jlawyer.server.calendar.conflictcheck";
     
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSTEM)
     public static final String SERVERCONF_USAGELIMIT_MAXUSERS="jlawyer.server.usagelimit.maxusers";
     
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String SERVERCONF_TIMESHEET_PARALLELLOGS_WARNING="jlawyer.server.timesheets.parallellogswarning";
     // can have values "minutes", "hours", "reject"
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String SERVERCONF_TIMESHEET_NUMERICINPUT="jlawyer.server.timesheets.numericinput";
     
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
     public static final String SERVERCONF_INSTANTMESSAGING_POLLING_ENABLED="jlawyer.server.instantmessaging.polling.enabled";
     
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.SYSTEM)
     public static final String SERVERCONF_INSTALLATION_ID="jlawyer.server.installation.id";
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSTEM)
     public static final String SERVERCONF_INSTALLATION_TYPE="jlawyer.server.installation.type";
+    @SettingAccess(read = SettingRole.ADMIN, write = SettingRole.ADMIN, secret = true)
     public static final String SERVERCONF_EPOSTVENDORID_ENCRYPTED="jlawyer.server.epost.vendorid";
     
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_STIRLINGPDF_ENDPOINT="jlawyer.server.stirlingpdf.endpoint";
 
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_DROPSCAN_POLLINGINTERVAL="jlawyer.server.dropscan.pollinginterval";
 
     // In-browser Office editing (OpenSpec add-web-client, Decision 6): connection to the external
     // document server (Collabora / OnlyOffice). provider = none|collabora|onlyoffice.
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_OFFICE_PROVIDER="jlawyer.server.office.provider";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_OFFICE_BASEURL="jlawyer.server.office.baseurl";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.SYSADMIN)
     public static final String SERVERCONF_OFFICE_WOPIPUBLICURL="jlawyer.server.office.wopipublicurl";
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSADMIN, secret = true)
     public static final String SERVERCONF_OFFICE_SECRET="jlawyer.server.office.secret";
+
+    // checking of [[SCRIPT:...]] expressions in document templates against the allow list:
+    // "log" (default) = violations are logged and the script still runs, "enforce" = violations are rejected
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSADMIN)
+    public static final String SERVERCONF_TEMPLATES_SCRIPTCHECK="jlawyer.server.templates.scriptcheck";
+
+    // keys that were used as string literals before
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.SYSADMIN)
+    public static final String SERVERCONF_BEA_MAXTEMPFOLDERS="jlawyer.server.bea.maxtempfolders";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.SYSADMIN)
+    public static final String SERVERCONF_MAIL_IMAPS_SSLTRUST="mail.imaps.ssl.trust";
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSADMIN)
+    public static final String SERVERCONF_SEARCHINDEX_SKIP="jlawyer.server.searchindex.skip";
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN)
+    public static final String SERVERCONF_DOCUMENTS_LOCK_FILETYPES="jlawyer.server.documents.lock.filetypes";
+    @SettingAccess(read = SettingRole.SYSADMIN, write = SettingRole.SYSTEM)
+    public static final String SERVERCONF_DATABASE_VERSION="jlawyer.server.database.version";
+
+    // runtime state maintained by the server monitor
+    @SettingAccess(read = SettingRole.SYSTEM, write = SettingRole.SYSTEM)
+    public static final String SERVERCONF_MONITOR_AVGCPU="jlawyer.server.monitor.avgcpu";
+    @SettingAccess(read = SettingRole.SYSTEM, write = SettingRole.SYSTEM)
+    public static final String SERVERCONF_MONITOR_LASTSTATUS="jlawyer.server.monitor.laststatus";
+    @SettingAccess(read = SettingRole.SYSTEM, write = SettingRole.SYSTEM)
+    public static final String SERVERCONF_MONITOR_LASTSTATUSLEVEL="jlawyer.server.monitor.laststatuslevel";
+    @SettingAccess(read = SettingRole.SYSTEM, write = SettingRole.SYSTEM)
+    public static final String SERVERCONF_MONITOR_VM_ISSUESSEQUENCE="jlawyer.server.monitor.vm.issuessequence";
+
+    // counters of the EDA id allocator: eda.<prefix>.lastused
+    @SettingAccess(read = SettingRole.SYSTEM, write = SettingRole.SYSTEM, prefix = true)
+    public static final String EDA_PREFIX="eda.";
+
+    // table layout of invoices and claim ledgers: plugins.global.tableproperties.<property>
+    @SettingAccess(read = SettingRole.LOGIN, write = SettingRole.ADMIN, prefix = true)
+    public static final String PLUGINS_TABLEPROPERTIES_PREFIX="plugins.global.tableproperties.";
 
 }

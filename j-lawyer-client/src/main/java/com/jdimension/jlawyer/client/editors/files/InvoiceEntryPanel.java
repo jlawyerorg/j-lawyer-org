@@ -710,8 +710,19 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         this.caseView = caseView;
     }
 
+    /**
+     * Re-applies the sort order and filter of the invoice list in the case
+     * view, e.g. after status or due date of this invoice changed.
+     */
+    private void refreshCaseViewSortAndFilter() {
+        if (this.caseView != null) {
+            this.caseView.applyInvoiceSortAndFilter();
+        }
+    }
+
     public void setPaidTotal(BigDecimal totalGross, BigDecimal paid, String currency) {
-        if (paid != BigDecimal.valueOf(Float.MIN_VALUE)) {
+        // BigDecimal.valueOf(Float.MIN_VALUE) means "keep the current value" - compare by value, the instances always differ
+        if (paid.compareTo(BigDecimal.valueOf(Float.MIN_VALUE)) != 0) {
             this.paid = paid;
         }
         this.lblPaidTotal.setText(totalFormat.format(this.paid) + " " + currency);
@@ -1016,6 +1027,7 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
                 this.setPaidTotal(dlg.getEntry().getTotalGross(), BigDecimal.valueOf(Float.MIN_VALUE), dlg.getEntry().getCurrency());
             else
                 this.setPaidTotal(dlg.getEntry().getTotal(), BigDecimal.valueOf(Float.MIN_VALUE), dlg.getEntry().getCurrency());
+            this.refreshCaseViewSortAndFilter();
         }
     }//GEN-LAST:event_cmdOpenActionPerformed
 
@@ -1030,6 +1042,7 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
                 parent.remove(this);
                 parent.invalidate();
                 parent.repaint();
+                this.refreshCaseViewSortAndFilter();
             } catch (Exception ex) {
                 log.error("Error deleting invoice", ex);
                 JOptionPane.showMessageDialog(this, "Fehler beim Löschen der Rechnung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -1062,6 +1075,7 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
             }
 
             this.setEntry(caseDto, this.invoice, addresses);
+            this.refreshCaseViewSortAndFilter();
 
             if(this.invoice.getTotalGross().subtract(currentPaid).compareTo(BigDecimal.ZERO) > 0) {
                 CaseAccountEntry entry = new CaseAccountEntry();
@@ -1080,10 +1094,15 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
                 boolean confirmed = this.caseView.addAccountEntry(entry);
 
                 if (confirmed) {
+                    // the amount may have been changed to a partial payment in the booking dialog - show what has actually been booked
+                    BigDecimal paidAfterBooking = BigDecimal.ZERO;
+                    for (CaseAccountEntry ce : locator.lookupArchiveFileServiceRemote().getAccountEntriesForInvoice(invoice.getId())) {
+                        paidAfterBooking = paidAfterBooking.add(ce.calculateEarningsTotal());
+                    }
                     if(invoice.isSmallBusiness())
-                        this.setPaidTotal(invoice.getTotalGross(), invoice.getTotalGross(), invoice.getCurrency());
+                        this.setPaidTotal(invoice.getTotalGross(), paidAfterBooking, invoice.getCurrency());
                     else
-                        this.setPaidTotal(invoice.getTotal(), invoice.getTotal(), invoice.getCurrency());
+                        this.setPaidTotal(invoice.getTotal(), paidAfterBooking, invoice.getCurrency());
                 }
             }
             

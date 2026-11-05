@@ -686,7 +686,7 @@ public class GirocodeDialog extends javax.swing.JDialog {
     
     private static final Logger log = Logger.getLogger(GirocodeDialog.class.getName());
     
-    private final DecimalFormat cf = new DecimalFormat(ServerSettings.getInstance().getSetting("plugins.global.tableproperties.numberFormat", "#,##0.00"));
+    private final DecimalFormat cf = new DecimalFormat(ServerSettings.getInstance().getSetting(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "numberFormat", "#,##0.00"));
     
     private byte[] qrImage=null;
 

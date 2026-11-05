@@ -716,21 +716,11 @@ public class MultiCalDialog extends javax.swing.JDialog {
         
         this.setLocationRelativeTo(null);
 
-        c1Cal = Calendar.getInstance();
-        c1.setCalendar(c1Cal);
+        this.initCalendars(0);
         c1.setAlwaysFireDayProperty(true);
-
-        c2Cal = Calendar.getInstance();
-        c2Cal.add(Calendar.MONTH, 1);
-        c2.setCalendar(c2Cal);
         c2.setAlwaysFireDayProperty(true);
-
-        c3Cal = Calendar.getInstance();
-        c3Cal.add(Calendar.MONTH, 2);
-        c3.setCalendar(c3Cal);
         c3.setAlwaysFireDayProperty(true);
 
-        this.updateMonthLabels();
         this.initializing = false;
 
     }
@@ -757,25 +747,50 @@ public class MultiCalDialog extends javax.swing.JDialog {
         
         this.setLocationRelativeTo(null);
 
-        c1Cal = Calendar.getInstance();
-        c1.setCalendar(c1Cal);
+        this.initCalendars(0);
         c1.setAlwaysFireDayProperty(true);
-
-        c2Cal = Calendar.getInstance();
-        c2Cal.add(Calendar.MONTH, 1);
-        c2.setCalendar(c2Cal);
         c2.setAlwaysFireDayProperty(true);
-
-        c3Cal = Calendar.getInstance();
-        c3Cal.add(Calendar.MONTH, 2);
-        c3.setCalendar(c3Cal);
         c3.setAlwaysFireDayProperty(true);
 
-        this.updateMonthLabels();
         this.initializing = false;
 
     }
     
+    /**
+     * Sets the months initially displayed by the dialog, relative to the
+     * current month. The dialog shows three consecutive months, starting with
+     * the month at the given offset. The default is 0 (current month and the
+     * two following months); e.g. -1 shows previous, current and next month.
+     *
+     * @param firstMonthOffset offset in months of the first displayed month
+     * relative to the current month
+     */
+    public void setMonthOffset(int firstMonthOffset) {
+        boolean wasInitializing = this.initializing;
+        this.initializing = true;
+        try {
+            this.initCalendars(firstMonthOffset);
+        } finally {
+            this.initializing = wasInitializing;
+        }
+    }
+
+    private void initCalendars(int firstMonthOffset) {
+        c1Cal = Calendar.getInstance();
+        c1Cal.add(Calendar.MONTH, firstMonthOffset);
+        c1.setCalendar(c1Cal);
+
+        c2Cal = Calendar.getInstance();
+        c2Cal.add(Calendar.MONTH, firstMonthOffset + 1);
+        c2.setCalendar(c2Cal);
+
+        c3Cal = Calendar.getInstance();
+        c3Cal.add(Calendar.MONTH, firstMonthOffset + 2);
+        c3.setCalendar(c3Cal);
+
+        this.updateMonthLabels();
+    }
+
     private void updateMonthLabels() {
         SimpleDateFormat df = new SimpleDateFormat("MMM yyyy");
         this.lblC1.setText(df.format(c1Cal.getTime()));

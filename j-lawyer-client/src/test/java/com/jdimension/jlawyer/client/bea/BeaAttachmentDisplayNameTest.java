@@ -661,79 +661,53 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.cli;
+package com.jdimension.jlawyer.client.bea;
 
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.settings.ServerSettings;
-import com.jdimension.jlawyer.server.services.ServerInformation;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import javax.swing.JTextArea;
+import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.services.bea.rest.BeaAttachment;
+import static org.junit.Assert.assertEquals;
+import org.junit.Test;
 
 /**
- *
- * @author jens
+ * The client lists received beA attachments and proposes their file names on saving via
+ * BeaAttachment.toString() - it has to keep the file name and its extension (#3424).
  */
-public class GetBindingsHandler extends CommandHandler {
+public class BeaAttachmentDisplayNameTest {
 
-    public GetBindingsHandler(boolean info) {
-        super(info);
+    private static BeaAttachment attachment(String name, String alias) {
+        BeaAttachment a = new BeaAttachment();
+        a.setName(name);
+        a.setAlias(alias);
+        return a;
     }
 
-    @Override
-    public String getDescription() {
-        return "returns the IPs the server is bound to";
+    @Test
+    public void testAliasIsShownBeforeTheFileName() {
+        BeaAttachment a = attachment("S_123_24_SCHRIFTSATZ_ZUR_KENNTNIS_0672713319C7.pdf", "zur Kenntnis");
+        assertEquals("(zur Kenntnis) S_123_24_SCHRIFTSATZ_ZUR_KENNTNIS_0672713319C7.pdf", a.toString());
     }
 
-    @Override
-    public String getCommand() {
-        return "getbindings";
+    @Test
+    public void testFileNameOnlyWithoutAlias() {
+        assertEquals("Schriftsatz.pdf", attachment("Schriftsatz.pdf", null).toString());
+        assertEquals("Schriftsatz.pdf", attachment("Schriftsatz.pdf", "").toString());
     }
 
-    @Override
-    public boolean handleCommand(String[] params, JTextArea ta) {
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            String bindString=locator.lookupSystemManagementRemote().getServerInterfacesBoundTo();
-            String ip=locator.lookupSystemManagementRemote().getServerIpV4();
-            boolean needsCorrection=false;
-            if(bindString.indexOf(ip)<0)
-                needsCorrection=true;
-            
-            outLine ("IP: " + ip, ta);
-            String[] binds=bindString.split(",");
-            for(String b: binds) {
-                outLine ("  " + b, ta);
-            }
-            if(needsCorrection) {
-                outLine ("  ", ta);
-                outLine ("  server misconfigured! use setbindings command to correct.", ta);
-                outLine ("  setbindings " + ip, ta);
-            }
-            
-            
-            
-
-        } catch (Exception ex) {
-            outLineError(ex.getMessage(), ta);
-        }
-
-
-        return true;
+    @Test
+    public void testAliasEqualToTheFileNameIsNotRepeated() {
+        assertEquals("Schriftsatz.pdf", attachment("Schriftsatz.pdf", "Schriftsatz.pdf").toString());
     }
 
-    @Override
-    public void handleHelp(JTextArea ta) {
-        outLine("getbindings", ta);
-        //outLine("  key: key of the setting whose value to retrieve", ta);
+    @Test
+    public void testAliasOnlyWithoutFileName() {
+        assertEquals("zur Kenntnis", attachment(null, "zur Kenntnis").toString());
+        assertEquals("zur Kenntnis", attachment("", "zur Kenntnis").toString());
     }
 
-    @Override
-    public boolean handlesCommand(String cmd) {
-        if ("getbindings".equals(cmd)) {
-            return true;
-        }
-
-        return false;
+    @Test
+    public void testProposedFileNameKeepsTheExtension() {
+        BeaAttachment a = attachment("Anlage_K1.pdf", "Anlage K1");
+        assertEquals("pdf", FileUtils.getExtension(a.toString()));
+        assertEquals("(Anlage K1) Anlage_K1.pdf", FileUtils.sanitizeFileName(a.toString()));
     }
 }

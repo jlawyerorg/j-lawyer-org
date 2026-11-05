@@ -700,6 +700,7 @@ import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.client.utils.SystemUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.dropscan.DropscanMailing;
 import com.jdimension.jlawyer.dropscan.DropscanScanbox;
@@ -2011,9 +2012,10 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
     }
 
     private void tblDirContentMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblDirContentMouseClicked
+        // on macOS, Control+click opens the context menu - a double click with it must not open the file
         if (evt.getClickCount() == 1 && evt.getButton() == MouseEvent.BUTTON1) {
             this.selectDirContent();
-        } else if (evt.getClickCount() == 2) {
+        } else if (evt.getClickCount() == 2 && evt.getButton() == MouseEvent.BUTTON1 && !(SystemUtils.isMacOs() && evt.isControlDown())) {
 
             int selRow = this.tblDirContent.getSelectedRow();
             if (selRow > -1) {
@@ -2488,9 +2490,14 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             bulkSaveDlg.setEntryProcessor(processor);
 
             ArrayList<String> fileNames = new ArrayList<>();
+            HashMap<String, Long> fileSizes = new HashMap<>();
             for (int r : selRow) {
                 String fileName = this.tblDirContent.getValueAt(r, 2).toString();
                 fileNames.add(fileName);
+                Object meta = this.tblDirContent.getValueAt(r, 1);
+                if (meta instanceof FileMetadata) {
+                    fileSizes.put(fileName, ((FileMetadata) meta).getFileSize());
+                }
             }
 
             CaseFolder rootFolder = null;
@@ -2538,6 +2545,10 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                     //newName = FileUtils.sanitizeFileName(newName);
 
                     bulkEntry.setDocumentFilename(newName);
+                    // bytes are not loaded, but the size is known from the scan metadata
+                    if (fileSizes.containsKey(fileName)) {
+                        bulkEntry.setDocumentSize(fileSizes.get(fileName));
+                    }
                     bulkSaveDlg.addEntry(bulkEntry);
 
                 } catch (Exception ex) {

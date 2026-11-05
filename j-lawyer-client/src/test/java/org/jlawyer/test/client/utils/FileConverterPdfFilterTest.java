@@ -661,75 +661,54 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.cli;
+package org.jlawyer.test.client.utils;
 
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import javax.swing.JTextArea;
+import com.jdimension.jlawyer.client.utils.FileConverter;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
 /**
- *
- * @author jens
+ * LibreOffice needs the PDF export filter of the application it opens a file
+ * with - otherwise it exits with 0 without writing a PDF (#3772).
  */
-public class SetBindingsHandler extends CommandHandler {
+public class FileConverterPdfFilterTest {
 
-    public SetBindingsHandler(boolean info) {
-        super(info);
+    @Test
+    public void testImagesUseDrawFilter() {
+        assertEquals("draw_pdf_Export", FileConverter.getPdfExportFilter("/tmp/PastedGraphic-1.png"));
+        assertEquals("draw_pdf_Export", FileConverter.getPdfExportFilter("/tmp/logo.JPG"));
+        assertEquals("draw_pdf_Export", FileConverter.getPdfExportFilter("/tmp/scan.tiff"));
+        assertEquals("draw_pdf_Export", FileConverter.getPdfExportFilter("/tmp/bild.bmp"));
     }
 
-    @Override
-    public String getDescription() {
-        return "sets the IP the server is bound to";
+    @Test
+    public void testSpreadsheetsUseCalcFilter() {
+        assertEquals("calc_pdf_Export", FileConverter.getPdfExportFilter("/tmp/liste.xlsx"));
+        assertEquals("calc_pdf_Export", FileConverter.getPdfExportFilter("/tmp/liste.ods"));
+        assertEquals("calc_pdf_Export", FileConverter.getPdfExportFilter("/tmp/export.csv"));
     }
 
-    @Override
-    public String getCommand() {
-        return "setbindings";
+    @Test
+    public void testPresentationsUseImpressFilter() {
+        assertEquals("impress_pdf_Export", FileConverter.getPdfExportFilter("/tmp/vortrag.pptx"));
+        assertEquals("impress_pdf_Export", FileConverter.getPdfExportFilter("/tmp/vortrag.odp"));
     }
 
-    @Override
-    public boolean handleCommand(String[] params, JTextArea ta) {
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-
-            if (params.length != 1) {
-                handleHelp(ta);
-                return true;
-            }
-
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            String ip = params[0];
-            locator.lookupSystemManagementRemote().setServerInterfaceBindings(ip);
-            String bindString = locator.lookupSystemManagementRemote().getServerInterfacesBoundTo();
-
-            outLine("IP: " + ip, ta);
-            String[] binds = bindString.split(",");
-            for (String b : binds) {
-                outLine("  " + b, ta);
-            }
-
-            outLine("  ", ta);
-            outLine("  server daemon needs to be restarted now", ta);
-
-        } catch (Exception ex) {
-            outLineError(ex.getMessage(), ta);
-        }
-
-        return true;
+    @Test
+    public void testTextDocumentsAndUnknownUseWriterFilter() {
+        assertEquals("writer_pdf_Export", FileConverter.getPdfExportFilter("/tmp/brief.docx"));
+        assertEquals("writer_pdf_Export", FileConverter.getPdfExportFilter("/tmp/brief.odt"));
+        assertEquals("writer_pdf_Export", FileConverter.getPdfExportFilter("/tmp/notiz.txt"));
+        assertEquals("writer_pdf_Export", FileConverter.getPdfExportFilter("/tmp/ohne-endung"));
+        // the extension is decisive, not a dot in a directory name
+        assertEquals("writer_pdf_Export", FileConverter.getPdfExportFilter("/tmp/bilder.png/brief.docx"));
     }
 
-    @Override
-    public void handleHelp(JTextArea ta) {
-        outLine("setbindings <ip>", ta);
-        outLine("  ip: new IP for the server to bind to", ta);
-    }
-
-    @Override
-    public boolean handlesCommand(String cmd) {
-        if ("setbindings".equals(cmd)) {
-            return true;
-        }
-
-        return false;
+    @Test
+    public void testConvertToArgumentKeepsPdfA() {
+        String arg = FileConverter.getPdfConvertToArgument("/tmp/logo.png");
+        assertTrue(arg.startsWith("pdf:draw_pdf_Export:"));
+        assertTrue(arg.contains("\"SelectPdfVersion\":{\"type\":\"long\",\"value\":3}"));
     }
 }

@@ -736,9 +736,36 @@ public interface SystemManagementRemote {
     
     String getServerLogs(int numberOfLines) throws Exception;
 
+    /**
+     * Returns a single server setting by its key, or {@code null} if it is not set. The caller must
+     * have the read role defined for the key (see ServerSettingsAccessCatalog), otherwise an
+     * EJBAccessException is thrown. Secrets (passwords, tokens) are write-only and returned with
+     * an empty value - use {@link #hasSetting(String)} to find out whether one is stored.
+     *
+     * @param key the setting key
+     * @return the setting, or {@code null}
+     */
     ServerSettingsBean getSetting(String key);
 
+    /**
+     * Creates or updates a single server setting. The caller must have the write role defined for
+     * the key (see ServerSettingsAccessCatalog), otherwise an EJBAccessException is thrown.
+     * Settings maintained by the server itself cannot be written.
+     *
+     * @param key the setting key
+     * @param value the value to store
+     * @return {@code true} on success
+     */
     boolean setSetting(String key, String value);
+
+    /**
+     * Whether a non-empty value is stored for a server setting. Works for secrets as well, whose
+     * values are never returned. The caller must have the read role defined for the key.
+     *
+     * @param key the setting key
+     * @return true if a non-empty value is stored
+     */
+    boolean hasSetting(String key);
     
     List<String> getAllOptionGroups();
 
@@ -763,8 +790,6 @@ public interface SystemManagementRemote {
 
     MonitoringSnapshot getMonitoringSnapshot();
 
-    void statusMail(String subject, String body);
-    
     void testSendMail(String smtpHost, int smtpPort, String smtpUser, String smtpPwd, boolean smtpSsl, boolean smtpStartTls, String mailAddress, boolean isMsExchange, String authToken, Properties customProps) throws Exception;
     
     void testReceiveMail(String mailAddress, String host, String protocol, boolean ssl, String user, String pwd, boolean isMsExchange, String authToken, Properties customProps) throws Exception;
@@ -778,10 +803,6 @@ public interface SystemManagementRemote {
     void setUserSettings(AppUserBean user, Properties settings);
 
     String getServerIpV4() throws Exception;
-
-    String getServerInterfacesBoundTo() throws Exception;
-
-    boolean setServerInterfaceBindings(String ip) throws Exception;
 
     boolean addTemplate(int templateType, GenericNode folder, String fileName, byte[] data) throws Exception;
 
@@ -898,6 +919,12 @@ public interface SystemManagementRemote {
 
     HashMap<String,Object> getPlaceHolderValues(HashMap<String,Object> placeHolders, ArchiveFileBean aFile, List<PartiesTriplet> selectedParties, String dictateSign, GenericCalculationTable calculationTable, HashMap<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author, Invoice invoice, AppUserBean invoiceSender, GenericCalculationTable invoiceTable, GenericCalculationTable timesheetsTable, GenericCalculationTable timesheetSummaryTable, byte[] giroCode, String ingoText) throws Exception;
 
+    /**
+     * Returns all assistant configurations. Requires adminRole. The returned configurations are
+     * copies without the password - the server calls the assistant backends itself.
+     *
+     * @return all assistant configurations without passwords
+     */
     List<AssistantConfig> getAssistants();
 
     AssistantConfig addAssistant(AssistantConfig assistant) throws Exception;

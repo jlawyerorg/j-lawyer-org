@@ -773,6 +773,7 @@ public class EpostLetterSendStep extends javax.swing.JPanel implements WizardSte
         chkDefaultCoverPage = new javax.swing.JCheckBox();
         chkBlackWhite = new javax.swing.JRadioButton();
         jSeparator3 = new javax.swing.JSeparator();
+        lblRegisteredLetter = new javax.swing.JLabel();
         cmbRegisteredLetter = new javax.swing.JComboBox<>();
         jSeparator1 = new javax.swing.JSeparator();
         jSeparator2 = new javax.swing.JSeparator();
@@ -834,6 +835,8 @@ public class EpostLetterSendStep extends javax.swing.JPanel implements WizardSte
         chkBlackWhite.setSelected(true);
         chkBlackWhite.setText("schwarz/weiß");
 
+        lblRegisteredLetter.setText("Einschreiben:");
+
         cmbRegisteredLetter.setEditable(true);
         cmbRegisteredLetter.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
@@ -850,6 +853,7 @@ public class EpostLetterSendStep extends javax.swing.JPanel implements WizardSte
             .addComponent(jSeparator2)
             .addComponent(chkDefaultCoverPage)
             .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, 175, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(lblRegisteredLetter)
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -870,7 +874,9 @@ public class EpostLetterSendStep extends javax.swing.JPanel implements WizardSte
                 .addComponent(chkDefaultCoverPage)
                 .addGap(41, 41, 41)
                 .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(39, 39, 39)
+                .addGap(18, 18, 18)
+                .addComponent(lblRegisteredLetter)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmbRegisteredLetter, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -1099,6 +1105,7 @@ public class EpostLetterSendStep extends javax.swing.JPanel implements WizardSte
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JSeparator jSeparator3;
+    private javax.swing.JLabel lblRegisteredLetter;
     private javax.swing.JTextField txtAdressLine1;
     private javax.swing.JTextField txtAdressLine2;
     private javax.swing.JTextField txtAdressLine3;
