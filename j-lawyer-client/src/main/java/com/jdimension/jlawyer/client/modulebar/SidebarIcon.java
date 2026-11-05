@@ -708,7 +708,16 @@ public class SidebarIcon implements Icon {
         if (this.source == null) {
             return null;
         }
-        String key = System.identityHashCode(this.source) + "." + this.color.getRGB() + "." + this.size;
+        // icons created from a resource carry its URL as description - new instances of the same
+        // resource must not grow the cache
+        String sourceKey = null;
+        if (this.source instanceof ImageIcon) {
+            sourceKey = ((ImageIcon) this.source).getDescription();
+        }
+        if (sourceKey == null) {
+            sourceKey = "id:" + System.identityHashCode(this.source);
+        }
+        String key = sourceKey + "|" + this.color.getRGB() + "|" + this.size;
         synchronized (CACHE) {
             Image cached = CACHE.get(key);
             if (cached != null) {

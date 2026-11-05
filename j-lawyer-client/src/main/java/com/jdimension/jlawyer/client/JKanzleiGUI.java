@@ -767,6 +767,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         this.initialized = System.currentTimeMillis();
         // for some reason, initComponents resets the bounds
         initComponents();
+        this.initStatusChips();
         PrinterServiceRegistry.getInstance().refreshAsync(null);
 
         this.initializing = false;
@@ -1082,6 +1083,17 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         openFrames.removeIf(tf -> tf == frame);
     }
 
+    /**
+     * The chips of the status bar open their module, exactly like a click on the sidebar entry.
+     */
+    private void initStatusChips() {
+        this.lblMailStatus.setClickAction(() -> this.moduleBar.openModule("com.jdimension.jlawyer.client.mail.EmailInboxPanel"));
+        this.lblBeaStatus.setClickAction(() -> this.moduleBar.openModule("com.jdimension.jlawyer.client.bea.BeaInboxPanel"));
+        this.lblMailingStatus.setClickAction(() -> this.moduleBar.openModule("com.jdimension.jlawyer.client.voip.MailingStatusPanel"));
+        this.lblScanStatus.setClickAction(() -> this.moduleBar.openModule("com.jdimension.jlawyer.client.editors.documents.ScannerPanel"));
+        this.lblUnreadInstantMessages.setClickAction(() -> this.moduleBar.openModule("com.jdimension.jlawyer.client.messenger.MessagingCenterPanel"));
+    }
+
     public void buildModuleBar() {
         ModuleMetadata rootModule = ClientSettings.getInstance().getRootModule();
 
@@ -1125,36 +1137,36 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         } else if (e instanceof SystemStatusEvent) {
 
-            Icon newIcon = null;
             String tooltip = "";
-            String text = "";
 
             int level = ((SystemStatusEvent) e).getLevel();
 
             String monitoringCaption = "";
             switch (level) {
                 case MonitoringConstants.LEVEL_ERROR:
-                    newIcon = new javax.swing.ImageIcon(getClass().getResource("/icons/redled.png"));
                     monitoringCaption = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("monitoring.error");
                     tooltip = "<html><p align=\"center\">" + monitoringCaption + "</p></html>";
 
                     break;
                 case MonitoringConstants.LEVEL_WARNING:
-                    newIcon = new javax.swing.ImageIcon(getClass().getResource("/icons/yellowled.png"));
                     monitoringCaption = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("monitoring.warn");
                     tooltip = "<html><p align=\"center\">" + monitoringCaption + "</p></html>";
 
                     break;
                 default:
-                    newIcon = new javax.swing.ImageIcon(getClass().getResource("/icons/greenled.png"));
                     monitoringCaption = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("monitoring.okay");
                     tooltip = "<html><p align=\"center\">" + monitoringCaption + "</p></html>";
                     break;
             }
 
             if (this.lblSystemStatus != null) {
-                this.lblSystemStatus.setIcon(newIcon);
-                this.lblSystemStatus.setText(text);
+                int ledLevel = com.jdimension.jlawyer.client.statusbar.StatusLed.LEVEL_OK;
+                if (level == MonitoringConstants.LEVEL_ERROR) {
+                    ledLevel = com.jdimension.jlawyer.client.statusbar.StatusLed.LEVEL_ERROR;
+                } else if (level == MonitoringConstants.LEVEL_WARNING) {
+                    ledLevel = com.jdimension.jlawyer.client.statusbar.StatusLed.LEVEL_WARNING;
+                }
+                this.lblSystemStatus.setLevel(ledLevel);
                 this.lblSystemStatus.setToolTipText(tooltip);
             }
         } else if (e instanceof ScannerStatusEvent) {
@@ -1166,6 +1178,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             } else {
                 this.lblScanStatus.setEnabled(false);
             }
+            this.lblScanStatus.setAttention(!((ScannerStatusEvent) e).getFileMetadata().isEmpty());
         } else if (e instanceof MailingStatusEvent) {
 
             this.lblMailingStatus.setText(" " + ((MailingStatusEvent) e).getMailingList().size());
@@ -1174,11 +1187,11 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
                 String failedFaxesCaption = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("caption.failedfaxes");
                 this.lblMailingStatus.setToolTipText("<html><p align=\"center\">" + failedFaxesCaption + "</p></html>");
-                this.lblMailingStatus.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+                this.lblMailingStatus.setWarning(true);
 
             } else {
                 this.lblMailingStatus.setToolTipText("");
-                this.lblMailingStatus.setForeground(Color.black);
+                this.lblMailingStatus.setWarning(false);
 
             }
             if (!((MailingStatusEvent) e).getMailingList().isEmpty()) {
@@ -1192,14 +1205,17 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             this.lblMailStatus.setText("" + ((EmailStatusEvent) e).getUnread());
             this.lblMailStatus.setToolTipText(((EmailStatusEvent) e).getUnread() + " " + java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("status.unreadmails"));
             this.lblMailStatus.setEnabled(true);
+            this.lblMailStatus.setAttention(((EmailStatusEvent) e).getUnread() > 0);
         } else if (e instanceof BeaStatusEvent) {
             this.lblBeaStatus.setEnabled(true);
             if (((BeaStatusEvent) e).getUnread() > 0) {
-                this.lblBeaStatus.setText("(*)");
+                this.lblBeaStatus.setText("neu");
                 this.lblBeaStatus.setToolTipText("es gibt ungelesene beA-Nachrichten");
+                this.lblBeaStatus.setAttention(true);
             } else {
-                this.lblBeaStatus.setText("-");
+                this.lblBeaStatus.setText("");
                 this.lblBeaStatus.setToolTipText("keine ungelesenen beA-Nachrichten");
+                this.lblBeaStatus.setAttention(false);
             }
         } else if (e instanceof OpenMentionsEvent) {
             this.lblUnreadInstantMessages.setEnabled(true);
@@ -1207,19 +1223,23 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 this.lblUnreadInstantMessages.setEnabled(true);
                 this.lblUnreadInstantMessages.setText("" + ((OpenMentionsEvent) e).getOpenMentions());
                 this.lblUnreadInstantMessages.setToolTipText("unbearbeitete Erwähnungen im Nachrichtencenter");
+                this.lblUnreadInstantMessages.setAttention(true);
             } else {
                 this.lblUnreadInstantMessages.setEnabled(false);
                 this.lblUnreadInstantMessages.setText("");
                 this.lblUnreadInstantMessages.setToolTipText(null);
+                this.lblUnreadInstantMessages.setAttention(false);
             }
         } else if (e instanceof OpenTimesheetPositionsEvent) {
             OpenTimesheetPositionsEvent ope = (OpenTimesheetPositionsEvent) e;
             if (ope.getOpenPositions() > 0) {
                 this.lblTimesheetStatus.setToolTipText("" + ope.getOpenPositions() + " laufende Zeiterfassung(en)");
                 this.lblTimesheetStatus.setText("Zeit läuft");
+                this.lblTimesheetStatus.setRunning(true);
             } else {
-                this.lblTimesheetStatus.setToolTipText(null);
-                this.lblTimesheetStatus.setText("");
+                this.lblTimesheetStatus.setToolTipText("keine laufende Zeiterfassung - Klick öffnet das Zeiterfassungsprotokoll");
+                this.lblTimesheetStatus.setText("keine Zeiterfassung");
+                this.lblTimesheetStatus.setRunning(false);
             }
         }
     }
@@ -1232,15 +1252,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        statusPanel = new javax.swing.JPanel();
-        statusLabel = new javax.swing.JLabel();
-        lblScanStatus = new javax.swing.JLabel();
-        lblMailStatus = new javax.swing.JLabel();
-        lblSystemStatus = new javax.swing.JLabel();
-        lblMailingStatus = new javax.swing.JLabel();
-        lblBeaStatus = new javax.swing.JLabel();
-        lblTimesheetStatus = new javax.swing.JLabel();
-        lblUnreadInstantMessages = new javax.swing.JLabel();
+        statusPanel = new com.jdimension.jlawyer.client.statusbar.StatusBarPanel();
+        statusLabel = new com.jdimension.jlawyer.client.statusbar.StatusMessageLabel();
+        lblScanStatus = new com.jdimension.jlawyer.client.statusbar.StatusChip();
+        lblMailStatus = new com.jdimension.jlawyer.client.statusbar.StatusChip();
+        lblSystemStatus = new com.jdimension.jlawyer.client.statusbar.StatusLed();
+        lblMailingStatus = new com.jdimension.jlawyer.client.statusbar.StatusChip();
+        lblBeaStatus = new com.jdimension.jlawyer.client.statusbar.StatusChip();
+        lblTimesheetStatus = new com.jdimension.jlawyer.client.statusbar.StatusChip();
+        lblUnreadInstantMessages = new com.jdimension.jlawyer.client.statusbar.StatusChip();
         moduleBar = new com.jdimension.jlawyer.client.modulebar.ModuleBar();
         jPanel1 = new javax.swing.JPanel();
         jMenuBar1 = new javax.swing.JMenuBar();
@@ -1378,9 +1398,10 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
 
-        statusPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        statusPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(3, 10, 3, 10));
 
         statusLabel.setFont(statusLabel.getFont().deriveFont(statusLabel.getFont().getStyle() & ~java.awt.Font.BOLD));
+        statusLabel.setForeground(new java.awt.Color(255, 255, 255));
         statusLabel.setText(bundle.getString("status.ready")); // NOI18N
 
         lblScanStatus.setFont(lblScanStatus.getFont());
@@ -1393,7 +1414,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         lblMailStatus.setText("?");
         lblMailStatus.setEnabled(false);
 
-        lblSystemStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/greenled.png"))); // NOI18N
+        lblSystemStatus.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         lblSystemStatus.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lblSystemStatusMouseClicked(evt);
@@ -1401,20 +1422,20 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         });
 
         lblMailingStatus.setFont(lblMailingStatus.getFont());
-        lblMailingStatus.setForeground(new java.awt.Color(255, 0, 0));
         lblMailingStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/printer.png"))); // NOI18N
         lblMailingStatus.setText("?");
         lblMailingStatus.setEnabled(false);
 
         lblBeaStatus.setFont(lblBeaStatus.getFont());
-        lblBeaStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/bea16.png"))); // NOI18N
+        lblBeaStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-16-blue.png"))); // NOI18N
         lblBeaStatus.setText("?");
         lblBeaStatus.setToolTipText("noch nicht eingeloggt");
         lblBeaStatus.setEnabled(false);
 
         lblTimesheetStatus.setFont(lblTimesheetStatus.getFont().deriveFont(lblTimesheetStatus.getFont().getStyle() & ~java.awt.Font.BOLD));
         lblTimesheetStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_timer_black_48dp.png"))); // NOI18N
-        lblTimesheetStatus.setText("  ");
+        lblTimesheetStatus.setText("keine Zeiterfassung");
+        lblTimesheetStatus.setToolTipText("keine laufende Zeiterfassung - Klick öffnet das Zeiterfassungsprotokoll");
         lblTimesheetStatus.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         lblTimesheetStatus.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -1432,34 +1453,32 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         statusPanelLayout.setHorizontalGroup(
             statusPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(statusPanelLayout.createSequentialGroup()
-                .add(lblSystemStatus)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(statusLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 385, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 281, Short.MAX_VALUE)
-                .add(lblTimesheetStatus)
-                .add(22, 22, 22)
-                .add(lblMailingStatus)
+                .add(lblSystemStatus, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(6, 6, 6)
+                .add(statusLabel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .add(12, 12, 12)
-                .add(lblUnreadInstantMessages)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(lblMailStatus)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(lblScanStatus)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(lblBeaStatus)
-                .addContainerGap())
+                .add(lblTimesheetStatus, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(6, 6, 6)
+                .add(lblMailingStatus, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(6, 6, 6)
+                .add(lblUnreadInstantMessages, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(6, 6, 6)
+                .add(lblMailStatus, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(6, 6, 6)
+                .add(lblScanStatus, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(6, 6, 6)
+                .add(lblBeaStatus, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
         );
         statusPanelLayout.setVerticalGroup(
-            statusPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, statusPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                .add(lblScanStatus)
-                .add(lblMailStatus)
-                .add(lblMailingStatus)
-                .add(statusLabel)
-                .add(lblBeaStatus)
-                .add(lblTimesheetStatus)
-                .add(lblUnreadInstantMessages))
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, lblSystemStatus)
+            statusPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+            .add(lblSystemStatus, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .add(statusLabel)
+            .add(lblTimesheetStatus, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .add(lblMailingStatus, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .add(lblUnreadInstantMessages, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .add(lblMailStatus, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .add(lblScanStatus, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .add(lblBeaStatus, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
         );
 
         jPanel1.setLayout(new javax.swing.BoxLayout(jPanel1, javax.swing.BoxLayout.LINE_AXIS));
@@ -3382,13 +3401,13 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JSeparator jSeparator3;
     private javax.swing.JPopupMenu.Separator jSeparator4;
     private javax.swing.JPopupMenu.Separator jSeparator5;
-    private javax.swing.JLabel lblBeaStatus;
-    private javax.swing.JLabel lblMailStatus;
-    private javax.swing.JLabel lblMailingStatus;
-    private javax.swing.JLabel lblScanStatus;
-    private javax.swing.JLabel lblSystemStatus;
-    private javax.swing.JLabel lblTimesheetStatus;
-    private javax.swing.JLabel lblUnreadInstantMessages;
+    private com.jdimension.jlawyer.client.statusbar.StatusChip lblBeaStatus;
+    private com.jdimension.jlawyer.client.statusbar.StatusChip lblMailStatus;
+    private com.jdimension.jlawyer.client.statusbar.StatusChip lblMailingStatus;
+    private com.jdimension.jlawyer.client.statusbar.StatusChip lblScanStatus;
+    private com.jdimension.jlawyer.client.statusbar.StatusLed lblSystemStatus;
+    private com.jdimension.jlawyer.client.statusbar.StatusChip lblTimesheetStatus;
+    private com.jdimension.jlawyer.client.statusbar.StatusChip lblUnreadInstantMessages;
     private javax.swing.JMenuItem mnuAbout;
     private javax.swing.JMenuItem mnuAddressBookSync;
     private javax.swing.JMenuItem mnuAddressBookSyncNow;
@@ -3500,7 +3519,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuWordProcessor;
     private javax.swing.JMenuItem mnuZipCodeImport;
     private com.jdimension.jlawyer.client.modulebar.ModuleBar moduleBar;
-    private javax.swing.JLabel statusLabel;
-    private javax.swing.JPanel statusPanel;
+    private com.jdimension.jlawyer.client.statusbar.StatusMessageLabel statusLabel;
+    private com.jdimension.jlawyer.client.statusbar.StatusBarPanel statusPanel;
     // End of variables declaration//GEN-END:variables
 }

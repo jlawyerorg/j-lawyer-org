@@ -811,6 +811,26 @@ public class ModuleBar extends javax.swing.JPanel {
         }
     }
 
+    /**
+     * Opens the module with the given editor, exactly as a click on its sidebar entry would
+     * (resetting its counter if configured, highlighting it, asking to save unsaved data).
+     *
+     * @param editorClass the editor class of the module
+     * @return true if a module with this editor exists
+     */
+    public boolean openModule(String editorClass) {
+        if (editorClass == null) {
+            return false;
+        }
+        for (Component c : this.buttonPane.getComponents()) {
+            if (c instanceof ModuleButton && editorClass.equals(((ModuleButton) c).getEditorClass())) {
+                ((ModuleButton) c).actionPerformed();
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void actionPerformed(int moduleIndex) {
         ModuleButton mb = (ModuleButton) this.buttonPane.getComponent(moduleIndex);
         mb.actionPerformed();
