@@ -1660,10 +1660,11 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                     byte[] data = ensureAttachmentContent(att);
                     
                     String newName = FileUtils.getNewFileName(sel, selected.toString(), true);
-                    newName=FileUtils.preserveExtension(att.getName(), newName);
+                    // null when the user cancelled the file name dialog
                     if (newName == null) {
                         return;
                     }
+                    newName=FileUtils.preserveExtension(att.getName(), newName);
 
                     DocumentMetadata attachmentMetadata = null;
                     if (this.msgContainer != null) {
@@ -2069,7 +2070,9 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
 
             if (targetCase == null) {
-                SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, "" + this.msgContainer.getReferenceJustice() + this.msgContainer.getReferenceNumber() + response.getSubject() + response.getBody(), null);
+                // suggest cases from the incoming message, like when saving the message or its attachments - the
+                // file number is usually in its subject, not in the eEB response
+                SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, "" + this.msgContainer.getReferenceJustice() + this.msgContainer.getReferenceNumber() + this.msgContainer.getSubject() + this.msgContainer.getBody(), null);
                 dlg.setVisible(true);
                 targetCase = dlg.getCaseSelection();
                 targetFolder = dlg.getFolderSelection();
@@ -2131,7 +2134,8 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
     }
 
     private void attachmentsMouseClicked(java.awt.event.MouseEvent evt, JList attList) {
-        if (evt.getClickCount() == 2 && attList.getSelectedValue() != null) {
+        // on macOS, Control+click opens the context menu - it must not open the attachment
+        if (evt.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(evt) && !(SystemUtils.isMacOs() && evt.isControlDown()) && attList.getSelectedValue() != null) {
             try {
                 BeaAttachment att = (BeaAttachment) attList.getSelectedValue();
                 byte[] data = ensureAttachmentContent(att);
@@ -2217,7 +2221,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                 EditorsRegistry.getInstance().registerFrame(dlg);
                 dlg.setVisible(true);
             } else {
-                DesktopUtils.openBrowser(url);
+                DesktopUtils.openExternalLink(url);
             }
         }
 

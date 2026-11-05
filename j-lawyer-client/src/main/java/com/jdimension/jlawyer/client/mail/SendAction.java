@@ -1258,14 +1258,15 @@ public class SendAction extends ProgressableAction {
                     if (!docName.toLowerCase().endsWith(".eml")) docName += ".eml";
 
                     docName = FileUtils.getNewFileName(this.archiveFile, docName, new Date(), true, this.indicator, "Datei benennen");
+                    // null when the user cancelled the file name dialog - the e-mail is then not saved to the case
                     if (docName != null && docName.trim().length() == 0) {
                         docName = "E-Mail";
                     }
-                    if (!docName.toLowerCase().endsWith(".eml")) {
+                    if (docName != null && !docName.toLowerCase().endsWith(".eml")) {
                         docName = docName + ".eml";
                     }
 
-                    boolean documentExists = caseSvc.doesDocumentExist(this.archiveFile.getId(), docName);
+                    boolean documentExists = docName != null && caseSvc.doesDocumentExist(this.archiveFile.getId(), docName);
                     while (documentExists) {
                         docName = FileUtils.getNewFileName(this.archiveFile, docName, new Date(), true, this.indicator, "Datei benennen");
                         if (docName == null || "".equals(docName)) {

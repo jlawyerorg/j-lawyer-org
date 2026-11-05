@@ -721,7 +721,8 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
     }
 
     public void setPaidTotal(BigDecimal totalGross, BigDecimal paid, String currency) {
-        if (paid != BigDecimal.valueOf(Float.MIN_VALUE)) {
+        // BigDecimal.valueOf(Float.MIN_VALUE) means "keep the current value" - compare by value, the instances always differ
+        if (paid.compareTo(BigDecimal.valueOf(Float.MIN_VALUE)) != 0) {
             this.paid = paid;
         }
         this.lblPaidTotal.setText(totalFormat.format(this.paid) + " " + currency);
@@ -1065,7 +1066,8 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         BigDecimal currentPaid = BigDecimal.ZERO;
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            locator.lookupArchiveFileServiceRemote().updateInvoice(this.caseDto.getId(), this.invoice);
+            // continue with the stored invoice - the server recalculates the totals, e.g. the gross total of invoices without VAT
+            this.invoice = locator.lookupArchiveFileServiceRemote().updateInvoice(this.caseDto.getId(), this.invoice);
 
             List<CaseAccountEntry> payments = locator.lookupArchiveFileServiceRemote().getAccountEntriesForInvoice(invoice.getId());
 
@@ -1093,10 +1095,15 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
                 boolean confirmed = this.caseView.addAccountEntry(entry);
 
                 if (confirmed) {
+                    // the amount may have been changed to a partial payment in the booking dialog - show what has actually been booked
+                    BigDecimal paidAfterBooking = BigDecimal.ZERO;
+                    for (CaseAccountEntry ce : locator.lookupArchiveFileServiceRemote().getAccountEntriesForInvoice(invoice.getId())) {
+                        paidAfterBooking = paidAfterBooking.add(ce.calculateEarningsTotal());
+                    }
                     if(invoice.isSmallBusiness())
-                        this.setPaidTotal(invoice.getTotalGross(), invoice.getTotalGross(), invoice.getCurrency());
+                        this.setPaidTotal(invoice.getTotalGross(), paidAfterBooking, invoice.getCurrency());
                     else
-                        this.setPaidTotal(invoice.getTotal(), invoice.getTotal(), invoice.getCurrency());
+                        this.setPaidTotal(invoice.getTotal(), paidAfterBooking, invoice.getCurrency());
                 }
             }
             

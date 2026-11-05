@@ -1124,7 +1124,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
     }//GEN-LAST:event_cmdRefreshActionPerformed
 
     private void lstTemplatesMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstTemplatesMouseClicked
-        if (evt.getClickCount() == 2) {
+        if (evt.getClickCount() == 2 && evt.getButton() == MouseEvent.BUTTON1) {
             this.mnuEditTemplateActionPerformed(null);
         } else if (evt.getClickCount() == 1 && !evt.isConsumed()) {
             evt.consume();

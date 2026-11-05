@@ -679,6 +679,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.CaseUtils;
+import com.jdimension.jlawyer.client.utils.AmountUtils;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
@@ -2092,9 +2093,13 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 // updated
                 this.currentEntry.setInvoiceNumber(this.lblInvoiceNumber.getText());
 
+                // persist unsaved input first - updateInvoiceType only changes type, pool and number, and setEntry reloads everything from the server
+                if (!this.save()) {
+                    return;
+                }
+
                 ClientSettings settings = ClientSettings.getInstance();
                 try {
-                    this.fillCurrentEntry();
                     this.currentEntry.setSmallBusiness(this.invoicePools.get(this.cmbInvoicePool.getSelectedItem().toString()).isSmallBusiness());
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                     Invoice updatedInvoice = locator.lookupArchiveFileServiceRemote().updateInvoiceType(this.caseDto.getId(), this.currentEntry, this.invoicePools.get(this.cmbInvoicePool.getSelectedItem().toString()), (InvoiceType) this.cmbInvoiceType.getSelectedItem());
@@ -2187,8 +2192,9 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         }
     }
 
-    private void save() {
+    private boolean save() {
         ClientSettings settings = ClientSettings.getInstance();
+        boolean positionsSaved = true;
         int positionIndex = 0;
         for (Component c : this.pnlInvoicePositions.getComponents()) {
             if (c instanceof InvoicePositionEntryPanel) {
@@ -2203,6 +2209,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 } catch (Exception ex) {
                     log.error("Error updating invoice position", ex);
                     JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Rechnungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    positionsSaved = false;
                 }
                 positionIndex = positionIndex + 1;
             }
@@ -2215,14 +2222,24 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
 
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             locator.lookupArchiveFileServiceRemote().updateInvoice(this.caseDto.getId(), this.currentEntry);
+            return positionsSaved;
 
         } catch (Exception ex) {
             log.error("error saving invoice", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Rechnung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return false;
         }
     }
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
+
+        if (this.cmbInvoicePool.isEnabled()) {
+            // type / pool are still in edit mode - a change there is only applied when confirmed
+            int response = JOptionPane.showConfirmDialog(this, "Belegart und Nummernkreis wurden noch nicht mit dem Haken bestätigt. Eine Änderung daran wird nicht gespeichert.\nTrotzdem speichern?", "Nummernkreis nicht bestätigt", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+            if (response != JOptionPane.YES_OPTION) {
+                return;
+            }
+        }
 
         this.save();
         this.cancelled = false;
@@ -3093,7 +3110,8 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
             BigDecimal amount = BigDecimal.ZERO;
             boolean validAmount = false;
             try {
-                amount = BigDecimal.valueOf(cf.parse(this.lblInvoiceTotal.getText()).floatValue());
+                // parse exactly - a float has too few digits, amounts from about 131.000 would be off by a cent
+                amount = AmountUtils.parseExact(cf, this.lblInvoiceTotal.getText());
                 validAmount = true;
             } catch (Throwable t) {
                 log.error("error parsing invoice total: " + this.lblInvoiceTotal.getText(), t);
@@ -3121,7 +3139,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     }//GEN-LAST:event_lblInvoiceDocumentMouseExited
 
     private void lblInvoiceDocumentMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblInvoiceDocumentMouseClicked
-        if (this.cmdViewDocument.isEnabled()) {
+        if (this.cmdViewDocument.isEnabled() && javax.swing.SwingUtilities.isLeftMouseButton(evt)) {
             this.cmdViewDocumentActionPerformed(null);
         }
     }//GEN-LAST:event_lblInvoiceDocumentMouseClicked

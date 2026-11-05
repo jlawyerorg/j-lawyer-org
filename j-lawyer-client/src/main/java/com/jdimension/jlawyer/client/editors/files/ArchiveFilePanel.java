@@ -892,6 +892,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     // Remember last document shown in preview to improve multi-select behavior
     private String lastPreviewDocId = null;
+    // the last search, applied again when the documents are reloaded
+    private String lastSearchText = "";
+    private String[] lastSearchTags = new String[0];
+    private int searchCount = 0;
+    // counts the openings of a case in this panel, a reload of the documents started before is obsolete
+    private volatile int caseLoadCount = 0;
+    private static final int RELOAD_DOCUMENTS_ATTEMPTS = 3;
     // the tag editor of the selected documents, hosted by the details tab
     private javax.swing.JPanel documentTagPanel = null;
     // divider position between document list and preview in the list view
@@ -1011,6 +1018,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     mnuCopyFilesToClipboardActionPerformed(e);
+                }
+            });
+
+        // F5 loads the documents and folders again while the focus is in the documents tab
+        this.jPanel7.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+            .put(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0), "reloadDocuments");
+        this.jPanel7.getActionMap()
+            .put("reloadDocuments", new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    reloadDocuments();
                 }
             });
 
@@ -1834,13 +1852,236 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
             Hashtable<String, ArrayList<String>> docTags = remote.getDocumentTagsForCase(this.dto.getId());
-            String docTagsHtml = TagUtils.getDocumentTagsOverviewAsHtml(docTags);
-            this.cmdDocumentTagFilter.setToolTipText(docTagsHtml);
-            // the active tags are shown with each document
-            this.caseFolderPanel1.setAllDocumentTags(docTags);
+            this.showDocumentTags(docTags);
         } catch (Throwable t) {
             log.error("Could not update document tags", t);
         }
+    }
+
+    private void showDocumentTags(Hashtable<String, ArrayList<String>> docTags) {
+        String docTagsHtml = TagUtils.getDocumentTagsOverviewAsHtml(docTags);
+        this.cmdDocumentTagFilter.setToolTipText(docTagsHtml);
+        // the active tags are shown with each document
+        this.caseFolderPanel1.setAllDocumentTags(docTags);
+    }
+
+    /**
+     * Loads the documents and folders of the case again, e.g. after colleagues or external
+     * systems have added documents. Keeps the selected documents and folders, the sort order,
+     * the collapsed folders and attachments, the search filter and unsaved input in the document
+     * details.
+     */
+    private void reloadDocuments() {
+        if (this.dto == null || this.dto.getId() == null || !this.cmdReloadDocuments.isEnabled()) {
+            return;
+        }
+        // keep an edit in the table view instead of losing it when the table is rebuilt
+        this.caseFolderPanel1.stopDocumentEditing();
+        this.cmdReloadDocuments.setEnabled(false);
+        this.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
+        EditorsRegistry.getInstance().updateStatus("Lade Dokumente neu...");
+        this.loadDocumentsAgain(this.dto.getId(), this.caseLoadCount, RELOAD_DOCUMENTS_ATTEMPTS);
+    }
+
+    private void finishDocumentsReload() {
+        this.setCursor(java.awt.Cursor.getDefaultCursor());
+        EditorsRegistry.getInstance().clearStatus();
+        this.cmdReloadDocuments.setEnabled(true);
+    }
+
+    // a running or pending search may apply its filter after the documents have been replaced
+    private boolean isSearchRunning() {
+        return (this.searchInputTimer != null && this.searchInputTimer.isRunning()) || (this.searchWorker != null && !this.searchWorker.isDone());
+    }
+
+    private void loadDocumentsAgain(String caseId, int caseLoadAtStart, int attemptsLeft) {
+        final int changeCountAtStart = this.caseFolderPanel1.getChangeCount();
+        final int searchCountAtStart = this.searchCount;
+        final boolean filterActive = this.cmdClearSearch.isEnabled();
+        final String searchText = this.lastSearchText;
+        final String[] searchTags = this.lastSearchTags;
+        final boolean fulltextSearch = filterActive && this.togFulltextSearch.isSelected() && !searchText.trim().isEmpty();
+
+        new javax.swing.SwingWorker<Void, Void>() {
+            private CaseFolder rootFolder = null;
+            private HashMap<String, CaseFolderSettings> folderSettings = null;
+            private Collection<ArchiveFileDocumentsBean> documents = null;
+            private List<Invoice> invoices = null;
+            private Hashtable<String, ArrayList<String>> documentTags = null;
+            private List<SearchHit> fulltextHits = new ArrayList<>();
+            private Throwable fulltextError = null;
+
+            @Override
+            protected Void doInBackground() throws Exception {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+                // the case is only loaded for its folders, the other case data is left as it is
+                ArchiveFileBean freshCase = remote.getArchiveFile(caseId);
+                if (freshCase == null) {
+                    throw new Exception("Die Akte existiert nicht mehr.");
+                }
+                this.rootFolder = freshCase.getRootFolder();
+                this.folderSettings = remote.getCaseFolderSettings(this.rootFolder.getAllFolderIds());
+                this.documents = remote.getDocuments(caseId);
+                this.invoices = remote.getInvoices(caseId);
+                this.documentTags = remote.getDocumentTagsForCase(caseId);
+                if (fulltextSearch) {
+                    // like the search itself: fall back to the file names if this does not work
+                    try {
+                        this.fulltextHits = locator.lookupSearchServiceRemote().search(searchText, 5000, caseId);
+                    } catch (Throwable t) {
+                        log.error("full-text search failed", t);
+                        this.fulltextError = t;
+                    }
+                }
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                if (this.isObsolete()) {
+                    finishDocumentsReload();
+                    return;
+                }
+                try {
+                    this.get();
+                } catch (Exception ex) {
+                    finishDocumentsReload();
+                    Throwable cause = (ex instanceof java.util.concurrent.ExecutionException && ex.getCause() != null) ? ex.getCause() : ex;
+                    log.error("Could not reload the documents of case " + caseId, cause);
+                    JOptionPane.showMessageDialog(ArchiveFilePanel.this, "Fehler beim Neuladen der Dokumente: " + cause.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                this.applyWhenNoDialogIsOpen();
+            }
+
+            // the case has been opened again or another case has been opened, which loads the
+            // documents anyway, or the case view has been closed, e.g. by switching to another module
+            private boolean isObsolete() {
+                return caseLoadCount != caseLoadAtStart || dto == null || !caseId.equals(dto.getId()) || !ArchiveFilePanel.this.isDisplayable();
+            }
+
+            // a modal dialog, e.g. for a folder, a highlight or an upload, may still change the
+            // documents or folders it has been opened for - the result is applied after it is closed
+            private void applyWhenNoDialogIsOpen() {
+                if (this.isObsolete()) {
+                    finishDocumentsReload();
+                    return;
+                }
+                if (isModalDialogShowing()) {
+                    javax.swing.Timer waitTimer = new javax.swing.Timer(300, e -> this.applyWhenNoDialogIsOpen());
+                    waitTimer.setRepeats(false);
+                    waitTimer.start();
+                    return;
+                }
+
+                caseFolderPanel1.stopDocumentEditing();
+                if (caseFolderPanel1.getChangeCount() != changeCountAtStart || searchCount != searchCountAtStart || isSearchRunning()) {
+                    // documents, folders or the search changed in this client while loading - the
+                    // loaded state might not contain these changes, so load again
+                    if (attemptsLeft > 1) {
+                        loadDocumentsAgain(caseId, caseLoadAtStart, attemptsLeft - 1);
+                    } else {
+                        finishDocumentsReload();
+                        JOptionPane.showMessageDialog(ArchiveFilePanel.this, "Die Dokumente wurden während des Neuladens geändert oder durchsucht. Bitte erneut neu laden.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, JOptionPane.INFORMATION_MESSAGE);
+                    }
+                    return;
+                }
+                finishDocumentsReload();
+
+                HashMap<String, Invoice> docToInvoice = new HashMap<>();
+                for (Invoice inv : this.invoices) {
+                    if (inv.getInvoiceDocument() != null) {
+                        docToInvoice.put(inv.getInvoiceDocument().getId(), inv);
+                    }
+                }
+                ArchiveFileDocumentsBean previewedBefore = findDocument(caseFolderPanel1.getDocuments(), getShownPreviewDocumentId());
+                HashSet<String> selectedBefore = documentIds(caseFolderPanel1.getSelectedDocuments());
+
+                dto.setRootFolder(this.rootFolder);
+                caseFolderPanel1.replaceRootFolder(this.rootFolder, this.folderSettings);
+                showDocumentTags(this.documentTags);
+                caseFolderPanel1.replaceDocuments(new ArrayList<>(this.documents), docToInvoice);
+                if (filterActive) {
+                    int matches = caseFolderPanel1.toggleSearchFilter(false, searchText, searchTags, this.documentTags, this.fulltextHits);
+                    lblDocumentHits.setText(matches + " Treffer");
+                }
+                updateFavoriteDocuments();
+
+                // the details of the selected documents are left as they are, so that unsaved input
+                // is kept - unless the selection has changed, e.g. because a selected document is gone
+                if (!documentIds(caseFolderPanel1.getSelectedDocuments()).equals(selectedBefore)) {
+                    documentSelectionChanged();
+                }
+                if (previewedBefore != null && hasNewContent(previewedBefore, findDocument(caseFolderPanel1.getDocuments(), previewedBefore.getId()))) {
+                    if (caseFolderPanel1.isTableMode()) {
+                        // the table view shows no preview - drop the outdated one, so that it is
+                        // loaded when the preview is shown again
+                        pnlPreview.removeAll();
+                        pnlPreview.revalidate();
+                        pnlPreview.repaint();
+                    } else if (previewedBefore.getId().equals(lastPreviewDocId)) {
+                        updateDocumentPreview(true);
+                    }
+                }
+
+                if (this.fulltextError != null) {
+                    JOptionPane.showMessageDialog(ArchiveFilePanel.this, "Volltextsuche fehlgeschlagen: " + this.fulltextError.getMessage() + " - suche anhand Dateinamen", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
+    }
+
+    /**
+     * @param shown a document as shown before the documents have been reloaded
+     * @param reloaded the same document as reloaded, null if it is gone
+     * @return true if the reloaded document has new content, so that its preview is outdated
+     */
+    static boolean hasNewContent(ArchiveFileDocumentsBean shown, ArchiveFileDocumentsBean reloaded) {
+        if (reloaded == null) {
+            return false;
+        }
+        return shown.getVersion() != reloaded.getVersion() || shown.getSize() != reloaded.getSize()
+                || !java.util.Objects.equals(shown.getChangeDate(), reloaded.getChangeDate());
+    }
+
+    // the document whose preview is shown - in the table view it may differ from the selection
+    private String getShownPreviewDocumentId() {
+        if (this.pnlPreview.getComponentCount() > 0 && this.pnlPreview.getComponent(0) instanceof com.jdimension.jlawyer.client.editors.documents.viewer.PreviewPanel) {
+            return ((com.jdimension.jlawyer.client.editors.documents.viewer.PreviewPanel) this.pnlPreview.getComponent(0)).getDocumentId();
+        }
+        return null;
+    }
+
+    private static boolean isModalDialogShowing() {
+        for (java.awt.Window w : java.awt.Window.getWindows()) {
+            if (w instanceof java.awt.Dialog && ((java.awt.Dialog) w).isModal() && w.isShowing()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static HashSet<String> documentIds(Collection<ArchiveFileDocumentsBean> documents) {
+        HashSet<String> ids = new HashSet<>();
+        for (ArchiveFileDocumentsBean d : documents) {
+            ids.add(d.getId());
+        }
+        return ids;
+    }
+
+    private static ArchiveFileDocumentsBean findDocument(Collection<ArchiveFileDocumentsBean> documents, String id) {
+        if (id == null) {
+            return null;
+        }
+        for (ArchiveFileDocumentsBean d : documents) {
+            if (id.equals(d.getId())) {
+                return d;
+            }
+        }
+        return null;
     }
 
     /**
@@ -2511,6 +2752,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     public void setArchiveFileDTO(ArchiveFileBean inDto, String selectDocumentWithFileName) {
         log.info("[AKTE-LOAD] setArchiveFileDTO START: " + (inDto != null ? inDto.getFileNumber() : "null"));
+        this.caseLoadCount++;
         this.dto = inDto;
         this.lastPreviewDocId=null;
         log.info("[AKTE-LOAD] setArchiveFileDTO: DTO zugewiesen");
@@ -2753,6 +2995,21 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             a.start();
         }
 
+    }
+
+    /**
+     * Like waitForOpenDocument, for several documents one after the other. The callback is not invoked if
+     * the user cancels waiting for one of them.
+     */
+    private void waitForOpenDocuments(List<ArchiveFileDocumentsBean> docs, ProgressableActionCallback callback) {
+        for (int i = 0; i < docs.size(); i++) {
+            if (this.isOpenForWrite(docs.get(i).getId())) {
+                List<ArchiveFileDocumentsBean> remaining = docs.subList(i + 1, docs.size());
+                this.waitForOpenDocument(docs.get(i), () -> this.waitForOpenDocuments(remaining, callback));
+                return;
+            }
+        }
+        callback.actionFinished();
     }
 
     public void clearInputs() {
@@ -3178,6 +3435,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         cmdAddVoiceMemo = new javax.swing.JButton();
         cmdAssistantGenerate = new javax.swing.JButton();
         togFulltextSearch = new javax.swing.JToggleButton();
+        cmdReloadDocuments = new javax.swing.JButton();
         tabFinance = new javax.swing.JPanel();
         subTabsFinance = new javax.swing.JTabbedPane();
         jPanel8 = new javax.swing.JPanel();
@@ -4299,6 +4557,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
+        cmdReloadDocuments.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/reload.png"))); // NOI18N
+        cmdReloadDocuments.setToolTipText("Dokumente und Ordner neu laden (F5)");
+        cmdReloadDocuments.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdReloadDocumentsActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel7Layout = new org.jdesktop.layout.GroupLayout(jPanel7);
         jPanel7.setLayout(jPanel7Layout);
         jPanel7Layout.setHorizontalGroup(
@@ -4307,6 +4573,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .addContainerGap()
                 .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel7Layout.createSequentialGroup()
+                        .add(cmdReloadDocuments)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(togFulltextSearch)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(txtSearchDocumentNames, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 135, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
@@ -4342,7 +4610,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(cmdClearSearch)
                         .add(cmdAddNote)
                         .add(cmdAddVoiceMemo)
-                        .add(cmdAssistantGenerate))
+                        .add(cmdAssistantGenerate)
+                        .add(cmdReloadDocuments))
                     .add(cmdDocumentTagFilter))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(splitDocumentsMain, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 768, Short.MAX_VALUE)
@@ -6816,37 +7085,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-            HashMap<String, BigDecimal> invoiceTotals = new HashMap<>();
             List<CaseAccountEntry> accountEntries = fileService.getAccountEntries(this.dto.getId());
             for (CaseAccountEntry cae : accountEntries) {
                 this.addAccountEntryRow(cae);
-                if (cae.getInvoice() != null) {
-                    if (!invoiceTotals.containsKey(cae.getInvoice().getId())) {
-                        invoiceTotals.put(cae.getInvoice().getId(), BigDecimal.ZERO);
-                    }
-                    invoiceTotals.put(cae.getInvoice().getId(), invoiceTotals.get(cae.getInvoice().getId()).add(cae.calculateEarningsTotal()));
-                }
             }
             ComponentUtils.autoSizeColumns(tblAccountEntries);
             this.updateAccountTotals();
-
-            for (int i = 0; i < this.pnlInvoices.getComponentCount(); i++) {
-                InvoiceEntryPanel ie = (InvoiceEntryPanel) this.pnlInvoices.getComponent(i);
-                Invoice inv = ie.getInvoice();
-                if (invoiceTotals.containsKey(inv.getId())) {
-                    if (inv.isSmallBusiness()) {
-                        ie.setPaidTotal(inv.getTotalGross(), invoiceTotals.get(inv.getId()), inv.getCurrency());
-                    } else {
-                        ie.setPaidTotal(inv.getTotal(), invoiceTotals.get(inv.getId()), inv.getCurrency());
-                    }
-                } else {
-                    if (inv.isSmallBusiness()) {
-                        ie.setPaidTotal(inv.getTotalGross(), BigDecimal.ZERO, inv.getCurrency());
-                    } else {
-                        ie.setPaidTotal(inv.getTotal(), BigDecimal.ZERO, inv.getCurrency());
-                    }
-                }
-            }
+            this.updateInvoicePaidTotals();
 
         } catch (Exception ex) {
             log.error("Error loading account entries", ex);
@@ -7563,6 +7808,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         }
 
+        // wait for open documents with the same logic as "Ablegen als PDF" (convertDocumentToPdf)
+        this.waitForOpenDocuments(selectedDocs, () -> this.sendDocumentsAsPdfByEmail(selectedDocs));
+    }//GEN-LAST:event_mnuSendDocumentPDFActionPerformed
+
+    private void sendDocumentsAsPdfByEmail(ArrayList<ArchiveFileDocumentsBean> selectedDocs) {
         // save form data so changes are available immediately for mail templates
         if (!this.readOnly) {
             this.saveFormData();
@@ -7596,7 +7846,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         a.start();
 
-    }//GEN-LAST:event_mnuSendDocumentPDFActionPerformed
+    }
 
     private void mnuOpenInExternalMailerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuOpenInExternalMailerActionPerformed
         try {
@@ -8303,6 +8553,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         }
 
+        // wait for open documents with the same logic as "Ablegen als PDF" (convertDocumentToPdf)
+        this.waitForOpenDocuments(selectedDocs, () -> this.sendDocumentsAsPdfByBea(selectedDocs));
+    }//GEN-LAST:event_mnuSendBeaDocumentPDFActionPerformed
+
+    private void sendDocumentsAsPdfByBea(ArrayList<ArchiveFileDocumentsBean> selectedDocs) {
         try {
             if (!BeaAccess.getInstance().ensureLoggedIn()) return;
         } catch (Exception ex) {
@@ -8330,7 +8585,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         SendPDFAction a = new SendPDFAction(pi, this.caseFolderPanel1, dlg, dlg);
 
         a.start();
-    }//GEN-LAST:event_mnuSendBeaDocumentPDFActionPerformed
+    }
 
     private CaseFolder resolveOutgoingDocumentFolder(List<ArchiveFileDocumentsBean> documents) {
         if (documents == null || documents.isEmpty()) {
@@ -8562,6 +8817,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private void searchInputChangedImpl(boolean clearOnly) {
         final String[] selectedTags = ComponentUtils.getSelectedMenuItems(this.popDocumentTagFilter);
         final String searchText = this.txtSearchDocumentNames.getText();
+        this.lastSearchText = searchText;
+        this.lastSearchTags = selectedTags;
+        this.searchCount++;
 
         // Update button state immediately for responsive UI
         if (searchText.length() > 0 || selectedTags.length > 0) {
@@ -8603,7 +8861,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     if (!isCancelled()) {
                         ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
                         allTags = remote.getDocumentTagsForCase(dto.getId());
-                        matches = caseFolderPanel1.toggleSearchFilter(clearOnly, searchText, selectedTags, allTags, fullTextMatches);
+                        // a newer search replaces this one
+                        if (!isCancelled()) {
+                            matches = caseFolderPanel1.toggleSearchFilter(clearOnly, searchText, selectedTags, allTags, fullTextMatches);
+                        }
                     }
                 } catch (Exception ioe) {
                     log.error("Error loading document tags", ioe);
@@ -8775,6 +9036,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private void cmdDocumentTagFilterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDocumentTagFilterActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_cmdDocumentTagFilterActionPerformed
+
+    private void cmdReloadDocumentsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdReloadDocumentsActionPerformed
+        this.reloadDocuments();
+    }//GEN-LAST:event_cmdReloadDocumentsActionPerformed
 
     private void cmdAddFormActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddFormActionPerformed
         FormTypeBean ftb = (FormTypeBean) this.cmbFormType.getSelectedItem();
@@ -9497,6 +9762,30 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     }
 
+    /**
+     * Recalculates paid / open of all invoices from the account entries currently shown in the case account table.
+     */
+    private void updateInvoicePaidTotals() {
+        HashMap<String, BigDecimal> invoiceTotals = new HashMap<>();
+        for (int r = 0; r < this.tblAccountEntries.getRowCount(); r++) {
+            CaseAccountEntry cae = ((AccountEntryRowIdentifier) this.tblAccountEntries.getValueAt(r, 0)).getAccountEntry();
+            if (cae.getInvoice() != null) {
+                invoiceTotals.merge(cae.getInvoice().getId(), cae.calculateEarningsTotal(), BigDecimal::add);
+            }
+        }
+
+        for (int i = 0; i < this.pnlInvoices.getComponentCount(); i++) {
+            InvoiceEntryPanel ie = (InvoiceEntryPanel) this.pnlInvoices.getComponent(i);
+            Invoice inv = ie.getInvoice();
+            BigDecimal paid = invoiceTotals.getOrDefault(inv.getId(), BigDecimal.ZERO);
+            if (inv.isSmallBusiness()) {
+                ie.setPaidTotal(inv.getTotalGross(), paid, inv.getCurrency());
+            } else {
+                ie.setPaidTotal(inv.getTotal(), paid, inv.getCurrency());
+            }
+        }
+    }
+
     public boolean addAccountEntry(CaseAccountEntry entry) {
         ArrayList<Invoice> invoices = new ArrayList<>();
         for (int i = 0; i < this.pnlInvoices.getComponentCount(); i++) {
@@ -9517,6 +9806,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 e = caseService.addAccountEntry(this.dto.getId(), e);
                 this.addAccountEntryRow(e);
                 this.updateAccountTotals();
+                this.updateInvoicePaidTotals();
             } catch (Throwable ex) {
                 log.error("Error saving account entry", ex);
                 JOptionPane.showMessageDialog(this, "Buchungseintrag konnte nicht erstellt werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -9554,6 +9844,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         this.updateAccountTotals();
+        this.updateInvoicePaidTotals();
 
 
     }//GEN-LAST:event_cmdRemoveAccountEntryActionPerformed
@@ -9575,7 +9866,23 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             invoices.add(inv);
         }
 
-        CaseAccountEntryDialog dlg = new CaseAccountEntryDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, ae.getAccountEntry(), this.pnlInvolvedParties.getInvolvedPartiesAddress(), invoices);
+        // the dialog writes its input into the entry it gets - edit a copy, the table keeps the stored values if saving fails
+        CaseAccountEntry original = ae.getAccountEntry();
+        CaseAccountEntry editedEntry = new CaseAccountEntry();
+        editedEntry.setId(original.getId());
+        editedEntry.setArchiveFileKey(original.getArchiveFileKey());
+        editedEntry.setEntryDate(original.getEntryDate());
+        editedEntry.setContact(original.getContact());
+        editedEntry.setInvoice(original.getInvoice());
+        editedEntry.setDescription(original.getDescription());
+        editedEntry.setEarnings(original.getEarnings());
+        editedEntry.setSpendings(original.getSpendings());
+        editedEntry.setEscrowIn(original.getEscrowIn());
+        editedEntry.setEscrowOut(original.getEscrowOut());
+        editedEntry.setExpendituresIn(original.getExpendituresIn());
+        editedEntry.setExpendituresOut(original.getExpendituresOut());
+
+        CaseAccountEntryDialog dlg = new CaseAccountEntryDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, editedEntry, this.pnlInvolvedParties.getInvolvedPartiesAddress(), invoices);
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
         if (dlg.getEntry() != null) {
@@ -9588,6 +9895,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 this.addAccountEntryRow(e);
 
                 this.updateAccountTotals();
+                this.updateInvoicePaidTotals();
             } catch (Throwable ex) {
                 log.error("Error saving account entry", ex);
                 JOptionPane.showMessageDialog(this, "Buchungseintrag konnte nicht aktualisiert werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -9753,6 +10061,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 this.addAccountEntryRow(e);
 
                 this.updateAccountTotals();
+                this.updateInvoicePaidTotals();
             } catch (Throwable ex) {
                 log.error("Error saving account entry", ex);
                 JOptionPane.showMessageDialog(this, "Buchungseintrag konnte nicht aktualisiert werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -11272,6 +11581,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JButton cmdNewTimesheet;
     private javax.swing.JButton cmdPaymentFromAccountEntry;
     private javax.swing.JButton cmdPrint;
+    private javax.swing.JButton cmdReloadDocuments;
     private javax.swing.JButton cmdRemoveAccountEntry;
     private javax.swing.JButton cmdSave;
     private javax.swing.JButton cmdSaveHistoryDocument;

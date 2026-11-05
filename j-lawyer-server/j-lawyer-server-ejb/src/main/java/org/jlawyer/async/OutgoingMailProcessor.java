@@ -663,6 +663,7 @@
  */
 package org.jlawyer.async;
 
+import com.jdimension.jlawyer.email.CommonMailUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
@@ -823,6 +824,7 @@ public class OutgoingMailProcessor implements MessageListener {
         props.put("mail.smtps.auth", true);
         props.put("mail.from", fromAddress);
         props.put("mail.password", smtpPwd);
+        CommonMailUtils.setSmtpTimeouts(props);
 
         javax.mail.Authenticator auth = new javax.mail.Authenticator() {
 

@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.documents.DocumentPreview;
+import com.jdimension.jlawyer.email.CommonMailUtils;
 import com.jdimension.jlawyer.pojo.PartiesTriplet;
 import com.jdimension.jlawyer.documents.LibreOfficeAccess;
 import com.jdimension.jlawyer.documents.TikaConfigurator;
@@ -687,6 +688,7 @@ import com.jdimension.jlawyer.server.utils.InvalidSchemaPatternException;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.server.utils.StringUtils;
+import com.jdimension.jlawyer.server.utils.SystemMemoryUtils;
 import com.jdimension.jlawyer.stirlingpdf.StirlingPdfAPI;
 import java.io.*;
 import java.lang.management.ManagementFactory;
@@ -1426,7 +1428,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         long total = 2;
         try {
             if (osBean instanceof com.sun.management.OperatingSystemMXBean) {
-                free = ((com.sun.management.OperatingSystemMXBean) osBean).getFreePhysicalMemorySize() + Math.max(1l, ((com.sun.management.OperatingSystemMXBean) osBean).getFreeSwapSpaceSize());
+                free = SystemMemoryUtils.getAvailablePhysicalMemory((com.sun.management.OperatingSystemMXBean) osBean) + Math.max(1l, ((com.sun.management.OperatingSystemMXBean) osBean).getFreeSwapSpaceSize());
                 total = ((com.sun.management.OperatingSystemMXBean) osBean).getTotalPhysicalMemorySize() + Math.max(1l, ((com.sun.management.OperatingSystemMXBean) osBean).getTotalSwapSpaceSize());
             }
         } catch (Throwable t) {
@@ -1549,6 +1551,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         props.put("mail.smtps.auth", true);
         props.put("mail.from", fromAddress);
         props.put("mail.password", smtpPwd);
+        CommonMailUtils.setSmtpTimeouts(props);
 
         final String fromAddressFinal = fromAddress;
         javax.mail.Authenticator auth = new javax.mail.Authenticator() {
@@ -1651,6 +1654,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         props.put("mail.smtps.auth", true);
         props.put("mail.from", smtpUser);
         props.put("mail.password", smtpPwd);
+        CommonMailUtils.setSmtpTimeouts(props);
 
         if (isMsExchange) {
 
