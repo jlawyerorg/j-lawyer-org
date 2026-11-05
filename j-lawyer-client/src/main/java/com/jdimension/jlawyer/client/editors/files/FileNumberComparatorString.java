@@ -695,7 +695,10 @@ public class FileNumberComparatorString implements Comparator<String> {
             if(s2==null)
                 return 1;
             
-            if (s1.matches("\\d{3,5}/\\d{2,4}") && s2.matches("\\d{3,5}/\\d{2,4}")) {
+            boolean defaultSchema1 = s1.matches("\\d{3,5}/\\d{2,4}");
+            boolean defaultSchema2 = s2.matches("\\d{3,5}/\\d{2,4}");
+
+            if (defaultSchema1 && defaultSchema2) {
                 // in case of default file number schema
                 String year1 = s1.substring(s1.indexOf("/")+1);
                 String year2 = s2.substring(s2.indexOf("/")+1);
@@ -731,6 +734,13 @@ public class FileNumberComparatorString implements Comparator<String> {
                 Integer in2 = Integer.parseInt(index2);
 
                 return in1.compareTo(in2);
+            } else if (defaultSchema1) {
+                // only 1 has the default file number schema --> always sort it first.
+                // mixing numeric and string comparison would violate the comparator contract
+                return -1;
+            } else if (defaultSchema2) {
+                // only 2 has the default file number schema
+                return 1;
             } else {
                 // default comparison
                 return s1.compareTo(s2);
