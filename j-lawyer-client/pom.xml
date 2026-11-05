@@ -446,11 +446,6 @@
             <artifactId>TableLayout</artifactId>
         </dependency>
         <dependency>
-            <groupId>jlawyer.thirdparty</groupId>
-            <artifactId>ical4j</artifactId>
-            <version>1.0-beta3</version>
-        </dependency>
-        <dependency>
             <groupId>ecs</groupId>
             <artifactId>ecs</artifactId>
         </dependency>
