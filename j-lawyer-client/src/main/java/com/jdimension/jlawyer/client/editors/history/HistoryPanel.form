@@ -473,10 +473,8 @@
         </Container>
       </SubComponents>
     </Container>
-    <Container class="javax.swing.JSplitPane" name="splitMain">
+    <Container class="javax.swing.JPanel" name="pnlMain">
       <Properties>
-        <Property name="orientation" type="int" value="0"/>
-        <Property name="resizeWeight" type="double" value="0.8"/>
         <Property name="opaque" type="boolean" value="false"/>
       </Properties>
       <Constraints>
@@ -485,12 +483,14 @@
         </Constraint>
       </Constraints>
 
-      <Layout class="org.netbeans.modules.form.compat2.layouts.support.JSplitPaneSupportLayout"/>
+      <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout">
+        <Property name="verticalGap" type="int" value="6"/>
+      </Layout>
       <SubComponents>
         <Container class="com.jdimension.jlawyer.client.editors.history.GlassCardPanel" name="cardTable">
           <Constraints>
-            <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JSplitPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JSplitPaneSupportLayout$JSplitPaneConstraintsDescription">
-              <JSplitPaneConstraints position="top"/>
+            <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout" value="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout$BorderConstraintsDescription">
+              <BorderConstraints direction="Center"/>
             </Constraint>
           </Constraints>
 
@@ -519,8 +519,8 @@
         </Container>
         <Container class="com.jdimension.jlawyer.client.editors.history.GlassCardPanel" name="cardDetail">
           <Constraints>
-            <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JSplitPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JSplitPaneSupportLayout$JSplitPaneConstraintsDescription">
-              <JSplitPaneConstraints position="bottom"/>
+            <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout" value="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout$BorderConstraintsDescription">
+              <BorderConstraints direction="South"/>
             </Constraint>
           </Constraints>
 
@@ -602,7 +602,7 @@
                   <Properties>
                     <Property name="editable" type="boolean" value="false"/>
                     <Property name="lineWrap" type="boolean" value="true"/>
-                    <Property name="rows" type="int" value="4"/>
+                    <Property name="rows" type="int" value="3"/>
                     <Property name="wrapStyleWord" type="boolean" value="true"/>
                   </Properties>
                 </Component>

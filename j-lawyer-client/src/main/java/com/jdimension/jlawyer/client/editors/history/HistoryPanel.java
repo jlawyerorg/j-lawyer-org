@@ -809,9 +809,6 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
         this.activityChart.setBarColor(this.accentColor);
         this.activityChart.setBinClickListener(this::scrollToRange);
 
-        ComponentUtils.restoreSplitPaneRatio(this.splitMain, this.getClass(), "splitMain");
-        ComponentUtils.persistSplitPaneRatio(this.splitMain, this.getClass(), "splitMain");
-
         ClientSettings settings = ClientSettings.getInstance();
         int preset = RANGE_LAST7DAYS;
         try {
@@ -1479,7 +1476,7 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
         lblKpiTopCaseValue = new javax.swing.JLabel();
         lblKpiTopCaseCaption = new javax.swing.JLabel();
         activityChart = new com.jdimension.jlawyer.client.editors.history.ActivityChart();
-        splitMain = new javax.swing.JSplitPane();
+        pnlMain = new javax.swing.JPanel();
         cardTable = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
         scrollTable = new javax.swing.JScrollPane();
         tblHistory = new com.jdimension.jlawyer.client.editors.history.HistoryTable();
@@ -1716,9 +1713,8 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
 
         add(pnlTop, java.awt.BorderLayout.NORTH);
 
-        splitMain.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
-        splitMain.setResizeWeight(0.8);
-        splitMain.setOpaque(false);
+        pnlMain.setOpaque(false);
+        pnlMain.setLayout(new java.awt.BorderLayout(0, 6));
 
         cardTable.setLayout(new java.awt.BorderLayout());
 
@@ -1742,7 +1738,7 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
 
         cardTable.add(scrollTable, java.awt.BorderLayout.CENTER);
 
-        splitMain.setTopComponent(cardTable);
+        pnlMain.add(cardTable, java.awt.BorderLayout.CENTER);
 
         cardDetail.setLayout(new java.awt.BorderLayout(0, 6));
 
@@ -1776,15 +1772,15 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
 
         txtDetail.setEditable(false);
         txtDetail.setLineWrap(true);
-        txtDetail.setRows(4);
+        txtDetail.setRows(3);
         txtDetail.setWrapStyleWord(true);
         scrollDetail.setViewportView(txtDetail);
 
         cardDetail.add(scrollDetail, java.awt.BorderLayout.CENTER);
 
-        splitMain.setBottomComponent(cardDetail);
+        pnlMain.add(cardDetail, java.awt.BorderLayout.SOUTH);
 
-        add(splitMain, java.awt.BorderLayout.CENTER);
+        add(pnlMain, java.awt.BorderLayout.CENTER);
 
         pnlStatus.setOpaque(false);
         pnlStatus.setLayout(new java.awt.BorderLayout());
@@ -2002,12 +1998,12 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
     private javax.swing.JPanel pnlKpiTopCase;
     private javax.swing.JPanel pnlKpiUsers;
     private javax.swing.JPanel pnlKpis;
+    private javax.swing.JPanel pnlMain;
     private javax.swing.JPanel pnlStatus;
     private javax.swing.JPanel pnlTop;
     private javax.swing.JPopupMenu popHistory;
     private javax.swing.JScrollPane scrollDetail;
     private javax.swing.JScrollPane scrollTable;
-    private javax.swing.JSplitPane splitMain;
     private com.jdimension.jlawyer.client.editors.history.HistoryTable tblHistory;
     private javax.swing.JTextArea txtDetail;
     private javax.swing.JTextField txtCase;
