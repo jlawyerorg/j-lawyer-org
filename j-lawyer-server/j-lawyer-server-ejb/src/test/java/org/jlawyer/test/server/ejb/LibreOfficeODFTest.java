@@ -789,6 +789,36 @@ public class LibreOfficeODFTest {
         }
     }
 
+    /**
+     * A character after a placeholder keeps its own formatting (#2265): a bold placeholder followed by a comma
+     * that is not bold.
+     */
+    @Test
+    public void setPlaceHolderKeepsFormattingOfFollowingCharacterInOdt() {
+        File f = new File(tempFolder.getRoot(), "format-after-placeholder.odt");
+        try {
+            TextDocument document = TextDocument.newTextDocument();
+            document.addParagraph("{{GEGNER_UNTERNEHMEN}}, vertreten durch");
+            org.odftoolkit.simple.common.navigation.TextNavigation search = new org.odftoolkit.simple.common.navigation.TextNavigation("\\{\\{GEGNER_UNTERNEHMEN\\}\\}", document);
+            org.odftoolkit.simple.text.Span placeholder = org.odftoolkit.simple.text.Span.newSpan((org.odftoolkit.simple.common.navigation.TextSelection) search.nextSelection());
+            placeholder.getStyleHandler().getTextPropertiesForWrite().setFontStyle(StyleTypeDefinitions.FontStyle.BOLD);
+            document.save(f);
+            document.close();
+            Assert.assertTrue(readZipEntry(f, "content.xml"), readZipEntry(f, "content.xml").matches("(?s).*<text:span[^>]*>\\{\\{GEGNER_UNTERNEHMEN\\}\\}</text:span>, vertreten durch.*"));
+
+            HashMap<String, Object> ph = new HashMap<>();
+            ph.put("{{GEGNER_UNTERNEHMEN}}", "Office 42 GmbH");
+            LibreOfficeAccess.setPlaceHolders("", f.getPath(), f.getName(), ph, null);
+
+            String contentXml = readZipEntry(f, "content.xml");
+            // the bold span (odftoolkit may nest a plain span in it) ends before the comma
+            Assert.assertTrue(contentXml, contentXml.matches("(?s).*<text:span text:style-name=\"[^\"]+\">(<text:span>)?Office 42 GmbH(</text:span>)+, vertreten durch.*"));
+        } catch (Throwable t) {
+            t.printStackTrace();
+            Assert.fail(t.getMessage());
+        }
+    }
+
     @Test
     public void setPlaceHoldersODT() {
         File f = new File(tempFolder.getRoot(), "template-run.odt");
