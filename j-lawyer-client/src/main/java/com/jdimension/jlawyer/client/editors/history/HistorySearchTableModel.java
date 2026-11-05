@@ -663,157 +663,315 @@
  */
 package com.jdimension.jlawyer.client.editors.history;
 
-import com.jdimension.jlawyer.client.components.FlexibleGridLayout;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Calendar;
+import java.util.Comparator;
 import java.util.Date;
-import java.util.Hashtable;
+import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.List;
-import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
-import org.apache.log4j.Logger;
+import java.util.Map;
+import java.util.Set;
+import javax.swing.table.AbstractTableModel;
 
 /**
+ * Read-only table model for the cross-case history report. Holds the loaded entries, applies the
+ * category filter and the sort order, and - when sorted by time - inserts one separator row per
+ * day. Every cell value is the {@link HistoryRow} of its row; the renderer decides what to show.
  *
  * @author jens
  */
-public class HistorySearchThread implements Runnable {
+public class HistorySearchTableModel extends AbstractTableModel {
 
-    private static final Logger log = Logger.getLogger(HistorySearchThread.class.getName());
-    
-    private static long lastThreadStart=System.currentTimeMillis();
+    public static final int COL_CATEGORY = 0;
+    public static final int COL_TIME = 1;
+    public static final int COL_CASE = 2;
+    public static final int COL_CHANGE = 3;
+    public static final int COL_USER = 4;
 
-    private Component owner;
-    private JPanel target;
-    private String principalId = null;
-    private Date fromDate = null;
-    private Date toDate = null;
-    private int maxEntries = 500;
+    private static final String[] COLUMNS = new String[]{"", "Zeit", "Akte", "Änderung", "Nutzer"};
+
+    private final List<Entry> allEntries = new ArrayList<>();
+    private final List<HistoryRow> rows = new ArrayList<>();
+    private final Set<HistoryCategory> activeCategories = EnumSet.noneOf(HistoryCategory.class);
+
+    private int sortColumn = COL_TIME;
+    private boolean ascending = false;
 
     /**
-     * Creates a new instance of ArchiveFileReviewsSearchThread
-     * @param owner
-     * @param target
-     * @param principalId
-     * @param maxEntries
-     * @param toDate
-     * @param fromDate
+     * A row of the table: either a day separator or a history entry.
      */
-    public HistorySearchThread(Component owner, JPanel target, String principalId, Date fromDate, Date toDate, int maxEntries) {
-        this.owner = owner;
-        this.target = target;
-        this.principalId = principalId;
-        this.fromDate = fromDate;
-        this.toDate = toDate;
-        this.maxEntries = maxEntries;
-        
+    public interface HistoryRow {
     }
-    
+
+    /**
+     * Separator row for one day.
+     */
+    public static class DayHeader implements HistoryRow {
+
+        private final Date day;
+        private final int count;
+
+        public DayHeader(Date day, int count) {
+            this.day = day;
+            this.count = count;
+        }
+
+        public Date getDay() {
+            return day;
+        }
+
+        public int getCount() {
+            return count;
+        }
+    }
+
+    /**
+     * Row of one history entry.
+     */
+    public static class Entry implements HistoryRow {
+
+        private final ArchiveFileHistoryBean history;
+        private final HistoryCategory category;
+        private boolean alternate = false;
+
+        public Entry(ArchiveFileHistoryBean history) {
+            this.history = history;
+            this.category = HistoryCategory.of(history.getChangeDescription());
+        }
+
+        public ArchiveFileHistoryBean getHistory() {
+            return history;
+        }
+
+        public HistoryCategory getCategory() {
+            return category;
+        }
+
+        /**
+         * @return true for every second entry within a day, used for zebra striping
+         */
+        public boolean isAlternate() {
+            return alternate;
+        }
+
+        String fileNumber() {
+            ArchiveFileBean c = history.getArchiveFileKey();
+            return c == null || c.getFileNumber() == null ? "" : c.getFileNumber();
+        }
+
+        String caseName() {
+            ArchiveFileBean c = history.getArchiveFileKey();
+            return c == null || c.getName() == null ? "" : c.getName();
+        }
+    }
+
+    public void setEntries(List<ArchiveFileHistoryBean> newEntries) {
+        this.allEntries.clear();
+        if (newEntries != null) {
+            for (ArchiveFileHistoryBean h : newEntries) {
+                this.allEntries.add(new Entry(h));
+            }
+        }
+        this.rebuild();
+    }
+
+    /**
+     * @param categories the categories to show; empty shows all
+     */
+    public void setActiveCategories(Set<HistoryCategory> categories) {
+        this.activeCategories.clear();
+        if (categories != null) {
+            this.activeCategories.addAll(categories);
+        }
+        this.rebuild();
+    }
+
+    public void sort(int column, boolean asc) {
+        this.sortColumn = column;
+        this.ascending = asc;
+        this.rebuild();
+    }
+
+    public int getSortColumn() {
+        return sortColumn;
+    }
+
+    public boolean isAscending() {
+        return ascending;
+    }
+
+    public boolean isGroupedByDay() {
+        return this.sortColumn == COL_TIME;
+    }
+
+    /**
+     * @return number of loaded entries per category, ignoring the category filter
+     */
+    public Map<HistoryCategory, Integer> getCategoryCounts() {
+        Map<HistoryCategory, Integer> counts = new EnumMap<>(HistoryCategory.class);
+        for (Entry e : this.allEntries) {
+            counts.merge(e.getCategory(), 1, Integer::sum);
+        }
+        return counts;
+    }
+
+    /**
+     * @return the entries that pass the category filter, in display order
+     */
+    public List<Entry> getVisibleEntries() {
+        List<Entry> result = new ArrayList<>();
+        for (HistoryRow r : this.rows) {
+            if (r instanceof Entry) {
+                result.add((Entry) r);
+            }
+        }
+        return result;
+    }
+
+    public int getLoadedCount() {
+        return this.allEntries.size();
+    }
+
+    public HistoryRow getRow(int row) {
+        if (row < 0 || row >= this.rows.size()) {
+            return null;
+        }
+        return this.rows.get(row);
+    }
+
+    /**
+     * @param row model row
+     * @return the history entry of the row, or null for a separator row
+     */
+    public ArchiveFileHistoryBean getEntry(int row) {
+        HistoryRow r = this.getRow(row);
+        return r instanceof Entry ? ((Entry) r).getHistory() : null;
+    }
+
+    /**
+     * @param from start of the range (inclusive)
+     * @param to end of the range (exclusive)
+     * @return the first row belonging to the range, preferably its day separator, or -1
+     */
+    public int findFirstRowInRange(Date from, Date to) {
+        for (int i = 0; i < this.rows.size(); i++) {
+            HistoryRow r = this.rows.get(i);
+            Date d = r instanceof DayHeader ? ((DayHeader) r).getDay() : ((Entry) r).getHistory().getChangeDate();
+            if (d != null && !d.before(from) && d.before(to)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private void rebuild() {
+        List<Entry> visible = new ArrayList<>();
+        for (Entry e : this.allEntries) {
+            if (this.activeCategories.isEmpty() || this.activeCategories.contains(e.getCategory())) {
+                visible.add(e);
+            }
+        }
+
+        Comparator<Entry> byTime = Comparator.comparing((Entry e) -> e.getHistory().getChangeDate(), Comparator.nullsFirst(Comparator.naturalOrder()));
+        Comparator<Entry> cmp;
+        switch (this.sortColumn) {
+            case COL_CASE:
+                cmp = Comparator.comparing(Entry::fileNumber, String.CASE_INSENSITIVE_ORDER).thenComparing(Entry::caseName, String.CASE_INSENSITIVE_ORDER);
+                break;
+            case COL_CHANGE:
+                cmp = Comparator.comparing((Entry e) -> e.getHistory().getChangeDescription() == null ? "" : e.getHistory().getChangeDescription(), String.CASE_INSENSITIVE_ORDER);
+                break;
+            case COL_USER:
+                cmp = Comparator.comparing((Entry e) -> e.getHistory().getPrincipal() == null ? "" : e.getHistory().getPrincipal(), String.CASE_INSENSITIVE_ORDER);
+                break;
+            default:
+                cmp = byTime;
+                break;
+        }
+        if (!this.ascending) {
+            cmp = cmp.reversed();
+        }
+        if (this.sortColumn != COL_TIME) {
+            // newest first within equal values
+            cmp = cmp.thenComparing(byTime.reversed());
+        }
+        visible.sort(cmp);
+
+        this.rows.clear();
+        if (this.isGroupedByDay()) {
+            int i = 0;
+            while (i < visible.size()) {
+                Date day = dayStart(visible.get(i).getHistory().getChangeDate());
+                int j = i;
+                while (j < visible.size() && sameDay(day, visible.get(j).getHistory().getChangeDate())) {
+                    j++;
+                }
+                this.rows.add(new DayHeader(day, j - i));
+                for (int k = i; k < j; k++) {
+                    Entry e = visible.get(k);
+                    e.alternate = (k - i) % 2 == 1;
+                    this.rows.add(e);
+                }
+                i = j;
+            }
+        } else {
+            for (int k = 0; k < visible.size(); k++) {
+                Entry e = visible.get(k);
+                e.alternate = k % 2 == 1;
+                this.rows.add(e);
+            }
+        }
+        this.fireTableDataChanged();
+    }
+
+    private static Date dayStart(Date d) {
+        if (d == null) {
+            return null;
+        }
+        Calendar c = Calendar.getInstance();
+        c.setTime(d);
+        c.set(Calendar.HOUR_OF_DAY, 0);
+        c.set(Calendar.MINUTE, 0);
+        c.set(Calendar.SECOND, 0);
+        c.set(Calendar.MILLISECOND, 0);
+        return c.getTime();
+    }
+
+    private static boolean sameDay(Date dayStart, Date d) {
+        Date other = dayStart(d);
+        return dayStart == null ? other == null : dayStart.equals(other);
+    }
+
     @Override
-    public void run() {
-        lastThreadStart=System.currentTimeMillis();
-        
-        // wait for 1s
-        try {
-            Thread.sleep(1000);
-        } catch (Throwable t) {
-            
-        }
-        
-        // check whether another thread has been started in the meantime
-        // this is to avoid refreshing the view for EVERY slider change
-        if(!(System.currentTimeMillis()>=(lastThreadStart+1000))) {
-            return;
-        }
-        
-        try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-
-            ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-            List<ArchiveFileHistoryBean> history = null;
-            if (this.principalId == null) {
-                history = fileService.getHistoryByDateInterval(fromDate, toDate, maxEntries);
-            } else {
-                history = fileService.getHistoryByPrincipalAndDateInterval(principalId, fromDate, toDate, maxEntries);
-            }
-            
-            Collections.sort(history, (ArchiveFileHistoryBean s1, ArchiveFileHistoryBean s2) -> {
-                try {
-                    return s2.getChangeDate().compareTo(s1.getChangeDate());
-                } catch (Throwable t) {
-                    return -1;
-                }
-            });
-
-            SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyy");
-            Hashtable<String, ArrayList<ArchiveFileHistoryBean>> ht = new Hashtable<>();
-            ArrayList<String> sortedKeys = new ArrayList<>();
-            for (int i = 0; i < history.size(); i++) {
-                ArchiveFileHistoryBean hist = history.get(i);
-                Date cd = hist.getChangeDate();
-                String key = df.format(cd);
-                if (ht.containsKey(key)) {
-                    ArrayList<ArchiveFileHistoryBean> list = ht.get(key);
-                    list.add(hist);
-                } else {
-                    ArrayList<ArchiveFileHistoryBean> list = new ArrayList<>();
-                    list.add(hist);
-                    ht.put(key, list);
-                    sortedKeys.add(key);
-                }
-
-            }
-
-            for (int i = 0; i < sortedKeys.size(); i++) {
-                ArrayList<ArchiveFileHistoryBean> list = ht.get(sortedKeys.get(i));
-                Collections.sort(list, (ArchiveFileHistoryBean s1, ArchiveFileHistoryBean s2) -> {
-                    try {
-                        if (s1.getArchiveFileKey().getFileNumber().equals(s2.getArchiveFileKey().getFileNumber())) {
-                            return s1.getPrincipal().compareTo(s2.getPrincipal());
-                        } else {
-                            return s1.getArchiveFileKey().getFileNumber().compareTo(s2.getArchiveFileKey().getFileNumber());
-                        }
-                    } catch (Throwable t) {
-                        return -1;
-                    }
-                });
-            }
-
-            final ArrayList<String> sortedKeysParam = sortedKeys;
-            final Hashtable<String, ArrayList<ArchiveFileHistoryBean>> htParam = ht;
-            final SimpleDateFormat dfParam=df;
-            SwingUtilities.invokeLater(() -> {
-                target.removeAll();
-                target.setLayout(new FlexibleGridLayout(sortedKeysParam.size(), 1));
-                target.setVisible(false);
-                for (int i = 0; i < sortedKeysParam.size(); i++) {
-                    try {
-                        DayHistoryPanel p = new DayHistoryPanel(dfParam.parse(sortedKeysParam.get(i)));
-                        p.setEntries(htParam.get(sortedKeysParam.get(i)));
-                        p.setMaximumSize(new Dimension(target.getWidth(), Integer.MAX_VALUE));
-                        target.add(p);
-                    } catch (Throwable t) {
-                        log.error(t);
-                    }
-                }
-                target.setVisible(true);
-            });
-
-        } catch (Exception ex) {
-            log.error("Error connecting to server", ex);
-            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
-            return;
-        }
-        ThreadUtils.setDefaultCursor(this.owner);
+    public int getRowCount() {
+        return this.rows.size();
     }
 
+    @Override
+    public int getColumnCount() {
+        return COLUMNS.length;
+    }
+
+    @Override
+    public String getColumnName(int column) {
+        return COLUMNS[column];
+    }
+
+    @Override
+    public Class<?> getColumnClass(int columnIndex) {
+        return HistoryRow.class;
+    }
+
+    @Override
+    public boolean isCellEditable(int rowIndex, int columnIndex) {
+        return false;
+    }
+
+    @Override
+    public Object getValueAt(int rowIndex, int columnIndex) {
+        return this.rows.get(rowIndex);
+    }
 }

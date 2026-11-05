@@ -695,4 +695,18 @@ public interface ArchiveFileHistoryBeanFacadeLocal {
     
     public List<ArchiveFileHistoryBean> findByDateInterval(Date fromDate, Date toDate, int limit);
     
+    /**
+     * Searches history entries across cases, newest first. Only filters that are set are applied.
+     *
+     * @param fromDate lower bound of the change date (inclusive), or null
+     * @param toDate upper bound of the change date (inclusive), or null
+     * @param principals users whose entries are returned; null or empty means all users
+     * @param caseQuery substring of the case file number or case name, or null
+     * @param textQuery substring of the change description, or null
+     * @param groupIds the caller's group ids to apply the case visibility rule; null disables the check
+     * @param limit maximum number of entries; 0 or less means unlimited
+     * @return matching history entries
+     */
+    public List<ArchiveFileHistoryBean> search(Date fromDate, Date toDate, java.util.Collection<String> principals, String caseQuery, String textQuery, java.util.Collection<String> groupIds, int limit);
+
 }

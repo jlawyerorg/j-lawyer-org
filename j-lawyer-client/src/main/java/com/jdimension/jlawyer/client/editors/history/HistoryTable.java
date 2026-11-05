@@ -663,110 +663,230 @@
  */
 package com.jdimension.jlawyer.client.editors.history;
 
-import com.jdimension.jlawyer.client.configuration.UserTableCellRenderer;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import javax.swing.table.DefaultTableModel;
-import org.apache.log4j.Logger;
+import java.util.Calendar;
+import java.util.Date;
+import javax.swing.Icon;
+import javax.swing.JLabel;
+import javax.swing.JTable;
+import javax.swing.SwingConstants;
+import javax.swing.UIManager;
+import javax.swing.event.TableModelEvent;
+import javax.swing.table.TableCellRenderer;
 
 /**
+ * Table for the history timeline. Works with a {@link HistorySearchTableModel}:
+ * <ul>
+ * <li>paints the label of day separator rows across the full row width,</li>
+ * <li>sets the row heights (separators are lower than entries),</li>
+ * <li>sorts via the model when a column header is clicked and shows the sort arrow,</li>
+ * <li>skips separator rows when the selection is moved.</li>
+ * </ul>
  *
  * @author jens
  */
-public class DayHistoryDetailsPanel extends javax.swing.JPanel {
+public class HistoryTable extends JTable {
 
-    private static final Logger log = Logger.getLogger(DayHistoryDetailsPanel.class.getName());
-    private SimpleDateFormat df=new SimpleDateFormat("HH:mm");
+    public static final int ENTRY_ROW_HEIGHT = 46;
+    public static final int HEADER_ROW_HEIGHT = 30;
 
-    /**
-     * Creates new form HitPanel
-     */
-    public DayHistoryDetailsPanel(ArchiveFileBean afb) {
-        initComponents();
-        
-        this.lblArchiveFile.setText(afb.getName());
+    private Color accentColor = new Color(0x1E88E5);
+
+    public HistoryTable() {
+        super();
+        this.setRowHeight(ENTRY_ROW_HEIGHT);
+        this.setShowGrid(false);
+        this.setIntercellSpacing(new java.awt.Dimension(0, 0));
+        this.setFillsViewportHeight(true);
+        this.getTableHeader().setReorderingAllowed(false);
+
+        final TableCellRenderer defaultHeaderRenderer = this.getTableHeader().getDefaultRenderer();
+        this.getTableHeader().setDefaultRenderer((JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) -> {
+            Component c = defaultHeaderRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            if (c instanceof JLabel) {
+                JLabel l = (JLabel) c;
+                l.setHorizontalTextPosition(SwingConstants.LEADING);
+                Icon icon = null;
+                if (table.getModel() instanceof HistorySearchTableModel) {
+                    HistorySearchTableModel m = (HistorySearchTableModel) table.getModel();
+                    if (table.convertColumnIndexToModel(column) == m.getSortColumn()) {
+                        icon = UIManager.getIcon(m.isAscending() ? "Table.ascendingSortIcon" : "Table.descendingSortIcon");
+                    }
+                }
+                l.setIcon(icon);
+            }
+            return c;
+        });
+
+        this.getTableHeader().addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getButton() != MouseEvent.BUTTON1 || !(getModel() instanceof HistorySearchTableModel)) {
+                    return;
+                }
+                int viewCol = getTableHeader().columnAtPoint(e.getPoint());
+                if (viewCol < 0) {
+                    return;
+                }
+                int col = convertColumnIndexToModel(viewCol);
+                if (col == HistorySearchTableModel.COL_CATEGORY) {
+                    return;
+                }
+                HistorySearchTableModel m = (HistorySearchTableModel) getModel();
+                boolean asc;
+                if (col == m.getSortColumn()) {
+                    asc = !m.isAscending();
+                } else {
+                    // time starts with the newest entries, text columns alphabetically
+                    asc = col != HistorySearchTableModel.COL_TIME;
+                }
+                m.sort(col, asc);
+                getTableHeader().repaint();
+            }
+        });
     }
 
-    public void setEntries(ArrayList<ArchiveFileHistoryBean> list) {
-        String[] colNames=new String[] {"Nutzer", "Zeit", "Änderung"};
-        //QuickArchiveFileSearchTableModel model=new QuickArchiveFileSearchTableModel(colNames, 0);
-        DefaultTableModel model = new DefaultTableModel(colNames, 0) {
-
-            public boolean isCellEditable(int i, int i0) {
-                return false;
-            }
-        };
-        this.tblUserActivities.setTableHeader(null);
-        this.tblUserActivities.setModel(model);
-        
-        for(int i=0;i<list.size();i++) {
-            Object[] row=new Object[] {list.get(i).getPrincipal(), df.format(list.get(i).getChangeDate()), list.get(i).getChangeDescription()};
-            model.addRow(row);
+    public void setAccentColor(Color c) {
+        if (c != null) {
+            this.accentColor = c;
+            this.repaint();
         }
-        this.tblUserActivities.setSize(this.tblUserActivities.getWidth(), this.tblUserActivities.getRowHeight()*model.getRowCount());
-        this.tblUserActivities.getColumnModel().getColumn(0).setCellRenderer(new UserTableCellRenderer());
-        
+    }
+
+    public Color getAccentColor() {
+        return accentColor;
+    }
+
+    @Override
+    public void tableChanged(TableModelEvent e) {
+        super.tableChanged(e);
+        if (this.getModel() instanceof HistorySearchTableModel) {
+            HistorySearchTableModel m = (HistorySearchTableModel) this.getModel();
+            for (int row = 0; row < m.getRowCount(); row++) {
+                int h = m.getRow(row) instanceof HistorySearchTableModel.DayHeader ? HEADER_ROW_HEIGHT : ENTRY_ROW_HEIGHT;
+                if (this.getRowHeight(row) != h) {
+                    this.setRowHeight(row, h);
+                }
+            }
+        }
+    }
+
+    private boolean isHeaderRow(int viewRow) {
+        if (!(this.getModel() instanceof HistorySearchTableModel) || viewRow < 0 || viewRow >= this.getRowCount()) {
+            return false;
+        }
+        return ((HistorySearchTableModel) this.getModel()).getRow(this.convertRowIndexToModel(viewRow)) instanceof HistorySearchTableModel.DayHeader;
+    }
+
+    @Override
+    public void changeSelection(int rowIndex, int columnIndex, boolean toggle, boolean extend) {
+        if (this.isHeaderRow(rowIndex)) {
+            // move on in the direction of travel; a separator is never selected
+            int lead = this.getSelectionModel().getLeadSelectionIndex();
+            int target = lead >= 0 && rowIndex < lead ? rowIndex - 1 : rowIndex + 1;
+            if (target < 0 || target >= this.getRowCount() || this.isHeaderRow(target)) {
+                target = rowIndex + 1;
+            }
+            if (target >= this.getRowCount()) {
+                return;
+            }
+            rowIndex = target;
+        }
+        super.changeSelection(rowIndex, columnIndex, toggle, extend);
     }
 
     /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
+     * @param day a day
+     * @return "Heute", "Gestern" or the empty string
      */
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-    private void initComponents() {
+    static String relativeDay(Date day) {
+        if (day == null) {
+            return "";
+        }
+        Calendar today = Calendar.getInstance();
+        Calendar d = Calendar.getInstance();
+        d.setTime(day);
+        if (sameDay(today, d)) {
+            return "Heute";
+        }
+        today.add(Calendar.DAY_OF_YEAR, -1);
+        if (sameDay(today, d)) {
+            return "Gestern";
+        }
+        return "";
+    }
 
-        lblArchiveFile = new javax.swing.JLabel();
-        tblUserActivities = new javax.swing.JTable();
+    private static boolean sameDay(Calendar a, Calendar b) {
+        return a.get(Calendar.YEAR) == b.get(Calendar.YEAR) && a.get(Calendar.DAY_OF_YEAR) == b.get(Calendar.DAY_OF_YEAR);
+    }
 
-        lblArchiveFile.setFont(lblArchiveFile.getFont().deriveFont(lblArchiveFile.getFont().getSize()+2f));
-        lblArchiveFile.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblArchiveFile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
-        lblArchiveFile.setText("der ./. den");
-        lblArchiveFile.setVerticalAlignment(javax.swing.SwingConstants.TOP);
-        lblArchiveFile.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        lblArchiveFile.setOpaque(true);
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        if (!(this.getModel() instanceof HistorySearchTableModel)) {
+            return;
+        }
+        HistorySearchTableModel m = (HistorySearchTableModel) this.getModel();
+        Rectangle clip = g.getClipBounds();
+        if (clip == null) {
+            clip = new Rectangle(0, 0, this.getWidth(), this.getHeight());
+        }
+        int first = this.rowAtPoint(new java.awt.Point(0, clip.y));
+        int last = this.rowAtPoint(new java.awt.Point(0, clip.y + clip.height));
+        if (first < 0) {
+            return;
+        }
+        if (last < 0) {
+            last = this.getRowCount() - 1;
+        }
 
-        tblUserActivities.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {null},
-                {null},
-                {null},
-                {null}
-            },
-            new String [] {
-                "Title 1"
+        Graphics2D g2 = (Graphics2D) g.create();
+        try {
+            g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            Font bold = this.getFont().deriveFont(Font.BOLD);
+            Font plain = this.getFont();
+            SimpleDateFormat df = new SimpleDateFormat("EEE, dd.MM.yyyy");
+            for (int row = first; row <= last; row++) {
+                HistorySearchTableModel.HistoryRow r = m.getRow(this.convertRowIndexToModel(row));
+                if (!(r instanceof HistorySearchTableModel.DayHeader)) {
+                    continue;
+                }
+                HistorySearchTableModel.DayHeader dh = (HistorySearchTableModel.DayHeader) r;
+                Rectangle rect = this.getCellRect(row, 0, true);
+                rect.width = this.getWidth();
+
+                String rel = relativeDay(dh.getDay());
+                String date = dh.getDay() == null ? "" : df.format(dh.getDay());
+                String main = rel.isEmpty() ? date : rel + "  ·  " + date;
+                String count = "  ·  " + dh.getCount() + (dh.getCount() == 1 ? " Eintrag" : " Einträge");
+
+                g2.setFont(bold);
+                FontMetrics fmb = g2.getFontMetrics();
+                int baseline = rect.y + (rect.height - fmb.getHeight()) / 2 + fmb.getAscent();
+                int x = rect.x + 12;
+                g2.setColor(this.accentColor);
+                g2.drawString(main, x, baseline);
+                x += fmb.stringWidth(main);
+                g2.setFont(plain);
+                g2.setColor(UIManager.getColor("Label.disabledForeground") != null ? UIManager.getColor("Label.disabledForeground") : Color.GRAY);
+                g2.drawString(count, x, baseline);
+
+                // thin accent line along the bottom of the separator
+                g2.setColor(new Color(this.accentColor.getRed(), this.accentColor.getGreen(), this.accentColor.getBlue(), 110));
+                g2.fillRect(rect.x, rect.y + rect.height - 2, rect.width, 2);
             }
-        ));
-        tblUserActivities.setShowVerticalLines(false);
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblArchiveFile, javax.swing.GroupLayout.DEFAULT_SIZE, 573, Short.MAX_VALUE)
-                    .addComponent(tblUserActivities, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(lblArchiveFile)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(tblUserActivities, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
-        );
-    }// </editor-fold>//GEN-END:initComponents
-
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel lblArchiveFile;
-    private javax.swing.JTable tblUserActivities;
-    // End of variables declaration//GEN-END:variables
+        } finally {
+            g2.dispose();
+        }
+    }
 }

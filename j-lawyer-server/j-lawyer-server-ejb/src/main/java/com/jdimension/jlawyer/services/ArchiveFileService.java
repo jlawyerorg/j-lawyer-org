@@ -4030,6 +4030,14 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         return filterHistory(this.archiveFileHistoryFacade.findByPrincipalAndDateInterval(principal, fromDate, toDate, limit), context.getCallerPrincipal().getName());
     }
 
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<ArchiveFileHistoryBean> searchHistory(Date fromDate, Date toDate, List<String> principals, String caseQuery, String textQuery, int limit) throws Exception {
+        String caller = context.getCallerPrincipal().getName();
+        List<String> groupIds = SecurityUtils.getGroupIdsForUser(caller, this.securityFacade);
+        return this.archiveFileHistoryFacade.search(fromDate, toDate, principals, caseQuery, textQuery, groupIds, limit);
+    }
+
     private List<ArchiveFileHistoryBean> filterHistory(List<ArchiveFileHistoryBean> inputList, String principalId) {
         List<Group> userGroups = new ArrayList<>();
         try {

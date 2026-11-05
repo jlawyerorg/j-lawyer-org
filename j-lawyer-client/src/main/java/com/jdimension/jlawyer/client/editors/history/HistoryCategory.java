@@ -661,103 +661,87 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.components;
+package com.jdimension.jlawyer.client.editors.history;
 
-import javax.swing.JSlider;
+import java.awt.Color;
+import java.util.Locale;
 
 /**
- * An extension of JSlider to select a range of values using two thumb controls.
- * The thumb controls are used to select the lower and upper value of a range
- * with predetermined minimum and maximum values.
- * 
- * <p>Note that RangeSlider makes use of the default BoundedRangeModel, which 
- * supports an inner range defined by a value and an extent.  The upper value
- * returned by RangeSlider is simply the lower value plus the extent.</p>
+ * Kind of change of a case history entry, derived from its description. The server writes free
+ * text only, so the category is recognized by the wording the server uses. Event types with custom
+ * names that contain none of the known words end up in {@link #OTHER}.
+ *
+ * @author jens
  */
-public class RangeSlider extends JSlider {
+public enum HistoryCategory {
 
-    /**
-     * Constructs a RangeSlider with default minimum and maximum values of 0
-     * and 100.
-     */
-    public RangeSlider() {
-        initSlider();
-        
+    DOCUMENT("Dokumente", new Color(0x1E88E5), "/icons16/material/baseline_insert_drive_file_white_36dp.png"),
+    EVENT("Termine / Fristen", new Color(0xFB8C00), "/icons16/material/notifications_calendar_20dp_white.png"),
+    PARTY("Beteiligte", new Color(0x8E24AA), "/icons16/material/baseline_supervisor_account_white_48dp.png"),
+    MESSAGE("Nachrichten", new Color(0x00897B), "/icons16/material/baseline_email_white_36dp.png"),
+    TAG("Etiketten", new Color(0x7CB342), "/icons16/material/baseline_label_white_36dp.png"),
+    FINANCE("Finanzen", new Color(0xE53935), "/icons16/material/baseline_receipt_long_black_48dp.png"),
+    CASE("Akte", new Color(0x3949AB), "/icons16/material/baseline_folder_white_36dp.png"),
+    OTHER("Sonstiges", new Color(0x757575), null);
+
+    private final String label;
+    private final Color color;
+    private final String glyph;
+
+    HistoryCategory(String label, Color color, String glyph) {
+        this.label = label;
+        this.color = color;
+        this.glyph = glyph;
+    }
+
+    public String getLabel() {
+        return label;
+    }
+
+    public Color getColor() {
+        return color;
     }
 
     /**
-     * Constructs a RangeSlider with the specified default minimum and maximum 
-     * values.
+     * @return classpath resource of the glyph drawn on the badge, or null for none
      */
-    public RangeSlider(int min, int max) {
-        super(min, max);
-        initSlider();
+    public String getGlyph() {
+        return glyph;
     }
 
     /**
-     * Initializes the slider by setting default properties.
+     * Determines the category of a history entry. The order of the checks matters, e.g. a
+     * "Dokument-Etikett" change is a tag change, not a document change.
+     *
+     * @param changeDescription the description of the history entry
+     * @return the category, never null
      */
-    private void initSlider() {
-        setOrientation(HORIZONTAL);
-        this.setOpaque(false);
-    }
-
-    /**
-     * Overrides the superclass method to install the UI delegate to draw two
-     * thumbs.
-     */
-    @Override
-    public void updateUI() {
-        setUI(new RangeSliderUI(this));
-        // Update UI for slider labels.  This must be called after updating the
-        // UI of the slider.  Refer to JSlider.updateUI().
-        updateLabelUIs();
-    }
-
-    /**
-     * Returns the lower value in the range.
-     */
-    @Override
-    public int getValue() {
-        return super.getValue();
-    }
-
-    /**
-     * Sets the lower value in the range.
-     */
-    @Override
-    public void setValue(int value) {
-        int oldValue = getValue();
-        if (oldValue == value) {
-            return;
+    public static HistoryCategory of(String changeDescription) {
+        if (changeDescription == null) {
+            return OTHER;
         }
-
-        // Compute new value and extent to maintain upper value.
-        int oldExtent = getExtent();
-        int newValue = Math.min(Math.max(getMinimum(), value), oldValue + oldExtent);
-        int newExtent = oldExtent + oldValue - newValue;
-
-        // Set new value and extent, and fire a single change event.
-        getModel().setRangeProperties(newValue, newExtent, getMinimum(), 
-            getMaximum(), getValueIsAdjusting());
-    }
-
-    /**
-     * Returns the upper value in the range.
-     */
-    public int getUpperValue() {
-        return getValue() + getExtent();
-    }
-
-    /**
-     * Sets the upper value in the range.
-     */
-    public void setUpperValue(int value) {
-        // Compute new extent.
-        int lowerValue = getValue();
-        int newExtent = Math.min(Math.max(0, value - lowerValue), getMaximum() - lowerValue);
-        
-        // Set extent to set upper value.
-        setExtent(newExtent);
+        String d = changeDescription.toLowerCase(Locale.GERMAN);
+        if (d.contains("etikett")) {
+            return TAG;
+        }
+        if (d.contains("e-mail") || d.contains("bea-") || d.contains("bea ") || d.contains("e-post") || d.contains("fax") || d.contains("nachricht")) {
+            return MESSAGE;
+        }
+        if (d.contains("beteiligte")) {
+            return PARTY;
+        }
+        if (d.contains("wiedervorlage") || d.contains("frist") || d.contains("termin") || d.contains("kalender")) {
+            return EVENT;
+        }
+        if (d.contains("rechnung") || d.contains("zeiterfassung") || d.contains("forderungskonto") || d.contains("zahlung") || d.contains("beleg") || d.contains("aktenkonto")) {
+            return FINANCE;
+        }
+        if (d.contains("dokument")) {
+            return DOCUMENT;
+        }
+        if (d.contains("akte") || d.contains("falldaten")) {
+            return CASE;
+        }
+        return OTHER;
     }
 }

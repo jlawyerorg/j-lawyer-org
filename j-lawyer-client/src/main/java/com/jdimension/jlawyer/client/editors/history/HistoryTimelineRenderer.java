@@ -661,155 +661,224 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.components;
+package com.jdimension.jlawyer.client.editors.history;
 
-import java.awt.*;
+import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.FontMetrics;
+import java.text.SimpleDateFormat;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
+import javax.swing.JTable;
+import javax.swing.SwingConstants;
+import javax.swing.UIManager;
+import javax.swing.table.DefaultTableCellRenderer;
 
-// Grid Layout which allows components of differrent sizes
-public class FlexibleGridLayout extends GridLayout 
-{
-  public FlexibleGridLayout() {
-    this(1, 0, 0, 0);
-  }
+/**
+ * Renders all columns of the history timeline ({@link HistoryTable}): category badges, two-line
+ * case and change cells, user avatars, zebra stripes, the background of day separators and the
+ * highlighting of search terms.
+ *
+ * @author jens
+ */
+public class HistoryTimelineRenderer extends DefaultTableCellRenderer {
 
-  public FlexibleGridLayout(int rows, int cols) {
-    this(rows, cols, 0, 0);
-  }
+    private static final String HIGHLIGHT_STYLE = "background-color:#ffe08a;color:#000000";
 
-  public FlexibleGridLayout(int rows, int cols, int hgap, int vgap) {
-    super(rows, cols, hgap, vgap);
-  }
+    private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
+    private final SimpleDateFormat dateTimeFormat = new SimpleDateFormat("dd.MM.yy HH:mm");
 
-  public Dimension preferredLayoutSize(Container parent) {
-	//System.err.println("preferredLayoutSize");
-    synchronized (parent.getTreeLock()) {
-      Insets insets = parent.getInsets();
-      int ncomponents = parent.getComponentCount();
-      int nrows = getRows();
-      int ncols = getColumns();
-      if (nrows > 0) {
-        ncols = (ncomponents + nrows - 1) / nrows;
-      } 
-      else {
-        nrows = (ncomponents + ncols - 1) / ncols;
-      }
-      int[] w = new int[ncols];
-      int[] h = new int[nrows];
-      for (int i = 0; i < ncomponents; i ++) {
-        int r = i / ncols;
-        int c = i % ncols;
-        Component comp = parent.getComponent(i);
-        Dimension d = comp.getPreferredSize();
-        if (w[c] < d.width) {
-          w[c] = d.width;
-        }
-        if (h[r] < d.height) {
-          h[r] = d.height;
-        }
-      }
-      int nw = 0;
-      for (int j = 0; j < ncols; j ++) {
-        nw += w[j];
-      }
-      int nh = 0;
-      for (int i = 0; i < nrows; i ++) {
-        nh += h[i];
-      }
-      return new Dimension(insets.left + insets.right + nw + (ncols-1)*getHgap(), 
-          insets.top + insets.bottom + nh + (nrows-1)*getVgap());
+    private Map<String, String> displayNames = new HashMap<>();
+    private String caseTerm = null;
+    private String textTerm = null;
+
+    public HistoryTimelineRenderer() {
+        super();
     }
-  }
 
-  public Dimension minimumLayoutSize(Container parent) {
-	System.err.println("minimumLayoutSize");
-    synchronized (parent.getTreeLock()) {
-      Insets insets = parent.getInsets();
-      int ncomponents = parent.getComponentCount();
-      int nrows = getRows();
-      int ncols = getColumns();
-      if (nrows > 0) {
-        ncols = (ncomponents + nrows - 1) / nrows;
-      } 
-      else {
-        nrows = (ncomponents + ncols - 1) / ncols;
-      }
-      int[] w = new int[ncols];
-      int[] h = new int[nrows];
-      for (int i = 0; i < ncomponents; i ++) {
-        int r = i / ncols;
-        int c = i % ncols;
-        Component comp = parent.getComponent(i);
-        Dimension d = comp.getMinimumSize();
-        if (w[c] < d.width) {
-          w[c] = d.width;
-        }
-        if (h[r] < d.height) {
-          h[r] = d.height;
-        }
-      }
-      int nw = 0;
-      for (int j = 0; j < ncols; j ++) {
-        nw += w[j];
-      }
-      int nh = 0;
-      for (int i = 0; i < nrows; i ++) {
-        nh += h[i];
-      }
-      return new Dimension(insets.left + insets.right + nw + (ncols-1)*getHgap(), 
-          insets.top + insets.bottom + nh + (nrows-1)*getVgap());
+    /**
+     * @param displayNames maps principal ids to display names
+     */
+    public void setDisplayNames(Map<String, String> displayNames) {
+        this.displayNames = displayNames == null ? new HashMap<>() : displayNames;
     }
-  }
 
-  public void layoutContainer(Container parent) {
-    //System.err.println("layoutContainer");
-    synchronized (parent.getTreeLock()) {
-      Insets insets = parent.getInsets();
-      int ncomponents = parent.getComponentCount();
-      int nrows = getRows();
-      int ncols = getColumns();
-      if (ncomponents == 0) {
-        return;
-      }
-      if (nrows > 0) {
-        ncols = (ncomponents + nrows - 1) / nrows;
-      } 
-      else {
-        nrows = (ncomponents + ncols - 1) / ncols;
-      }
-      int hgap = getHgap();
-      int vgap = getVgap();
-	  // scaling factors      
-      Dimension pd = preferredLayoutSize(parent);
-      double sw = (1.0 * parent.getWidth()) / pd.width;
-      double sh = (1.0 * parent.getHeight()) / pd.height;
-      // scale
-      int[] w = new int[ncols];
-      int[] h = new int[nrows];
-      for (int i = 0; i < ncomponents; i ++) {
-        int r = i / ncols;
-        int c = i % ncols;
-        Component comp = parent.getComponent(i);
-        Dimension d = comp.getPreferredSize();
-        d.width = (int) (sw * d.width);
-        d.height = (int) (sh * d.height);
-        if (w[c] < d.width) {
-          w[c] = d.width;
-        }
-        if (h[r] < d.height) {
-          h[r] = d.height;
-        }
-      }
-      for (int c = 0, x = insets.left; c < ncols; c ++) {
-        for (int r = 0, y = insets.top; r < nrows; r ++) {
-          int i = r * ncols + c;
-          if (i < ncomponents) {
-            parent.getComponent(i).setBounds(x, y, w[c], h[r]);
-          }
-          y += h[r] + vgap;
-        }
-        x += w[c] + hgap;
-      }
+    /**
+     * @param caseTerm highlighted in the case cells, may be null
+     * @param textTerm highlighted in the change cells, may be null
+     */
+    public void setSearchTerms(String caseTerm, String textTerm) {
+        this.caseTerm = caseTerm == null || caseTerm.trim().isEmpty() ? null : caseTerm.trim();
+        this.textTerm = textTerm == null || textTerm.trim().isEmpty() ? null : textTerm.trim();
     }
-  }  
+
+    public String displayName(String principalId) {
+        if (principalId == null) {
+            return "";
+        }
+        String dn = this.displayNames.get(principalId);
+        return dn == null || dn.trim().isEmpty() ? principalId : dn;
+    }
+
+    @Override
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        JLabel l = (JLabel) super.getTableCellRendererComponent(table, "", isSelected, false, row, column);
+        l.setIcon(null);
+        l.setToolTipText(null);
+        l.setHorizontalAlignment(SwingConstants.LEADING);
+        l.setVerticalAlignment(SwingConstants.CENTER);
+        l.setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 6));
+
+        Color accent = table instanceof HistoryTable ? ((HistoryTable) table).getAccentColor() : new Color(0x1E88E5);
+        Color bg = table.getBackground();
+
+        if (value instanceof HistorySearchTableModel.DayHeader) {
+            // the label text is painted by HistoryTable across the whole row
+            l.setBackground(blend(bg, accent, 0.12f));
+            l.setOpaque(true);
+            return l;
+        }
+        if (!(value instanceof HistorySearchTableModel.Entry)) {
+            return l;
+        }
+
+        HistorySearchTableModel.Entry e = (HistorySearchTableModel.Entry) value;
+        ArchiveFileHistoryBean h = e.getHistory();
+        if (!isSelected) {
+            l.setBackground(e.isAlternate() ? blend(bg, table.getForeground(), 0.035f) : bg);
+        }
+        Color secondary = isSelected ? table.getSelectionForeground() : secondaryColor(table);
+        String secondaryHex = toHex(secondary);
+
+        int modelCol = table.convertColumnIndexToModel(column);
+        switch (modelCol) {
+            case HistorySearchTableModel.COL_CATEGORY:
+                l.setHorizontalAlignment(SwingConstants.CENTER);
+                l.setIcon(CategoryBadgeIcon.get(e.getCategory(), 26));
+                l.setToolTipText(e.getCategory().getLabel());
+                break;
+            case HistorySearchTableModel.COL_TIME:
+                boolean grouped = table.getModel() instanceof HistorySearchTableModel && ((HistorySearchTableModel) table.getModel()).isGroupedByDay();
+                if (h.getChangeDate() != null) {
+                    l.setText(grouped ? timeFormat.format(h.getChangeDate()) : dateTimeFormat.format(h.getChangeDate()));
+                }
+                break;
+            case HistorySearchTableModel.COL_CASE: {
+                int width = table.getColumnModel().getColumn(column).getWidth() - 14;
+                FontMetrics fm = l.getFontMetrics(l.getFont());
+                String fileNumber = fit(e.fileNumber(), fm, width);
+                String name = fit(e.caseName(), fm, width);
+                l.setText("<html><b>" + highlight(fileNumber, this.caseTerm) + "</b><br><font color='" + secondaryHex + "'>" + highlight(name, this.caseTerm) + "</font></html>");
+                l.setToolTipText(e.fileNumber() + " " + e.caseName());
+                break;
+            }
+            case HistorySearchTableModel.COL_CHANGE: {
+                String full = h.getChangeDescription() == null ? "" : h.getChangeDescription();
+                String oneLine = full.replace('\r', ' ').replace('\n', ' ');
+                int width = table.getColumnModel().getColumn(column).getWidth() - 14;
+                FontMetrics fm = l.getFontMetrics(l.getFont());
+                String catHex = isSelected ? secondaryHex : toHex(e.getCategory().getColor());
+                l.setText("<html>" + highlight(fit(oneLine, fm, width), this.textTerm) + "<br><font color='" + catHex + "'>" + escape(e.getCategory().getLabel()) + "</font></html>");
+                if (!full.isEmpty()) {
+                    l.setToolTipText("<html><div style='width:400px'>" + escape(full).replace("\n", "<br>") + "</div></html>");
+                }
+                break;
+            }
+            case HistorySearchTableModel.COL_USER:
+                if (h.getPrincipal() != null && !h.getPrincipal().isEmpty()) {
+                    l.setIcon(UserSettings.getInstance().getUserSmallIcon(h.getPrincipal()));
+                    l.setIconTextGap(8);
+                    l.setText(this.displayName(h.getPrincipal()));
+                    l.setToolTipText(h.getPrincipal());
+                }
+                break;
+            default:
+                break;
+        }
+        return l;
+    }
+
+    private static Color secondaryColor(JTable table) {
+        Color c = UIManager.getColor("Label.disabledForeground");
+        if (c == null) {
+            c = blend(table.getForeground(), table.getBackground(), 0.45f);
+        }
+        return c;
+    }
+
+    /**
+     * Shortens a text to the given width, appending an ellipsis.
+     */
+    static String fit(String s, FontMetrics fm, int width) {
+        if (s == null) {
+            return "";
+        }
+        if (width <= 0 || fm.stringWidth(s) <= width) {
+            return s;
+        }
+        String ellipsis = "…";
+        int lo = 0;
+        int hi = s.length();
+        while (lo < hi) {
+            int mid = (lo + hi + 1) >>> 1;
+            if (fm.stringWidth(s.substring(0, mid) + ellipsis) <= width) {
+                lo = mid;
+            } else {
+                hi = mid - 1;
+            }
+        }
+        return s.substring(0, lo) + ellipsis;
+    }
+
+    static String escape(String s) {
+        if (s == null) {
+            return "";
+        }
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    }
+
+    /**
+     * Escapes a text for HTML and marks all case-insensitive occurrences of the term.
+     */
+    static String highlight(String s, String term) {
+        if (s == null) {
+            return "";
+        }
+        if (term == null || term.isEmpty()) {
+            return escape(s);
+        }
+        String lower = s.toLowerCase(Locale.GERMAN);
+        String t = term.toLowerCase(Locale.GERMAN);
+        if (lower.length() != s.length()) {
+            // lower-casing changed the length, positions would not match
+            return escape(s);
+        }
+        StringBuilder sb = new StringBuilder();
+        int pos = 0;
+        int idx;
+        while ((idx = lower.indexOf(t, pos)) >= 0) {
+            sb.append(escape(s.substring(pos, idx)));
+            sb.append("<span style='").append(HIGHLIGHT_STYLE).append("'>").append(escape(s.substring(idx, idx + t.length()))).append("</span>");
+            pos = idx + t.length();
+        }
+        sb.append(escape(s.substring(pos)));
+        return sb.toString();
+    }
+
+    static Color blend(Color base, Color over, float amount) {
+        float a = Math.max(0f, Math.min(1f, amount));
+        int r = Math.round(base.getRed() * (1 - a) + over.getRed() * a);
+        int g = Math.round(base.getGreen() * (1 - a) + over.getGreen() * a);
+        int b = Math.round(base.getBlue() * (1 - a) + over.getBlue() * a);
+        return new Color(r, g, b);
+    }
+
+    static String toHex(Color c) {
+        return String.format("#%02x%02x%02x", c.getRed(), c.getGreen(), c.getBlue());
+    }
 }
-

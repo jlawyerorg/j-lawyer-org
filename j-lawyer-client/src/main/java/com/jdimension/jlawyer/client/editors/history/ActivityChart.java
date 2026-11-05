@@ -663,186 +663,278 @@
  */
 package com.jdimension.jlawyer.client.editors.history;
 
-import com.jdimension.jlawyer.client.components.AutoWrapLayout;
-import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.editors.ThemeableEditor;
-import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
-import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
-import com.jdimension.jlawyer.client.editors.files.ViewArchiveFileDetailsPanel;
-import com.jdimension.jlawyer.client.editors.reporting.ReportingPanel;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.settings.UserSettings;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
-import java.awt.Component;
-import java.awt.FlowLayout;
-import java.awt.Image;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import javax.swing.JOptionPane;
-import org.apache.log4j.Logger;
-import themes.colors.DefaultColorTheme;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.function.BiConsumer;
+import javax.swing.JComponent;
 
 /**
+ * A small, transparent bar chart showing the number of history entries per day (or per week for
+ * long ranges). Clicking a bar reports the bar's date range to a listener.
  *
  * @author jens
  */
-public class DayCaseHistoryDetailsPanel extends javax.swing.JPanel {
+public class ActivityChart extends JComponent {
 
-    private static final Logger log = Logger.getLogger(DayCaseHistoryDetailsPanel.class.getName());
-    private SimpleDateFormat df=new SimpleDateFormat("HH:mm");
-    
-    private ArchiveFileBean afb=null;
+    private static final int MAX_DAILY_BINS = 62;
+    private static final int TOP_PAD = 16;
+    private static final int BOTTOM_PAD = 16;
 
-    /**
-     * Creates new form HitPanel
-     */
-    public DayCaseHistoryDetailsPanel(ArchiveFileBean afb) {
-        initComponents();
-        this.afb=afb;
-        this.lblArchiveFile.setText(afb.getFileNumber() + " " + afb.getName() + " ");
-        this.lblArchiveFile.setBackground(DefaultColorTheme.COLOR_LOGO_BLUE);
+    private final List<Date> binStarts = new ArrayList<>();
+    private final List<Integer> binCounts = new ArrayList<>();
+    private boolean weekly = false;
+    private int maxCount = 0;
+    private int hoverIndex = -1;
+    private Color barColor = new Color(0x1E88E5);
+    private BiConsumer<Date, Date> binClickListener = null;
+
+    public ActivityChart() {
+        this.setOpaque(false);
+        this.setForeground(Color.WHITE);
+        this.setPreferredSize(new Dimension(320, 64));
+        this.setMinimumSize(new Dimension(120, 48));
+        // enables tooltips, the text is computed per position
+        this.setToolTipText("");
+        MouseAdapter ma = new MouseAdapter() {
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                int idx = binAt(e.getX());
+                if (idx != hoverIndex) {
+                    hoverIndex = idx;
+                    setCursor(idx >= 0 && binClickListener != null ? java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR) : java.awt.Cursor.getDefaultCursor());
+                    repaint();
+                }
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                hoverIndex = -1;
+                repaint();
+            }
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int idx = binAt(e.getX());
+                if (idx >= 0 && binClickListener != null) {
+                    binClickListener.accept(binStarts.get(idx), binEnd(idx));
+                }
+            }
+        };
+        this.addMouseListener(ma);
+        this.addMouseMotionListener(ma);
     }
 
-    public void setEntries(ArrayList<ArchiveFileHistoryBean> list) {
-        
-        AutoWrapLayout layout=new AutoWrapLayout(FlowLayout.LEFT);
-        layout.setHgap(10);
-        this.pnlEntries.setLayout(layout);
-        //this.pnlEntries.setMaximumSize(new Dimension(this.getParent().getWidth(), Integer.MAX_VALUE));
-        
-        for(int i=0;i<list.size();i++) {
-            
-            
-            DayCaseUserHistoryDetailsPanel p=new DayCaseUserHistoryDetailsPanel(list.get(i).getPrincipal(), list.get(i).getChangeDate(), list.get(i).getChangeDescription());
-            this.pnlEntries.add(p);
-            
+    public void setBarColor(Color c) {
+        if (c != null) {
+            this.barColor = c;
+            this.repaint();
         }
-        
     }
 
     /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
+     * @param listener receives start (inclusive) and end (exclusive) of a clicked bar
      */
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-    private void initComponents() {
+    public void setBinClickListener(BiConsumer<Date, Date> listener) {
+        this.binClickListener = listener;
+    }
 
-        lblArchiveFile = new javax.swing.JLabel();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        pnlEntries = new javax.swing.JPanel();
+    /**
+     * Sets the data to display.
+     *
+     * @param changeDates the change dates of all entries
+     * @param from first day of the range, or null to start at the oldest entry
+     * @param to last day of the range, or null to end at the newest entry
+     */
+    public void setData(List<Date> changeDates, Date from, Date to) {
+        this.binStarts.clear();
+        this.binCounts.clear();
+        this.maxCount = 0;
+        this.hoverIndex = -1;
 
-        setBackground(new java.awt.Color(153, 153, 153));
-        setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
-        setPreferredSize(new java.awt.Dimension(965, 189));
-
-        lblArchiveFile.setBackground(new java.awt.Color(102, 0, 204));
-        lblArchiveFile.setFont(lblArchiveFile.getFont().deriveFont(lblArchiveFile.getFont().getSize()+2f));
-        lblArchiveFile.setForeground(new java.awt.Color(255, 255, 255));
-        lblArchiveFile.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblArchiveFile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_folder_white_36dp.png"))); // NOI18N
-        lblArchiveFile.setText("der ./. den");
-        lblArchiveFile.setVerticalAlignment(javax.swing.SwingConstants.TOP);
-        lblArchiveFile.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        lblArchiveFile.setOpaque(true);
-        lblArchiveFile.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                lblArchiveFileMouseClicked(evt);
+        Date dataMin = null;
+        Date dataMax = null;
+        for (Date d : changeDates) {
+            if (d == null) {
+                continue;
             }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                lblArchiveFileMouseExited(evt);
+            if (dataMin == null || d.before(dataMin)) {
+                dataMin = d;
             }
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                lblArchiveFileMouseEntered(evt);
+            if (dataMax == null || d.after(dataMax)) {
+                dataMax = d;
             }
-        });
+        }
+        Date min = from != null ? from : dataMin;
+        Date max = to != null ? to : dataMax;
+        if (min == null || max == null) {
+            this.repaint();
+            return;
+        }
 
-        pnlEntries.setBackground(new java.awt.Color(153, 153, 153));
-        pnlEntries.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT));
-        jScrollPane1.setViewportView(pnlEntries);
+        Calendar start = dayStart(min);
+        Calendar end = dayStart(max);
+        long days = (end.getTimeInMillis() - start.getTimeInMillis()) / (24L * 60L * 60L * 1000L) + 1;
+        this.weekly = days > MAX_DAILY_BINS;
+        if (this.weekly) {
+            // weeks start on Monday
+            while (start.get(Calendar.DAY_OF_WEEK) != Calendar.MONDAY) {
+                start.add(Calendar.DAY_OF_YEAR, -1);
+            }
+        }
+        Calendar c = (Calendar) start.clone();
+        while (!c.after(end)) {
+            this.binStarts.add(c.getTime());
+            this.binCounts.add(0);
+            c.add(Calendar.DAY_OF_YEAR, this.weekly ? 7 : 1);
+        }
+        for (Date d : changeDates) {
+            if (d == null) {
+                continue;
+            }
+            int idx = this.indexOf(d);
+            if (idx >= 0) {
+                int v = this.binCounts.get(idx) + 1;
+                this.binCounts.set(idx, v);
+                this.maxCount = Math.max(this.maxCount, v);
+            }
+        }
+        this.repaint();
+    }
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(lblArchiveFile, javax.swing.GroupLayout.DEFAULT_SIZE, 128, Short.MAX_VALUE)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jScrollPane1)
-                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(lblArchiveFile)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1)
-                .addContainerGap())
-        );
-    }// </editor-fold>//GEN-END:initComponents
-
-    private void lblArchiveFileMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblArchiveFileMouseClicked
-        try {
-            Object editor=null;
-            if(UserSettings.getInstance().isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
-                editor = EditorsRegistry.getInstance().getEditor(EditArchiveFileDetailsPanel.class.getName());
+    private int indexOf(Date d) {
+        // bins are sorted, binary search on the start dates
+        int lo = 0;
+        int hi = this.binStarts.size() - 1;
+        int result = -1;
+        while (lo <= hi) {
+            int mid = (lo + hi) >>> 1;
+            if (!this.binStarts.get(mid).after(d)) {
+                result = mid;
+                lo = mid + 1;
             } else {
-                editor = EditorsRegistry.getInstance().getEditor(ViewArchiveFileDetailsPanel.class.getName());
+                hi = mid - 1;
             }
-            Object reportingeditor = EditorsRegistry.getInstance().getCurrentEditor();
-            Image bgi=((ReportingPanel)reportingeditor).getBackgroundImage();
-            
-            if (editor instanceof ThemeableEditor) {
-                // inherit the background to newly created child editors
-                ((ThemeableEditor) editor).setBackgroundImage(bgi);
+        }
+        if (result >= 0 && !d.before(this.binEnd(result))) {
+            return -1;
+        }
+        return result;
+    }
+
+    private Date binEnd(int idx) {
+        Calendar c = Calendar.getInstance();
+        c.setTime(this.binStarts.get(idx));
+        c.add(Calendar.DAY_OF_YEAR, this.weekly ? 7 : 1);
+        return c.getTime();
+    }
+
+    private static Calendar dayStart(Date d) {
+        Calendar c = Calendar.getInstance();
+        c.setTime(d);
+        c.set(Calendar.HOUR_OF_DAY, 0);
+        c.set(Calendar.MINUTE, 0);
+        c.set(Calendar.SECOND, 0);
+        c.set(Calendar.MILLISECOND, 0);
+        return c;
+    }
+
+    private int binAt(int x) {
+        int n = this.binStarts.size();
+        if (n == 0) {
+            return -1;
+        }
+        double w = (double) this.getWidth() / n;
+        int idx = (int) (x / w);
+        return idx >= 0 && idx < n ? idx : -1;
+    }
+
+    @Override
+    public String getToolTipText(MouseEvent e) {
+        int idx = this.binAt(e.getX());
+        if (idx < 0) {
+            return null;
+        }
+        SimpleDateFormat df = new SimpleDateFormat("EEE, dd.MM.yyyy");
+        String label = this.weekly ? "Woche ab " + df.format(this.binStarts.get(idx)) : df.format(this.binStarts.get(idx));
+        int count = this.binCounts.get(idx);
+        return label + ": " + count + (count == 1 ? " Eintrag" : " Einträge");
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        Graphics2D g2 = (Graphics2D) g.create();
+        try {
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            Font small = this.getFont().deriveFont(Math.max(9f, this.getFont().getSize2D() - 2f));
+            g2.setFont(small);
+            FontMetrics fm = g2.getFontMetrics();
+            Color textColor = new Color(255, 255, 255, 200);
+
+            int n = this.binStarts.size();
+            int w = this.getWidth();
+            int h = this.getHeight();
+            int chartTop = TOP_PAD;
+            int chartBottom = h - BOTTOM_PAD;
+            int chartHeight = Math.max(1, chartBottom - chartTop);
+
+            g2.setColor(textColor);
+            String title = this.weekly ? "Aktivität pro Woche" : "Aktivität pro Tag";
+            g2.drawString(title, 0, fm.getAscent());
+            if (this.maxCount > 0) {
+                String maxLabel = "max. " + this.maxCount;
+                g2.drawString(maxLabel, w - fm.stringWidth(maxLabel), fm.getAscent());
             }
 
-            if (editor instanceof PopulateOptionsEditor) {
-                ((PopulateOptionsEditor) editor).populateOptions();
-            }
+            // baseline
+            g2.setColor(new Color(255, 255, 255, 60));
+            g2.drawLine(0, chartBottom, w, chartBottom);
 
-            ArchiveFileBean aFile = null;
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
-                ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-                
-                aFile = fileService.getArchiveFile(this.afb.getId());
-            } catch (Exception ex) {
-                log.error("Error loading archive file from server", ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Laden der Akte: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            }
-
-            if (aFile == null) {
+            if (n == 0 || this.maxCount == 0) {
                 return;
             }
 
-            ((ArchiveFilePanel) editor).setArchiveFileDTO(aFile);
-            ((ArchiveFilePanel) editor).setOpenedFromEditorClass(reportingeditor.getClass().getName());
-            EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
-        } catch (Exception ex) {
-            log.error("Error creating editor from class " + this.getClass().getName(), ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            double slot = (double) w / n;
+            int gap = slot > 6 ? 2 : (slot > 3 ? 1 : 0);
+            for (int i = 0; i < n; i++) {
+                int count = this.binCounts.get(i);
+                if (count == 0) {
+                    continue;
+                }
+                int barH = Math.max(2, (int) Math.round((double) count / this.maxCount * chartHeight));
+                int x = (int) Math.round(i * slot) + gap / 2;
+                int bw = Math.max(1, (int) Math.round(slot) - gap);
+                Color c = i == this.hoverIndex ? this.barColor.brighter() : this.barColor;
+                g2.setColor(c);
+                int arc = Math.min(6, bw);
+                g2.fillRoundRect(x, chartBottom - barH, bw, barH + arc / 2, arc, arc);
+            }
+            // repaint the baseline over the rounded bottoms
+            g2.setColor(new Color(255, 255, 255, 60));
+            g2.drawLine(0, chartBottom, w, chartBottom);
+
+            SimpleDateFormat df = new SimpleDateFormat("dd.MM.");
+            g2.setColor(textColor);
+            String first = df.format(this.binStarts.get(0));
+            String last = df.format(this.binStarts.get(n - 1));
+            g2.drawString(first, 0, h - fm.getDescent());
+            if (n > 1) {
+                g2.drawString(last, w - fm.stringWidth(last), h - fm.getDescent());
+            }
+        } finally {
+            g2.dispose();
         }
-    }//GEN-LAST:event_lblArchiveFileMouseClicked
-
-    private void lblArchiveFileMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblArchiveFileMouseEntered
-        this.lblArchiveFile.setForeground(Color.ORANGE);
-    }//GEN-LAST:event_lblArchiveFileMouseEntered
-
-    private void lblArchiveFileMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblArchiveFileMouseExited
-        this.lblArchiveFile.setForeground(Color.WHITE);
-    }//GEN-LAST:event_lblArchiveFileMouseExited
-
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JLabel lblArchiveFile;
-    private javax.swing.JPanel pnlEntries;
-    // End of variables declaration//GEN-END:variables
+    }
 }
