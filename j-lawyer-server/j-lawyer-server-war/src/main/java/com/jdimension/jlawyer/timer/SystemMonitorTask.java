@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
 import com.jdimension.jlawyer.server.constants.MonitoringConstants;
 import com.jdimension.jlawyer.server.utils.ServerInformation;
+import com.jdimension.jlawyer.server.utils.SystemMemoryUtils;
 import com.jdimension.jlawyer.services.SingletonServiceLocal;
 import java.io.File;
 import java.lang.management.ManagementFactory;
@@ -951,7 +952,7 @@ public class SystemMonitorTask extends java.util.TimerTask {
         long total = 2;
         try {
             if (osBean instanceof com.sun.management.OperatingSystemMXBean) {
-                free = ((com.sun.management.OperatingSystemMXBean) osBean).getFreePhysicalMemorySize() + Math.max(1l, ((com.sun.management.OperatingSystemMXBean) osBean).getFreeSwapSpaceSize());
+                free = SystemMemoryUtils.getAvailablePhysicalMemory((com.sun.management.OperatingSystemMXBean) osBean) + Math.max(1l, ((com.sun.management.OperatingSystemMXBean) osBean).getFreeSwapSpaceSize());
                 total = ((com.sun.management.OperatingSystemMXBean) osBean).getTotalPhysicalMemorySize() + Math.max(1l, ((com.sun.management.OperatingSystemMXBean) osBean).getTotalSwapSpaceSize());
             }
         } catch (Throwable t) {
