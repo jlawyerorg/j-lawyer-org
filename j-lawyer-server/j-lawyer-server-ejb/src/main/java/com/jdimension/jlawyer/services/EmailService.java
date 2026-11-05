@@ -706,6 +706,7 @@ import javax.mail.BodyPart;
 import javax.mail.Flags;
 import javax.mail.Folder;
 import javax.mail.Message;
+import javax.mail.MessagingException;
 import javax.mail.Multipart;
 import javax.mail.Part;
 import javax.mail.PasswordAuthentication;
@@ -2054,7 +2055,8 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                     // Use IMAP search for server-side filtering
                     javax.mail.search.SearchTerm term = null;
                     if (sinceDate != null) {
-                        term = new javax.mail.search.SentDateTerm(javax.mail.search.ComparisonTerm.GT, sinceDate);
+                        // filter by IMAP INTERNALDATE: SENTSINCE relies on the Date header, which some senders (e.g. scanners) omit
+                        term = new javax.mail.search.ReceivedDateTerm(javax.mail.search.ComparisonTerm.GE, sinceDate);
                     }
                     if (unreadOnly) {
                         javax.mail.search.SearchTerm unreadTerm = new javax.mail.search.FlagTerm(new Flags(Flags.Flag.SEEN), false);
@@ -2119,7 +2121,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                     long uid = uidFolder.getUID(msg);
                     dto.setMessageRef(buildImapRef(folderId, uid, uidValidity));
                     dto.setSubject(msg.getSubject());
-                    dto.setDate(msg.getSentDate());
+                    dto.setDate(getMessageDate(msg));
                     dto.setRead(msg.isSet(Flags.Flag.SEEN));
                     // Skip hasAttachments check in list view - too expensive (requires body parsing)
                     String[] msgIdHeader = msg.getHeader("Message-ID");
@@ -2143,6 +2145,16 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         }
     }
 
+    /**
+     * Returns the sent date of a message (Date header), falling back to the
+     * received date (IMAP INTERNALDATE) when the Date header is missing or
+     * unparseable - e.g. for mails sent by scanners / multifunction printers.
+     */
+    private static Date getMessageDate(Message msg) throws MessagingException {
+        Date d = msg.getSentDate();
+        return d != null ? d : msg.getReceivedDate();
+    }
+
     private MailMessageDTO imapGetMessage(MailboxSetup ms, String messageRef) throws Exception {
         String folderName = parseImapRefFolder(messageRef);
         long[] parsed = parseImapRef(messageRef);
@@ -2162,7 +2174,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                 MailMessageDTO dto = new MailMessageDTO();
                 dto.setMessageRef(messageRef);
                 dto.setSubject(msg.getSubject());
-                dto.setDate(msg.getSentDate());
+                dto.setDate(getMessageDate(msg));
                 dto.setRead(msg.isSet(Flags.Flag.SEEN));
                 dto.setHasAttachments(hasAttachments(msg));
                 String[] h = msg.getHeader("Message-ID");
