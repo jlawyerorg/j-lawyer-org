@@ -858,6 +858,27 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
                 // only fired for styled documents
             }
         });
+        this.txtBankAccount.addFocusListener(new java.awt.event.FocusAdapter() {
+            private String textOnFocusGained = null;
+
+            @Override
+            public void focusGained(java.awt.event.FocusEvent e) {
+                textOnFocusGained = txtBankAccount.getText();
+            }
+
+            @Override
+            public void focusLost(java.awt.event.FocusEvent e) {
+                // only reformat if the user changed the value - merely tabbing through must not modify legacy values
+                String text = txtBankAccount.getText();
+                if (!txtBankAccount.isEditable() || !txtBankAccount.isEnabled() || StringUtils.equals(text, textOnFocusGained)) {
+                    return;
+                }
+                String formatted = IbanUtils.format(text);
+                if (!StringUtils.equals(text, formatted)) {
+                    txtBankAccount.setText(formatted);
+                }
+            }
+        });
 
         ServerSettings sset = ServerSettings.getInstance();
         this.lblCustom1.setText(sset.getSetting(ServerSettings.DATA_CUSTOMFIELD_ADDRESS_PREFIX + "1", "Eigenes Feld 1"));

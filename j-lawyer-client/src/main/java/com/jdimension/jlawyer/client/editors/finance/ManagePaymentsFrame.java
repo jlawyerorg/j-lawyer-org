@@ -689,6 +689,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
+import com.jdimension.jlawyer.client.utils.IbanUtils;
 import org.iban4j.IbanUtil;
 
 /**
@@ -1069,7 +1070,7 @@ public class ManagePaymentsFrame extends javax.swing.JFrame {
         if (iban == null) {
             return null;
         }
-        return iban.replaceAll("\\s", "").toUpperCase();
+        return IbanUtils.normalize(iban);
     }
 
     /**
