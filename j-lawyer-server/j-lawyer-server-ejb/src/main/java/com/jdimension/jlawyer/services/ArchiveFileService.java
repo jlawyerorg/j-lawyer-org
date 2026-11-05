@@ -6876,13 +6876,17 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             );
         }
 
-        // Bruttosumme berechnen
-        for (Map.Entry<BigDecimal, BigDecimal> entry : taxRateToNetSum.entrySet()) {
-            BigDecimal taxRate = entry.getKey();
-            BigDecimal netSum = entry.getValue();
-            BigDecimal taxFactor = taxRate.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
-            BigDecimal grossPart = netSum.multiply(BigDecimal.ONE.add(taxFactor)).setScale(2, RoundingMode.HALF_UP);
-            newTotalGross = newTotalGross.add(grossPart);
+        // Bruttosumme berechnen - ohne ausgewiesene USt (smallBusiness=false) entspricht sie wie im Belegdialog der Nettosumme
+        if (invoice.isSmallBusiness()) {
+            for (Map.Entry<BigDecimal, BigDecimal> entry : taxRateToNetSum.entrySet()) {
+                BigDecimal taxRate = entry.getKey();
+                BigDecimal netSum = entry.getValue();
+                BigDecimal taxFactor = taxRate.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
+                BigDecimal grossPart = netSum.multiply(BigDecimal.ONE.add(taxFactor)).setScale(2, RoundingMode.HALF_UP);
+                newTotalGross = newTotalGross.add(grossPart);
+            }
+        } else {
+            newTotalGross = newTotalNet;
         }
 
         // Gesamtsummen setzen (mit kaufmännischer Rundung)
@@ -7174,6 +7178,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 }
 
                 this.invoicesFacade.edit(existingInvoice);
+                if (poolChange) {
+                    // the pool determines whether VAT is shown, which changes the gross total
+                    this.updateInvoiceTotal(existingInvoice.getId());
+                }
                 this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Belegart oder Nummernkreis geändert (" + existingInvoice.getInvoiceNumber() + ", " + existingInvoice.getInvoiceType().getDisplayName() + ")");
             }
 

@@ -1066,7 +1066,8 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         BigDecimal currentPaid = BigDecimal.ZERO;
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            locator.lookupArchiveFileServiceRemote().updateInvoice(this.caseDto.getId(), this.invoice);
+            // continue with the stored invoice - the server recalculates the totals, e.g. the gross total of invoices without VAT
+            this.invoice = locator.lookupArchiveFileServiceRemote().updateInvoice(this.caseDto.getId(), this.invoice);
 
             List<CaseAccountEntry> payments = locator.lookupArchiveFileServiceRemote().getAccountEntriesForInvoice(invoice.getId());
 
