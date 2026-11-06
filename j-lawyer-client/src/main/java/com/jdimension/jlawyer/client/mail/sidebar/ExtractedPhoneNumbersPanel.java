@@ -685,7 +685,6 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
@@ -700,7 +699,7 @@ import org.apache.log4j.Logger;
  *
  * @author jens
  */
-public class ExtractedPhoneNumbersPanel extends javax.swing.JPanel {
+public class ExtractedPhoneNumbersPanel extends com.jdimension.jlawyer.client.ui.theme.EntryRowPanel {
 
     private static final Logger log = Logger.getLogger(ExtractedPhoneNumbersPanel.class.getName());
     
@@ -710,6 +709,9 @@ public class ExtractedPhoneNumbersPanel extends javax.swing.JPanel {
      */
     public ExtractedPhoneNumbersPanel() {
         initComponents();
+        this.lblExtractedNumbers.setForeground(com.jdimension.jlawyer.client.ui.theme.UiColors.TEXT_DARK);
+        this.cmdPhone.setToolTipText("gefundene Nummer anrufen");
+        styleRowButtons(this.cmdPhone);
     }
 
     public void setPhoneNumbers(ArrayList<String> phoneNumbers) {
@@ -789,11 +791,11 @@ public class ExtractedPhoneNumbersPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void lblExtractedNumbersMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblExtractedNumbersMouseEntered
-        this.lblExtractedNumbers.setForeground(new Color(0, 0, 255));
+        this.lblExtractedNumbers.setForeground(ACCENT_OPEN);
     }//GEN-LAST:event_lblExtractedNumbersMouseEntered
 
     private void lblExtractedNumbersMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblExtractedNumbersMouseExited
-        this.lblExtractedNumbers.setForeground(Color.BLACK);
+        this.lblExtractedNumbers.setForeground(com.jdimension.jlawyer.client.ui.theme.UiColors.TEXT_DARK);
     }//GEN-LAST:event_lblExtractedNumbersMouseExited
 
     private void cmdPhoneMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdPhoneMouseReleased

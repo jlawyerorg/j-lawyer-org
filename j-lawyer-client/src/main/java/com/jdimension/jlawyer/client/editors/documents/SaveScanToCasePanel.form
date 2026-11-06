@@ -67,7 +67,7 @@
         <EventHandler event="mouseEntered" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="lblDescriptionMouseEntered"/>
       </Events>
     </Component>
-    <Component class="javax.swing.JLabel" name="lblRole">
+    <Component class="com.jdimension.jlawyer.client.ui.theme.ChipLabel" name="lblRole">
       <Properties>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
           <FontInfo relative="true">

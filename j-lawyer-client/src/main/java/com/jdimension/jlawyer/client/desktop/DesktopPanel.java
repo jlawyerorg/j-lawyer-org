@@ -2601,7 +2601,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 if (lastEventType != -1) {
                     addDueSpacer(pnlRevDue);
                 }
-                addDueSectionHeader(pnlRevDue, entry);
+                addDueSectionHeader(pnlRevDue, entry, countsByEventType.getOrDefault(entry.getReview().getEventTypeName(), 0));
                 lastEventType = entry.getType();
             }
 
@@ -2683,44 +2683,56 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     /**
      * Adds a section header for a due entry type.
      */
-    private void addDueSectionHeader(javax.swing.JPanel panel, ReviewDueEntry entry) {
-        // a light pill on the glass card, the colour of the event type is in the icon
-        javax.swing.JPanel sectionHeader = new javax.swing.JPanel() {
-            @Override
-            protected void paintComponent(java.awt.Graphics g) {
-                java.awt.Graphics2D g2d = (java.awt.Graphics2D) g.create();
-                g2d.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
-                g2d.setColor(new java.awt.Color(255, 255, 255, 22));
-                g2d.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, getHeight(), getHeight());
-                g2d.dispose();
-                super.paintComponent(g);
-            }
-        };
-        sectionHeader.setOpaque(false);
-        sectionHeader.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 8, 3));
-
-        // Determine icon and color based on event type
+    private void addDueSectionHeader(javax.swing.JPanel panel, ReviewDueEntry entry, int count) {
+        // a chapter heading: icon, name in capitals and the number of entries in the colour of the
+        // event type, followed by a line in that colour across the full width
         String iconPath;
-        java.awt.Color labelColor;
+        java.awt.Color typeColor;
         if (entry.getType() == com.jdimension.jlawyer.server.constants.ArchiveFileConstants.REVIEWTYPE_RESPITE) {
             iconPath = "/icons16/material/notifications_important_20dp_white.png";
-            labelColor = org.jlawyer.themes.ServerColorTheme.COLOR_LOGO_RED;
+            typeColor = org.jlawyer.themes.ServerColorTheme.COLOR_LOGO_RED;
         } else if (entry.getType() == com.jdimension.jlawyer.server.constants.ArchiveFileConstants.REVIEWTYPE_EVENT) {
             iconPath = "/icons16/material/notifications_calendar_20dp_white.png";
-            labelColor = org.jlawyer.themes.ServerColorTheme.COLOR_LOGO_BLUE;
+            typeColor = org.jlawyer.themes.ServerColorTheme.COLOR_LOGO_BLUE;
         } else {
             iconPath = "/icons16/material/notifications_20dp_white.png";
-            labelColor = org.jlawyer.themes.ServerColorTheme.COLOR_LOGO_GREEN;
+            typeColor = org.jlawyer.themes.ServerColorTheme.COLOR_LOGO_GREEN;
         }
+        // lightened, so that also the dark blue stays readable on the glass
+        final java.awt.Color color = new java.awt.Color(
+                typeColor.getRed() + (255 - typeColor.getRed()) * 35 / 100,
+                typeColor.getGreen() + (255 - typeColor.getGreen()) * 35 / 100,
+                typeColor.getBlue() + (255 - typeColor.getBlue()) * 35 / 100);
 
-        sectionHeader.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 4, 0, 4));
+        javax.swing.JPanel sectionHeader = new javax.swing.JPanel(new java.awt.BorderLayout(10, 0));
+        sectionHeader.setOpaque(false);
+        sectionHeader.setBorder(javax.swing.BorderFactory.createEmptyBorder(8, 2, 4, 2));
 
-        javax.swing.JLabel sectionLabel = new javax.swing.JLabel(entry.getReview().getEventTypeName());
-        javax.swing.ImageIcon originalIcon = new javax.swing.ImageIcon(getClass().getResource(iconPath));
-        sectionLabel.setIcon(tintDueIcon(originalIcon, labelColor));
-        sectionLabel.setForeground(UiColors.TEXT_ON_GLASS);
-        sectionLabel.setFont(UiFonts.exo2Bold(sectionLabel.getFont().getSize() + 2f));
-        sectionHeader.add(sectionLabel);
+        javax.swing.JPanel title = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 6, 0));
+        title.setOpaque(false);
+        javax.swing.JLabel sectionLabel = new javax.swing.JLabel(StringUtils.nonEmpty(entry.getReview().getEventTypeName()).toUpperCase());
+        sectionLabel.setIcon(tintDueIcon(new javax.swing.ImageIcon(getClass().getResource(iconPath)), color));
+        sectionLabel.setIconTextGap(6);
+        sectionLabel.setForeground(color);
+        sectionLabel.setFont(UiFonts.exo2Bold(sectionLabel.getFont().getSize() + 3f));
+        title.add(sectionLabel);
+        javax.swing.JLabel countLabel = new javax.swing.JLabel(String.valueOf(count));
+        countLabel.setForeground(UiColors.TEXT_ON_GLASS_SECONDARY);
+        countLabel.setFont(UiFonts.exo2Bold(sectionLabel.getFont().getSize2D() - 2f));
+        title.add(countLabel);
+        sectionHeader.add(title, java.awt.BorderLayout.WEST);
+
+        javax.swing.JComponent line = new javax.swing.JComponent() {
+            @Override
+            protected void paintComponent(java.awt.Graphics g) {
+                java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
+                g2.setColor(new java.awt.Color(color.getRed(), color.getGreen(), color.getBlue(), 200));
+                g2.fillRect(0, getHeight() / 2 - 1, getWidth(), 2);
+                g2.dispose();
+            }
+        };
+        sectionHeader.add(line, java.awt.BorderLayout.CENTER);
+
         sectionHeader.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, sectionHeader.getPreferredSize().height));
         panel.add(sectionHeader);
     }

@@ -668,7 +668,6 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.pojo.FileMetadata;
 import com.jdimension.jlawyer.services.IntegrationServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.log4j.Logger;
@@ -677,7 +676,7 @@ import org.apache.log4j.Logger;
  *
  * @author jens
  */
-public class EditScanPanel extends javax.swing.JPanel {
+public class EditScanPanel extends com.jdimension.jlawyer.client.ui.theme.EntryRowPanel {
 
     private static final Logger log = Logger.getLogger(EditScanPanel.class.getName());
 
@@ -695,6 +694,8 @@ public class EditScanPanel extends javax.swing.JPanel {
     public EditScanPanel(String openedFromClassName) {
         initComponents();
         this.openedFromEditorClass = openedFromClassName;
+        this.lblDescription.setForeground(com.jdimension.jlawyer.client.ui.theme.UiColors.TEXT_DARK);
+        styleRowButtons(this.cmdDeleteScan, this.cmdRenameScan, this.cmdSplitPdf, this.cmdOcr);
 
     }
 
@@ -850,9 +851,9 @@ public class EditScanPanel extends javax.swing.JPanel {
         boolean removed = this.executor.removeCallback();
         if (removed) {
             this.cmdDeleteScan.setEnabled(false);
-            this.cmdDeleteScan.setBackground(Color.green.darker().darker());
+            this.setAccent(ACCENT_DONE);
         } else {
-            this.cmdDeleteScan.setBackground(Color.red.darker().darker());
+            this.setAccent(ACCENT_OVERDUE);
         }
     }//GEN-LAST:event_cmdDeleteScanActionPerformed
 
@@ -860,9 +861,9 @@ public class EditScanPanel extends javax.swing.JPanel {
         boolean renamed = this.executor.renameCallback();
         if (renamed) {
             this.cmdRenameScan.setEnabled(false);
-            this.cmdRenameScan.setBackground(Color.green.darker().darker());
+            this.setAccent(ACCENT_DONE);
         } else {
-            this.cmdRenameScan.setBackground(Color.red.darker().darker());
+            this.setAccent(ACCENT_OVERDUE);
         }
     }//GEN-LAST:event_cmdRenameScanActionPerformed
 

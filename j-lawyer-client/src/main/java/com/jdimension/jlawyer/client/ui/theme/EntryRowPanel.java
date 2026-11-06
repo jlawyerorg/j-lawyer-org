@@ -718,8 +718,12 @@ public class EntryRowPanel extends JPanel {
     private static final String ROW_BUTTON_STYLE = "arc: 8; margin: 3,3,3,3;"
             + " toolbar.hoverBackground: #0e72b51a; toolbar.pressedBackground: #0e72b533; toolbar.selectedBackground: #0e72b526";
 
+    private static final Color FILL_SELECTED = new Color(234, 243, 252);
+    private static final Color OUTLINE_SELECTED = new Color(14, 114, 181);
+
     private Color accent = null;
     private boolean hovered = false;
+    private boolean rowSelected = false;
     private boolean hoverInstalled = false;
 
     private final MouseAdapter hoverListener = new MouseAdapter() {
@@ -744,6 +748,12 @@ public class EntryRowPanel extends JPanel {
     private void updatePadding() {
         int left = 10 + (this.accent != null ? ACCENT_WIDTH : 0);
         this.setBorder(BorderFactory.createEmptyBorder(6, left, 6 + GAP, 8));
+    }
+
+    @Override
+    public java.awt.Dimension getMaximumSize() {
+        // as wide as the list, never taller than the content - a short list must not stretch its entries
+        return new java.awt.Dimension(Integer.MAX_VALUE, this.getPreferredSize().height);
     }
 
     /**
@@ -771,6 +781,23 @@ public class EntryRowPanel extends JPanel {
      */
     public boolean isHovered() {
         return hovered;
+    }
+
+    /**
+     * @return true if the entry is selected, e.g. for editing in a detail area
+     */
+    public boolean isRowSelected() {
+        return rowSelected;
+    }
+
+    /**
+     * @param rowSelected true to show the entry as selected: light blue with a blue outline
+     */
+    public void setRowSelected(boolean rowSelected) {
+        if (this.rowSelected != rowSelected) {
+            this.rowSelected = rowSelected;
+            this.repaint();
+        }
     }
 
     private void setHovered(boolean hovered) {
@@ -833,7 +860,7 @@ public class EntryRowPanel extends JPanel {
         try {
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             Shape shape = new RoundRectangle2D.Float(0, 0, w - 1, h - 1, ARC * 2, ARC * 2);
-            g2.setColor(FILL);
+            g2.setColor(this.rowSelected ? FILL_SELECTED : FILL);
             g2.fill(shape);
             if (this.accent != null) {
                 Graphics2D ga = (Graphics2D) g2.create();
@@ -842,7 +869,7 @@ public class EntryRowPanel extends JPanel {
                 ga.fillRect(0, 0, ACCENT_WIDTH, h);
                 ga.dispose();
             }
-            g2.setColor(this.hovered ? OUTLINE_HOVER : OUTLINE);
+            g2.setColor(this.rowSelected ? OUTLINE_SELECTED : (this.hovered ? OUTLINE_HOVER : OUTLINE));
             g2.draw(shape);
         } finally {
             g2.dispose();

@@ -685,7 +685,6 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Image;
 import javax.swing.JOptionPane;
@@ -695,7 +694,7 @@ import org.apache.log4j.Logger;
  *
  * @author jens
  */
-public class NavigateToAddressPanel extends javax.swing.JPanel {
+public class NavigateToAddressPanel extends com.jdimension.jlawyer.client.ui.theme.EntryRowPanel {
 
     private static final Logger log = Logger.getLogger(NavigateToAddressPanel.class.getName());
     private AddressBean address = null;
@@ -707,6 +706,15 @@ public class NavigateToAddressPanel extends javax.swing.JPanel {
     public NavigateToAddressPanel(String editorClassName) {
         initComponents();
         this.editorClass=editorClassName;
+
+        // design kit: the buttons carry their caption instead of a separate label next to them
+        this.lblAddress.setForeground(com.jdimension.jlawyer.client.ui.theme.UiColors.TEXT_DARK);
+        this.lblAddress.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+        this.cmdPhone.setText(this.jLabel1.getText());
+        this.cmdCell.setText(this.jLabel2.getText());
+        this.jLabel1.setVisible(false);
+        this.jLabel2.setVisible(false);
+        styleRowButtons(this.cmdPhone, this.cmdCell);
     }
 
     public void setAddress(AddressBean ab) {
@@ -819,11 +827,11 @@ public class NavigateToAddressPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void lblAddressMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblAddressMouseEntered
-        this.lblAddress.setForeground(new Color(0, 0, 255));
+        this.lblAddress.setForeground(ACCENT_OPEN);
     }//GEN-LAST:event_lblAddressMouseEntered
 
     private void lblAddressMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblAddressMouseExited
-        this.lblAddress.setForeground(Color.BLACK);
+        this.lblAddress.setForeground(com.jdimension.jlawyer.client.ui.theme.UiColors.TEXT_DARK);
     }//GEN-LAST:event_lblAddressMouseExited
 
     private void lblAddressMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblAddressMouseClicked

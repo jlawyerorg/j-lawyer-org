@@ -677,7 +677,7 @@ import com.jdimension.jlawyer.services.bea.rest.BeaIdentity;
  *
  * @author jens
  */
-public class CreateNewAddressPanel extends javax.swing.JPanel {
+public class CreateNewAddressPanel extends com.jdimension.jlawyer.client.ui.theme.EntryRowPanel {
 
     private static final Logger log = Logger.getLogger(CreateNewAddressPanel.class.getName());
     private String email = null;
@@ -691,6 +691,16 @@ public class CreateNewAddressPanel extends javax.swing.JPanel {
     public CreateNewAddressPanel(String editorClassName) {
         initComponents();
         this.editorClass = editorClassName;
+
+        // design kit: a light entry with a green bar; the buttons carry their caption instead of a
+        // separate label next to them
+        this.setAccent(ACCENT_DONE);
+        this.lblAddress.setForeground(com.jdimension.jlawyer.client.ui.theme.UiColors.TEXT_DARK);
+        this.cmdSaveCompany.setText(this.jLabel1.getText());
+        this.cmdSavePerson.setText(this.jLabel2.getText());
+        this.jLabel1.setVisible(false);
+        this.jLabel2.setVisible(false);
+        styleRowButtons(this.cmdSaveCompany, this.cmdSavePerson);
     }
 
     /**

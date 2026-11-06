@@ -664,75 +664,33 @@
 package com.jdimension.jlawyer.client.mail.sidebar;
 
 import com.jdimension.jlawyer.client.editors.addresses.*;
-import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.editors.ThemeableEditor;
-import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
-import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
-import com.jdimension.jlawyer.client.editors.files.ViewArchiveFileDetailsPanel;
 import com.jdimension.jlawyer.client.mail.SaveToCaseExecutor;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.settings.UserSettings;
-import com.jdimension.jlawyer.client.utils.StringUtils;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.Component;
-import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author jens
  */
-public class SaveToCasePanel extends javax.swing.JPanel {
+public class SaveToCasePanel extends com.jdimension.jlawyer.client.mail.sidebar.CaseSuggestionPanel {
     
     private static final Logger log = Logger.getLogger(SaveToCasePanel.class.getName());
-    private CaseForContactEntry e = null;
     private SaveToCaseExecutor executor=null;
-    
-    private String openedFromEditorClass=null;
     
     /**
      * Creates new form HitPanel
      */
     public SaveToCasePanel(String openedFromClassName) {
         initComponents();
+        styleRowButtons(this.cmdSaveFullMessage, this.cmdSaveMessageWithoutAttachments, this.cmdSaveMessageAttachmentsOnly, this.cmdSaveSeparate);
         this.openedFromEditorClass=openedFromClassName;
             
     }
     
     public void setEntry(CaseForContactEntry entry, SaveToCaseExecutor executor) {
-        this.e = entry;
         this.executor=executor;
-        
-        String name=e.getName();
-        if(name==null)
-            name="";
-        if(name.length()>25)
-            name=name.substring(0,25) + "...";
-        
-        String reason=e.getReason();
-        if(reason==null)
-            reason="";
-        if(reason.length()>45)
-            reason=reason.substring(0,45) + "...";
-        
-        
-        if(e.isArchived()) {
-            this.lblDescription.setForeground(Color.GRAY);
-            this.lblDescription.setText("<html><b>Archiv: " + StringUtils.nonEmpty(e.getFileNumber()) + " " + name + "</b><br/>" + StringUtils.nonEmpty(reason) + "</html>");
-        } else {
-            this.lblDescription.setForeground(Color.BLACK);
-            this.lblDescription.setText("<html><b>" + StringUtils.nonEmpty(e.getFileNumber()) + " " + name + "</b><br/>" + StringUtils.nonEmpty(reason) + "</html>");
-        }
-        this.lblRole.setText(e.getRole());
-        
-        String contactCaption=java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel").getString("role");
-        String tooltip="<html><b>" + StringUtils.nonEmpty(e.getFileNumber()) + " " + e.getName() + "</b><br/>" + e.getReason() + "<br/>"  + contactCaption + ": " + e.getRole() + "</html>";
-        this.lblDescription.setToolTipText(tooltip);
-        
+        this.presentEntry(entry, this.lblDescription, this.lblRole);
     }
 
     /**
@@ -745,7 +703,7 @@ public class SaveToCasePanel extends javax.swing.JPanel {
     private void initComponents() {
 
         lblDescription = new javax.swing.JLabel();
-        lblRole = new javax.swing.JLabel();
+        lblRole = new com.jdimension.jlawyer.client.ui.theme.ChipLabel();
         cmdSaveFullMessage = new javax.swing.JButton();
         cmdSaveMessageWithoutAttachments = new javax.swing.JButton();
         cmdSaveSeparate = new javax.swing.JButton();
@@ -845,102 +803,35 @@ public class SaveToCasePanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void lblDescriptionMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseEntered
-        this.lblDescription.setForeground(new Color(0, 0, 255));
+        this.titleHover(true);
     }//GEN-LAST:event_lblDescriptionMouseEntered
 
     private void lblDescriptionMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseExited
-        if(e.isArchived()) {
-            this.lblDescription.setForeground(Color.GRAY);
-        } else {
-            this.lblDescription.setForeground(Color.BLACK);
-        }
+        this.titleHover(false);
     }//GEN-LAST:event_lblDescriptionMouseExited
 
     private void lblDescriptionMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseClicked
-        
-        if(this.e==null || this.e.getId()==null)
-            return;
-        
-        try {
-            Object editor=null;
-            if(UserSettings.getInstance().isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
-                editor = EditorsRegistry.getInstance().getEditor(EditArchiveFileDetailsPanel.class.getName());
-            } else {
-                editor = EditorsRegistry.getInstance().getEditor(ViewArchiveFileDetailsPanel.class.getName());
-            }
-            Object opener = EditorsRegistry.getInstance().getEditor(this.openedFromEditorClass);
-            
-            if (editor instanceof ThemeableEditor && opener instanceof ThemeableEditor) {
-                // inherit the background to newly created child editors
-                ((ThemeableEditor) editor).setBackgroundImage(((ThemeableEditor) opener).getBackgroundImage());
-            }
-
-            if (editor instanceof PopulateOptionsEditor) {
-                ((PopulateOptionsEditor) editor).populateOptions();
-            }
-
-            ArchiveFileBean aFile = null;
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
-                ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-                
-                aFile = fileService.getArchiveFile(this.e.getId());
-            } catch (Exception ex) {
-                log.error("Error loading archive file from server", ex);
-                JOptionPane.showMessageDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel").getString("error.loadingcase"), new Object[] {ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel").getString("dialog.error"), JOptionPane.ERROR_MESSAGE);
-            }
-
-            if (aFile == null) {
-                return;
-            }
-
-            ((ArchiveFilePanel) editor).setArchiveFileDTO(aFile);
-            ((ArchiveFilePanel) editor).setOpenedFromEditorClass(this.openedFromEditorClass);
-            EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
-        } catch (Exception ex) {
-            log.error("Error creating editor from class " + this.getClass().getName(), ex);
-            JOptionPane.showMessageDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel").getString("error.loadingeditor"), new Object[] {ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel").getString("dialog.error"), JOptionPane.ERROR_MESSAGE);
-        }
+        this.openCase();
     }//GEN-LAST:event_lblDescriptionMouseClicked
 
     private void cmdSaveFullMessageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveFullMessageActionPerformed
         boolean saved=this.executor.saveToCaseCallback(this.e.getId(), true, false, false);
-        if(saved) {
-            this.cmdSaveFullMessage.setEnabled(false);
-            this.cmdSaveFullMessage.setBackground(Color.green.darker().darker());
-        } else {
-            this.cmdSaveFullMessage.setBackground(Color.red.darker().darker());
-        }
+        this.showSaveResult(this.cmdSaveFullMessage, saved);
     }//GEN-LAST:event_cmdSaveFullMessageActionPerformed
 
     private void cmdSaveMessageWithoutAttachmentsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveMessageWithoutAttachmentsActionPerformed
         boolean saved=this.executor.saveToCaseCallback(this.e.getId(), false, false, false);
-        if(saved) {
-            this.cmdSaveMessageWithoutAttachments.setEnabled(false);
-            this.cmdSaveMessageWithoutAttachments.setBackground(Color.green.darker().darker());
-        } else {
-            this.cmdSaveMessageWithoutAttachments.setBackground(Color.red.darker().darker());
-        }
+        this.showSaveResult(this.cmdSaveMessageWithoutAttachments, saved);
     }//GEN-LAST:event_cmdSaveMessageWithoutAttachmentsActionPerformed
 
     private void cmdSaveSeparateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveSeparateActionPerformed
         boolean saved=this.executor.saveToCaseCallback(this.e.getId(), true, true, false);
-        if(saved) {
-            this.cmdSaveSeparate.setEnabled(false);
-            this.cmdSaveSeparate.setBackground(Color.green.darker().darker());
-        } else {
-            this.cmdSaveSeparate.setBackground(Color.red.darker().darker());
-        }
+        this.showSaveResult(this.cmdSaveSeparate, saved);
     }//GEN-LAST:event_cmdSaveSeparateActionPerformed
 
     private void cmdSaveMessageAttachmentsOnlyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveMessageAttachmentsOnlyActionPerformed
         boolean saved=this.executor.saveToCaseCallback(this.e.getId(), false, false, true);
-        if(saved) {
-            this.cmdSaveMessageAttachmentsOnly.setEnabled(false);
-            this.cmdSaveMessageAttachmentsOnly.setBackground(Color.green.darker().darker());
-        } else {
-            this.cmdSaveMessageAttachmentsOnly.setBackground(Color.red.darker().darker());
-        }
+        this.showSaveResult(this.cmdSaveMessageAttachmentsOnly, saved);
     }//GEN-LAST:event_cmdSaveMessageAttachmentsOnlyActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -949,6 +840,6 @@ public class SaveToCasePanel extends javax.swing.JPanel {
     private javax.swing.JButton cmdSaveMessageWithoutAttachments;
     private javax.swing.JButton cmdSaveSeparate;
     private javax.swing.JLabel lblDescription;
-    private javax.swing.JLabel lblRole;
+    private com.jdimension.jlawyer.client.ui.theme.ChipLabel lblRole;
     // End of variables declaration//GEN-END:variables
 }

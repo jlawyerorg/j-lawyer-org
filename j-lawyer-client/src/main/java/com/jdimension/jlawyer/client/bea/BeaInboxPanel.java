@@ -700,7 +700,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Desktop;
 import java.awt.Graphics;
-import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
@@ -1040,7 +1039,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         this.scrollTree.setBorder(javax.swing.BorderFactory.createLineBorder(com.jdimension.jlawyer.client.ui.theme.UiColors.SEPARATOR));
         this.scrollTree.getViewport().setBackground(java.awt.Color.WHITE);
         this.treeFolders.setBackground(java.awt.Color.WHITE);
-        this.jScrollPane4.setBorder(javax.swing.BorderFactory.createLineBorder(com.jdimension.jlawyer.client.ui.theme.UiColors.SEPARATOR));
+        com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.styleContainer(this.jScrollPane4, this.pnlActions, this.pnlActionsChild);
         this.jPanel2.setOpaque(false);
         this.chkMoveToImported.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
     }
@@ -1103,8 +1102,9 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         tblMails = new javax.swing.JTable();
         jPanel2 = new javax.swing.JPanel();
         jSplitPane1 = new javax.swing.JSplitPane();
+        cardSuggestions = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jScrollPane4 = new javax.swing.JScrollPane();
-        pnlActions = new javax.swing.JPanel();
+        pnlActions = new com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel();
         pnlActionsChild = new javax.swing.JPanel();
         beaMessageContentUI = new com.jdimension.jlawyer.client.bea.BeaMessageContentUI();
         cmdRefresh = new javax.swing.JButton();
@@ -1334,7 +1334,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
         splitterFolderDetails.setLeftComponent(jScrollPane3);
 
-        pnlActions.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEADING));
+        pnlActions.setLayout(new java.awt.BorderLayout());
 
         org.jdesktop.layout.GroupLayout pnlActionsChildLayout = new org.jdesktop.layout.GroupLayout(pnlActionsChild);
         pnlActionsChild.setLayout(pnlActionsChildLayout);
@@ -1347,11 +1347,15 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             .add(0, 321, Short.MAX_VALUE)
         );
 
-        pnlActions.add(pnlActionsChild);
+        pnlActions.add(pnlActionsChild, java.awt.BorderLayout.NORTH);
 
         jScrollPane4.setViewportView(pnlActions);
 
-        jSplitPane1.setRightComponent(jScrollPane4);
+        cardSuggestions.setTitle("Vorschläge");
+        cardSuggestions.setLayout(new java.awt.BorderLayout());
+        cardSuggestions.add(jScrollPane4, java.awt.BorderLayout.CENTER);
+
+        jSplitPane1.setRightComponent(cardSuggestions);
         jSplitPane1.setLeftComponent(beaMessageContentUI);
 
         org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
@@ -2680,21 +2684,22 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 pnlActionsChild.removeAll();
 
                 ArrayList<Component> actionPanelEntries = new ArrayList<>();
+                // contacts are shown at the end of the column
+                ArrayList<Component> contactEntries = new ArrayList<>();
 
                 String sender = msg.getSenderSafeId();
                 if (sender != null && sender.length() > 0) {
 
                     if (hits.length == 0) {
                         CreateNewAddressPanel nap = new CreateNewAddressPanel(BeaInboxPanel.this.getClass().getName());
-                        nap.setBackground(new Color(153, 204, 255));
                         nap.setBeaSafeId(sender);
                         nap.setSenderName(msg.getSenderName());
+                        actionPanelEntries.add(com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.heading("Neu"));
                         actionPanelEntries.add(nap);
                     }
 
                     // empty case reference - will trigger a search
                     SaveToCasePanel sp = new SaveToCasePanel(BeaInboxPanel.this.getClass().getName());
-                    sp.setBackground(sp.getBackground().brighter());
                     CaseForContactEntry cce = new CaseForContactEntry();
                     cce.setFileNumber(null);
                     cce.setId(null);
@@ -2703,16 +2708,19 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     cce.setReason(StringUtils.nonEmpty(null));
                     cce.setArchived(false);
                     sp.setEntry(cce, BeaInboxPanel.this);
+                    actionPanelEntries.add(com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.heading("Zuordnen"));
                     actionPanelEntries.add(sp);
 
                     if (!phoneNumbers.isEmpty()) {
                         ExtractedPhoneNumbersPanel pnp = new ExtractedPhoneNumbersPanel();
                         pnp.setPhoneNumbers(phoneNumbers);
-                        actionPanelEntries.add(pnp);
+                        contactEntries.add(pnp);
                     }
 
                     // eEB responses are offered in the header of the message view itself, see BeaMessageContentUI
 
+                    // cases found by the references of the message, under their own heading
+                    int referenceStart = actionPanelEntries.size();
                     // add reference-based cases (first pass: referenceJustice)
                     addCasePanelsFromData(refCasesJustice, actionPanelEntries);
                     if (refCasesJustice.isEmpty() && refFileNumberCasesJustice != null) {
@@ -2726,7 +2734,12 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                         }
                     }
 
+                    if (actionPanelEntries.size() > referenceStart) {
+                        actionPanelEntries.add(referenceStart, com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.heading("Aktenzeichen im Bezug"));
+                    }
+
                     if (!foundByReferenceJustice && !foundByReferenceNumber) {
+                        int senderStart = actionPanelEntries.size();
                         // display all cases where sender is involved
                         for (AddressBean h : hits) {
                             ArrayList cases = casesByAddress.get(h.getId());
@@ -2738,10 +2751,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                                 ArchiveFileAddressesBean afab = (ArchiveFileAddressesBean) c;
                                 ArchiveFileBean aFile = afab.getArchiveFileKey();
                                 SaveToCasePanel ep = new SaveToCasePanel(BeaInboxPanel.this.getClass().getName());
-                                if (i % 2 == 0) {
-                                    ep.setBackground(ep.getBackground().darker());
-                                }
-                                ep.setBackground(ep.getBackground().brighter());
                                 CaseForContactEntry lce = new CaseForContactEntry();
                                 lce.setFileNumber(aFile.getFileNumber());
                                 lce.setId(aFile.getId());
@@ -2758,21 +2767,24 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                                 }
                             }
                         }
+                        if (actionPanelEntries.size() > senderStart) {
+                            actionPanelEntries.add(senderStart, com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.heading("Akten des Absenders"));
+                        }
                     }
 
                     // allow navigating to senders address
                     for (AddressBean h : hits) {
                         NavigateToAddressPanel ap = new NavigateToAddressPanel(BeaInboxPanel.this.getClass().getName());
                         ap.setAddress(h);
-                        ap.setBackground(new Color(153, 204, 255));
-                        actionPanelEntries.add(ap);
+                        contactEntries.add(ap);
                     }
                 }
 
-                pnlActionsChild.setLayout(new GridLayout(actionPanelEntries.size(), 1));
-                for (Component o : actionPanelEntries) {
-                    pnlActionsChild.add(o);
+                if (!contactEntries.isEmpty()) {
+                    actionPanelEntries.add(com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.heading("Kontakte"));
+                    actionPanelEntries.addAll(contactEntries);
                 }
+                com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.show(pnlActionsChild, actionPanelEntries);
 
                 jSplitPane1.setDividerLocation(splitLocationBefore);
 
@@ -2791,7 +2803,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         }
         for (ArchiveFileAddressesBean aab : cases) {
             SaveToCasePanel ep = new SaveToCasePanel(this.getClass().getName());
-            ep.setBackground(ep.getBackground().brighter());
             CaseForContactEntry lce = new CaseForContactEntry();
             lce.setFileNumber(aab.getArchiveFileKey().getFileNumber());
             lce.setId(aab.getArchiveFileKey().getId());
@@ -2810,7 +2821,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     private void addFileNumberPanels(ArchiveFileBean[] fileNumberCases, ArrayList<Component> actionPanelEntries) {
         for (ArchiveFileBean afb : fileNumberCases) {
             SaveToCasePanel ep = new SaveToCasePanel(this.getClass().getName());
-            ep.setBackground(ep.getBackground().brighter());
             CaseForContactEntry lce = new CaseForContactEntry();
             lce.setFileNumber(afb.getFileNumber());
             lce.setId(afb.getId());
@@ -3272,6 +3282,10 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
                 }
 
+                // shown in the dialog, so the user knows what happens with the message after saving
+                if ("true".equalsIgnoreCase(ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_BEA_MOVETOIMPORTEDENABLED, "false"))) {
+                    bulkSaveDlg.setPostSaveHint("beA-Nachricht wird in den Ordner \"importiert\" verschoben");
+                }
                 FrameUtils.centerDialog(bulkSaveDlg, EditorsRegistry.getInstance().getMainWindow());
                 bulkSaveDlg.setVisible(true);
 
@@ -3564,7 +3578,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     private javax.swing.JMenuItem mnuSearchSave;
     private javax.swing.JMenuItem mnuSearchSaveNoAttachments;
     private javax.swing.JMenuItem mnuSearchSaveOnlyAttachments;
-    private javax.swing.JPanel pnlActions;
+    private com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel pnlActions;
     private javax.swing.JPanel pnlActionsChild;
     private javax.swing.JPopupMenu popEmailList;
     private javax.swing.JPopupMenu popFolders;
@@ -3575,5 +3589,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardMail;
     private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlToolbar;
     private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlOptionsBar;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardSuggestions;
     // End of variables declaration//GEN-END:variables
 }

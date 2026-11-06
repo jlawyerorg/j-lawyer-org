@@ -707,7 +707,6 @@ import com.sun.mail.pop3.POP3Folder;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
-import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -1474,7 +1473,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         this.jScrollPane2.setBorder(javax.swing.BorderFactory.createLineBorder(com.jdimension.jlawyer.client.ui.theme.UiColors.SEPARATOR));
         this.jScrollPane2.getViewport().setBackground(java.awt.Color.WHITE);
         this.treeFolders.setBackground(java.awt.Color.WHITE);
-        this.jScrollPane4.setBorder(javax.swing.BorderFactory.createLineBorder(com.jdimension.jlawyer.client.ui.theme.UiColors.SEPARATOR));
+        com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.styleContainer(this.jScrollPane4, this.pnlActions, this.pnlActionsChild);
         this.jPanel2.setOpaque(false);
         this.txtSearchString.putClientProperty(com.formdev.flatlaf.FlatClientProperties.TEXT_FIELD_LEADING_ICON,
                 new javax.swing.ImageIcon(getClass().getResource("/icons/find.png")));
@@ -1535,8 +1534,9 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         jPanel2 = new javax.swing.JPanel();
         jSplitPane3 = new javax.swing.JSplitPane();
         mailContentUI = new com.jdimension.jlawyer.client.mail.MailContentUI();
+        cardSuggestions = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jScrollPane4 = new javax.swing.JScrollPane();
-        pnlActions = new javax.swing.JPanel();
+        pnlActions = new com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel();
         pnlActionsChild = new javax.swing.JPanel();
         cmbDownloadMails = new javax.swing.JComboBox<>();
         jToolBar1 = new javax.swing.JToolBar();
@@ -1743,7 +1743,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
         jSplitPane3.setLeftComponent(mailContentUI);
 
-        pnlActions.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEADING));
+        pnlActions.setLayout(new java.awt.BorderLayout());
 
         org.jdesktop.layout.GroupLayout pnlActionsChildLayout = new org.jdesktop.layout.GroupLayout(pnlActionsChild);
         pnlActionsChild.setLayout(pnlActionsChildLayout);
@@ -1756,11 +1756,15 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             .add(0, 321, Short.MAX_VALUE)
         );
 
-        pnlActions.add(pnlActionsChild);
+        pnlActions.add(pnlActionsChild, java.awt.BorderLayout.NORTH);
 
         jScrollPane4.setViewportView(pnlActions);
 
-        jSplitPane3.setRightComponent(jScrollPane4);
+        cardSuggestions.setTitle("Vorschläge");
+        cardSuggestions.setLayout(new java.awt.BorderLayout());
+        cardSuggestions.add(jScrollPane4, java.awt.BorderLayout.CENTER);
+
+        jSplitPane3.setRightComponent(cardSuggestions);
 
         org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -3501,7 +3505,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         } else if (this.tblMails.getSelectedRows().length > 1) {
             // multiple selected
             this.mailContentUI.clear();
-            this.pnlActionsChild.removeAll();
+            com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.begin(this.pnlActionsChild);
             SaveToCasePanel sp = new SaveToCasePanel(this.getClass().getName());
             CaseForContactEntry cce = new CaseForContactEntry();
             cce.setFileNumber(null);
@@ -3511,9 +3515,9 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             cce.setReason(StringUtils.nonEmpty(null));
             cce.setArchived(false);
             sp.setEntry(cce, this);
-            sp.setBackground(sp.getBackground().brighter());
-            this.pnlActionsChild.add(sp);
-            this.pnlActions.revalidate();
+            com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.section(this.pnlActionsChild, "Zuordnen");
+            com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.add(this.pnlActionsChild, sp);
+            com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.end(this.pnlActionsChild);
             return;
         }
 
@@ -3684,7 +3688,10 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
             String subjectForCase = msgC.isServerBased() ? (msgC.getMessageDTO().getSubject() != null ? msgC.getMessageDTO().getSubject() : "") : (msgC.getMessage() != null ? msgC.getMessage().getSubject() : "");
             CreateNewCasePanel cncp = new CreateNewCasePanel(this.getClass().getName(), this, relevantAddresses, subjectForCase, this.mailContentUI, senderName, senderAddress);
+            actionPanelEntries.add(com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.heading("Neu"));
             actionPanelEntries.add(cncp);
+            // contacts are collected separately and shown under their own heading
+            ArrayList<Component> contactEntries = new ArrayList<>();
 
             ArrayList<ArchiveFileBean> addressRelatedCases = new ArrayList<>();
             if (relevantAddresses != null && relevantAddresses.length > 0) {
@@ -3692,7 +3699,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
                 if (hits.length == 0) {
                     CreateNewAddressPanel nap = new CreateNewAddressPanel(this.getClass().getName());
-                    nap.setBackground(new Color(153, 204, 255));
                     nap.setEmail(senderAddress);
                     nap.setSenderName(senderName);
                     actionPanelEntries.add(nap);
@@ -3700,7 +3706,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
                 // empt case reference - will trigger a search
                 SaveToCasePanel sp = new SaveToCasePanel(this.getClass().getName());
-                sp.setBackground(sp.getBackground().brighter());
                 CaseForContactEntry cce = new CaseForContactEntry();
                 cce.setFileNumber(null);
                 cce.setId(null);
@@ -3709,12 +3714,13 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 cce.setReason(StringUtils.nonEmpty(null));
                 cce.setArchived(false);
                 sp.setEntry(cce, this);
+                actionPanelEntries.add(com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.heading("Zuordnen"));
                 actionPanelEntries.add(sp);
 
                 if (!phoneNumbers.isEmpty()) {
                     ExtractedPhoneNumbersPanel pnp = new ExtractedPhoneNumbersPanel();
                     pnp.setPhoneNumbers(phoneNumbers);
-                    actionPanelEntries.add(pnp);
+                    contactEntries.add(pnp);
                 }
 
                 ArrayList<String> addedAddressIds = new ArrayList<>();
@@ -3722,8 +3728,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     if (!addedAddressIds.contains(h.getId())) {
                         NavigateToAddressPanel ap = new NavigateToAddressPanel(this.getClass().getName());
                         ap.setAddress(h);
-                        ap.setBackground(new Color(153, 204, 255));
-                        actionPanelEntries.add(ap);
+                        contactEntries.add(ap);
                         addedAddressIds.add(h.getId());
                     }
                 }
@@ -3779,14 +3784,12 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             } else if (senderAddress != null && !senderAddress.isEmpty()) {
                 // No matching addresses found - offer to create a new contact
                 CreateNewAddressPanel nap = new CreateNewAddressPanel(this.getClass().getName());
-                nap.setBackground(new Color(153, 204, 255));
                 nap.setEmail(senderAddress);
                 nap.setSenderName(senderName);
                 actionPanelEntries.add(nap);
 
                 // empt case reference - will trigger a search
                 SaveToCasePanel sp = new SaveToCasePanel(this.getClass().getName());
-                sp.setBackground(sp.getBackground().brighter());
                 CaseForContactEntry cce = new CaseForContactEntry();
                 cce.setFileNumber(null);
                 cce.setId(null);
@@ -3795,45 +3798,54 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 cce.setReason(StringUtils.nonEmpty(null));
                 cce.setArchived(false);
                 sp.setEntry(cce, this);
+                actionPanelEntries.add(com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.heading("Zuordnen"));
                 actionPanelEntries.add(sp);
 
                 if (!phoneNumbers.isEmpty()) {
                     ExtractedPhoneNumbersPanel pnp = new ExtractedPhoneNumbersPanel();
                     pnp.setPhoneNumbers(phoneNumbers);
-                    actionPanelEntries.add(pnp);
+                    contactEntries.add(pnp);
                 }
             }
 
-            // die spezifischeren Ergebnisse sollen oben stehen
-            List<ArchiveFileBean> orderedCases = new ArrayList<>();
+            // contacts (found phone numbers, the sender's addresses) before the cases
+            if (!contactEntries.isEmpty()) {
+                actionPanelEntries.add(com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.heading("Kontakte"));
+                actionPanelEntries.addAll(contactEntries);
+            }
+
+            // the more specific results first - each source under its own heading
+            List<List<ArchiveFileBean>> caseGroups = new ArrayList<>();
+            List<String> caseHeadings = new ArrayList<>();
             if (subjectBodyCases.size() >= addressRelatedCases.size()) {
-                orderedCases.addAll(addressRelatedCases);
-                orderedCases.addAll(subjectBodyCases);
+                caseGroups.add(addressRelatedCases);
+                caseHeadings.add("Akten des Absenders");
+                caseGroups.add(subjectBodyCases);
+                caseHeadings.add("Aktenzeichen in der Nachricht");
             } else {
-                orderedCases.addAll(subjectBodyCases);
-                orderedCases.addAll(addressRelatedCases);
+                caseGroups.add(subjectBodyCases);
+                caseHeadings.add("Aktenzeichen in der Nachricht");
+                caseGroups.add(addressRelatedCases);
+                caseHeadings.add("Akten des Absenders");
             }
-            int i = 0;
-            for (Object c : orderedCases) {
-                ArchiveFileBean aFile = (ArchiveFileBean) c;
-                SaveToCasePanel ep = new SaveToCasePanel(this.getClass().getName());
-                if (i % 2 == 0) {
-                    ep.setBackground(ep.getBackground().darker());
+            for (int g = 0; g < caseGroups.size(); g++) {
+                if (caseGroups.get(g).isEmpty()) {
+                    continue;
                 }
-                ep.setBackground(ep.getBackground().brighter());
-                CaseForContactEntry lce = new CaseForContactEntry();
-                lce.setFileNumber(aFile.getFileNumber());
-                lce.setId(aFile.getId());
-                lce.setRole("");
-                lce.setName(aFile.getName());
-                lce.setReason(StringUtils.nonEmpty(aFile.getReason()));
-                lce.setArchived(aFile.isArchived());
-                ep.setEntry(lce, this);
-
-                actionPanelEntries.add(ep);
-                i++;
+                actionPanelEntries.add(com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.heading(caseHeadings.get(g)));
+                for (ArchiveFileBean aFile : caseGroups.get(g)) {
+                    SaveToCasePanel ep = new SaveToCasePanel(this.getClass().getName());
+                    CaseForContactEntry lce = new CaseForContactEntry();
+                    lce.setFileNumber(aFile.getFileNumber());
+                    lce.setId(aFile.getId());
+                    lce.setRole("");
+                    lce.setName(aFile.getName());
+                    lce.setReason(StringUtils.nonEmpty(aFile.getReason()));
+                    lce.setArchived(aFile.isArchived());
+                    ep.setEntry(lce, this);
+                    actionPanelEntries.add(ep);
+                }
             }
-
             if (loadId != this.actionPanelLoadId) return;
 
             // Update UI on EDT
@@ -3841,15 +3853,9 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             SwingUtilities.invokeLater(() -> {
                 if (loadId != this.actionPanelLoadId) return;
 
-                this.pnlActionsChild.removeAll();
-                this.pnlActionsChild.setLayout(new GridLayout(finalEntries.size(), 1));
-                for (Component o : finalEntries) {
-                    this.pnlActionsChild.add(o);
-                }
+                com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.show(this.pnlActionsChild, finalEntries);
 
                 this.jSplitPane3.setDividerLocation(0.8f);
-                this.pnlActionsChild.revalidate();
-                this.pnlActionsChild.repaint();
 
                 // Update table row to reflect read status
                 if (selectionIndex >= 0 && selectionIndex < tblMails.getRowCount()) {
@@ -4303,6 +4309,10 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern der E-Mail: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
         }
 
+        // shown in the dialog, so the user knows what happens with the e-mail after saving
+        if ("true".equalsIgnoreCase(ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_MAILS_DELETEENABLED, "false"))) {
+            bulkSaveDlg.setPostSaveHint("E-Mail wird gelöscht");
+        }
         FrameUtils.centerDialog(bulkSaveDlg, EditorsRegistry.getInstance().getMainWindow());
         bulkSaveDlg.setVisible(true);
 
@@ -4312,7 +4322,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 this.cmdDeleteActionPerformed(null);
             } else if (caseId == null && targetCase != null) {
                 SaveToCasePanel ep = new SaveToCasePanel(this.getClass().getName());
-                ep.setBackground(ep.getBackground().brighter());
                 CaseForContactEntry lce = new CaseForContactEntry();
                 lce.setFileNumber(targetCase.getFileNumber());
                 lce.setId(targetCase.getId());
@@ -4322,11 +4331,10 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 lce.setArchived(targetCase.isArchived());
                 ep.setEntry(lce, this);
 
-                this.pnlActionsChild.add(ep, 0);
-                GridLayout layout = (GridLayout) this.pnlActionsChild.getLayout();
-                layout.setRows(layout.getRows() + 1);
-                this.pnlActionsChild.revalidate();
-                this.pnlActionsChild.repaint();
+                // the case just used for saving, on top of the suggestions
+                com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.addFirst(this.pnlActionsChild, ep);
+                com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.addFirst(this.pnlActionsChild, com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.heading("Zuletzt zugeordnet"));
+                com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.end(this.pnlActionsChild);
             }
             return true;
         } else {
@@ -4455,7 +4463,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     private javax.swing.JMenu mnuShowFolders;
     private javax.swing.JMenuItem mnuSortMailboxes;
     private javax.swing.JPopupMenu.Separator sepSortMailboxes;
-    private javax.swing.JPanel pnlActions;
+    private com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel pnlActions;
     private javax.swing.JPanel pnlActionsChild;
     private javax.swing.JPopupMenu popEmailList;
     private javax.swing.JPopupMenu popFolders;
@@ -4465,5 +4473,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardMail;
     private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlToolbar;
     private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlSearchBar;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardSuggestions;
     // End of variables declaration//GEN-END:variables
 }

@@ -671,13 +671,12 @@ import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.wizard.WizardDataContainer;
 import com.jdimension.jlawyer.client.wizard.WizardSteps;
 import com.jdimension.jlawyer.persistence.AddressBean;
-import themes.colors.DefaultColorTheme;
 
 /**
  *
  * @author jens
  */
-public class CreateNewCasePanel extends javax.swing.JPanel {
+public class CreateNewCasePanel extends com.jdimension.jlawyer.client.ui.theme.EntryRowPanel {
 
     private String editorClass = null;
     
@@ -707,8 +706,12 @@ public class CreateNewCasePanel extends javax.swing.JPanel {
         this.senderName=senderName;
         this.panelParent=parent;
         this.senderAddress=senderAddress;
-        
-        setBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
+
+        // design kit: a light entry with a green bar, the action as primary button
+        this.setAccent(ACCENT_DONE);
+        this.lblAddress.setForeground(com.jdimension.jlawyer.client.ui.theme.UiColors.TEXT_DARK);
+        com.jdimension.jlawyer.client.ui.theme.DialogStyle.stylePrimary(this.cmdNewCase, "Anlegen");
+        this.cmdNewCase.setToolTipText("neue Akte aus dieser Nachricht anlegen");
     }
 
     /**

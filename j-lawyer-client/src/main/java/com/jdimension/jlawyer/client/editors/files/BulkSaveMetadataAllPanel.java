@@ -749,7 +749,8 @@ public class BulkSaveMetadataAllPanel extends JPanel {
     }
 
     private List<BulkSaveEntry> entries() {
-        return this.dialog == null ? new ArrayList<>() : this.dialog.getSelectedEntries();
+        // the files selected in the list of the dialog that are going to be saved
+        return this.dialog == null ? new ArrayList<>() : this.dialog.getEntriesForBulkEdit();
     }
 
     private void keywordsForAll() {
