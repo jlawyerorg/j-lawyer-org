@@ -720,8 +720,9 @@ public class AiChatMessageMarkdownPanel extends javax.swing.JPanel {
 
     private static final int AVATAR_SIZE = 32;
     private static final int AVATAR_GAP = 8;
-    // free space on the side opposite to the avatar, so the conversation reads as a dialogue
-    private static final int SIDE_INDENT = 56;
+    // free space on the side opposite to the avatar - as wide as the avatar column, so user and
+    // assistant bubbles (and the tool calls between them) share the same left and right edges
+    private static final int SIDE_INDENT = AVATAR_SIZE + AVATAR_GAP;
     private static final int RADIUS = 16;
 
     /**
@@ -839,13 +840,35 @@ public class AiChatMessageMarkdownPanel extends javax.swing.JPanel {
             this.lblSender.setText(sender != null ? sender : "Ich");
             this.lblMeta.setText("");
             this.lblMeta.setToolTipText(null);
+            this.lblUser.setToolTipText(userTooltip(sender));
         } else {
             this.lblSender.setText(ASSISTANT_NAME);
             this.lblMeta.setText(modelRef != null ? modelRef : "");
             this.lblMeta.setToolTipText(modelRef);
+            this.lblUser.setToolTipText(modelRef != null ? ASSISTANT_NAME + " (" + modelRef + ")" : ASSISTANT_NAME);
         }
         this.revalidate();
         this.repaint();
+    }
+
+    /**
+     * @return display name and login of the user, e.g. "Jens Mustermann (jens)", or just the login
+     * if the user has no display name
+     */
+    private static String userTooltip(String principalId) {
+        if (principalId == null) {
+            return null;
+        }
+        try {
+            AppUserBean u = UserSettings.getInstance().getUser(principalId);
+            if (u != null && u.getDisplayName() != null && !u.getDisplayName().trim().isEmpty()
+                    && !u.getDisplayName().trim().equals(principalId)) {
+                return u.getDisplayName().trim() + " (" + principalId + ")";
+            }
+        } catch (Throwable t) {
+            log.debug("could not resolve user " + principalId, t);
+        }
+        return principalId;
     }
 
     private static String currentPrincipalId() {

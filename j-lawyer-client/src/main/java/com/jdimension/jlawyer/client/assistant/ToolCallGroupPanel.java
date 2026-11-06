@@ -715,7 +715,8 @@ public class ToolCallGroupPanel extends JPanel {
         setOpaque(false);
         setAlignmentX(Component.LEFT_ALIGNMENT);
         // tool calls belong to an answer - align them with the assistant bubbles
-        setBorder(BorderFactory.createEmptyBorder(0, AiChatMessageMarkdownPanel.ASSISTANT_BUBBLE_LEFT, 0, AiChatMessageMarkdownPanel.ASSISTANT_BUBBLE_RIGHT));
+        // space above, so the calls do not stick to the user's request
+        setBorder(BorderFactory.createEmptyBorder(8, AiChatMessageMarkdownPanel.ASSISTANT_BUBBLE_LEFT, 0, AiChatMessageMarkdownPanel.ASSISTANT_BUBBLE_RIGHT));
 
         this.header = new ToolCallCard(new FlowLayout(FlowLayout.LEFT, 6, 2)) {
             @Override

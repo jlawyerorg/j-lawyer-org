@@ -970,7 +970,7 @@ public class AiChatTranscript {
         lblMore.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         // user bubbles are right-aligned, next to the avatar
         lblMore.setHorizontalAlignment(JLabel.RIGHT);
-        lblMore.setBorder(BorderFactory.createEmptyBorder(0, 0, 4, 54));
+        lblMore.setBorder(BorderFactory.createEmptyBorder(0, 0, 4, AiChatMessageMarkdownPanel.ASSISTANT_BUBBLE_LEFT + 4));
 
         wrapper.add(previewPanel, BorderLayout.CENTER);
         wrapper.add(lblMore, BorderLayout.SOUTH);
