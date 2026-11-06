@@ -1038,9 +1038,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_big.png")));
         }
 
-        ComponentUtils.decorateSplitPane(this.splitMessages);
-        ComponentUtils.decorateSplitPane(this.splitDocumentsMain);
-        ComponentUtils.decorateSplitPane(this.splitNotes);
+        this.applyModernLook();
 
         this.messageSendPanel1.setMessageConsumer(this);
         this.messageSendPanel1.setUsers(UserSettings.getInstance().getMessagingEnabledUsers());
@@ -1219,7 +1217,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
                 if (!isSelected) {
                     if (row % 2 == 0) {
-                        c.setBackground(new Color(204, 204, 204));
+                        c.setBackground(com.jdimension.jlawyer.client.ui.theme.UiColors.TABLE_STRIPE);
                     } else {
                         c.setBackground(Color.WHITE);
                     }
@@ -1239,7 +1237,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
                 if (!isSelected) {
                     if (row % 2 == 0) {
-                        c.setBackground(new Color(204, 204, 204));
+                        c.setBackground(com.jdimension.jlawyer.client.ui.theme.UiColors.TABLE_STRIPE);
                     } else {
                         c.setBackground(Color.WHITE);
                     }
@@ -2793,7 +2791,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         this.clearDocumentPreview("");
 
-        this.lblHeaderInfo.setText(this.dto.getFileNumber() + " " + StringUtils.nonEmpty(this.dto.getName()) + " " + StringUtils.nonEmpty(this.dto.getReason()));
+        this.setHeaderInfo(this.dto.getFileNumber());
         log.info("[AKTE-LOAD] setArchiveFileDTO: Header-Info gesetzt");
 
         this.txtClaimNumber.setText(dto.getClaimNumber());
@@ -3162,7 +3160,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         // reset tab colors, currently used for indicating timesheets that have exceeded their limit
         int tabIndex = tabPaneArchiveFile.indexOfTab("Zeiten");
         if (tabIndex > -1) {
-            tabPaneArchiveFile.setForegroundAt(tabIndex, Color.BLACK);
+            tabPaneArchiveFile.setForegroundAt(tabIndex, com.jdimension.jlawyer.client.ui.theme.UiColors.TEXT_ON_GLASS);
         } else {
             log.warn("Tab with name Zeiterfassung cannot be found");
         }
@@ -3368,7 +3366,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         popAssistantNoContext = new javax.swing.JPopupMenu();
         tabPaneArchiveFile = new javax.swing.JTabbedPane();
         tabGeneralData = new javax.swing.JPanel();
-        jPanel1 = new javax.swing.JPanel();
+        jPanel1 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jLabel1 = new javax.swing.JLabel();
         txtFileNumber = new javax.swing.JTextField();
         jLabel3 = new javax.swing.JLabel();
@@ -3400,24 +3398,24 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         pnlLinkedCases = new javax.swing.JPanel();
         splitMessages = new javax.swing.JSplitPane();
         splitNotes = new javax.swing.JSplitPane();
-        jPanel2 = new javax.swing.JPanel();
+        jPanel2 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tagPanel = new javax.swing.JPanel();
-        jPanel3 = new javax.swing.JPanel();
+        jPanel3 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         txtNoticePane = new javax.swing.JScrollPane();
         txtNotice = new javax.swing.JTextArea();
-        pnlMessagesView = new javax.swing.JPanel();
+        pnlMessagesView = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jScrollPane9 = new javax.swing.JScrollPane();
         pnlMessages = new javax.swing.JPanel();
         messageSendPanel1 = new com.jdimension.jlawyer.client.messenger.MessageSendPanel();
-        tabParties = new javax.swing.JPanel();
+        tabParties = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         cmdSearchClient = new javax.swing.JButton();
         cmdCaseNetwork = new javax.swing.JButton();
         jScrollPane8 = new javax.swing.JScrollPane();
         pnlInvolvedParties = new com.jdimension.jlawyer.client.editors.files.InvolvedPartiesPanel();
         txtFilterParties = new javax.swing.JTextField();
         tabDocuments = new javax.swing.JPanel();
-        jPanel7 = new javax.swing.JPanel();
+        jPanel7 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         cmdNewDocument = new javax.swing.JButton();
         cmdUploadDocument = new javax.swing.JButton();
         txtSearchDocumentNames = new javax.swing.JTextField();
@@ -3436,7 +3434,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         cmdAssistantGenerate = new javax.swing.JButton();
         togFulltextSearch = new javax.swing.JToggleButton();
         cmdReloadDocuments = new javax.swing.JButton();
-        tabFinance = new javax.swing.JPanel();
+        tabFinance = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         subTabsFinance = new javax.swing.JTabbedPane();
         jPanel8 = new javax.swing.JPanel();
         jLabel7 = new javax.swing.JLabel();
@@ -3495,16 +3493,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         txtClaimNumber = new javax.swing.JTextField();
         cmdNewRvg = new javax.swing.JButton();
         tabReviews = new javax.swing.JPanel();
-        jPanel9 = new javax.swing.JPanel();
+        jPanel9 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         tblReviewReasonsPane = new javax.swing.JScrollPane();
         tblReviewReasons = new javax.swing.JTable();
         newEventPanel = new com.jdimension.jlawyer.client.editors.files.NewEventPanel();
-        tabTimesheets = new javax.swing.JPanel();
+        tabTimesheets = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jLabel22 = new javax.swing.JLabel();
         cmdNewTimesheet = new javax.swing.JButton();
         jScrollPane11 = new javax.swing.JScrollPane();
         pnlTimesheets = new javax.swing.JPanel();
-        jPanel11 = new javax.swing.JPanel();
+        jPanel11 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         lblCustom1 = new javax.swing.JLabel();
         txtCustom1 = new javax.swing.JTextField();
         lblCustom2 = new javax.swing.JLabel();
@@ -3512,7 +3510,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         lblCustom3 = new javax.swing.JLabel();
         jScrollPane6 = new javax.swing.JScrollPane();
         taCustom3 = new javax.swing.JTextArea();
-        jPanel5 = new javax.swing.JPanel();
+        jPanel5 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         tabPaneForms = new javax.swing.JTabbedPane();
         pnlAddForms = new javax.swing.JPanel();
         cmdAddForm = new javax.swing.JButton();
@@ -3524,10 +3522,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         jLabel19 = new javax.swing.JLabel();
         txtFormDescription = new javax.swing.JTextField();
         cmdFormsManager = new javax.swing.JButton();
-        tabAiChats = new javax.swing.JPanel();
+        tabAiChats = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         aiChatHistoryPanel = new com.jdimension.jlawyer.client.assistant.AiChatHistoryPanel();
         tabHistory = new javax.swing.JPanel();
-        jPanel10 = new javax.swing.JPanel();
+        jPanel10 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jScrollPane4 = new javax.swing.JScrollPane();
         tblHistory = new javax.swing.JTable();
         jLabel13 = new javax.swing.JLabel();
@@ -3543,12 +3541,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         lblPanelTitle = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         lblHeaderInfo = new javax.swing.JLabel();
-        jPanel13 = new javax.swing.JPanel();
+        jPanel13 = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
         cmdToEditMode = new javax.swing.JButton();
         cmdPrint = new javax.swing.JButton();
         cmdBackToSearch = new javax.swing.JButton();
         cmdExportHtml = new javax.swing.JButton();
         cmdSave = new javax.swing.JButton();
+        pnlHeaderRight = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
         cmdHeaderAddNote = new javax.swing.JButton();
         cmdFavoriteDocuments = new javax.swing.JButton();
         togCaseSync = new javax.swing.JToggleButton();
@@ -4017,7 +4016,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Aktenkopf"));
+        jPanel1.setTitle("Aktenkopf");
 
         jLabel1.setText("Aktenzeichen:");
 
@@ -4292,7 +4291,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         splitNotes.setDividerLocation(170);
         splitNotes.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
 
-        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Akten-Etiketten"));
+        jPanel2.setTitle("Akten-Etiketten");
         jPanel2.setLayout(new java.awt.BorderLayout());
 
         jScrollPane1.setBorder(null);
@@ -4314,7 +4313,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         splitNotes.setLeftComponent(jPanel2);
 
-        jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Notizen"));
+        jPanel3.setTitle("Notizen");
 
         txtNoticePane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
@@ -4358,6 +4357,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         );
 
         jScrollPane9.setViewportView(pnlMessages);
+
+        pnlMessagesView.setTitle("Nachrichten");
 
         org.jdesktop.layout.GroupLayout pnlMessagesViewLayout = new org.jdesktop.layout.GroupLayout(pnlMessagesView);
         pnlMessagesView.setLayout(pnlMessagesViewLayout);
@@ -4462,7 +4463,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         tabPaneArchiveFile.addTab("Beteiligte", new javax.swing.ImageIcon(getClass().getResource("/icons/vcard.png")), tabParties); // NOI18N
 
-        jPanel7.setBorder(javax.swing.BorderFactory.createTitledBorder("Dokumente"));
+        jPanel7.setTitle("Dokumente");
 
         cmdNewDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_documents.png"))); // NOI18N
         cmdNewDocument.setText("Erstellen");
@@ -5168,7 +5169,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         tabPaneArchiveFile.addTab("Finanzen", new javax.swing.ImageIcon(getClass().getResource("/icons/money.png")), tabFinance); // NOI18N
 
-        jPanel9.setBorder(javax.swing.BorderFactory.createTitledBorder("Wiedervorlagen, Fristen und Termine"));
+        jPanel9.setTitle("Wiedervorlagen, Fristen und Termine");
 
         tblReviewReasons.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -5454,7 +5455,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         tabPaneArchiveFile.addTab("AI", new javax.swing.ImageIcon(getClass().getResource("/icons16/material/j-lawyer-ai.png")), tabAiChats); // NOI18N
 
-        jPanel10.setBorder(javax.swing.BorderFactory.createTitledBorder("Aktenhistorie"));
+        jPanel10.setTitle("Aktenhistorie");
 
         tblHistory.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -5621,7 +5622,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
-        jPanel13.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
         jPanel13.setOpaque(false);
 
         cmdToEditMode.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png"))); // NOI18N
@@ -5749,6 +5749,41 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
+        pnlHeaderRight.setOpaque(false);
+
+        org.jdesktop.layout.GroupLayout pnlHeaderRightLayout = new org.jdesktop.layout.GroupLayout(pnlHeaderRight);
+        pnlHeaderRight.setLayout(pnlHeaderRightLayout);
+        pnlHeaderRightLayout.setHorizontalGroup(
+            pnlHeaderRightLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlHeaderRightLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(cmdIngoChat)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(cmdTimesheetLog)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(togCaseSync)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(cmdFavoriteDocuments)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(cmdHeaderAddNote)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(cmdSendInstantMessage)
+                .addContainerGap())
+        );
+        pnlHeaderRightLayout.setVerticalGroup(
+            pnlHeaderRightLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlHeaderRightLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(pnlHeaderRightLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+                    .add(cmdIngoChat)
+                    .add(cmdTimesheetLog)
+                    .add(togCaseSync)
+                    .add(cmdFavoriteDocuments)
+                    .add(cmdHeaderAddNote)
+                    .add(cmdSendInstantMessage))
+                .addContainerGap())
+        );
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -5757,9 +5792,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(tabPaneArchiveFile)
-                    .add(layout.createSequentialGroup()
-                        .add(lblHeaderInfo)
-                        .add(0, 0, Short.MAX_VALUE))
+                    .add(lblHeaderInfo, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(layout.createSequentialGroup()
                         .add(jPanel13, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -5767,35 +5800,19 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdIngoChat)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdTimesheetLog)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(togCaseSync)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdFavoriteDocuments)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdHeaderAddNote)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdSendInstantMessage)))
+                        .add(pnlHeaderRight, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
                     .add(jPanel13, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(cmdHeaderAddNote)
                     .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
                         .add(org.jdesktop.layout.GroupLayout.LEADING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, togCaseSync, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, cmdFavoriteDocuments, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .add(cmdTimesheetLog)
-                    .add(cmdSendInstantMessage)
-                    .add(cmdIngoChat))
+                    .add(pnlHeaderRight, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(lblHeaderInfo)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -9756,9 +9773,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.lblEscrowOut.setText(accountEntryFormat.format(tEscrowOut));
         this.lblExpendituresIn.setText(accountEntryFormat.format(tExpIn));
         this.lblExpendituresOut.setText(accountEntryFormat.format(tExpOut));
-        this.lblEarningsTotal.setText(accountEntryFormat.format(tEarningsSpendings));
-        this.lblEscrowTotal.setText(accountEntryFormat.format(tEscrow));
-        this.lblExpendituresTotal.setText(accountEntryFormat.format(tExp));
+        this.showBalance(this.lblEarningsTotal, tEarningsSpendings);
+        this.showBalance(this.lblEscrowTotal, tEscrow);
+        this.showBalance(this.lblExpendituresTotal, tExp);
 
     }
 
@@ -9936,7 +9953,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     boolean success = locator.lookupArchiveFileServiceRemote().udpateFileNumber(this.dto.getFileNumberMain(), newFileNumber.toString());
                     if (success) {
                         this.dto.setFileNumberMain(newFileNumber.toString());
-                        this.lblHeaderInfo.setText(this.dto.getFileNumber() + " " + StringUtils.nonEmpty(this.dto.getName()) + " " + StringUtils.nonEmpty(this.dto.getReason()));
+                        this.setHeaderInfo(this.dto.getFileNumber());
                         this.txtFileNumber.setText(dto.getFileNumber());
                     } else {
                         JOptionPane.showMessageDialog(this, "Fehler beim Anpassen des Aktenzeichens - neues Zeichen ungültig?", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -11626,24 +11643,24 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel10;
-    private javax.swing.JPanel jPanel11;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel1;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel10;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel11;
     private javax.swing.JPanel jPanel12;
-    private javax.swing.JPanel jPanel13;
+    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel jPanel13;
     private javax.swing.JPanel jPanel15;
     private javax.swing.JPanel jPanel16;
     private javax.swing.JPanel jPanel17;
     private javax.swing.JPanel jPanel18;
     private javax.swing.JPanel jPanel19;
-    private javax.swing.JPanel jPanel2;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel2;
     private javax.swing.JPanel jPanel20;
-    private javax.swing.JPanel jPanel3;
-    private javax.swing.JPanel jPanel5;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel3;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel5;
     private javax.swing.JPanel jPanel6;
-    private javax.swing.JPanel jPanel7;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel7;
     private javax.swing.JPanel jPanel8;
-    private javax.swing.JPanel jPanel9;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel9;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane10;
     private javax.swing.JScrollPane jScrollPane11;
@@ -11740,11 +11757,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private com.jdimension.jlawyer.client.editors.files.NewEventPanel newEventPanel;
     private javax.swing.JPanel pnlAddForms;
     private javax.swing.JPanel pnlClaimLedgers;
+    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlHeaderRight;
     private javax.swing.JPanel pnlInvoices;
     protected com.jdimension.jlawyer.client.editors.files.InvolvedPartiesPanel pnlInvolvedParties;
     protected javax.swing.JPanel pnlLinkedCases;
     private javax.swing.JPanel pnlMessages;
-    private javax.swing.JPanel pnlMessagesView;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel pnlMessagesView;
     private javax.swing.JPanel pnlPayments;
     private com.jdimension.jlawyer.client.editors.files.DocumentDetailsPanel pnlDocumentDetails;
     private com.jdimension.jlawyer.client.editors.files.DocumentMessagesPanel pnlDocumentMessages;
@@ -11762,17 +11780,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JSplitPane splitNotes;
     private javax.swing.JTabbedPane subTabsFinance;
     protected javax.swing.JTextArea taCustom3;
-    private javax.swing.JPanel tabAiChats;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel tabAiChats;
     private javax.swing.JPanel tabDocuments;
-    private javax.swing.JPanel tabFinance;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel tabFinance;
     private javax.swing.JPanel tabGeneralData;
     private javax.swing.JPanel tabHistory;
     private javax.swing.JTabbedPane tabPaneArchiveFile;
     private javax.swing.JTabbedPane tabPaneForms;
-    private javax.swing.JPanel tabParties;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel tabParties;
     private javax.swing.JTabbedPane tabPrivileges;
     private javax.swing.JPanel tabReviews;
-    private javax.swing.JPanel tabTimesheets;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel tabTimesheets;
     private javax.swing.JPanel tagPanel;
     private javax.swing.JTable tblAccountEntries;
     private javax.swing.JTable tblGroups;
@@ -12029,7 +12047,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             String fileNumber = fileService.getFileNumber(caseId);
 
-            this.lblHeaderInfo.setText(fileNumber + " " + StringUtils.nonEmpty(this.dto.getName()) + " " + StringUtils.nonEmpty(this.dto.getReason()));
+            this.setHeaderInfo(fileNumber);
             this.txtFileNumber.setText(fileNumber);
 
             // we need to update the search tables because they pass their cached DTOs to the editors
@@ -12067,9 +12085,111 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         return this.backgroundImage;
     }
 
+    /**
+     * Shows file number, name and reason of the case prominently in the header.
+     *
+     * @param fileNumber the file number to show
+     */
+    private void setHeaderInfo(String fileNumber) {
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.setContextTitle(this.lblHeaderInfo, fileNumber,
+                StringUtils.nonEmpty(this.dto.getName()), StringUtils.nonEmpty(this.dto.getReason()));
+    }
+
+    /**
+     * Applies the editor design kit: header and tabs on dark glass, working areas on light cards.
+     */
+    private void applyModernLook() {
+        // file number and name are the most important information of the whole view
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleContextTitle(this.lblPanelTitle, this.lblHeaderInfo);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleHeaderButtons(this.cmdBackToSearch, this.cmdPrint, this.cmdExportHtml,
+                this.cmdToEditMode, this.cmdSave, this.cmdIngoChat, this.cmdTimesheetLog, this.togCaseSync,
+                this.cmdFavoriteDocuments, this.cmdHeaderAddNote, this.cmdSendInstantMessage);
+
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleMainTabs(this.tabPaneArchiveFile);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleInnerTabs(this.tabPrivileges);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleInnerTabs(this.tabsDocumentSide);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleInnerTabs(this.subTabsFinance);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleInnerTabs(this.tabPaneForms);
+
+        // tabs whose content are cards: the background shows between the cards
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.transparent(this.tabGeneralData, this.tabDocuments, this.tabReviews, this.tabHistory);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleSplitPane(this.splitMessages);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleSplitPane(this.splitNotes);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleSplitPane(this.splitDocumentsMain);
+
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleTable(this.tblHistory, this.jScrollPane4);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleTable(this.tblReviewReasons, this.tblReviewReasonsPane);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleTable(this.tblAccountEntries, this.jScrollPane10);
+        this.styleAccountTotals();
+    }
+
+    private static final Color TOTALS_CAPTION_IN = new Color(77, 124, 15);
+    private static final Color TOTALS_CAPTION_OUT = new Color(185, 28, 28);
+    private static final Color TOTALS_SUM_BACKGROUND = new Color(232, 240, 248);
+
+    /**
+     * The totals of the case account as a compact summary table: header row, in / out per category
+     * and a highlighted row of balances; thin separator lines between the cells.
+     */
+    private void styleAccountTotals() {
+        Color line = com.jdimension.jlawyer.client.ui.theme.UiColors.SEPARATOR;
+        Color dark = com.jdimension.jlawyer.client.ui.theme.UiColors.TEXT_DARK;
+        Color navy = com.jdimension.jlawyer.client.ui.theme.UiColors.CARD_TITLE;
+
+        // the 1px gaps of the grids show the panel background as separator lines
+        for (javax.swing.JPanel p : new javax.swing.JPanel[]{this.jPanel17, this.jPanel16, this.jPanel18}) {
+            if (p.getLayout() instanceof java.awt.GridLayout) {
+                ((java.awt.GridLayout) p.getLayout()).setHgap(1);
+                ((java.awt.GridLayout) p.getLayout()).setVgap(1);
+            }
+            p.setOpaque(true);
+            p.setBackground(line);
+        }
+        this.jPanel17.setBorder(javax.swing.BorderFactory.createMatteBorder(1, 1, 1, 1, line));
+        this.jPanel16.setBorder(javax.swing.BorderFactory.createMatteBorder(0, 1, 1, 1, line));
+        this.jPanel18.setBorder(javax.swing.BorderFactory.createMatteBorder(0, 1, 1, 1, line));
+
+        // header: category names
+        for (javax.swing.JLabel l : new javax.swing.JLabel[]{this.jLabel35, this.jLabel36, this.jLabel37}) {
+            styleTotalsCell(l, com.jdimension.jlawyer.client.ui.theme.UiColors.TABLE_HEADER, navy, java.awt.Font.BOLD, 0f, 7);
+        }
+        // captions "ein" / "aus"
+        for (javax.swing.JLabel l : new javax.swing.JLabel[]{this.jLabel23, this.jLabel25, this.jLabel27}) {
+            styleTotalsCell(l, Color.WHITE, TOTALS_CAPTION_IN, java.awt.Font.BOLD, -1f, 4);
+        }
+        for (javax.swing.JLabel l : new javax.swing.JLabel[]{this.jLabel24, this.jLabel26, this.jLabel28}) {
+            styleTotalsCell(l, Color.WHITE, TOTALS_CAPTION_OUT, java.awt.Font.BOLD, -1f, 4);
+        }
+        // amounts
+        for (javax.swing.JLabel l : new javax.swing.JLabel[]{this.lblEarnings, this.lblSpendings, this.lblEscrowIn, this.lblEscrowOut, this.lblExpendituresIn, this.lblExpendituresOut}) {
+            styleTotalsCell(l, Color.WHITE, dark, java.awt.Font.PLAIN, 0f, 5);
+        }
+        // balances
+        for (javax.swing.JLabel l : new javax.swing.JLabel[]{this.lblEarningsTotal, this.lblEscrowTotal, this.lblExpendituresTotal}) {
+            styleTotalsCell(l, TOTALS_SUM_BACKGROUND, navy, java.awt.Font.BOLD, 1f, 8);
+        }
+    }
+
+    private static void styleTotalsCell(javax.swing.JLabel l, Color background, Color foreground, int style, float sizeDelta, int vPad) {
+        l.setOpaque(true);
+        l.setBackground(background);
+        l.setForeground(foreground);
+        java.awt.Font f = l.getFont();
+        l.setFont(f.deriveFont(style, f.getSize2D() + sizeDelta));
+        l.setBorder(javax.swing.BorderFactory.createEmptyBorder(vPad, 8, vPad, 8));
+    }
+
+    /**
+     * Shows a balance of the case account; negative balances are red.
+     */
+    private void showBalance(javax.swing.JLabel label, BigDecimal value) {
+        label.setText(accountEntryFormat.format(value));
+        label.setForeground(value.signum() < 0 ? TOTALS_CAPTION_OUT : com.jdimension.jlawyer.client.ui.theme.UiColors.CARD_TITLE);
+    }
+
     public void checkTimesheetLimits() {
-        // cases without timesheet: black tab caption
-        Color tabForeGround = Color.BLACK;
+        // cases without timesheet: regular (white) tab caption
+        Color tabForeGround = com.jdimension.jlawyer.client.ui.theme.UiColors.TEXT_ON_GLASS;
         for (int i = 0; i < this.pnlTimesheets.getComponentCount(); i++) {
             Component c = this.pnlTimesheets.getComponent(i);
             if (c instanceof TimesheetEntryPanel) {
