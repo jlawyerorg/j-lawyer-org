@@ -723,7 +723,10 @@ public class SearchIndexProcessor implements MessageListener {
                         api.removeFromIndex(req.getId());
                     } else if (req.getAction() == SearchIndexRequest.ACTION_UPDATE) {
                         ArchiveFileDocumentsBean md = this.archiveFileDocumentsFacade.find(req.getId());
-                        api.updateInIndex(req.getId(), req.getFileName(), req.getText(), req.getArchiveFileId(), req.getArchiveFileName(), req.getArchiveFileNumber(), title(md), keywords(md), correspondent(md));
+                        // a document in the bin (e.g. renamed there) or gone in the meantime stays out of the index
+                        if (md != null && !md.isDeleted()) {
+                            api.updateInIndex(req.getId(), req.getFileName(), req.getText(), req.getArchiveFileId(), req.getArchiveFileName(), req.getArchiveFileNumber(), title(md), keywords(md), correspondent(md));
+                        }
                     } else if (req.getAction() == SearchIndexRequest.ACTION_UPDATE_METADATA) {
                         // metadata changed, content did not: reuse the stored text preview instead
                         // of extracting the text again

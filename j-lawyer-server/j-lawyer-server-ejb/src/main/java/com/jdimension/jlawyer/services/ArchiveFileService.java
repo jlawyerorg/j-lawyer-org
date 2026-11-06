@@ -2902,6 +2902,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             localBaseDir = localBaseDir + System.getProperty("file.separator");
         }
 
+        // a document that is still stored under its name gets its file named by its id before the name changes,
+        // otherwise its content can not be found any more
+        String dst = localBaseDir + "archivefiles" + System.getProperty("file.separator") + aFile.getId() + System.getProperty("file.separator");
+        this.migrateDocument(dst, id, db.getName());
+
         String preview = "";
         PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade, null);
         if (pg.previewExists(aFile.getId(), id, db.getName(), DocumentPreview.TYPE_TEXT)) {
