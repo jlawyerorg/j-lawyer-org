@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileFormEntriesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileFormEntriesBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileFormsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileFormsBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
 import com.jdimension.jlawyer.persistence.FormTypeArtefactBean;
 import com.jdimension.jlawyer.persistence.FormTypeArtefactBeanFacadeLocal;
@@ -678,6 +679,7 @@ import com.jdimension.jlawyer.persistence.FormTypeBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.pojo.FormPluginSetting;
 import com.jdimension.jlawyer.pojo.ServerFormPlugin;
+import com.jdimension.jlawyer.server.utils.SecurityUtils;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -692,10 +694,12 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
+import javax.ejb.EJBAccessException;
 import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
 import javax.enterprise.event.Event;
@@ -735,6 +739,10 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
     private FormTypeArtefactBeanFacadeLocal formArtefactsFacade;
     @EJB
     private ArchiveFileServiceLocal archiveFileService;
+    @EJB
+    private SecurityServiceLocal securityFacade;
+    @EJB
+    private ArchiveFileGroupsBeanFacadeLocal caseGroupsFacade;
 
     // custom hooks support
     @Inject
@@ -821,6 +829,7 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
         if (afb == null) {
             throw new Exception("Akte " + caseId + " kann nicht gefunden werden!");
         }
+        this.checkCaseAccess(afb);
 
         if (ServerStringUtils.isEmpty(form.getPlaceHolder())) {
             throw new Exception("Platzhalterpräfix darf nicht leer sein!");
@@ -858,6 +867,11 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
         ArchiveFileBean afb = this.caseFacade.find(caseId);
         ArrayList<ArchiveFileFormsBean> list = new ArrayList<>();
         if (afb != null) {
+            try {
+                this.checkCaseAccess(afb);
+            } catch (Exception ex) {
+                throw new EJBAccessException(ex.getMessage());
+            }
             return this.caseFormsFacade.findByArchiveFileKey(afb);
         }
         return list;
@@ -889,6 +903,7 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
         if (afb == null) {
             throw new Exception("Falldatenblatt " + formId + " ist nicht vorhanden!");
         }
+        this.checkCaseAccess(afb.getArchiveFileKey());
 
         this.caseFormsFacade.remove(afb);
 
@@ -928,6 +943,7 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
         if (afb == null) {
             throw new Exception("Falldatenblatt " + formId + " ist nicht vorhanden!");
         }
+        this.checkCaseAccess(afb.getArchiveFileKey());
 
         List<ArchiveFileFormEntriesBean> existingEntries = this.caseFormEntriesFacade.findByForm(afb);
         boolean entriesChanged = entriesChanged(existingEntries, formEntries);
@@ -1021,7 +1037,14 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
         if (afb == null) {
             throw new Exception("Falldatenblatt " + formId + " ist nicht vorhanden!");
         }
+        this.checkCaseAccess(afb.getArchiveFileKey());
+        return this.getFormEntriesImpl(afb);
+    }
 
+    /**
+     * Returns the entries of a form without any permission check - callers must have checked case access before.
+     */
+    private List<ArchiveFileFormEntriesBean> getFormEntriesImpl(ArchiveFileFormsBean afb) {
         List<ArchiveFileFormEntriesBean> existingEntries = this.caseFormEntriesFacade.findByForm(afb);
         if (existingEntries == null) {
             existingEntries = new ArrayList<>();
@@ -1036,6 +1059,7 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
         if (afb == null) {
             throw new Exception("Falldatenblatt " + formId + " ist nicht vorhanden!");
         }
+        this.checkCaseAccess(afb.getArchiveFileKey());
 
         return afb;
 
@@ -1049,6 +1073,7 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
     @Override
     @RolesAllowed({"loginRole"})
     public Collection<String> getPlaceHoldersForCase(String caseId) throws Exception {
+        this.checkCaseAccess(this.caseFacade.find(caseId));
         return getPlaceHoldersForCaseImpl(caseId);
     }
     
@@ -1061,7 +1086,7 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
         List<ArchiveFileFormsBean> forms = this.caseFormsFacade.findByArchiveFileKey(caseBean);
         ArrayList<String> placeHolders = new ArrayList<>();
         for (ArchiveFileFormsBean f : forms) {
-            List<ArchiveFileFormEntriesBean> entries = this.getFormEntries(f.getId());
+            List<ArchiveFileFormEntriesBean> entries = this.getFormEntriesImpl(f);
             for (ArchiveFileFormEntriesBean e : entries) {
                 String ph = e.getPlaceHolder();
                 if (!(ph.startsWith("{{"))) {
@@ -1086,6 +1111,7 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public HashMap<String, String> getPlaceHolderValuesForCase(String caseId) throws Exception {
+        this.checkCaseAccess(this.caseFacade.find(caseId));
         return this.getPlaceHolderValuesForCaseImpl(caseId);
     }
     
@@ -1098,7 +1124,7 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
         List<ArchiveFileFormsBean> forms = this.caseFormsFacade.findByArchiveFileKey(caseBean);
         HashMap<String, String> placeHolders = new HashMap<>();
         for (ArchiveFileFormsBean f : forms) {
-            List<ArchiveFileFormEntriesBean> entries = this.getFormEntries(f.getId());
+            List<ArchiveFileFormEntriesBean> entries = this.getFormEntriesImpl(f);
             for (ArchiveFileFormEntriesBean e : entries) {
                 String ph = e.getPlaceHolder();
                 if (!(ph.startsWith("{{"))) {
@@ -1236,13 +1262,32 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
     }
 
     @Override
+    @RolesAllowed({"readArchiveFileRole"})
     public List<ArchiveFileFormsBean> getFormsByType(String typeId) throws Exception {
         FormTypeBean formType = this.formTypesFacade.find(typeId);
         if (formType == null) {
             return new ArrayList<>();
         }
-        
-        return this.caseFormsFacade.findByFormType(formType);
+
+        // only return forms of cases the caller is allowed to see
+        Set<String> allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
+        List<ArchiveFileFormsBean> result = new ArrayList<>();
+        for (ArchiveFileFormsBean f : this.caseFormsFacade.findByFormType(formType)) {
+            if (f.getArchiveFileKey() != null && allowedCases.contains(f.getArchiveFileKey().getId())) {
+                result.add(f);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Throws if the caller may not access the given case.
+     */
+    private void checkCaseAccess(ArchiveFileBean caseBean) throws Exception {
+        if (caseBean == null) {
+            return;
+        }
+        SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), caseBean, this.securityFacade, this.caseGroupsFacade.findByCase(caseBean));
     }
 
 }

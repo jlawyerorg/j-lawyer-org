@@ -240,10 +240,11 @@ public class DocumentsBinEndpointV8 implements DocumentsBinEndpointLocalV8 {
 
     /**
      * Sets the recycle-bin retention period (days after which soft-deleted documents are purged
-     * automatically). A value of 0 or less disables automatic purging.
+     * automatically). A value of 0 disables automatic purging, negative values are rejected.
      *
      * @param body the new retention period (field {@code retentionDays})
      * @response 200 Stored
+     * @response 400 Missing body or negative retention period
      */
     @Override
     @PUT
@@ -253,7 +254,7 @@ public class DocumentsBinEndpointV8 implements DocumentsBinEndpointLocalV8 {
     @io.swagger.annotations.ApiOperation(value = "Sets the recycle-bin retention period (days)")
     public Response setRetention(@io.swagger.annotations.ApiParam RestfulDocumentBinV8 body) {
         try {
-            if (body == null) {
+            if (body == null || body.getRetentionDays() < 0) {
                 return Response.status(Response.Status.BAD_REQUEST).build();
             }
             InitialContext ic = new InitialContext();

@@ -730,7 +730,7 @@ public class JavaFxBrowserPanel extends JPanel implements PreviewPanel {
     @Override
     public void showContent(String documentId, byte[] content) {
         this.documentId = documentId;
-        final String html = new String(content, java.nio.charset.StandardCharsets.UTF_8);
+        final String html = com.jdimension.jlawyer.client.utils.HtmlSanitizer.sanitize(new String(content, java.nio.charset.StandardCharsets.UTF_8));
 
         Platform.runLater(() -> {
             if (webEngine != null) {

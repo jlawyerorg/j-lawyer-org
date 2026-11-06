@@ -853,6 +853,9 @@ public class HitPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_cmdEditArchiveFileActionPerformed
 
     private void lblFileNameMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFileNameMouseClicked
+        if (!javax.swing.SwingUtilities.isLeftMouseButton(evt)) {
+            return;
+        }
 
         byte[] content=null;
         try {

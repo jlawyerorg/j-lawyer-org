@@ -770,6 +770,16 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
             }
         }
 
+        if (message.getCaseContext() != null) {
+            // resolve the case from the database - never trust the case object sent by the caller
+            ArchiveFileBean caseContext = message.getCaseContext().getId() == null ? null : this.caseFacade.find(message.getCaseContext().getId());
+            if (caseContext == null) {
+                throw new Exception("Nachricht wurde für eine Akte übermittelt, die Akte kann jedoch nicht gefunden werden!");
+            }
+            this.checkCaseAccess(caseContext);
+            message.setCaseContext(caseContext);
+        }
+
         this.messageFacade.create(message);
         InstantMessage newMessage = this.messageFacade.find(messageId);
 
@@ -843,6 +853,7 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
     public boolean deleteMessage(String messageId) throws Exception {
         InstantMessage m = this.messageFacade.find(messageId);
         if (m != null) {
+            this.checkCaseAccess(m.getCaseContext());
             this.messageFacade.remove(m);
         } else {
             return false;
@@ -1058,7 +1069,7 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
                 messages.add(mention.getMessage());
             }
         }
-        return messages;
+        return this.filterMessagesByCaseAccess(messages);
     }
     
     @Override
@@ -1076,7 +1087,7 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
                 }
             }
         }
-        return messages;
+        return this.filterMessagesByCaseAccess(messages);
     }
 
     @Override
@@ -1114,6 +1125,9 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
         InstantMessageMention m = this.mentionFacade.find(mentionId);
         if (m == null) {
             throw new Exception("Erwähung mit ID '" + mentionId + "' existiert nicht!");
+        }
+        if (m.getMessage() != null) {
+            this.checkCaseAccess(m.getMessage().getCaseContext());
         }
 
         m.setDone(done);
@@ -1156,7 +1170,92 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
     @Override
     @RolesAllowed({"loginRole"})
     public InstantMessage getMessage(String id) throws Exception {
-        return this.messageFacade.find(id);
+        InstantMessage m = this.messageFacade.find(id);
+        if (m != null) {
+            this.checkCaseAccess(m.getCaseContext());
+        }
+        return m;
+    }
+
+    /**
+     * Throws if the caller may not access the given case. Messages without case context are not restricted.
+     */
+    private void checkCaseAccess(ArchiveFileBean caseContext) throws Exception {
+        if (caseContext == null) {
+            return;
+        }
+        SecurityUtils.checkGroupsForCase(
+            context.getCallerPrincipal().getName(),
+            caseContext,
+            this.securityFacade,
+            this.caseGroupsFacade.findByCase(caseContext)
+        );
+    }
+
+    /**
+     * Checks case access for many messages of the caller. The caller's groups are loaded lazily,
+     * only once a message of a protected case is encountered, and results are cached per case.
+     */
+    private class CaseAccessFilter {
+
+        private List<Group> userGroups = null;
+        private final Map<String, Boolean> caseAccessCache = new HashMap<>();
+
+        private List<Group> getUserGroups() {
+            if (this.userGroups == null) {
+                String principalId = context.getCallerPrincipal().getName();
+                try {
+                    this.userGroups = securityFacade.getGroupsForUser(principalId);
+                } catch (Throwable t) {
+                    log.error("Unable to determine groups for user " + principalId, t);
+                    this.userGroups = new ArrayList<>();
+                }
+            }
+            return this.userGroups;
+        }
+
+        private boolean hasAccess(InstantMessage m) {
+            if (m == null) {
+                return false;
+            }
+            ArchiveFileBean caseContext = m.getCaseContext();
+            if (caseContext == null || caseContext.getGroup() == null) {
+                // no case context or unprotected case
+                return true;
+            }
+            return this.caseAccessCache.computeIfAbsent(caseContext.getId(), id -> SecurityUtils.checkGroupsForCase(this.getUserGroups(), caseContext, caseGroupsFacade));
+        }
+    }
+
+    /**
+     * Removes all messages that belong to a case the caller may not access.
+     */
+    private List<InstantMessage> filterMessagesByCaseAccess(List<InstantMessage> messages) {
+        CaseAccessFilter filter = new CaseAccessFilter();
+        ArrayList<InstantMessage> result = new ArrayList<>();
+        for (InstantMessage m : messages) {
+            if (filter.hasAccess(m)) {
+                result.add(m);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Removes all mentions whose message belongs to a case the caller may not access.
+     */
+    private List<InstantMessageMention> filterMentionsByCaseAccess(List<InstantMessageMention> mentions) {
+        if (mentions == null) {
+            return null;
+        }
+        CaseAccessFilter filter = new CaseAccessFilter();
+        ArrayList<InstantMessageMention> result = new ArrayList<>();
+        for (InstantMessageMention mention : mentions) {
+            if (filter.hasAccess(mention.getMessage())) {
+                result.add(mention);
+            }
+        }
+        return result;
     }
 
     @Override
@@ -1193,7 +1292,7 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
             } else {
                 this.singleton.setLatestInstantMessageStatusUpdated(since.getTime());
             }
-            return mentions;
+            return this.filterMentionsByCaseAccess(mentions);
         } else if (since.getTime() < this.singleton.getLatestInstantMessageStatusUpdated()) {
             // new message have been received
             List<InstantMessageMention> mentions = this.mentionFacade.findSince(since);
@@ -1202,7 +1301,7 @@ public class MessagingService implements MessagingServiceRemote, MessagingServic
             } else {
                 this.singleton.setLatestInstantMessageStatusUpdated(since.getTime());
             }
-            return mentions;
+            return this.filterMentionsByCaseAccess(mentions);
         } else {
             return null;
         }

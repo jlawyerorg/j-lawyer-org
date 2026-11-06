@@ -675,6 +675,7 @@ import com.jdimension.jlawyer.client.plugins.calculation.CalculationPluginUtil;
 import com.jdimension.jlawyer.client.plugins.form.FormPluginUtil;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
+import com.jdimension.jlawyer.client.settings.ThemeBackgrounds;
 import com.jdimension.jlawyer.client.settings.ThemeSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
@@ -1046,7 +1047,8 @@ public class SplashThread implements Runnable {
                     openBackupConfigurationDialog();
                 }
             }
-            if ("1".equals(serverSettings1.getSetting(ServerSettings.SERVERCONF_REPLICATION_ISTARGET, "0"))) {
+            // only system administrators may switch off the replication target mode
+            if ("1".equals(serverSettings1.getSetting(ServerSettings.SERVERCONF_REPLICATION_ISTARGET, "0")) && UserUtils.isCurrentUserSysAdmin()) {
                 StringBuilder dialogContent = new StringBuilder();
                 dialogContent.append("<html>");
                 dialogContent.append("<b>Diese Installation empf&auml;ngt momentan Daten einer anderen j-lawyer.BOX (Replikation).</b><br/>");
@@ -1133,11 +1135,17 @@ public class SplashThread implements Runnable {
         if (module.getBackgroundImage() != null) {
 
             try {
-
-                ImageIcon image = new ImageIcon(getClass().getResource("/themes/" + themeName + "/backgrounds/" + module.getBackgroundImage()));
-                theme.addBackground(module, image.getImage());
-            } catch (Exception ex) {
-                log.error(ex);
+                // generated background matching the dark module sidebar
+                theme.addBackground(module, ThemeBackgrounds.get(module.getBackgroundImage()));
+            } catch (Throwable t) {
+                log.error("Could not generate background " + module.getBackgroundImage() + ", using the fallback image instead", t);
+                try {
+                    // one dark fallback image for all modules
+                    ImageIcon image = new ImageIcon(getClass().getResource("/themes/" + themeName + "/backgrounds/messaging.jpg"));
+                    theme.addBackground(module, image.getImage());
+                } catch (Exception ex) {
+                    log.error(ex);
+                }
             }
         }
         if (module.getRandomBackgroundImage() != null) {

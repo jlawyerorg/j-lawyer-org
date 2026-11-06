@@ -696,6 +696,9 @@ public class SipUtils extends StatusLevels {
         phone=phone.replaceAll("\\]", "");
         phone=phone.replaceAll("\\(", "");
         phone=phone.replaceAll("\\)", "");
+        if(phone.isEmpty()) {
+            return phone;
+        }
 
         if(phone.startsWith("+1")) {
             phone=normCountry(phone, "+1", "1");
@@ -707,7 +710,8 @@ public class SipUtils extends StatusLevels {
         } else if (phone.startsWith("+34")) {
             phone=normCountry(phone, "+34", "34");
         } else if (phone.startsWith("+39")) {
-            phone=normCountry(phone, "+39", "39");
+            // Italy: the leading 0 of landline numbers is part of the number
+            phone="39" + phone.substring(3);
         } else if (phone.startsWith("+49")) {
             phone=normCountry(phone, "+49", "49");
         } else if (phone.startsWith("+41")) {
@@ -735,7 +739,7 @@ public class SipUtils extends StatusLevels {
         } else if (phone.startsWith("0034")) {
             phone=normCountry(phone, "0034", "34");
         } else if (phone.startsWith("0039")) {
-            phone=normCountry(phone, "0039", "39");
+            phone="39" + phone.substring(4);
         } else if (phone.startsWith("0049")) {
             phone=normCountry(phone, "0049", "49");
         } else if (phone.startsWith("0041")) {
@@ -755,6 +759,11 @@ public class SipUtils extends StatusLevels {
             
             
             
+        } else if (phone.startsWith("+")) {
+            // other country - keep its country code
+            phone=phone.substring(1);
+        } else if (phone.startsWith("00")) {
+            phone=phone.substring(2);
         } else if(phone.charAt(0)=='0') {
             // no country prefix - assume it's Germany
             phone="49" + phone.substring(1);

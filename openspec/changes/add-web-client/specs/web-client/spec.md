@@ -199,6 +199,22 @@ SHALL denselben Nutzer-/Rollen-Store wie die bestehende Authentifizierung verwen
 - **WHEN** eine Web-UI-Anfrage mit gültigem Token einen Endpunkt aufruft, der Business-EJBs verwendet
 - **THEN** entspricht die vom Server etablierte Aufrufer-Identität (`getCallerPrincipal()`) dem angemeldeten Nutzer und seinen Rollen, sodass EJB-seitige Autorisierung (Akten-/Gruppen-Sichtbarkeit) und Audit-Felder korrekt greifen — identisch zum Basic-authentifizierten Zugriff
 
+#### Scenario: Anmeldung nur mit Anmeldeberechtigung
+- **WHEN** sich ein Nutzer ohne `loginRole` mit korrektem Passwort in der Web-UI anmeldet
+- **THEN** lehnt der Server die Anmeldung mit derselben Antwort wie bei falschen Zugangsdaten ab und stellt keine Tokens aus
+
+#### Scenario: Rechteentzug wirkt beim Token-Refresh
+- **WHEN** einem angemeldeten Nutzer die `loginRole` entzogen oder sein Konto gelöscht wird und die Web-UI danach mit dem Refresh-Cookie ein neues Token anfordert
+- **THEN** lehnt der Server den Refresh ab, löscht das Refresh-Cookie und stellt keine neuen Tokens aus
+
+#### Scenario: Token-Refresh übernimmt aktuelle Rollen
+- **WHEN** sich die Rollen eines angemeldeten Nutzers ändern und die Web-UI ein neues Token anfordert
+- **THEN** enthält das neue Token die aktuellen Rollen aus dem Nutzer-/Rollen-Store und nicht die Rollen aus dem bisherigen Refresh-Token
+
+#### Scenario: Absolute Höchstdauer einer Sitzung
+- **WHEN** seit der interaktiven Anmeldung mehr als die maximale Sitzungsdauer (12 Stunden) vergangen ist
+- **THEN** lehnt der Server jeden weiteren Refresh ab, auch wenn zwischenzeitlich regelmäßig erneuert wurde, und der Nutzer muss sich neu anmelden
+
 ### Requirement: Funktionsparität mit dem Desktop-Client als Zielbild
 Das System SHALL schrittweise Funktionsparität mit dem Swing-Client anstreben und die
 Kernmodule abdecken: Fälle, Dokumente, Kontakte, Kalender/Fristen, Finanzen/Rechnungen,

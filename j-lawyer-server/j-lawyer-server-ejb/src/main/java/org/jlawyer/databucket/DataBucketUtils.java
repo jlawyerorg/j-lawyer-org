@@ -667,49 +667,154 @@ import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.pojo.DataBucket;
 import java.io.File;
 import java.io.RandomAccessFile;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 import org.apache.log4j.Logger;
 
 /**
+ * Temporary files that are transferred to clients in chunks ("buckets"). A bucket belongs to the
+ * user that created it; only that user can load its chunks.
  *
  * @author jens
  */
 public class DataBucketUtils {
-    
-    private static final Logger log=Logger.getLogger(DataBucketUtils.class.getName());
 
-    public static DataBucket newBucket(String fileName, long totalSize) {
-        removeStaleBuckets();
-        String id = new StringGenerator().getID().toString();
-        return new DataBucket(id, fileName, totalSize);
+    private static final Logger log = Logger.getLogger(DataBucketUtils.class.getName());
+
+    // buckets older than this are removed
+    private static final long MAX_AGE_MILLIS = 4L * 60L * 60L * 1000L;
+
+    // maximum size of a chunk, same as the default capacity of DataBucket
+    private static final int CAPACITY = 1024 * 1024;
+
+    // IDs created by StringGenerator: hex characters only
+    private static final Pattern BUCKET_ID = Pattern.compile("[0-9a-fA-F]{16,64}");
+
+    // bucket ID -> owner
+    private static final Map<String, BucketOwner> OWNERS = new ConcurrentHashMap<>();
+
+    private static final class BucketOwner {
+
+        private final String principalId;
+        private final long created;
+
+        private BucketOwner(String principalId) {
+            this.principalId = principalId;
+            this.created = System.currentTimeMillis();
+        }
     }
 
-    public static DataBucket newBucket(String fileName) {
+    private DataBucketUtils() {
+    }
+
+    /**
+     * Creates a new bucket owned by the given user.
+     *
+     * @param fileName name of the file for display / saving on the client
+     * @param principalId the user that may load the chunks of this bucket
+     * @return the new bucket
+     */
+    public static DataBucket newBucket(String fileName, String principalId) {
         removeStaleBuckets();
         String id = new StringGenerator().getID().toString();
+        OWNERS.put(id, new BucketOwner(principalId));
         return new DataBucket(id, fileName);
     }
 
-    public static void fillBucket(DataBucket bucket) throws Exception {
-        try (RandomAccessFile randomAccessFile = new RandomAccessFile(getLocalFile(bucket), "r")) {
-            byte[] payload = new byte[bucket.getSize()];
-            randomAccessFile.seek(bucket.getBeginOffset());
-            int bytesRead = randomAccessFile.read(payload, 0, bucket.getSize());
-            bucket.setPayload(payload);
+    /**
+     * Loads the chunk following the given one. Only the size and position of the given chunk are
+     * taken from the client; the total size is the size of the bucket file. The bucket file is
+     * removed after its last chunk has been loaded.
+     *
+     * @param current the chunk the client has loaded last
+     * @param principalId the calling user
+     * @return the next chunk, or null if there is none
+     * @throws Exception if the bucket does not exist or belongs to another user
+     */
+    public static DataBucket nextBucket(DataBucket current, String principalId) throws Exception {
+        if (current == null) {
+            throw new Exception("Ungültiger Datenblock");
+        }
+        File f = getBucketFile(current.getId());
+        BucketOwner owner = OWNERS.get(current.getId());
+        if (owner == null || principalId == null || !principalId.equals(owner.principalId)) {
+            log.warn("user " + principalId + " requested data bucket " + current.getId() + " that does not belong to them");
+            throw new Exception("Datenblock existiert nicht");
+        }
+        if (!f.isFile()) {
+            throw new Exception("Datenblock existiert nicht");
         }
 
+        long totalSize = f.length();
+        if (current.getBeginOffset() < 0 || current.getSize() < 0) {
+            throw new Exception("Ungültiger Datenblock");
+        }
+        long offset = current.getBeginOffset() + current.getSize();
+        if (offset > totalSize) {
+            throw new Exception("Ungültiger Datenblock");
+        }
+        if (offset == totalSize) {
+            return null;
+        }
+
+        int size = (int) Math.min((long) CAPACITY, totalSize - offset);
+        DataBucket next = new DataBucket(current.getId(), current.getFileName(), totalSize, offset, size);
+        fillBucket(next);
+        if (next.isLast()) {
+            removeLocalFile(next);
+        }
+        return next;
     }
 
-    public static String getLocalFile(DataBucket bucket) {
-        String tmpDir = System.getProperty("java.io.tmpdir") + System.getProperty("file.separator") + "databucket" + System.getProperty("file.separator");
-        new File(tmpDir).mkdirs();
-        return tmpDir + bucket.getId();
+    /**
+     * Reads the payload of a bucket from its file.
+     *
+     * @param bucket the bucket, with position and size set
+     * @throws Exception if the file can not be read or position / size are out of range
+     */
+    public static void fillBucket(DataBucket bucket) throws Exception {
+        File f = getBucketFile(bucket.getId());
+        if (bucket.getBeginOffset() < 0 || bucket.getSize() < 0 || bucket.getSize() > CAPACITY
+                || bucket.getBeginOffset() + bucket.getSize() > f.length()) {
+            throw new Exception("Ungültiger Datenblock");
+        }
+        try (RandomAccessFile randomAccessFile = new RandomAccessFile(f, "r")) {
+            byte[] payload = new byte[bucket.getSize()];
+            randomAccessFile.seek(bucket.getBeginOffset());
+            randomAccessFile.readFully(payload, 0, bucket.getSize());
+            bucket.setPayload(payload);
+        }
     }
-    
+
+    /**
+     * @param bucket a bucket
+     * @return the path of the file that holds the data of the bucket
+     */
+    public static String getLocalFile(DataBucket bucket) {
+        return getBucketFile(bucket.getId()).getPath();
+    }
+
+    private static File getBucketDir() {
+        File dir = new File(System.getProperty("java.io.tmpdir"), "databucket");
+        dir.mkdirs();
+        return dir;
+    }
+
+    private static File getBucketFile(String id) {
+        if (id == null || !BUCKET_ID.matcher(id).matches()) {
+            log.warn("rejected invalid data bucket id: " + id);
+            throw new IllegalArgumentException("Ungültige ID eines Datenblocks");
+        }
+        return new File(getBucketDir(), id);
+    }
+
     public static void removeLocalFile(DataBucket bucket) {
-        File f=new File(getLocalFile(bucket));
-        if(f.exists())  {
+        OWNERS.remove(bucket.getId());
+        File f = getBucketFile(bucket.getId());
+        if (f.exists()) {
             try {
-                if(!f.delete()) {
+                if (!f.delete()) {
                     log.error("Could not delete local data bucket " + bucket.getId());
                 }
             } catch (Exception ex) {
@@ -717,22 +822,24 @@ public class DataBucketUtils {
             }
         }
     }
-    
+
     private static void removeStaleBuckets() {
-        File bucketDir=new File(System.getProperty("java.io.tmpdir") + System.getProperty("file.separator") + "databucket");
-        if(bucketDir.exists()) {
-            for(File f: bucketDir.listFiles()) {
-                if(!f.isDirectory()) {
-                    // delete buckets older than 4hrs
-                    if((System.currentTimeMillis()-f.lastModified())>4L*60L*60L*1000L) {
-                        try {
-                            if(!f.delete()) {
-                                log.error("Could not delete local data bucket " + f.getName());
-                            }
-                        } catch (Exception ex) {
-                            log.error("Could not delete local data bucket " + f.getName());
-                        }
+        long now = System.currentTimeMillis();
+        OWNERS.entrySet().removeIf(e -> now - e.getValue().created > MAX_AGE_MILLIS);
+
+        File bucketDir = new File(System.getProperty("java.io.tmpdir"), "databucket");
+        File[] files = bucketDir.listFiles();
+        if (files == null) {
+            return;
+        }
+        for (File f : files) {
+            if (!f.isDirectory() && (now - f.lastModified()) > MAX_AGE_MILLIS) {
+                try {
+                    if (!f.delete()) {
+                        log.error("Could not delete local data bucket " + f.getName());
                     }
+                } catch (Exception ex) {
+                    log.error("Could not delete local data bucket " + f.getName());
                 }
             }
         }

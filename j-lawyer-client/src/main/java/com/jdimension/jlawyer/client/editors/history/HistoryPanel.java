@@ -663,20 +663,70 @@
  */
 package com.jdimension.jlawyer.client.editors.history;
 
+import com.formdev.flatlaf.FlatClientProperties;
+import com.jdimension.jlawyer.client.components.AutoWrapLayout;
+import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
+import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
+import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
+import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
+import com.jdimension.jlawyer.client.editors.files.ViewArchiveFileDetailsPanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.DesktopUtils;
+import com.jdimension.jlawyer.client.utils.TableUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.awt.Dimension;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.ImageIcon;
+import javax.swing.JList;
+import javax.swing.JOptionPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.JToggleButton;
+import javax.swing.ListSelectionModel;
+import javax.swing.UIManager;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
+import javax.swing.text.DefaultHighlighter;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
+ * Cross-case history report ("Aktenhistorie"): filter bar with category chips, key figures and
+ * an activity chart, a timeline table grouped by day and a detail card for the selected entry.
  *
  * @author jens
  */
@@ -684,69 +734,692 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
 
     private static final Logger log = Logger.getLogger(HistoryPanel.class.getName());
 
+    private static final String CONF_PRESET = "client.reporting.history.preset";
+    private static final String CONF_USER = "client.reporting.history.user";
+    private static final String CONF_LIMIT = "client.reporting.history.limit";
+
+    // indexes of the entries of cmbRange, see the .form file
+    private static final int RANGE_TODAY = 0;
+    private static final int RANGE_YESTERDAY = 1;
+    private static final int RANGE_LAST7DAYS = 2;
+    private static final int RANGE_LAST30DAYS = 3;
+    private static final int RANGE_THISMONTH = 4;
+    private static final int RANGE_LASTMONTH = 5;
+    private static final int RANGE_THISYEAR = 6;
+    private static final int RANGE_CUSTOM = 7;
+
+    private static final String USER_ME = "Ich";
+    private static final String USER_ALL = "Alle Nutzer";
+
+    private static final Color HIGHLIGHT_COLOR = new Color(0xffe08a);
+    private static final int KPI_TEXT_WIDTH = 240;
+
     private Image backgroundImage = null;
 
-    private String principalId = null;
+    private final HistorySearchTableModel tableModel = new HistorySearchTableModel();
+    private final HistoryTimelineRenderer renderer = new HistoryTimelineRenderer();
+    private final Map<String, String> displayNames = new HashMap<>();
+    private Color accentColor = DefaultColorTheme.COLOR_LOGO_BLUE;
 
-    private Date intervalMin = null;
-    private Date intervalMax = null;
+    // set while filter components are changed programmatically, so that their listeners do not react
+    private boolean adjusting = false;
 
-    private Date lowerDate = null;
-    private Date upperDate = null;
+    // incremented for every search; results of older searches are discarded
+    private long searchSequence = 0;
+    private HistorySearchWorker currentWorker = null;
 
-    private int lowerValue = -1;
-    private int upperValue = -1;
+    // filter values of the search whose result is displayed
+    private Date shownFrom = null;
+    private Date shownTo = null;
+    private String shownCaseTerm = null;
+    private String shownTextTerm = null;
+    private boolean shownTruncated = false;
 
-    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+    private final List<JToggleButton> categoryChips = new ArrayList<>();
+    private JToggleButton chipAll = null;
+    private String topCaseId = null;
 
     /**
      * Creates new form HistoryPanel
      */
     public HistoryPanel() {
-
+        this.adjusting = true;
         initComponents();
-        this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
 
-        if (this.chkOnlyMine.isSelected()) {
-            this.principalId = UserSettings.getInstance().getCurrentUser().getPrincipalId();
-        } else {
-            this.principalId = null;
+        Color accent = UIManager.getColor("Component.accentColor");
+        if (accent != null) {
+            this.accentColor = accent;
         }
 
+        AutoWrapLayout filterLayout = new AutoWrapLayout(FlowLayout.LEFT);
+        filterLayout.setHgap(6);
+        this.pnlFilter.setLayout(filterLayout);
+        AutoWrapLayout chipLayout = new AutoWrapLayout(FlowLayout.LEFT);
+        chipLayout.setHgap(6);
+        chipLayout.setVgap(2);
+        this.pnlCategories.setLayout(chipLayout);
+
+        this.dtFrom.setDateFormatString("dd.MM.yyyy");
+        this.dtTo.setDateFormatString("dd.MM.yyyy");
+
+        this.initFilterStyles();
+        this.initUserCombo();
+        this.initTable();
+
+        this.activityChart.setBarColor(this.accentColor);
+        this.activityChart.setBinClickListener(this::scrollToRange);
+
+        ClientSettings settings = ClientSettings.getInstance();
+        int preset = RANGE_LAST7DAYS;
         try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            preset = Integer.parseInt(settings.getConfiguration(CONF_PRESET, "" + RANGE_LAST7DAYS));
+        } catch (NumberFormatException nfe) {
+            // keep default
+        }
+        if (preset < 0 || preset >= RANGE_CUSTOM) {
+            // a custom range is not restored, its dates would be outdated
+            preset = RANGE_LAST7DAYS;
+        }
+        this.cmbRange.setSelectedIndex(preset);
+        this.applyPreset(preset);
 
-            ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-            Date[] date = fileService.getHistoryInterval(this.principalId);
+        String user = settings.getConfiguration(CONF_USER, USER_ME);
+        if (ComponentUtils.containsItem(this.cmbUser, user)) {
+            this.cmbUser.setSelectedItem(user);
+        } else {
+            this.cmbUser.setSelectedItem(USER_ME);
+        }
 
-            if (date[0] != null) {
-                this.lblMinDate.setText(df.format(date[0]));
-                this.intervalMin = date[0];
+        String limit = settings.getConfiguration(CONF_LIMIT, "1000");
+        if (ComponentUtils.containsItem(this.cmbMax, limit)) {
+            this.cmbMax.setSelectedItem(limit);
+        }
+
+        this.adjusting = false;
+        this.updateDetail();
+        this.updateKpis();
+        this.updateActionStates();
+        this.search();
+    }
+
+    private void initFilterStyles() {
+        ImageIcon lens = new ImageIcon(getClass().getResource("/icons/find.png"));
+        this.initSearchField(this.txtCase, "Aktenzeichen oder Rubrum", lens);
+        this.initSearchField(this.txtText, "Suchbegriff", lens);
+
+        String accentHex = HistoryTimelineRenderer.toHex(this.accentColor);
+        this.cmdSearch.putClientProperty(FlatClientProperties.STYLE, "arc: 999; borderWidth: 0; focusWidth: 0; background: " + accentHex + "; foreground: #ffffff; hoverBackground: " + HistoryTimelineRenderer.toHex(this.accentColor.brighter()));
+    }
+
+    private void initSearchField(JTextField field, String placeholder, ImageIcon icon) {
+        field.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, placeholder);
+        field.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
+        field.putClientProperty(FlatClientProperties.TEXT_FIELD_LEADING_ICON, icon);
+        field.putClientProperty(FlatClientProperties.TEXT_FIELD_CLEAR_CALLBACK, (Runnable) () -> {
+            field.setText("");
+            this.search();
+        });
+    }
+
+    private void initUserCombo() {
+        DefaultComboBoxModel<Object> model = new DefaultComboBoxModel<>();
+        model.addElement(USER_ME);
+        model.addElement(USER_ALL);
+        List<String> principals = new ArrayList<>();
+        for (AppUserBean u : UserSettings.getInstance().getLoginEnabledUsers()) {
+            principals.add(u.getPrincipalId());
+            if (u.getDisplayName() != null && !u.getDisplayName().trim().isEmpty()) {
+                this.displayNames.put(u.getPrincipalId(), u.getDisplayName());
             }
-            if (date[1] != null) {
-                Date now = new Date();
-                this.lblMaxDate.setText(df.format(now));
-                this.intervalMax = now;
-            }
+        }
+        Collections.sort(principals, String.CASE_INSENSITIVE_ORDER);
+        for (String p : principals) {
+            model.addElement(p);
+        }
+        this.cmbUser.setModel(model);
 
+        final UserListCellRenderer userRenderer = new UserListCellRenderer();
+        final DefaultListCellRenderer plainRenderer = new DefaultListCellRenderer();
+        this.cmbUser.setRenderer((JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) -> {
+            if (USER_ME.equals(value) || USER_ALL.equals(value)) {
+                return plainRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            }
+            return userRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        });
+    }
+
+    private void initTable() {
+        this.renderer.setDisplayNames(this.displayNames);
+        this.tblHistory.setAccentColor(this.accentColor);
+        this.tblHistory.setModel(this.tableModel);
+        this.tblHistory.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        this.tblHistory.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
+        this.tblHistory.setDefaultRenderer(HistorySearchTableModel.HistoryRow.class, this.renderer);
+
+        TableColumnModel cm = this.tblHistory.getColumnModel();
+        TableColumn catCol = cm.getColumn(HistorySearchTableModel.COL_CATEGORY);
+        catCol.setMinWidth(44);
+        catCol.setMaxWidth(44);
+        catCol.setPreferredWidth(44);
+        cm.getColumn(HistorySearchTableModel.COL_TIME).setPreferredWidth(95);
+        cm.getColumn(HistorySearchTableModel.COL_CASE).setPreferredWidth(240);
+        cm.getColumn(HistorySearchTableModel.COL_CHANGE).setPreferredWidth(560);
+        cm.getColumn(HistorySearchTableModel.COL_USER).setPreferredWidth(170);
+        for (int i = 0; i < cm.getColumnCount(); i++) {
+            cm.getColumn(i).setCellRenderer(this.renderer);
+        }
+
+        this.tblHistory.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                this.updateDetail();
+                this.updateActionStates();
+            }
+        });
+    }
+
+    /**
+     * Sets the date fields according to a preset of cmbRange.
+     */
+    private void applyPreset(int preset) {
+        if (preset == RANGE_CUSTOM) {
+            return;
+        }
+        Calendar from = Calendar.getInstance();
+        Calendar to = Calendar.getInstance();
+        switch (preset) {
+            case RANGE_TODAY:
+                break;
+            case RANGE_YESTERDAY:
+                from.add(Calendar.DAY_OF_YEAR, -1);
+                to.add(Calendar.DAY_OF_YEAR, -1);
+                break;
+            case RANGE_LAST7DAYS:
+                from.add(Calendar.DAY_OF_YEAR, -6);
+                break;
+            case RANGE_LAST30DAYS:
+                from.add(Calendar.DAY_OF_YEAR, -29);
+                break;
+            case RANGE_THISMONTH:
+                from.set(Calendar.DAY_OF_MONTH, 1);
+                break;
+            case RANGE_LASTMONTH:
+                from.add(Calendar.MONTH, -1);
+                from.set(Calendar.DAY_OF_MONTH, 1);
+                to.setTime(from.getTime());
+                to.set(Calendar.DAY_OF_MONTH, to.getActualMaximum(Calendar.DAY_OF_MONTH));
+                break;
+            case RANGE_THISYEAR:
+                from.set(Calendar.DAY_OF_YEAR, 1);
+                break;
+            default:
+                break;
+        }
+        boolean wasAdjusting = this.adjusting;
+        this.adjusting = true;
+        this.dtFrom.setDate(startOfDay(from.getTime()));
+        this.dtTo.setDate(startOfDay(to.getTime()));
+        this.adjusting = wasAdjusting;
+    }
+
+    private static Date startOfDay(Date d) {
+        if (d == null) {
+            return null;
+        }
+        Calendar c = Calendar.getInstance();
+        c.setTime(d);
+        c.set(Calendar.HOUR_OF_DAY, 0);
+        c.set(Calendar.MINUTE, 0);
+        c.set(Calendar.SECOND, 0);
+        c.set(Calendar.MILLISECOND, 0);
+        return c.getTime();
+    }
+
+    private static Date endOfDay(Date d) {
+        if (d == null) {
+            return null;
+        }
+        Calendar c = Calendar.getInstance();
+        c.setTime(d);
+        c.set(Calendar.HOUR_OF_DAY, 23);
+        c.set(Calendar.MINUTE, 59);
+        c.set(Calendar.SECOND, 59);
+        c.set(Calendar.MILLISECOND, 999);
+        return c.getTime();
+    }
+
+    private List<String> getSelectedPrincipals() {
+        Object sel = this.cmbUser.getSelectedItem();
+        if (sel == null || USER_ALL.equals(sel)) {
+            return null;
+        }
+        List<String> result = new ArrayList<>();
+        if (USER_ME.equals(sel)) {
+            result.add(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+        } else {
+            result.add(sel.toString());
+        }
+        return result;
+    }
+
+    private int getSelectedLimit() {
+        try {
+            return Integer.parseInt(this.cmbMax.getSelectedItem().toString());
         } catch (Exception ex) {
-            log.error("Error connecting to server", ex);
-            ThreadUtils.showErrorDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+            return 1000;
+        }
+    }
+
+    /**
+     * Starts a search with the current filter values. A search that is still running is superseded.
+     */
+    private void search() {
+        if (this.adjusting) {
+            return;
+        }
+        Date from = startOfDay(this.dtFrom.getDate());
+        Date to = endOfDay(this.dtTo.getDate());
+        if (from != null && to != null && from.after(to)) {
+            this.lblStatus.setFont(this.lblStatus.getFont().deriveFont(Font.BOLD));
+            this.lblStatus.setText("Das Von-Datum liegt nach dem Bis-Datum.");
             return;
         }
 
-        long intervalDiff = this.intervalMax.getTime() - this.intervalMin.getTime();
-        float percentage = (4f * 7f * 24f * 60f * 60f * 1000f) / (float) intervalDiff;
+        if (this.currentWorker != null) {
+            this.currentWorker.cancel(false);
+        }
+        this.searchSequence++;
+        this.lblStatus.setFont(this.lblStatus.getFont().deriveFont(Font.PLAIN));
+        this.lblStatus.setText("Suche läuft...");
+        this.cmdSearch.setEnabled(false);
+        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
-        this.historyIntervalSlider.setUpperValue(this.historyIntervalSlider.getMaximum());
-        this.historyIntervalSlider.setValue(this.historyIntervalSlider.getMaximum() - Math.max((int) (percentage * 100), 1));
+        String caseQuery = this.txtCase.getText();
+        String textQuery = this.txtText.getText();
+        this.currentWorker = new HistorySearchWorker(this, this.searchSequence, from, to, this.getSelectedPrincipals(), caseQuery, textQuery, this.getSelectedLimit());
+        this.currentWorker.execute();
+    }
+
+    /**
+     * Called on the EDT when a search has finished.
+     *
+     * @param sequence the sequence number of the search
+     * @param result the entries, at most the selected limit
+     * @param truncated true if more entries match than the limit
+     */
+    void searchFinished(long sequence, List<ArchiveFileHistoryBean> result, boolean truncated) {
+        if (sequence != this.searchSequence) {
+            return;
+        }
+        HistorySearchWorker w = this.currentWorker;
+        this.searchDone();
+        if (w != null) {
+            this.shownFrom = w.getFromDate();
+            this.shownTo = w.getToDate();
+            this.shownCaseTerm = w.getCaseQuery();
+            this.shownTextTerm = w.getTextQuery();
+        }
+        this.shownTruncated = truncated;
+        this.renderer.setSearchTerms(this.shownCaseTerm, this.shownTextTerm);
+
+        this.tableModel.setActiveCategories(null);
+        this.tableModel.setEntries(result);
+        this.buildCategoryChips();
+        this.refreshAfterFilter();
+    }
+
+    /**
+     * Called on the EDT when a search has failed.
+     */
+    void searchFailed(long sequence, Throwable t) {
+        if (sequence != this.searchSequence) {
+            return;
+        }
+        this.searchDone();
+        this.lblStatus.setFont(this.lblStatus.getFont().deriveFont(Font.PLAIN));
+        this.lblStatus.setText("Fehler bei der Suche.");
+        ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Historie: " + t.getMessage(), DesktopUtils.POPUP_TITLE_ERROR);
+    }
+
+    private void searchDone() {
+        this.currentWorker = null;
+        this.cmdSearch.setEnabled(true);
+        this.setCursor(Cursor.getDefaultCursor());
+    }
+
+    /**
+     * Updates everything that depends on the visible entries: detail, key figures, chart, status.
+     */
+    private void refreshAfterFilter() {
+        this.updateDetail();
+        this.updateKpis();
+        List<Date> dates = new ArrayList<>();
+        for (HistorySearchTableModel.Entry e : this.tableModel.getVisibleEntries()) {
+            dates.add(e.getHistory().getChangeDate());
+        }
+        this.activityChart.setData(dates, this.shownFrom, this.shownTo);
+        this.updateStatus();
+        this.updateActionStates();
+    }
+
+    private void updateStatus() {
+        int visible = this.tableModel.getVisibleEntries().size();
+        int loaded = this.tableModel.getLoadedCount();
+        StringBuilder sb = new StringBuilder();
+        if (loaded == 0) {
+            sb.append("Keine Historieneinträge für die gewählten Filter.");
+        } else if (visible != loaded) {
+            sb.append(visible).append(" von ").append(loaded).append(" Einträgen (Kategoriefilter)");
+        } else {
+            sb.append(loaded == 1 ? "1 Eintrag" : loaded + " Einträge");
+        }
+        if (this.shownTruncated) {
+            sb.append(" - Limit erreicht, ältere Einträge werden nicht angezeigt. Bitte Zeitraum oder Filter eingrenzen.");
+        }
+        this.lblStatus.setFont(this.lblStatus.getFont().deriveFont(this.shownTruncated ? Font.BOLD : Font.PLAIN));
+        this.lblStatus.setText(sb.toString());
+    }
+
+    private void buildCategoryChips() {
+        this.pnlCategories.removeAll();
+        this.categoryChips.clear();
+
+        Map<HistoryCategory, Integer> counts = this.tableModel.getCategoryCounts();
+        if (!counts.isEmpty()) {
+            this.chipAll = this.createChip("Alle  " + this.tableModel.getLoadedCount(), null, this.accentColor);
+            this.chipAll.setSelected(true);
+            this.chipAll.addActionListener(e -> {
+                for (JToggleButton b : this.categoryChips) {
+                    b.setSelected(false);
+                }
+                this.chipAll.setSelected(true);
+                this.applyCategoryFilter();
+            });
+            this.pnlCategories.add(this.chipAll);
+
+            for (HistoryCategory cat : HistoryCategory.values()) {
+                Integer count = counts.get(cat);
+                if (count == null || count == 0) {
+                    continue;
+                }
+                JToggleButton chip = this.createChip(cat.getLabel() + "  " + count, cat, cat.getColor());
+                chip.putClientProperty("jlawyer.historyCategory", cat);
+                chip.addActionListener(e -> {
+                    boolean any = false;
+                    for (JToggleButton b : this.categoryChips) {
+                        any = any || b.isSelected();
+                    }
+                    this.chipAll.setSelected(!any);
+                    this.applyCategoryFilter();
+                });
+                this.categoryChips.add(chip);
+                this.pnlCategories.add(chip);
+            }
+        } else {
+            this.chipAll = null;
+        }
+        this.pnlCategories.revalidate();
+        this.pnlCategories.repaint();
+    }
+
+    private JToggleButton createChip(String text, HistoryCategory category, Color selectedColor) {
+        JToggleButton chip = new JToggleButton(text);
+        if (category != null) {
+            chip.setIcon(CategoryBadgeIcon.get(category, 14));
+            chip.setIconTextGap(6);
+        }
+        chip.setFocusable(false);
+        chip.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        chip.putClientProperty(FlatClientProperties.STYLE, "arc: 999; borderWidth: 0; focusWidth: 0; margin: 2,10,2,10;"
+                + " background: #ffffff26; foreground: #ffffff; hoverBackground: #ffffff40;"
+                + " selectedBackground: " + HistoryTimelineRenderer.toHex(selectedColor) + "; selectedForeground: #ffffff");
+        return chip;
+    }
+
+    private void applyCategoryFilter() {
+        Set<HistoryCategory> active = EnumSet.noneOf(HistoryCategory.class);
+        for (JToggleButton b : this.categoryChips) {
+            if (b.isSelected()) {
+                active.add((HistoryCategory) b.getClientProperty("jlawyer.historyCategory"));
+            }
+        }
+        this.tableModel.setActiveCategories(active);
+        this.refreshAfterFilter();
+    }
+
+    private void updateKpis() {
+        List<HistorySearchTableModel.Entry> entries = this.tableModel.getVisibleEntries();
+        Set<String> cases = new HashSet<>();
+        Set<String> users = new HashSet<>();
+        Map<String, Integer> perCase = new HashMap<>();
+        Map<String, ArchiveFileBean> caseById = new HashMap<>();
+        for (HistorySearchTableModel.Entry e : entries) {
+            ArchiveFileHistoryBean h = e.getHistory();
+            if (h.getPrincipal() != null) {
+                users.add(h.getPrincipal());
+            }
+            ArchiveFileBean c = h.getArchiveFileKey();
+            if (c != null && c.getId() != null) {
+                cases.add(c.getId());
+                perCase.merge(c.getId(), 1, Integer::sum);
+                caseById.putIfAbsent(c.getId(), c);
+            }
+        }
+        this.lblKpiEntriesValue.setText(entries.size() + (this.shownTruncated ? "+" : ""));
+        this.lblKpiEntriesCaption.setText(entries.size() == 1 ? "Eintrag" : (this.shownTruncated ? "Einträge (Limit erreicht)" : "Einträge"));
+        this.lblKpiCasesValue.setText("" + cases.size());
+        this.lblKpiCasesCaption.setText(cases.size() == 1 ? "Akte" : "Akten");
+        this.lblKpiUsersValue.setText("" + users.size());
+        this.lblKpiUsersCaption.setText(users.size() == 1 ? "Nutzer" : "Nutzer");
+
+        this.topCaseId = null;
+        int topCount = 0;
+        for (Map.Entry<String, Integer> me : perCase.entrySet()) {
+            if (me.getValue() > topCount) {
+                topCount = me.getValue();
+                this.topCaseId = me.getKey();
+            }
+        }
+        if (this.topCaseId == null) {
+            this.lblKpiTopCaseValue.setText("-");
+            this.lblKpiTopCaseCaption.setText("meistbearbeitete Akte");
+            this.lblKpiTopCaseValue.setToolTipText(null);
+            this.lblKpiTopCaseCaption.setToolTipText(null);
+        } else {
+            ArchiveFileBean top = caseById.get(this.topCaseId);
+            FontMetrics fmv = this.lblKpiTopCaseValue.getFontMetrics(this.lblKpiTopCaseValue.getFont());
+            FontMetrics fmc = this.lblKpiTopCaseCaption.getFontMetrics(this.lblKpiTopCaseCaption.getFont());
+            String name = top.getName() == null ? "" : top.getName();
+            this.lblKpiTopCaseValue.setText(HistoryTimelineRenderer.fit(top.getFileNumber(), fmv, KPI_TEXT_WIDTH));
+            this.lblKpiTopCaseCaption.setText(HistoryTimelineRenderer.fit(name + " (" + topCount + ")", fmc, KPI_TEXT_WIDTH));
+            String tip = "meistbearbeitete Akte: " + top.getFileNumber() + " " + name + " - " + topCount + " Einträge, Klick öffnet die Akte";
+            this.lblKpiTopCaseValue.setToolTipText(tip);
+            this.lblKpiTopCaseCaption.setToolTipText(tip);
+        }
+    }
+
+    /**
+     * Scrolls the table to the first row of a date range (clicked bar of the activity chart).
+     */
+    private void scrollToRange(Date from, Date to) {
+        int row = this.tableModel.findFirstRowInRange(from, to);
+        if (row < 0) {
+            return;
+        }
+        Rectangle r = this.tblHistory.getCellRect(row, 0, true);
+        r.height = Math.max(r.height, this.scrollTable.getViewport().getExtentSize().height);
+        this.tblHistory.scrollRectToVisible(r);
+        this.tblHistory.clearSelection();
+        this.tblHistory.changeSelection(row, 0, false, false);
+        this.tblHistory.requestFocusInWindow();
+    }
+
+    private List<ArchiveFileHistoryBean> getSelectedEntries() {
+        List<ArchiveFileHistoryBean> result = new ArrayList<>();
+        for (int viewRow : this.tblHistory.getSelectedRows()) {
+            ArchiveFileHistoryBean h = this.tableModel.getEntry(this.tblHistory.convertRowIndexToModel(viewRow));
+            if (h != null) {
+                result.add(h);
+            }
+        }
+        return result;
+    }
+
+    private HistorySearchTableModel.Entry getLeadSelectedEntry() {
+        int viewRow = this.tblHistory.getSelectionModel().getLeadSelectionIndex();
+        if (viewRow < 0 || !this.tblHistory.isRowSelected(viewRow)) {
+            viewRow = this.tblHistory.getSelectedRow();
+        }
+        if (viewRow < 0) {
+            return null;
+        }
+        HistorySearchTableModel.HistoryRow r = this.tableModel.getRow(this.tblHistory.convertRowIndexToModel(viewRow));
+        return r instanceof HistorySearchTableModel.Entry ? (HistorySearchTableModel.Entry) r : null;
+    }
+
+    private void updateDetail() {
+        HistorySearchTableModel.Entry e = this.getLeadSelectedEntry();
+        this.txtDetail.getHighlighter().removeAllHighlights();
+        if (e == null) {
+            this.lblDetailCategory.setIcon(null);
+            this.lblDetailCategory.setText(this.tableModel.getRowCount() > 0 ? "Eintrag auswählen, um Details zu sehen" : " ");
+            this.lblDetailCase.setText(" ");
+            this.lblDetailCase.setToolTipText(null);
+            this.lblDetailUser.setIcon(null);
+            this.lblDetailUser.setText(" ");
+            this.lblDetailTime.setText(" ");
+            this.txtDetail.setText("");
+            return;
+        }
+        ArchiveFileHistoryBean h = e.getHistory();
+        this.lblDetailCategory.setIcon(CategoryBadgeIcon.get(e.getCategory(), 32));
+        this.lblDetailCategory.setText(e.getCategory().getLabel());
+
+        ArchiveFileBean c = h.getArchiveFileKey();
+        if (c != null) {
+            this.lblDetailCase.setText("<html><u>" + HistoryTimelineRenderer.escape(c.getFileNumber()) + "</u>&nbsp;&nbsp;" + HistoryTimelineRenderer.escape(c.getName()) + "</html>");
+            this.lblDetailCase.setToolTipText("Akte öffnen");
+        } else {
+            this.lblDetailCase.setText(" ");
+            this.lblDetailCase.setToolTipText(null);
+        }
+        if (h.getPrincipal() != null && !h.getPrincipal().isEmpty()) {
+            this.lblDetailUser.setIcon(UserSettings.getInstance().getUserSmallIcon(h.getPrincipal()));
+            this.lblDetailUser.setText(this.renderer.displayName(h.getPrincipal()));
+        } else {
+            this.lblDetailUser.setIcon(null);
+            this.lblDetailUser.setText(" ");
+        }
+        this.lblDetailTime.setText(h.getChangeDate() == null ? " " : new SimpleDateFormat("EEEE, dd.MM.yyyy HH:mm:ss").format(h.getChangeDate()));
+
+        String text = h.getChangeDescription() == null ? "" : h.getChangeDescription();
+        this.txtDetail.setText(text);
+        this.txtDetail.setCaretPosition(0);
+        this.highlightDetail(text);
+    }
+
+    private void highlightDetail(String text) {
+        if (this.shownTextTerm == null || this.shownTextTerm.trim().isEmpty()) {
+            return;
+        }
+        String lower = text.toLowerCase(Locale.GERMAN);
+        String term = this.shownTextTerm.trim().toLowerCase(Locale.GERMAN);
+        if (lower.length() != text.length()) {
+            return;
+        }
+        DefaultHighlighter.DefaultHighlightPainter painter = new DefaultHighlighter.DefaultHighlightPainter(HIGHLIGHT_COLOR);
+        int pos = 0;
+        int idx;
+        while ((idx = lower.indexOf(term, pos)) >= 0) {
+            try {
+                this.txtDetail.getHighlighter().addHighlight(idx, idx + term.length(), painter);
+            } catch (Exception ex) {
+                log.warn("Could not highlight search term", ex);
+                return;
+            }
+            pos = idx + term.length();
+        }
+    }
+
+    private void updateActionStates() {
+        boolean hasSelection = !this.getSelectedEntries().isEmpty();
+        this.cmdOpenCase.setEnabled(hasSelection);
+        this.mnuOpenCase.setEnabled(hasSelection);
+        this.mnuCopyText.setEnabled(hasSelection);
+        this.cmdExport.setEnabled(!this.tableModel.getVisibleEntries().isEmpty());
+    }
+
+    private void openSelectedCase() {
+        HistorySearchTableModel.Entry e = this.getLeadSelectedEntry();
+        if (e == null || e.getHistory().getArchiveFileKey() == null) {
+            return;
+        }
+        this.openCase(e.getHistory().getArchiveFileKey().getId());
+    }
+
+    private void openCase(String caseId) {
+        if (caseId == null) {
+            return;
+        }
+        try {
+            Object editor;
+            if (UserSettings.getInstance().isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
+                editor = EditorsRegistry.getInstance().getEditor(EditArchiveFileDetailsPanel.class.getName());
+            } else {
+                editor = EditorsRegistry.getInstance().getEditor(ViewArchiveFileDetailsPanel.class.getName());
+            }
+
+            // this panel is shown inside the reporting editor - navigating back returns there
+            Object reportingEditor = EditorsRegistry.getInstance().getCurrentEditor();
+            if (editor instanceof ThemeableEditor && reportingEditor instanceof ThemeableEditor) {
+                ((ThemeableEditor) editor).setBackgroundImage(((ThemeableEditor) reportingEditor).getBackgroundImage());
+            }
+            if (editor instanceof PopulateOptionsEditor) {
+                ((PopulateOptionsEditor) editor).populateOptions();
+            }
+
+            ArchiveFileBean aFile;
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+                ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+                aFile = fileService.getArchiveFile(caseId);
+            } catch (Exception ex) {
+                log.error("Error loading case " + caseId + " from server", ex);
+                JOptionPane.showMessageDialog(this, "Fehler beim Laden der Akte: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            if (aFile == null) {
+                return;
+            }
+
+            ((ArchiveFilePanel) editor).setArchiveFileDTO(aFile);
+            if (reportingEditor != null) {
+                ((ArchiveFilePanel) editor).setOpenedFromEditorClass(reportingEditor.getClass().getName());
+            }
+            EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
+        } catch (Exception ex) {
+            log.error("Error opening case editor", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void showPopup(MouseEvent evt) {
+        int row = this.tblHistory.rowAtPoint(evt.getPoint());
+        if (row >= 0 && !this.tblHistory.isRowSelected(row)) {
+            this.tblHistory.changeSelection(row, 0, false, false);
+        }
+        if (!this.getSelectedEntries().isEmpty()) {
+            this.popHistory.show(this.tblHistory, evt.getX(), evt.getY());
+        }
     }
 
     @Override
     public void setBackgroundImage(Image image) {
         this.backgroundImage = image;
+    }
 
+    @Override
+    public Image getBackgroundImage() {
+        return this.backgroundImage;
     }
 
     @Override
@@ -762,200 +1435,578 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
      * WARNING: Do NOT modify this code. The content of this method is always
      * regenerated by the Form Editor.
      */
+    @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        lblPanelTitle = new javax.swing.JLabel();
-        historyIntervalSlider = new com.jdimension.jlawyer.client.components.RangeSlider();
-        lblMinDate = new javax.swing.JLabel();
-        lblMaxDate = new javax.swing.JLabel();
-        txtSelected = new javax.swing.JTextField();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        pnlEntries = new javax.swing.JPanel();
-        cmbMaxEntries = new javax.swing.JComboBox();
-        cmdRefresh = new javax.swing.JButton();
-        chkOnlyMine = new javax.swing.JCheckBox();
+        popHistory = new javax.swing.JPopupMenu();
+        mnuOpenCase = new javax.swing.JMenuItem();
+        mnuCopyText = new javax.swing.JMenuItem();
+        pnlTop = new javax.swing.JPanel();
+        cardFilter = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        pnlFilter = new javax.swing.JPanel();
+        lblRange = new javax.swing.JLabel();
+        cmbRange = new javax.swing.JComboBox<>();
+        lblFrom = new javax.swing.JLabel();
+        dtFrom = new com.toedter.calendar.JDateChooser();
+        lblTo = new javax.swing.JLabel();
+        dtTo = new com.toedter.calendar.JDateChooser();
+        lblUser = new javax.swing.JLabel();
+        cmbUser = new javax.swing.JComboBox();
+        lblCase = new javax.swing.JLabel();
+        txtCase = new javax.swing.JTextField();
+        lblText = new javax.swing.JLabel();
+        txtText = new javax.swing.JTextField();
+        lblMax = new javax.swing.JLabel();
+        cmbMax = new javax.swing.JComboBox<>();
+        cmdSearch = new javax.swing.JButton();
+        pnlCategories = new javax.swing.JPanel();
+        cardKpi = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        pnlKpis = new javax.swing.JPanel();
+        pnlKpiEntries = new javax.swing.JPanel();
+        lblKpiEntriesValue = new javax.swing.JLabel();
+        lblKpiEntriesCaption = new javax.swing.JLabel();
+        pnlKpiCases = new javax.swing.JPanel();
+        lblKpiCasesValue = new javax.swing.JLabel();
+        lblKpiCasesCaption = new javax.swing.JLabel();
+        pnlKpiUsers = new javax.swing.JPanel();
+        lblKpiUsersValue = new javax.swing.JLabel();
+        lblKpiUsersCaption = new javax.swing.JLabel();
+        pnlKpiTopCase = new javax.swing.JPanel();
+        lblKpiTopCaseValue = new javax.swing.JLabel();
+        lblKpiTopCaseCaption = new javax.swing.JLabel();
+        activityChart = new com.jdimension.jlawyer.client.editors.history.ActivityChart();
+        pnlMain = new javax.swing.JPanel();
+        cardTable = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        scrollTable = new javax.swing.JScrollPane();
+        tblHistory = new com.jdimension.jlawyer.client.editors.history.HistoryTable();
+        cardDetail = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        pnlDetailHeader = new javax.swing.JPanel();
+        lblDetailCategory = new javax.swing.JLabel();
+        lblDetailCase = new javax.swing.JLabel();
+        lblDetailUser = new javax.swing.JLabel();
+        lblDetailTime = new javax.swing.JLabel();
+        scrollDetail = new javax.swing.JScrollPane();
+        txtDetail = new javax.swing.JTextArea();
+        pnlStatus = new javax.swing.JPanel();
+        lblStatus = new javax.swing.JLabel();
+        pnlActions = new javax.swing.JPanel();
+        cmdOpenCase = new javax.swing.JButton();
+        cmdExport = new javax.swing.JButton();
 
-        addComponentListener(new java.awt.event.ComponentAdapter() {
-            public void componentResized(java.awt.event.ComponentEvent evt) {
-                formComponentResized(evt);
-            }
-        });
-
-        lblPanelTitle.setFont(lblPanelTitle.getFont().deriveFont(lblPanelTitle.getFont().getStyle() | java.awt.Font.BOLD, lblPanelTitle.getFont().getSize()+12));
-        lblPanelTitle.setText("Historienrecherche");
-
-        historyIntervalSlider.setPaintLabels(true);
-        historyIntervalSlider.setValue(90);
-        historyIntervalSlider.setUpperValue(100);
-        historyIntervalSlider.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                historyIntervalSliderStateChanged(evt);
-            }
-        });
-
-        lblMinDate.setBackground(javax.swing.UIManager.getDefaults().getColor("Slider.foreground"));
-        lblMinDate.setText("01.01.2015");
-
-        lblMaxDate.setBackground(javax.swing.UIManager.getDefaults().getColor("Slider.foreground"));
-        lblMaxDate.setText("31.12.2015");
-
-        txtSelected.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-        txtSelected.setText("jTextField1");
-
-        jScrollPane1.setOpaque(false);
-
-        pnlEntries.setMaximumSize(new java.awt.Dimension(32767, 327670));
-        pnlEntries.setOpaque(false);
-        pnlEntries.setLayout(new java.awt.GridLayout(1, 1));
-        jScrollPane1.setViewportView(pnlEntries);
-
-        cmbMaxEntries.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "50", "100", "500", "1000", "5000" }));
-        cmbMaxEntries.setSelectedIndex(2);
-
-        cmdRefresh.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_refresh_blue_36dp.png"))); // NOI18N
-        cmdRefresh.setToolTipText("Aktualisieren");
-        cmdRefresh.addActionListener(new java.awt.event.ActionListener() {
+        mnuOpenCase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
+        mnuOpenCase.setText("Akte öffnen");
+        mnuOpenCase.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdRefreshActionPerformed(evt);
+                mnuOpenCaseActionPerformed(evt);
             }
         });
+        popHistory.add(mnuOpenCase);
 
-        chkOnlyMine.setSelected(true);
-        chkOnlyMine.setText("nur meine Änderungen");
-        chkOnlyMine.addActionListener(new java.awt.event.ActionListener() {
+        mnuCopyText.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
+        mnuCopyText.setText("Änderungstext kopieren");
+        mnuCopyText.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkOnlyMineActionPerformed(evt);
+                mnuCopyTextActionPerformed(evt);
             }
         });
+        popHistory.add(mnuCopyText);
 
-        org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(layout.createSequentialGroup()
-                .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane1)
-                    .add(layout.createSequentialGroup()
-                        .add(cmdRefresh)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblPanelTitle)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(chkOnlyMine)
-                        .add(18, 18, 18)
-                        .add(cmbMaxEntries, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 107, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(historyIntervalSlider, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(layout.createSequentialGroup()
-                        .add(lblMinDate)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                        .add(txtSelected, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 569, Short.MAX_VALUE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                        .add(lblMaxDate)))
-                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(layout.createSequentialGroup()
-                .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(cmdRefresh)
-                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                            .add(chkOnlyMine)
-                            .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .add(cmbMaxEntries, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(historyIntervalSlider, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(lblMinDate)
-                    .add(lblMaxDate)
-                    .add(txtSelected, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 375, Short.MAX_VALUE)
-                .addContainerGap())
-        );
+        setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        setOpaque(false);
+        setLayout(new java.awt.BorderLayout(0, 6));
+
+        pnlTop.setOpaque(false);
+        pnlTop.setLayout(new java.awt.BorderLayout(0, 6));
+
+        cardFilter.setLayout(new java.awt.BorderLayout(0, 4));
+
+        pnlFilter.setOpaque(false);
+        pnlFilter.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT));
+
+        lblRange.setForeground(new java.awt.Color(255, 255, 255));
+        lblRange.setText("Zeitraum:");
+        pnlFilter.add(lblRange);
+
+        cmbRange.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Heute", "Gestern", "Letzte 7 Tage", "Letzte 30 Tage", "Dieser Monat", "Letzter Monat", "Dieses Jahr", "Benutzerdefiniert" }));
+        cmbRange.setSelectedIndex(2);
+        cmbRange.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbRangeActionPerformed(evt);
+            }
+        });
+        pnlFilter.add(cmbRange);
+
+        lblFrom.setForeground(new java.awt.Color(255, 255, 255));
+        lblFrom.setText("von");
+        pnlFilter.add(lblFrom);
+
+        dtFrom.setPreferredSize(new java.awt.Dimension(130, 26));
+        dtFrom.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+            public void propertyChange(java.beans.PropertyChangeEvent evt) {
+                dtFromPropertyChange(evt);
+            }
+        });
+        pnlFilter.add(dtFrom);
+
+        lblTo.setForeground(new java.awt.Color(255, 255, 255));
+        lblTo.setText("bis");
+        pnlFilter.add(lblTo);
+
+        dtTo.setPreferredSize(new java.awt.Dimension(130, 26));
+        dtTo.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+            public void propertyChange(java.beans.PropertyChangeEvent evt) {
+                dtToPropertyChange(evt);
+            }
+        });
+        pnlFilter.add(dtTo);
+
+        lblUser.setForeground(new java.awt.Color(255, 255, 255));
+        lblUser.setText("Nutzer:");
+        pnlFilter.add(lblUser);
+
+        cmbUser.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbUserActionPerformed(evt);
+            }
+        });
+        pnlFilter.add(cmbUser);
+
+        lblCase.setForeground(new java.awt.Color(255, 255, 255));
+        lblCase.setText("Akte:");
+        pnlFilter.add(lblCase);
+
+        txtCase.setColumns(10);
+        txtCase.setToolTipText("Aktenzeichen oder Rubrum (Teil davon), Enter startet die Suche");
+        txtCase.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtCaseActionPerformed(evt);
+            }
+        });
+        pnlFilter.add(txtCase);
+
+        lblText.setForeground(new java.awt.Color(255, 255, 255));
+        lblText.setText("Text:");
+        pnlFilter.add(lblText);
+
+        txtText.setColumns(14);
+        txtText.setToolTipText("Text in der Änderungsbeschreibung, Enter startet die Suche");
+        txtText.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtTextActionPerformed(evt);
+            }
+        });
+        pnlFilter.add(txtText);
+
+        lblMax.setForeground(new java.awt.Color(255, 255, 255));
+        lblMax.setText("max.");
+        pnlFilter.add(lblMax);
+
+        cmbMax.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "100", "500", "1000", "5000" }));
+        cmbMax.setSelectedIndex(2);
+        cmbMax.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbMaxActionPerformed(evt);
+            }
+        });
+        pnlFilter.add(cmbMax);
+
+        cmdSearch.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
+        cmdSearch.setText("Suchen");
+        cmdSearch.setToolTipText("Suche ausführen");
+        cmdSearch.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSearchActionPerformed(evt);
+            }
+        });
+        pnlFilter.add(cmdSearch);
+
+        cardFilter.add(pnlFilter, java.awt.BorderLayout.CENTER);
+
+        pnlCategories.setOpaque(false);
+        pnlCategories.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 6, 2));
+        cardFilter.add(pnlCategories, java.awt.BorderLayout.SOUTH);
+
+        pnlTop.add(cardFilter, java.awt.BorderLayout.NORTH);
+
+        cardKpi.setLayout(new java.awt.BorderLayout(24, 0));
+
+        pnlKpis.setOpaque(false);
+        pnlKpis.setLayout(new java.awt.GridLayout(1, 4, 24, 0));
+
+        pnlKpiEntries.setOpaque(false);
+        pnlKpiEntries.setLayout(new java.awt.GridLayout(2, 1));
+
+        lblKpiEntriesValue.setFont(lblKpiEntriesValue.getFont().deriveFont(lblKpiEntriesValue.getFont().getStyle() | java.awt.Font.BOLD, lblKpiEntriesValue.getFont().getSize()+10));
+        lblKpiEntriesValue.setForeground(new java.awt.Color(255, 255, 255));
+        lblKpiEntriesValue.setText("0");
+        pnlKpiEntries.add(lblKpiEntriesValue);
+
+        lblKpiEntriesCaption.setFont(lblKpiEntriesCaption.getFont().deriveFont(lblKpiEntriesCaption.getFont().getSize()-2f));
+        lblKpiEntriesCaption.setForeground(new java.awt.Color(220, 220, 220));
+        lblKpiEntriesCaption.setText("Einträge");
+        pnlKpiEntries.add(lblKpiEntriesCaption);
+
+        pnlKpis.add(pnlKpiEntries);
+
+        pnlKpiCases.setOpaque(false);
+        pnlKpiCases.setLayout(new java.awt.GridLayout(2, 1));
+
+        lblKpiCasesValue.setFont(lblKpiCasesValue.getFont().deriveFont(lblKpiCasesValue.getFont().getStyle() | java.awt.Font.BOLD, lblKpiCasesValue.getFont().getSize()+10));
+        lblKpiCasesValue.setForeground(new java.awt.Color(255, 255, 255));
+        lblKpiCasesValue.setText("0");
+        pnlKpiCases.add(lblKpiCasesValue);
+
+        lblKpiCasesCaption.setFont(lblKpiCasesCaption.getFont().deriveFont(lblKpiCasesCaption.getFont().getSize()-2f));
+        lblKpiCasesCaption.setForeground(new java.awt.Color(220, 220, 220));
+        lblKpiCasesCaption.setText("Akten");
+        pnlKpiCases.add(lblKpiCasesCaption);
+
+        pnlKpis.add(pnlKpiCases);
+
+        pnlKpiUsers.setOpaque(false);
+        pnlKpiUsers.setLayout(new java.awt.GridLayout(2, 1));
+
+        lblKpiUsersValue.setFont(lblKpiUsersValue.getFont().deriveFont(lblKpiUsersValue.getFont().getStyle() | java.awt.Font.BOLD, lblKpiUsersValue.getFont().getSize()+10));
+        lblKpiUsersValue.setForeground(new java.awt.Color(255, 255, 255));
+        lblKpiUsersValue.setText("0");
+        pnlKpiUsers.add(lblKpiUsersValue);
+
+        lblKpiUsersCaption.setFont(lblKpiUsersCaption.getFont().deriveFont(lblKpiUsersCaption.getFont().getSize()-2f));
+        lblKpiUsersCaption.setForeground(new java.awt.Color(220, 220, 220));
+        lblKpiUsersCaption.setText("Nutzer");
+        pnlKpiUsers.add(lblKpiUsersCaption);
+
+        pnlKpis.add(pnlKpiUsers);
+
+        pnlKpiTopCase.setOpaque(false);
+        pnlKpiTopCase.setLayout(new java.awt.GridLayout(2, 1));
+
+        lblKpiTopCaseValue.setFont(lblKpiTopCaseValue.getFont().deriveFont(lblKpiTopCaseValue.getFont().getStyle() | java.awt.Font.BOLD, lblKpiTopCaseValue.getFont().getSize()+10));
+        lblKpiTopCaseValue.setForeground(new java.awt.Color(255, 255, 255));
+        lblKpiTopCaseValue.setText("-");
+        lblKpiTopCaseValue.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        lblKpiTopCaseValue.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblKpiTopCaseMouseClicked(evt);
+            }
+        });
+        pnlKpiTopCase.add(lblKpiTopCaseValue);
+
+        lblKpiTopCaseCaption.setFont(lblKpiTopCaseCaption.getFont().deriveFont(lblKpiTopCaseCaption.getFont().getSize()-2f));
+        lblKpiTopCaseCaption.setForeground(new java.awt.Color(220, 220, 220));
+        lblKpiTopCaseCaption.setText("meistbearbeitete Akte");
+        lblKpiTopCaseCaption.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        lblKpiTopCaseCaption.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblKpiTopCaseMouseClicked(evt);
+            }
+        });
+        pnlKpiTopCase.add(lblKpiTopCaseCaption);
+
+        pnlKpis.add(pnlKpiTopCase);
+
+        cardKpi.add(pnlKpis, java.awt.BorderLayout.WEST);
+        cardKpi.add(activityChart, java.awt.BorderLayout.CENTER);
+
+        pnlTop.add(cardKpi, java.awt.BorderLayout.CENTER);
+
+        add(pnlTop, java.awt.BorderLayout.NORTH);
+
+        pnlMain.setOpaque(false);
+        pnlMain.setLayout(new java.awt.BorderLayout(0, 6));
+
+        cardTable.setLayout(new java.awt.BorderLayout());
+
+        tblHistory.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblHistoryMouseClicked(evt);
+            }
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                tblHistoryMousePressed(evt);
+            }
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                tblHistoryMouseReleased(evt);
+            }
+        });
+        tblHistory.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                tblHistoryKeyPressed(evt);
+            }
+        });
+        scrollTable.setViewportView(tblHistory);
+
+        cardTable.add(scrollTable, java.awt.BorderLayout.CENTER);
+
+        pnlMain.add(cardTable, java.awt.BorderLayout.CENTER);
+
+        cardDetail.setLayout(new java.awt.BorderLayout(0, 6));
+
+        pnlDetailHeader.setOpaque(false);
+        pnlDetailHeader.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 14, 0));
+
+        lblDetailCategory.setFont(lblDetailCategory.getFont().deriveFont(lblDetailCategory.getFont().getStyle() | java.awt.Font.BOLD, lblDetailCategory.getFont().getSize()+2));
+        lblDetailCategory.setForeground(new java.awt.Color(255, 255, 255));
+        lblDetailCategory.setText(" ");
+        pnlDetailHeader.add(lblDetailCategory);
+
+        lblDetailCase.setForeground(new java.awt.Color(255, 255, 255));
+        lblDetailCase.setText(" ");
+        lblDetailCase.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        lblDetailCase.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblDetailCaseMouseClicked(evt);
+            }
+        });
+        pnlDetailHeader.add(lblDetailCase);
+
+        lblDetailUser.setForeground(new java.awt.Color(255, 255, 255));
+        lblDetailUser.setText(" ");
+        pnlDetailHeader.add(lblDetailUser);
+
+        lblDetailTime.setForeground(new java.awt.Color(220, 220, 220));
+        lblDetailTime.setText(" ");
+        pnlDetailHeader.add(lblDetailTime);
+
+        cardDetail.add(pnlDetailHeader, java.awt.BorderLayout.NORTH);
+
+        txtDetail.setEditable(false);
+        txtDetail.setLineWrap(true);
+        txtDetail.setRows(3);
+        txtDetail.setWrapStyleWord(true);
+        scrollDetail.setViewportView(txtDetail);
+
+        cardDetail.add(scrollDetail, java.awt.BorderLayout.CENTER);
+
+        pnlMain.add(cardDetail, java.awt.BorderLayout.SOUTH);
+
+        add(pnlMain, java.awt.BorderLayout.CENTER);
+
+        pnlStatus.setOpaque(false);
+        pnlStatus.setLayout(new java.awt.BorderLayout());
+
+        lblStatus.setForeground(new java.awt.Color(255, 255, 255));
+        lblStatus.setText(" ");
+        pnlStatus.add(lblStatus, java.awt.BorderLayout.CENTER);
+
+        pnlActions.setOpaque(false);
+        pnlActions.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT));
+
+        cmdOpenCase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
+        cmdOpenCase.setText("Akte öffnen");
+        cmdOpenCase.setToolTipText("gewählte Akte öffnen");
+        cmdOpenCase.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdOpenCaseActionPerformed(evt);
+            }
+        });
+        pnlActions.add(cmdOpenCase);
+
+        cmdExport.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/calc.png"))); // NOI18N
+        cmdExport.setText("Export");
+        cmdExport.setToolTipText("angezeigte Einträge als Tabelle exportieren");
+        cmdExport.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdExportActionPerformed(evt);
+            }
+        });
+        pnlActions.add(cmdExport);
+
+        pnlStatus.add(pnlActions, java.awt.BorderLayout.EAST);
+
+        add(pnlStatus, java.awt.BorderLayout.SOUTH);
     }// </editor-fold>//GEN-END:initComponents
 
-    private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
-
-        // in case of manual refreshs use current date as max
-        // perform search here
-        ThreadUtils.setWaitCursor(this);
-        this.upperDate = new Date();
-        this.lblMaxDate.setText(df.format(this.upperDate));
-        this.intervalMax = this.upperDate;
-        this.historyIntervalSlider.setUpperValue(this.historyIntervalSlider.getMaximum());
-        long intervalDiff = this.intervalMax.getTime() - this.intervalMin.getTime();
-        float percentage = (4f * 7f * 24f * 60f * 60f * 1000f) / (float) intervalDiff;
-        this.historyIntervalSlider.setValue(this.historyIntervalSlider.getMaximum() - Math.max((int) (percentage * 100), 1));
-        new Thread(new HistorySearchThread(this, this.pnlEntries, this.principalId, this.lowerDate, this.upperDate, Integer.parseInt(this.cmbMaxEntries.getSelectedItem().toString()))).start();
-
-    }//GEN-LAST:event_cmdRefreshActionPerformed
-
-    private void historyIntervalSliderStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_historyIntervalSliderStateChanged
-        if (this.lowerValue != this.historyIntervalSlider.getValue() || this.upperValue != this.historyIntervalSlider.getUpperValue()) {
-            this.lowerValue = this.historyIntervalSlider.getValue();
-            this.upperValue = this.historyIntervalSlider.getUpperValue();
-
-            float lowerPercentage = ((float) this.lowerValue / (float) this.historyIntervalSlider.getMaximum());
-            float upperPercentage = ((float) this.upperValue / (float) this.historyIntervalSlider.getMaximum());
-
-            long intervalDiff = this.intervalMax.getTime() - this.intervalMin.getTime();
-
-            if (this.lowerValue == this.historyIntervalSlider.getMinimum()) {
-                this.lowerDate = this.intervalMin;
-            } else {
-                this.lowerDate = new Date((long) (this.intervalMin.getTime() + (lowerPercentage * intervalDiff)));
-            }
-
-            if (this.upperValue == this.historyIntervalSlider.getMaximum()) {
-                this.upperDate = this.intervalMax;
-            } else {
-                this.upperDate = new Date((long) (this.intervalMin.getTime() + (upperPercentage * intervalDiff)));
-            }
-
-            this.txtSelected.setText(df.format(this.lowerDate) + " bis " + df.format(this.upperDate));
-
-            // perform search here
-            ThreadUtils.setWaitCursor(this);
-            new Thread(new HistorySearchThread(this, this.pnlEntries, this.principalId, this.lowerDate, this.upperDate, Integer.parseInt(this.cmbMaxEntries.getSelectedItem().toString()))).start();
-
+    private void cmbRangeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbRangeActionPerformed
+        if (this.adjusting) {
+            return;
         }
-
-
-    }//GEN-LAST:event_historyIntervalSliderStateChanged
-
-    private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
-        this.pnlEntries.setMaximumSize(new Dimension(this.getWidth(), Integer.MAX_VALUE));
-    }//GEN-LAST:event_formComponentResized
-
-    private void chkOnlyMineActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkOnlyMineActionPerformed
-        if (this.chkOnlyMine.isSelected()) {
-            this.principalId = UserSettings.getInstance().getCurrentUser().getPrincipalId();
-        } else {
-            this.principalId = null;
+        int preset = this.cmbRange.getSelectedIndex();
+        if (preset == RANGE_CUSTOM) {
+            // keep the current dates, the user adjusts them
+            return;
         }
-    }//GEN-LAST:event_chkOnlyMineActionPerformed
+        ClientSettings.getInstance().setConfiguration(CONF_PRESET, "" + preset);
+        this.applyPreset(preset);
+        this.search();
+    }//GEN-LAST:event_cmbRangeActionPerformed
 
+    private void dtFromPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_dtFromPropertyChange
+        this.dateChangedByUser(evt);
+    }//GEN-LAST:event_dtFromPropertyChange
 
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JCheckBox chkOnlyMine;
-    private javax.swing.JComboBox cmbMaxEntries;
-    private javax.swing.JButton cmdRefresh;
-    private com.jdimension.jlawyer.client.components.RangeSlider historyIntervalSlider;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JLabel lblMaxDate;
-    private javax.swing.JLabel lblMinDate;
-    protected javax.swing.JLabel lblPanelTitle;
-    private javax.swing.JPanel pnlEntries;
-    private javax.swing.JTextField txtSelected;
-    // End of variables declaration//GEN-END:variables
+    private void dtToPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_dtToPropertyChange
+        this.dateChangedByUser(evt);
+    }//GEN-LAST:event_dtToPropertyChange
 
-    @Override
-    public Image getBackgroundImage() {
-        return this.backgroundImage;
+    private void dateChangedByUser(java.beans.PropertyChangeEvent evt) {
+        if (this.adjusting || !"date".equals(evt.getPropertyName())) {
+            return;
+        }
+        if (this.cmbRange.getSelectedIndex() != RANGE_CUSTOM) {
+            this.adjusting = true;
+            this.cmbRange.setSelectedIndex(RANGE_CUSTOM);
+            this.adjusting = false;
+        }
+        this.search();
     }
 
+    private void cmbUserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbUserActionPerformed
+        if (this.adjusting || this.cmbUser.getSelectedItem() == null) {
+            return;
+        }
+        ClientSettings.getInstance().setConfiguration(CONF_USER, this.cmbUser.getSelectedItem().toString());
+        this.search();
+    }//GEN-LAST:event_cmbUserActionPerformed
+
+    private void txtCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtCaseActionPerformed
+        this.search();
+    }//GEN-LAST:event_txtCaseActionPerformed
+
+    private void txtTextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtTextActionPerformed
+        this.search();
+    }//GEN-LAST:event_txtTextActionPerformed
+
+    private void cmbMaxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbMaxActionPerformed
+        if (this.adjusting) {
+            return;
+        }
+        ClientSettings.getInstance().setConfiguration(CONF_LIMIT, this.cmbMax.getSelectedItem().toString());
+        this.search();
+    }//GEN-LAST:event_cmbMaxActionPerformed
+
+    private void cmdSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSearchActionPerformed
+        this.search();
+    }//GEN-LAST:event_cmdSearchActionPerformed
+
+    private void tblHistoryMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblHistoryMouseClicked
+        if (evt.getClickCount() == 2 && evt.getButton() == MouseEvent.BUTTON1) {
+            // a double click on a day separator does not open the entry below it
+            int row = this.tblHistory.rowAtPoint(evt.getPoint());
+            if (row >= 0 && this.tableModel.getEntry(this.tblHistory.convertRowIndexToModel(row)) != null) {
+                this.openSelectedCase();
+            }
+        }
+    }//GEN-LAST:event_tblHistoryMouseClicked
+
+    private void tblHistoryMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblHistoryMousePressed
+        if (evt.isPopupTrigger()) {
+            this.showPopup(evt);
+        }
+    }//GEN-LAST:event_tblHistoryMousePressed
+
+    private void tblHistoryMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblHistoryMouseReleased
+        if (evt.isPopupTrigger()) {
+            this.showPopup(evt);
+        }
+    }//GEN-LAST:event_tblHistoryMouseReleased
+
+    private void tblHistoryKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tblHistoryKeyPressed
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
+            // do not move the selection to the next row
+            evt.consume();
+            this.openSelectedCase();
+        }
+    }//GEN-LAST:event_tblHistoryKeyPressed
+
+    private void mnuOpenCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuOpenCaseActionPerformed
+        this.openSelectedCase();
+    }//GEN-LAST:event_mnuOpenCaseActionPerformed
+
+    private void mnuCopyTextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCopyTextActionPerformed
+        StringBuilder sb = new StringBuilder();
+        for (ArchiveFileHistoryBean h : this.getSelectedEntries()) {
+            if (sb.length() > 0) {
+                sb.append(System.lineSeparator());
+            }
+            sb.append(h.getChangeDescription() == null ? "" : h.getChangeDescription());
+        }
+        if (sb.length() > 0) {
+            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(sb.toString()), null);
+        }
+    }//GEN-LAST:event_mnuCopyTextActionPerformed
+
+    private void cmdOpenCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdOpenCaseActionPerformed
+        this.openSelectedCase();
+    }//GEN-LAST:event_cmdOpenCaseActionPerformed
+
+    private void cmdExportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportActionPerformed
+        try {
+            // export the visible entries without day separators, with plain text values
+            JTable exportTable = new JTable(new HistoryExportTableModel(this.tableModel.getVisibleEntries()));
+            TableUtils.exportAndLaunch("aktenhistorie-export.csv", exportTable);
+        } catch (Exception ex) {
+            log.error("Error exporting case history", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Export: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdExportActionPerformed
+
+    private void lblKpiTopCaseMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblKpiTopCaseMouseClicked
+        if (evt.getButton() == MouseEvent.BUTTON1) {
+            this.openCase(this.topCaseId);
+        }
+    }//GEN-LAST:event_lblKpiTopCaseMouseClicked
+
+    private void lblDetailCaseMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDetailCaseMouseClicked
+        if (evt.getButton() == MouseEvent.BUTTON1) {
+            this.openSelectedCase();
+        }
+    }//GEN-LAST:event_lblDetailCaseMouseClicked
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private com.jdimension.jlawyer.client.editors.history.ActivityChart activityChart;
+    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel cardDetail;
+    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel cardFilter;
+    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel cardKpi;
+    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel cardTable;
+    private javax.swing.JComboBox<String> cmbMax;
+    private javax.swing.JComboBox<String> cmbRange;
+    private javax.swing.JComboBox cmbUser;
+    private javax.swing.JButton cmdExport;
+    private javax.swing.JButton cmdOpenCase;
+    private javax.swing.JButton cmdSearch;
+    private com.toedter.calendar.JDateChooser dtFrom;
+    private com.toedter.calendar.JDateChooser dtTo;
+    private javax.swing.JLabel lblCase;
+    private javax.swing.JLabel lblDetailCase;
+    private javax.swing.JLabel lblDetailCategory;
+    private javax.swing.JLabel lblDetailTime;
+    private javax.swing.JLabel lblDetailUser;
+    private javax.swing.JLabel lblFrom;
+    private javax.swing.JLabel lblKpiCasesCaption;
+    private javax.swing.JLabel lblKpiCasesValue;
+    private javax.swing.JLabel lblKpiEntriesCaption;
+    private javax.swing.JLabel lblKpiEntriesValue;
+    private javax.swing.JLabel lblKpiTopCaseCaption;
+    private javax.swing.JLabel lblKpiTopCaseValue;
+    private javax.swing.JLabel lblKpiUsersCaption;
+    private javax.swing.JLabel lblKpiUsersValue;
+    private javax.swing.JLabel lblMax;
+    private javax.swing.JLabel lblRange;
+    private javax.swing.JLabel lblStatus;
+    private javax.swing.JLabel lblText;
+    private javax.swing.JLabel lblTo;
+    private javax.swing.JLabel lblUser;
+    private javax.swing.JMenuItem mnuCopyText;
+    private javax.swing.JMenuItem mnuOpenCase;
+    private javax.swing.JPanel pnlActions;
+    private javax.swing.JPanel pnlCategories;
+    private javax.swing.JPanel pnlDetailHeader;
+    private javax.swing.JPanel pnlFilter;
+    private javax.swing.JPanel pnlKpiCases;
+    private javax.swing.JPanel pnlKpiEntries;
+    private javax.swing.JPanel pnlKpiTopCase;
+    private javax.swing.JPanel pnlKpiUsers;
+    private javax.swing.JPanel pnlKpis;
+    private javax.swing.JPanel pnlMain;
+    private javax.swing.JPanel pnlStatus;
+    private javax.swing.JPanel pnlTop;
+    private javax.swing.JPopupMenu popHistory;
+    private javax.swing.JScrollPane scrollDetail;
+    private javax.swing.JScrollPane scrollTable;
+    private com.jdimension.jlawyer.client.editors.history.HistoryTable tblHistory;
+    private javax.swing.JTextArea txtDetail;
+    private javax.swing.JTextField txtCase;
+    private javax.swing.JTextField txtText;
+    // End of variables declaration//GEN-END:variables
 }

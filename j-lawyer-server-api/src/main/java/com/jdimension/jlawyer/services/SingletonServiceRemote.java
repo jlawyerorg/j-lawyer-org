@@ -698,28 +698,65 @@ import javax.ejb.Remote;
 @Remote
 public interface SingletonServiceRemote {
 
+    /**
+     * Returns the current system monitoring status level as determined by the server-side
+     * system monitor.
+     *
+     * @return the system status level
+     */
     int getSystemStatus();
 
-    void setSystemStatus(int status);
-
+    /**
+     * Returns the files currently observed in the server's scan directory, as cached by the
+     * server.
+     *
+     * @return observed files mapped to their last modification date
+     */
     HashMap<FileMetadata,Date> getObservedFiles();
-    
+
+    /**
+     * Returns the files currently observed in the server's scan directory.
+     *
+     * @param bypassCache true to rescan the directory before returning, false to return the
+     * cached state
+     * @return observed files mapped to their last modification date
+     */
     HashMap<FileMetadata,Date> getObservedFiles(boolean bypassCache);
-    
-    void updateObservedFiles();
 
-    void setObservedFiles(HashMap<FileMetadata,Date> fileNames);
-
+    /**
+     * Returns the most recent fax transmission that failed, if any.
+     *
+     * @return the failed fax, or null if there is none
+     */
     FaxQueueBean getFailedFax();
+
+    /**
+     * Returns the most recent E-POST letter that failed, if any.
+     *
+     * @return the failed letter, or null if there is none
+     */
     EpostQueueBean getFailedLetter();
 
+    /**
+     * Returns the current fax queue as last published by the server.
+     *
+     * @return the fax queue entries
+     */
     ArrayList<FaxQueueBean> getFaxQueue();
+
+    /**
+     * Returns the current E-POST letter queue as last published by the server.
+     *
+     * @return the E-POST queue entries
+     */
     ArrayList<EpostQueueBean> getEpostQueue();
 
-    void setFailedFax(FaxQueueBean failedFax);
-
-    void setFaxQueue(ArrayList<FaxQueueBean> faxQueue);
-    
+    /**
+     * Returns all assistant text replacements, sorted by length of the search string
+     * (longest first).
+     *
+     * @return the assistant replacements
+     */
     List<AssistantReplacement> getAssistantReplacements();
 
     /**

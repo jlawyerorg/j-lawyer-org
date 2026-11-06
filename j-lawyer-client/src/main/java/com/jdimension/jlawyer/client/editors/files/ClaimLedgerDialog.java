@@ -722,7 +722,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
     private static final Logger log = Logger.getLogger(ClaimLedgerDialog.class.getName());
     private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
-    private final DecimalFormat cf = new DecimalFormat(ServerSettings.getInstance().getSetting("plugins.global.tableproperties.numberFormat", "#,##0.00"));
+    private final DecimalFormat cf = new DecimalFormat(ServerSettings.getInstance().getSetting(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "numberFormat", "#,##0.00"));
     private final DecimalFormat percentageFormat = new DecimalFormat("0.0");
 
     private ClaimLedger currentEntry = null;
@@ -2237,11 +2237,11 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         ct.addRow("", "offen", lblSumOpen.getText(), "", "");
         
 
-        int rgb = ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.header.fore.color", Color.BLACK.getRGB());
+        int rgb = ServerSettings.getInstance().getSettingAsInt(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "header.fore.color", Color.BLACK.getRGB());
         ct.setRowForeGround(0, new Color(rgb));
-        rgb = ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.header.back.color", Color.LIGHT_GRAY.getRGB());
+        rgb = ServerSettings.getInstance().getSettingAsInt(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "header.back.color", Color.LIGHT_GRAY.getRGB());
         ct.setRowBackGround(0, new Color(rgb));
-        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.header.Bold", true)) {
+        if (ServerSettings.getInstance().getSettingAsBoolean(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "header.Bold", true)) {
             ct.setRowBold(0, true);
         } else {
             ct.setRowBold(0, false);
@@ -2254,15 +2254,15 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         ct.setColumnWidth(0, 25);
         ct.setColumnWidth(1, 120);
         ct.setColumnWidth(2, 35);
-        ct.setFontFamily(ServerSettings.getInstance().getSetting("plugins.global.tableproperties.table.fontfamily", "Arial"));
-        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.lines", true)) {
+        ct.setFontFamily(ServerSettings.getInstance().getSetting(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "table.fontfamily", "Arial"));
+        if (ServerSettings.getInstance().getSettingAsBoolean(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "table.lines", true)) {
             ct.setLineBorder(true);
         } else {
             ct.setLineBorder(false);
         }
-        rgb = ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.table.lines.color", Color.BLACK.getRGB());
+        rgb = ServerSettings.getInstance().getSettingAsInt(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "table.lines.color", Color.BLACK.getRGB());
         ct.setBorderColor(new Color(rgb));
-        ct.setFontSize(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.table.fontsize", 12));
+        ct.setFontSize(ServerSettings.getInstance().getSettingAsInt(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "table.fontsize", 12));
 
         FormPluginCallback.HtmlSelection stsel = new FormPluginCallback.HtmlSelection(ct.toHtml());
         Clipboard system = Toolkit.getDefaultToolkit().getSystemClipboard();
@@ -2294,11 +2294,11 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
             ct.addRow(datum, bezeichnung, zahlung, unverzKosten, verzKosten, zinsen, forderung);
         }
 
-        int rgb = ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.header.fore.color", Color.BLACK.getRGB());
+        int rgb = ServerSettings.getInstance().getSettingAsInt(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "header.fore.color", Color.BLACK.getRGB());
         ct.setRowForeGround(0, new Color(rgb));
-        rgb = ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.header.back.color", Color.LIGHT_GRAY.getRGB());
+        rgb = ServerSettings.getInstance().getSettingAsInt(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "header.back.color", Color.LIGHT_GRAY.getRGB());
         ct.setRowBackGround(0, new Color(rgb));
-        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.header.Bold", true)) {
+        if (ServerSettings.getInstance().getSettingAsBoolean(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "header.Bold", true)) {
             ct.setRowBold(0, true);
         } else {
             ct.setRowBold(0, false);
@@ -2317,15 +2317,15 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         ct.setRowFontSize(0, 12);
         ct.setColumnWidth(0, 25);
         ct.setColumnWidth(1, 120);
-        ct.setFontFamily(ServerSettings.getInstance().getSetting("plugins.global.tableproperties.table.fontfamily", "Arial"));
-        if (ServerSettings.getInstance().getSettingAsBoolean("plugins.global.tableproperties.table.lines", true)) {
+        ct.setFontFamily(ServerSettings.getInstance().getSetting(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "table.fontfamily", "Arial"));
+        if (ServerSettings.getInstance().getSettingAsBoolean(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "table.lines", true)) {
             ct.setLineBorder(true);
         } else {
             ct.setLineBorder(false);
         }
-        rgb = ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.table.lines.color", Color.BLACK.getRGB());
+        rgb = ServerSettings.getInstance().getSettingAsInt(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "table.lines.color", Color.BLACK.getRGB());
         ct.setBorderColor(new Color(rgb));
-        ct.setFontSize(ServerSettings.getInstance().getSettingAsInt("plugins.global.tableproperties.table.fontsize", 12));
+        ct.setFontSize(ServerSettings.getInstance().getSettingAsInt(ServerSettings.PLUGINS_TABLEPROPERTIES_PREFIX + "table.fontsize", 12));
 
         FormPluginCallback.HtmlSelection stsel = new FormPluginCallback.HtmlSelection(ct.toHtml());
         Clipboard system = Toolkit.getDefaultToolkit().getSystemClipboard();

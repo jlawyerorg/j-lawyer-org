@@ -769,6 +769,58 @@ public class SecurityUtils {
      * @return ids of all cases visible to the user
      * @throws Exception on database errors
      */
+    /**
+     * The case visibility rule of {@link #getAllowedCasesForUser(java.lang.String, com.jdimension.jlawyer.services.SecurityServiceLocal)}
+     * as a JPQL predicate instead of a list of every case the user may see: the case is unprotected,
+     * or the user owns it through its owner group, or the user is in one of its allowed groups, or it
+     * restricts nothing although it has an owner. Uses the parameter {@code :groupIds}, see
+     * {@link #groupIdsParameter(java.util.Collection)}.
+     *
+     * Note the last branch is written as NOT EXISTS where the SQL uses NOT IN. The two agree except
+     * when a case_groups row has no case, where NOT IN would collapse the whole branch to empty;
+     * NOT EXISTS expresses the intent.
+     *
+     * @param caseAlias alias of the ArchiveFileBean in the query
+     * @param ownerGroupAlias alias of the case's owner group, joined with LEFT JOIN
+     * @return the predicate, in parentheses
+     */
+    public static String caseVisibilityJpql(String caseAlias, String ownerGroupAlias) {
+        return "(" + ownerGroupAlias + " IS NULL"
+                + " OR " + ownerGroupAlias + ".id IN :groupIds"
+                + " OR EXISTS (SELECT vg.id FROM ArchiveFileGroupsBean vg WHERE vg.archiveFileKey = " + caseAlias + " AND vg.allowedGroup.id IN :groupIds)"
+                + " OR NOT EXISTS (SELECT vg2.id FROM ArchiveFileGroupsBean vg2 WHERE vg2.archiveFileKey = " + caseAlias + "))";
+    }
+
+    /**
+     * @param groupIds the user's group ids, may be null or empty
+     * @return the value for {@code :groupIds} of {@link #caseVisibilityJpql(java.lang.String, java.lang.String)} -
+     * an empty list would render as IN (), so a group id that cannot occur is used instead
+     */
+    public static List<String> groupIdsParameter(Collection<String> groupIds) {
+        List<String> result = new ArrayList<>();
+        if (groupIds != null) {
+            result.addAll(groupIds);
+        }
+        if (result.isEmpty()) {
+            result.add("dummy");
+        }
+        return result;
+    }
+
+    /**
+     * @param principalId the user
+     * @param securityFacade used to determine the user's groups
+     * @return the ids of the user's groups
+     * @throws Exception if the groups can not be determined
+     */
+    public static List<String> getGroupIdsForUser(String principalId, SecurityServiceLocal securityFacade) throws Exception {
+        List<String> result = new ArrayList<>();
+        for (Group g : securityFacade.getGroupsForUser(principalId)) {
+            result.add(g.getId());
+        }
+        return result;
+    }
+
     public static Set<String> getAllowedCasesForUser(String principalId, SecurityServiceLocal securityFacade) throws Exception {
         JDBCUtils utils = new JDBCUtils();
         Set<String> list = new HashSet<>();

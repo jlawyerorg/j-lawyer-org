@@ -767,44 +767,6 @@ public class SystemResource {
     }
     
     @GET
-    @Path("/server/interfacesboundto")
-    @Produces(MediaType.APPLICATION_JSON)
-    public String getServerInterfacesBoundTo() throws Exception {
-        // available under http://localhost:8080/j-lawyer.io/webresources/system/monitoringsnapshot
-        
-        try {
-        
-        InitialContext ic = new InitialContext();
-        SystemManagementLocal sys = (SystemManagementLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal");
-           return sys.getServerInterfacesBoundTo();
-        } catch (Exception ex) {
-            log.error(ex);
-            return "unknown";
-        }
-        
-        
-    }
-    
-    @PUT
-    @Path("/server/interfacesboundto")
-    @Consumes(MediaType.APPLICATION_JSON)
-    public void setServerInterfaceBindings(String ip) throws Exception {
-        // available under http://localhost:8080/j-lawyer.io/webresources/system/monitoringsnapshot
-        
-        try {
-        
-        InitialContext ic = new InitialContext();
-        SystemManagementLocal sys = (SystemManagementLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal");
-           sys.setServerInterfaceBindings(ip);
-        } catch (Exception ex) {
-            
-            return;
-        }
-        
-        
-    }
-    
-    @GET
     @Path("/data/casecount")
     @Produces(MediaType.APPLICATION_JSON)
     public Integer getCaseCount() {

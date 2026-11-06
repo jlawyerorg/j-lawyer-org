@@ -668,6 +668,9 @@ import java.util.List;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.TypedQuery;
+import com.jdimension.jlawyer.server.utils.SecurityUtils;
+import java.util.Collection;
 
 /**
  *
@@ -709,4 +712,62 @@ public class ArchiveFileHistoryBeanFacade extends AbstractFacade<ArchiveFileHist
         return em.createQuery("from ArchiveFileHistoryBean a where a.changeDate >= ?1 and a.changeDate <= ?2 order by a.changeDate desc").setParameter(1, fromDate).setParameter(2, toDate).setMaxResults(limit).getResultList();
     }
     
+    @Override
+    public List<ArchiveFileHistoryBean> search(Date fromDate, Date toDate, Collection<String> principals, String caseQuery, String textQuery, Collection<String> groupIds, int limit) {
+        StringBuilder jpql = new StringBuilder("SELECT a FROM ArchiveFileHistoryBean a JOIN a.archiveFileKey c LEFT JOIN c.group og WHERE 1=1");
+        if (fromDate != null) {
+            jpql.append(" AND a.changeDate >= :fromDate");
+        }
+        if (toDate != null) {
+            jpql.append(" AND a.changeDate <= :toDate");
+        }
+        boolean hasPrincipals = principals != null && !principals.isEmpty();
+        if (hasPrincipals) {
+            jpql.append(" AND a.principal IN :principals");
+        }
+        boolean hasCaseQuery = caseQuery != null && !caseQuery.trim().isEmpty();
+        if (hasCaseQuery) {
+            // case columns use a binary collation, so compare lower-cased
+            // the displayed file number is composed of fileNumberMain and fileNumberExtension, see ArchiveFileBean.getFileNumber()
+            jpql.append(" AND (LOWER(c.fileNumberMain) LIKE :caseQuery OR LOWER(c.fileNumberExtension) LIKE :caseQuery OR LOWER(c.name) LIKE :caseQuery)");
+        }
+        boolean hasTextQuery = textQuery != null && !textQuery.trim().isEmpty();
+        if (hasTextQuery) {
+            jpql.append(" AND a.changeDescription LIKE :textQuery");
+        }
+        if (groupIds != null) {
+            jpql.append(" AND ").append(SecurityUtils.caseVisibilityJpql("c", "og"));
+        }
+        jpql.append(" ORDER BY a.changeDate DESC");
+
+        TypedQuery<ArchiveFileHistoryBean> q = em.createQuery(jpql.toString(), ArchiveFileHistoryBean.class);
+        if (fromDate != null) {
+            q.setParameter("fromDate", fromDate);
+        }
+        if (toDate != null) {
+            q.setParameter("toDate", toDate);
+        }
+        if (hasPrincipals) {
+            q.setParameter("principals", principals);
+        }
+        if (hasCaseQuery) {
+            q.setParameter("caseQuery", "%" + escapeLike(caseQuery.trim().toLowerCase()) + "%");
+        }
+        if (hasTextQuery) {
+            q.setParameter("textQuery", "%" + escapeLike(textQuery.trim()) + "%");
+        }
+        if (groupIds != null) {
+            q.setParameter("groupIds", SecurityUtils.groupIdsParameter(groupIds));
+        }
+        if (limit > 0) {
+            q.setMaxResults(limit);
+        }
+        return q.getResultList();
+    }
+
+    private static String escapeLike(String s) {
+        // MySQL / MariaDB use backslash as the default LIKE escape character
+        return s.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+    }
+
 }

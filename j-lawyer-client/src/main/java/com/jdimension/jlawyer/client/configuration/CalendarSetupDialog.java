@@ -1134,8 +1134,11 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
         if (row >= 0) {
 
 
+            CalendarSetup selectedSetup = (CalendarSetup) this.tblCalendars.getValueAt(row, 0);
+            // the stored password is never sent to the client - an existing one counts as provided
+            boolean hasPassword = !StringUtils.isEmpty(this.pnlCloud.getCloudPassword()) || selectedSetup.isCloudPasswordSet();
             if (this.cmbName.getSelectedItem() == null) {
-                if (!StringUtils.isEmpty(this.pnlCloud.getCloudHost()) && !StringUtils.isEmpty(this.pnlCloud.getCloudUser()) && !StringUtils.isEmpty(this.pnlCloud.getCloudPassword())) {
+                if (!StringUtils.isEmpty(this.pnlCloud.getCloudHost()) && !StringUtils.isEmpty(this.pnlCloud.getCloudUser()) && hasPassword) {
                     // user provided connection but no target calendar
                     JOptionPane.showMessageDialog(this, "Es ist kein Zielkalender ausgewählt. Entweder Ziel angeben oder Nextcloudverbindung entfernen", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
                     return;
@@ -1165,7 +1168,12 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
             cs.setBackground(this.cmdColor.getBackground().getRGB());
             cs.setCloudHost(this.pnlCloud.getCloudHost());
             try {
-                cs.setCloudPassword(CryptoProvider.defaultCrypto().encrypt(this.pnlCloud.getCloudPassword()));
+                if (!StringUtils.isEmpty(this.pnlCloud.getCloudPassword())) {
+                    cs.setCloudPassword(CryptoProvider.defaultCrypto().encrypt(this.pnlCloud.getCloudPassword()));
+                } else {
+                    // empty: the server keeps the stored password
+                    cs.setCloudPassword(null);
+                }
             } catch (Exception ex) {
                 log.error("Error accessing cloud credentials", ex);
                 JOptionPane.showMessageDialog(this, "Fehler bzgl. Nextcloud-Zugangsdaten" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -1276,7 +1284,13 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            List cals = locator.lookupCalendarServiceRemote().listCalendars(this.pnlCloud.getCloudHost(), this.pnlCloud.isSsl(), this.pnlCloud.getCloudPort(), this.pnlCloud.getCloudUser(), this.pnlCloud.getCloudPassword(), this.pnlCloud.getCloudPath());
+            // with an empty password field the server uses the password stored with the selected setup
+            String setupId = null;
+            int row = this.tblCalendars.getSelectedRow();
+            if (row >= 0) {
+                setupId = ((CalendarSetup) this.tblCalendars.getValueAt(row, 0)).getId();
+            }
+            List cals = locator.lookupCalendarServiceRemote().listCalendarsForSetup(setupId, this.pnlCloud.getCloudHost(), this.pnlCloud.isSsl(), this.pnlCloud.getCloudPort(), this.pnlCloud.getCloudUser(), this.pnlCloud.getCloudPassword(), this.pnlCloud.getCloudPath());
             this.cmbName.removeAllItems();
             cals.forEach(ab -> {
                 ((DefaultComboBoxModel) this.cmbName.getModel()).addElement(ab);
@@ -1308,12 +1322,13 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
 
     private void updatedUI(CalendarSetup cs) {
         this.cmbName.removeAllItems();
-        if (!StringUtils.isEmpty(cs.getCloudHost()) && !StringUtils.isEmpty(cs.getCloudUser()) && !StringUtils.isEmpty(cs.getCloudPassword())) {
+        if (!StringUtils.isEmpty(cs.getCloudHost()) && !StringUtils.isEmpty(cs.getCloudUser()) && cs.isCloudPasswordSet()) {
             ClientSettings settings = ClientSettings.getInstance();
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-                List cals = locator.lookupCalendarServiceRemote().listCalendars(cs.getCloudHost(), cs.isCloudSsl(), cs.getCloudPort(), cs.getCloudUser(), CryptoProvider.defaultCrypto().decrypt(cs.getCloudPassword()), cs.getCloudPath());
+                // the server lists the calendars with the password stored for this setup
+                List cals = locator.lookupCalendarServiceRemote().listCalendarsForSetup(cs.getId(), cs.getCloudHost(), cs.isCloudSsl(), cs.getCloudPort(), cs.getCloudUser(), null, cs.getCloudPath());
                 CloudCalendar selected = null;
                 for (Object abO : cals) {
                     CloudCalendar ab=(CloudCalendar)abO;
@@ -1330,13 +1345,9 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
             }
         }
 
-        try {
-            this.pnlCloud.setCloudPassword(CryptoProvider.defaultCrypto().decrypt(cs.getCloudPassword()));
-        } catch (Exception ex) {
-            log.error("Error accessing cloud credentials", ex);
-            this.pnlCloud.setCloudPassword("");
-            JOptionPane.showMessageDialog(this, "Fehler bzgl. Nextcloud-Zugangsdaten" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-        }
+        // the password is write-only: the server never returns it, an empty field keeps the stored one
+        this.pnlCloud.setCloudPassword("");
+        this.pnlCloud.setCloudPasswordStored(cs.isCloudPasswordSet());
         
         this.txtDisplayName.setText(cs.getDisplayName());
         this.cmdColor.setBackground(new Color(cs.getBackground()));

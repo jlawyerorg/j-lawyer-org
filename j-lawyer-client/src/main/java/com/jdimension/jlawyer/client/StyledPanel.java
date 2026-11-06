@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client;
 
 import java.awt.AlphaComposite;
 import java.awt.Color;
+import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
@@ -683,7 +684,8 @@ public class StyledPanel extends javax.swing.JPanel {
     private Timer fadeTimer = null;
     private static final int FADE_DURATION_MS = 500;
     private static final int FADE_INTERVAL_MS = 16; // ~60 FPS
-    private Color fallbackColor = new Color(30, 40, 55); // Dark blue-gray
+    private Color fallbackColor = com.jdimension.jlawyer.client.modulebar.SidebarColors.BACKGROUND_BOTTOM;
+    private boolean overlay = true;
 
     /**
      * Creates new form StyledPanel
@@ -709,20 +711,66 @@ public class StyledPanel extends javax.swing.JPanel {
                 float oldImageAlpha = 1f - (fadeAlpha * 2f);  // 1.0 -> 0.0
                 g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, oldImageAlpha));
                 if (this.backgroundImage != null) {
-                    g2d.drawImage(this.backgroundImage, 0, 0, this.getWidth(), this.getHeight(), this);
+                    drawCover(g2d, this.backgroundImage);
                 }
             } else {
                 // Second half: draw new image, fading in from dark background
                 float newImageAlpha = (fadeAlpha - 0.5f) * 2f;  // 0.0 -> 1.0
                 g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, newImageAlpha));
-                g2d.drawImage(fadeTargetImage, 0, 0, this.getWidth(), this.getHeight(), this);
+                drawCover(g2d, fadeTargetImage);
             }
         } else if (this.backgroundImage != null) {
             // No fade in progress, draw current image normally
-            g2d.drawImage(this.backgroundImage, 0, 0, this.getWidth(), this.getHeight(), this);
+            drawCover(g2d, this.backgroundImage);
+        }
+
+        if (this.overlay) {
+            this.paintOverlay(g2d);
         }
 
         g2d.dispose();
+    }
+
+    /**
+     * Draws an image so that it covers the whole panel, keeping its aspect ratio; the image is
+     * centered and cropped where it does not fit.
+     */
+    private void drawCover(Graphics2D g2d, Image img) {
+        int iw = img.getWidth(this);
+        int ih = img.getHeight(this);
+        if (iw <= 0 || ih <= 0) {
+            return;
+        }
+        int w = this.getWidth();
+        int h = this.getHeight();
+        double scale = Math.max((double) w / iw, (double) h / ih);
+        int dw = (int) Math.ceil(iw * scale);
+        int dh = (int) Math.ceil(ih * scale);
+        g2d.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh, this);
+    }
+
+    /**
+     * Darkens the photo towards the navy of the application: from the left (word mark, user info)
+     * and from the bottom (location, background switch).
+     */
+    private void paintOverlay(Graphics2D g2d) {
+        int w = this.getWidth();
+        int h = this.getHeight();
+        Color navy = com.jdimension.jlawyer.client.modulebar.SidebarColors.BACKGROUND_TOP;
+        Color dark = com.jdimension.jlawyer.client.modulebar.SidebarColors.BACKGROUND_BOTTOM;
+        g2d.setComposite(AlphaComposite.SrcOver);
+        g2d.setPaint(new GradientPaint(0, 0, new Color(navy.getRed(), navy.getGreen(), navy.getBlue(), 150), w * 0.65f, 0, new Color(navy.getRed(), navy.getGreen(), navy.getBlue(), 20)));
+        g2d.fillRect(0, 0, w, h);
+        g2d.setPaint(new GradientPaint(0, h * 0.7f, new Color(dark.getRed(), dark.getGreen(), dark.getBlue(), 0), 0, h, new Color(dark.getRed(), dark.getGreen(), dark.getBlue(), 130)));
+        g2d.fillRect(0, (int) (h * 0.7f), w, h - (int) (h * 0.7f));
+    }
+
+    /**
+     * @param overlay true (default) to darken the photo towards the application navy
+     */
+    public void setOverlay(boolean overlay) {
+        this.overlay = overlay;
+        this.repaint();
     }
 
     /**

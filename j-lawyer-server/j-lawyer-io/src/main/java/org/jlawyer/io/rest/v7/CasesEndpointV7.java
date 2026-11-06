@@ -677,7 +677,6 @@ import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBean;
 import com.jdimension.jlawyer.persistence.CaseAccountEntry;
-import com.jdimension.jlawyer.persistence.CaseAccountEntryFacadeLocal;
 import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.persistence.InstantMessage;
 import com.jdimension.jlawyer.persistence.Invoice;
@@ -752,7 +751,6 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
     private static final String LOOKUP_INVOICE_POOL_FACADE = "java:global/j-lawyer-server/j-lawyer-server-ejb/InvoicePoolFacade!com.jdimension.jlawyer.persistence.InvoicePoolFacadeLocal";
     private static final String LOOKUP_INVOICE_POSITION_FACADE = "java:global/j-lawyer-server/j-lawyer-server-ejb/InvoicePositionFacade!com.jdimension.jlawyer.persistence.InvoicePositionFacadeLocal";
     private static final String LOOKUP_ADDRESSES = "java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal";
-    private static final String LOOKUP_ACCOUNT_ENTRIES = "java:global/j-lawyer-server/j-lawyer-server-ejb/CaseAccountEntryFacade!com.jdimension.jlawyer.persistence.CaseAccountEntryFacadeLocal";
     private static final String LOOKUP_SYSMAN = "java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal";
     private static final String LOOKUP_FORMSSVC = "java:global/j-lawyer-server/j-lawyer-server-ejb/FormsService!com.jdimension.jlawyer.services.FormsServiceLocal";
 
@@ -2096,8 +2094,8 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
         try {
 
             InitialContext ic = new InitialContext();
-            CaseAccountEntryFacadeLocal entryFacade = (CaseAccountEntryFacadeLocal) ic.lookup(LOOKUP_ACCOUNT_ENTRIES);
-            CaseAccountEntry found = entryFacade.find(id);
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            CaseAccountEntry found = cases.getAccountEntry(id);
             if (found == null) {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }
@@ -2129,8 +2127,8 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
         try {
 
             InitialContext ic = new InitialContext();
-            CaseAccountEntryFacadeLocal entryFacade = (CaseAccountEntryFacadeLocal) ic.lookup(LOOKUP_ACCOUNT_ENTRIES);
-            CaseAccountEntry found = entryFacade.find(id);
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            CaseAccountEntry found = cases.getAccountEntry(id);
             if (found == null) {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }
@@ -2158,20 +2156,21 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
             }
 
             // Update fields
-            found.setContact(contact);
-            found.setInvoice(invoice);
-            found.setEntryDate(accountEntry.getEntryDate());
-            found.setDescription(accountEntry.getDescription());
-            found.setEarnings(accountEntry.getEarnings());
-            found.setSpendings(accountEntry.getSpendings());
-            found.setEscrowIn(accountEntry.getEscrowIn());
-            found.setEscrowOut(accountEntry.getEscrowOut());
-            found.setExpendituresIn(accountEntry.getExpendituresIn());
-            found.setExpendituresOut(accountEntry.getExpendituresOut());
+            CaseAccountEntry update = new CaseAccountEntry(found.getId());
+            update.setContact(contact);
+            update.setInvoice(invoice);
+            update.setEntryDate(accountEntry.getEntryDate());
+            update.setDescription(accountEntry.getDescription());
+            update.setEarnings(accountEntry.getEarnings());
+            update.setSpendings(accountEntry.getSpendings());
+            update.setEscrowIn(accountEntry.getEscrowIn());
+            update.setEscrowOut(accountEntry.getEscrowOut());
+            update.setExpendituresIn(accountEntry.getExpendituresIn());
+            update.setExpendituresOut(accountEntry.getExpendituresOut());
 
-            entryFacade.edit(found);
+            CaseAccountEntry updated = cases.updateAccountEntry(found.getArchiveFileKey().getId(), update);
 
-            return Response.ok(RestfulCaseAccountEntryV7.fromCaseAccountEntry(found)).build();
+            return Response.ok(RestfulCaseAccountEntryV7.fromCaseAccountEntry(updated)).build();
         } catch (Exception ex) {
             log.error("can not update account entry " + id, ex);
             return RestErrorResponses.serverError(ex);
@@ -2196,13 +2195,13 @@ public class CasesEndpointV7 implements CasesEndpointLocalV7 {
         try {
 
             InitialContext ic = new InitialContext();
-            CaseAccountEntryFacadeLocal entryFacade = (CaseAccountEntryFacadeLocal) ic.lookup(LOOKUP_ACCOUNT_ENTRIES);
-            CaseAccountEntry found = entryFacade.find(id);
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup(LOOKUP_CASES);
+            CaseAccountEntry found = cases.getAccountEntry(id);
             if (found == null) {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }
 
-            entryFacade.remove(found);
+            cases.removeAccountEntry(id);
 
             return Response.ok().build();
         } catch (Exception ex) {

@@ -908,11 +908,15 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
     }
 
     @Override
+    // server-internal (Local only): also called by timers that run without a security context
+    @PermitAll
     public void setFailedFax(FaxQueueBean failedFax) {
         this.failedFax = failedFax;
     }
 
     @Override
+    // server-internal (Local only): also called by timers that run without a security context
+    @PermitAll
     public void setFaxQueue(ArrayList<FaxQueueBean> faxQueue) {
         this.faxQueue = faxQueue;
     }
@@ -968,6 +972,8 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
      * @param failedLetter the failedLetter to set
      */
     @Override
+    // server-internal (Local only): also called by timers that run without a security context
+    @PermitAll
     public void setFailedLetter(EpostQueueBean failedLetter) {
         this.failedLetter = failedLetter;
     }
@@ -986,6 +992,8 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
      * @param epostQueue the epostQueue to set
      */
     @Override
+    // server-internal (Local only): also called by timers that run without a security context
+    @PermitAll
     public void setEpostQueue(ArrayList<EpostQueueBean> epostQueue) {
         this.epostQueue = epostQueue;
     }

@@ -698,6 +698,31 @@ public class SipUtilsTest {
     }
 
     @Test
+    public void testE164NumberOtherCountries() {
+        Assert.assertEquals("902121234567", SipUtils.E164Number("+90 212 1234567"));
+        Assert.assertEquals("902121234567", SipUtils.E164Number("0090 212 1234567"));
+        Assert.assertEquals("48221234567", SipUtils.E164Number("+48 22 123-45-67"));
+        Assert.assertEquals("+902121234567", SipUtils.E164NumberWithPlusSign("+90 212 1234567"));
+        // known countries and national numbers are unchanged
+        Assert.assertEquals("49301234567", SipUtils.E164Number("+49 (0)30 1234567"));
+        Assert.assertEquals("49301234567", SipUtils.E164Number("030 1234567"));
+    }
+
+    @Test
+    public void testE164NumberItaly() {
+        // landline numbers keep their leading 0, mobile numbers start with 3
+        Assert.assertEquals("39061234567", SipUtils.E164Number("+39 06 1234567"));
+        Assert.assertEquals("39061234567", SipUtils.E164Number("0039 06 1234567"));
+        Assert.assertEquals("393471234567", SipUtils.E164Number("+39 347 1234567"));
+    }
+
+    @Test
+    public void testE164NumberEmpty() {
+        Assert.assertEquals("", SipUtils.E164Number(""));
+        Assert.assertEquals("", SipUtils.E164Number(" - / "));
+    }
+
+    @Test
     public void testE164Number() {
         
         // no country prefix - defaults to Germany

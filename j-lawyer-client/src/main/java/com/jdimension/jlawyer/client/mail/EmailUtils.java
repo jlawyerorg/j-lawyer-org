@@ -989,7 +989,9 @@ public class EmailUtils extends CommonMailUtils {
             Collections.sort(sortedMailboxes, new Comparator<MailboxSetup>() {
                 @Override
                 public int compare(MailboxSetup o1, MailboxSetup o2) {
-                    return Integer.compare(o2.getEmailAddress().length(), o1.getEmailAddress().length());
+                    int len1 = o1.getEmailAddress() != null ? o1.getEmailAddress().length() : 0;
+                    int len2 = o2.getEmailAddress() != null ? o2.getEmailAddress().length() : 0;
+                    return Integer.compare(len2, len1);
                 }
             });
 
@@ -1414,6 +1416,63 @@ public class EmailUtils extends CommonMailUtils {
         }
 
         return result;
+    }
+
+    /**
+     * Removes an email address from a comma-separated string of recipients, e.g. the content of the To, Cc or
+     * Bcc field. Entries are separated at commas outside of quoted display names and angle brackets (escaped
+     * quotes in display names are respected). Only entries that consist of exactly this address are removed,
+     * ignoring case and surrounding blanks. The other entries are kept as they are, recipients with a display
+     * name included. If an entry was removed, empty entries are dropped and the result is trimmed.
+     *
+     * @param recipients Comma-separated string of email recipients
+     * @param email the address to remove
+     * @return the remaining recipients, or the unchanged input if the address is not one of the entries
+     */
+    public static String removeRecipient(String recipients, String email) {
+        if (recipients == null || email == null || email.trim().isEmpty()) {
+            return recipients;
+        }
+
+        // unlike splitRecipients, keep the entries as they are and respect escaped quotes
+        List<String> entries = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        boolean inQuotes = false;
+        boolean inAngleBrackets = false;
+        for (int i = 0; i < recipients.length(); i++) {
+            char c = recipients.charAt(i);
+            if (inQuotes && c == '\\' && i + 1 < recipients.length()) {
+                current.append(c).append(recipients.charAt(++i));
+                continue;
+            }
+            if (c == '"') {
+                inQuotes = !inQuotes;
+            } else if (c == '<' && !inQuotes) {
+                inAngleBrackets = true;
+            } else if (c == '>' && !inQuotes) {
+                inAngleBrackets = false;
+            } else if (c == ',' && !inQuotes && !inAngleBrackets) {
+                entries.add(current.toString());
+                current.setLength(0);
+                continue;
+            }
+            current.append(c);
+        }
+        entries.add(current.toString());
+
+        List<String> remaining = new ArrayList<>();
+        boolean removed = false;
+        for (String entry : entries) {
+            if (entry.trim().equalsIgnoreCase(email.trim())) {
+                removed = true;
+            } else if (!entry.trim().isEmpty()) {
+                remaining.add(entry);
+            }
+        }
+        if (!removed) {
+            return recipients;
+        }
+        return String.join(",", remaining).trim();
     }
 
     /**

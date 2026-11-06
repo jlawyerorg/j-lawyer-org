@@ -695,6 +695,9 @@ import org.apache.log4j.Logger;
 public class DocumentsBinDialog extends javax.swing.JDialog {
 
     private static final Logger log = Logger.getLogger(DocumentsBinDialog.class.getName());
+
+    // false while the dialog fills its fields, so programmatic selections are not stored
+    private boolean initialized = false;
     SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
 
     /**
@@ -716,7 +719,9 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
         }
         
         String retentionDays=ServerSettings.getInstance().getSetting(ServerSettings.SERVERCONF_DOCUMENTS_BIN_RETENTIONDAYS, "7");
+        this.initialized = false;
         this.cmbRetentionDays.setSelectedItem(retentionDays);
+        this.initialized = true;
 
         this.loadBin();
 
@@ -1024,6 +1029,10 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdEmptyBinActionPerformed
 
     private void cmbRetentionDaysActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbRetentionDaysActionPerformed
+        // setSelectedItem in the constructor fires this event as well - only store changes made by the user
+        if (!this.initialized || !this.cmbRetentionDays.isEnabled() || this.cmbRetentionDays.getSelectedItem() == null) {
+            return;
+        }
         ServerSettings.getInstance().setSetting(ServerSettings.SERVERCONF_DOCUMENTS_BIN_RETENTIONDAYS, this.cmbRetentionDays.getSelectedItem().toString());
     }//GEN-LAST:event_cmbRetentionDaysActionPerformed
 

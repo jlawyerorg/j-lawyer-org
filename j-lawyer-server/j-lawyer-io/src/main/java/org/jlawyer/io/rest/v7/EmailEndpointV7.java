@@ -89,6 +89,10 @@ public class EmailEndpointV7 implements EmailEndpointLocalV7 {
     private SecurityContext securityContext;
 
     private boolean hasMailboxAccess(InitialContext ic, String mailboxId) throws Exception {
+        // administrators may use every configured mailbox, even if it is not assigned to them
+        if (securityContext.isUserInRole("adminRole")) {
+            return true;
+        }
         SecurityServiceLocal secService = (SecurityServiceLocal) ic.lookup(LOOKUP_SECURITY);
         String principal = securityContext.getUserPrincipal().getName();
         List<MailboxSetup> mailboxes = secService.getMailboxesForUser(principal);
