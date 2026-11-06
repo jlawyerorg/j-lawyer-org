@@ -1417,7 +1417,7 @@ public class LoginDialog extends javax.swing.JFrame {
         lblUser = new javax.swing.JLabel();
         lblCompany = new javax.swing.JLabel();
         lblRole = new javax.swing.JLabel();
-        cardLogin = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        cardLogin = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         lblBrandCompact = new javax.swing.JLabel();
         jTabbedPane1 = new javax.swing.JTabbedPane();
         scrollLogin = new javax.swing.JScrollPane();
@@ -2979,7 +2979,7 @@ public class LoginDialog extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private com.jdimension.jlawyer.client.StyledPanel bgPanel;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel cardLogin;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel cardLogin;
     private javax.swing.JProgressBar boxProgress;
     private javax.swing.ButtonGroup btnGrpSecurity;
     private javax.swing.JComboBox<String> cmbCurrentConnection;

@@ -687,7 +687,7 @@ import themes.colors.DefaultColorTheme;
  *
  * @author jens
  */
-public class InvoiceEntryPanel extends javax.swing.JPanel {
+public class InvoiceEntryPanel extends com.jdimension.jlawyer.client.ui.theme.EntryRowPanel {
 
     private static final Logger log = Logger.getLogger(InvoiceEntryPanel.class.getName());
     private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
@@ -708,6 +708,8 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
     public InvoiceEntryPanel(ArchiveFilePanel caseView) {
         initComponents();
         this.caseView = caseView;
+        styleRowButtons(this.cmdOpen, this.cmdDelete, this.cmdDuplicate, this.cmdCopy, this.cmdMarkAsPayed, this.cmdCreditNote, this.cmdPaymentFromInvoice);
+        styleMuted(this.jLabel1, this.jLabel2, this.jLabel3, this.jLabel4, this.lblInvoiceType, this.lblRecipient);
     }
 
     /**
@@ -735,13 +737,17 @@ public class InvoiceEntryPanel extends javax.swing.JPanel {
         this.addresses = addresses;
         this.lblInvoiceNumber.setText(invoice.getInvoiceNumber());
         this.lblDueDate.setText(df.format(invoice.getDueDate()));
+        // the bar on the left shows the state: done, overdue or open
         if (invoice.getStatus() == Invoice.STATUS_CANCELLED || invoice.getStatus() == Invoice.STATUS_PAID) {
             this.lblDueDate.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
+            this.setAccent(ACCENT_DONE);
         } else {
             if (invoice.getDueDate().getTime() < new Date().getTime()) {
                 this.lblDueDate.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+                this.setAccent(ACCENT_OVERDUE);
             } else {
-                this.lblDueDate.setForeground(Color.black);
+                this.lblDueDate.setForeground(com.jdimension.jlawyer.client.ui.theme.UiColors.TEXT_DARK);
+                this.setAccent(ACCENT_OPEN);
             }
         }
         this.lblName.setText(invoice.getName());

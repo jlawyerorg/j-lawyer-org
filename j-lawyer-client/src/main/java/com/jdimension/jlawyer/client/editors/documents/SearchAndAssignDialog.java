@@ -775,7 +775,10 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
     }
 
     private void initialize() {
-        ComponentUtils.decorateSplitPane(this.split);
+        // design kit: a transparent gap between results and folders, a search icon in the field
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleSplitPane(this.split);
+        this.txtSearchString.putClientProperty(com.formdev.flatlaf.FlatClientProperties.TEXT_FIELD_LEADING_ICON,
+                new com.formdev.flatlaf.icons.FlatSearchIcon());
         // Use persisted divider if available; otherwise apply a sensible default once
         String savedDivider = ClientSettings.getInstance()
                 .getConfiguration("split." + this.getClass().getName() + ".split", "");

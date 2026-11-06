@@ -724,6 +724,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         this.initializing = true;
         initComponents();
 
+        this.applyModernLook();
         this.txtSearchString.putClientProperty("JTextField.showClearButton", true);
         this.txtSearchString.putClientProperty("JTextField.placeholderText", "Suche: Akten");
 
@@ -755,7 +756,8 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             }
         });
 
-        Color splitPaneColor = new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 170);
+        // the divider is a thin line on the light results card
+        Color splitPaneColor = com.jdimension.jlawyer.client.ui.theme.UiColors.SEPARATOR;
         ComponentUtils.decorateSplitPane(jSplitPane1, splitPaneColor);
         this.jSplitPane1.setDividerLocation(0.8d);
         ComponentUtils.restoreSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
@@ -827,7 +829,9 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         lblPanelTitle = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         chkIncludeArchive = new javax.swing.JCheckBox();
-        jPanel1 = new javax.swing.JPanel();
+        jPanel1 = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
+        pnlSearchBar = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
+        cardResults = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         cmdExport = new javax.swing.JButton();
         cmdDocumentTagFilter = new javax.swing.JButton();
         jSplitPane1 = new javax.swing.JSplitPane();
@@ -941,7 +945,6 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             }
         });
 
-        jPanel1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
         jPanel1.setOpaque(false);
 
         cmdExport.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/calc.png"))); // NOI18N
@@ -1013,6 +1016,41 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
 
         jSplitPane1.setRightComponent(jScrollPane2);
 
+        pnlSearchBar.setOpaque(false);
+
+        org.jdesktop.layout.GroupLayout pnlSearchBarLayout = new org.jdesktop.layout.GroupLayout(pnlSearchBar);
+        pnlSearchBar.setLayout(pnlSearchBarLayout);
+        pnlSearchBarLayout.setHorizontalGroup(
+            pnlSearchBarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlSearchBarLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(txtSearchString, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(cmdQuickSearch)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(chkIncludeArchive)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(cmdTagFilter)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(cmdDocumentTagFilter)
+                .addContainerGap())
+        );
+        pnlSearchBarLayout.setVerticalGroup(
+            pnlSearchBarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlSearchBarLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(pnlSearchBarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+                    .add(txtSearchString)
+                    .add(cmdQuickSearch)
+                    .add(chkIncludeArchive)
+                    .add(cmdTagFilter)
+                    .add(cmdDocumentTagFilter))
+                .addContainerGap())
+        );
+
+        cardResults.setLayout(new java.awt.BorderLayout());
+        cardResults.add(jSplitPane1, java.awt.BorderLayout.CENTER);
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -1020,18 +1058,9 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jSplitPane1)
+                    .add(cardResults, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(pnlSearchBar, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(layout.createSequentialGroup()
-                        .add(txtSearchString, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 528, Short.MAX_VALUE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdQuickSearch)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(chkIncludeArchive)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                        .add(cmdTagFilter)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdDocumentTagFilter))
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                         .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(18, 18, 18)
                         .add(jLabel2)
@@ -1043,23 +1072,34 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
                 .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
                     .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .add(jLabel2)
+                    .add(lblPanelTitle))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(cmdQuickSearch)
-                    .add(txtSearchString, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(cmdTagFilter)
-                    .add(chkIncludeArchive)
-                    .add(cmdDocumentTagFilter))
+                .add(pnlSearchBar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 578, Short.MAX_VALUE)
+                .add(cardResults, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    /**
+     * Applies the editor design kit: header, toolbar and search bar on dark glass, the results on a
+     * light card.
+     */
+    private void applyModernLook() {
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleTitle(this.lblPanelTitle, null);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleHeaderButtons(this.cmdExport, this.cmdQuickSearch, this.cmdTagFilter, this.cmdDocumentTagFilter);
+        this.chkIncludeArchive.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+        this.txtSearchString.putClientProperty(com.formdev.flatlaf.FlatClientProperties.TEXT_FIELD_LEADING_ICON,
+                new javax.swing.ImageIcon(getClass().getResource("/icons/find.png")));
+        this.txtSearchString.putClientProperty(com.formdev.flatlaf.FlatClientProperties.MINIMUM_HEIGHT, 32);
+
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleTable(this.tblResults, this.jScrollPane1);
+        this.jScrollPane2.setBorder(javax.swing.BorderFactory.createLineBorder(com.jdimension.jlawyer.client.ui.theme.UiColors.SEPARATOR));
+        this.jScrollPane2.getViewport().setBackground(java.awt.Color.WHITE);
+    }
 
     private void mnuDeleteSelectedArchiveFilesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDeleteSelectedArchiveFilesActionPerformed
 
@@ -1420,7 +1460,9 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     private javax.swing.JButton cmdQuickSearch;
     private javax.swing.JButton cmdTagFilter;
     private javax.swing.JLabel jLabel2;
-    private javax.swing.JPanel jPanel1;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardResults;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel jPanel1;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlSearchBar;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JSplitPane jSplitPane1;

@@ -708,6 +708,8 @@ public class ManagePaymentsFrame extends javax.swing.JFrame {
      */
     public ManagePaymentsFrame() {
         initComponents();
+        // the entries have their own frame - the scroll pane around them does not need one
+        this.jScrollPane2.setBorder(javax.swing.BorderFactory.createEmptyBorder());
 
         BoxLayout boxLayout = new BoxLayout(this.pnlPayments, BoxLayout.Y_AXIS);
         this.pnlPayments.setLayout(boxLayout);

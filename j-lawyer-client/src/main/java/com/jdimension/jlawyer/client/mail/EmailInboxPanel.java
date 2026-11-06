@@ -819,9 +819,10 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
                 });
 
-        ComponentUtils.decorateSplitPane(this.jSplitPane1);
-        ComponentUtils.decorateSplitPane(this.jSplitPane2);
-        ComponentUtils.decorateSplitPane(this.jSplitPane3);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleCardSplitPane(this.jSplitPane1);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleCardSplitPane(this.jSplitPane2);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleCardSplitPane(this.jSplitPane3);
+        this.applyModernLook();
 
         ClientSettings cs = ClientSettings.getInstance();
         String temp = cs.getConfiguration(ClientSettings.CONF_MAILS_DELETEENABLED, "false");
@@ -1461,6 +1462,26 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
     }
 
+    /**
+     * Applies the editor design kit: glass tool bar and search bar, folders, mails and the mail
+     * content on one light card.
+     */
+    private void applyModernLook() {
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleTitle(this.lblPanelTitle, null);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleHeaderButtons(this.cmdRefresh, this.cmdNew, this.cmdReply,
+                this.cmdReplyAll, this.cmdForward, this.cmdDelete, this.cmdSearch);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleTable(this.tblMails, this.jScrollPane3);
+        this.jScrollPane2.setBorder(javax.swing.BorderFactory.createLineBorder(com.jdimension.jlawyer.client.ui.theme.UiColors.SEPARATOR));
+        this.jScrollPane2.getViewport().setBackground(java.awt.Color.WHITE);
+        this.treeFolders.setBackground(java.awt.Color.WHITE);
+        this.jScrollPane4.setBorder(javax.swing.BorderFactory.createLineBorder(com.jdimension.jlawyer.client.ui.theme.UiColors.SEPARATOR));
+        this.jPanel2.setOpaque(false);
+        this.txtSearchString.putClientProperty(com.formdev.flatlaf.FlatClientProperties.TEXT_FIELD_LEADING_ICON,
+                new javax.swing.ImageIcon(getClass().getResource("/icons/find.png")));
+        this.txtSearchString.putClientProperty(com.formdev.flatlaf.FlatClientProperties.MINIMUM_HEIGHT, 32);
+        this.chkDeleteAfterAction.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+    }
+
     @Override
     public void setBackgroundImage(Image image) {
         this.backgroundImage = image;
@@ -1483,6 +1504,8 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        pnlSearchBar = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
+        pnlToolbar = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         popFolders = new javax.swing.JPopupMenu();
         mnuNewFolder = new javax.swing.JMenuItem();
         mnuEmptyTrash = new javax.swing.JMenuItem();
@@ -1502,6 +1525,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         jMenuItem1 = new javax.swing.JMenuItem();
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
+        cardMail = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jSplitPane2 = new javax.swing.JSplitPane();
         jScrollPane2 = new javax.swing.JScrollPane();
         treeFolders = new javax.swing.JTree();
@@ -1753,6 +1777,9 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
         jSplitPane2.setRightComponent(jSplitPane1);
 
+        cardMail.setLayout(new java.awt.BorderLayout());
+        cardMail.add(jSplitPane2, java.awt.BorderLayout.CENTER);
+
         cmbDownloadMails.setFont(cmbDownloadMails.getFont());
         cmbDownloadMails.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
         cmbDownloadMails.addActionListener(new java.awt.event.ActionListener() {
@@ -1865,6 +1892,58 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             }
         });
 
+        pnlToolbar.setOpaque(false);
+
+        org.jdesktop.layout.GroupLayout pnlToolbarLayout = new org.jdesktop.layout.GroupLayout(pnlToolbar);
+        pnlToolbar.setLayout(pnlToolbarLayout);
+        pnlToolbarLayout.setHorizontalGroup(
+            pnlToolbarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlToolbarLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(cmdRefresh, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jToolBar1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+        pnlToolbarLayout.setVerticalGroup(
+            pnlToolbarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlToolbarLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(pnlToolbarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+                    .add(cmdRefresh, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jToolBar1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
+        );
+
+        pnlSearchBar.setOpaque(false);
+
+        org.jdesktop.layout.GroupLayout pnlSearchBarLayout = new org.jdesktop.layout.GroupLayout(pnlSearchBar);
+        pnlSearchBar.setLayout(pnlSearchBarLayout);
+        pnlSearchBarLayout.setHorizontalGroup(
+            pnlSearchBarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlSearchBarLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(txtSearchString, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 300, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(cmdSearch, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(cmbDownloadMails, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(chkDeleteAfterAction, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+        pnlSearchBarLayout.setVerticalGroup(
+            pnlSearchBarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlSearchBarLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(pnlSearchBarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+                    .add(txtSearchString, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(cmdSearch, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(cmbDownloadMails, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(chkDeleteAfterAction, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
+        );
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -1872,44 +1951,28 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jSplitPane2)
                     .add(layout.createSequentialGroup()
-                        .add(cmdRefresh)
+                        .add(pnlToolbar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(18, 18, 18)
-                        .add(jToolBar1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                        .add(jLabel18)
+                        .add(jLabel18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblPanelTitle)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(cmbDownloadMails, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(layout.createSequentialGroup()
-                        .add(chkDeleteAfterAction)
-                        .add(18, 18, 18)
-                        .add(txtSearchString, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 260, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdSearch)
-                        .add(0, 0, Short.MAX_VALUE)))
+                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(pnlSearchBar, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(cardMail, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
                 .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                        .add(org.jdesktop.layout.GroupLayout.TRAILING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(org.jdesktop.layout.GroupLayout.TRAILING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(jToolBar1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(cmbDownloadMails, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 46, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(cmdRefresh))
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+                    .add(pnlToolbar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(chkDeleteAfterAction)
-                    .add(txtSearchString, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(cmdSearch))
+                .add(pnlSearchBar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jSplitPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 485, Short.MAX_VALUE)
+                .add(cardMail, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -4399,5 +4462,8 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     private javax.swing.JTable tblMails;
     private javax.swing.JTree treeFolders;
     private javax.swing.JTextField txtSearchString;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardMail;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlToolbar;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlSearchBar;
     // End of variables declaration//GEN-END:variables
 }

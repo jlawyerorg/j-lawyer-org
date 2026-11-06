@@ -709,7 +709,7 @@ import themes.colors.DefaultColorTheme;
 /**
  * @author jens
  */
-public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements EventConsumer {
+public class InvolvedPartyEntryPanel extends com.jdimension.jlawyer.client.ui.theme.EntryRowPanel implements EventConsumer {
 
     private static final Logger log = Logger.getLogger(InvolvedPartyEntryPanel.class.getName());
     private AddressBean a = null;
@@ -747,6 +747,14 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
 
         this.mnuSendBea.setEnabled(beaEnabled);
 
+        // design kit: the colour of the party type is the bar on the left edge of the entry
+        this.lblType.setVisible(false);
+        styleRowButtons(this.cmdActions, this.cmdToAddress);
+        styleMuted(this.jLabel2, this.jLabel3, this.lblCustom1, this.lblCustom2, this.lblCustom3);
+        styleTaskPane(this.detailsContentTaskPane);
+        styleTaskPane(this.jXTaskPane1);
+        this.detailsContent.setBackground(java.awt.Color.WHITE);
+
         ServerSettings sset = ServerSettings.getInstance();
         this.lblCustom1.setText(sset.getSetting(ServerSettings.DATA_CUSTOMFIELD_ARCHIVEFILE_INVOLVED_PREFIX + "1", "Eigenes Feld 1"));
         this.lblCustom2.setText(sset.getSetting(ServerSettings.DATA_CUSTOMFIELD_ARCHIVEFILE_INVOLVED_PREFIX + "2", "Eigenes Feld 2"));
@@ -773,6 +781,22 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         b.subscribeConsumer(this, Event.TYPE_CONTACTUPDATED);
 
         this.initializing = false;
+    }
+
+    /**
+     * The collapsible sections of an entry: a light header with dark text instead of the grey
+     * SwingX default. The task pane reads its colours when its UI is installed.
+     */
+    private static void styleTaskPane(org.jdesktop.swingx.JXTaskPane pane) {
+        javax.swing.UIManager.put("TaskPane.titleBackgroundGradientStart", new javax.swing.plaf.ColorUIResource(241, 245, 249));
+        javax.swing.UIManager.put("TaskPane.titleBackgroundGradientEnd", new javax.swing.plaf.ColorUIResource(241, 245, 249));
+        javax.swing.UIManager.put("TaskPane.titleForeground", new javax.swing.plaf.ColorUIResource(com.jdimension.jlawyer.client.ui.theme.UiColors.TEXT_DARK));
+        javax.swing.UIManager.put("TaskPane.titleOver", new javax.swing.plaf.ColorUIResource(14, 114, 181));
+        javax.swing.UIManager.put("TaskPane.borderColor", new javax.swing.plaf.ColorUIResource(com.jdimension.jlawyer.client.ui.theme.UiColors.SEPARATOR));
+        javax.swing.UIManager.put("TaskPane.background", new javax.swing.plaf.ColorUIResource(java.awt.Color.WHITE));
+        pane.updateUI();
+        pane.setForeground(com.jdimension.jlawyer.client.ui.theme.UiColors.TEXT_DARK);
+        pane.getContentPane().setBackground(java.awt.Color.WHITE);
     }
 
     public AddressBean getAdress() {
@@ -1285,6 +1309,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
 
         Color c = new Color(ptb.getColor());
         this.lblType.setBackground(c);
+        this.setAccent(c);
 
         if (!this.initializing) {
             ConflictOfInterestUtils.checkForConflicts(a, ptb, this.caseDto.getId(), EditorsRegistry.getInstance().getMainWindow());

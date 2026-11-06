@@ -698,7 +698,6 @@ import javax.swing.text.AbstractDocument;
 import org.apache.log4j.Logger;
 import com.jdimension.jlawyer.client.utils.IbanUtils;
 import org.iban4j.IbanUtil;
-import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -746,7 +745,8 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
         ((AbstractDocument) this.taDescription.getDocument()).setDocumentFilter(new DocumentSizeFilter(MAXLEN_DESCRIPTION));
         ((AbstractDocument) this.txtReason.getDocument()).setDocumentFilter(new DocumentSizeFilter(MAXLEN_REASON));
 
-        this.lblHeader.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
+        // design kit: navy header like the glass headers of the editors
+        com.jdimension.jlawyer.client.ui.theme.DialogStyle.styleHeader(this.lblHeader);
 
         DefaultComboBoxModel<String> dmCurrencies = new DefaultComboBoxModel<>();
         try {

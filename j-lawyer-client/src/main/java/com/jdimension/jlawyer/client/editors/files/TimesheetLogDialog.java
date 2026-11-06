@@ -721,7 +721,11 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
         this.jScrollPane2.getVerticalScrollBar().setUnitIncrement(16);
 
-        ComponentUtils.decorateSplitPane(splitTimesheetLog);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleSplitPane(splitTimesheetLog);
+        // the entries have their own frame - the scroll pane around them does not need one
+        // (an empty border: a null border is replaced by the default on a UI update)
+        this.jScrollPane1.setBorder(javax.swing.BorderFactory.createEmptyBorder());
+        this.jScrollPane2.setBorder(javax.swing.BorderFactory.createEmptyBorder());
         ComponentUtils.persistSplitPane(splitTimesheetLog, TimesheetLogDialog.class, "splitTimesheetLog");
         ComponentUtils.restoreSplitPane(splitTimesheetLog, TimesheetLogDialog.class, "splitTimesheetLog");
 

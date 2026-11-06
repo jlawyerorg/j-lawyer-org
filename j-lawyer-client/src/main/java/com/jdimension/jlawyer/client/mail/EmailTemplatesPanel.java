@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.CommonStrings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.client.utils.SystemUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.documents.PlaceHolderCatalog;
 import com.jdimension.jlawyer.documents.PlaceHolderContext;
@@ -684,6 +685,13 @@ import java.util.Map;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.io.StringReader;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
+import javax.swing.text.Element;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.html.HTML;
+import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.*;
 import org.apache.log4j.Logger;
 
@@ -701,6 +709,8 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
 
     private TextEditorPanel tp;
     private WebViewHtmlEditorPanel hp;
+    // true while a template is being loaded - its body replaces the editor content, so nothing needs to be carried over on a format switch
+    private boolean loadingTemplate = false;
 
     /**
      * Creates new form AddressPanel
@@ -709,8 +719,9 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
 
         initComponents();
 
-        ComponentUtils.decorateSplitPane(jSplitPane1);
-        ComponentUtils.decorateSplitPane(jSplitPane2);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleSplitPane(jSplitPane1);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleSplitPane(jSplitPane2);
+        this.applyModernLook();
 
         tp = new TextEditorPanel();
         hp = new WebViewHtmlEditorPanel();
@@ -783,6 +794,114 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         }
     }
 
+    /**
+     * Waits for the HTML editor content cache to be synchronized on macOS.
+     * <p>
+     * On macOS, the WebViewHtmlEditorPanel uses a cached content mechanism to avoid
+     * EDT/JavaFX deadlocks. The cache is updated via JavaScript's onChange handler
+     * with a 300ms debounce. This method waits 1500ms (300ms debounce + buffer) to
+     * ensure the cache contains the latest editor content before reading it.
+     * </p>
+     * <p>
+     * This method only waits if:
+     * <ul>
+     *   <li>Running on macOS</li>
+     *   <li>The editor is a WebViewHtmlEditorPanel (not needed for plain text editors)</li>
+     * </ul>
+     * </p>
+     *
+     * @param ed the editor implementation to check
+     */
+    private void waitForHtmlContentOnMac(EditorImplementation ed) {
+        if (SystemUtils.isMacOs() && ed instanceof WebViewHtmlEditorPanel) {
+            try {
+                Thread.sleep(1500);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+
+    /**
+     * Converts the content of the HTML editor to plain text while keeping its line breaks.
+     * EmailUtils.html2Text (HTMLEditorKit) turns &lt;br&gt; into a space and prepends a line break,
+     * so switching a template from text/plain to text/html and back would merge its lines.
+     * The HTML is parsed the same way, but every &lt;br&gt; element becomes a line break - except one
+     * that only precedes white space up to the end of its paragraph, which adds no line, as in a
+     * browser (e.g. the empty paragraphs of the HTML editor).
+     *
+     * @param html the HTML content
+     * @return the plain text
+     */
+    private static String htmlToPlainText(String html) {
+        if (html == null) {
+            return "";
+        }
+        try {
+            HTMLEditorKit editorKit = new HTMLEditorKit();
+            Document doc = editorKit.createDefaultDocument();
+            doc.putProperty("IgnoreCharsetDirective", true);
+            editorKit.read(new StringReader(html), doc, 0);
+            StringBuilder text = new StringBuilder();
+            appendPlainText(doc, doc.getDefaultRootElement(), text);
+            if (text.length() > 0 && text.charAt(0) == '\n') {
+                text.deleteCharAt(0);
+            }
+            return text.toString();
+        } catch (Exception ex) {
+            log.error("Unable to convert HTML to plain text", ex);
+            return EmailUtils.html2Text(html);
+        }
+    }
+
+    private static void appendPlainText(Document doc, Element element, StringBuilder text) throws BadLocationException {
+        if (!element.isLeaf()) {
+            for (int i = 0; i < element.getElementCount(); i++) {
+                appendPlainText(doc, element.getElement(i), text);
+            }
+            return;
+        }
+        if (element.getAttributes().getAttribute(StyleConstants.NameAttribute) == HTML.Tag.BR) {
+            if (!isLastInParagraph(doc, element)) {
+                text.append('\n');
+            }
+            return;
+        }
+        int end = Math.min(element.getEndOffset(), doc.getLength());
+        if (end > element.getStartOffset()) {
+            text.append(doc.getText(element.getStartOffset(), end - element.getStartOffset()));
+        }
+    }
+
+    private static boolean isLastInParagraph(Document doc, Element br) throws BadLocationException {
+        // a <br> adds no line if it is followed by nothing but white space up to the end of its paragraph
+        // (a following <br> counts as content: HTMLEditorKit stores each <br> as a space)
+        Element paragraph = br.getParentElement();
+        for (int i = paragraph.getElementIndex(br.getStartOffset()) + 1; i < paragraph.getElementCount(); i++) {
+            Element next = paragraph.getElement(i);
+            if (next.getAttributes().getAttribute(StyleConstants.NameAttribute) == HTML.Tag.BR) {
+                return false;
+            }
+            int end = Math.min(next.getEndOffset(), doc.getLength());
+            if (end > next.getStartOffset() && !doc.getText(next.getStartOffset(), end - next.getStartOffset()).trim().isEmpty()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Applies the editor design kit: list, form and placeholders as three light cards side by side.
+     */
+    private void applyModernLook() {
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleTitle(this.lblPanelTitle, null);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleHeaderButtons(this.cmdRefresh);
+        this.jScrollPane1.setBorder(javax.swing.BorderFactory.createLineBorder(com.jdimension.jlawyer.client.ui.theme.UiColors.SEPARATOR));
+        this.jScrollPane1.getViewport().setBackground(java.awt.Color.WHITE);
+        this.lstMailTemplates.setBackground(java.awt.Color.WHITE);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.transparentInsideCards(this);
+    }
+
     @Override
     public void setBackgroundImage(Image image) {
         this.backgroundImage = image;
@@ -805,11 +924,12 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        pnlToolbar = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
         cmdRefresh = new javax.swing.JButton();
         jSplitPane2 = new javax.swing.JSplitPane();
-        jPanel3 = new javax.swing.JPanel();
+        jPanel3 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         cmdSave = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         lstMailTemplates = new javax.swing.JList();
@@ -818,7 +938,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         cmdRename = new javax.swing.JButton();
         cmdDuplicate = new javax.swing.JButton();
         jSplitPane1 = new javax.swing.JSplitPane();
-        jPanel1 = new javax.swing.JPanel();
+        jPanel1 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         txtSubject = new javax.swing.JTextField();
@@ -831,7 +951,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         txtBcc = new javax.swing.JTextField();
         jLabel5 = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
-        jPanel2 = new javax.swing.JPanel();
+        jPanel2 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         cmdAddPlaceHolder = new javax.swing.JButton();
         placeHolderPicker = new com.jdimension.jlawyer.client.mail.PlaceHolderPickerPanel();
         cmbPlaceHolderTarget = new javax.swing.JComboBox();
@@ -907,6 +1027,8 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         });
 
         org.jdesktop.layout.GroupLayout jPanel3Layout = new org.jdesktop.layout.GroupLayout(jPanel3);
+        jPanel3.setTitle("Vorlagen");
+
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -946,7 +1068,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
             }
         });
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("E-Mail- / beA-Vorlage"));
+        jPanel1.setTitle("E-Mail- / beA-Vorlage");
 
         jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() | java.awt.Font.BOLD));
         jLabel1.setText("Betreff:");
@@ -1056,7 +1178,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
 
         jSplitPane1.setLeftComponent(jPanel1);
 
-        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Platzhalter"));
+        jPanel2.setTitle("Platzhalter");
 
         cmdAddPlaceHolder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/1leftarrow.png"))); // NOI18N
         cmdAddPlaceHolder.addActionListener(new java.awt.event.ActionListener() {
@@ -1095,6 +1217,26 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
 
         jSplitPane2.setRightComponent(jSplitPane1);
 
+        pnlToolbar.setOpaque(false);
+
+        org.jdesktop.layout.GroupLayout pnlToolbarLayout = new org.jdesktop.layout.GroupLayout(pnlToolbar);
+        pnlToolbar.setLayout(pnlToolbarLayout);
+        pnlToolbarLayout.setHorizontalGroup(
+            pnlToolbarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlToolbarLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(cmdRefresh, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+        pnlToolbarLayout.setVerticalGroup(
+            pnlToolbarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlToolbarLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(pnlToolbarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+                    .add(cmdRefresh, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
+        );
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -1102,27 +1244,25 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                        .add(cmdRefresh)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                        .add(jLabel18)
+                    .add(layout.createSequentialGroup()
+                        .add(pnlToolbar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(18, 18, 18)
+                        .add(jLabel18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblPanelTitle)
-                        .add(0, 0, Short.MAX_VALUE))
-                    .add(jSplitPane2))
+                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(jSplitPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
                 .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .add(cmdRefresh))
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+                    .add(pnlToolbar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jSplitPane2)
+                .add(jSplitPane2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -1138,6 +1278,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             EmailTemplate tpl = new EmailTemplate();
             EditorImplementation ed = (EditorImplementation) this.contentPanel.getComponent(0);
+            waitForHtmlContentOnMac(ed);
             tpl.setBody(ed.getText());
             tpl.setFileName(this.lstMailTemplates.getSelectedValue().toString());
             tpl.setFormat(this.cmbFormat.getSelectedItem().toString());
@@ -1167,7 +1308,12 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
             EmailTemplate tpl = locator.lookupIntegrationServiceRemote().getEmailTemplate(this.lstMailTemplates.getSelectedValue().toString());
-            this.cmbFormat.setSelectedItem(tpl.getFormat());
+            this.loadingTemplate = true;
+            try {
+                this.cmbFormat.setSelectedItem(tpl.getFormat());
+            } finally {
+                this.loadingTemplate = false;
+            }
             EditorImplementation ed = (EditorImplementation) this.contentPanel.getComponent(0);
             ed.setText(tpl.getBody());
             this.txtSubject.setText(tpl.getSubject());
@@ -1276,6 +1422,10 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
 
         if (sel.toLowerCase().contains("html")) {
             
+            if (!this.loadingTemplate && this.contentPanel.getComponent(0) != hp) {
+                // carry over the content of the current template - the HTML editor might still hold the body of a previously selected template
+                hp.setText(EmailUtils.text2Html(tp.getText()));
+            }
             this.contentPanel.remove(0);
             this.contentPanel.add(hp);
             hp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
@@ -1284,6 +1434,11 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
             SwingUtilities.updateComponentTreeUI(hp);
         } else {
             
+            if (!this.loadingTemplate && this.contentPanel.getComponent(0) != tp) {
+                // carry over the content of the current template - the text editor might still hold the body of a previously selected template
+                waitForHtmlContentOnMac(hp);
+                tp.setText(htmlToPlainText(hp.getText()));
+            }
             this.contentPanel.remove(0);
             this.contentPanel.add(tp);
             tp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
@@ -1383,9 +1538,9 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel2;
-    private javax.swing.JPanel jPanel3;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel1;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel2;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel3;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JSplitPane jSplitPane2;
@@ -1396,6 +1551,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
     private javax.swing.JTextField txtCc;
     private javax.swing.JTextField txtSubject;
     private javax.swing.JTextField txtTo;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlToolbar;
     // End of variables declaration//GEN-END:variables
 
     @Override

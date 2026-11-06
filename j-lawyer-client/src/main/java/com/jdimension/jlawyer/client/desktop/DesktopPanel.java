@@ -744,6 +744,10 @@ import javax.swing.MenuElement;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
+import com.jdimension.jlawyer.client.ui.theme.GlassCardPanel;
+import com.jdimension.jlawyer.client.ui.theme.EditorStyle;
+import com.jdimension.jlawyer.client.ui.theme.UiColors;
+import com.jdimension.jlawyer.client.ui.theme.UiFonts;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -793,6 +797,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
      */
     public DesktopPanel() {
         initComponents();
+        applyModernLook();
 
         // Set tooltip with platform-specific keyboard shortcut
         String os = System.getProperty("os.name").toLowerCase();
@@ -1121,6 +1126,31 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.lblUserIcon.setIcon(us.getCurrentUserBigIcon());
     }
 
+    /**
+     * Design kit: glass header and footer, the sections are glass cards with a styled header.
+     */
+    private void applyModernLook() {
+        EditorStyle.styleHeaderButtons(this.cmdIngoChat, this.cmdGlobalSearch, this.cmdEditDesktop);
+        EditorStyle.styleCardTitle(this.jLabel5);
+        EditorStyle.styleCardTitle(this.jLabel6);
+        EditorStyle.styleCardTitle(this.jLabel9);
+        EditorStyle.styleCardHeaderButtons(this.cmdRefreshRevDue, this.cmdUserFilter, this.cmdDueSinceDays,
+                this.cmdRefreshLastChanged, this.cmdUserFilterLastchanged,
+                this.cmdUserFilterTagged, this.cmdRefreshTagged, this.cmdTagFilter, this.cmdDocumentTagFilter);
+        EditorStyle.styleGlassSearchField(this.txtSearchDue);
+        EditorStyle.styleMainTabs(this.tabPaneDue);
+        EditorStyle.styleMainTabs(this.tabPaneTagged);
+        EditorStyle.styleGlassScrollBars(this.jScrollPane1, this.jScrollPane3, this.jScrollPane4);
+        for (javax.swing.JLabel count : new javax.swing.JLabel[]{this.lblUserFilterCount, this.lblDueSinceDays,
+            this.lblUserFilterCountLastchanged, this.lblUserFilterCountTagged}) {
+            count.setForeground(UiColors.TEXT_ON_GLASS_SECONDARY);
+        }
+        for (javax.swing.JLabel status : new javax.swing.JLabel[]{this.lblArchiveFileCount, this.lblArchiveFileArchivedCount,
+            this.lblAddressCount, this.lblDocumentCount, this.lblVoipBalance, this.lblAssistant}) {
+            status.setForeground(UiColors.TEXT_ON_GLASS_SECONDARY);
+        }
+    }
+
     private void configureStatusLabels() {
         configureStatusLabel(this.lblUnreadMail, EmailInboxPanel.class, "desktop-mail");
         configureStatusLabel(this.lblScans, ScannerPanel.class, "desktop-scans");
@@ -1284,11 +1314,8 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
     private void applyLayoutVisibility() {
         // Get the split pane color from the theme
-        Color splitPaneColor = new Color(
-                DefaultColorTheme.COLOR_DARK_GREY.getRed(),
-                DefaultColorTheme.COLOR_DARK_GREY.getGreen(),
-                DefaultColorTheme.COLOR_DARK_GREY.getBlue(),
-                170);
+        // the cards are separated by transparent gaps instead of dark dividers
+        Color splitPaneColor = new Color(0, 0, 0, 0);
 
         // Build the dynamic layout using the LayoutManager
         javax.swing.JComponent layoutComponent = layoutManager.buildLayout(splitPaneColor);
@@ -1560,13 +1587,14 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        pnlHeaderUser = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         popTagFilter = new javax.swing.JPopupMenu();
         popDocumentTagFilter = new javax.swing.JPopupMenu();
         popUserFilter = new javax.swing.JPopupMenu();
         popDueSinceDays = new javax.swing.JPopupMenu();
         popUserFilterTagged = new javax.swing.JPopupMenu();
         popUserFilterLastchanged = new javax.swing.JPopupMenu();
-        jPanel2 = new javax.swing.JPanel();
+        jPanel2 = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         jLabel6 = new javax.swing.JLabel();
         cmdUserFilter = new javax.swing.JButton();
         cmdRefreshRevDue = new javax.swing.JButton();
@@ -1579,7 +1607,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         cmdDueSinceDays = new javax.swing.JButton();
         toggleDueCompactView = new javax.swing.JLabel();
         txtSearchDue = new javax.swing.JTextField();
-        jPanel1 = new javax.swing.JPanel();
+        jPanel1 = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         jLabel5 = new javax.swing.JLabel();
         jScrollPane3 = new javax.swing.JScrollPane();
         pnlLastChanged = new javax.swing.JPanel();
@@ -1587,7 +1615,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         cmdRefreshLastChanged = new javax.swing.JButton();
         lblUserFilterCountLastchanged = new javax.swing.JLabel();
         cmdUserFilterLastchanged = new javax.swing.JButton();
-        jPanel3 = new javax.swing.JPanel();
+        jPanel3 = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         jLabel9 = new javax.swing.JLabel();
         cmdUserFilterTagged = new javax.swing.JButton();
         lblUserFilterCountTagged = new javax.swing.JLabel();
@@ -1598,7 +1626,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         jScrollPane4 = new javax.swing.JScrollPane();
         pnlTagged = new javax.swing.JPanel();
         jLabel10 = new javax.swing.JLabel();
-        messagesWidget = new com.jdimension.jlawyer.client.desktop.DesktopWidgetPanel();
+        messagesWidget = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         lblUnreadMail = new javax.swing.JLabel();
         lblUnreadBea = new javax.swing.JLabel();
         lblScans = new javax.swing.JLabel();
@@ -1607,14 +1635,14 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         lblUpdateStatus = new javax.swing.JLabel();
         lblNewsStatus = new javax.swing.JLabel();
         lblUpdateStatusFormPlugins = new javax.swing.JLabel();
-        systemInformationWidget = new com.jdimension.jlawyer.client.desktop.DesktopWidgetPanel();
+        systemInformationWidget = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         lblArchiveFileCount = new javax.swing.JLabel();
         lblArchiveFileArchivedCount = new javax.swing.JLabel();
         lblAddressCount = new javax.swing.JLabel();
         lblDocumentCount = new javax.swing.JLabel();
         lblVoipBalance = new javax.swing.JLabel();
         lblAssistant = new javax.swing.JLabel();
-        desktopWidgetPanel2 = new com.jdimension.jlawyer.client.desktop.DesktopWidgetPanel();
+        desktopWidgetPanel2 = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         cmdEditDesktop = new javax.swing.JButton();
         cmdGlobalSearch = new javax.swing.JButton();
         cmdIngoChat = new javax.swing.JButton();
@@ -2189,6 +2217,32 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             }
         });
 
+        pnlHeaderUser.setOpaque(false);
+
+        org.jdesktop.layout.GroupLayout pnlHeaderUserLayout = new org.jdesktop.layout.GroupLayout(pnlHeaderUser);
+        pnlHeaderUser.setLayout(pnlHeaderUserLayout);
+        pnlHeaderUserLayout.setHorizontalGroup(
+            pnlHeaderUserLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlHeaderUserLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(lblDay, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(lblUserName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(lblUserIcon, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+        pnlHeaderUserLayout.setVerticalGroup(
+            pnlHeaderUserLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlHeaderUserLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(pnlHeaderUserLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+                    .add(lblDay, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(lblUserName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(lblUserIcon, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
+        );
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -2196,17 +2250,13 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(pnlGridContainer, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(layout.createSequentialGroup()
                         .add(messagesWidget, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblDay, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 99, Short.MAX_VALUE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblUserName)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblUserIcon)
+                        .add(pnlHeaderUser, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(desktopWidgetPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(pnlGridContainer, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(systemInformationWidget, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -2214,14 +2264,12 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
                 .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                    .add(desktopWidgetPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(lblDay, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(messagesWidget, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(lblUserIcon, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(lblUserName, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+                    .add(messagesWidget, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(pnlHeaderUser, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(desktopWidgetPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(pnlGridContainer, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(pnlGridContainer, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(systemInformationWidget, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
@@ -2394,16 +2442,16 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JButton cmdUserFilter;
     private javax.swing.JButton cmdUserFilterLastchanged;
     private javax.swing.JButton cmdUserFilterTagged;
-    private com.jdimension.jlawyer.client.desktop.DesktopWidgetPanel desktopWidgetPanel2;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel desktopWidgetPanel2;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel2;
-    private javax.swing.JPanel jPanel3;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel jPanel1;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel jPanel2;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel jPanel3;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
@@ -2428,7 +2476,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JLabel lblUserIcon;
     private javax.swing.JLabel lblUserName;
     private javax.swing.JLabel lblVoipBalance;
-    private com.jdimension.jlawyer.client.desktop.DesktopWidgetPanel messagesWidget;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel messagesWidget;
     private javax.swing.JPanel pnlGridContainer;
     private javax.swing.JPanel pnlLastChanged;
     private javax.swing.JPanel pnlRevDue;
@@ -2439,11 +2487,12 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JPopupMenu popUserFilter;
     private javax.swing.JPopupMenu popUserFilterLastchanged;
     private javax.swing.JPopupMenu popUserFilterTagged;
-    private com.jdimension.jlawyer.client.desktop.DesktopWidgetPanel systemInformationWidget;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel systemInformationWidget;
     private javax.swing.JTabbedPane tabPaneDue;
     private javax.swing.JTabbedPane tabPaneTagged;
     private javax.swing.JLabel toggleDueCompactView;
     private javax.swing.JTextField txtSearchDue;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlHeaderUser;
     // End of variables declaration//GEN-END:variables
 
     /**
@@ -2635,18 +2684,20 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
      * Adds a section header for a due entry type.
      */
     private void addDueSectionHeader(javax.swing.JPanel panel, ReviewDueEntry entry) {
+        // a light pill on the glass card, the colour of the event type is in the icon
         javax.swing.JPanel sectionHeader = new javax.swing.JPanel() {
             @Override
             protected void paintComponent(java.awt.Graphics g) {
                 java.awt.Graphics2D g2d = (java.awt.Graphics2D) g.create();
-                g2d.setColor(new java.awt.Color(0, 0, 0, 180));
-                g2d.fillRect(0, 0, getWidth(), getHeight());
+                g2d.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+                g2d.setColor(new java.awt.Color(255, 255, 255, 22));
+                g2d.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, getHeight(), getHeight());
                 g2d.dispose();
                 super.paintComponent(g);
             }
         };
         sectionHeader.setOpaque(false);
-        sectionHeader.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 8, 4));
+        sectionHeader.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 8, 3));
 
         // Determine icon and color based on event type
         String iconPath;
@@ -2662,13 +2713,13 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             labelColor = org.jlawyer.themes.ServerColorTheme.COLOR_LOGO_GREEN;
         }
 
-        sectionHeader.setBorder(javax.swing.BorderFactory.createLineBorder(labelColor, 3));
+        sectionHeader.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 4, 0, 4));
 
         javax.swing.JLabel sectionLabel = new javax.swing.JLabel(entry.getReview().getEventTypeName());
         javax.swing.ImageIcon originalIcon = new javax.swing.ImageIcon(getClass().getResource(iconPath));
         sectionLabel.setIcon(tintDueIcon(originalIcon, labelColor));
-        sectionLabel.setForeground(labelColor);
-        sectionLabel.setFont(sectionLabel.getFont().deriveFont(java.awt.Font.BOLD, sectionLabel.getFont().getSize() + 2f));
+        sectionLabel.setForeground(UiColors.TEXT_ON_GLASS);
+        sectionLabel.setFont(UiFonts.exo2Bold(sectionLabel.getFont().getSize() + 2f));
         sectionHeader.add(sectionLabel);
         sectionHeader.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, sectionHeader.getPreferredSize().height));
         panel.add(sectionHeader);
@@ -2716,6 +2767,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             scroll.getViewport().setOpaque(false);
             scroll.setBorder(null);
             scroll.setOpaque(false);
+            EditorStyle.styleGlassScrollBars(scroll);
             tabPaneDue.addTab(eventTypeName, scroll);
             ComponentUtils.setTabBaseTitle(tabPaneDue, tabPaneDue.getTabCount() - 1, eventTypeName);
         }
@@ -2901,19 +2953,18 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
     private void initMessagingDesktopPanels() {
         // "Nachrichten an mich" panel
-        pnlDesktopMessagesToMe = new JPanel();
-        pnlDesktopMessagesToMe.setOpaque(false);
+        pnlDesktopMessagesToMe = new GlassCardPanel();
+        pnlDesktopMessagesToMe.setBorder(javax.swing.BorderFactory.createEmptyBorder(4, 6, 8, 8));
         pnlDesktopMessagesToMe.setLayout(new java.awt.BorderLayout());
 
         JLabel lblMessagesToMeTitle = new JLabel("Nachrichten an mich");
-        lblMessagesToMeTitle.setFont(lblMessagesToMeTitle.getFont().deriveFont(lblMessagesToMeTitle.getFont().getStyle() | java.awt.Font.BOLD, lblMessagesToMeTitle.getFont().getSize() + 2));
-        lblMessagesToMeTitle.setForeground(java.awt.Color.white);
+        EditorStyle.styleCardTitle(lblMessagesToMeTitle);
         JPanel headerToMe = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT));
         headerToMe.setOpaque(false);
         headerToMe.add(lblMessagesToMeTitle);
         pnlDesktopMessagesToMe.add(headerToMe, java.awt.BorderLayout.NORTH);
 
-        pnlDesktopMessagesToMeContent = new JPanel();
+        pnlDesktopMessagesToMeContent = new com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel();
         pnlDesktopMessagesToMeContent.setOpaque(false);
         pnlDesktopMessagesToMeContent.setLayout(new BoxLayout(pnlDesktopMessagesToMeContent, BoxLayout.Y_AXIS));
         JLabel lblLoadingToMe = new JLabel("Nachrichten werden geladen...");
@@ -2925,22 +2976,23 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         scrollDesktopMessagesToMe.setOpaque(false);
         scrollDesktopMessagesToMe.getViewport().setOpaque(false);
         scrollDesktopMessagesToMe.getVerticalScrollBar().setUnitIncrement(16);
+        scrollDesktopMessagesToMe.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        EditorStyle.styleGlassScrollBars(scrollDesktopMessagesToMe);
         pnlDesktopMessagesToMe.add(scrollDesktopMessagesToMe, java.awt.BorderLayout.CENTER);
 
         // "Nachrichten an andere" panel
-        pnlDesktopMessagesToOthers = new JPanel();
-        pnlDesktopMessagesToOthers.setOpaque(false);
+        pnlDesktopMessagesToOthers = new GlassCardPanel();
+        pnlDesktopMessagesToOthers.setBorder(javax.swing.BorderFactory.createEmptyBorder(4, 6, 8, 8));
         pnlDesktopMessagesToOthers.setLayout(new java.awt.BorderLayout());
 
         JLabel lblMessagesToOthersTitle = new JLabel("Nachrichten an andere");
-        lblMessagesToOthersTitle.setFont(lblMessagesToOthersTitle.getFont().deriveFont(lblMessagesToOthersTitle.getFont().getStyle() | java.awt.Font.BOLD, lblMessagesToOthersTitle.getFont().getSize() + 2));
-        lblMessagesToOthersTitle.setForeground(java.awt.Color.white);
+        EditorStyle.styleCardTitle(lblMessagesToOthersTitle);
         JPanel headerToOthers = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT));
         headerToOthers.setOpaque(false);
         headerToOthers.add(lblMessagesToOthersTitle);
         pnlDesktopMessagesToOthers.add(headerToOthers, java.awt.BorderLayout.NORTH);
 
-        pnlDesktopMessagesToOthersContent = new JPanel();
+        pnlDesktopMessagesToOthersContent = new com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel();
         pnlDesktopMessagesToOthersContent.setOpaque(false);
         pnlDesktopMessagesToOthersContent.setLayout(new BoxLayout(pnlDesktopMessagesToOthersContent, BoxLayout.Y_AXIS));
         JLabel lblLoadingToOthers = new JLabel("Nachrichten werden geladen...");
@@ -2952,6 +3004,8 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         scrollDesktopMessagesToOthers.setOpaque(false);
         scrollDesktopMessagesToOthers.getViewport().setOpaque(false);
         scrollDesktopMessagesToOthers.getVerticalScrollBar().setUnitIncrement(16);
+        scrollDesktopMessagesToOthers.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        EditorStyle.styleGlassScrollBars(scrollDesktopMessagesToOthers);
         pnlDesktopMessagesToOthers.add(scrollDesktopMessagesToOthers, java.awt.BorderLayout.CENTER);
     }
 

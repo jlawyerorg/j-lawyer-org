@@ -761,7 +761,12 @@ public class AiChatHistoryPanel extends javax.swing.JPanel implements EventConsu
         this.jScrollPane1.setMinimumSize(new Dimension(220, 0));
         this.jScrollPane2.getVerticalScrollBar().setUnitIncrement(32);
 
-        com.jdimension.jlawyer.client.utils.ComponentUtils.decorateSplitPane(this.jSplitPane1);
+        // the panel sits on a light card (AI chats editor, case editor): thin divider, framed areas
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleCardSplitPane(this.jSplitPane1);
+        this.jSplitPane1.setOpaque(false);
+        this.jScrollPane1.setBorder(javax.swing.BorderFactory.createLineBorder(com.jdimension.jlawyer.client.ui.theme.UiColors.SEPARATOR));
+        this.jScrollPane2.setBorder(javax.swing.BorderFactory.createLineBorder(com.jdimension.jlawyer.client.ui.theme.UiColors.SEPARATOR));
+        this.pnlTranscript.setOpaque(false);
 
         this.updateActionStates();
 
@@ -1142,14 +1147,7 @@ public class AiChatHistoryPanel extends javax.swing.JPanel implements EventConsu
             if (this.pnlMessages.getComponentCount() > 0) {
                 this.pnlMessages.add(Box.createRigidArea(new Dimension(0, 12)));
             }
-            if (entry.getKind() == AiChatTranscript.Entry.KIND_USER && this.caseMode && entry.getPrincipalId() != null) {
-                // case chats may be continued by several users - show who asked
-                JLabel lblAuthor = new JLabel(entry.getPrincipalId());
-                lblAuthor.setFont(lblAuthor.getFont().deriveFont(lblAuthor.getFont().getSize2D() - 1f));
-                lblAuthor.setForeground(Color.GRAY);
-                lblAuthor.setAlignmentX(Component.LEFT_ALIGNMENT);
-                this.pnlMessages.add(lblAuthor);
-            }
+            // the bubble header names who asked - case chats may be continued by several users
             Message m = entry.toMessage();
             AiChatMessageMarkdownPanel p = AiChatTranscript.createMessagePanel(m, null);
             Dimension d = p.getPreferredSize();

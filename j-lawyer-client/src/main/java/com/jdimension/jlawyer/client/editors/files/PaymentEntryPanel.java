@@ -688,7 +688,7 @@ import themes.colors.DefaultColorTheme;
  *
  * @author jens
  */
-public class PaymentEntryPanel extends javax.swing.JPanel {
+public class PaymentEntryPanel extends com.jdimension.jlawyer.client.ui.theme.EntryRowPanel {
 
     private static final Logger log = Logger.getLogger(PaymentEntryPanel.class.getName());
     private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
@@ -709,6 +709,8 @@ public class PaymentEntryPanel extends javax.swing.JPanel {
     public PaymentEntryPanel(ArchiveFilePanel caseView) {
         initComponents();
         this.caseView = caseView;
+        styleRowButtons(this.cmdOpen, this.cmdDelete, this.cmdDuplicate, this.cmdMarkAsPayed);
+        styleMuted(this.jLabel1, this.jLabel2, this.lblPaymentType, this.lblRecipient);
     }
 
     public void setEntry(ArchiveFileBean caseDto, Payment payment, List<ArchiveFileAddressesBean> addresses) {
@@ -717,13 +719,17 @@ public class PaymentEntryPanel extends javax.swing.JPanel {
         this.addresses = addresses;
         this.lblPaymentNumber.setText(payment.getPaymentNumber());
         this.lblTargetDate.setText(df.format(payment.getTargetDate()));
+        // the bar on the left shows the state: done, overdue or open
         if (payment.getStatus() == Payment.STATUS_CANCELLED || payment.getStatus() == Payment.STATUS_EXECUTED) {
             this.lblTargetDate.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
+            this.setAccent(ACCENT_DONE);
         } else {
             if (payment.getTargetDate().getTime() < new Date().getTime()) {
                 this.lblTargetDate.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+                this.setAccent(ACCENT_OVERDUE);
             } else {
-                this.lblTargetDate.setForeground(Color.black);
+                this.lblTargetDate.setForeground(com.jdimension.jlawyer.client.ui.theme.UiColors.TEXT_DARK);
+                this.setAccent(ACCENT_OPEN);
             }
         }
         this.lblName.setText(payment.getName());

@@ -1282,6 +1282,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
                                 if (!hasTab) {
                                     JScrollPane scroll = new JScrollPane();
                                     scroll.getVerticalScrollBar().setUnitIncrement(16);
+                                    com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleGlassScrollBars(scroll);
 
                                     JPanel tPanel = new JPanel();
                                     BoxLayout layout = new BoxLayout(tPanel, BoxLayout.Y_AXIS);

@@ -684,10 +684,66 @@ public class ReportEntryPanel extends javax.swing.JPanel {
      * Creates new form ReportEntryPanel
      * @param reportPane
      */
+    private static final javax.swing.Icon CATEGORY_DOT = new javax.swing.Icon() {
+        @Override
+        public void paintIcon(java.awt.Component c, java.awt.Graphics g, int x, int y) {
+            java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
+            g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(com.jdimension.jlawyer.client.ui.theme.UiColors.ACCENT);
+            g2.fillOval(x, y + 2, 7, 7);
+            g2.dispose();
+        }
+
+        @Override
+        public int getIconWidth() {
+            return 9;
+        }
+
+        @Override
+        public int getIconHeight() {
+            return 11;
+        }
+    };
+
     public ReportEntryPanel(JTabbedPane reportPane) {
         initComponents();
+        this.applyModernLook();
         
         this.reportPane=reportPane;
+    }
+
+    /**
+     * The entries are rows on a light card: transparent, separated by a thin line, highlighted
+     * while the mouse is over them; the category is a section heading.
+     */
+    private void applyModernLook() {
+        this.setOpaque(false);
+        this.setBackground(com.jdimension.jlawyer.client.ui.theme.UiColors.TABLE_STRIPE);
+        this.setBorder(javax.swing.BorderFactory.createMatteBorder(0, 0, 1, 0, com.jdimension.jlawyer.client.ui.theme.UiColors.SEPARATOR));
+        this.lblCategory.setOpaque(false);
+        this.lblCategory.setForeground(com.jdimension.jlawyer.client.ui.theme.UiColors.CARD_TITLE);
+        this.lblDescription.setForeground(new java.awt.Color(71, 85, 105));
+        this.cmdPlay.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+        java.awt.event.MouseAdapter hover = new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                setOpaque(true);
+                repaint();
+            }
+
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                java.awt.Point p = javax.swing.SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), ReportEntryPanel.this);
+                if (!contains(p)) {
+                    setOpaque(false);
+                    repaint();
+                }
+            }
+        };
+        this.addMouseListener(hover);
+        for (java.awt.Component c : this.getComponents()) {
+            c.addMouseListener(hover);
+        }
     }
     
     public void setEntry(Report report) {
@@ -722,11 +778,14 @@ public class ReportEntryPanel extends javax.swing.JPanel {
         }
         
         if(report.isFirstInCategory()) {
+            // first report of a category: the category as section heading with an accent dot
             this.lblCategory.setText(report.getCategory());
-            this.lblCategory.setBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
+            this.lblCategory.setIcon(CATEGORY_DOT);
+            this.lblCategory.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 0, 2, 0));
         } else {
             this.lblCategory.setText("");
-            this.lblCategory.setBackground(this.lblName.getBackground());
+            this.lblCategory.setIcon(null);
+            this.lblCategory.setBorder(null);
         }
         this.lblName.setText(report.getName());
         this.lblDescription.setText(report.getDescription());

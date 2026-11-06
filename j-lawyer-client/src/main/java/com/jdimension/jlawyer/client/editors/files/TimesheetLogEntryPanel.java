@@ -683,7 +683,6 @@ import java.util.List;
 import java.util.Objects;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import javax.swing.border.MatteBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.apache.log4j.Logger;
@@ -693,7 +692,7 @@ import themes.colors.DefaultColorTheme;
  *
  * @author jens
  */
-public class TimesheetLogEntryPanel extends javax.swing.JPanel {
+public class TimesheetLogEntryPanel extends com.jdimension.jlawyer.client.ui.theme.EntryRowPanel {
 
     private static final Logger log = Logger.getLogger(TimesheetLogEntryPanel.class.getName());
 
@@ -725,6 +724,7 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
      */
     public TimesheetLogEntryPanel(TimesheetLogDialog cParent, List<TimesheetPositionTemplate> posTemplates, String numericInputFormat) {
         initComponents();
+        styleRowButtons(this.cmdStartStop, this.cmdSave, this.cmdEdit, this.cmdManualRange, this.cmdDescriptionSuggestions);
 
         this.numericInputFormat = numericInputFormat;
 
@@ -788,7 +788,7 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         if (this.manualRangeMode) {
             borderColor = DefaultColorTheme.COLOR_LOGO_BLUE;
         } else if (this.entry.getStarted() == null) {
-            borderColor = DefaultColorTheme.COLOR_DARK_GREY;
+            borderColor = TEXT_MUTED;
         } else if (this.entry.getStopped() == null) {
             borderColor = DefaultColorTheme.COLOR_LOGO_RED;
         } else if (isDirty()) {
@@ -796,7 +796,8 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         } else {
             borderColor = DefaultColorTheme.COLOR_LOGO_GREEN;
         }
-        this.setBorder(new MatteBorder(0, 4, 0, 0, borderColor));
+        // the status is shown as the bar on the left edge of the entry
+        this.setAccent(borderColor);
     }
 
     public boolean isEntryRunning() {
@@ -1263,7 +1264,7 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         this.containingParent.updatePercentageDone(entrySheet);
 
         this.setStatusColor(DefaultColorTheme.COLOR_LOGO_BLUE);
-        this.setBorder(new javax.swing.border.MatteBorder(0, 4, 0, 0, DefaultColorTheme.COLOR_LOGO_BLUE));
+        this.setAccent(ACCENT_OPEN);
         this.txtManualEntry.setValue(null);
 
     }
@@ -1408,7 +1409,7 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         this.cmdSave.setEnabled(true);
         this.cmdEdit.setVisible(false);
         this.setStatusColor(DefaultColorTheme.COLOR_LOGO_BLUE);
-        this.setBorder(new javax.swing.border.MatteBorder(0, 4, 0, 0, DefaultColorTheme.COLOR_LOGO_BLUE));
+        this.setAccent(ACCENT_OPEN);
     }//GEN-LAST:event_cmdEditActionPerformed
 
     private void cmdManualRangeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdManualRangeActionPerformed
@@ -1446,7 +1447,7 @@ public class TimesheetLogEntryPanel extends javax.swing.JPanel {
         this.cmdManualRange.setEnabled(false);
 
         this.setStatusColor(DefaultColorTheme.COLOR_LOGO_BLUE);
-        this.setBorder(new javax.swing.border.MatteBorder(0, 4, 0, 0, DefaultColorTheme.COLOR_LOGO_BLUE));
+        this.setAccent(ACCENT_OPEN);
     }//GEN-LAST:event_cmdManualRangeActionPerformed
 
 

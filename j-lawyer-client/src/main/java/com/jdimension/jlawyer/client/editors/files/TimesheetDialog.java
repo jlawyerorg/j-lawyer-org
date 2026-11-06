@@ -735,7 +735,10 @@ public class TimesheetDialog extends javax.swing.JDialog implements NewEventEntr
         this.cmdAllowedPositions.setText("");
 
         ComponentUtils.restoreDialogSize(this);
-        ComponentUtils.decorateSplitPane(splitMain);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleSplitPane(splitMain);
+        // the entries have their own frame - the scroll pane around them does not need one
+        // (an empty border: a null border is replaced by the default on a UI update)
+        this.jScrollPane2.setBorder(javax.swing.BorderFactory.createEmptyBorder());
         ComponentUtils.restoreSplitPane(splitMain, TimesheetDialog.class, "splitMain");
         ComponentUtils.persistSplitPane(splitMain, TimesheetDialog.class, "splitMain");
         this.jScrollPane2.getVerticalScrollBar().setUnitIncrement(16);

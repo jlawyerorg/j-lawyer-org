@@ -71,7 +71,7 @@
         <Property name="verticalGap" type="int" value="6"/>
       </Layout>
       <SubComponents>
-        <Container class="com.jdimension.jlawyer.client.editors.history.GlassCardPanel" name="cardFilter">
+        <Container class="com.jdimension.jlawyer.client.ui.theme.GlassCardPanel" name="cardFilter">
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout" value="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout$BorderConstraintsDescription">
               <BorderConstraints direction="North"/>
@@ -269,7 +269,7 @@
             </Container>
           </SubComponents>
         </Container>
-        <Container class="com.jdimension.jlawyer.client.editors.history.GlassCardPanel" name="cardKpi">
+        <Container class="com.jdimension.jlawyer.client.ui.theme.GlassCardPanel" name="cardKpi">
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout" value="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout$BorderConstraintsDescription">
               <BorderConstraints direction="Center"/>
@@ -487,7 +487,7 @@
         <Property name="verticalGap" type="int" value="6"/>
       </Layout>
       <SubComponents>
-        <Container class="com.jdimension.jlawyer.client.editors.history.GlassCardPanel" name="cardTable">
+        <Container class="com.jdimension.jlawyer.client.ui.theme.GlassCardPanel" name="cardTable">
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout" value="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout$BorderConstraintsDescription">
               <BorderConstraints direction="Center"/>
@@ -517,7 +517,7 @@
             </Container>
           </SubComponents>
         </Container>
-        <Container class="com.jdimension.jlawyer.client.editors.history.GlassCardPanel" name="cardDetail">
+        <Container class="com.jdimension.jlawyer.client.ui.theme.GlassCardPanel" name="cardDetail">
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout" value="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout$BorderConstraintsDescription">
               <BorderConstraints direction="South"/>

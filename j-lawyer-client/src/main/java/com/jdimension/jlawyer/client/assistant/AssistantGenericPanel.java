@@ -123,10 +123,6 @@ public class AssistantGenericPanel extends JDialog {
     private boolean modelSupportsTools = false;
     private static Map<AssistantConfig, List<AiModel>> cachedModels = null;
 
-    // Gray-tone bubble colors (consistent with AssistantChatPanel)
-    private static final Color ASSISTANT_BUBBLE_BG = new Color(245, 245, 245);
-    private static final Color BUBBLE_BORDER_COLOR = new Color(215, 215, 215);
-
     // UI components
     private JPanel pnlTitle;
     private JLabel lblIcon;
@@ -1021,26 +1017,10 @@ public class AssistantGenericPanel extends JDialog {
     }
 
     /**
-     * Applies rounded FlatLineBorder and gray-tone colors to an assistant message bubble.
+     * Applies the bubble look of an assistant message.
      */
     private void styleMessageBubble(AiChatMessageMarkdownPanel panel) {
-        panel.setOpaque(true);
-        panel.setBackground(ASSISTANT_BUBBLE_BG);
-        panel.setBorder(new FlatLineBorder(new Insets(8, 8, 8, 8), BUBBLE_BORDER_COLOR, 1, 12));
-        applyBubbleColors(panel, ASSISTANT_BUBBLE_BG, DefaultColorTheme.COLOR_DARK_GREY);
-    }
-
-    private void applyBubbleColors(java.awt.Container container, Color bg, Color iconBg) {
-        for (Component c : container.getComponents()) {
-            if (c instanceof JLabel && ((JLabel) c).getIcon() != null) {
-                c.setBackground(iconBg);
-            } else {
-                c.setBackground(bg);
-            }
-            if (c instanceof java.awt.Container) {
-                applyBubbleColors((java.awt.Container) c, bg, iconBg);
-            }
-        }
+        AiChatTranscript.styleMessageBubble(panel, false);
     }
 
     /**
