@@ -8,7 +8,6 @@
  */
 package com.jdimension.jlawyer.client.desktop;
 
-import com.formdev.flatlaf.FlatClientProperties;
 import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
@@ -33,7 +32,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
-import themes.colors.DefaultColorTheme;
 
 /**
  * Header panel for grouping calendar entries by case and day.
@@ -48,16 +46,6 @@ public class CaseGroupHeaderPanel extends javax.swing.JPanel implements CaseDrop
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy");
 
     // Same background color as entry panels
-    private static final Color HEADER_COLOR = new Color(
-            DefaultColorTheme.COLOR_DARK_GREY.getRed(),
-            DefaultColorTheme.COLOR_DARK_GREY.getGreen(),
-            DefaultColorTheme.COLOR_DARK_GREY.getBlue(),
-            190).darker().darker();
-    private static final Color HIGHLIGHT_COLOR = new Color(
-            DefaultColorTheme.COLOR_DARK_GREY.getRed(),
-            DefaultColorTheme.COLOR_DARK_GREY.getGreen(),
-            DefaultColorTheme.COLOR_DARK_GREY.getBlue(),
-            220).darker().darker();
 
     private String archiveFileId = null;
     private boolean archived = false;
@@ -68,15 +56,14 @@ public class CaseGroupHeaderPanel extends javax.swing.JPanel implements CaseDrop
     public CaseGroupHeaderPanel() {
         initComponents();
 
-        this.jPanel1.setBackground(HEADER_COLOR);
-        this.jPanel1.putClientProperty(FlatClientProperties.COMPONENT_ROUND_RECT, true);
+        this.jPanel1.setEmphasized(true);
 
         this.setOpaque(false);
         this.lblCaseInfo.setOpaque(false);
         this.lblCaseInfo.setForeground(Color.WHITE);
         this.lblCaseInfo.setCursor(new Cursor(Cursor.HAND_CURSOR));
         this.lblTags.setOpaque(false);
-        this.lblTags.setForeground(DefaultColorTheme.COLOR_LIGHT_GREY);
+        this.lblTags.setForeground(com.jdimension.jlawyer.client.ui.theme.UiColors.TEXT_ON_GLASS_SECONDARY);
 
         // Use smaller icon in compact view mode
         boolean compactView = UserSettings.getInstance().getSettingAsBoolean(
@@ -185,7 +172,7 @@ public class CaseGroupHeaderPanel extends javax.swing.JPanel implements CaseDrop
     @Override
     public void setDropIndicatorVisible(boolean visible) {
         this.lblDropIndicator.setVisible(visible);
-        this.jPanel1.setBackground(visible ? HIGHLIGHT_COLOR : HEADER_COLOR);
+        this.jPanel1.setHovered(visible);
         this.jPanel1.revalidate();
         this.repaint();
     }
@@ -251,7 +238,7 @@ public class CaseGroupHeaderPanel extends javax.swing.JPanel implements CaseDrop
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jPanel1 = new javax.swing.JPanel();
+        jPanel1 = new com.jdimension.jlawyer.client.ui.theme.GlassRowPanel();
         lblIcon = new javax.swing.JLabel();
         lblCaseInfo = new javax.swing.JLabel();
         lblTags = new javax.swing.JLabel();
@@ -325,7 +312,7 @@ public class CaseGroupHeaderPanel extends javax.swing.JPanel implements CaseDrop
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JPanel jPanel1;
+    private com.jdimension.jlawyer.client.ui.theme.GlassRowPanel jPanel1;
     private javax.swing.JLabel lblCaseInfo;
     private javax.swing.JLabel lblDropIndicator;
     private javax.swing.JLabel lblIcon;

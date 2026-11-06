@@ -42,6 +42,15 @@ public class GlobalSearchDialog extends JDialog {
     private static final Logger log = Logger.getLogger(GlobalSearchDialog.class.getName());
     private static final Color ARCHIVED_COLOR = DefaultColorTheme.COLOR_DARK_GREY;
 
+    private static final Color TEXT_DARK = new Color(30, 41, 59);
+    private static final Color MUTED_TEXT = new Color(100, 116, 139);
+    private static final Color ROW_HOVER = new Color(241, 245, 249);
+    private static final Color ROW_SELECTED = new Color(234, 243, 252);
+    private static final Color ROW_SELECTED_BORDER = new Color(191, 219, 243);
+    private static final String HOVER_INDEX = "jlawyer.globalSearch.hoverIndex";
+    // corner radius of the card (and of the window shape)
+    private static final int CARD_ARC = 20;
+
     // UserSettings keys for filter button states
     private static final String SETTING_FILTER_CASES = "globalsearch.filter.cases";
     private static final String SETTING_FILTER_CALENDAR = "globalsearch.filter.calendar";
@@ -92,16 +101,35 @@ public class GlobalSearchDialog extends JDialog {
         setAlwaysOnTop(true);
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
-        JPanel mainPanel = new JPanel(new BorderLayout(0, 8));
-        mainPanel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
-                new EmptyBorder(12, 12, 12, 12)));
-        mainPanel.setBackground(Color.WHITE);
+        // design kit: a light card with rounded corners. The window stays opaque - a per-pixel
+        // translucent window (needed for a soft shadow) is not double buffered on every platform,
+        // the search field then flickers while typing. The corners come from the window shape.
+        boolean shaped = false;
+        try {
+            shaped = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice()
+                    .isWindowTranslucencySupported(GraphicsDevice.WindowTranslucency.PERPIXEL_TRANSPARENT);
+        } catch (Throwable t) {
+            log.debug("could not determine window shape support", t);
+        }
+        if (shaped) {
+            addComponentListener(new ComponentAdapter() {
+                @Override
+                public void componentResized(ComponentEvent e) {
+                    setShape(new java.awt.geom.RoundRectangle2D.Double(0, 0, getWidth(), getHeight(), CARD_ARC, CARD_ARC));
+                }
+            });
+        }
+        CardPanel mainPanel = new CardPanel(shaped);
+        mainPanel.setLayout(new BorderLayout(0, 10));
 
-        // Search field - use default font like txtSearchDue in DesktopPanel
+        // Search field
         txtSearch = new JTextField();
-        txtSearch.putClientProperty("JTextField.placeholderText", "Suchen...");
+        txtSearch.putClientProperty("JTextField.placeholderText", "Akten, Adressen, Termine, Belege suchen ...");
         txtSearch.putClientProperty("JTextField.showClearButton", true);
+        txtSearch.putClientProperty("JTextField.leadingIcon", new com.formdev.flatlaf.icons.FlatSearchIcon());
+        txtSearch.setFont(txtSearch.getFont().deriveFont(txtSearch.getFont().getSize2D() + 4f));
+        txtSearch.putClientProperty("FlatLaf.style", "arc: 14; margin: 8,10,8,10; borderWidth: 1; focusWidth: 0; innerFocusWidth: 0;"
+                + " background: #f8fafc; borderColor: #e2e8f0; focusedBorderColor: #0e72b5");
         txtSearch.addActionListener(e -> performSearch());
 
         // Filter buttons panel - no ButtonGroup, all are toggle buttons
@@ -148,8 +176,29 @@ public class GlobalSearchDialog extends JDialog {
             }
         });
 
+        // hover highlight: the renderer reads the row under the mouse from this client property
+        resultList.addMouseMotionListener(new MouseMotionAdapter() {
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                int i = resultList.locationToIndex(e.getPoint());
+                if (i >= 0 && !resultList.getCellBounds(i, i).contains(e.getPoint())) {
+                    i = -1;
+                }
+                setHoverIndex(i);
+            }
+        });
+        resultList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseExited(MouseEvent e) {
+                setHoverIndex(-1);
+            }
+        });
+        resultList.setBackground(Color.WHITE);
+        resultList.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
         JScrollPane scrollPane = new JScrollPane(resultList);
-        scrollPane.setBorder(BorderFactory.createLineBorder(new Color(220, 220, 220)));
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.getViewport().setBackground(Color.WHITE);
 
         // Footer panel with status and cancel button
         JPanel footerPanel = new JPanel(new BorderLayout(8, 0));
@@ -157,12 +206,13 @@ public class GlobalSearchDialog extends JDialog {
 
         // Status label
         lblStatus = new JLabel(" ");
-        lblStatus.setForeground(Color.GRAY);
+        lblStatus.setForeground(MUTED_TEXT);
 
         // Cancel button
         cmdCancel = new JButton("Abbrechen");
         cmdCancel.setIcon(new ImageIcon(getClass().getResource("/icons/cancel.png")));
         cmdCancel.addActionListener(e -> closeDialog());
+        cmdCancel.putClientProperty("FlatLaf.style", "arc: 10; margin: 4,12,4,12");
 
         footerPanel.add(lblStatus, BorderLayout.CENTER);
         footerPanel.add(cmdCancel, BorderLayout.EAST);
@@ -198,12 +248,14 @@ public class GlobalSearchDialog extends JDialog {
     }
 
     private JToggleButton createFilterButton(String text, boolean selected) {
+        // filter chips: white with a fine border, blue tinted while active
         JToggleButton btn = new JToggleButton(text);
         btn.putClientProperty("JButton.buttonType", "roundRect");
         btn.putClientProperty("FlatLaf.style",
-                "borderWidth: 2; pressedBackground: rgb(102, 102, 102); " +
-                "selectedBackground: rgb(151, 191, 13); selectedForeground: rgb(0, 0, 0); " +
-                "foreground: rgb(102, 102, 102)");
+                "arc: 999; borderWidth: 1; focusWidth: 0; innerFocusWidth: 0; margin: 3,12,3,12;"
+                + " background: #ffffff; foreground: #475569; borderColor: #e2e8f0; hoverBackground: #f1f5f9;"
+                + " selectedBackground: #eaf3fc; selectedForeground: #0e72b5; pressedBackground: #dbeaf9");
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.setSelected(selected);
         btn.setFocusable(false);
         return btn;
@@ -638,51 +690,134 @@ public class GlobalSearchDialog extends JDialog {
     /**
      * Custom cell renderer for search results.
      */
+    private void setHoverIndex(int index) {
+        Object old = resultList.getClientProperty(HOVER_INDEX);
+        if (old == null || (Integer) old != index) {
+            resultList.putClientProperty(HOVER_INDEX, index);
+            resultList.repaint();
+        }
+    }
+
+    /**
+     * The white card of the dialog with a fine outline - rounded if the window has a rounded
+     * shape.
+     */
+    private static class CardPanel extends JPanel {
+
+        private final boolean rounded;
+
+        CardPanel(boolean rounded) {
+            this.rounded = rounded;
+            setOpaque(true);
+            setBackground(Color.WHITE);
+            setBorder(new EmptyBorder(16, 16, 14, 16));
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(new Color(203, 213, 225));
+            if (this.rounded) {
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, CARD_ARC, CARD_ARC);
+            } else {
+                g2.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
+            }
+            g2.dispose();
+        }
+    }
+
+    /**
+     * A result row: rounded highlight on hover and selection, icon, bold title and a muted second
+     * line. The first row of each kind of result carries a small heading.
+     */
     private static class GlobalSearchResultRenderer extends DefaultListCellRenderer {
+
+        private static String groupOf(GlobalSearchResultItem item) {
+            switch (item.getType()) {
+                case CASE:
+                    return item.isArchived() ? "ARCHIVIERTE AKTEN" : "AKTEN";
+                case INVOICE:
+                    return "BELEGE";
+                case CALENDAR:
+                    return "KALENDER";
+                case ADDRESS:
+                    return "ADRESSEN";
+                default:
+                    return "";
+            }
+        }
+
         @Override
         public Component getListCellRendererComponent(JList<?> list, Object value,
                 int index, boolean isSelected, boolean cellHasFocus) {
 
-            JPanel panel = new JPanel(new BorderLayout(8, 2));
-            panel.setBorder(new EmptyBorder(6, 8, 6, 8));
+            Object hover = list.getClientProperty(HOVER_INDEX);
+            final boolean hovered = hover instanceof Integer && (Integer) hover == index;
+            final boolean selected = isSelected;
 
-            if (isSelected) {
-                panel.setBackground(list.getSelectionBackground());
-                panel.setForeground(list.getSelectionForeground());
-            } else {
-                panel.setBackground(list.getBackground());
-                panel.setForeground(list.getForeground());
-            }
+            JPanel row = new JPanel(new BorderLayout(10, 2)) {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    if (selected || hovered) {
+                        Graphics2D g2 = (Graphics2D) g.create();
+                        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                        g2.setColor(selected ? ROW_SELECTED : ROW_HOVER);
+                        g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 14, 14);
+                        if (selected) {
+                            g2.setColor(ROW_SELECTED_BORDER);
+                            g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 14, 14);
+                        }
+                        g2.dispose();
+                    }
+                    super.paintComponent(g);
+                }
+            };
+            row.setOpaque(false);
+            row.setBorder(new EmptyBorder(7, 10, 7, 10));
+
+            JPanel panel = new JPanel(new BorderLayout(0, 4));
+            panel.setBackground(Color.WHITE);
+            panel.setBorder(new EmptyBorder(1, 2, 1, 6));
 
             if (value instanceof GlobalSearchResultItem) {
                 GlobalSearchResultItem item = (GlobalSearchResultItem) value;
 
+                String group = groupOf(item);
+                boolean first = index == 0;
+                if (!first) {
+                    Object prev = list.getModel().getElementAt(index - 1);
+                    first = !(prev instanceof GlobalSearchResultItem) || !group.equals(groupOf((GlobalSearchResultItem) prev));
+                }
+                if (first) {
+                    JLabel heading = new JLabel(group);
+                    heading.setFont(heading.getFont().deriveFont(Font.BOLD, heading.getFont().getSize2D() - 2f));
+                    heading.setForeground(MUTED_TEXT);
+                    heading.setBorder(new EmptyBorder(index == 0 ? 2 : 10, 10, 2, 0));
+                    panel.add(heading, BorderLayout.NORTH);
+                }
+
                 JLabel iconLabel = new JLabel(item.getIcon());
-                iconLabel.setVerticalAlignment(SwingConstants.TOP);
+                iconLabel.setVerticalAlignment(SwingConstants.CENTER);
 
                 JPanel textPanel = new JPanel(new GridLayout(2, 1, 0, 2));
                 textPanel.setOpaque(false);
 
                 JLabel primaryLabel = new JLabel(item.getDisplayText());
                 primaryLabel.setFont(primaryLabel.getFont().deriveFont(Font.BOLD));
+                primaryLabel.setForeground(item.isArchived() ? ARCHIVED_COLOR : TEXT_DARK);
 
-                // Set color based on selection and archived status
-                if (isSelected) {
-                    primaryLabel.setForeground(list.getSelectionForeground());
-                } else if (item.isArchived()) {
-                    primaryLabel.setForeground(ARCHIVED_COLOR);
-                }
-
-                // Secondary label - normal style (not italic)
                 JLabel secondaryLabel = new JLabel(item.getSecondaryText());
-                secondaryLabel.setForeground(isSelected ? list.getSelectionForeground() : Color.GRAY);
+                secondaryLabel.setForeground(MUTED_TEXT);
 
                 textPanel.add(primaryLabel);
                 textPanel.add(secondaryLabel);
 
-                panel.add(iconLabel, BorderLayout.WEST);
-                panel.add(textPanel, BorderLayout.CENTER);
+                row.add(iconLabel, BorderLayout.WEST);
+                row.add(textPanel, BorderLayout.CENTER);
             }
+            panel.add(row, BorderLayout.CENTER);
 
             return panel;
         }

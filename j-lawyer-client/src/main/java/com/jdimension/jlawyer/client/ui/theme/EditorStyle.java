@@ -705,6 +705,15 @@ public final class EditorStyle {
     private static final String HEADER_BUTTON_STYLE = "arc: 10; margin: 6,6,6,6;"
             + " toolbar.hoverBackground: #ffffff1f; toolbar.pressedBackground: #ffffff33; toolbar.selectedBackground: #ffffff2e";
 
+    // solid colours: a translucent text field background leaves paint artifacts while typing
+    private static final String GLASS_SEARCH_STYLE = "arc: 999; margin: 3,8,3,8; borderWidth: 1; focusWidth: 0; innerFocusWidth: 0;"
+            + " background: #2b4a6b; foreground: #ffffff; caretColor: #ffffff; placeholderForeground: #ffffffa0;"
+            + " borderColor: #ffffff40; focusedBorderColor: #97bf0d";
+
+    private static final String GLASS_SCROLLBAR_STYLE = "track: #00000000; thumb: #ffffff40; hoverThumbColor: #ffffff70;"
+            + " pressedThumbColor: #ffffff90; hoverTrackColor: #00000000; pressedTrackColor: #00000000;"
+            + " thumbArc: 999; thumbInsets: 2,2,2,2; width: 10";
+
     private EditorStyle() {
     }
 
@@ -933,7 +942,65 @@ public final class EditorStyle {
      * @param buttons the buttons
      */
     public static void styleHeaderButtons(AbstractButton... buttons) {
-        styleHeaderButtons(true, buttons);
+        styleHeaderButtons(true, 22, buttons);
+    }
+
+    /**
+     * Like {@link #styleHeaderButtons(AbstractButton...)} for the smaller tool buttons in the header
+     * of a glass card (e.g. the sections of the desktop).
+     *
+     * @param buttons the buttons
+     */
+    public static void styleCardHeaderButtons(AbstractButton... buttons) {
+        styleHeaderButtons(true, 18, buttons);
+    }
+
+    /**
+     * Title of a glass card (e.g. a section of the desktop): Exo 2, white.
+     *
+     * @param title the title label
+     */
+    public static void styleCardTitle(JLabel title) {
+        if (title != null) {
+            title.setFont(UiFonts.exo2Bold(17f));
+            title.setForeground(UiColors.TEXT_ON_GLASS);
+        }
+    }
+
+    /**
+     * Scroll bars of a scroll pane on glass: no track, a slim translucent white thumb.
+     *
+     * @param scrollPanes the scroll panes
+     */
+    public static void styleGlassScrollBars(JScrollPane... scrollPanes) {
+        for (JScrollPane sp : scrollPanes) {
+            if (sp == null) {
+                continue;
+            }
+            for (javax.swing.JScrollBar bar : new javax.swing.JScrollBar[]{sp.getVerticalScrollBar(), sp.getHorizontalScrollBar()}) {
+                if (bar != null) {
+                    bar.setOpaque(false);
+                    bar.putClientProperty(FlatClientProperties.STYLE, GLASS_SCROLLBAR_STYLE);
+                }
+            }
+        }
+    }
+
+    /**
+     * A search field on glass: round, a translucent light fill, white text and a search icon.
+     *
+     * @param field the text field
+     */
+    public static void styleGlassSearchField(javax.swing.JTextField field) {
+        if (field == null) {
+            return;
+        }
+        field.putClientProperty(FlatClientProperties.STYLE, GLASS_SEARCH_STYLE);
+        field.setSelectionColor(new Color(14, 114, 181));
+        field.setSelectedTextColor(Color.WHITE);
+        field.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
+        field.putClientProperty(FlatClientProperties.TEXT_FIELD_LEADING_ICON,
+                new com.formdev.flatlaf.icons.FlatSearchIcon());
     }
 
     /**
@@ -943,10 +1010,10 @@ public final class EditorStyle {
      * @param buttons the buttons
      */
     public static void styleHeaderButtonsKeepIcons(AbstractButton... buttons) {
-        styleHeaderButtons(false, buttons);
+        styleHeaderButtons(false, 22, buttons);
     }
 
-    private static void styleHeaderButtons(boolean tint, AbstractButton... buttons) {
+    private static void styleHeaderButtons(boolean tint, int iconSize, AbstractButton... buttons) {
         for (AbstractButton b : buttons) {
             if (b == null) {
                 continue;
@@ -962,8 +1029,8 @@ public final class EditorStyle {
             // without a visible frame, the cursor tells that these are buttons
             b.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
             if (tint) {
-                tintIcons(b, UiColors.TEXT_ON_GLASS, 22);
-                keepIconsTinted(b, 22);
+                tintIcons(b, UiColors.TEXT_ON_GLASS, iconSize);
+                keepIconsTinted(b, iconSize);
             }
         }
     }

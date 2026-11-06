@@ -369,6 +369,7 @@ public class DesktopLayoutManager {
     private JTabbedPane buildTabbedPane(List<String> visiblePanelIds) {
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.setTabPlacement(JTabbedPane.TOP);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleMainTabs(tabbedPane);
 
         for (String panelId : visiblePanelIds) {
             JComponent content = panelContents.get(panelId);
