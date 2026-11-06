@@ -906,8 +906,8 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        pnlActions = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
-        pnlToolbar = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        pnlActions = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
+        pnlToolbar = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         popFolders = new javax.swing.JPopupMenu();
         mnuNewFolder = new javax.swing.JMenuItem();
         mnuRenameFolder = new javax.swing.JMenuItem();
@@ -1796,8 +1796,8 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
     private javax.swing.JTree treeFolders;
     private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardFolders;
     private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardTemplates;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlToolbar;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlActions;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlToolbar;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlActions;
     // End of variables declaration//GEN-END:variables
 
     @Override

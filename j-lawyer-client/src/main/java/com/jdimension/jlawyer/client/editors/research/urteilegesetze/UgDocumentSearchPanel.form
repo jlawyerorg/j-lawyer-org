@@ -157,7 +157,7 @@
         <Property name="text" type="java.lang.String" value="Bereitstellung der juristischen Suche durch "/>
       </Properties>
     </Component>
-    <Container class="com.jdimension.jlawyer.client.editors.history.GlassCardPanel" name="pnlSearchBar">
+    <Container class="com.jdimension.jlawyer.client.ui.theme.GlassCardPanel" name="pnlSearchBar">
       <Properties>
         <Property name="opaque" type="boolean" value="false"/>
       </Properties>

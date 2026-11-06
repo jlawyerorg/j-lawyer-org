@@ -744,7 +744,7 @@ import javax.swing.MenuElement;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
-import com.jdimension.jlawyer.client.editors.history.GlassCardPanel;
+import com.jdimension.jlawyer.client.ui.theme.GlassCardPanel;
 import com.jdimension.jlawyer.client.ui.theme.EditorStyle;
 import com.jdimension.jlawyer.client.ui.theme.UiColors;
 import com.jdimension.jlawyer.client.ui.theme.UiFonts;
@@ -1587,14 +1587,14 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        pnlHeaderUser = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        pnlHeaderUser = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         popTagFilter = new javax.swing.JPopupMenu();
         popDocumentTagFilter = new javax.swing.JPopupMenu();
         popUserFilter = new javax.swing.JPopupMenu();
         popDueSinceDays = new javax.swing.JPopupMenu();
         popUserFilterTagged = new javax.swing.JPopupMenu();
         popUserFilterLastchanged = new javax.swing.JPopupMenu();
-        jPanel2 = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        jPanel2 = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         jLabel6 = new javax.swing.JLabel();
         cmdUserFilter = new javax.swing.JButton();
         cmdRefreshRevDue = new javax.swing.JButton();
@@ -1607,7 +1607,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         cmdDueSinceDays = new javax.swing.JButton();
         toggleDueCompactView = new javax.swing.JLabel();
         txtSearchDue = new javax.swing.JTextField();
-        jPanel1 = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        jPanel1 = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         jLabel5 = new javax.swing.JLabel();
         jScrollPane3 = new javax.swing.JScrollPane();
         pnlLastChanged = new javax.swing.JPanel();
@@ -1615,7 +1615,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         cmdRefreshLastChanged = new javax.swing.JButton();
         lblUserFilterCountLastchanged = new javax.swing.JLabel();
         cmdUserFilterLastchanged = new javax.swing.JButton();
-        jPanel3 = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        jPanel3 = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         jLabel9 = new javax.swing.JLabel();
         cmdUserFilterTagged = new javax.swing.JButton();
         lblUserFilterCountTagged = new javax.swing.JLabel();
@@ -1626,7 +1626,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         jScrollPane4 = new javax.swing.JScrollPane();
         pnlTagged = new javax.swing.JPanel();
         jLabel10 = new javax.swing.JLabel();
-        messagesWidget = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        messagesWidget = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         lblUnreadMail = new javax.swing.JLabel();
         lblUnreadBea = new javax.swing.JLabel();
         lblScans = new javax.swing.JLabel();
@@ -1635,14 +1635,14 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         lblUpdateStatus = new javax.swing.JLabel();
         lblNewsStatus = new javax.swing.JLabel();
         lblUpdateStatusFormPlugins = new javax.swing.JLabel();
-        systemInformationWidget = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        systemInformationWidget = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         lblArchiveFileCount = new javax.swing.JLabel();
         lblArchiveFileArchivedCount = new javax.swing.JLabel();
         lblAddressCount = new javax.swing.JLabel();
         lblDocumentCount = new javax.swing.JLabel();
         lblVoipBalance = new javax.swing.JLabel();
         lblAssistant = new javax.swing.JLabel();
-        desktopWidgetPanel2 = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        desktopWidgetPanel2 = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         cmdEditDesktop = new javax.swing.JButton();
         cmdGlobalSearch = new javax.swing.JButton();
         cmdIngoChat = new javax.swing.JButton();
@@ -2442,16 +2442,16 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JButton cmdUserFilter;
     private javax.swing.JButton cmdUserFilterLastchanged;
     private javax.swing.JButton cmdUserFilterTagged;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel desktopWidgetPanel2;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel desktopWidgetPanel2;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel jPanel1;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel jPanel2;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel jPanel3;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel jPanel1;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel jPanel2;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel jPanel3;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
@@ -2476,7 +2476,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JLabel lblUserIcon;
     private javax.swing.JLabel lblUserName;
     private javax.swing.JLabel lblVoipBalance;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel messagesWidget;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel messagesWidget;
     private javax.swing.JPanel pnlGridContainer;
     private javax.swing.JPanel pnlLastChanged;
     private javax.swing.JPanel pnlRevDue;
@@ -2487,12 +2487,12 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JPopupMenu popUserFilter;
     private javax.swing.JPopupMenu popUserFilterLastchanged;
     private javax.swing.JPopupMenu popUserFilterTagged;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel systemInformationWidget;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel systemInformationWidget;
     private javax.swing.JTabbedPane tabPaneDue;
     private javax.swing.JTabbedPane tabPaneTagged;
     private javax.swing.JLabel toggleDueCompactView;
     private javax.swing.JTextField txtSearchDue;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlHeaderUser;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlHeaderUser;
     // End of variables declaration//GEN-END:variables
 
     /**

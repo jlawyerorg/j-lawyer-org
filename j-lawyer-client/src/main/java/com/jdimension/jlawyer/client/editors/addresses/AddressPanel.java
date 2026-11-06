@@ -1824,11 +1824,11 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         cmdShowRelationGraph = new javax.swing.JButton();
         lblHeaderInfo = new javax.swing.JLabel();
         jPanel23 = new javax.swing.JPanel();
-        pnlHeaderRight = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        pnlHeaderRight = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
         chkEncryption = new javax.swing.JToggleButton();
-        jPanel16 = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        jPanel16 = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         cmdToEditMode = new javax.swing.JButton();
         cmdSave = new javax.swing.JButton();
         cmdBackToSearch = new javax.swing.JButton();
@@ -5217,8 +5217,8 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JPanel jPanel13;
     private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel14;
     private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel15;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel jPanel16;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlHeaderRight;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel jPanel16;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlHeaderRight;
     private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel17;
     private javax.swing.JPanel jPanel18;
     private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel19;

@@ -818,7 +818,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        pnlToolbar = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        pnlToolbar = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
         cmdRefresh = new javax.swing.JButton();
@@ -1430,7 +1430,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
     private javax.swing.JTextField txtCc;
     private javax.swing.JTextField txtSubject;
     private javax.swing.JTextField txtTo;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlToolbar;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlToolbar;
     // End of variables declaration//GEN-END:variables
 
     @Override

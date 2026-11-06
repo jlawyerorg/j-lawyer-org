@@ -889,10 +889,10 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        pnlConversation = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
-        pnlHashtags = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
-        pnlHeaderRight = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
-        pnlToolbar = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        pnlConversation = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
+        pnlHashtags = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
+        pnlHeaderRight = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
+        pnlToolbar = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
         cmbDownloadInstantMessages = new javax.swing.JComboBox<>();
@@ -1403,10 +1403,10 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
     private com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel pnlMessagesToMe;
     private com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel pnlMessagesToOthers;
     private javax.swing.JTabbedPane tabsPane;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlToolbar;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlHeaderRight;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlHashtags;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlConversation;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlToolbar;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlHeaderRight;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlHashtags;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlConversation;
     // End of variables declaration//GEN-END:variables
 
     private void addMessageToView(InstantMessage msg) {

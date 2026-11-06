@@ -764,8 +764,8 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        pnlCampaignBar = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
-        pnlToolbar = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        pnlCampaignBar = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
+        pnlToolbar = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         popup = new javax.swing.JPopupMenu();
         mnuRemoveFromCampaign = new javax.swing.JMenuItem();
         jLabel18 = new javax.swing.JLabel();
@@ -1141,7 +1141,7 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
     private javax.swing.JPopupMenu popup;
     private javax.swing.JTable tblResults;
     private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardRecipients;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlToolbar;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlCampaignBar;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlToolbar;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlCampaignBar;
     // End of variables declaration//GEN-END:variables
 }

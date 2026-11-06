@@ -1443,7 +1443,7 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
         mnuOpenCase = new javax.swing.JMenuItem();
         mnuCopyText = new javax.swing.JMenuItem();
         pnlTop = new javax.swing.JPanel();
-        cardFilter = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        cardFilter = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         pnlFilter = new javax.swing.JPanel();
         lblRange = new javax.swing.JLabel();
         cmbRange = new javax.swing.JComboBox<>();
@@ -1461,7 +1461,7 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
         cmbMax = new javax.swing.JComboBox<>();
         cmdSearch = new javax.swing.JButton();
         pnlCategories = new javax.swing.JPanel();
-        cardKpi = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        cardKpi = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         pnlKpis = new javax.swing.JPanel();
         pnlKpiEntries = new javax.swing.JPanel();
         lblKpiEntriesValue = new javax.swing.JLabel();
@@ -1477,10 +1477,10 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
         lblKpiTopCaseCaption = new javax.swing.JLabel();
         activityChart = new com.jdimension.jlawyer.client.editors.history.ActivityChart();
         pnlMain = new javax.swing.JPanel();
-        cardTable = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        cardTable = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         scrollTable = new javax.swing.JScrollPane();
         tblHistory = new com.jdimension.jlawyer.client.editors.history.HistoryTable();
-        cardDetail = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        cardDetail = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         pnlDetailHeader = new javax.swing.JPanel();
         lblDetailCategory = new javax.swing.JLabel();
         lblDetailCase = new javax.swing.JLabel();
@@ -1955,10 +1955,10 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private com.jdimension.jlawyer.client.editors.history.ActivityChart activityChart;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel cardDetail;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel cardFilter;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel cardKpi;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel cardTable;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel cardDetail;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel cardFilter;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel cardKpi;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel cardTable;
     private javax.swing.JComboBox<String> cmbMax;
     private javax.swing.JComboBox<String> cmbRange;
     private javax.swing.JComboBox cmbUser;

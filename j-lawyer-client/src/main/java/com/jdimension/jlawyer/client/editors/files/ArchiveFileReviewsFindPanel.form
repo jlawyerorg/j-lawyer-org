@@ -401,7 +401,7 @@
         </Component>
       </SubComponents>
     </Container>
-    <Container class="com.jdimension.jlawyer.client.editors.history.GlassCardPanel" name="jPanel2">
+    <Container class="com.jdimension.jlawyer.client.ui.theme.GlassCardPanel" name="jPanel2">
       <Properties>
         <Property name="opaque" type="boolean" value="false"/>
       </Properties>

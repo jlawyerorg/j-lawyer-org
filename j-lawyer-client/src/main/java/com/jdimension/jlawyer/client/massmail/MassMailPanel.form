@@ -140,7 +140,7 @@
         </Container>
       </SubComponents>
     </Container>
-    <Container class="com.jdimension.jlawyer.client.editors.history.GlassCardPanel" name="pnlToolbar">
+    <Container class="com.jdimension.jlawyer.client.ui.theme.GlassCardPanel" name="pnlToolbar">
       <Properties>
         <Property name="opaque" type="boolean" value="false"/>
       </Properties>
@@ -181,7 +181,7 @@
         </Component>
       </SubComponents>
     </Container>
-    <Container class="com.jdimension.jlawyer.client.editors.history.GlassCardPanel" name="pnlCampaignBar">
+    <Container class="com.jdimension.jlawyer.client.ui.theme.GlassCardPanel" name="pnlCampaignBar">
       <Properties>
         <Property name="opaque" type="boolean" value="false"/>
       </Properties>

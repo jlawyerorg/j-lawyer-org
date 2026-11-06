@@ -38,7 +38,7 @@
         <Property name="useNullLayout" type="boolean" value="true"/>
       </Layout>
     </Container>
-    <Container class="com.jdimension.jlawyer.client.editors.history.GlassCardPanel" name="jPanel2">
+    <Container class="com.jdimension.jlawyer.client.ui.theme.GlassCardPanel" name="jPanel2">
       <Properties>
         <Property name="opaque" type="boolean" value="false"/>
       </Properties>
@@ -258,7 +258,7 @@
         </Component>
       </SubComponents>
     </Container>
-    <Container class="com.jdimension.jlawyer.client.editors.history.GlassCardPanel" name="jPanel1">
+    <Container class="com.jdimension.jlawyer.client.ui.theme.GlassCardPanel" name="jPanel1">
       <Properties>
         <Property name="opaque" type="boolean" value="false"/>
       </Properties>
@@ -418,7 +418,7 @@
         </Component>
       </SubComponents>
     </Container>
-    <Container class="com.jdimension.jlawyer.client.editors.history.GlassCardPanel" name="jPanel3">
+    <Container class="com.jdimension.jlawyer.client.ui.theme.GlassCardPanel" name="jPanel3">
       <Properties>
         <Property name="opaque" type="boolean" value="false"/>
       </Properties>
@@ -697,7 +697,7 @@
     </DimensionLayout>
   </Layout>
   <SubComponents>
-    <Container class="com.jdimension.jlawyer.client.editors.history.GlassCardPanel" name="messagesWidget">
+    <Container class="com.jdimension.jlawyer.client.ui.theme.GlassCardPanel" name="messagesWidget">
 
       <Layout>
         <DimensionLayout dim="0">
@@ -887,7 +887,7 @@
         </Component>
       </SubComponents>
     </Container>
-    <Container class="com.jdimension.jlawyer.client.editors.history.GlassCardPanel" name="systemInformationWidget">
+    <Container class="com.jdimension.jlawyer.client.ui.theme.GlassCardPanel" name="systemInformationWidget">
 
       <Layout>
         <DimensionLayout dim="0">
@@ -1030,7 +1030,7 @@
         </Component>
       </SubComponents>
     </Container>
-    <Container class="com.jdimension.jlawyer.client.editors.history.GlassCardPanel" name="desktopWidgetPanel2">
+    <Container class="com.jdimension.jlawyer.client.ui.theme.GlassCardPanel" name="desktopWidgetPanel2">
 
       <Layout>
         <DimensionLayout dim="0">
@@ -1099,7 +1099,7 @@
 
       <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout"/>
     </Container>
-    <Container class="com.jdimension.jlawyer.client.editors.history.GlassCardPanel" name="pnlHeaderUser">
+    <Container class="com.jdimension.jlawyer.client.ui.theme.GlassCardPanel" name="pnlHeaderUser">
       <Properties>
         <Property name="opaque" type="boolean" value="false"/>
       </Properties>

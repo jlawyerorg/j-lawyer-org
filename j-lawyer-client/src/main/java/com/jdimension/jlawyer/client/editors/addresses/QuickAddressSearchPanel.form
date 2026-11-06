@@ -127,7 +127,7 @@
         <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="4"/>
       </AuxValues>
     </Component>
-    <Container class="com.jdimension.jlawyer.client.editors.history.GlassCardPanel" name="jPanel1">
+    <Container class="com.jdimension.jlawyer.client.ui.theme.GlassCardPanel" name="jPanel1">
       <Properties>
         <Property name="opaque" type="boolean" value="false"/>
       </Properties>
@@ -166,7 +166,7 @@
         </Component>
       </SubComponents>
     </Container>
-    <Container class="com.jdimension.jlawyer.client.editors.history.GlassCardPanel" name="pnlSearchBar">
+    <Container class="com.jdimension.jlawyer.client.ui.theme.GlassCardPanel" name="pnlSearchBar">
       <Properties>
         <Property name="opaque" type="boolean" value="false"/>
       </Properties>

@@ -733,13 +733,13 @@ public class AiChatsEditorPanel extends javax.swing.JPanel implements ThemeableE
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        pnlToolbar = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        pnlToolbar = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         cmdRefresh = new javax.swing.JButton();
         lblIcon = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
         cardChats = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         chatHistory = new com.jdimension.jlawyer.client.assistant.AiChatHistoryPanel();
-        pnlHeaderRight = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        pnlHeaderRight = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         cmdNewChat = new javax.swing.JButton();
 
         pnlToolbar.setOpaque(false);
@@ -856,7 +856,7 @@ public class AiChatsEditorPanel extends javax.swing.JPanel implements ThemeableE
     private javax.swing.JButton cmdRefresh;
     private javax.swing.JLabel lblIcon;
     private javax.swing.JLabel lblPanelTitle;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlHeaderRight;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlToolbar;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlHeaderRight;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlToolbar;
     // End of variables declaration//GEN-END:variables
 }

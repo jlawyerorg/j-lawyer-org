@@ -3588,7 +3588,7 @@
         <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="lblHeaderInfoMousePressed"/>
       </Events>
     </Component>
-    <Container class="com.jdimension.jlawyer.client.editors.history.GlassCardPanel" name="jPanel13">
+    <Container class="com.jdimension.jlawyer.client.ui.theme.GlassCardPanel" name="jPanel13">
       <Properties>
         <Property name="opaque" type="boolean" value="false"/>
       </Properties>
@@ -3693,7 +3693,7 @@
         </Component>
       </SubComponents>
     </Container>
-    <Container class="com.jdimension.jlawyer.client.editors.history.GlassCardPanel" name="pnlHeaderRight">
+    <Container class="com.jdimension.jlawyer.client.ui.theme.GlassCardPanel" name="pnlHeaderRight">
       <Properties>
         <Property name="opaque" type="boolean" value="false"/>
       </Properties>

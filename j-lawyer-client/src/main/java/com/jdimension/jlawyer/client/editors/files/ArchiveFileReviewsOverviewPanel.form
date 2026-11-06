@@ -112,7 +112,7 @@
 
           <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout"/>
           <SubComponents>
-            <Container class="com.jdimension.jlawyer.client.editors.history.GlassCardPanel" name="pnlListActions">
+            <Container class="com.jdimension.jlawyer.client.ui.theme.GlassCardPanel" name="pnlListActions">
               <Properties>
                 <Property name="opaque" type="boolean" value="false"/>
               </Properties>
@@ -222,7 +222,7 @@
 
           <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout"/>
           <SubComponents>
-            <Container class="com.jdimension.jlawyer.client.editors.history.GlassCardPanel" name="pnlSheetActions">
+            <Container class="com.jdimension.jlawyer.client.ui.theme.GlassCardPanel" name="pnlSheetActions">
               <Properties>
                 <Property name="opaque" type="boolean" value="false"/>
               </Properties>

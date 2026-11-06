@@ -829,8 +829,8 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         lblPanelTitle = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         chkIncludeArchive = new javax.swing.JCheckBox();
-        jPanel1 = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
-        pnlSearchBar = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        jPanel1 = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
+        pnlSearchBar = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         cardResults = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         cmdExport = new javax.swing.JButton();
         cmdDocumentTagFilter = new javax.swing.JButton();
@@ -1461,8 +1461,8 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     private javax.swing.JButton cmdTagFilter;
     private javax.swing.JLabel jLabel2;
     private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardResults;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel jPanel1;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlSearchBar;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel jPanel1;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlSearchBar;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JSplitPane jSplitPane1;

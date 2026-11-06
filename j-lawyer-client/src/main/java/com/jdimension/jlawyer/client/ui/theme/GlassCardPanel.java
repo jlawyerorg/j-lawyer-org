@@ -661,7 +661,7 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.editors.history;
+package com.jdimension.jlawyer.client.ui.theme;
 
 import java.awt.Color;
 import java.awt.Graphics;

@@ -754,7 +754,7 @@ public class ArchiveFileReviewsMissingPanel extends javax.swing.JPanel implement
         mnuOpenArchiveFile = new javax.swing.JMenuItem();
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
-        jPanel1 = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        jPanel1 = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         cmdExport = new javax.swing.JButton();
         cmdRefresh = new javax.swing.JButton();
         tabTables = new javax.swing.JTabbedPane();
@@ -1080,7 +1080,7 @@ public class ArchiveFileReviewsMissingPanel extends javax.swing.JPanel implement
     private javax.swing.JButton cmdExport;
     private javax.swing.JButton cmdRefresh;
     private javax.swing.JLabel jLabel18;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel jPanel1;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;

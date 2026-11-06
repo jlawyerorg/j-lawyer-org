@@ -3541,13 +3541,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         lblPanelTitle = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         lblHeaderInfo = new javax.swing.JLabel();
-        jPanel13 = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        jPanel13 = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         cmdToEditMode = new javax.swing.JButton();
         cmdPrint = new javax.swing.JButton();
         cmdBackToSearch = new javax.swing.JButton();
         cmdExportHtml = new javax.swing.JButton();
         cmdSave = new javax.swing.JButton();
-        pnlHeaderRight = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        pnlHeaderRight = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         cmdHeaderAddNote = new javax.swing.JButton();
         cmdFavoriteDocuments = new javax.swing.JButton();
         togCaseSync = new javax.swing.JToggleButton();
@@ -11647,7 +11647,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel10;
     private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel11;
     private javax.swing.JPanel jPanel12;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel jPanel13;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel jPanel13;
     private javax.swing.JPanel jPanel15;
     private javax.swing.JPanel jPanel16;
     private javax.swing.JPanel jPanel17;
@@ -11757,7 +11757,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private com.jdimension.jlawyer.client.editors.files.NewEventPanel newEventPanel;
     private javax.swing.JPanel pnlAddForms;
     private javax.swing.JPanel pnlClaimLedgers;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlHeaderRight;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlHeaderRight;
     private javax.swing.JPanel pnlInvoices;
     protected com.jdimension.jlawyer.client.editors.files.InvolvedPartiesPanel pnlInvolvedParties;
     protected javax.swing.JPanel pnlLinkedCases;

@@ -874,7 +874,7 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        pnlToolbar = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        pnlToolbar = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
         cardQueue = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
@@ -1495,6 +1495,6 @@ public class MailingStatusPanel extends javax.swing.JPanel implements ThemeableE
     private javax.swing.JToggleButton selectAllToggle;
     private javax.swing.JTable tblQueue;
     private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardQueue;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlToolbar;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlToolbar;
     // End of variables declaration//GEN-END:variables
 }

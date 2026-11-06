@@ -1504,8 +1504,8 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        pnlSearchBar = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
-        pnlToolbar = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        pnlSearchBar = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
+        pnlToolbar = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         popFolders = new javax.swing.JPopupMenu();
         mnuNewFolder = new javax.swing.JMenuItem();
         mnuEmptyTrash = new javax.swing.JMenuItem();
@@ -4463,7 +4463,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     private javax.swing.JTree treeFolders;
     private javax.swing.JTextField txtSearchString;
     private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardMail;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlToolbar;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlSearchBar;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlToolbar;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlSearchBar;
     // End of variables declaration//GEN-END:variables
 }

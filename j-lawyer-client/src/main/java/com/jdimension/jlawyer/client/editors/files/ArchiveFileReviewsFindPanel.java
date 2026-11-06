@@ -821,7 +821,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
         jLabel6 = new javax.swing.JLabel();
         jLabel7 = new javax.swing.JLabel();
         cmbAssignee = new javax.swing.JComboBox<>();
-        jPanel2 = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        jPanel2 = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         cmdExport = new javax.swing.JButton();
         cmdRefresh = new javax.swing.JButton();
         cmdPrint = new javax.swing.JButton();
@@ -1408,7 +1408,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel1;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel jPanel2;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel labelSearchAZ;
     private javax.swing.JMenuItem mnuOpenArchiveFile;

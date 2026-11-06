@@ -27,7 +27,7 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import org.jlawyer.themes.ServerColorTheme;
-import com.jdimension.jlawyer.client.editors.history.GlassCardPanel;
+import com.jdimension.jlawyer.client.ui.theme.GlassCardPanel;
 import com.jdimension.jlawyer.client.ui.theme.EditorStyle;
 import com.jdimension.jlawyer.client.ui.theme.GlassRowPanel;
 import com.jdimension.jlawyer.client.ui.theme.UiColors;

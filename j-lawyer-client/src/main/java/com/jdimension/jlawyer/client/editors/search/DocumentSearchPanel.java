@@ -822,8 +822,8 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        pnlSearchBar = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
-        pnlHeaderRight = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        pnlSearchBar = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
+        pnlHeaderRight = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         txtSearchString = new javax.swing.JTextField();
         cmdQuickSearch = new javax.swing.JButton();
         lblPanelTitle = new javax.swing.JLabel();
@@ -1132,8 +1132,8 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
     private javax.swing.JScrollPane scrollResults;
     private javax.swing.JTextField txtSearchString;
     private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardResults;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlHeaderRight;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlSearchBar;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlHeaderRight;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlSearchBar;
     // End of variables declaration//GEN-END:variables
 
     @Override

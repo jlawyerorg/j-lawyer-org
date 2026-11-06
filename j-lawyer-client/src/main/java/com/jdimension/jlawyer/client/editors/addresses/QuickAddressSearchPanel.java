@@ -818,8 +818,8 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
         cmdQuickSearch = new javax.swing.JButton();
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
-        jPanel1 = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
-        pnlSearchBar = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        jPanel1 = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
+        pnlSearchBar = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         cardResults = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         cmdExport = new javax.swing.JButton();
         cmdTagFilter = new javax.swing.JButton();
@@ -1390,8 +1390,8 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
     private javax.swing.JButton cmdTagFilter;
     private javax.swing.JLabel jLabel18;
     private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardResults;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel jPanel1;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlSearchBar;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel jPanel1;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlSearchBar;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JSplitPane jSplitPane1;

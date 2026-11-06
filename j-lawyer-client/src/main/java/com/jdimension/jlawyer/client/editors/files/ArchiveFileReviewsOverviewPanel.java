@@ -952,7 +952,7 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
         lblPanelTitle = new javax.swing.JLabel();
         jTabbedPane1 = new javax.swing.JTabbedPane();
         pnlList = new javax.swing.JPanel();
-        pnlListActions = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        pnlListActions = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         cmdExport = new javax.swing.JButton();
         cmdRefresh = new javax.swing.JButton();
         lblStatus = new javax.swing.JLabel();
@@ -960,7 +960,7 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
         jScrollPane1 = new javax.swing.JScrollPane();
         tblResults = new javax.swing.JTable();
         pnlSheet = new javax.swing.JPanel();
-        pnlSheetActions = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        pnlSheetActions = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         cmdRefreshSheet = new javax.swing.JButton();
         cardSheet = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         calendarPanel1 = new de.costache.calendar.CalendarPanel();
@@ -1230,9 +1230,9 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
     private javax.swing.JLabel lblStatus;
     private javax.swing.JMenuItem mnuOpenArchiveFile;
     private javax.swing.JPanel pnlList;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlListActions;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlListActions;
     private javax.swing.JPanel pnlSheet;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlSheetActions;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlSheetActions;
     private javax.swing.JPopupMenu popupArchiveFileActions;
     private javax.swing.JTable tblResults;
     private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardList;

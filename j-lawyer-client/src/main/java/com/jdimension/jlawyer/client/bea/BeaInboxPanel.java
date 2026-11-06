@@ -1067,8 +1067,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        pnlOptionsBar = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
-        pnlToolbar = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        pnlOptionsBar = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
+        pnlToolbar = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         popFolders = new javax.swing.JPopupMenu();
         mnuNewFolder = new javax.swing.JMenuItem();
         mnuRemoveFolder = new javax.swing.JMenuItem();
@@ -3573,7 +3573,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     private javax.swing.JTable tblMails;
     private javax.swing.JTree treeFolders;
     private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardMail;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlToolbar;
-    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlOptionsBar;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlToolbar;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlOptionsBar;
     // End of variables declaration//GEN-END:variables
 }
