@@ -679,7 +679,7 @@ import themes.colors.DefaultColorTheme;
  *
  * @author jens
  */
-public class TimesheetEntryPanel extends javax.swing.JPanel {
+public class TimesheetEntryPanel extends com.jdimension.jlawyer.client.ui.theme.EntryRowPanel {
     
     private static final Logger log=Logger.getLogger(TimesheetEntryPanel.class.getName());
     
@@ -694,6 +694,11 @@ public class TimesheetEntryPanel extends javax.swing.JPanel {
     public TimesheetEntryPanel(ArchiveFilePanel caseView) {
         initComponents();
         this.caseView=caseView;
+        styleRowButtons(this.cmdOpen, this.cmdDelete, this.cmdTransferPositions);
+        // the description is a quiet, lightly framed area on the white entry
+        this.taDescription.setBackground(new java.awt.Color(248, 250, 252));
+        this.jScrollPane1.setBorder(new com.formdev.flatlaf.ui.FlatLineBorder(new java.awt.Insets(2, 4, 2, 4), com.jdimension.jlawyer.client.ui.theme.UiColors.SEPARATOR, 1, 8));
+        this.jScrollPane1.getViewport().setBackground(new java.awt.Color(248, 250, 252));
     }
     
     public void setEntry(ArchiveFileBean caseDto, Timesheet timesheet) {
@@ -701,8 +706,10 @@ public class TimesheetEntryPanel extends javax.swing.JPanel {
         this.timesheet=timesheet;
         if(timesheet.getStatus()==Timesheet.STATUS_CLOSED) {
             this.lblStatus.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
+            this.setAccent(ACCENT_DONE);
         } else {
             this.lblStatus.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+            this.setAccent(ACCENT_OPEN);
         }
         this.lblName.setText(timesheet.getName());
         this.lblStatus.setText("(" + timesheet.getStatusString() + ")");

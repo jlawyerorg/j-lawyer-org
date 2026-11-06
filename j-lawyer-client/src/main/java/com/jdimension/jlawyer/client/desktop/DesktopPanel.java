@@ -2951,41 +2951,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         }
     }
 
-    /**
-     * Content of a message list in a scroll pane: always exactly as wide as the visible area.
-     * A message bubble sizes itself to the width its list had when it was painted - in a plain
-     * panel, that width then becomes the list's preferred width, so a list that was once wide (e.g.
-     * while the desktop grid was built) never got narrower again: the bubbles stayed in a wide
-     * area, own messages at its far right, and could only be reached by scrolling horizontally.
-     */
-    private static class WidthTrackingPanel extends JPanel implements javax.swing.Scrollable {
-
-        @Override
-        public java.awt.Dimension getPreferredScrollableViewportSize() {
-            return this.getPreferredSize();
-        }
-
-        @Override
-        public int getScrollableUnitIncrement(java.awt.Rectangle visibleRect, int orientation, int direction) {
-            return 16;
-        }
-
-        @Override
-        public int getScrollableBlockIncrement(java.awt.Rectangle visibleRect, int orientation, int direction) {
-            return visibleRect.height;
-        }
-
-        @Override
-        public boolean getScrollableTracksViewportWidth() {
-            return true;
-        }
-
-        @Override
-        public boolean getScrollableTracksViewportHeight() {
-            return false;
-        }
-    }
-
     private void initMessagingDesktopPanels() {
         // "Nachrichten an mich" panel
         pnlDesktopMessagesToMe = new GlassCardPanel();
@@ -2999,7 +2964,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         headerToMe.add(lblMessagesToMeTitle);
         pnlDesktopMessagesToMe.add(headerToMe, java.awt.BorderLayout.NORTH);
 
-        pnlDesktopMessagesToMeContent = new WidthTrackingPanel();
+        pnlDesktopMessagesToMeContent = new com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel();
         pnlDesktopMessagesToMeContent.setOpaque(false);
         pnlDesktopMessagesToMeContent.setLayout(new BoxLayout(pnlDesktopMessagesToMeContent, BoxLayout.Y_AXIS));
         JLabel lblLoadingToMe = new JLabel("Nachrichten werden geladen...");
@@ -3027,7 +2992,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         headerToOthers.add(lblMessagesToOthersTitle);
         pnlDesktopMessagesToOthers.add(headerToOthers, java.awt.BorderLayout.NORTH);
 
-        pnlDesktopMessagesToOthersContent = new WidthTrackingPanel();
+        pnlDesktopMessagesToOthersContent = new com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel();
         pnlDesktopMessagesToOthersContent.setOpaque(false);
         pnlDesktopMessagesToOthersContent.setLayout(new BoxLayout(pnlDesktopMessagesToOthersContent, BoxLayout.Y_AXIS));
         JLabel lblLoadingToOthers = new JLabel("Nachrichten werden geladen...");

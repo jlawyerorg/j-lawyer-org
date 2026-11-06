@@ -3406,7 +3406,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         txtNotice = new javax.swing.JTextArea();
         pnlMessagesView = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jScrollPane9 = new javax.swing.JScrollPane();
-        pnlMessages = new javax.swing.JPanel();
+        pnlMessages = new com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel();
         messageSendPanel1 = new com.jdimension.jlawyer.client.messenger.MessageSendPanel();
         tabParties = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         cmdSearchClient = new javax.swing.JButton();
@@ -11761,7 +11761,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JPanel pnlInvoices;
     protected com.jdimension.jlawyer.client.editors.files.InvolvedPartiesPanel pnlInvolvedParties;
     protected javax.swing.JPanel pnlLinkedCases;
-    private javax.swing.JPanel pnlMessages;
+    private com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel pnlMessages;
     private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel pnlMessagesView;
     private javax.swing.JPanel pnlPayments;
     private com.jdimension.jlawyer.client.editors.files.DocumentDetailsPanel pnlDocumentDetails;
@@ -12121,6 +12121,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleTable(this.tblReviewReasons, this.tblReviewReasonsPane);
         com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleTable(this.tblAccountEntries, this.jScrollPane10);
         this.styleAccountTotals();
+
+        // lists of entries (parties, invoices, payments, timesheets): every entry has its own frame,
+        // the scroll pane around them does not need one
+        for (javax.swing.JScrollPane sp : new javax.swing.JScrollPane[]{this.jScrollPane8, this.jScrollPane5, this.jScrollPane12, this.jScrollPane11}) {
+            // an empty border instead of null - a null border is replaced by the look and feel's
+            // default border when the UI is updated (e.g. on a theme change)
+            sp.setBorder(javax.swing.BorderFactory.createEmptyBorder());
+        }
     }
 
     private static final Color TOTALS_CAPTION_IN = new Color(77, 124, 15);

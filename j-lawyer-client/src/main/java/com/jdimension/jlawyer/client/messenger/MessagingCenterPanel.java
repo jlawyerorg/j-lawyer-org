@@ -901,11 +901,11 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         lstHashtags = new javax.swing.JList<>();
         tabsPane = new javax.swing.JTabbedPane();
         jScrollPane3 = new javax.swing.JScrollPane();
-        pnlMessages = new javax.swing.JPanel();
+        pnlMessages = new com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
-        pnlMessagesToMe = new javax.swing.JPanel();
+        pnlMessagesToMe = new com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel();
         jScrollPane4 = new javax.swing.JScrollPane();
-        pnlMessagesToOthers = new javax.swing.JPanel();
+        pnlMessagesToOthers = new com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel();
         messageSendPanel1 = new com.jdimension.jlawyer.client.messenger.MessageSendPanel();
         lblClearHashtagSelection = new javax.swing.JLabel();
         lblPopoutMessenger = new javax.swing.JLabel();
@@ -1399,9 +1399,9 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
     private javax.swing.JLabel lblPopoutMessenger;
     private javax.swing.JList<String> lstHashtags;
     private com.jdimension.jlawyer.client.messenger.MessageSendPanel messageSendPanel1;
-    private javax.swing.JPanel pnlMessages;
-    private javax.swing.JPanel pnlMessagesToMe;
-    private javax.swing.JPanel pnlMessagesToOthers;
+    private com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel pnlMessages;
+    private com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel pnlMessagesToMe;
+    private com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel pnlMessagesToOthers;
     private javax.swing.JTabbedPane tabsPane;
     private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlToolbar;
     private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlHeaderRight;
@@ -1462,7 +1462,8 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
             targetScroll = new JScrollPane();
             targetScroll.getVerticalScrollBar().setUnitIncrement(SCROLLPANE_VERTICAL_INCREMENT);
 
-            targetPanel = new JPanel();
+            // follows the width of the tab, see WidthTrackingPanel
+            targetPanel = new com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel();
             BoxLayout layout = new javax.swing.BoxLayout(targetPanel, javax.swing.BoxLayout.Y_AXIS);
             targetPanel.setLayout(layout);
             targetPanel.setOpaque(false);

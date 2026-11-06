@@ -773,7 +773,7 @@ public class PopoutMessenger extends javax.swing.JDialog implements NewMessageCo
 
         jPanel1 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        pnlMessages = new javax.swing.JPanel();
+        pnlMessages = new com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel();
         messageSendPanel1 = new com.jdimension.jlawyer.client.messenger.MessageSendPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -892,7 +892,7 @@ public class PopoutMessenger extends javax.swing.JDialog implements NewMessageCo
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private com.jdimension.jlawyer.client.messenger.MessageSendPanel messageSendPanel1;
-    private javax.swing.JPanel pnlMessages;
+    private com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel pnlMessages;
     // End of variables declaration//GEN-END:variables
 
     @Override

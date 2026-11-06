@@ -375,7 +375,7 @@
 
               <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
               <SubComponents>
-                <Container class="javax.swing.JPanel" name="pnlMessages">
+                <Container class="com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel" name="pnlMessages">
                   <Properties>
                     <Property name="opaque" type="boolean" value="false"/>
                   </Properties>
@@ -412,7 +412,7 @@
 
               <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
               <SubComponents>
-                <Container class="javax.swing.JPanel" name="pnlMessagesToMe">
+                <Container class="com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel" name="pnlMessagesToMe">
                   <Properties>
                     <Property name="opaque" type="boolean" value="false"/>
                   </Properties>
@@ -449,7 +449,7 @@
 
               <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
               <SubComponents>
-                <Container class="javax.swing.JPanel" name="pnlMessagesToOthers">
+                <Container class="com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel" name="pnlMessagesToOthers">
                   <Properties>
                     <Property name="opaque" type="boolean" value="false"/>
                   </Properties>

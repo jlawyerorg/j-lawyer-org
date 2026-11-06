@@ -809,7 +809,7 @@ public class PopoutMessengerOtherUsers extends javax.swing.JDialog implements Ev
         popUserFilter = new javax.swing.JPopupMenu();
         jPanel1 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        pnlMessages = new javax.swing.JPanel();
+        pnlMessages = new com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel();
         jLabel1 = new javax.swing.JLabel();
         lblUserFilterCount = new javax.swing.JLabel();
         cmdUserFilter = new javax.swing.JButton();
@@ -965,7 +965,7 @@ public class PopoutMessengerOtherUsers extends javax.swing.JDialog implements Ev
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblUserFilterCount;
-    private javax.swing.JPanel pnlMessages;
+    private com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel pnlMessages;
     private javax.swing.JPopupMenu popUserFilter;
     // End of variables declaration//GEN-END:variables
 
