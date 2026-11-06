@@ -750,12 +750,16 @@ public class PDFSplitAction extends ProgressableAction {
                 break;
             }
             this.progress("Ermittle Dokumenteigenschaften...");
-            PDDocument document = PDDocument.load(data);
+            // the document is only read here to find the parts, split() loads it for every part itself
 
             if (req.getSplitType() == PDFSplitRequest.SPLITTYPE_PAGECOUNT) {
                 this.progress("Splitte Dokument...");
+                int pageCount;
+                try (PDDocument document = PDDocument.load(data)) {
+                    pageCount = document.getNumberOfPages();
+                }
                 // each part only with its own pages, without references to the other pages of the document
-                List<byte[]> splittedList = PdfSplitUtils.split(data, PdfSplitUtils.toPageCountRanges(req.getSplitAfterPages(), document.getNumberOfPages()));
+                List<byte[]> splittedList = PdfSplitUtils.split(data, PdfSplitUtils.toPageCountRanges(req.getSplitAfterPages(), pageCount));
                 this.max = this.max + splittedList.size();
                 this.indicator.setMax(this.max);
                 int start = 1;
@@ -774,33 +778,37 @@ public class PDFSplitAction extends ProgressableAction {
 
                     start = end + 1;
                     end += req.getSplitAfterPages();
-                    if (end > document.getNumberOfPages()) {
-                        end = document.getNumberOfPages();
+                    if (end > pageCount) {
+                        end = pageCount;
                     }
                 }
             } else if (req.getSplitType() == PDFSplitRequest.SPLITTYPE_BLANKPAGES) {
                 this.progress("Ermittle leere Seiten...");
 
                 ArrayList<Integer> splitPageIndices = new ArrayList<>();
-                PDPageTree allPages = document.getPages();
-                this.max = this.max + allPages.getCount();
-                this.indicator.setMax(this.max);
-                Integer pageNumber = 1;
-                for (PDPage page : allPages) {
-                    this.progress(MSG_CHECKPAGE + pageNumber);
-                    Iterable<COSName> xObjects = page.getResources().getXObjectNames();
-                    Iterable<COSName> fonts = page.getResources().getFontNames();
-                    
-                    if (xObjects.spliterator().getExactSizeIfKnown() == 0 && fonts.spliterator().getExactSizeIfKnown() ==0) {
-                        splitPageIndices.add(pageNumber);
-                    }
-                    pageNumber++;
-                    if (this.isCancelled()) {
+                int pageCount;
+                try (PDDocument document = PDDocument.load(data)) {
+                    pageCount = document.getNumberOfPages();
+                    PDPageTree allPages = document.getPages();
+                    this.max = this.max + allPages.getCount();
+                    this.indicator.setMax(this.max);
+                    Integer pageNumber = 1;
+                    for (PDPage page : allPages) {
+                        this.progress(MSG_CHECKPAGE + pageNumber);
+                        Iterable<COSName> xObjects = page.getResources().getXObjectNames();
+                        Iterable<COSName> fonts = page.getResources().getFontNames();
+
+                        if (xObjects.spliterator().getExactSizeIfKnown() == 0 && fonts.spliterator().getExactSizeIfKnown() ==0) {
+                            splitPageIndices.add(pageNumber);
+                        }
+                        pageNumber++;
+                        if (this.isCancelled()) {
                             break;
                         }
+                    }
                 }
 
-                List<byte[]> splittedList = PdfSplitUtils.split(data, PdfSplitUtils.toSeparatorRanges(splitPageIndices, document.getNumberOfPages()));
+                List<byte[]> splittedList = PdfSplitUtils.split(data, PdfSplitUtils.toSeparatorRanges(splitPageIndices, pageCount));
                 this.max = this.max + splittedList.size();
                 this.indicator.setMax(this.max + splittedList.size());
                 String fileNameNoExt = req.getFileName();
@@ -825,25 +833,28 @@ public class PDFSplitAction extends ProgressableAction {
                 }
             } else if(req.getSplitType() == PDFSplitRequest.SPLITTYPE_KEYWORD) {
                 ArrayList<Integer> splitPageIndices = new ArrayList<>();
-                this.max = this.max + document.getNumberOfPages();
-                this.indicator.setMax(this.max);
-                
-                
-                for (int pageNumber = 0; pageNumber < document.getNumberOfPages(); pageNumber++) {
-                    this.progress(MSG_CHECKPAGE + (pageNumber+1));
-                    PDFTextStripper reader = new PDFTextStripper();
-                    reader.setStartPage(pageNumber+1);
-                    reader.setEndPage(pageNumber+1);
-                    String pageText = reader.getText(document);
-                    if (pageText.toLowerCase().contains(req.getSplitKeyword().toLowerCase())) {
-                        splitPageIndices.add(pageNumber);
-                        if (this.isCancelled()) {
-                            break;
+                int pageCount;
+                try (PDDocument document = PDDocument.load(data)) {
+                    pageCount = document.getNumberOfPages();
+                    this.max = this.max + pageCount;
+                    this.indicator.setMax(this.max);
+
+                    for (int pageNumber = 0; pageNumber < pageCount; pageNumber++) {
+                        this.progress(MSG_CHECKPAGE + (pageNumber+1));
+                        PDFTextStripper reader = new PDFTextStripper();
+                        reader.setStartPage(pageNumber+1);
+                        reader.setEndPage(pageNumber+1);
+                        String pageText = reader.getText(document);
+                        if (pageText.toLowerCase().contains(req.getSplitKeyword().toLowerCase())) {
+                            splitPageIndices.add(pageNumber);
+                            if (this.isCancelled()) {
+                                break;
+                            }
                         }
                     }
                 }
                 
-                List<int[]> ranges = PdfSplitUtils.toSeparatorRanges(splitPageIndices, document.getNumberOfPages());
+                List<int[]> ranges = PdfSplitUtils.toSeparatorRanges(splitPageIndices, pageCount);
                 List<byte[]> splittedList = PdfSplitUtils.split(data, ranges);
                 this.max = this.max + splittedList.size();
                 this.indicator.setMax(this.max + splittedList.size());
@@ -887,21 +898,25 @@ public class PDFSplitAction extends ProgressableAction {
                 this.progress("Ermittle leere Seiten...");
 
                 ArrayList<Integer> splitPageIndices = new ArrayList<>();
-                this.max = this.max + document.getNumberOfPages();
-                this.indicator.setMax(this.max);
-                
-                PDFRenderer renderedDoc = new PDFRenderer(document);
-                for (int pageNumber = 0; pageNumber < document.getNumberOfPages(); pageNumber++) {
-                    this.progress(MSG_CHECKPAGE + (pageNumber+1));
-                    if (isBlank(renderedDoc.renderImage(pageNumber))) {
-                        splitPageIndices.add(pageNumber);
-                        if (this.isCancelled()) {
-                            break;
+                int pageCount;
+                try (PDDocument document = PDDocument.load(data)) {
+                    pageCount = document.getNumberOfPages();
+                    this.max = this.max + pageCount;
+                    this.indicator.setMax(this.max);
+
+                    PDFRenderer renderedDoc = new PDFRenderer(document);
+                    for (int pageNumber = 0; pageNumber < pageCount; pageNumber++) {
+                        this.progress(MSG_CHECKPAGE + (pageNumber+1));
+                        if (isBlank(renderedDoc.renderImage(pageNumber))) {
+                            splitPageIndices.add(pageNumber);
+                            if (this.isCancelled()) {
+                                break;
+                            }
                         }
                     }
                 }
                 
-                List<int[]> ranges = PdfSplitUtils.toSeparatorRanges(splitPageIndices, document.getNumberOfPages());
+                List<int[]> ranges = PdfSplitUtils.toSeparatorRanges(splitPageIndices, pageCount);
                 List<byte[]> splittedList = PdfSplitUtils.split(data, ranges);
                 this.max = this.max + splittedList.size();
                 this.indicator.setMax(this.max + splittedList.size());
@@ -920,7 +935,7 @@ public class PDFSplitAction extends ProgressableAction {
                         // find the split document with just the blank page, and skip it
                         if (ranges.get(i)[1] - ranges.get(i)[0] == 1) {
                             try (PDDocument doc = PDDocument.load(splittedList.get(i))) {
-                                renderedDoc = new PDFRenderer(doc);
+                                PDFRenderer renderedDoc = new PDFRenderer(doc);
 
                                 if (isBlank(renderedDoc.renderImage(0))) {
                                     continue;
