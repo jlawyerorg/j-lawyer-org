@@ -2750,42 +2750,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.setArchiveFileDTO(inDto, null);
     }
 
-    /**
-     * Brings the document list in line with the server after a document replacement: the documents of the case are
-     * loaded again, because other documents than the ones of the outcome may have been renamed on the server in the
-     * meantime. Known links to invoices are kept, renaming and replacing do not change them. If loading fails, only the
-     * documents of the outcome are updated.
-     *
-     * @param remote the case service
-     * @param outcome the outcome of the replacement
-     */
-    private void showDocumentsAfterReplacement(ArchiveFileServiceRemote remote, DocumentReplacement.Outcome outcome) {
-        try {
-            ArrayList<ArchiveFileDocumentsBean> documents = new ArrayList<>(remote.getDocuments(this.dto.getId()));
-            java.util.HashMap<String, com.jdimension.jlawyer.persistence.Invoice> invoices = new java.util.HashMap<>();
-            for (ArchiveFileDocumentsBean d : documents) {
-                com.jdimension.jlawyer.persistence.Invoice invoice = this.caseFolderPanel1.getLinkedInvoice(d.getId());
-                if (invoice != null) {
-                    invoices.put(d.getId(), invoice);
-                }
-            }
-            this.caseFolderPanel1.setAllDocumentTags(remote.getDocumentTagsForCase(this.dto.getId()));
-            this.caseFolderPanel1.setDocuments(documents, invoices);
-            this.caseFolderPanel1.sort();
-        } catch (Exception ex) {
-            log.error("Unable to load the documents of the case after a replacement", ex);
-            for (ArchiveFileDocumentsBean affected : outcome.getAffectedDocuments()) {
-                this.caseFolderPanel1.removeDocument(affected);
-            }
-            for (ArchiveFileDocumentsBean active : outcome.getActiveDocuments()) {
-                this.caseFolderPanel1.addDocument(active, this.caseFolderPanel1.getLinkedInvoice(active.getId()));
-            }
-            if (outcome.getDocument() != null) {
-                this.caseFolderPanel1.addDocument(outcome.getDocument(), null);
-            }
-        }
-    }
-
     public void setArchiveFileDTO(ArchiveFileBean inDto, String selectDocumentWithFileName) {
         log.info("[AKTE-LOAD] setArchiveFileDTO START: " + (inDto != null ? inDto.getFileNumber() : "null"));
         this.caseLoadCount++;
@@ -8195,6 +8159,64 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     }
 
+    /**
+     * Clarifies the name under which a document is stored in this case: if a document with the name exists, asks
+     * whether it is replaced, otherwise for a new name. Closing the question cancels.
+     *
+     * @param remote the case service
+     * @param name the name the document should get
+     * @param newNameTitle the title of the dialog for a new name
+     * @return the name and whether the existing document is to be replaced, null if the user cancelled
+     * @throws Exception if the check on the server fails
+     */
+    private DocumentTargetName resolveDocumentName(ArchiveFileServiceRemote remote, String name, String newNameTitle) throws Exception {
+        return DocumentTargetName.resolve(name, n -> remote.doesDocumentExist(this.dto.getId(), n), new DocumentTargetName.Questions() {
+            @Override
+            public Boolean replace(String taken) {
+                int response = JOptionPane.showOptionDialog(EditorsRegistry.getInstance().getMainWindow(), "Eine Datei mit dem Namen '" + taken + "' existiert bereits, soll diese ersetzt werden?", "Datei ersetzen?", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, new String[]{"Ja", "Nein"}, "Nein");
+                if (response == JOptionPane.CLOSED_OPTION) {
+                    return null;
+                }
+                return response == JOptionPane.YES_OPTION;
+            }
+
+            @Override
+            public String newName(String taken) {
+                return FileUtils.getNewFileName(dto, taken, new Date(), false, EditorsRegistry.getInstance().getMainWindow(), newNameTitle);
+            }
+        });
+    }
+
+    /**
+     * Removes the document of this case that has the name for good, so that a new document can be stored under it:
+     * from the documents of the case, otherwise from the bin.
+     *
+     * @param remote the case service
+     * @param name the name of the document to replace
+     * @throws Exception if removing fails
+     */
+    private void removeDocumentToReplace(ArchiveFileServiceRemote remote, String name) throws Exception {
+        ArchiveFileDocumentsBean document = DocumentTargetName.findDocument(this.caseFolderPanel1.getDocuments(), name);
+        if (document != null) {
+            // document with that name is part of the "active" documents in the case: move it to the bin, then remove it from there
+            remote.removeDocument(document.getId());
+            remote.removeDocumentFromBin(document.getId());
+            this.caseFolderPanel1.removeDocument(document);
+        } else {
+            // document with that name is not present in UI but exists in the trash bin
+            List<ArchiveFileDocumentsBean> bin = new ArrayList<>();
+            for (ArchiveFileDocumentsBean binDoc : remote.getDocumentsBin()) {
+                if (this.dto.getId().equals(binDoc.getArchiveFileKey().getId())) {
+                    bin.add(binDoc);
+                }
+            }
+            document = DocumentTargetName.findDocument(bin, name);
+            if (document != null) {
+                remote.removeDocumentFromBin(document.getId());
+            }
+        }
+    }
+
     public void convertDocumentToPdf(ArchiveFileDocumentsBean doc) throws Exception {
         ClientSettings settings = ClientSettings.getInstance();
         JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -8234,49 +8256,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     return;
                 }
 
-                boolean documentExists = remote.doesDocumentExist(dto.getId(), newName);
-                boolean replaceDocument = false;
-                while (documentExists && !replaceDocument) {
-                    int repResp = JOptionPane.showOptionDialog(
-                            EditorsRegistry.getInstance().getMainWindow(),
-                            "Eine Datei mit dem Namen '" + newName + "' existiert bereits, soll diese ersetzt werden?",
-                            "Datei ersetzen?",
-                            JOptionPane.YES_NO_OPTION,
-                            JOptionPane.WARNING_MESSAGE,
-                            null,
-                            new String[]{"Ja", "Nein"},
-                            "Nein");
-                    replaceDocument = repResp == JOptionPane.YES_OPTION;
-                    if (!replaceDocument) {
-                        newName = FileUtils.getNewFileName(dto, newName, new Date(), false, EditorsRegistry.getInstance().getMainWindow(), "Neuer Name für PDF-Dokument");
-                        if (newName == null || "".equals(newName)) {
-                            this.lastPopupClosed = System.currentTimeMillis();
-                            return;
-                        }
-                    }
-                    documentExists = remote.doesDocumentExist(dto.getId(), newName);
+                DocumentTargetName target = this.resolveDocumentName(remote, newName, "Neuer Name für PDF-Dokument");
+                if (target == null) {
+                    this.lastPopupClosed = System.currentTimeMillis();
+                    return;
                 }
-
-                if (replaceDocument) {
-                    final String searchName = newName;
-                    ArchiveFileDocumentsBean document = this.caseFolderPanel1.getDocuments().stream()
-                            .filter(iterDoc -> searchName.equals(iterDoc.getName()))
-                            .findAny()
-                            .orElse(null);
-                    if (document != null) {
-                        remote.removeDocument(document.getId());
-                        remote.removeDocumentFromBin(document.getId());
-                        caseFolderPanel1.removeDocument(document);
-                    } else {
-                        document = remote.getDocumentsBin().stream()
-                                .filter(iterDoc -> dto.getId().equals(iterDoc.getArchiveFileKey().getId()))
-                                .filter(iterDoc -> searchName.equals(iterDoc.getName()))
-                                .findAny()
-                                .orElse(null);
-                        if (document != null) {
-                            remote.removeDocumentFromBin(document.getId());
-                        }
-                    }
+                newName = target.getName();
+                if (target.isReplace()) {
+                    this.removeDocumentToReplace(remote, newName);
                 }
 
                 ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, content, doc.getDictateSign(), null, metadata);
@@ -8317,20 +8304,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     return;
                 }
 
-                boolean documentExists = remote.doesDocumentExist(dto.getId(), newName);
-                boolean replaceDocument = false;
-                while (documentExists && !replaceDocument) {
-                    int response = JOptionPane.showOptionDialog(EditorsRegistry.getInstance().getMainWindow(), "Eine Datei mit dem Namen '" + newName + "' existiert bereits, soll diese ersetzt werden?", "Datei ersetzen?", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, new String[]{"Ja", "Nein"}, "Nein");
-                    replaceDocument = response == JOptionPane.YES_OPTION;
-                    if (!replaceDocument) {
-                        newName = FileUtils.getNewFileName(dto, newName, new Date(), false, EditorsRegistry.getInstance().getMainWindow(), "Neuer Name für PDF-Dokument");
-                        if (newName == null || "".equals(newName)) {
-                            this.lastPopupClosed = System.currentTimeMillis();
-                            return;
-                        }
-                    }
-                    documentExists = remote.doesDocumentExist(dto.getId(), newName);
+                DocumentTargetName target = this.resolveDocumentName(remote, newName, "Neuer Name für PDF-Dokument");
+                if (target == null) {
+                    this.lastPopupClosed = System.currentTimeMillis();
+                    return;
                 }
+                newName = target.getName();
 
                 FileConverter conv = FileConverter.getInstance();
                 String tempPath = FileUtils.createTempFile(doc.getName(), content);
@@ -8340,33 +8319,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 FileUtils.cleanupTempFile(tempPdfPath);
 
                 // To replace document, old one gets removed first, then the new is uploaded
-                if (replaceDocument) {
-                    final String searchName = newName;
-                    // Check documents to find Bean for name
-                    ArchiveFileDocumentsBean document = this.caseFolderPanel1.getDocuments().stream()
-                            .filter(iterDoc -> searchName.equals(iterDoc.getName()))
-                            .findAny()
-                            .orElse(null);
-                    // Check if the document was found
-                    if (document != null) {
-                        // document with that name is part of the "active" documents in the case
-                        // First move document to bin
-                        remote.removeDocument(document.getId());
-                        // Then remove from bin
-                        remote.removeDocumentFromBin(document.getId());
-                        // Then remove from view
-                        caseFolderPanel1.removeDocument(document);
-                    } else {
-                        // document with that name is not present in UI but exists in the trash bin
-                        document = remote.getDocumentsBin().stream()
-                                .filter(iterDoc -> dto.getId().equals(iterDoc.getArchiveFileKey().getId()))
-                                .filter(iterDoc -> searchName.equals(iterDoc.getName()))
-                                .findAny()
-                                .orElse(null);
-                        if (document != null) {
-                            remote.removeDocumentFromBin(document.getId());
-                        }
-                    }
+                if (target.isReplace()) {
+                    this.removeDocumentToReplace(remote, newName);
                 }
 
                 ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, pdfContent, doc.getDictateSign(), null);
@@ -9028,25 +8982,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             return;
                         }
 
-                        boolean documentExists = remote.doesDocumentExist(dto.getId(), newName);
-                        boolean replaceDocument = false;
-                        while (documentExists && !replaceDocument) {
-                            int replaceResponse = JOptionPane.showOptionDialog(EditorsRegistry.getInstance().getMainWindow(), "Eine Datei mit dem Namen '" + newName + "' existiert bereits, soll diese ersetzt werden?", "Datei ersetzen?", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, new String[]{"Ja", "Nein"}, "Nein");
-                            if (replaceResponse == JOptionPane.CLOSED_OPTION) {
-                                // dialog closed without a choice - cancel
-                                this.lastPopupClosed = System.currentTimeMillis();
-                                return;
-                            }
-                            replaceDocument = replaceResponse == JOptionPane.YES_OPTION;
-                            if (!replaceDocument) {
-                                newName = FileUtils.getNewFileName(dto, newName, new Date(), false, EditorsRegistry.getInstance().getMainWindow(), "Neuer Name für Dokument");
-                                if (newName == null || "".equals(newName)) {
-                                    this.lastPopupClosed = System.currentTimeMillis();
-                                    return;
-                                }
-                            }
-                            documentExists = remote.doesDocumentExist(dto.getId(), newName);
+                        DocumentTargetName target = this.resolveDocumentName(remote, newName, "Neuer Name für Dokument");
+                        if (target == null) {
+                            this.lastPopupClosed = System.currentTimeMillis();
+                            return;
                         }
+                        newName = target.getName();
 
                         FileConverter conv = FileConverter.getInstance();
                         String tempPath = FileUtils.createTempFile(doc.getName(), content);
@@ -9055,21 +8996,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         FileUtils.cleanupTempFile(tempPath);
                         FileUtils.cleanupTempFile(tempTargetPath);
 
-                        // to replace a document, the new one is stored first, the document that has the name on the server is only moved to the bin afterwards
-                        DocumentReplacement.Outcome replacement;
-                        try {
-                            replacement = DocumentReplacement.addReplacing(remote, dto.getId(), newName, targetContent, doc.getDictateSign(), replaceDocument);
-                        } catch (DocumentReplacement.ReplacementException rex) {
-                            log.error("Error replacing document " + newName, rex);
-                            // show the documents as they are on the server now, the new one under its temporary name
-                            this.showDocumentsAfterReplacement(remote, rex.getOutcome());
-                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), rex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                            return;
+                        // To replace document, old one gets removed first, then the new is uploaded
+                        if (target.isReplace()) {
+                            this.removeDocumentToReplace(remote, newName);
                         }
-                        ArchiveFileDocumentsBean newDoc = replacement.getDocument();
-                        if (replacement.getProblems() != null) {
-                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), replacement.getProblems(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
-                        }
+                        ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, targetContent, doc.getDictateSign(), null);
 
                         if (doc.getFolder() != null) {
                             ArrayList<String> documentIds = new ArrayList<>();
@@ -9078,7 +9009,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                                 remote.moveDocumentsToFolder(documentIds, doc.getFolder().getId());
                                 newDoc.setFolder(doc.getFolder());
                             } catch (Exception moveFailed) {
-                                // the document is stored, e.g. the folder was deleted in the meantime - the list is still brought in line below
+                                // the document is stored, e.g. the folder was deleted in the meantime - it is still shown in the list
                                 log.error("Unable to move " + newDoc.getName() + " to the folder of " + doc.getName(), moveFailed);
                                 JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "'" + newDoc.getName() + "' wurde abgelegt, konnte aber nicht in den Ordner von '" + doc.getName() + "' verschoben werden: " + moveFailed.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
                             }
@@ -9086,12 +9017,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             log.warn("document folder of source document is null when duplicating as " + targetFormat);
                         }
 
-                        if (replaceDocument) {
-                            // documents may have been renamed on the server, show them as they are now
-                            this.showDocumentsAfterReplacement(remote, replacement);
-                        } else {
-                            caseFolderPanel1.addDocument(newDoc, null);
-                        }
+                        caseFolderPanel1.addDocument(newDoc, null);
 
                     } catch (Exception ioe) {
                         log.error("Error duplicating document", ioe);
