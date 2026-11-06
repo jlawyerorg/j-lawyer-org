@@ -731,6 +731,7 @@ public class DialogStyle {
     private static final String APPLIED = "jlawyer.dialogStyle.applied";
 
     public static final Color PAGE_BACKGROUND = new Color(236, 241, 246);
+    private static final Color HEADER_BACKGROUND = UiColors.CARD_TITLE;
     private static final Color CARD_BACKGROUND = Color.WHITE;
 
     private static final String BUTTON_STYLE = "arc: 10; margin: 4,12,4,12";
@@ -835,6 +836,9 @@ public class DialogStyle {
                     // plain wrapper panels show what is behind them: the page or the card
                     p.setOpaque(false);
                 }
+            } else if (c instanceof javax.swing.JViewport && hasDefaultBackground(c)) {
+                // lists in scroll panes: a white area like a table instead of the default grey
+                c.setBackground(CARD_BACKGROUND);
             } else if (c instanceof JTabbedPane && hasDefaultBackground(c)) {
                 c.setBackground(insideCard ? CARD_BACKGROUND : PAGE_BACKGROUND);
             } else if (c instanceof JButton) {
@@ -854,6 +858,19 @@ public class DialogStyle {
                 // shows the page or card behind it instead of the default grey - its content stays
                 ((JPanel) c).setOpaque(false);
             }
+        }
+    }
+
+    /**
+     * The header area of a dialog (e.g. number and status of an invoice): navy like the glass
+     * headers of the editors, its white texts stay readable.
+     *
+     * @param header the header panel
+     */
+    public static void styleHeader(JComponent header) {
+        if (header != null) {
+            header.setOpaque(true);
+            header.setBackground(HEADER_BACKGROUND);
         }
     }
 
