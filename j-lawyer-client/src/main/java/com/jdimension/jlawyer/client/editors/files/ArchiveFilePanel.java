@@ -750,6 +750,7 @@ import com.jdimension.jlawyer.client.voip.EpostPdfConversionStep;
 import com.jdimension.jlawyer.client.voip.EpostPdfMergeStep;
 import com.jdimension.jlawyer.client.voip.EpostPdfOrderingStep;
 import com.jdimension.jlawyer.client.utils.pdf.PdfPageReorderDialog;
+import com.jdimension.jlawyer.client.utils.pdf.PdfSplitUtils;
 import com.jdimension.jlawyer.client.voip.EpostWizardDialog;
 import com.jdimension.jlawyer.client.voip.SendFaxDialog;
 import com.jdimension.jlawyer.client.wizard.WizardDataContainer;
@@ -10275,36 +10276,20 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         }
                     }
 
-                    List<Integer> allSplitPoints = new ArrayList<>();
-                    allSplitPoints.add(0);
-                    allSplitPoints.addAll(splitPages);
-                    allSplitPoints.add(pageCount);
+                    // doppelte Seitenzahlen ergeben keinen leeren Teil
+                    List<int[]> partRanges = PdfSplitUtils.toPartRanges(splitPages, pageCount);
+                    // jeder Teil nur mit seinen eigenen Seiten, ohne Verweise auf Seiten außerhalb des Teils
+                    List<byte[]> parts = PdfSplitUtils.split(content, partRanges);
 
                     ClientSettings settings = ClientSettings.getInstance();
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                     ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
 
                     // Erstelle für jeden Abschnitt ein neues temporäres Dokument
-                    for (int i = 0; i < allSplitPoints.size() - 1; i++) {
-                        int startPage = allSplitPoints.get(i);
-                        int endPage = allSplitPoints.get(i + 1);
-
+                    for (int i = 0; i < partRanges.size(); i++) {
                         // Erstelle eine neue temporäre Datei für diesen Teil
-                        String partTempPath = FileUtils.createTempFile("part_" + (i + 1) + "_" + doc.getName(), new byte[0]);
+                        String partTempPath = FileUtils.createTempFile("part_" + (i + 1) + "_" + doc.getName(), parts.get(i));
                         tempFiles.add(partTempPath);
-
-                        PDDocument sourceDoc = PDDocument.load(new File(tempPath));
-                        PDDocument newDoc = new PDDocument();
-
-                        // Kopiere die relevanten Seiten
-                        for (int pageNum = startPage; pageNum < endPage; pageNum++) {
-                            newDoc.importPage(sourceDoc.getPage(pageNum));
-                        }
-
-                        // Speichere den Teil
-                        newDoc.save(new File(partTempPath));
-                        newDoc.close();
-                        sourceDoc.close();
 
                         // Generiere Namen für das neue Dokument
                         String baseName = doc.getName();
