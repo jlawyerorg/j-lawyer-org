@@ -668,12 +668,12 @@ import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.client.utils.pdf.PdfSplitUtils;
 import com.jdimension.jlawyer.server.utils.ServerInformation;
 import com.jdimension.jlawyer.services.IntegrationServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -681,7 +681,6 @@ import java.util.List;
 import javax.swing.*;
 import org.apache.log4j.Logger;
 import org.apache.pdfbox.cos.COSName;
-import org.apache.pdfbox.multipdf.Splitter;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageTree;
@@ -755,9 +754,8 @@ public class PDFSplitAction extends ProgressableAction {
 
             if (req.getSplitType() == PDFSplitRequest.SPLITTYPE_PAGECOUNT) {
                 this.progress("Splitte Dokument...");
-                Splitter splitter = new Splitter();
-                splitter.setSplitAtPage(req.getSplitAfterPages());
-                List<PDDocument> splittedList = splitter.split(document);
+                // each part only with its own pages, without references to the other pages of the document
+                List<byte[]> splittedList = PdfSplitUtils.split(data, PdfSplitUtils.toPageCountRanges(req.getSplitAfterPages(), document.getNumberOfPages()));
                 this.max = this.max + splittedList.size();
                 this.indicator.setMax(this.max);
                 int start = 1;
@@ -766,22 +764,19 @@ public class PDFSplitAction extends ProgressableAction {
                 if (fileNameNoExt.toLowerCase().endsWith(".pdf")) {
                     fileNameNoExt = fileNameNoExt.substring(0, fileNameNoExt.length() - 4);
                 }
-                for (PDDocument doc : splittedList) {
+                for (byte[] doc : splittedList) {
                     if (this.isCancelled()) {
                         break;
                     }
                     String splitFileName = fileNameNoExt + "_S" + start + "-S" + end + ".pdf";
                     this.progress("Speichere " + splitFileName);
-                    ByteArrayOutputStream bout = new ByteArrayOutputStream();
-                    doc.save(bout);
-                    svc.addObservedFile(splitFileName, bout.toByteArray(), ServerInformation.getHostName());
+                    svc.addObservedFile(splitFileName, doc, ServerInformation.getHostName());
 
                     start = end + 1;
                     end += req.getSplitAfterPages();
                     if (end > document.getNumberOfPages()) {
                         end = document.getNumberOfPages();
                     }
-                    doc.close();
                 }
             } else if (req.getSplitType() == PDFSplitRequest.SPLITTYPE_BLANKPAGES) {
                 this.progress("Ermittle leere Seiten...");
@@ -805,8 +800,7 @@ public class PDFSplitAction extends ProgressableAction {
                         }
                 }
 
-                PDFBlankPageSplitter splitter = new PDFBlankPageSplitter(splitPageIndices);
-                List<PDDocument> splittedList = splitter.split(document);
+                List<byte[]> splittedList = PdfSplitUtils.split(data, PdfSplitUtils.toSeparatorRanges(splitPageIndices, document.getNumberOfPages()));
                 this.max = this.max + splittedList.size();
                 this.indicator.setMax(this.max + splittedList.size());
                 String fileNameNoExt = req.getFileName();
@@ -816,17 +810,14 @@ public class PDFSplitAction extends ProgressableAction {
                 DecimalFormat df = new DecimalFormat("000");
                 int counter = 1;
                 if (splittedList.size() > 1) {
-                    for (PDDocument doc : splittedList) {
+                    for (byte[] doc : splittedList) {
                         if (this.isCancelled()) {
                             break;
                         }
                         String splitFileName = fileNameNoExt + "-" + df.format(counter) + ".pdf";
                         this.progress("Speichere " + splitFileName);
-                        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-                        doc.save(bout);
-                        svc.addObservedFile(splitFileName, bout.toByteArray(), ServerInformation.getHostName());
+                        svc.addObservedFile(splitFileName, doc, ServerInformation.getHostName());
 
-                        doc.close();
                         counter++;
                     }
                 } else {
@@ -852,8 +843,8 @@ public class PDFSplitAction extends ProgressableAction {
                     }
                 }
                 
-                PDFBlankPageSplitter splitter = new PDFBlankPageSplitter(splitPageIndices);
-                List<PDDocument> splittedList = splitter.split(document);
+                List<int[]> ranges = PdfSplitUtils.toSeparatorRanges(splitPageIndices, document.getNumberOfPages());
+                List<byte[]> splittedList = PdfSplitUtils.split(data, ranges);
                 this.max = this.max + splittedList.size();
                 this.indicator.setMax(this.max + splittedList.size());
                 String fileNameNoExt = req.getFileName();
@@ -863,31 +854,30 @@ public class PDFSplitAction extends ProgressableAction {
                 DecimalFormat df = new DecimalFormat("000");
                 int counter = 1;
                 if (splittedList.size() > 1) {
-                    for (PDDocument doc : splittedList) {
+                    for (int i = 0; i < splittedList.size(); i++) {
                         if (this.isCancelled()) {
                             break;
                         }
                         
                         // find the split document with just the blank page, and skip it
-                        if (doc.getNumberOfPages() == 1) {
-                            PDFTextStripper reader = new PDFTextStripper();
-                            reader.setStartPage(1);
-                            reader.setEndPage(1);
-                            String pageText = reader.getText(doc);
+                        if (ranges.get(i)[1] - ranges.get(i)[0] == 1) {
+                            try (PDDocument doc = PDDocument.load(splittedList.get(i))) {
+                                PDFTextStripper reader = new PDFTextStripper();
+                                reader.setStartPage(1);
+                                reader.setEndPage(1);
+                                String pageText = reader.getText(doc);
 
-                            if (pageText.toLowerCase().contains(req.getSplitKeyword().toLowerCase())) {
-                                continue;
+                                if (pageText.toLowerCase().contains(req.getSplitKeyword().toLowerCase())) {
+                                    continue;
+                                }
                             }
 
                         }
                         
                         String splitFileName = fileNameNoExt + "-" + df.format(counter) + ".pdf";
                         this.progress("Speichere " + splitFileName);
-                        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-                        doc.save(bout);
-                        svc.addObservedFile(splitFileName, bout.toByteArray(), ServerInformation.getHostName());
+                        svc.addObservedFile(splitFileName, splittedList.get(i), ServerInformation.getHostName());
 
-                        doc.close();
                         counter++;
                     }
                 } else {
@@ -911,9 +901,8 @@ public class PDFSplitAction extends ProgressableAction {
                     }
                 }
                 
-                PDFBlankPageSplitter splitter = new PDFBlankPageSplitter(splitPageIndices);
-                splitter.setSplitAtPage(req.getSplitAfterPages());
-                List<PDDocument> splittedList = splitter.split(document);
+                List<int[]> ranges = PdfSplitUtils.toSeparatorRanges(splitPageIndices, document.getNumberOfPages());
+                List<byte[]> splittedList = PdfSplitUtils.split(data, ranges);
                 this.max = this.max + splittedList.size();
                 this.indicator.setMax(this.max + splittedList.size());
                 String fileNameNoExt = req.getFileName();
@@ -923,28 +912,27 @@ public class PDFSplitAction extends ProgressableAction {
                 DecimalFormat df = new DecimalFormat("000");
                 int counter = 1;
                 if (splittedList.size() > 1) {
-                    for (PDDocument doc : splittedList) {
+                    for (int i = 0; i < splittedList.size(); i++) {
                         if (this.isCancelled()) {
                             break;
                         }
                         
                         // find the split document with just the blank page, and skip it
-                        if (doc.getNumberOfPages() == 1) {
-                            renderedDoc = new PDFRenderer(doc);
+                        if (ranges.get(i)[1] - ranges.get(i)[0] == 1) {
+                            try (PDDocument doc = PDDocument.load(splittedList.get(i))) {
+                                renderedDoc = new PDFRenderer(doc);
 
-                            if (isBlank(renderedDoc.renderImage(0))) {
-                                continue;
+                                if (isBlank(renderedDoc.renderImage(0))) {
+                                    continue;
+                                }
                             }
 
                         }
                         
                         String splitFileName = fileNameNoExt + "-" + df.format(counter) + ".pdf";
                         this.progress("Speichere " + splitFileName);
-                        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-                        doc.save(bout);
-                        svc.addObservedFile(splitFileName, bout.toByteArray(), ServerInformation.getHostName());
+                        svc.addObservedFile(splitFileName, splittedList.get(i), ServerInformation.getHostName());
 
-                        doc.close();
                         counter++;
                     }
                 } else {

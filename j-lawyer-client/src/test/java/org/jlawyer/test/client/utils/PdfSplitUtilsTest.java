@@ -679,6 +679,7 @@ import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.cos.COSObjectKey;
 import org.apache.pdfbox.cos.COSStream;
 import org.apache.pdfbox.cos.COSString;
+import org.apache.pdfbox.multipdf.Splitter;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -1186,4 +1187,163 @@ public class PdfSplitUtilsTest {
         }
     }
 
+
+    private static String str(List<int[]> ranges) {
+        StringBuilder sb = new StringBuilder();
+        for (int[] range : ranges) {
+            sb.append('[').append(range[0]).append(',').append(range[1]).append(')');
+        }
+        return sb.toString();
+    }
+
+    @Test
+    public void testPageCountRanges() {
+        assertEquals("without remainder", "[0,3)[3,6)", str(PdfSplitUtils.toPageCountRanges(3, 6)));
+        assertEquals("with remainder", "[0,3)[3,6)[6,7)", str(PdfSplitUtils.toPageCountRanges(3, 7)));
+        assertEquals("fewer pages than one part", "[0,3)", str(PdfSplitUtils.toPageCountRanges(5, 3)));
+        assertEquals("[0,1)[1,2)[2,3)", str(PdfSplitUtils.toPageCountRanges(1, 3)));
+        assertEquals("", str(PdfSplitUtils.toPageCountRanges(2, 0)));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testPageCountRangesNeedOnePagePerPart() {
+        PdfSplitUtils.toPageCountRanges(0, 5);
+    }
+
+    @Test
+    public void testSeparatorRanges() {
+        assertEquals("separator at the start", "[0,1)[1,4)", str(PdfSplitUtils.toSeparatorRanges(Arrays.asList(0), 4)));
+        assertEquals("separator in the middle", "[0,2)[2,3)[3,5)", str(PdfSplitUtils.toSeparatorRanges(Arrays.asList(2), 5)));
+        assertEquals("separator at the end", "[0,4)[4,5)", str(PdfSplitUtils.toSeparatorRanges(Arrays.asList(4), 5)));
+        assertEquals("separators one after the other", "[0,1)[1,2)[2,3)[3,5)", str(PdfSplitUtils.toSeparatorRanges(Arrays.asList(1, 2), 5)));
+        assertEquals("several separators", "[0,1)[1,3)[3,4)[4,6)[6,7)", str(PdfSplitUtils.toSeparatorRanges(Arrays.asList(0, 3, 6), 7)));
+        assertEquals("no separator", "[0,5)", str(PdfSplitUtils.toSeparatorRanges(Collections.emptyList(), 5)));
+        assertEquals("only a separator", "[0,1)", str(PdfSplitUtils.toSeparatorRanges(Arrays.asList(0), 1)));
+        assertEquals("", str(PdfSplitUtils.toSeparatorRanges(Arrays.asList(0), 0)));
+    }
+
+    /**
+     * The scan folder split with PDFBox's Splitter, at separator pages with a subclass whose splitAtPage was the one
+     * below. The ranges must give exactly the parts it gave, for the page count and for any separator pages.
+     */
+    @Test
+    public void testRangesAreThoseOfThePdfBoxSplitter() throws Exception {
+        for (int pageCount = 1; pageCount <= 7; pageCount++) {
+            try (PDDocument source = new PDDocument()) {
+                for (int i = 0; i < pageCount; i++) {
+                    source.addPage(new PDPage());
+                }
+                for (int pagesPerPart = 1; pagesPerPart <= 4; pagesPerPart++) {
+                    Splitter splitter = new Splitter();
+                    splitter.setSplitAtPage(pagesPerPart);
+                    assertEquals("page count " + pageCount + ", " + pagesPerPart + " per part", partSizes(splitter.split(source)), sizes(PdfSplitUtils.toPageCountRanges(pagesPerPart, pageCount)));
+                }
+                // every subset of the page numbers -1 to pageCount, the scan folder passes zero- and one-based numbers
+                for (int mask = 0; mask < (1 << (pageCount + 2)); mask++) {
+                    List<Integer> separators = new ArrayList<>();
+                    for (int bit = 0; bit < pageCount + 2; bit++) {
+                        if ((mask & (1 << bit)) != 0) {
+                            separators.add(bit - 1);
+                        }
+                    }
+                    Splitter splitter = new Splitter() {
+                        @Override
+                        protected boolean splitAtPage(int pageNumber) {
+                            return separators.contains(pageNumber) || separators.contains(pageNumber - 1);
+                        }
+                    };
+                    assertEquals("page count " + pageCount + ", separators " + separators, partSizes(splitter.split(source)), sizes(PdfSplitUtils.toSeparatorRanges(separators, pageCount)));
+                }
+            }
+        }
+    }
+
+    private static List<Integer> partSizes(List<PDDocument> parts) throws IOException {
+        List<Integer> sizes = new ArrayList<>();
+        for (PDDocument part : parts) {
+            sizes.add(part.getNumberOfPages());
+            part.close();
+        }
+        return sizes;
+    }
+
+    private static List<Integer> sizes(List<int[]> ranges) {
+        List<Integer> sizes = new ArrayList<>();
+        int next = 0;
+        for (int[] range : ranges) {
+            assertEquals("the ranges follow each other", next, range[0]);
+            sizes.add(range[1] - range[0]);
+            next = range[1];
+        }
+        return sizes;
+    }
+
+    private static COSDictionary widgetOn(PDPage page) throws IOException {
+        for (PDAnnotation annotation : page.getAnnotations()) {
+            if (annotation instanceof PDAnnotationWidget) {
+                return annotation.getCOSObject();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * A form field with a widget in each of two parts: cleaning the first part removes the other widget from the
+     * /Kids of the field in the loaded source, so split() loads the source again for the second part.
+     */
+    @Test
+    public void testSplitLoadsTheSourceForEveryPart() throws Exception {
+        byte[] pdf;
+        try (PDDocument source = createLinkedDocument(5)) {
+            PDAcroForm acroForm = new PDAcroForm(source);
+            source.getDocumentCatalog().setAcroForm(acroForm);
+            PDTextField field = new PDTextField(acroForm);
+            field.setPartialName("aktenzeichen");
+            List<PDAnnotationWidget> widgets = new ArrayList<>();
+            for (int pageIndex : new int[]{0, 4}) {
+                PDAnnotationWidget widget = new PDAnnotationWidget();
+                widget.setRectangle(new PDRectangle(400, 800, 150, 20));
+                widget.setPage(source.getPage(pageIndex));
+                widget.setParent(field);
+                List<PDAnnotation> annotations = new ArrayList<>(source.getPage(pageIndex).getAnnotations());
+                annotations.add(widget);
+                source.getPage(pageIndex).setAnnotations(annotations);
+                widgets.add(widget);
+            }
+            field.setWidgets(widgets);
+            acroForm.getFields().add(field);
+            ByteArrayOutputStream bout = new ByteArrayOutputStream();
+            source.save(bout);
+            pdf = bout.toByteArray();
+        }
+
+        List<byte[]> parts = PdfSplitUtils.split(pdf, Arrays.asList(new int[]{0, 2}, new int[]{2, 5}));
+        assertEquals(2, parts.size());
+        try (PDDocument part1 = PDDocument.load(parts.get(0)); PDDocument part2 = PDDocument.load(parts.get(1))) {
+            assertEquals(2, part1.getNumberOfPages());
+            assertEquals(3, part2.getNumberOfPages());
+            assertEquals(3, part2.getDocument().getObjectsByType(COSName.PAGE).size());
+            for (COSDictionary widget : new COSDictionary[]{widgetOn(part1.getPage(0)), widgetOn(part2.getPage(2))}) {
+                assertNotNull(widget);
+                COSDictionary parent = (COSDictionary) widget.getDictionaryObject(COSName.PARENT);
+                assertNotNull("the widget keeps its form field", parent);
+                assertEquals("aktenzeichen", parent.getString(COSName.T));
+                COSArray kids = (COSArray) parent.getDictionaryObject(COSName.KIDS);
+                assertEquals(1, kids.size());
+                assertSame(widget, kids.getObject(0));
+            }
+        }
+
+        // the reason: both parts taken from one loaded source, the field in the second part has lost its widget
+        try (PDDocument source = PDDocument.load(pdf)) {
+            try (PDDocument first = PdfSplitUtils.extractPages(source, 0, 2)) {
+                first.save(new ByteArrayOutputStream());
+            }
+            try (PDDocument second = PdfSplitUtils.extractPages(source, 2, 5); PDDocument reloaded = saveAndReload(second)) {
+                COSDictionary widget = widgetOn(reloaded.getPage(2));
+                COSDictionary parent = (COSDictionary) widget.getDictionaryObject(COSName.PARENT);
+                assertEquals("without loading again, the /Kids of the field were cleaned for the first part", 0, ((COSArray) parent.getDictionaryObject(COSName.KIDS)).size());
+            }
+        }
+    }
 }

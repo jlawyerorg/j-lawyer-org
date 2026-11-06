@@ -662,9 +662,11 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.utils.pdf;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.IdentityHashMap;
@@ -710,6 +712,72 @@ public class PdfSplitUtils {
     }
 
     /**
+     * The zero-based page ranges of the parts when a document is split after every n pages, as PDFBox's Splitter with
+     * setSplitAtPage(n) does: {0, n}, {n, 2n}, ..., the last one up to the page count.
+     *
+     * @param pagesPerPart number of pages of each part, at least 1
+     * @param pageCount number of pages of the document
+     * @return one range per part, each as {fromIndex inclusive, toIndex exclusive}
+     */
+    public static List<int[]> toPageCountRanges(int pagesPerPart, int pageCount) {
+        if (pagesPerPart < 1) {
+            throw new IllegalArgumentException("Number of pages per part is smaller than one");
+        }
+        List<int[]> ranges = new ArrayList<>();
+        for (int from = 0; from < pageCount; from += pagesPerPart) {
+            ranges.add(new int[]{from, Math.min(from + pagesPerPart, pageCount)});
+        }
+        return ranges;
+    }
+
+    /**
+     * The zero-based page ranges of the parts when a document is split at separator pages (e.g. blank pages): a new
+     * part starts at every separator page and at the page after it, so each separator page is a part of its own and
+     * the pages between them form the other parts. This is what the scan folder did with a PDFBox Splitter whose
+     * splitAtPage(index) was true if the index or the index before it is a separator.
+     *
+     * @param separatorPages the separator pages, compared with the zero-based page indices
+     * @param pageCount number of pages of the document
+     * @return one range per part, each as {fromIndex inclusive, toIndex exclusive}
+     */
+    public static List<int[]> toSeparatorRanges(Collection<Integer> separatorPages, int pageCount) {
+        List<int[]> ranges = new ArrayList<>();
+        int from = 0;
+        for (int index = 1; index < pageCount; index++) {
+            if (separatorPages.contains(index) || separatorPages.contains(index - 1)) {
+                ranges.add(new int[]{from, index});
+                from = index;
+            }
+        }
+        if (pageCount > 0) {
+            ranges.add(new int[]{from, pageCount});
+        }
+        return ranges;
+    }
+
+    /**
+     * Splits a document into parts with {@link #extractPages(PDDocument, int, int)}. The source is loaded again for
+     * every part: extractPages changes objects of the source that parts may share, e.g. the /Kids of a form field with
+     * widgets in two parts, so a second part taken from the same loaded source could lose them.
+     *
+     * @param pdf the document to split
+     * @param ranges one range per part, each as {fromIndex inclusive, toIndex exclusive}
+     * @return the saved parts, in the order of the ranges
+     * @throws IOException if the document can not be loaded or a part can not be created
+     */
+    public static List<byte[]> split(byte[] pdf, List<int[]> ranges) throws IOException {
+        List<byte[]> parts = new ArrayList<>();
+        for (int[] range : ranges) {
+            try (PDDocument source = PDDocument.load(pdf); PDDocument part = extractPages(source, range[0], range[1])) {
+                ByteArrayOutputStream bout = new ByteArrayOutputStream();
+                part.save(bout);
+                parts.add(bout.toByteArray());
+            }
+        }
+        return parts;
+    }
+
+    /**
      * Creates a new document containing the pages fromIndex (inclusive) to toIndex (exclusive) of the source document,
      * zero-based.
      * <p>
@@ -725,7 +793,8 @@ public class PdfSplitUtils {
      * and /Kids of its field. As a safety net, any other page or page tree node that is not part of the new document is
      * removed as well.
      * <p>
-     * The source document is changed by this and must stay open until the returned document has been saved.
+     * The source document is changed by this and must stay open until the returned document has been saved. For
+     * several parts of the same document use {@link #split(byte[], List)}, which loads the source for each part.
      *
      * @param source the document to take the pages from
      * @param fromIndex index of the first page, inclusive

@@ -10254,6 +10254,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
                     // doppelte Seitenzahlen ergeben keinen leeren Teil
                     List<int[]> partRanges = PdfSplitUtils.toPartRanges(splitPages, pageCount);
+                    // jeder Teil nur mit seinen eigenen Seiten, ohne Verweise auf Seiten außerhalb des Teils
+                    List<byte[]> parts = PdfSplitUtils.split(content, partRanges);
 
                     ClientSettings settings = ClientSettings.getInstance();
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -10261,19 +10263,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
                     // Erstelle für jeden Abschnitt ein neues temporäres Dokument
                     for (int i = 0; i < partRanges.size(); i++) {
-                        int startPage = partRanges.get(i)[0];
-                        int endPage = partRanges.get(i)[1];
-
                         // Erstelle eine neue temporäre Datei für diesen Teil
-                        String partTempPath = FileUtils.createTempFile("part_" + (i + 1) + "_" + doc.getName(), new byte[0]);
+                        String partTempPath = FileUtils.createTempFile("part_" + (i + 1) + "_" + doc.getName(), parts.get(i));
                         tempFiles.add(partTempPath);
-
-                        // Kopiere die relevanten Seiten - ohne Verweise auf Seiten außerhalb des Teils, sonst enthält jeder Teil das ganze Original
-                        try (PDDocument sourceDoc = PDDocument.load(new File(tempPath));
-                                PDDocument newDoc = PdfSplitUtils.extractPages(sourceDoc, startPage, endPage)) {
-                            // Speichere den Teil
-                            newDoc.save(new File(partTempPath));
-                        }
 
                         // Generiere Namen für das neue Dokument
                         String baseName = doc.getName();
