@@ -721,6 +721,8 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
 
     private boolean initializing = true;
     private boolean statusBarNotified = false;
+    // true while messages are added that arrived just now (they fade in)
+    private boolean liveMessages = false;
 
     private ArrayList<InstantMessage> currentMessageList = new ArrayList<>();
     private ArrayList<String> deletedMessageIds = new ArrayList<>();
@@ -1409,8 +1411,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
 
     private void addMessageToView(InstantMessage msg) {
         MessagePanel mp1 = new MessagePanel(UserSettings.getInstance().getLoginEnabledUsers(), UserSettings.getInstance().getCurrentUser().getPrincipalId(), UserSettings.getInstance().getCurrentUser().getPrincipalId().equalsIgnoreCase(msg.getSender()), msg);
-        mp1.setAlignmentX(JPanel.LEFT_ALIGNMENT);
-        pnlMessages.add(mp1);
+        this.appendMessage(pnlMessages, mp1);
         pnlMessages.repaint();
         this.jScrollPane3.doLayout();
         mp1.revalidate();
@@ -1552,10 +1553,47 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
 
     }
 
+    /**
+     * Appends a message to a message list. A day separator is put in front of the first message
+     * of each day; messages arriving live fade in.
+     */
+    private void appendMessage(JPanel messagesPanel, MessagePanel mp) {
+        MessagePanel last = null;
+        for (int i = messagesPanel.getComponentCount() - 1; i >= 0; i--) {
+            if (messagesPanel.getComponent(i) instanceof MessagePanel) {
+                last = (MessagePanel) messagesPanel.getComponent(i);
+                break;
+            }
+        }
+        java.util.Date sent = mp.getMessage() != null ? mp.getMessage().getSent() : null;
+        java.util.Date lastSent = (last != null && last.getMessage() != null) ? last.getMessage().getSent() : null;
+        if (sent != null && (lastSent == null || !DaySeparator.isSameDay(sent, lastSent))) {
+            messagesPanel.add(new DaySeparator(sent));
+        }
+        mp.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+        messagesPanel.add(mp);
+        if (this.liveMessages) {
+            mp.fadeIn();
+        }
+    }
+
+    /**
+     * Removes day separators that no longer have any messages below them.
+     */
+    private static void removeOrphanedSeparators(JPanel messagesPanel) {
+        for (int i = messagesPanel.getComponentCount() - 1; i >= 0; i--) {
+            if (messagesPanel.getComponent(i) instanceof DaySeparator) {
+                boolean last = i == messagesPanel.getComponentCount() - 1;
+                if (last || messagesPanel.getComponent(i + 1) instanceof DaySeparator) {
+                    messagesPanel.remove(i);
+                }
+            }
+        }
+    }
+
     private void addMessageToContainers(InstantMessage msg, JPanel targetPanel, JScrollPane targetScroll) {
         MessagePanel mp1 = new MessagePanel(UserSettings.getInstance().getLoginEnabledUsers(), UserSettings.getInstance().getCurrentUser().getPrincipalId(), UserSettings.getInstance().getCurrentUser().getPrincipalId().equalsIgnoreCase(msg.getSender()), msg);
-        mp1.setAlignmentX(JPanel.LEFT_ALIGNMENT);
-        targetPanel.add(mp1);
+        this.appendMessage(targetPanel, mp1);
         targetPanel.repaint();
         targetScroll.doLayout();
         mp1.revalidate();
@@ -1610,9 +1648,15 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
 
             SwingUtilities.invokeLater(() -> {
                 if (((NewInstantMessagesEvent) e).getNewMessages() != null) {
-                    for (InstantMessage msg : ((NewInstantMessagesEvent) e).getNewMessages()) {
-                        this.currentMessageList.add(msg);
-                        this.addMessageToView(msg);
+                    // messages that just arrived fade in
+                    this.liveMessages = true;
+                    try {
+                        for (InstantMessage msg : ((NewInstantMessagesEvent) e).getNewMessages()) {
+                            this.currentMessageList.add(msg);
+                            this.addMessageToView(msg);
+                        }
+                    } finally {
+                        this.liveMessages = false;
                     }
                     this.updateHashtagsBar(((NewInstantMessagesEvent) e).getNewMessages());
                 }
@@ -1652,6 +1696,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
             }
         }
         if(removed) {
+            removeOrphanedSeparators(messagesPanel);
             messagesPanel.revalidate();
             messagesPanel.doLayout();
         }
@@ -1718,6 +1763,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
             }
         }
         if (removed) {
+            removeOrphanedSeparators(this.pnlMessagesToMe);
             this.pnlMessagesToMe.revalidate();
             this.pnlMessagesToMe.repaint();
             this.jScrollPane2.revalidate();
