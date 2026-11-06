@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.CommonStrings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.client.utils.SystemUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.documents.PlaceHolderCatalog;
 import com.jdimension.jlawyer.documents.PlaceHolderContext;
@@ -684,6 +685,13 @@ import java.util.Map;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.io.StringReader;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
+import javax.swing.text.Element;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.html.HTML;
+import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.*;
 import org.apache.log4j.Logger;
 
@@ -701,6 +709,8 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
 
     private TextEditorPanel tp;
     private WebViewHtmlEditorPanel hp;
+    // true while a template is being loaded - its body replaces the editor content, so nothing needs to be carried over on a format switch
+    private boolean loadingTemplate = false;
 
     /**
      * Creates new form AddressPanel
@@ -782,6 +792,102 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
             log.error(ex);
             ThreadUtils.showErrorDialog(this, "Fehler beim Laden der E-Mail - Vorlagen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
         }
+    }
+
+    /**
+     * Waits for the HTML editor content cache to be synchronized on macOS.
+     * <p>
+     * On macOS, the WebViewHtmlEditorPanel uses a cached content mechanism to avoid
+     * EDT/JavaFX deadlocks. The cache is updated via JavaScript's onChange handler
+     * with a 300ms debounce. This method waits 1500ms (300ms debounce + buffer) to
+     * ensure the cache contains the latest editor content before reading it.
+     * </p>
+     * <p>
+     * This method only waits if:
+     * <ul>
+     *   <li>Running on macOS</li>
+     *   <li>The editor is a WebViewHtmlEditorPanel (not needed for plain text editors)</li>
+     * </ul>
+     * </p>
+     *
+     * @param ed the editor implementation to check
+     */
+    private void waitForHtmlContentOnMac(EditorImplementation ed) {
+        if (SystemUtils.isMacOs() && ed instanceof WebViewHtmlEditorPanel) {
+            try {
+                Thread.sleep(1500);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+
+    /**
+     * Converts the content of the HTML editor to plain text while keeping its line breaks.
+     * EmailUtils.html2Text (HTMLEditorKit) turns &lt;br&gt; into a space and prepends a line break,
+     * so switching a template from text/plain to text/html and back would merge its lines.
+     * The HTML is parsed the same way, but every &lt;br&gt; element becomes a line break - except one
+     * that only precedes white space up to the end of its paragraph, which adds no line, as in a
+     * browser (e.g. the empty paragraphs of the HTML editor).
+     *
+     * @param html the HTML content
+     * @return the plain text
+     */
+    private static String htmlToPlainText(String html) {
+        if (html == null) {
+            return "";
+        }
+        try {
+            HTMLEditorKit editorKit = new HTMLEditorKit();
+            Document doc = editorKit.createDefaultDocument();
+            doc.putProperty("IgnoreCharsetDirective", true);
+            editorKit.read(new StringReader(html), doc, 0);
+            StringBuilder text = new StringBuilder();
+            appendPlainText(doc, doc.getDefaultRootElement(), text);
+            if (text.length() > 0 && text.charAt(0) == '\n') {
+                text.deleteCharAt(0);
+            }
+            return text.toString();
+        } catch (Exception ex) {
+            log.error("Unable to convert HTML to plain text", ex);
+            return EmailUtils.html2Text(html);
+        }
+    }
+
+    private static void appendPlainText(Document doc, Element element, StringBuilder text) throws BadLocationException {
+        if (!element.isLeaf()) {
+            for (int i = 0; i < element.getElementCount(); i++) {
+                appendPlainText(doc, element.getElement(i), text);
+            }
+            return;
+        }
+        if (element.getAttributes().getAttribute(StyleConstants.NameAttribute) == HTML.Tag.BR) {
+            if (!isLastInParagraph(doc, element)) {
+                text.append('\n');
+            }
+            return;
+        }
+        int end = Math.min(element.getEndOffset(), doc.getLength());
+        if (end > element.getStartOffset()) {
+            text.append(doc.getText(element.getStartOffset(), end - element.getStartOffset()));
+        }
+    }
+
+    private static boolean isLastInParagraph(Document doc, Element br) throws BadLocationException {
+        // a <br> adds no line if it is followed by nothing but white space up to the end of its paragraph
+        // (a following <br> counts as content: HTMLEditorKit stores each <br> as a space)
+        Element paragraph = br.getParentElement();
+        for (int i = paragraph.getElementIndex(br.getStartOffset()) + 1; i < paragraph.getElementCount(); i++) {
+            Element next = paragraph.getElement(i);
+            if (next.getAttributes().getAttribute(StyleConstants.NameAttribute) == HTML.Tag.BR) {
+                return false;
+            }
+            int end = Math.min(next.getEndOffset(), doc.getLength());
+            if (end > next.getStartOffset() && !doc.getText(next.getStartOffset(), end - next.getStartOffset()).trim().isEmpty()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -1172,6 +1278,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             EmailTemplate tpl = new EmailTemplate();
             EditorImplementation ed = (EditorImplementation) this.contentPanel.getComponent(0);
+            waitForHtmlContentOnMac(ed);
             tpl.setBody(ed.getText());
             tpl.setFileName(this.lstMailTemplates.getSelectedValue().toString());
             tpl.setFormat(this.cmbFormat.getSelectedItem().toString());
@@ -1201,7 +1308,12 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
             EmailTemplate tpl = locator.lookupIntegrationServiceRemote().getEmailTemplate(this.lstMailTemplates.getSelectedValue().toString());
-            this.cmbFormat.setSelectedItem(tpl.getFormat());
+            this.loadingTemplate = true;
+            try {
+                this.cmbFormat.setSelectedItem(tpl.getFormat());
+            } finally {
+                this.loadingTemplate = false;
+            }
             EditorImplementation ed = (EditorImplementation) this.contentPanel.getComponent(0);
             ed.setText(tpl.getBody());
             this.txtSubject.setText(tpl.getSubject());
@@ -1310,6 +1422,10 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
 
         if (sel.toLowerCase().contains("html")) {
             
+            if (!this.loadingTemplate && this.contentPanel.getComponent(0) != hp) {
+                // carry over the content of the current template - the HTML editor might still hold the body of a previously selected template
+                hp.setText(EmailUtils.text2Html(tp.getText()));
+            }
             this.contentPanel.remove(0);
             this.contentPanel.add(hp);
             hp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
@@ -1318,6 +1434,11 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
             SwingUtilities.updateComponentTreeUI(hp);
         } else {
             
+            if (!this.loadingTemplate && this.contentPanel.getComponent(0) != tp) {
+                // carry over the content of the current template - the text editor might still hold the body of a previously selected template
+                waitForHtmlContentOnMac(hp);
+                tp.setText(htmlToPlainText(hp.getText()));
+            }
             this.contentPanel.remove(0);
             this.contentPanel.add(tp);
             tp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
