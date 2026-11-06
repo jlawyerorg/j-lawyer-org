@@ -1035,12 +1035,15 @@ public final class EditorStyle {
         }
     }
 
+    // "favorites-green.png", "baseline_label_green_36dp.png", "..._97bf0d.png" (the accent colour)
+    private static final String GREEN_ICON_PATTERN = ".*([-_]green([-_][^/]*)?|_97bf0d[^/]*)\\.[a-z]+$";
+
     private static final String TINT_LISTENER_KEY = "jlawyer.editorStyle.tintListener";
 
     /**
      * Some buttons swap their icon at runtime (e.g. the tag filter shows a green icon while a filter
      * is active). Such raw icons are tinted as well, so they keep size and color scheme: icons whose
-     * resource name ends with "-green" get the accent color, all others white.
+     * resource name marks them as green (e.g. "-green.png", "_green_36dp.png") get the accent color, all others white.
      */
     private static void keepIconsTinted(AbstractButton b, int size) {
         if (b.getClientProperty(TINT_LISTENER_KEY) != null) {
@@ -1054,7 +1057,7 @@ public final class EditorStyle {
                 Color color = UiColors.TEXT_ON_GLASS;
                 if (raw instanceof javax.swing.ImageIcon) {
                     String desc = ((javax.swing.ImageIcon) raw).getDescription();
-                    if (desc != null && desc.toLowerCase().matches(".*-green\\.[a-z]+$")) {
+                    if (desc != null && desc.toLowerCase().matches(GREEN_ICON_PATTERN)) {
                         color = UiColors.ACCENT;
                     }
                 }
