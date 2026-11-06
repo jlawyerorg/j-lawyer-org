@@ -891,7 +891,16 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
 
         this.quickDateSelectionPanel.setTarget(this.txtReviewDateField);
 
-        ComponentUtils.decorateSplitPane(jSplitPane1);
+        // design kit: page background and cards (see DialogStyle), a transparent gap between the
+        // message and its options, the send action as primary button
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleSplitPane(jSplitPane1);
+        this.jToolBar1.setOpaque(false);
+        this.jToolBar1.setBorder(javax.swing.BorderFactory.createEmptyBorder());
+        com.jdimension.jlawyer.client.ui.theme.DialogStyle.stylePrimary(this.cmdSend, "Senden");
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.transparentInsideCards(this.getContentPane());
+        this.quickDateSelectionPanel.setOpaque(false);
+        this.pnlParties.setOpaque(false);
+        com.jdimension.jlawyer.client.ui.theme.DialogStyle.apply(this);
 
         this.pnlParties.initialize(new ArrayList<>());
         this.pnlParties.setListener(this);
@@ -2082,7 +2091,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         mnuRemoveAttachment = new javax.swing.JMenuItem();
         popAssistant = new javax.swing.JPopupMenu();
         jSplitPane1 = new javax.swing.JSplitPane();
-        jPanel3 = new javax.swing.JPanel();
+        jPanel3 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jLabel2 = new javax.swing.JLabel();
         cmdRecipientsCc = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
@@ -2114,7 +2123,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         cmbDevices = new javax.swing.JComboBox<>();
         cmbPriority = new javax.swing.JComboBox<>();
         jPanel6 = new javax.swing.JPanel();
-        jPanel2 = new javax.swing.JPanel();
+        jPanel2 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         text = new javax.swing.JRadioButton();
         html = new javax.swing.JRadioButton();
         chkReadReceipt = new javax.swing.JCheckBox();
@@ -2124,7 +2133,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         chkDocumentTagging = new javax.swing.JCheckBox();
         cmbDocumentTag = new javax.swing.JComboBox<>();
         chkDeliveryReceipt = new javax.swing.JCheckBox();
-        jPanel4 = new javax.swing.JPanel();
+        jPanel4 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         cmbReviewReason = new javax.swing.JComboBox();
         jLabel12 = new javax.swing.JLabel();
         jLabel10 = new javax.swing.JLabel();
@@ -2136,7 +2145,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         radioReviewTypeNone = new javax.swing.JRadioButton();
         quickDateSelectionPanel = new com.jdimension.jlawyer.client.components.QuickDateSelectionPanel();
         calendarSelectionButton1 = new com.jdimension.jlawyer.client.calendar.CalendarSelectionButton();
-        jPanel1 = new javax.swing.JPanel();
+        jPanel1 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jLabel4 = new javax.swing.JLabel();
         cmbTemplates = new javax.swing.JComboBox();
         pnlParties = new com.jdimension.jlawyer.client.editors.files.PartiesPanel();
@@ -2376,6 +2385,8 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         cmbPriority.setToolTipText("Sendungspriorität");
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
+        jPanel3.setTitle("Nachricht");
+
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -2464,7 +2475,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
 
         jSplitPane1.setLeftComponent(jPanel3);
 
-        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Optionen"));
+        jPanel2.setTitle("Optionen");
 
         buttonGroupTextHtml.add(text);
         text.setSelected(true);
@@ -2569,7 +2580,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                 .addContainerGap())
         );
 
-        jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder("Wiedervorlage / Frist"));
+        jPanel4.setTitle("Wiedervorlage / Frist");
 
         cmbReviewReason.setEditable(true);
         cmbReviewReason.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
@@ -2687,7 +2698,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                 .addComponent(quickDateSelectionPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Vorlagedaten"));
+        jPanel1.setTitle("Vorlagedaten");
 
         jLabel4.setText("Vorlage:");
 
@@ -3818,10 +3829,10 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel2;
-    private javax.swing.JPanel jPanel3;
-    private javax.swing.JPanel jPanel4;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel1;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel2;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel3;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel4;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanel6;
     private javax.swing.JScrollPane jScrollPane2;

@@ -869,8 +869,14 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         this.pnlPartiesPanel.initialize(involved);
         this.pnlPartiesPanel.setListener(this);
 
-        ComponentUtils.decorateSplitPane(jSplitPane1);
-        ComponentUtils.decorateSplitPane(splitMain);
+        // design kit: a fine line between folders and templates, a transparent gap between the cards
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleCardSplitPane(jSplitPane1);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleSplitPane(splitMain);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleInnerTabs(tabPlaceholders);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.transparentInsideCards(this.getContentPane());
+        // panels of their own classes on the cards: let the card show through
+        this.quickDateSelectionPanel.setOpaque(false);
+        this.pnlPartiesPanel.setOpaque(false);
 
         String[] colNames = new String[]{"Platzhalter", "Wert"};
         ArchiveFileTemplatePlaceHoldersTableModel model = new ArchiveFileTemplatePlaceHoldersTableModel(colNames, 0);
@@ -1053,7 +1059,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         cmdAdd = new javax.swing.JButton();
         splitMain = new javax.swing.JSplitPane();
         jPanel5 = new javax.swing.JPanel();
-        jPanel4 = new javax.swing.JPanel();
+        jPanel4 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         cmbReviewReason = new javax.swing.JComboBox();
         jLabel12 = new javax.swing.JLabel();
         jLabel8 = new javax.swing.JLabel();
@@ -1065,13 +1071,14 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         radioReviewTypeNone = new javax.swing.JRadioButton();
         quickDateSelectionPanel = new com.jdimension.jlawyer.client.components.QuickDateSelectionPanel();
         calendarSelectionButton1 = new com.jdimension.jlawyer.client.calendar.CalendarSelectionButton();
+        cardPlaceholders = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         tabPlaceholders = new javax.swing.JTabbedPane();
         jPanel7 = new javax.swing.JPanel();
         pnlPartiesPanel = new com.jdimension.jlawyer.client.editors.files.PartiesPanel();
         jPanel8 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblPlaceHolders = new javax.swing.JTable();
-        jPanel6 = new javax.swing.JPanel();
+        jPanel6 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jPanel1 = new javax.swing.JPanel();
         txtTemplateFilter = new javax.swing.JTextField();
         jLabel3 = new javax.swing.JLabel();
@@ -1119,7 +1126,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         splitMain.setDividerLocation(650);
         splitMain.setResizeWeight(0.5);
 
-        jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder("Wiedervorlage / Frist"));
+        jPanel4.setTitle("Wiedervorlage / Frist");
 
         cmbReviewReason.setEditable(true);
         cmbReviewReason.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
@@ -1293,6 +1300,10 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
         tabPlaceholders.addTab("Platzhalter", jPanel8);
 
+        cardPlaceholders.setTitle("Beteiligte & Platzhalter");
+        cardPlaceholders.setLayout(new java.awt.BorderLayout());
+        cardPlaceholders.add(tabPlaceholders, java.awt.BorderLayout.CENTER);
+
         org.jdesktop.layout.GroupLayout jPanel5Layout = new org.jdesktop.layout.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
         jPanel5Layout.setHorizontalGroup(
@@ -1300,7 +1311,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             .add(jPanel5Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(tabPlaceholders)
+                    .add(cardPlaceholders)
                     .add(jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -1308,7 +1319,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel5Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(tabPlaceholders)
+                .add(cardPlaceholders)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
@@ -1316,7 +1327,6 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
         splitMain.setRightComponent(jPanel5);
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Briefkopf & Vorlage"));
 
         txtTemplateFilter.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
@@ -1447,6 +1457,8 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         });
 
         org.jdesktop.layout.GroupLayout jPanel6Layout = new org.jdesktop.layout.GroupLayout(jPanel6);
+        jPanel6.setTitle("Vorlage & Dokument");
+
         jPanel6.setLayout(jPanel6Layout);
         jPanel6Layout.setHorizontalGroup(
             jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -2135,9 +2147,9 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel4;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel4;
     private javax.swing.JPanel jPanel5;
-    private javax.swing.JPanel jPanel6;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel6;
     private javax.swing.JPanel jPanel7;
     private javax.swing.JPanel jPanel8;
     private javax.swing.JScrollPane jScrollPane1;
@@ -2159,6 +2171,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private javax.swing.JTextField txtFileName;
     private javax.swing.JTextField txtReviewDateField;
     private javax.swing.JTextField txtTemplateFilter;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardPlaceholders;
     // End of variables declaration//GEN-END:variables
 
     @Override

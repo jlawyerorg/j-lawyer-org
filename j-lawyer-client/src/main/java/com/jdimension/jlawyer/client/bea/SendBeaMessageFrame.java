@@ -817,7 +817,16 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
 
         this.quickDateSelectionPanel.setTarget(this.txtReviewDateField);
 
-        ComponentUtils.decorateSplitPane(jSplitPane1);
+        // design kit: page background and cards (see DialogStyle), a transparent gap between the
+        // message and its options, the send action as primary button
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleSplitPane(jSplitPane1);
+        this.jToolBar1.setOpaque(false);
+        this.jToolBar1.setBorder(javax.swing.BorderFactory.createEmptyBorder());
+        com.jdimension.jlawyer.client.ui.theme.DialogStyle.stylePrimary(this.cmdSend, "Senden");
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.transparentInsideCards(this.getContentPane());
+        this.quickDateSelectionPanel.setOpaque(false);
+        this.pnlParties.setOpaque(false);
+        com.jdimension.jlawyer.client.ui.theme.DialogStyle.apply(this);
 
         this.pnlParties.initialize(new ArrayList<>());
         this.pnlParties.setListener(this);
@@ -1427,7 +1436,7 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
         jScrollPane3 = new javax.swing.JScrollPane();
         lstTo = new javax.swing.JList();
         jSplitPane1 = new javax.swing.JSplitPane();
-        jPanel5 = new javax.swing.JPanel();
+        jPanel5 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         cmbAzRecipient = new javax.swing.JComboBox<>();
         cmdAttachmentUp = new javax.swing.JButton();
         lblAttachmentSize = new javax.swing.JLabel();
@@ -1467,7 +1476,7 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
         jPanel3 = new javax.swing.JPanel();
         chkSaveAsDocument = new javax.swing.JCheckBox();
         cmbDocumentTag = new javax.swing.JComboBox<>();
-        jPanel4 = new javax.swing.JPanel();
+        jPanel4 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         cmbReviewReason = new javax.swing.JComboBox();
         jLabel12 = new javax.swing.JLabel();
         jLabel10 = new javax.swing.JLabel();
@@ -1480,13 +1489,13 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
         quickDateSelectionPanel = new com.jdimension.jlawyer.client.components.QuickDateSelectionPanel();
         calendarSelectionButton1 = new com.jdimension.jlawyer.client.calendar.CalendarSelectionButton();
         chkDocumentTagging = new javax.swing.JCheckBox();
-        jPanel2 = new javax.swing.JPanel();
+        jPanel2 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         cmbMessageType = new javax.swing.JComboBox<>();
         jLabel5 = new javax.swing.JLabel();
         cmbPriorities = new javax.swing.JComboBox<>();
         jLabel6 = new javax.swing.JLabel();
         chkEeb = new javax.swing.JCheckBox();
-        jPanel1 = new javax.swing.JPanel();
+        jPanel1 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jLabel4 = new javax.swing.JLabel();
         cmbTemplates = new javax.swing.JComboBox();
         pnlParties = new com.jdimension.jlawyer.client.editors.files.PartiesPanel();
@@ -1711,6 +1720,8 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
         });
 
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
+        jPanel5.setTitle("Nachricht");
+
         jPanel5.setLayout(jPanel5Layout);
         jPanel5Layout.setHorizontalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1781,7 +1792,7 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
             }
         });
 
-        jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder("Wiedervorlage / Frist"));
+        jPanel4.setTitle("Wiedervorlage / Frist");
 
         cmbReviewReason.setEditable(true);
         cmbReviewReason.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
@@ -1905,7 +1916,7 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
             }
         });
 
-        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Optionen"));
+        jPanel2.setTitle("Optionen");
 
         cmbMessageType.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Allgemeine Nachricht", "Mahnantrag", "Testnachricht" }));
 
@@ -1959,7 +1970,7 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
                 .addContainerGap(12, Short.MAX_VALUE))
         );
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Vorlagedaten"));
+        jPanel1.setTitle("Vorlagedaten");
 
         jLabel4.setText("Vorlage:");
 
@@ -2914,11 +2925,11 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel2;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel1;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel2;
     private javax.swing.JPanel jPanel3;
-    private javax.swing.JPanel jPanel4;
-    private javax.swing.JPanel jPanel5;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel4;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel5;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JPopupMenu.Separator jSeparator1;
