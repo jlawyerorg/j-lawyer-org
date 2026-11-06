@@ -685,6 +685,36 @@ public class IbanUtilsTest {
     }
 
     @Test
+    public void testValidIbanWithUnicodeSpaces() {
+        // no-break spaces as copied from PDF / Word documents
+        assertTrue(IbanUtils.validate("DE89 3704 0044 0532 0130 00").isValid());
+        // narrow no-break space and thin space
+        assertTrue(IbanUtils.validate("DE89 3704 0044 0532 0130 00").isValid());
+        // zero-width space and BOM
+        assertTrue(IbanUtils.validate("﻿DE89​3704004405320130 00").isValid());
+    }
+
+    @Test
+    public void testValidIbanWithLabel() {
+        assertTrue(IbanUtils.validate("IBAN: DE89 3704 0044 0532 0130 00").isValid());
+        assertTrue(IbanUtils.validate("iban:DE89370400440532013000").isValid());
+        assertTrue(IbanUtils.validate("IBAN DE89 3704 0044 0532 0130 00").isValid());
+        assertEquals("DE89370400440532013000", IbanUtils.normalize("IBAN: DE89 3704 0044 0532 0130 00"));
+    }
+
+    @Test
+    public void testFormat() {
+        assertEquals("DE89 3704 0044 0532 0130 00", IbanUtils.format("DE89370400440532013000"));
+        assertEquals("DE89 3704 0044 0532 0130 00", IbanUtils.format("iban: de89 3704 0044 0532 0130 00"));
+        // invalid values and legacy account numbers stay untouched
+        assertEquals("DE89370400440532013001", IbanUtils.format("DE89370400440532013001"));
+        assertEquals("123 456 789", IbanUtils.format("123 456 789"));
+        assertNull(IbanUtils.format(null));
+        assertEquals("", IbanUtils.format(""));
+        assertEquals("  ", IbanUtils.format("  "));
+    }
+
+    @Test
     public void testEmptyIban() {
         assertTrue(IbanUtils.validate(null).isValid());
         assertTrue(IbanUtils.validate("").isValid());

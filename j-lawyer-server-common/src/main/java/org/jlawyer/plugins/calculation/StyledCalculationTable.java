@@ -866,9 +866,9 @@ public class StyledCalculationTable extends GenericCalculationTable implements S
         StringBuilder sb=new StringBuilder();
         String borderCol=String.format("#%02x%02x%02x", this.borderColor.getRed(), this.borderColor.getGreen(), this.borderColor.getBlue());
         if(this.isLineBorder()) {
-            sb.append("<html><table border=\"1\" bordercolor=\"").append(borderCol).append("\" cellspacing=\"0\" width=\"85%\">");
+            sb.append("<html><table border=\"1\" bordercolor=\"").append(borderCol).append("\" cellspacing=\"0\" width=\"100%\">");
         } else {
-            sb.append("<html><table border=\"0\" width=\"85%\">");
+            sb.append("<html><table border=\"0\" width=\"100%\">");
         }
         
         for(int i=0;i<this.data.size();i++) {
@@ -883,9 +883,12 @@ public class StyledCalculationTable extends GenericCalculationTable implements S
                 } else {
                     sb.append("<td align=\"left\" bgcolor=\"").append(bgColor).append("\">");
                 }
-                int fontSize=c.getFontSize();
-                fontSize=pixelFontSizeToHtmlSize(fontSize);
-                sb.append("<font size=\"").append(fontSize).append("\" color=\""). append(String.format("#%02x%02x%02x", c.getForeGround().getRed(), c.getForeGround().getGreen(), c.getForeGround().getBlue())).append("\" face=\"").append(this.getFontFamily()).append("\">");
+                sb.append("<font color=\""). append(String.format("#%02x%02x%02x", c.getForeGround().getRed(), c.getForeGround().getGreen(), c.getForeGround().getBlue())).append("\" face=\"").append(this.getFontFamily()).append("\"");
+                if(c.getFontSize()>0) {
+                    // font size is in points, same as for tables in ODT / DOCX documents
+                    sb.append(" style=\"font-size:").append(c.getFontSize()).append("pt\"");
+                }
+                sb.append(">");
                 if(c.isBold())
                     sb.append("<b>");
                 if(c.isItalic())
@@ -898,11 +901,11 @@ public class StyledCalculationTable extends GenericCalculationTable implements S
                     sb.append(c.getValue());
                 }
                 if(c.isUnderline())
-                    sb.append("<u>");
+                    sb.append("</u>");
                 if(c.isItalic())
-                    sb.append("<i>");
+                    sb.append("</i>");
                 if(c.isBold())
-                    sb.append("<b>");
+                    sb.append("</b>");
                 
                 
                 sb.append("</font>");
@@ -943,27 +946,5 @@ public class StyledCalculationTable extends GenericCalculationTable implements S
         this.flexibleInvoiceData = flexibleInvoiceData;
     }
 
-    private int pixelFontSizeToHtmlSize(int fontSize) {
-        // 1=10px, 2=13px, 3=16px, 4=18px, 5=24px, 6=32px, 7=48px
-        
-        if(fontSize<=0)
-            return 2;
-        
-        if(fontSize>=48)
-            return 7;
-        else if(fontSize>=32)
-            return 6;
-        else if(fontSize>=24)
-            return 5;
-        else if(fontSize>=18)
-            return 4;
-        else if(fontSize>=16)
-            return 3;
-        else if(fontSize>=13)
-            return 2;
-        else
-            return 1;
-    }
-    
     
 }

@@ -740,6 +740,7 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
     public ArchiveFileReviewsOverviewPanel() {
         this.initializing=true;
         initComponents();
+        this.applyModernLook();
         if (UserSettings.getInstance().isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
             this.detailsEditorClass = EditArchiveFileDetailsPanel.class.getName();
         } else {
@@ -911,6 +912,17 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
         }, LOCAL_CHANGE_COALESCE_MS);
     }
     
+    /**
+     * Applies the editor design kit: white tabs, glass tool bars, list and calendar sheet on light
+     * cards.
+     */
+    private void applyModernLook() {
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleTitle(this.lblPanelTitle, null);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleMainTabs(this.jTabbedPane1);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleHeaderButtons(this.cmdExport, this.cmdRefresh, this.cmdRefreshSheet);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleTable(this.tblResults, this.jScrollPane1);
+    }
+
     public void setBackgroundImage(Image image) {
         this.backgroundImage=image;
         this.calendarPanel1.setParentEditor(this.getClass().getName(), detailsEditorClass, backgroundImage);
@@ -940,15 +952,17 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
         lblPanelTitle = new javax.swing.JLabel();
         jTabbedPane1 = new javax.swing.JTabbedPane();
         pnlList = new javax.swing.JPanel();
-        pnlListActions = new javax.swing.JPanel();
+        pnlListActions = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
         cmdExport = new javax.swing.JButton();
         cmdRefresh = new javax.swing.JButton();
         lblStatus = new javax.swing.JLabel();
+        cardList = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblResults = new javax.swing.JTable();
         pnlSheet = new javax.swing.JPanel();
-        pnlSheetActions = new javax.swing.JPanel();
+        pnlSheetActions = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
         cmdRefreshSheet = new javax.swing.JButton();
+        cardSheet = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         calendarPanel1 = new de.costache.calendar.CalendarPanel();
         findPanel = new com.jdimension.jlawyer.client.editors.files.ArchiveFileReviewsFindPanel();
 
@@ -1026,7 +1040,10 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
         });
         jScrollPane1.setViewportView(tblResults);
 
-        pnlList.add(jScrollPane1, java.awt.BorderLayout.CENTER);
+        cardList.setLayout(new java.awt.BorderLayout());
+        cardList.add(jScrollPane1, java.awt.BorderLayout.CENTER);
+
+        pnlList.add(cardList, java.awt.BorderLayout.CENTER);
 
         jTabbedPane1.addTab("Liste", pnlList);
 
@@ -1046,7 +1063,10 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
         pnlSheetActions.add(cmdRefreshSheet);
 
         pnlSheet.add(pnlSheetActions, java.awt.BorderLayout.NORTH);
-        pnlSheet.add(calendarPanel1, java.awt.BorderLayout.CENTER);
+        cardSheet.setLayout(new java.awt.BorderLayout());
+        cardSheet.add(calendarPanel1, java.awt.BorderLayout.CENTER);
+
+        pnlSheet.add(cardSheet, java.awt.BorderLayout.CENTER);
 
         jTabbedPane1.addTab("Kalenderblatt", pnlSheet);
         jTabbedPane1.addTab("suchen", findPanel);
@@ -1210,11 +1230,13 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
     private javax.swing.JLabel lblStatus;
     private javax.swing.JMenuItem mnuOpenArchiveFile;
     private javax.swing.JPanel pnlList;
-    private javax.swing.JPanel pnlListActions;
+    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlListActions;
     private javax.swing.JPanel pnlSheet;
-    private javax.swing.JPanel pnlSheetActions;
+    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlSheetActions;
     private javax.swing.JPopupMenu popupArchiveFileActions;
     private javax.swing.JTable tblResults;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardList;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardSheet;
     // End of variables declaration//GEN-END:variables
 
     @Override

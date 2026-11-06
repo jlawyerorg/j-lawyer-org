@@ -667,6 +667,9 @@ import com.jdimension.jlawyer.client.JKanzleiGUI;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import java.awt.Component;
 import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 import java.util.Timer;
 import java.util.TimerTask;
 import javax.swing.*;
@@ -684,6 +687,7 @@ public class EditorsRegistry {
     private static final String STATUS_READY = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("status.ready");
     private HashMap editors;
     private JPanel pane = null;
+    private final List<Consumer<Component>> editorChangeListeners = new CopyOnWriteArrayList<>();
     private JLabel statusLabel;
 
     private Timer timer = null;
@@ -759,6 +763,19 @@ public class EditorsRegistry {
         return false;
     }
 
+    /**
+     * Registers a listener that is notified after the editor shown in the main editors pane has
+     * been replaced. It is not notified if a change is refused, e.g. because of invalid or unsaved
+     * data in the current editor.
+     *
+     * @param listener receives the editor that is shown now
+     */
+    public void addEditorChangeListener(Consumer<Component> listener) {
+        if (listener != null) {
+            this.editorChangeListeners.add(listener);
+        }
+    }
+
     public void setMainEditorsPaneView(Component c) {
         this.setMainEditorsPaneView(c, false);
     }
@@ -806,6 +823,13 @@ public class EditorsRegistry {
             this.pane.add(c);
             this.pane.revalidate();
             this.pane.repaint();
+            for (Consumer<Component> l : this.editorChangeListeners) {
+                try {
+                    l.accept(c);
+                } catch (Throwable t) {
+                    log.error("Error notifying editor change listener", t);
+                }
+            }
         }
 
         if (!skipReset) {

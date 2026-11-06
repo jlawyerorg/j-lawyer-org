@@ -1061,6 +1061,22 @@ public interface ArchiveFileServiceRemote {
 
     List<ArchiveFileHistoryBean> getHistoryByPrincipalAndDateInterval(String principal, Date fromDate, Date toDate, int limit);
 
+    /**
+     * Searches case history entries across all cases the caller is allowed to see, newest first.
+     * The permission check is part of the query, so the limit always refers to permitted entries.
+     * Only filters that are set are applied.
+     *
+     * @param fromDate lower bound of the change date (inclusive), or null for no lower bound
+     * @param toDate upper bound of the change date (inclusive), or null for no upper bound
+     * @param principals ids of the users whose entries are returned; null or empty means all users
+     * @param caseQuery substring matched against the case file number or the case name, or null
+     * @param textQuery substring matched against the change description, or null
+     * @param limit maximum number of entries to return; 0 or less means unlimited
+     * @return matching history entries, sorted by change date descending
+     * @throws Exception if the search fails or the caller's groups can not be determined
+     */
+    List<ArchiveFileHistoryBean> searchHistory(Date fromDate, Date toDate, List<String> principals, String caseQuery, String textQuery, int limit) throws Exception;
+
     List<ArchiveFileBean> getLastChanged(int limit);
 
     String[] previewCaseNumbering(String pattern, int startFrom, int increment, boolean extension, String dividerMain, String dividerExt, boolean bPrefix, String prefix, boolean bSuffix, String suffix, boolean userAbbr, boolean groupAbbr) throws Exception;

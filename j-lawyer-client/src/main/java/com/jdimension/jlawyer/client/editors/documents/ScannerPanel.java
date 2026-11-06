@@ -700,6 +700,7 @@ import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.client.utils.SystemUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.dropscan.DropscanMailing;
 import com.jdimension.jlawyer.dropscan.DropscanScanbox;
@@ -840,8 +841,9 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         initComponents();
 
-        ComponentUtils.decorateSplitPane(this.splitTop);
-        ComponentUtils.decorateSplitPane(this.splitContainer);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleCardSplitPane(this.splitTop);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleCardSplitPane(this.splitContainer);
+        this.applyModernLook();
 
         ClientSettings settings = ClientSettings.getInstance();
         String temp = settings.getConfiguration(ClientSettings.CONF_SCANS_DELETEENABLED, "false");
@@ -1014,7 +1016,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         // Content area: split pane with table+envelope on left, actions on right
         javax.swing.JSplitPane splitDropscan = new javax.swing.JSplitPane(javax.swing.JSplitPane.HORIZONTAL_SPLIT);
         splitDropscan.setResizeWeight(0.8);
-        ComponentUtils.decorateSplitPane(splitDropscan);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleCardSplitPane(splitDropscan);
 
         // Left panel: table + envelope
         javax.swing.JPanel pnlDropscanLeft = new javax.swing.JPanel(new java.awt.BorderLayout());
@@ -1049,7 +1051,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         splitLeftContent.setTopComponent(scrollTable);
         splitLeftContent.setBottomComponent(pnlDropscanEnvelope);
         splitLeftContent.setDividerLocation(200);
-        ComponentUtils.decorateSplitPane(splitLeftContent);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleCardSplitPane(splitLeftContent);
 
         pnlDropscanLeft.add(splitLeftContent, java.awt.BorderLayout.CENTER);
 
@@ -1081,6 +1083,9 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         // Main content: use card-like approach
         pnlDropscan.add(splitDropscan, java.awt.BorderLayout.CENTER);
+
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleTable(tblDropscanMailings, scrollTable);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.transparentInsideCards(this);
 
         pnlDropscan.revalidate();
         pnlDropscan.repaint();
@@ -1600,6 +1605,16 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
     }
 
+    /**
+     * Applies the editor design kit: white tabs, the content of each tab on a light card.
+     */
+    private void applyModernLook() {
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleTitle(this.lblPanelTitle, null);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleMainTabs(this.jTabbedPane1);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleTable(this.tblDirContent, this.jScrollPane2);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.transparentInsideCards(this);
+    }
+
     @Override
     public void setBackgroundImage(Image image) {
         this.backgroundImage = image;
@@ -1633,7 +1648,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
         jTabbedPane1 = new javax.swing.JTabbedPane();
-        jPanel1 = new javax.swing.JPanel();
+        jPanel1 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         cmdRefresh = new javax.swing.JButton();
         cmdLocalUploadDir = new javax.swing.JButton();
         lblLocalDir = new javax.swing.JLabel();
@@ -1648,7 +1663,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         pnlActionsChild = new javax.swing.JPanel();
         jScrollPane4 = new javax.swing.JScrollPane();
         pnlPreview = new javax.swing.JPanel();
-        pnlDropscan = new javax.swing.JPanel();
+        pnlDropscan = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
 
         mnuSplitPdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_splitscreen_black_48dp.png"))); // NOI18N
         mnuSplitPdf.setText("PDF splitten");
@@ -1873,21 +1888,21 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(layout.createSequentialGroup()
-                        .add(jLabel18)
+                        .add(jLabel18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .add(jTabbedPane1))
+                    .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
                 .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jLabel18)
-                    .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+                    .add(jLabel18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 410, Short.MAX_VALUE)
+                .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -2011,9 +2026,10 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
     }
 
     private void tblDirContentMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblDirContentMouseClicked
+        // on macOS, Control+click opens the context menu - a double click with it must not open the file
         if (evt.getClickCount() == 1 && evt.getButton() == MouseEvent.BUTTON1) {
             this.selectDirContent();
-        } else if (evt.getClickCount() == 2) {
+        } else if (evt.getClickCount() == 2 && evt.getButton() == MouseEvent.BUTTON1 && !(SystemUtils.isMacOs() && evt.isControlDown())) {
 
             int selRow = this.tblDirContent.getSelectedRow();
             if (selRow > -1) {
@@ -2453,7 +2469,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JButton cmdLocalUploadDir;
     private javax.swing.JButton cmdRefresh;
     private javax.swing.JLabel jLabel18;
-    private javax.swing.JPanel jPanel1;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
@@ -2469,7 +2485,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JMenuItem mnuSplitPdf;
     private javax.swing.JPanel pnlActions;
     private javax.swing.JPanel pnlActionsChild;
-    private javax.swing.JPanel pnlDropscan;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel pnlDropscan;
     private javax.swing.JPanel pnlPreview;
     private javax.swing.JPopupMenu popActions;
     private javax.swing.JPopupMenu popConfiguration;
@@ -2488,9 +2504,14 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             bulkSaveDlg.setEntryProcessor(processor);
 
             ArrayList<String> fileNames = new ArrayList<>();
+            HashMap<String, Long> fileSizes = new HashMap<>();
             for (int r : selRow) {
                 String fileName = this.tblDirContent.getValueAt(r, 2).toString();
                 fileNames.add(fileName);
+                Object meta = this.tblDirContent.getValueAt(r, 1);
+                if (meta instanceof FileMetadata) {
+                    fileSizes.put(fileName, ((FileMetadata) meta).getFileSize());
+                }
             }
 
             CaseFolder rootFolder = null;
@@ -2538,6 +2559,10 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                     //newName = FileUtils.sanitizeFileName(newName);
 
                     bulkEntry.setDocumentFilename(newName);
+                    // bytes are not loaded, but the size is known from the scan metadata
+                    if (fileSizes.containsKey(fileName)) {
+                        bulkEntry.setDocumentSize(fileSizes.get(fileName));
+                    }
                     bulkSaveDlg.addEntry(bulkEntry);
 
                 } catch (Exception ex) {

@@ -753,14 +753,15 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         this.templateType=templateType;
         
         initComponents();
+        this.applyModernLook();
         
         this.foldersSupported=foldersSupported;
         this.lblPanelTitle.setText(panelTitle);
         if(!tablesSupported)
             this.cmdNewODS.setEnabled(false);
         
-        ComponentUtils.decorateSplitPane(jSplitPane1);
-        ComponentUtils.decorateSplitPane(jSplitPane2);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleSplitPane(jSplitPane1);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleSplitPane(jSplitPane2);
 
         this.lstTemplates.setCellRenderer(new TemplateListCellRenderer());
 
@@ -866,6 +867,23 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
 
     }
 
+    /**
+     * Applies the editor design kit: glass tool bars, folders, templates and preview on light cards.
+     */
+    private void applyModernLook() {
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleTitle(this.lblPanelTitle, null);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleHeaderButtons(this.cmdRefresh, this.cmdAddExisting, this.cmdNewODS, this.cmdNewODT);
+        for (javax.swing.JButton b : new javax.swing.JButton[]{this.cmdAddExisting, this.cmdNewODS, this.cmdNewODT}) {
+            b.setForeground(com.jdimension.jlawyer.client.ui.theme.UiColors.TEXT_ON_GLASS);
+        }
+        this.jScrollPane1.setBorder(javax.swing.BorderFactory.createLineBorder(com.jdimension.jlawyer.client.ui.theme.UiColors.SEPARATOR));
+        this.jScrollPane2.setBorder(javax.swing.BorderFactory.createLineBorder(com.jdimension.jlawyer.client.ui.theme.UiColors.SEPARATOR));
+        this.jScrollPane1.getViewport().setBackground(java.awt.Color.WHITE);
+        this.jScrollPane2.getViewport().setBackground(java.awt.Color.WHITE);
+        this.lstTemplates.setBackground(java.awt.Color.WHITE);
+        this.treeFolders.setBackground(java.awt.Color.WHITE);
+    }
+
     @Override
     public void setBackgroundImage(Image image) {
         this.backgroundImage = image;
@@ -888,6 +906,8 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        pnlActions = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        pnlToolbar = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
         popFolders = new javax.swing.JPopupMenu();
         mnuNewFolder = new javax.swing.JMenuItem();
         mnuRenameFolder = new javax.swing.JMenuItem();
@@ -904,10 +924,12 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         cmdNewODS = new javax.swing.JButton();
         cmdAddExisting = new javax.swing.JButton();
         jSplitPane2 = new javax.swing.JSplitPane();
-        pnlPreview = new javax.swing.JPanel();
+        pnlPreview = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jSplitPane1 = new javax.swing.JSplitPane();
+        cardTemplates = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         lstTemplates = new javax.swing.JList();
+        cardFolders = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
         treeFolders = new javax.swing.JTree();
         cmdRefresh = new javax.swing.JButton();
@@ -1017,6 +1039,8 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
 
         jSplitPane2.setResizeWeight(0.7);
 
+        pnlPreview.setTitle("Vorschau");
+
         pnlPreview.setLayout(new java.awt.BorderLayout());
         jSplitPane2.setRightComponent(pnlPreview);
 
@@ -1046,7 +1070,11 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         });
         jScrollPane1.setViewportView(lstTemplates);
 
-        jSplitPane1.setRightComponent(jScrollPane1);
+        cardTemplates.setTitle("Vorlagen");
+        cardTemplates.setLayout(new java.awt.BorderLayout());
+        cardTemplates.add(jScrollPane1, java.awt.BorderLayout.CENTER);
+
+        jSplitPane1.setRightComponent(cardTemplates);
 
         treeFolders.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mousePressed(java.awt.event.MouseEvent evt) {
@@ -1063,7 +1091,11 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         });
         jScrollPane2.setViewportView(treeFolders);
 
-        jSplitPane1.setLeftComponent(jScrollPane2);
+        cardFolders.setTitle("Ordner");
+        cardFolders.setLayout(new java.awt.BorderLayout());
+        cardFolders.add(jScrollPane2, java.awt.BorderLayout.CENTER);
+
+        jSplitPane1.setLeftComponent(cardFolders);
 
         jSplitPane2.setLeftComponent(jSplitPane1);
 
@@ -1075,46 +1107,81 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
             }
         });
 
+        pnlToolbar.setOpaque(false);
+
+        org.jdesktop.layout.GroupLayout pnlToolbarLayout = new org.jdesktop.layout.GroupLayout(pnlToolbar);
+        pnlToolbar.setLayout(pnlToolbarLayout);
+        pnlToolbarLayout.setHorizontalGroup(
+            pnlToolbarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlToolbarLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(cmdRefresh, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+        pnlToolbarLayout.setVerticalGroup(
+            pnlToolbarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlToolbarLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(pnlToolbarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+                    .add(cmdRefresh, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
+        );
+
+        pnlActions.setOpaque(false);
+
+        org.jdesktop.layout.GroupLayout pnlActionsLayout = new org.jdesktop.layout.GroupLayout(pnlActions);
+        pnlActions.setLayout(pnlActionsLayout);
+        pnlActionsLayout.setHorizontalGroup(
+            pnlActionsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlActionsLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(cmdAddExisting, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(cmdNewODS, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(cmdNewODT, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+        pnlActionsLayout.setVerticalGroup(
+            pnlActionsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlActionsLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(pnlActionsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+                    .add(cmdAddExisting, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(cmdNewODS, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(cmdNewODT, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
+        );
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+            .add(layout.createSequentialGroup()
                 .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(jSplitPane2)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(layout.createSequentialGroup()
-                        .add(0, 450, Short.MAX_VALUE)
-                        .add(cmdAddExisting)
+                        .add(pnlToolbar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(18, 18, 18)
+                        .add(jLabel18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdNewODS)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdNewODT))
-                    .add(layout.createSequentialGroup()
-                        .add(cmdRefresh)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                        .add(jLabel18)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblPanelTitle)
-                        .add(0, 0, Short.MAX_VALUE)))
+                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(pnlActions, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(jSplitPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
                 .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .add(cmdRefresh))
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+                    .add(pnlToolbar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(pnlActions, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jSplitPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 414, Short.MAX_VALUE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(cmdNewODT)
-                    .add(cmdNewODS)
-                    .add(cmdAddExisting))
+                .add(jSplitPane2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -1124,7 +1191,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
     }//GEN-LAST:event_cmdRefreshActionPerformed
 
     private void lstTemplatesMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstTemplatesMouseClicked
-        if (evt.getClickCount() == 2) {
+        if (evt.getClickCount() == 2 && evt.getButton() == MouseEvent.BUTTON1) {
             this.mnuEditTemplateActionPerformed(null);
         } else if (evt.getClickCount() == 1 && !evt.isConsumed()) {
             evt.consume();
@@ -1723,10 +1790,14 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
     private javax.swing.JMenuItem mnuRemoveFolder;
     private javax.swing.JMenuItem mnuRenameFolder;
     private javax.swing.JMenuItem mnuRenameTemplate;
-    private javax.swing.JPanel pnlPreview;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel pnlPreview;
     private javax.swing.JPopupMenu popFolders;
     private javax.swing.JPopupMenu popTemplates;
     private javax.swing.JTree treeFolders;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardFolders;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardTemplates;
+    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlToolbar;
+    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlActions;
     // End of variables declaration//GEN-END:variables
 
     @Override

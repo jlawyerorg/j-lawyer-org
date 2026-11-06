@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.configuration;
 
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.formdev.flatlaf.FlatClientProperties;
 
 
@@ -722,6 +723,13 @@ public class NextcloudConnectionPanel extends javax.swing.JPanel {
     
     public void setCloudPassword(String s) {
         this.pwCloudPassword.setText(s);
+    }
+
+    /**
+     * @param stored whether a password is stored on the server; shows a hint in the empty field
+     */
+    public void setCloudPasswordStored(boolean stored) {
+        ComponentUtils.setStoredSecretHint(this.pwCloudPassword, stored);
     }
     
     public boolean isSsl() {

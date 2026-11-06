@@ -704,6 +704,22 @@ public class DesktopUtils {
         openBrowserFromFrame(url, null);
     }
 
+    /**
+     * Opens a link from external content (e-mails, beA messages) in the system browser. Only http
+     * and https links are opened, any other link is just shown to the user for copying.
+     *
+     * @param url the link target
+     */
+    public static void openExternalLink(String url) {
+        if (HtmlSanitizer.isWebLink(url)) {
+            openBrowser(url.trim());
+        } else {
+            log.warn("not opening link with unsupported scheme: " + url);
+            ShowURLDialog dlg = new ShowURLDialog(EditorsRegistry.getInstance().getMainWindow(), true, url);
+            dlg.setVisible(true);
+        }
+    }
+
     public static void openBrowserFromDialog(String url, Dialog owner) {
 
         boolean browserSupport = true;

@@ -797,6 +797,66 @@ public class ServerFileUtils {
         return sanitized;
     }
     
+    /**
+     * Checks that a name is a single file or folder name: not empty, no path separators, not "." or
+     * "..", no null characters. Use it for names that are appended to a server directory.
+     *
+     * @param name the file or folder name
+     * @return the name
+     * @throws Exception if the name is not a plain name
+     */
+    public static String requireSimpleName(String name) throws Exception {
+        if (!isSimpleName(name)) {
+            log.warn("rejected invalid file name: " + name);
+            throw new Exception("Ungültiger Datei- oder Ordnername: " + name);
+        }
+        return name;
+    }
+
+    /**
+     * @param name a file or folder name
+     * @return true if the name is a single file or folder name that can safely be appended to a
+     * directory (see {@link #requireSimpleName(String)})
+     */
+    public static boolean isSimpleName(String name) {
+        return !(name == null || name.isEmpty() || name.contains("/") || name.contains("\\") || name.indexOf('\0') >= 0
+                || ".".equals(name.trim()) || "..".equals(name.trim()));
+    }
+
+    /**
+     * Checks that a file lies inside a base directory (or is the base directory itself), after
+     * resolving "..", "." and symbolic links. Use it before reading, writing, renaming or deleting a
+     * file whose path is built from a base directory and caller-supplied parts.
+     *
+     * @param baseDir the directory the file must stay in
+     * @param candidate the file to check
+     * @return the canonical file
+     * @throws Exception if the file is outside of the base directory
+     */
+    public static File requireWithin(File baseDir, File candidate) throws Exception {
+        String base = baseDir.getCanonicalPath();
+        File canonical = candidate.getCanonicalFile();
+        String path = canonical.getPath();
+        if (!path.equals(base) && !path.startsWith(base.endsWith(File.separator) ? base : base + File.separator)) {
+            log.warn("rejected path outside of " + base + ": " + candidate.getPath());
+            throw new Exception("Ungültiger Pfad: " + candidate.getName());
+        }
+        return canonical;
+    }
+
+    /**
+     * Same as {@link #requireWithin(File, File)} for paths given as strings.
+     *
+     * @param baseDir the directory the path must stay in
+     * @param candidate the path to check
+     * @return the candidate path, unchanged
+     * @throws Exception if the path is outside of the base directory
+     */
+    public static String requireWithin(String baseDir, String candidate) throws Exception {
+        requireWithin(new File(baseDir), new File(candidate));
+        return candidate;
+    }
+
     public static String getFileSizeHumanReadable(long size) {
         DecimalFormat megaBytes = new DecimalFormat("0");
 

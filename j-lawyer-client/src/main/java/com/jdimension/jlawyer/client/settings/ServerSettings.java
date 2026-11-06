@@ -663,11 +663,11 @@
  */
 package com.jdimension.jlawyer.client.settings;
 
-import com.jdimension.jlawyer.client.utils.StringGenerator;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
+import javax.ejb.EJBAccessException;
 import org.apache.log4j.Logger;
 
 /**
@@ -702,17 +702,30 @@ public class ServerSettings extends ServerSettingsKeys {
         return instance;
     }
     
+    /**
+     * @return the installation id; it is created by the server at startup, clients only read it
+     */
     public String getInstallationId() {
-        String installationId=this.getSetting(SERVERCONF_INSTALLATION_ID, "");
-        if("".equals(installationId)) {
-            installationId=new StringGenerator().getID().toString();
-            this.setSetting(SERVERCONF_INSTALLATION_ID, installationId);
-        }
-        return installationId;
+        return this.getSetting(SERVERCONF_INSTALLATION_ID, "");
     }
     
+    /**
+     * Reads a server setting. Secrets are never returned by the server (empty value), use
+     * {@link #hasSetting(String)} to find out whether one is stored. If the current user may not
+     * read the setting, the default value is returned.
+     *
+     * @param key the setting key
+     * @param defaultValue value to return if the setting does not exist or may not be read
+     * @return the setting value
+     */
     public String getSetting(String key, String defaultValue) {
-        ServerSettingsBean b=this.mgmt.getSetting(key);
+        ServerSettingsBean b;
+        try {
+            b = this.mgmt.getSetting(key);
+        } catch (EJBAccessException ex) {
+            log.warn("current user may not read server setting " + key);
+            return defaultValue;
+        }
         if(b==null)
             return defaultValue;
         else
@@ -737,16 +750,17 @@ public class ServerSettings extends ServerSettingsKeys {
         return this.mgmt.setSetting(key, "" + value);
     }
     
+    /**
+     * @param key the setting key
+     * @return true if a non-empty value is stored - also for secrets, whose values are never
+     * returned; false if the current user may not read the setting
+     */
     public boolean hasSetting(String key) {
-        ServerSettingsBean b = this.mgmt.getSetting(key);
-        if (b == null) {
+        try {
+            return this.mgmt.hasSetting(key);
+        } catch (EJBAccessException ex) {
+            log.warn("current user may not read server setting " + key);
             return false;
-
-        } else {
-            if ("".equals(b.getSettingValue())) {
-                return false;
-            }
-            return true;
         }
     }
     

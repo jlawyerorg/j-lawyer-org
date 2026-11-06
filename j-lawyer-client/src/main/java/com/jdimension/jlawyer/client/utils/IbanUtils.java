@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.utils;
 
+import org.iban4j.Iban;
 import org.iban4j.Iban4jException;
 import org.iban4j.IbanFormatException;
 import org.iban4j.IbanUtil;
@@ -710,7 +711,17 @@ public class IbanUtils {
     private static final IbanValidationResult VALID = new IbanValidationResult(true, null);
 
     /**
-     * Removes all whitespace and converts to upper case.
+     * Any kind of whitespace, including Unicode spaces that are not covered by
+     * \s - e.g. no-break spaces (U+00A0, U+202F) and thin spaces (U+2009) as
+     * they occur when copying from PDF or Word documents - plus zero-width
+     * characters.
+     */
+    private static final String WHITESPACE_REGEX = "[\\s\\p{Z}\\u200B\\u200C\\u200D\\u2060\\uFEFF]";
+
+    /**
+     * Removes all whitespace (including Unicode spaces such as no-break spaces
+     * and zero-width characters), converts to upper case and strips a leading
+     * "IBAN" / "IBAN:" label as it is often copied along from documents.
      *
      * @param iban the IBAN as entered by the user
      * @return the normalized IBAN, null if iban is null
@@ -719,7 +730,35 @@ public class IbanUtils {
         if (iban == null) {
             return null;
         }
-        return iban.replaceAll("\\s", "").toUpperCase();
+        String normalized = iban.replaceAll(WHITESPACE_REGEX, "").toUpperCase();
+        if (normalized.startsWith("IBAN")) {
+            normalized = normalized.substring(4);
+            if (normalized.startsWith(":")) {
+                normalized = normalized.substring(1);
+            }
+        }
+        return normalized;
+    }
+
+    /**
+     * Formats a valid IBAN in the human readable form with groups of four
+     * characters, e.g. "DE89 3704 0044 0532 0130 00".
+     *
+     * @param iban the IBAN as entered by the user
+     * @return the formatted IBAN if it is valid; otherwise the input is
+     * returned unchanged, so that invalid values (e.g. legacy account numbers)
+     * are never altered
+     */
+    public static String format(String iban) {
+        String normalized = normalize(iban);
+        if (normalized == null || normalized.isEmpty() || !validate(iban).isValid()) {
+            return iban;
+        }
+        try {
+            return Iban.valueOf(normalized).toFormattedString();
+        } catch (Iban4jException ex) {
+            return iban;
+        }
     }
 
     /**

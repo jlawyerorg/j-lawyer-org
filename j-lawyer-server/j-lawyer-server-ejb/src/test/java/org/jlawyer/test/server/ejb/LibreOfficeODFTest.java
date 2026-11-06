@@ -789,6 +789,36 @@ public class LibreOfficeODFTest {
         }
     }
 
+    /**
+     * A character after a placeholder keeps its own formatting (#2265): a bold placeholder followed by a comma
+     * that is not bold.
+     */
+    @Test
+    public void setPlaceHolderKeepsFormattingOfFollowingCharacterInOdt() {
+        File f = new File(tempFolder.getRoot(), "format-after-placeholder.odt");
+        try {
+            TextDocument document = TextDocument.newTextDocument();
+            document.addParagraph("{{GEGNER_UNTERNEHMEN}}, vertreten durch");
+            org.odftoolkit.simple.common.navigation.TextNavigation search = new org.odftoolkit.simple.common.navigation.TextNavigation("\\{\\{GEGNER_UNTERNEHMEN\\}\\}", document);
+            org.odftoolkit.simple.text.Span placeholder = org.odftoolkit.simple.text.Span.newSpan((org.odftoolkit.simple.common.navigation.TextSelection) search.nextSelection());
+            placeholder.getStyleHandler().getTextPropertiesForWrite().setFontStyle(StyleTypeDefinitions.FontStyle.BOLD);
+            document.save(f);
+            document.close();
+            Assert.assertTrue(readZipEntry(f, "content.xml"), readZipEntry(f, "content.xml").matches("(?s).*<text:span[^>]*>\\{\\{GEGNER_UNTERNEHMEN\\}\\}</text:span>, vertreten durch.*"));
+
+            HashMap<String, Object> ph = new HashMap<>();
+            ph.put("{{GEGNER_UNTERNEHMEN}}", "Office 42 GmbH");
+            LibreOfficeAccess.setPlaceHolders("", f.getPath(), f.getName(), ph, null);
+
+            String contentXml = readZipEntry(f, "content.xml");
+            // the bold span (odftoolkit may nest a plain span in it) ends before the comma
+            Assert.assertTrue(contentXml, contentXml.matches("(?s).*<text:span text:style-name=\"[^\"]+\">(<text:span>)?Office 42 GmbH(</text:span>)+, vertreten durch.*"));
+        } catch (Throwable t) {
+            t.printStackTrace();
+            Assert.fail(t.getMessage());
+        }
+    }
+
     @Test
     public void setPlaceHoldersODT() {
         File f = new File(tempFolder.getRoot(), "template-run.odt");
@@ -887,68 +917,21 @@ public class LibreOfficeODFTest {
     @Test
     @Ignore
     public void testSmartTemplateClass() {
-//        Binding sharedData=new Binding();
-//        sharedData.setProperty("key1", "value1");
-//        GroovyShell gs=new GroovyShell(sharedData);
-//        gs.evaluate("System.out.println('test');"
-//                + "System.out.println('test2');");
-
         try {
-
-            InputStream is = getClass().getResourceAsStream("/templates/smart/smarttemplate.groovy");
-            InputStreamReader isr = new InputStreamReader(is);
-            BufferedReader br = new BufferedReader(isr);
-            StringBuilder sb = new StringBuilder();
-            String line = br.readLine();
-            while (line != null) {
-                sb.append(line).append(System.lineSeparator());
-                line = br.readLine();
-            }
-            br.close();
-
-            //String myclass="class Foo { double doIt(double d1) { println \"ok\"; return 42d-d1; } }";
-            String myclass = sb.toString();
-            GroovyClassLoader gcl = new GroovyClassLoader();
-            //Class calcClass = gcl.parseClass(new File("src/main/groovy/com/baeldung/", "CalcMath.groovy"));
-            Class calcClass = gcl.parseClass(myclass);
-            GroovyObject calc = (GroovyObject) calcClass.newInstance();
-            Double resultDouble = (Double) calc.invokeMethod("doIt", new Object[]{new Double(19)});
-            Assert.assertEquals(23d, resultDouble);
+            Assert.assertEquals("23.0", evaluateSmartTemplate("String.valueOf(42d - 19d)"));
         } catch (Throwable t) {
             Assert.fail(t.getMessage());
         }
-
     }
     
     @Test
     @Ignore
     public void testSmartTemplateMethod() {
         try {
-
-            InputStream is = getClass().getResourceAsStream("/templates/smart/smarttemplate.groovy");
-            InputStreamReader isr = new InputStreamReader(is);
-            BufferedReader br = new BufferedReader(isr);
-            StringBuilder sb = new StringBuilder();
-            String line = br.readLine();
-            while (line != null) {
-                sb.append(line).append(System.lineSeparator());
-                line = br.readLine();
-            }
-            br.close();
-            
-            String myclass = sb.toString();
-            myclass=myclass.replace("SMARTTEMPLATESCRIPT", "\"schnuffel\"");
-            myclass = myclass.replace("SMARTTEMPLATECASEID", "");
-            GroovyClassLoader gcl = new GroovyClassLoader();
-            Class calcClass = gcl.parseClass(myclass);
-            GroovyObject calc = (GroovyObject) calcClass.newInstance();
-            String resultString = (String) calc.invokeMethod("evaluateScript", new Object[]{});
-            System.out.println(resultString);
-            //Assert.assertEquals(23d, resultDouble);
+            Assert.assertEquals("schnuffel", evaluateSmartTemplate("\"schnuffel\""));
         } catch (Throwable t) {
             Assert.fail(t.getMessage());
         }
-
     }
     
     @Test
@@ -1194,24 +1177,7 @@ public class LibreOfficeODFTest {
     }
     
     private String evaluateSmartTemplate(String script) throws Exception {
-        InputStream is = getClass().getResourceAsStream("/templates/smart/smarttemplate.groovy");
-            InputStreamReader isr = new InputStreamReader(is);
-            BufferedReader br = new BufferedReader(isr);
-            StringBuilder sb = new StringBuilder();
-            String line = br.readLine();
-            while (line != null) {
-                sb.append(line).append(System.lineSeparator());
-                line = br.readLine();
-            }
-            br.close();
-            
-            String myclass = sb.toString();
-            myclass=myclass.replace("SMARTTEMPLATESCRIPT", script);
-            myclass = myclass.replace("SMARTTEMPLATECASEID", "");
-            GroovyClassLoader gcl = new GroovyClassLoader();
-            Class calcClass = gcl.parseClass(myclass);
-            GroovyObject calc = (GroovyObject) calcClass.newInstance();
-            return (String) calc.invokeMethod("evaluateScript", new Object[]{});
+        return com.jdimension.jlawyer.documents.SmartTemplateEvaluator.evaluate("", script, new HashMap<>(), new ArrayList<>(), com.jdimension.jlawyer.documents.SmartTemplateEvaluator.MODE_LOG);
     }
 
     @Test
@@ -1502,6 +1468,79 @@ public class LibreOfficeODFTest {
             }
             try ( InputStream is = zip.getInputStream(zip.getEntry(entryName))) {
                 return new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            }
+        }
+    }
+
+    @Test
+    public void setEmptyPlaceholderRemovesLineInOdt() {
+        File f = null;
+        try {
+            f = File.createTempFile("j-lawyer-empty-line-", ".odt");
+            TextDocument document = TextDocument.newTextDocument();
+            document.addParagraph("zeile1");
+            document.addParagraph("{{MANDANT_NAME}}");
+            document.addParagraph("zeile 3");
+            document.addParagraph("{{MANDANT_VORNAME}}");
+            // a frame (here an empty text box) in front of an empty placeholder
+            org.odftoolkit.simple.text.Paragraph withFrame = document.addParagraph("{{MANDANT_NAME}}");
+            org.w3c.dom.Element frame = document.getContentDom().createElementNS("urn:oasis:names:tc:opendocument:xmlns:drawing:1.0", "draw:frame");
+            frame.appendChild(document.getContentDom().createElementNS("urn:oasis:names:tc:opendocument:xmlns:drawing:1.0", "draw:text-box"));
+            withFrame.getOdfElement().insertBefore(frame, withFrame.getOdfElement().getFirstChild());
+            // a field without text (hidden variable) in front of an empty placeholder
+            org.odftoolkit.simple.text.Paragraph withField = document.addParagraph("{{MANDANT_NAME}}");
+            org.w3c.dom.Element field = document.getContentDom().createElementNS("urn:oasis:names:tc:opendocument:xmlns:text:1.0", "text:variable-set");
+            field.setAttributeNS("urn:oasis:names:tc:opendocument:xmlns:text:1.0", "text:name", "jlawyerTestVariable");
+            field.setAttributeNS("urn:oasis:names:tc:opendocument:xmlns:text:1.0", "text:display", "none");
+            field.setAttributeNS("urn:oasis:names:tc:opendocument:xmlns:office:1.0", "office:value-type", "string");
+            field.setAttributeNS("urn:oasis:names:tc:opendocument:xmlns:office:1.0", "office:string-value", "jlawyerTestValue");
+            withField.getOdfElement().insertBefore(field, withField.getOdfElement().getFirstChild());
+            // a bookmark starting in front of an empty placeholder and ending in the next paragraph
+            org.odftoolkit.simple.text.Paragraph withBookmark = document.addParagraph("{{MANDANT_NAME}}");
+            org.w3c.dom.Element bookmarkStart = document.getContentDom().createElementNS("urn:oasis:names:tc:opendocument:xmlns:text:1.0", "text:bookmark-start");
+            bookmarkStart.setAttributeNS("urn:oasis:names:tc:opendocument:xmlns:text:1.0", "text:name", "jlawyerTestBookmark");
+            withBookmark.getOdfElement().insertBefore(bookmarkStart, withBookmark.getOdfElement().getFirstChild());
+            org.odftoolkit.simple.text.Paragraph bookmarkEnd = document.addParagraph("zeile 5");
+            org.w3c.dom.Element bookmarkEndElement = document.getContentDom().createElementNS("urn:oasis:names:tc:opendocument:xmlns:text:1.0", "text:bookmark-end");
+            bookmarkEndElement.setAttributeNS("urn:oasis:names:tc:opendocument:xmlns:text:1.0", "text:name", "jlawyerTestBookmark");
+            bookmarkEnd.getOdfElement().appendChild(bookmarkEndElement);
+            // a named hyperlink target without text in front of an empty placeholder, and a link to it
+            org.odftoolkit.simple.text.Paragraph withTarget = document.addParagraph("{{MANDANT_NAME}}");
+            org.w3c.dom.Element target = document.getContentDom().createElementNS("urn:oasis:names:tc:opendocument:xmlns:text:1.0", "text:a");
+            target.setAttributeNS("urn:oasis:names:tc:opendocument:xmlns:office:1.0", "office:name", "jlawyerTestTarget");
+            target.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", "#jlawyerTestTarget");
+            withTarget.getOdfElement().insertBefore(target, withTarget.getOdfElement().getFirstChild());
+            org.odftoolkit.simple.text.Paragraph withLink = document.addParagraph("");
+            org.w3c.dom.Element link = document.getContentDom().createElementNS("urn:oasis:names:tc:opendocument:xmlns:text:1.0", "text:a");
+            link.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", "#jlawyerTestTarget");
+            link.setTextContent("zum Ziel");
+            withLink.getOdfElement().appendChild(link);
+            // a placeholder repeated twice after a line break
+            org.odftoolkit.simple.text.Paragraph repeated = document.addParagraph("{{MANDANT_NAME}}{{MANDANT_NAME}}");
+            repeated.getOdfElement().insertBefore(document.getContentDom().createElementNS("urn:oasis:names:tc:opendocument:xmlns:text:1.0", "text:line-break"), repeated.getOdfElement().getFirstChild());
+            document.save(f);
+            document.close();
+
+            HashMap<String,Object> ph = new HashMap<>();
+            ph.put("{{MANDANT_NAME}}", "");
+            ph.put("{{MANDANT_VORNAME}}", "hans");
+
+            LibreOfficeAccess.setPlaceHolders("", f.getAbsolutePath(), f.getName(), ph, null);
+
+            String contentXml = readZipEntry(f, "content.xml");
+            Assert.assertTrue("the line that only held the empty placeholder is removed", java.util.regex.Pattern.compile("(?s).*zeile1</text:p><text:p[^>]*>zeile 3</text:p>.*").matcher(contentXml).matches());
+            Assert.assertTrue("a placeholder at the end of a paragraph gets no trailing space", java.util.regex.Pattern.compile("(?s).*>hans(</text:span>)*</text:p>.*").matcher(contentXml).matches());
+            Assert.assertTrue("a frame is kept", contentXml.contains("<draw:text-box"));
+            Assert.assertTrue("a field without text is kept", contentXml.contains("jlawyerTestValue"));
+            Assert.assertTrue("both ends of a bookmark are kept", java.util.regex.Pattern.compile("(?s).*<text:bookmark-start[^>]*jlawyerTestBookmark.*<text:bookmark-end[^>]*jlawyerTestBookmark.*").matcher(contentXml).matches());
+            Assert.assertTrue("a named hyperlink target is kept", contentXml.contains("office:name=\"jlawyerTestTarget\""));
+            Assert.assertFalse("every placeholder is replaced", contentXml.contains("{{MANDANT_NAME}}"));
+        } catch (Throwable t) {
+            t.printStackTrace();
+            Assert.fail(t.getMessage());
+        } finally {
+            if (f != null) {
+                f.delete();
             }
         }
     }

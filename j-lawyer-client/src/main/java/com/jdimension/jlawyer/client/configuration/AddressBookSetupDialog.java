@@ -683,6 +683,9 @@ public class AddressBookSetupDialog extends javax.swing.JDialog {
 
     private static Logger log = Logger.getLogger(AddressBookSetupDialog.class.getName());
 
+    // whether a password is stored on the server (it is never sent to the client)
+    private boolean passwordSet = false;
+
     /**
      * Creates new form AddressBookSetupDialog
      * @param parent
@@ -707,12 +710,10 @@ public class AddressBookSetupDialog extends javax.swing.JDialog {
             } catch (Throwable t) {
                 log.warn("invalid cloud port: " + s.getSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PORT, ""), t);
             }
-            try {
-                this.pnlCloud.setCloudPassword(CryptoProvider.defaultCrypto().decrypt(s.getSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PWD, "")));
-            } catch (Throwable t) {
-                log.warn("invalid cloud password: " + s.getSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PWD, ""), t);
-                this.pnlCloud.setCloudPassword("");
-            }
+            // the password is write-only: the server never returns it, an empty field keeps the stored value
+            this.pnlCloud.setCloudPassword("");
+            this.passwordSet = s.hasSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PWD);
+            this.pnlCloud.setCloudPasswordStored(this.passwordSet);
             this.pnlCloud.setSsl(s.getSettingAsBoolean(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_SSL, true));
             this.pnlCloud.setCloudUser(s.getSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_USER, ""));
         } catch (Throwable t) {
@@ -725,8 +726,20 @@ public class AddressBookSetupDialog extends javax.swing.JDialog {
             String currentHref = s.getSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_HREF, "");
             this.cmbAddressBook.removeAllItems();
             
-            if(StringUtils.isEmpty(this.pnlCloud.getCloudHost()) || StringUtils.isEmpty(this.pnlCloud.getCloudUser()) || StringUtils.isEmpty(this.pnlCloud.getCloudPassword()))
+            if(StringUtils.isEmpty(this.pnlCloud.getCloudHost()) || StringUtils.isEmpty(this.pnlCloud.getCloudUser()))
                 return;
+
+            if (StringUtils.isEmpty(this.pnlCloud.getCloudPassword())) {
+                // without the password the address books cannot be listed - keep the configured one selectable
+                if (!StringUtils.isEmpty(currentHref)) {
+                    CloudAddressBook current = new CloudAddressBook();
+                    current.setDisplayName("aktuell konfiguriert - zum Ändern Passwort eingeben und Adressbücher abrufen");
+                    current.setHref(currentHref);
+                    ((DefaultComboBoxModel) this.cmbAddressBook.getModel()).addElement(current);
+                    this.cmbAddressBook.setSelectedItem(current);
+                }
+                return;
+            }
 
             NextcloudContactsConnector nc = new NextcloudContactsConnector(this.pnlCloud.getCloudHost(), this.pnlCloud.isSsl(), this.pnlCloud.getCloudPort(), this.pnlCloud.getCloudUser(), this.pnlCloud.getCloudPassword());
             if(!StringUtils.isEmpty(this.pnlCloud.getCloudPath()))
@@ -877,6 +890,10 @@ public class AddressBookSetupDialog extends javax.swing.JDialog {
             JOptionPane.showMessageDialog(this, "Gewähltes Adressbuch ist ungültig", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return;
         }
+        if (this.chkBookSync.isSelected() && !this.passwordSet && StringUtils.isEmpty(this.pnlCloud.getCloudPassword())) {
+            JOptionPane.showMessageDialog(this, "Bitte ein Passwort für die Synchronisation eingeben.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
         try {
             ServerSettings s = ServerSettings.getInstance();
@@ -886,7 +903,9 @@ public class AddressBookSetupDialog extends javax.swing.JDialog {
             s.setSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_HREF, ((CloudAddressBook) this.cmbAddressBook.getSelectedItem()).getHref());
             s.setSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PATH, this.pnlCloud.getCloudPath());
             s.setSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PORT, "" + this.pnlCloud.getCloudPort());
-            s.setSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PWD, CryptoProvider.defaultCrypto().encrypt(this.pnlCloud.getCloudPassword()));
+            if (!StringUtils.isEmpty(this.pnlCloud.getCloudPassword())) {
+                s.setSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PWD, CryptoProvider.defaultCrypto().encrypt(this.pnlCloud.getCloudPassword()));
+            }
             s.setSettingAsBoolean(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_SSL, this.pnlCloud.isSsl());
             s.setSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_USER, this.pnlCloud.getCloudUser());
 
@@ -910,6 +929,11 @@ public class AddressBookSetupDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdSaveActionPerformed
 
     private void cmdGetAdressBooksActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdGetAdressBooksActionPerformed
+        if (StringUtils.isEmpty(this.pnlCloud.getCloudPassword())) {
+            // the stored password is never sent to the client
+            JOptionPane.showMessageDialog(this, "Bitte zum Abrufen der Adressbücher das Passwort eingeben.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
         try {
             NextcloudContactsConnector nc = new NextcloudContactsConnector(this.pnlCloud.getCloudHost(), this.pnlCloud.isSsl(), this.pnlCloud.getCloudPort(), this.pnlCloud.getCloudUser(), this.pnlCloud.getCloudPassword());
             if(!StringUtils.isEmpty(this.pnlCloud.getCloudPath()))

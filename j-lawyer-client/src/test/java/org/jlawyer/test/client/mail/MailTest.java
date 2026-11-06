@@ -715,4 +715,32 @@ public class MailTest {
          
      
      }
+
+     @Test
+     public void testRemoveRecipient() {
+
+         // the only / first / middle / last recipient - the first one used to fail (#2127)
+         Assert.assertEquals("", EmailUtils.removeRecipient("a@x.de", "a@x.de"));
+         Assert.assertEquals("b@y.de", EmailUtils.removeRecipient("a@x.de, b@y.de", "a@x.de"));
+         Assert.assertEquals("a@x.de, c@z.de", EmailUtils.removeRecipient("a@x.de, b@y.de, c@z.de", "b@y.de"));
+         Assert.assertEquals("a@x.de", EmailUtils.removeRecipient("a@x.de, b@y.de", "b@y.de"));
+
+         // case and blanks are ignored
+         Assert.assertEquals("b@y.de", EmailUtils.removeRecipient(" A@X.de ,b@y.de", "a@x.de"));
+
+         // other addresses containing the address and recipients with a display name are kept
+         Assert.assertEquals("aa@x.de, b@y.de", EmailUtils.removeRecipient("aa@x.de, b@y.de", "a@x.de"));
+         Assert.assertEquals("\"Müller, Otto\" <a@x.de>", EmailUtils.removeRecipient("\"Müller, Otto\" <a@x.de>", "a@x.de"));
+         Assert.assertEquals("\"Müller, Otto\" <o@m.de>", EmailUtils.removeRecipient("\"Müller, Otto\" <o@m.de>, a@x.de", "a@x.de"));
+         Assert.assertEquals("\"Acme 6\\\"\" <b@y.de>", EmailUtils.removeRecipient("\"Acme 6\\\"\" <b@y.de>, a@x.de", "a@x.de"));
+         Assert.assertEquals("\"Team, a@x.de, West\" <b@y.de>", EmailUtils.removeRecipient("\"Team, a@x.de, West\" <b@y.de>", "a@x.de"));
+         Assert.assertEquals("\"Team, a@x.de, West\" <b@y.de>", EmailUtils.removeRecipient("\"Team, a@x.de, West\" <b@y.de>, a@x.de", "a@x.de"));
+
+         // empty entries are dropped once an entry has been removed
+         Assert.assertEquals("b@y.de", EmailUtils.removeRecipient("a@x.de,,b@y.de,", "a@x.de"));
+
+         // not contained or nothing to remove: input unchanged
+         Assert.assertEquals("b@y.de", EmailUtils.removeRecipient("b@y.de", "a@x.de"));
+         Assert.assertEquals("", EmailUtils.removeRecipient("", "a@x.de"));
+     }
 }

@@ -677,8 +677,6 @@ import com.jdimension.jlawyer.client.editors.files.BulkSaveDialog;
 import com.jdimension.jlawyer.client.editors.files.BulkSaveEntry;
 import com.jdimension.jlawyer.client.editors.files.DescendingDateTimeStringComparator;
 import com.jdimension.jlawyer.client.editors.files.FileNumberComparatorArchiveFileBean;
-import com.jdimension.jlawyer.client.events.BeaStatusEvent;
-import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.mail.sidebar.CreateNewAddressPanel;
 import com.jdimension.jlawyer.client.mail.sidebar.ExtractedPhoneNumbersPanel;
 import com.jdimension.jlawyer.client.mail.sidebar.NavigateToAddressPanel;
@@ -789,7 +787,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             new Thread(() -> {
                 try {
                     int tempFolders = BeaAccess.countTempFolders();
-                    int tempFoldersLimit = ServerSettings.getInstance().getSettingAsInt("jlawyer.server.bea.maxtempfolders", 500);
+                    int tempFoldersLimit = ServerSettings.getInstance().getSettingAsInt(ServerSettings.SERVERCONF_BEA_MAXTEMPFOLDERS, 500);
                     if (tempFolders > tempFoldersLimit) {
                         SwingUtilities.invokeLater(() -> {
                             lblTempFilesWarning.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/messagebox_warning.png"))); // NOI18N
@@ -807,9 +805,10 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             log.error(ex);
         }
 
-        ComponentUtils.decorateSplitPane(jSplitPane1);
-        ComponentUtils.decorateSplitPane(this.mainSplitter);
-        ComponentUtils.decorateSplitPane(this.splitterFolderDetails);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleCardSplitPane(jSplitPane1);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleCardSplitPane(this.mainSplitter);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleCardSplitPane(this.splitterFolderDetails);
+        this.applyModernLook();
 
         ClientSettings cs = ClientSettings.getInstance();
         String temp = cs.getConfiguration(ClientSettings.CONF_BEA_MOVETOIMPORTEDENABLED, "false");
@@ -1015,28 +1014,35 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
         }
 
-        // count unread messages from already-loaded headers and publish status
+        // count unread messages of all inboxes and publish status - one event with the total, each event replaces the previous count
         try {
-            for (String safeId : inboxFolders.keySet()) {
-                BeaFolder inbox = inboxFolders.get(safeId);
-                if (inbox != null) {
-                    EditorsRegistry.getInstance().updateStatus("Nachrichtenübersicht wird geladen für " + inbox.getName() + "...");
-                    List<BeaMessageHeader> messages = BeaAccess.getInstance().getFolderOverview(safeId, inbox, BeaAccess.getFilter(inbox.getType()));
-                    int unread = 0;
-                    for (BeaMessageHeader mh : messages) {
-                        if (!mh.isRead()) {
-                            unread++;
-                        }
-                    }
-                    BeaStatusEvent e = new BeaStatusEvent(unread);
-                    EventBroker.getInstance().publishEvent(e);
-                }
-            }
+            // if the count can not be determined (a postbox without inbox, or an error), nothing is published and the indicator keeps its previous value
+            BeaUnreadCounter.publishUnread(inboxes.size(), inboxFolders, (safeId, inbox) -> {
+                EditorsRegistry.getInstance().updateStatus("Nachrichtenübersicht wird geladen für " + inbox.getName() + "...");
+                return BeaAccess.getInstance().getFolderOverview(safeId, inbox, BeaAccess.getFilter(inbox.getType()));
+            });
         } catch (Throwable t) {
             log.error(t);
         }
         EditorsRegistry.getInstance().clearStatus();
 
+    }
+
+    /**
+     * Applies the editor design kit: glass tool bar and options bar, folders, messages and the
+     * message content on one light card.
+     */
+    private void applyModernLook() {
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleTitle(this.lblPanelTitle, null);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleHeaderButtons(this.cmdRefresh, this.cmdLogout, this.cmdNew,
+                this.cmdReply, this.cmdReplyAll, this.cmdForward, this.cmdDelete);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleTable(this.tblMails, this.jScrollPane3);
+        this.scrollTree.setBorder(javax.swing.BorderFactory.createLineBorder(com.jdimension.jlawyer.client.ui.theme.UiColors.SEPARATOR));
+        this.scrollTree.getViewport().setBackground(java.awt.Color.WHITE);
+        this.treeFolders.setBackground(java.awt.Color.WHITE);
+        this.jScrollPane4.setBorder(javax.swing.BorderFactory.createLineBorder(com.jdimension.jlawyer.client.ui.theme.UiColors.SEPARATOR));
+        this.jPanel2.setOpaque(false);
+        this.chkMoveToImported.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
     }
 
     @Override
@@ -1061,6 +1067,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        pnlOptionsBar = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        pnlToolbar = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
         popFolders = new javax.swing.JPopupMenu();
         mnuNewFolder = new javax.swing.JMenuItem();
         mnuRemoveFolder = new javax.swing.JMenuItem();
@@ -1086,6 +1094,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         cmdForward = new javax.swing.JButton();
         jSeparator4 = new javax.swing.JToolBar.Separator();
         cmdDelete = new javax.swing.JButton();
+        cardMail = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         mainSplitter = new javax.swing.JSplitPane();
         scrollTree = new javax.swing.JScrollPane();
         treeFolders = new javax.swing.JTree();
@@ -1362,6 +1371,9 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
         mainSplitter.setRightComponent(splitterFolderDetails);
 
+        cardMail.setLayout(new java.awt.BorderLayout());
+        cardMail.add(mainSplitter, java.awt.BorderLayout.CENTER);
+
         cmdRefresh.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_refresh_blue_36dp.png"))); // NOI18N
         cmdRefresh.setToolTipText("Aktualisieren");
         cmdRefresh.addActionListener(new java.awt.event.ActionListener() {
@@ -1406,50 +1418,87 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             }
         });
 
+        pnlToolbar.setOpaque(false);
+
+        org.jdesktop.layout.GroupLayout pnlToolbarLayout = new org.jdesktop.layout.GroupLayout(pnlToolbar);
+        pnlToolbar.setLayout(pnlToolbarLayout);
+        pnlToolbarLayout.setHorizontalGroup(
+            pnlToolbarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlToolbarLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(cmdRefresh, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(cmdLogout, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jToolBar1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+        pnlToolbarLayout.setVerticalGroup(
+            pnlToolbarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlToolbarLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(pnlToolbarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+                    .add(cmdRefresh, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(cmdLogout, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jToolBar1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
+        );
+
+        pnlOptionsBar.setOpaque(false);
+
+        org.jdesktop.layout.GroupLayout pnlOptionsBarLayout = new org.jdesktop.layout.GroupLayout(pnlOptionsBar);
+        pnlOptionsBar.setLayout(pnlOptionsBarLayout);
+        pnlOptionsBarLayout.setHorizontalGroup(
+            pnlOptionsBarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlOptionsBarLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(chkMoveToImported, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(lblTempFilesWarning, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(cmbDownloadMails, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+        pnlOptionsBarLayout.setVerticalGroup(
+            pnlOptionsBarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlOptionsBarLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(pnlOptionsBarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+                    .add(chkMoveToImported, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(lblTempFilesWarning, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(cmbDownloadMails, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
+        );
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+            .add(layout.createSequentialGroup()
                 .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(layout.createSequentialGroup()
-                        .add(chkMoveToImported)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(lblTempFilesWarning))
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, mainSplitter)
-                    .add(layout.createSequentialGroup()
-                        .add(cmdRefresh)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdLogout)
+                        .add(pnlToolbar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(18, 18, 18)
-                        .add(jToolBar1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                        .add(jLabel18)
+                        .add(jLabel18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblPanelTitle)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(cmbDownloadMails, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(pnlOptionsBar, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(cardMail, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
                 .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                        .add(jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(jToolBar1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(org.jdesktop.layout.GroupLayout.TRAILING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(cmbDownloadMails))
-                    .add(cmdRefresh)
-                    .add(cmdLogout))
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+                    .add(pnlToolbar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(chkMoveToImported)
-                    .add(lblTempFilesWarning))
+                .add(pnlOptionsBar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(mainSplitter, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 411, Short.MAX_VALUE)
+                .add(cardMail, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -1812,6 +1861,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         // Execute deletion in background
         new javax.swing.SwingWorker<java.util.List<Integer>, Void>() {
             private Exception error = null;
+            private int failed = 0;
+            private String lastFailure = "";
 
             @Override
             protected java.util.List<Integer> doInBackground() throws Exception {
@@ -1838,9 +1889,13 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                             }
                             if (success) {
                                 successfulIndices.add(modelIndices[i]);
+                            } else {
+                                failed++;
                             }
                         } catch (Throwable ex) {
                             log.error(ex);
+                            failed++;
+                            lastFailure = ex.getMessage() != null ? ex.getMessage() : ex.toString();
                         }
                     }
                 } catch (Exception ex) {
@@ -1857,6 +1912,9 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
                 if (error != null) {
                     JOptionPane.showMessageDialog(BeaInboxPanel.this, "Fehler beim Löschen: " + error.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                } else if (failed > 0) {
+                    // same feedback as when emptying the trash - otherwise the messages just stay without any hint
+                    JOptionPane.showMessageDialog(BeaInboxPanel.this, "" + failed + " Nachricht(en) konnten nicht gelöscht werden" + (lastFailure.isEmpty() ? "." : ", letzte Meldung: " + lastFailure), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 }
 
                 try {
@@ -3514,5 +3572,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     private javax.swing.JSplitPane splitterFolderDetails;
     private javax.swing.JTable tblMails;
     private javax.swing.JTree treeFolders;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardMail;
+    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlToolbar;
+    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlOptionsBar;
     // End of variables declaration//GEN-END:variables
 }

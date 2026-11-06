@@ -1,7 +1,7 @@
 ## 1. Low-risk lifts (patch/minor; no expected code changes)
 - [ ] 1.1 `org.slf4j:slf4j-api` → **1.7.36** (client 1.7.36; fax/server/server-common/server-entities/server-io 1.7.30) — patch bump
 - [ ] 1.2 `commons-logging:commons-logging` → **1.2** (client/server/server-common/server-ejb 1.2; fax 1.1)
-- [ ] 1.3 `commons-net:commons-net` → **3.5** (server/server-common/server-ejb 3.5; client 3.1)
+- [x] 1.3 `commons-net:commons-net` → consolidated to **3.11.1** in the root `dependencyManagement` (7 per-module pins dropped: client 3.1 + server-common/server-ejb/war/io/server-io/ear 3.5). Lifted past the originally-planned 3.5 because commons-vfs2 2.10.0 is built against 3.11.1 and calls `FTPClient.setDataTimeout(Duration)`, which 3.5 lacks (`NoSuchMethodError` on every `ftp://` location). FtpTest green against a local vsftpd.
 - [ ] 1.4 `javax.activation:activation` → **1.1.1** (server-ejb 1.1.1; fax 1.1)
 - [ ] 1.5 `com.sun.xml.bind:jaxb-impl` → **2.3.3** (client 2.3.3; server-ejb 2.3.2)
 - [ ] 1.6 `junit:junit` → **4.12** (test scope; server-common/server-entities 4.12; client/fax/server 4.10 + 3.8.2) — verify no test relies on JUnit 3 `TestCase`

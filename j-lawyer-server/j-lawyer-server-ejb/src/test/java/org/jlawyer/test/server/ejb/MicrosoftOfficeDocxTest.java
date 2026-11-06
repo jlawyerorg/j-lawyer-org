@@ -678,8 +678,16 @@ import java.io.Reader;
 import java.io.StringWriter;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.zip.ZipFile;
 import junit.framework.Assert;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFFootnote;
+import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.tika.Tika;
 import org.jlawyer.plugins.calculation.Cell;
 import org.jlawyer.plugins.calculation.StyledCalculationTable;
@@ -765,6 +773,76 @@ public class MicrosoftOfficeDocxTest {
             // lines are separate paragraphs ("not working" in the template) is not detected
             Assert.assertEquals(10, l.size());
         } catch (Throwable t) {
+            Assert.fail(t.getMessage());
+        }
+    }
+
+    /**
+     * A character after a placeholder keeps its own formatting (#2265): a bold placeholder followed by a comma
+     * that is not bold, once with the comma in the run of the following text, once in a run of its own. The text
+     * stays as before: the same placeholder twice in one run with different characters after it, an empty value
+     * before a comma, the placeholder in a field instruction before it, and at the end of a paragraph before a field
+     * instruction with it (no space, as with #3697). The same placeholder in separate runs no longer gets a space
+     * before the second comma.
+     */
+    @Test
+    public void setPlaceHolderKeepsFormattingOfFollowingCharacterInDocx() {
+        File f = new File(tempFolder.getRoot(), "format-after-placeholder.docx");
+        try {
+            try (org.apache.poi.xwpf.usermodel.XWPFDocument document = new org.apache.poi.xwpf.usermodel.XWPFDocument();
+                    FileOutputStream out = new FileOutputStream(f)) {
+                org.apache.poi.xwpf.usermodel.XWPFParagraph withText = document.createParagraph();
+                withText.createRun().setText("{{GEGNER_UNTERNEHMEN}}");
+                withText.getRuns().get(0).setBold(true);
+                withText.createRun().setText(", vertreten durch");
+                org.apache.poi.xwpf.usermodel.XWPFParagraph ownRun = document.createParagraph();
+                ownRun.createRun().setText("{{GEGNER_UNTERNEHMEN}}");
+                ownRun.getRuns().get(0).setBold(true);
+                ownRun.createRun().setText(",");
+                ownRun.createRun().setText(" vertreten durch");
+                document.createParagraph().createRun().setText("{{GEGNER_UNTERNEHMEN}}, {{GEGNER_UNTERNEHMEN}}.");
+                document.createParagraph().createRun().setText("{{GEGNER_NAME}}, Ort");
+                org.apache.poi.xwpf.usermodel.XWPFParagraph field = document.createParagraph();
+                field.createRun().getCTR().addNewInstrText().setStringValue(" MERGEFIELD \"{{GEGNER_UNTERNEHMEN}}\" ");
+                field.createRun().setText("{{GEGNER_UNTERNEHMEN}}");
+                field.createRun().setText(", Ort");
+                org.apache.poi.xwpf.usermodel.XWPFParagraph separateRuns = document.createParagraph();
+                separateRuns.createRun().setText("{{GEGNER_UNTERNEHMEN}}");
+                separateRuns.createRun().setText(", ");
+                separateRuns.createRun().setText("{{GEGNER_UNTERNEHMEN}}");
+                separateRuns.createRun().setText(", Ort");
+                org.apache.poi.xwpf.usermodel.XWPFParagraph fieldAfter = document.createParagraph();
+                fieldAfter.createRun().setText("{{GEGNER_UNTERNEHMEN}}");
+                fieldAfter.createRun().getCTR().addNewFldChar().setFldCharType(org.openxmlformats.schemas.wordprocessingml.x2006.main.STFldCharType.BEGIN);
+                fieldAfter.createRun().getCTR().addNewInstrText().setStringValue(" XE \"{{GEGNER_UNTERNEHMEN}}\" ");
+                fieldAfter.createRun().getCTR().addNewFldChar().setFldCharType(org.openxmlformats.schemas.wordprocessingml.x2006.main.STFldCharType.END);
+                document.write(out);
+            }
+
+            HashMap<String, Object> ph = new HashMap<>();
+            ph.put("{{GEGNER_UNTERNEHMEN}}", "Office 42 GmbH");
+            ph.put("{{GEGNER_NAME}}", "");
+            LibreOfficeAccess.setPlaceHolders("", f.getPath(), f.getPath(), ph, null);
+
+            String[] texts = new String[]{"Office 42 GmbH, vertreten durch", "Office 42 GmbH, vertreten durch", "Office 42 GmbH, Office 42 GmbH.", ", Ort", "Office 42 GmbH, Ort", "Office 42 GmbH, Office 42 GmbH, Ort", "Office 42 GmbH"};
+            String[] boldTexts = new String[]{"Office 42 GmbH", "Office 42 GmbH", "", "", "", "", ""};
+            try (FileInputStream in = new FileInputStream(f);
+                    org.apache.poi.xwpf.usermodel.XWPFDocument document = new org.apache.poi.xwpf.usermodel.XWPFDocument(in)) {
+                Assert.assertEquals(texts.length, document.getParagraphs().size());
+                for (int i = 0; i < texts.length; i++) {
+                    org.apache.poi.xwpf.usermodel.XWPFParagraph paragraph = document.getParagraphs().get(i);
+                    StringBuilder bold = new StringBuilder();
+                    for (org.apache.poi.xwpf.usermodel.XWPFRun run : paragraph.getRuns()) {
+                        if (run.isBold() && run.getText(0) != null) {
+                            bold.append(run.getText(0));
+                        }
+                    }
+                    Assert.assertEquals(texts[i], paragraph.getText());
+                    Assert.assertEquals("bold text in: " + paragraph.getText(), boldTexts[i], bold.toString());
+                }
+            }
+        } catch (Throwable t) {
+            t.printStackTrace();
             Assert.fail(t.getMessage());
         }
     }
@@ -866,7 +944,8 @@ public class MicrosoftOfficeDocxTest {
         Assert.assertEquals(77, content.indexOf("otto\" test"));
         Assert.assertEquals(88, content.indexOf("otto test"));
         Assert.assertEquals(98, content.indexOf("hans otto"));
-        Assert.assertEquals(109, content.indexOf("hans otto 2"));
+        // "hans otto" ends its paragraph, so no space is appended after it
+        Assert.assertEquals(108, content.indexOf("hans otto 2"));
         Assert.assertTrue(!content.contains("MANDANT_ANREDE"));
 
     }
@@ -948,7 +1027,8 @@ public class MicrosoftOfficeDocxTest {
         Assert.assertEquals(77, content.indexOf("otto\" test"));
         Assert.assertEquals(88, content.indexOf("otto test"));
         Assert.assertEquals(98, content.indexOf("hans otto"));
-        Assert.assertEquals(109, content.indexOf("hans otto 2"));
+        // "hans otto" ends its paragraph, so no space is appended after it
+        Assert.assertEquals(108, content.indexOf("hans otto 2"));
         Assert.assertTrue(!content.contains("MANDANT_ANREDE"));
 
     }
@@ -1074,6 +1154,54 @@ public class MicrosoftOfficeDocxTest {
         Assert.assertTrue(content.contains("Brüssel"));
         Assert.assertTrue(content.contains("anwalt@"));
 
+    }
+
+    @Test
+    public void setPlaceHoldersNoTrailingSpaceAtParagraphEndInDocx() {
+        File f = null;
+        try {
+            f = File.createTempFile("j-lawyer-trailing-space-", ".docx");
+            try ( XWPFDocument document = new XWPFDocument();  FileOutputStream out = new FileOutputStream(f)) {
+                document.createParagraph().createRun().setText("{{MANDANT_VORNAME}} {{MANDANT_NAME}}");
+                // Word often splits a placeholder over several runs
+                XWPFParagraph split = document.createParagraph();
+                split.createRun().setText("Az.: {{");
+                split.createRun().setText("AKTE_ZEICHEN");
+                split.createRun().setText("}}");
+                document.createParagraph().createRun().setText("{{MANDANT_NAME}}und mehr");
+                // POI appends the footnote text to the paragraph text
+                XWPFParagraph footnoted = document.createParagraph();
+                footnoted.createRun().setText("Siehe");
+                XWPFFootnote footnote = document.createFootnote();
+                footnote.createParagraph().createRun().setText("Fußnote");
+                footnoted.addFootnoteReference(footnote);
+                footnoted.createRun().setText(" {{MANDANT_NAME}}");
+                // the value is inserted once, even if it contains its own placeholder
+                document.createParagraph().createRun().setText("{{BETREFF}}");
+                document.createTable(1, 1).getRow(0).getCell(0).getParagraphs().get(0).createRun().setText("{{MANDANT_NAME}}");
+                document.write(out);
+            }
+
+            HashMap<String,Object> ph = new HashMap<>();
+            ph.put("{{MANDANT_NAME}}", "otto");
+            ph.put("{{MANDANT_VORNAME}}", "hans");
+            ph.put("{{AKTE_ZEICHEN}}", "33.61.02/191327");
+            ph.put("{{BETREFF}}", "Antwort auf {{BETREFF}}");
+
+            LibreOfficeAccess.setPlaceHolders("", f.getAbsolutePath(), f.getName(), ph, null);
+
+            // no trailing space after a placeholder that ends a paragraph (also in a table cell),
+            // but still the automatic space after a placeholder that is followed by more text
+            List<String> paragraphs = paragraphTexts(readZipEntry(f, "word/document.xml"));
+            Assert.assertEquals(Arrays.asList("hans otto", "Az.: 33.61.02/191327", "otto und mehr", "Siehe otto", "Antwort auf {{BETREFF}}", "otto"), paragraphs);
+        } catch (Throwable t) {
+            t.printStackTrace();
+            Assert.fail(t.getMessage());
+        } finally {
+            if (f != null) {
+                f.delete();
+            }
+        }
     }
 
 //    @Test
@@ -1210,6 +1338,36 @@ public class MicrosoftOfficeDocxTest {
                 os.write(buffer, 0, length);
             }
         }
+    }
+
+    private static String readZipEntry(File file, String entryName) throws IOException {
+        try ( ZipFile zip = new ZipFile(file)) {
+            if (zip.getEntry(entryName) == null) {
+                throw new IOException("ZIP entry not found: " + entryName);
+            }
+            try ( InputStream is = zip.getInputStream(zip.getEntry(entryName))) {
+                return new String(is.readAllBytes(), "UTF-8");
+            }
+        }
+    }
+
+    /**
+     * Returns the text of each paragraph (w:p) of a WordprocessingML part, in document order.
+     * Sufficient for documents written by POI: "w" prefix, no nested paragraphs, entities are
+     * not decoded.
+     */
+    private static List<String> paragraphTexts(String partXml) {
+        List<String> paragraphs = new ArrayList<>();
+        Matcher paragraph = Pattern.compile("(?s)<w:p[ >].*?</w:p>").matcher(partXml);
+        while (paragraph.find()) {
+            StringBuilder text = new StringBuilder();
+            Matcher run = Pattern.compile("<w:t(?: [^>]*)?>([^<]*)</w:t>").matcher(paragraph.group());
+            while (run.find()) {
+                text.append(run.group(1));
+            }
+            paragraphs.add(text.toString());
+        }
+        return paragraphs;
     }
 
 }

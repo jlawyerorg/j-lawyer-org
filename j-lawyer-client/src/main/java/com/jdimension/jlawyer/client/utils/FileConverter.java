@@ -1089,9 +1089,7 @@ public class FileConverter {
 
                 // Try soffice.exe first
                 try {
-                    Process p = Runtime.getRuntime().exec(new String[]{OOO_BINARY, "--headless", "--convert-to", "pdf:writer_pdf_Export:{\n" +
-                            "  \"SelectPdfVersion\":{\"type\":\"long\",\"value\":3}\n" +
-                            "}", "--outdir", parentPath, url});
+                    Process p = Runtime.getRuntime().exec(new String[]{OOO_BINARY, "--headless", "--convert-to", getPdfConvertToArgument(url), "--outdir", parentPath, url});
                     exit = p.waitFor();
                     if (exit == 0) {
                         log.info("PDF conversion succeeded with " + OOO_BINARY);
@@ -1105,9 +1103,7 @@ public class FileConverter {
                 if (!success) {
                     usedBinary = LO_BINARY;
                     try {
-                        Process p = Runtime.getRuntime().exec(new String[]{LO_BINARY, "--headless", "--convert-to", "pdf:writer_pdf_Export:{\n" +
-                                "  \"SelectPdfVersion\":{\"type\":\"long\",\"value\":3}\n" +
-                                "}", "--outdir", parentPath, url});
+                        Process p = Runtime.getRuntime().exec(new String[]{LO_BINARY, "--headless", "--convert-to", getPdfConvertToArgument(url), "--outdir", parentPath, url});
                         exit = p.waitFor();
                         if (exit == 0) {
                             log.info("PDF conversion succeeded with " + LO_BINARY);
@@ -1229,9 +1225,7 @@ public class FileConverter {
 
             boolean isRetry = false;
             for (int i = 0; i < 2; i++) {
-                Process p = Runtime.getRuntime().exec(new String[]{"libreoffice", "--headless", "--convert-to", "pdf:writer_pdf_Export:{\n" +
-"  \"SelectPdfVersion\":{\"type\":\"long\",\"value\":3}\n" +
-"}", "--outdir", parentPath, url});
+                Process p = Runtime.getRuntime().exec(new String[]{"libreoffice", "--headless", "--convert-to", getPdfConvertToArgument(url), "--outdir", parentPath, url});
                 int exit = p.waitFor();
                 if (exit != 0) {
                     if (isRetry) {
@@ -1252,7 +1246,9 @@ public class FileConverter {
                 File org = new File(url);
                 String orgName = org.getName();
                 String path = url.substring(0, url.indexOf(orgName));
-                return path + orgName.substring(0, orgName.lastIndexOf('.')) + ".pdf";
+                String pdf = path + orgName.substring(0, orgName.lastIndexOf('.')) + ".pdf";
+                ensurePdfCreated(pdf, url);
+                return pdf;
             }
 
             // should never be reached
@@ -1342,9 +1338,7 @@ public class FileConverter {
 
             boolean isRetry = false;
             for (int i = 0; i < 2; i++) {
-                Process p = Runtime.getRuntime().exec(new String[]{"/Applications/LibreOffice.app/Contents/MacOS/soffice", "--headless", "--convert-to", "pdf:writer_pdf_Export:{\n" +
-"  \"SelectPdfVersion\":{\"type\":\"long\",\"value\":3}\n" +
-"}", "--outdir", parentPath, url});
+                Process p = Runtime.getRuntime().exec(new String[]{"/Applications/LibreOffice.app/Contents/MacOS/soffice", "--headless", "--convert-to", getPdfConvertToArgument(url), "--outdir", parentPath, url});
                 
                 int exit = p.waitFor();
 
@@ -1367,7 +1361,9 @@ public class FileConverter {
                 File org = new File(url);
                 String orgName = org.getName();
                 String path = url.substring(0, url.indexOf(orgName));
-                return path + orgName.substring(0, orgName.lastIndexOf('.')) + ".pdf";
+                String pdf = path + orgName.substring(0, orgName.lastIndexOf('.')) + ".pdf";
+                ensurePdfCreated(pdf, url);
+                return pdf;
             }
 
             // should never be reached
@@ -1377,8 +1373,65 @@ public class FileConverter {
     
     private static boolean isImageFile(String url) {
         String lUrl = url.toLowerCase();
-        return lUrl.endsWith(".jpg") || lUrl.endsWith(".jpeg") || 
+        return lUrl.endsWith(".jpg") || lUrl.endsWith(".jpeg") ||
                lUrl.endsWith(".gif") || lUrl.endsWith(".png");
+    }
+
+    // LibreOffice opens these formats in Draw, Calc or Impress - all others in Writer
+    private static final List<String> PDF_EXPORT_DRAW = Arrays.asList(".png", ".jpg", ".jpeg", ".gif", ".tiff", ".tif", ".bmp", ".eps", ".odg", ".sda");
+    private static final List<String> PDF_EXPORT_CALC = Arrays.asList(".xls", ".xlsx", ".ods", ".fods", ".csv", ".sdc");
+    private static final List<String> PDF_EXPORT_IMPRESS = Arrays.asList(".ppt", ".pptx", ".odp", ".fodp", ".sdd");
+
+    /**
+     * Returns the LibreOffice PDF export filter matching the application
+     * LibreOffice opens the given file with. Using the Writer filter for e.g.
+     * an image makes LibreOffice exit with 0 without creating a PDF (#3772).
+     *
+     * @param url the file to convert
+     * @return the name of the export filter, e.g. draw_pdf_Export
+     */
+    public static String getPdfExportFilter(String url) {
+        String lUrl = url.toLowerCase();
+        int dot = lUrl.lastIndexOf('.');
+        String ext = dot >= 0 ? lUrl.substring(dot) : "";
+        if (PDF_EXPORT_DRAW.contains(ext)) {
+            return "draw_pdf_Export";
+        }
+        if (PDF_EXPORT_CALC.contains(ext)) {
+            return "calc_pdf_Export";
+        }
+        if (PDF_EXPORT_IMPRESS.contains(ext)) {
+            return "impress_pdf_Export";
+        }
+        return "writer_pdf_Export";
+    }
+
+    /**
+     * Returns the value of the LibreOffice --convert-to argument for a PDF/A-3
+     * export of the given file.
+     *
+     * @param url the file to convert
+     * @return the --convert-to argument
+     */
+    public static String getPdfConvertToArgument(String url) {
+        return "pdf:" + getPdfExportFilter(url) + ":{\n"
+                + "  \"SelectPdfVersion\":{\"type\":\"long\",\"value\":3}\n"
+                + "}";
+    }
+
+    /**
+     * LibreOffice may exit with 0 although no PDF has been written, e.g. if
+     * the export filter does not match the document type.
+     *
+     * @param pdf the expected PDF file
+     * @param source the converted file, used for the error message
+     * @throws Exception if the PDF does not exist
+     */
+    private static void ensurePdfCreated(String pdf, String source) throws Exception {
+        if (!new File(pdf).exists()) {
+            log.error("PDF conversion reported success, but no PDF was created: " + pdf);
+            throw new Exception("Konvertierung nach PDF fehlgeschlagen - kein PDF erzeugt für " + new File(source).getName());
+        }
     }
 
     private static String processImageOrientation(String url) throws Exception {
