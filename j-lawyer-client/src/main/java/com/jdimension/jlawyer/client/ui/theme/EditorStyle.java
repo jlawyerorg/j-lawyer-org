@@ -693,7 +693,10 @@ public final class EditorStyle {
 
     private static final String MAIN_TABS_STYLE = "tabsOpaque: false; showContentSeparator: false;"
             + " selectedBackground: #ffffff14; selectedForeground: #ffffff; hoverColor: #ffffff1f; hoverForeground: #ffffff;"
-            + " underlineColor: #97bf0d; inactiveUnderlineColor: #97bf0d99; focusColor: #ffffff14; contentAreaColor: #00000000";
+            + " underlineColor: #97bf0d; inactiveUnderlineColor: #97bf0d99; focusColor: #ffffff14; contentAreaColor: #00000000;"
+            // close buttons of closable tabs (e.g. opened reports)
+            + " closeForeground: #ffffffb3; closeHoverForeground: #ffffff; closePressedForeground: #ffffff;"
+            + " closeHoverBackground: #ffffff26; closePressedBackground: #ffffff40";
 
     private static final String INNER_TABS_STYLE = "tabsOpaque: false; showContentSeparator: false;"
             + " selectedBackground: #0e72b510; hoverColor: #0e72b51a;"

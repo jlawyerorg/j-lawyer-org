@@ -1078,6 +1078,13 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         
         initComponents();
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleTitle(this.lblPanelTitle, null);
+        // white tabs - also for the reports that are opened as tabs later
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleMainTabs(this.tabbedPane);
+        // the report list: white rows on the card
+        this.jScrollPane1.setBorder(javax.swing.BorderFactory.createLineBorder(com.jdimension.jlawyer.client.ui.theme.UiColors.SEPARATOR));
+        this.jScrollPane1.getViewport().setOpaque(true);
+        this.jScrollPane1.getViewport().setBackground(java.awt.Color.WHITE);
 
         tabbedPane.putClientProperty("JTabbedPane.tabClosable", true);
         tabbedPane.putClientProperty("JTabbedPane.tabCloseCallback",
@@ -1127,6 +1134,7 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
         tabbedPane = new javax.swing.JTabbedPane();
+        cardEntries = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         pnlEntries = new javax.swing.JPanel();
 
@@ -1149,7 +1157,10 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
         pnlEntries.setLayout(new java.awt.GridLayout(1, 1));
         jScrollPane1.setViewportView(pnlEntries);
 
-        tabbedPane.addTab("Auswertungen", jScrollPane1);
+        cardEntries.setLayout(new java.awt.BorderLayout());
+        cardEntries.add(jScrollPane1, java.awt.BorderLayout.CENTER);
+
+        tabbedPane.addTab("Auswertungen", cardEntries);
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
@@ -1159,22 +1170,21 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(layout.createSequentialGroup()
-                        .add(jLabel18)
+                        .add(jLabel18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblPanelTitle)
-                        .add(0, 516, Short.MAX_VALUE))
-                    .add(tabbedPane))
+                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(tabbedPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
                 .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .add(8, 8, 8)
-                .add(tabbedPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 330, Short.MAX_VALUE)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+                    .add(jLabel18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(tabbedPane, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -1190,6 +1200,7 @@ public class ReportingPanel extends javax.swing.JPanel implements ThemeableEdito
     protected javax.swing.JLabel lblPanelTitle;
     private javax.swing.JPanel pnlEntries;
     private javax.swing.JTabbedPane tabbedPane;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardEntries;
     // End of variables declaration//GEN-END:variables
 
     @Override

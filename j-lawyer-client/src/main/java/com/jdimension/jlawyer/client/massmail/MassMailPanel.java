@@ -707,6 +707,7 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
     public MassMailPanel() {
 
         initComponents();
+        this.applyModernLook();
 
         this.clearDetails();
 
@@ -731,6 +732,17 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
         }
     }
 
+    /**
+     * Applies the editor design kit: glass tool bar and series bar, recipients on a light card.
+     */
+    private void applyModernLook() {
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleTitle(this.lblPanelTitle, null);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleHeaderButtons(this.cmdRefresh, this.cmdDeleteCampaign, this.cmdAddCampaign, this.cmdAddContacts, this.cmdGenerateDocs);
+        this.cmdAddContacts.setForeground(com.jdimension.jlawyer.client.ui.theme.UiColors.TEXT_ON_GLASS);
+        this.cmdGenerateDocs.setForeground(com.jdimension.jlawyer.client.ui.theme.UiColors.TEXT_ON_GLASS);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleTable(this.tblResults, this.jScrollPane1);
+    }
+
     public void setBackgroundImage(Image image) {
         this.backgroundImage = image;
         //this.jPanel1.setOpaque(false);
@@ -752,10 +764,13 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        pnlCampaignBar = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
+        pnlToolbar = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
         popup = new javax.swing.JPopupMenu();
         mnuRemoveFromCampaign = new javax.swing.JMenuItem();
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
+        cardRecipients = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblResults = new javax.swing.JTable();
         cmbCampaign = new javax.swing.JComboBox<>();
@@ -808,6 +823,9 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
             }
         });
         jScrollPane1.setViewportView(tblResults);
+
+        cardRecipients.setLayout(new java.awt.BorderLayout());
+        cardRecipients.add(jScrollPane1, java.awt.BorderLayout.CENTER);
 
         cmbCampaign.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
         cmbCampaign.addActionListener(new java.awt.event.ActionListener() {
@@ -862,6 +880,64 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
             }
         });
 
+        pnlToolbar.setOpaque(false);
+
+        org.jdesktop.layout.GroupLayout pnlToolbarLayout = new org.jdesktop.layout.GroupLayout(pnlToolbar);
+        pnlToolbar.setLayout(pnlToolbarLayout);
+        pnlToolbarLayout.setHorizontalGroup(
+            pnlToolbarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlToolbarLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(cmdRefresh, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+        pnlToolbarLayout.setVerticalGroup(
+            pnlToolbarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlToolbarLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(pnlToolbarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+                    .add(cmdRefresh, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
+        );
+
+        pnlCampaignBar.setOpaque(false);
+
+        org.jdesktop.layout.GroupLayout pnlCampaignBarLayout = new org.jdesktop.layout.GroupLayout(pnlCampaignBar);
+        pnlCampaignBar.setLayout(pnlCampaignBarLayout);
+        pnlCampaignBarLayout.setHorizontalGroup(
+            pnlCampaignBarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlCampaignBarLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(jLabel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(cmbCampaign, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(cmdDeleteCampaign, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(cmdAddCampaign, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(18, 18, 18)
+                .add(cmdAddContacts, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(cmdGenerateDocs, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(lblFolder, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+        pnlCampaignBarLayout.setVerticalGroup(
+            pnlCampaignBarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlCampaignBarLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(pnlCampaignBarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+                    .add(jLabel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(cmbCampaign, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(cmdDeleteCampaign, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(cmdAddCampaign, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(cmdAddContacts, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(cmdGenerateDocs, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(lblFolder, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
+        );
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -869,54 +945,28 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 894, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, lblFolder, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(layout.createSequentialGroup()
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(layout.createSequentialGroup()
-                                .add(cmdRefresh)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                                .add(jLabel18)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(lblPanelTitle))
-                            .add(layout.createSequentialGroup()
-                                .add(jLabel1)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(cmbCampaign, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(cmdDeleteCampaign)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(cmdAddCampaign)
-                                .add(18, 18, 18)
-                                .add(cmdAddContacts)
-                                .add(18, 18, 18)
-                                .add(cmdGenerateDocs)))
-                        .add(0, 0, Short.MAX_VALUE)))
+                        .add(pnlToolbar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(18, 18, 18)
+                        .add(jLabel18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(pnlCampaignBar, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(cardRecipients, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
                 .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .add(cmdRefresh))
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+                    .add(pnlToolbar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                        .add(org.jdesktop.layout.GroupLayout.TRAILING, cmdAddCampaign)
-                        .add(cmdDeleteCampaign)
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                            .add(jLabel1)
-                            .add(cmbCampaign, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-                    .add(cmdAddContacts)
-                    .add(cmdGenerateDocs))
+                .add(pnlCampaignBar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(lblFolder)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 377, Short.MAX_VALUE)
+                .add(cardRecipients, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -1090,5 +1140,8 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
     private javax.swing.JMenuItem mnuRemoveFromCampaign;
     private javax.swing.JPopupMenu popup;
     private javax.swing.JTable tblResults;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardRecipients;
+    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlToolbar;
+    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlCampaignBar;
     // End of variables declaration//GEN-END:variables
 }
