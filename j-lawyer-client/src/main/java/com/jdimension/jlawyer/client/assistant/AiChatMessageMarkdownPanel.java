@@ -664,27 +664,94 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.assistant;
 
 import com.jdimension.jlawyer.ai.Message;
+import com.jdimension.jlawyer.client.modulebar.SidebarIcon;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.ui.theme.UiColors;
+import com.jdimension.jlawyer.persistence.AppUserBean;
+import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GradientPaint;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.MouseInfo;
+import java.awt.Point;
+import java.awt.PointerInfo;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Area;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.RoundRectangle2D;
+import java.awt.image.BufferedImage;
+import javax.swing.BorderFactory;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JDialog;
-import javax.swing.UIManager;
+import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 import org.jmarkdownviewer.jmdviewer.HtmlPane;
-import themes.colors.DefaultColorTheme;
 
 /**
+ * One message of an AI chat, painted as a speech bubble: the user's own requests on the right in a
+ * light blue, the assistant's answers on the left in a light slate, each with a round avatar and a
+ * header line (sender, model). The copy actions appear in the header while the mouse is over the
+ * bubble.
  *
  * @author jens
  */
 public class AiChatMessageMarkdownPanel extends javax.swing.JPanel {
 
     private static final Logger log = Logger.getLogger(AiChatMessageMarkdownPanel.class.getName());
+
+    /**
+     * name shown as sender of assistant messages
+     */
+    public static final String ASSISTANT_NAME = "Ingo";
+
+    private static final int AVATAR_SIZE = 32;
+    private static final int AVATAR_GAP = 8;
+    // free space on the side opposite to the avatar, so the conversation reads as a dialogue
+    private static final int SIDE_INDENT = 56;
+    private static final int RADIUS = 16;
+
+    /**
+     * distance of the left edge of an assistant bubble from the left edge of the message panel
+     * (avatar plus gap) - content belonging to an answer, like tool calls, aligns with it
+     */
+    public static final int ASSISTANT_BUBBLE_LEFT = AVATAR_SIZE + AVATAR_GAP;
+
+    /**
+     * free space right of an assistant bubble
+     */
+    public static final int ASSISTANT_BUBBLE_RIGHT = SIDE_INDENT;
+    private static final int CONTENT_PREF_WIDTH = 300;
+    // the corner next to the avatar is less rounded, like the tail of a speech bubble
+    private static final int TAIL_RADIUS = 5;
+
+    private static final Color USER_TOP = new Color(234, 243, 252);
+    private static final Color USER_BOTTOM = new Color(219, 234, 249);
+    private static final Color USER_BORDER = new Color(191, 219, 243);
+    private static final Color ASSISTANT_TOP = new Color(250, 251, 253);
+    private static final Color ASSISTANT_BOTTOM = new Color(241, 245, 249);
+    private static final Color ASSISTANT_BORDER = UiColors.SEPARATOR;
+    private static final Color HOVER_BORDER = new Color(14, 114, 181, 110);
+    private static final Color SHADOW = new Color(15, 23, 42, 14);
+    private static final Color TEXT_MUTED = new Color(100, 116, 139);
+    private static final Color ACTION_ICON = new Color(71, 85, 105);
+    private static final Color USER_AVATAR_BG = new Color(219, 234, 249);
+    private static final Color ASSISTANT_AVATAR_BG = Color.WHITE;
+
+    private static final java.util.Map<String, Icon> AVATARS = new java.util.concurrent.ConcurrentHashMap<>();
 
     private Message msg = null;
     private HtmlPane aiCalloutComponent1 = null;
@@ -693,67 +760,255 @@ public class AiChatMessageMarkdownPanel extends javax.swing.JPanel {
 
     private JDialog owner = null;
 
+    private boolean userMessage = false;
+    private boolean hovered = false;
+
     /**
      * Creates new form MessagePanel
      */
     public AiChatMessageMarkdownPanel() {
         initComponents();
-
-        this.aiCalloutComponent1 = new HtmlPane();
+        this.createContentPane();
         this.aiCalloutComponent1.setMarkdownText("");
-
-        this.aiCalloutComponent1.setForeground(Color.WHITE);
-        this.aiCalloutComponent1.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
-        this.pnlButtons.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
-        this.pnlContent.add(this.aiCalloutComponent1);
-        aiCalloutComponent1.revalidate();
-        aiCalloutComponent1.repaint();
+        this.applyRole(false, null, null);
     }
 
     public AiChatMessageMarkdownPanel(Message aiMessage, JDialog owner) {
         initComponents();
 
         this.owner = owner;
-
         this.msg = aiMessage;
 
-        this.lblUser.setForeground(Color.WHITE);
-        this.lblUser.putClientProperty("JComponent.roundRect", true);
-        this.lblUser.setFont(UIManager.getFont("h1.font"));
+        this.createContentPane();
+        this.aiCalloutComponent1.setMarkdownText(aiMessage.getContent());
+        this.applyRole(Message.ROLE_USER.equals(aiMessage.getRole()), aiMessage.getModelRef(), aiMessage.getPrincipalId());
+    }
 
-        if (Message.ROLE_USER.equals(aiMessage.getRole())) {
-            this.lblUser.setIcon(UserSettings.getInstance().getCurrentUserBigIcon());
-        } else {
-            javax.swing.Icon providerIcon = AssistantAccess.getProviderIcon32(aiMessage.getModelRef());
-            if (providerIcon != null) {
-                this.lblUser.setIcon(providerIcon);
-            } else {
-                this.lblUser.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/j-lawyer-ai.png")));
+    private void createContentPane() {
+        this.aiCalloutComponent1 = new HtmlPane() {
+            @Override
+            public Dimension getPreferredSize() {
+                // the unwrapped text would make the bubble - and the whole message list in its
+                // scroll pane - as wide as the longest paragraph; the width is given by the list,
+                // the height follows the current width
+                Dimension d = super.getPreferredSize();
+                return new Dimension(Math.min(d.width, CONTENT_PREF_WIDTH), d.height);
             }
+        };
+        this.aiCalloutComponent1.setOpaque(false);
+        this.aiCalloutComponent1.setBackground(new Color(0, 0, 0, 0));
+        this.aiCalloutComponent1.setForeground(UiColors.TEXT_DARK);
+        this.aiCalloutComponent1.setBorder(BorderFactory.createEmptyBorder());
+        this.pnlContent.add(this.aiCalloutComponent1);
+
+        Font base = this.lblSender.getFont();
+        this.lblSender.setFont(base.deriveFont(Font.BOLD, base.getSize2D() - 1f));
+        this.lblSender.setForeground(UiColors.TEXT_DARK);
+        this.lblMeta.setFont(base.deriveFont(base.getSize2D() - 2f));
+        this.lblMeta.setForeground(TEXT_MUTED);
+        this.lblCopy.setIcon(new SidebarIcon(this.lblCopy.getIcon(), ACTION_ICON, 16));
+        this.lblSelect.setIcon(new SidebarIcon(this.lblSelect.getIcon(), ACTION_ICON, 16));
+        this.pnlBubble.setBorder(BorderFactory.createEmptyBorder(8, 14, 10, 14));
+        this.pnlHeader.setBorder(BorderFactory.createEmptyBorder(0, 0, 4, 0));
+
+        this.setActionsVisible(false);
+        this.installHoverTracking(this);
+    }
+
+    /**
+     * Sets colours, alignment, avatar and header for a user or an assistant message.
+     */
+    private void applyRole(boolean user, String modelRef, String principalId) {
+        this.userMessage = user;
+
+        this.remove(this.lblUser);
+        if (user) {
+            this.add(this.lblUser, BorderLayout.EAST);
+            this.lblUser.setBorder(BorderFactory.createEmptyBorder(2, AVATAR_GAP, 0, 0));
+            this.setBorder(BorderFactory.createEmptyBorder(2, SIDE_INDENT, 2, 0));
+        } else {
+            this.add(this.lblUser, BorderLayout.WEST);
+            this.lblUser.setBorder(BorderFactory.createEmptyBorder(2, 0, 0, AVATAR_GAP));
+            this.setBorder(BorderFactory.createEmptyBorder(2, 0, 2, SIDE_INDENT));
         }
         this.lblUser.setText("");
-        //this.lblUser.setToolTipText("von: " + aiMessage.getSender());
+        this.lblUser.setIcon(createAvatar(user, modelRef, principalId));
 
-        this.aiCalloutComponent1 = new HtmlPane();
-        this.aiCalloutComponent1.setMarkdownText(aiMessage.getContent());
-
-        boolean ownMessage = aiMessage.getRole().equals(Message.ROLE_USER);
-        if (ownMessage) {
-            this.lblUser.setBackground(DefaultColorTheme.COLOR_LOGO_BLUE);
-            this.aiCalloutComponent1.setForeground(Color.BLACK);
-            this.aiCalloutComponent1.setBackground(DefaultColorTheme.COLOR_LOGO_BLUE);
-            this.pnlButtons.setBackground(DefaultColorTheme.COLOR_LOGO_BLUE);
+        if (user) {
+            String sender = principalId != null ? principalId : currentPrincipalId();
+            this.lblSender.setText(sender != null ? sender : "Ich");
+            this.lblMeta.setText("");
+            this.lblMeta.setToolTipText(null);
         } else {
-            this.lblUser.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
-            this.aiCalloutComponent1.setForeground(Color.BLACK);
-            this.aiCalloutComponent1.setBackground(DefaultColorTheme.COLOR_LIGHT_GREY);
-            this.pnlButtons.setBackground(DefaultColorTheme.COLOR_LIGHT_GREY);
+            this.lblSender.setText(ASSISTANT_NAME);
+            this.lblMeta.setText(modelRef != null ? modelRef : "");
+            this.lblMeta.setToolTipText(modelRef);
+        }
+        this.revalidate();
+        this.repaint();
+    }
+
+    private static String currentPrincipalId() {
+        AppUserBean current = UserSettings.getInstance().getCurrentUser();
+        return current != null ? current.getPrincipalId() : null;
+    }
+
+    private static Icon createAvatar(boolean user, String modelRef, String principalId) {
+        // streaming answers restyle their bubble with every chunk - paint each avatar only once
+        String key = (user ? "u|" + principalId : "a|" + modelRef);
+        return AVATARS.computeIfAbsent(key, k -> paintAvatar(user, modelRef, principalId));
+    }
+
+    private static Icon paintAvatar(boolean user, String modelRef, String principalId) {
+        Icon source = null;
+        try {
+            if (user) {
+                source = principalId != null ? UserSettings.getInstance().getUserBigIcon(principalId) : null;
+                if (source == null) {
+                    source = UserSettings.getInstance().getCurrentUserBigIcon();
+                }
+            } else {
+                source = AssistantAccess.getProviderIcon32(modelRef);
+                if (source == null) {
+                    source = new ImageIcon(AiChatMessageMarkdownPanel.class.getResource("/icons32/material/j-lawyer-ai.png"));
+                }
+            }
+        } catch (Throwable t) {
+            log.debug("could not load avatar", t);
         }
 
-        this.pnlContent.add(this.aiCalloutComponent1);
-        aiCalloutComponent1.revalidate();
-        aiCalloutComponent1.repaint();
+        int scale = 2;
+        int s = AVATAR_SIZE * scale;
+        BufferedImage img = new BufferedImage(s, s, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g.setColor(user ? USER_AVATAR_BG : ASSISTANT_AVATAR_BG);
+        g.fill(new Ellipse2D.Float(0, 0, s - 1, s - 1));
+        boolean validSource = source != null && source.getIconWidth() > 0
+                && !(source instanceof ImageIcon && ((ImageIcon) source).getImageLoadStatus() == java.awt.MediaTracker.ERRORED);
+        if (validSource) {
+            int inner = (int) (s * 0.78f);
+            int off = (s - inner) / 2;
+            Graphics2D gi = (Graphics2D) g.create();
+            gi.clip(new Ellipse2D.Float(1, 1, s - 3, s - 3));
+            gi.translate(off, off);
+            gi.scale(inner / (double) source.getIconWidth(), inner / (double) source.getIconHeight());
+            source.paintIcon(null, gi, 0, 0);
+            gi.dispose();
+        } else {
+            // no picture - show the initials, as the messenger does
+            String name = user ? (principalId != null ? principalId : currentPrincipalId()) : ASSISTANT_NAME;
+            String initials = (name == null || name.isEmpty()) ? "?" : name.substring(0, Math.min(2, name.length())).toUpperCase();
+            g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, (int) (s * 0.36f)));
+            java.awt.FontMetrics fm = g.getFontMetrics();
+            g.setColor(new Color(14, 114, 181));
+            g.drawString(initials, (s - fm.stringWidth(initials)) / 2, (s - fm.getHeight()) / 2 + fm.getAscent());
+        }
+        g.setColor(user ? USER_BORDER : ASSISTANT_BORDER);
+        g.setStroke(new java.awt.BasicStroke(scale));
+        g.draw(new Ellipse2D.Float(scale / 2f, scale / 2f, s - scale - 1, s - scale - 1));
+        g.dispose();
+        return new ImageIcon(img.getScaledInstance(AVATAR_SIZE, AVATAR_SIZE, java.awt.Image.SCALE_SMOOTH));
+    }
 
+    private void installHoverTracking(Component c) {
+        c.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                setHovered(true);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                // moving onto a child component also fires an exit on the parent
+                setHovered(isMouseInside());
+            }
+        });
+        if (c instanceof Container) {
+            for (Component child : ((Container) c).getComponents()) {
+                installHoverTracking(child);
+            }
+        }
+    }
+
+    private boolean isMouseInside() {
+        if (!this.isShowing()) {
+            return false;
+        }
+        try {
+            PointerInfo pi = MouseInfo.getPointerInfo();
+            if (pi == null) {
+                return false;
+            }
+            Point p = pi.getLocation();
+            SwingUtilities.convertPointFromScreen(p, this);
+            return this.contains(p);
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    private void setHovered(boolean h) {
+        if (this.hovered != h) {
+            this.hovered = h;
+            this.setActionsVisible(h);
+            this.repaint();
+        }
+    }
+
+    private void setActionsVisible(boolean visible) {
+        this.lblCopy.setVisible(visible);
+        this.lblSelect.setVisible(visible && this.owner != null);
+    }
+
+    /**
+     * Applies the bubble look of a user or an assistant message again, e.g. after the role of the
+     * message has changed.
+     *
+     * @param user true for a message of the user
+     */
+    public void applyBubbleStyle(boolean user) {
+        String modelRef = this.msg != null ? this.msg.getModelRef() : null;
+        String principalId = this.msg != null ? this.msg.getPrincipalId() : null;
+        this.applyRole(user, modelRef, principalId);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        // no super call - the panel is transparent, only the bubble behind pnlBubble is painted
+        Rectangle b = this.pnlBubble.getBounds();
+        if (b.width <= 0 || b.height <= 0) {
+            return;
+        }
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        Area shape = bubbleShape(b.x, b.y, b.width - 1, b.height - 2);
+
+        g2.setColor(SHADOW);
+        Area shadow = bubbleShape(b.x, b.y + 2, b.width - 1, b.height - 2);
+        g2.fill(shadow);
+
+        Color top = this.userMessage ? USER_TOP : ASSISTANT_TOP;
+        Color bottom = this.userMessage ? USER_BOTTOM : ASSISTANT_BOTTOM;
+        g2.setPaint(new GradientPaint(0, b.y, top, 0, b.y + Math.min(b.height, 160), bottom));
+        g2.fill(shape);
+
+        g2.setColor(this.hovered ? HOVER_BORDER : (this.userMessage ? USER_BORDER : ASSISTANT_BORDER));
+        g2.draw(shape);
+        g2.dispose();
+    }
+
+    private Area bubbleShape(int x, int y, int w, int h) {
+        Area a = new Area(new RoundRectangle2D.Float(x, y, w, h, RADIUS * 2, RADIUS * 2));
+        // square off the corner pointing to the avatar
+        int c = RADIUS + 2;
+        int cx = this.userMessage ? x + w - c : x;
+        a.add(new Area(new RoundRectangle2D.Float(cx, y, c, c, TAIL_RADIUS * 2, TAIL_RADIUS * 2)));
+        return a;
     }
 
     public String getAsText() {
@@ -769,20 +1024,12 @@ public class AiChatMessageMarkdownPanel extends javax.swing.JPanel {
     }
 
     public void setMessage(Message m, JDialog owner) {
+        boolean roleChanged = this.msg == null || !java.util.Objects.equals(this.msg.getRole(), m.getRole())
+                || !java.util.Objects.equals(this.msg.getModelRef(), m.getModelRef());
         this.msg = m;
         this.aiCalloutComponent1.setMarkdownText(m.getContent());
-
-        boolean ownMessage = m.getRole().equals(Message.ROLE_USER);
-        if (ownMessage) {
-            this.lblUser.setBackground(DefaultColorTheme.COLOR_LOGO_BLUE);
-            this.aiCalloutComponent1.setForeground(Color.BLACK);
-            this.aiCalloutComponent1.setBackground(DefaultColorTheme.COLOR_LOGO_BLUE);
-            this.pnlButtons.setBackground(DefaultColorTheme.COLOR_LOGO_BLUE);
-        } else {
-            this.lblUser.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
-            this.aiCalloutComponent1.setForeground(Color.BLACK);
-            this.aiCalloutComponent1.setBackground(DefaultColorTheme.COLOR_LIGHT_GREY);
-            this.pnlButtons.setBackground(DefaultColorTheme.COLOR_LIGHT_GREY);
+        if (roleChanged) {
+            this.applyRole(Message.ROLE_USER.equals(m.getRole()), m.getModelRef(), m.getPrincipalId());
         }
     }
 
@@ -791,7 +1038,14 @@ public class AiChatMessageMarkdownPanel extends javax.swing.JPanel {
     }
 
     public int getCalloutWidth() {
-        return this.getParent().getWidth() - this.lblUser.getWidth() - 30;
+        return this.getParent().getWidth() - AVATAR_SIZE - AVATAR_GAP - SIDE_INDENT - 30;
+    }
+
+    @Override
+    public Dimension getMaximumSize() {
+        // as wide as the message list, but never taller than the text - a list with few messages
+        // must not stretch its bubbles
+        return new Dimension(Integer.MAX_VALUE, this.getPreferredSize().height);
     }
 
     @Override
@@ -817,16 +1071,35 @@ public class AiChatMessageMarkdownPanel extends javax.swing.JPanel {
     private void initComponents() {
 
         lblUser = new javax.swing.JLabel();
-        pnlContent = new javax.swing.JPanel();
+        pnlBubble = new javax.swing.JPanel();
+        pnlHeader = new javax.swing.JPanel();
+        lblSender = new javax.swing.JLabel();
+        lblMeta = new javax.swing.JLabel();
         pnlButtons = new javax.swing.JPanel();
         lblCopy = new javax.swing.JLabel();
         lblSelect = new javax.swing.JLabel();
+        pnlContent = new javax.swing.JPanel();
 
         setOpaque(false);
+        setLayout(new java.awt.BorderLayout());
 
-        lblUser.setText("jLabel1");
+        lblUser.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        add(lblUser, java.awt.BorderLayout.WEST);
 
-        pnlContent.setLayout(new javax.swing.BoxLayout(pnlContent, javax.swing.BoxLayout.Y_AXIS));
+        pnlBubble.setOpaque(false);
+        pnlBubble.setLayout(new java.awt.BorderLayout());
+
+        pnlHeader.setOpaque(false);
+        pnlHeader.setLayout(new java.awt.BorderLayout(6, 0));
+
+        lblSender.setText("Ingo");
+        pnlHeader.add(lblSender, java.awt.BorderLayout.WEST);
+
+        lblMeta.setText(" ");
+        pnlHeader.add(lblMeta, java.awt.BorderLayout.CENTER);
+
+        pnlButtons.setOpaque(false);
+        pnlButtons.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 8, 0));
 
         lblCopy.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_content_copy_lightgrey_48dp.png"))); // NOI18N
         lblCopy.setToolTipText("gesamten Text in die Zwischenablage kopieren");
@@ -836,6 +1109,7 @@ public class AiChatMessageMarkdownPanel extends javax.swing.JPanel {
                 lblCopyMouseClicked(evt);
             }
         });
+        pnlButtons.add(lblCopy);
 
         lblSelect.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/select_all_20dp_FFFFFF.png"))); // NOI18N
         lblSelect.setToolTipText("Text auswählen und in die Zwischenablage kopieren");
@@ -845,53 +1119,17 @@ public class AiChatMessageMarkdownPanel extends javax.swing.JPanel {
                 lblSelectMouseClicked(evt);
             }
         });
+        pnlButtons.add(lblSelect);
 
-        javax.swing.GroupLayout pnlButtonsLayout = new javax.swing.GroupLayout(pnlButtons);
-        pnlButtons.setLayout(pnlButtonsLayout);
-        pnlButtonsLayout.setHorizontalGroup(
-            pnlButtonsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnlButtonsLayout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(pnlButtonsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblCopy, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(lblSelect, javax.swing.GroupLayout.Alignment.TRAILING))
-                .addContainerGap())
-        );
-        pnlButtonsLayout.setVerticalGroup(
-            pnlButtonsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnlButtonsLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(lblCopy)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblSelect)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
+        pnlHeader.add(pnlButtons, java.awt.BorderLayout.EAST);
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(lblUser)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(pnlContent, javax.swing.GroupLayout.DEFAULT_SIZE, 375, Short.MAX_VALUE)
-                .addGap(0, 0, 0)
-                .addComponent(pnlButtons, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(15, 15, 15))
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(10, 10, 10)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(pnlButtons, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                        .addComponent(lblUser)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(pnlContent, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(10, 10, 10))
-        );
+        pnlBubble.add(pnlHeader, java.awt.BorderLayout.NORTH);
+
+        pnlContent.setOpaque(false);
+        pnlContent.setLayout(new javax.swing.BoxLayout(pnlContent, javax.swing.BoxLayout.Y_AXIS));
+        pnlBubble.add(pnlContent, java.awt.BorderLayout.CENTER);
+
+        add(pnlBubble, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
     private void lblCopyMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblCopyMouseClicked
@@ -921,10 +1159,14 @@ public class AiChatMessageMarkdownPanel extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel lblCopy;
+    private javax.swing.JLabel lblMeta;
     private javax.swing.JLabel lblSelect;
+    private javax.swing.JLabel lblSender;
     private javax.swing.JLabel lblUser;
+    private javax.swing.JPanel pnlBubble;
     private javax.swing.JPanel pnlButtons;
     private javax.swing.JPanel pnlContent;
+    private javax.swing.JPanel pnlHeader;
     // End of variables declaration//GEN-END:variables
 
     /**

@@ -1637,9 +1637,8 @@ public class AssistantChatPanel extends JDialog {
     }
 
     private void addDocumentButton(JPanel toolPanel, List<String[]> docs) {
-        JButton btnDocs = new JButton(docs.size() + " Dok.");
-        btnDocs.setFont(btnDocs.getFont().deriveFont(btnDocs.getFont().getSize2D() - 2f));
-        btnDocs.setMargin(new Insets(1, 4, 1, 4));
+        JButton btnDocs = new JButton(docs.size() + " Dok. \u25be");
+        ToolCallCard.styleChipButton(btnDocs);
         btnDocs.setToolTipText("Dokumente öffnen");
         btnDocs.addActionListener((ActionEvent e) -> {
             JPopupMenu popup = new JPopupMenu();
@@ -1665,7 +1664,7 @@ public class AssistantChatPanel extends JDialog {
             popup.show(btnDocs, 0, btnDocs.getHeight());
         });
         toolPanel.add(btnDocs);
-        toolPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, toolPanel.getPreferredSize().height + 8));
+        toolPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, toolPanel.getPreferredSize().height));
         toolPanel.revalidate();
         toolPanel.repaint();
     }

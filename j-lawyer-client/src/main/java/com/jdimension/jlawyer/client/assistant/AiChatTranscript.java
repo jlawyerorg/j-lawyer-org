@@ -662,17 +662,14 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.assistant;
 
-import com.formdev.flatlaf.ui.FlatLineBorder;
 import com.jdimension.jlawyer.ai.Message;
 import com.jdimension.jlawyer.ai.ToolCall;
 import com.jdimension.jlawyer.ai.ToolDefinition;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.BorderFactory;
@@ -680,6 +677,7 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import com.jdimension.jlawyer.client.ui.theme.UiColors;
 import themes.colors.DefaultColorTheme;
 import org.apache.log4j.Logger;
 import org.json.simple.JsonArray;
@@ -706,12 +704,6 @@ public class AiChatTranscript {
     private static final Logger log = Logger.getLogger(AiChatTranscript.class.getName());
 
     private static final int USER_MSG_TRUNCATE_LENGTH = 300;
-
-    // Gray-tone bubble colors (no blue)
-    private static final Color USER_BUBBLE_BG = new Color(232, 232, 232);
-    private static final Color ASSISTANT_BUBBLE_BG = new Color(245, 245, 245);
-    private static final Color USER_ICON_BG = new Color(150, 150, 150);
-    private static final Color BUBBLE_BORDER_COLOR = new Color(215, 215, 215);
 
     /**
      * One displayable element of a transcript.
@@ -884,24 +876,17 @@ public class AiChatTranscript {
      * @return the line
      */
     public static JPanel createToolLine(String text, String riskLevel) {
-        Color[] colors = getRiskColors(riskLevel);
-        Color bgColor = colors[0];
-        Color borderColor = colors[1];
-        Color indicatorColor = colors[2];
+        Color indicatorColor = getRiskColors(riskLevel)[2];
 
-        JPanel toolPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 4));
-        toolPanel.setOpaque(true);
-        toolPanel.setBackground(bgColor);
-        toolPanel.setBorder(new FlatLineBorder(new Insets(4, 8, 4, 8), borderColor, 1, 8));
+        ToolCallCard toolPanel = new ToolCallCard(new FlowLayout(FlowLayout.LEFT, 6, 2));
+        toolPanel.setAccent(indicatorColor);
 
-        JLabel riskIndicator = new JLabel("●");
-        riskIndicator.setFont(riskIndicator.getFont().deriveFont(10f));
-        riskIndicator.setForeground(indicatorColor);
+        JLabel riskIndicator = new JLabel(ToolCallCard.riskBadge(indicatorColor));
         toolPanel.add(riskIndicator);
 
         JLabel lbl = new JLabel(text);
         lbl.setFont(lbl.getFont().deriveFont(lbl.getFont().getSize2D() - 1f));
-        lbl.setForeground(Color.DARK_GRAY);
+        lbl.setForeground(UiColors.TEXT_DARK);
         lbl.setName(TOOL_LABEL_NAME);
         toolPanel.add(lbl);
 
@@ -937,33 +922,13 @@ public class AiChatTranscript {
     }
 
     /**
-     * Applies rounded FlatLineBorder and gray-tone colors to a message bubble.
+     * Applies the bubble look of a user or an assistant message.
      *
      * @param panel the bubble
      * @param isUser true for a user message
      */
     public static void styleMessageBubble(AiChatMessageMarkdownPanel panel, boolean isUser) {
-        Color bg = isUser ? USER_BUBBLE_BG : ASSISTANT_BUBBLE_BG;
-        Color iconBg = isUser ? USER_ICON_BG : DefaultColorTheme.COLOR_DARK_GREY;
-
-        panel.setOpaque(true);
-        panel.setBackground(bg);
-        panel.setBorder(new FlatLineBorder(new Insets(8, 8, 8, 8), BUBBLE_BORDER_COLOR, 1, 12));
-
-        applyBubbleColors(panel, bg, iconBg);
-    }
-
-    private static void applyBubbleColors(Container container, Color bg, Color iconBg) {
-        for (Component c : container.getComponents()) {
-            if (c instanceof JLabel && ((JLabel) c).getIcon() != null) {
-                c.setBackground(iconBg);
-            } else {
-                c.setBackground(bg);
-            }
-            if (c instanceof Container) {
-                applyBubbleColors((Container) c, bg, iconBg);
-            }
-        }
+        panel.applyBubbleStyle(isUser);
     }
 
     /**
@@ -981,9 +946,14 @@ public class AiChatTranscript {
             return null;
         }
 
-        JPanel wrapper = new JPanel(new BorderLayout());
+        JPanel wrapper = new JPanel(new BorderLayout()) {
+            @Override
+            public Dimension getMaximumSize() {
+                // never taller than the bubble and the link - a short list must not stretch it
+                return new Dimension(Integer.MAX_VALUE, getPreferredSize().height);
+            }
+        };
         wrapper.setOpaque(false);
-        wrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
 
         // Create truncated preview panel
         String preview = content.substring(0, USER_MSG_TRUNCATE_LENGTH) + " ...";
@@ -996,9 +966,11 @@ public class AiChatTranscript {
         previewPanel.setPreferredSize(maxSize);
 
         JLabel lblMore = new JLabel("mehr anzeigen \u25bc");
-        lblMore.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
+        lblMore.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
         lblMore.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        lblMore.setBorder(BorderFactory.createEmptyBorder(2, 42, 4, 0));
+        // user bubbles are right-aligned, next to the avatar
+        lblMore.setHorizontalAlignment(JLabel.RIGHT);
+        lblMore.setBorder(BorderFactory.createEmptyBorder(0, 0, 4, 54));
 
         wrapper.add(previewPanel, BorderLayout.CENTER);
         wrapper.add(lblMore, BorderLayout.SOUTH);

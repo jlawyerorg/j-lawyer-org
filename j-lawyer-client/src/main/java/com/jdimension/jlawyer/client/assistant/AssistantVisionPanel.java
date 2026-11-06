@@ -131,12 +131,6 @@ public class AssistantVisionPanel extends JDialog {
 
     private String initialPrompt = "";
 
-    // Gray-tone bubble colors (consistent with AssistantChatPanel)
-    private static final Color USER_BUBBLE_BG = new Color(232, 232, 232);
-    private static final Color ASSISTANT_BUBBLE_BG = new Color(245, 245, 245);
-    private static final Color USER_ICON_BG = new Color(150, 150, 150);
-    private static final Color BUBBLE_BORDER_COLOR = new Color(215, 215, 215);
-
     // UI components
     private JPanel pnlTitle;
     private JLabel lblRequestType;
@@ -922,27 +916,7 @@ public class AssistantVisionPanel extends JDialog {
     }
 
     private void styleMessageBubble(AiChatMessageMarkdownPanel panel, boolean isUser) {
-        Color bg = isUser ? USER_BUBBLE_BG : ASSISTANT_BUBBLE_BG;
-        Color iconBg = isUser ? USER_ICON_BG : DefaultColorTheme.COLOR_DARK_GREY;
-
-        panel.setOpaque(true);
-        panel.setBackground(bg);
-        panel.setBorder(new FlatLineBorder(new Insets(8, 8, 8, 8), BUBBLE_BORDER_COLOR, 1, 12));
-
-        applyBubbleColors(panel, bg, iconBg);
-    }
-
-    private void applyBubbleColors(java.awt.Container container, Color bg, Color iconBg) {
-        for (Component c : container.getComponents()) {
-            if (c instanceof JLabel && ((JLabel) c).getIcon() != null) {
-                c.setBackground(iconBg);
-            } else {
-                c.setBackground(bg);
-            }
-            if (c instanceof java.awt.Container) {
-                applyBubbleColors((java.awt.Container) c, bg, iconBg);
-            }
-        }
+        AiChatTranscript.styleMessageBubble(panel, isUser);
     }
 
     private AiChatMessageMarkdownPanel findLastMessagePanel() {

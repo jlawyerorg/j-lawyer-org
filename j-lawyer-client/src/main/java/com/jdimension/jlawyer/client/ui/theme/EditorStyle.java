@@ -933,6 +933,20 @@ public final class EditorStyle {
      * @param buttons the buttons
      */
     public static void styleHeaderButtons(AbstractButton... buttons) {
+        styleHeaderButtons(true, buttons);
+    }
+
+    /**
+     * Like {@link #styleHeaderButtons(AbstractButton...)}, but keeps the original (colored) icons,
+     * e.g. for a logo-like icon.
+     *
+     * @param buttons the buttons
+     */
+    public static void styleHeaderButtonsKeepIcons(AbstractButton... buttons) {
+        styleHeaderButtons(false, buttons);
+    }
+
+    private static void styleHeaderButtons(boolean tint, AbstractButton... buttons) {
         for (AbstractButton b : buttons) {
             if (b == null) {
                 continue;
@@ -947,8 +961,10 @@ public final class EditorStyle {
             b.setFocusPainted(false);
             // without a visible frame, the cursor tells that these are buttons
             b.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
-            tintIcons(b, UiColors.TEXT_ON_GLASS, 22);
-            keepIconsTinted(b, 22);
+            if (tint) {
+                tintIcons(b, UiColors.TEXT_ON_GLASS, 22);
+                keepIconsTinted(b, 22);
+            }
         }
     }
 
