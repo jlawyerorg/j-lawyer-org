@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.mail.sidebar.AttributeCellEditor;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.DesktopDateEntry;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.JTextFieldLimit;
 import com.jdimension.jlawyer.client.utils.StringUtils;
@@ -702,7 +703,7 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
     public QuickCreateAddressDialog(java.awt.Dialog parent, boolean modal) {
         super(parent, modal);
         initComponents();
-        com.jdimension.jlawyer.client.utils.DesktopDateEntry.hint(this.txtBirthDate);
+        DesktopDateEntry.hint(this.txtBirthDate);
         this.result=null;
         
         ClientSettings settings = ClientSettings.getInstance();
@@ -1330,7 +1331,7 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
             return;
         }
 
-        if (!com.jdimension.jlawyer.client.utils.DesktopDateEntry.check(
+        if (!DesktopDateEntry.check(
                 this, this.txtBirthDate, "Geburtsdatum", false)) {
             return;
         }

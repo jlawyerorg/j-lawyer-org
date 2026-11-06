@@ -681,6 +681,7 @@ public class DateUtilsDesktopDayTest {
         JTextField field = new JTextField();
         DesktopDateEntry.hint(field);
         assertEquals("TTMMJJJJ", field.getClientProperty("JTextField.placeholderText"));
+        assertEquals(true, field.getToolTipText().contains("T.M.JJJJ"));
         assertEquals("", field.getText());
         field.setText("28061979");
         for (FocusListener listener : field.getFocusListeners()) {
@@ -698,6 +699,15 @@ public class DateUtilsDesktopDayTest {
             listener.focusLost(new FocusEvent(field, FocusEvent.FOCUS_LOST));
         }
         assertEquals("28.06.1979", field.getText());
+
+        for (FocusListener listener : field.getFocusListeners()) {
+            listener.focusGained(new FocusEvent(field, FocusEvent.FOCUS_GAINED));
+        }
+        field.setText("1.3.2025");
+        for (FocusListener listener : field.getFocusListeners()) {
+            listener.focusLost(new FocusEvent(field, FocusEvent.FOCUS_LOST));
+        }
+        assertEquals("01.03.2025", field.getText());
 
         for (FocusListener listener : field.getFocusListeners()) {
             listener.focusGained(new FocusEvent(field, FocusEvent.FOCUS_GAINED));
@@ -733,6 +743,9 @@ public class DateUtilsDesktopDayTest {
     public void acceptsBothFourDigitYearFormsAndAnEmptyOptionalField() {
         assertEquals("28.06.1979", DateUtils.normalizeDesktopDay("28061979"));
         assertEquals("28.06.1979", DateUtils.normalizeDesktopDay("28.06.1979"));
+        assertEquals("01.03.2025", DateUtils.normalizeDesktopDay("1.3.2025"));
+        assertEquals("01.03.2025", DateUtils.normalizeDesktopDay("01.3.2025"));
+        assertEquals("01.03.2025", DateUtils.normalizeDesktopDay("1.03.2025"));
         assertEquals("29.02.2024", DateUtils.normalizeDesktopDay("29022024"));
         assertEquals("", DateUtils.normalizeDesktopDay("  "));
         assertNull(DateUtils.parseDesktopDay(""));
@@ -740,13 +753,16 @@ public class DateUtilsDesktopDayTest {
 
     @Test
     public void rejectsImpossibleDatesAndAmbiguousYears() {
-        for (String input : new String[]{"280679", "28.06.79", "31022024", "29022023",
+        for (String input : new String[]{"280679", "28.06.79", "1.3.25", "31022024", "29022023",
                 "32.01.2024", "00.01.2024", "01.13.2024", "01.01.0000",
                 "01.01.2024 extra", "12345678.01"}) {
             try {
                 DateUtils.normalizeDesktopDay(input);
                 fail("Invalid date was accepted: " + input);
             } catch (IllegalArgumentException expected) {
+                if ("1.3.25".equals(input)) {
+                    assertEquals(true, expected.getMessage().contains("T.M.JJJJ"));
+                }
                 // Expected: no lenient calendar correction or inferred century.
             }
         }

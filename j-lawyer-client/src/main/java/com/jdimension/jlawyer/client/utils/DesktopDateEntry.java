@@ -685,7 +685,7 @@ public final class DesktopDateEntry {
     public static void hint(JTextField field) {
         field.putClientProperty("JTextField.placeholderText", "TTMMJJJJ");
         String previous = field.getToolTipText();
-        String format = "TT.MM.JJJJ oder TTMMJJJJ (vierstelliges Jahr)";
+        String format = "TTMMJJJJ, TT.MM.JJJJ oder T.M.JJJJ (vierstelliges Jahr)";
         field.setToolTipText(previous == null || previous.isEmpty()
                 ? format : previous + "; Format: " + format);
         field.addFocusListener(new FocusAdapter() {
@@ -699,16 +699,17 @@ public final class DesktopDateEntry {
             @Override
             public void focusLost(FocusEvent event) {
                 if (!Objects.equals(textOnFocus, field.getText())) {
-                    normalizeCompleteDigits(field);
+                    normalizeCompleteDate(field);
                 }
             }
         });
     }
 
-    /** Give immediate visual feedback when a complete, valid undotted date is entered. */
-    public static void normalizeCompleteDigits(JTextField field) {
+    /** Give immediate visual feedback for a complete, valid date. */
+    public static void normalizeCompleteDate(JTextField field) {
         String text = field.getText();
-        if (text == null || !text.matches("[0-9]{8}")) {
+        if (text == null || !(text.matches("[0-9]{8}")
+                || text.matches("[0-9]{1,2}\\.[0-9]{1,2}\\.[0-9]{4}"))) {
             return;
         }
         try {
@@ -760,7 +761,7 @@ public final class DesktopDateEntry {
         }
         JTextField field = (JTextField) component;
         field.putClientProperty("JTextField.placeholderText", "TTMMJJJJ");
-        field.setToolTipText("TT.MM.JJJJ oder TTMMJJJJ (vierstelliges Jahr)");
+        field.setToolTipText("TTMMJJJJ, TT.MM.JJJJ oder T.M.JJJJ (vierstelliges Jahr)");
         field.getDocument().addDocumentListener(new DocumentListener() {
             private void normalizeCompleteDigits() {
                 String typed = field.getText();

@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.DesktopDateEntry;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.AttachedClaimType;
@@ -765,8 +766,8 @@ public class ThirdPartyDebtorDialog extends javax.swing.JDialog {
     public ThirdPartyDebtorDialog(java.awt.Dialog parent, boolean modal) {
         super(parent, modal);
         initComponents();
-        com.jdimension.jlawyer.client.utils.DesktopDateEntry.hint(this.txtServed);
-        com.jdimension.jlawyer.client.utils.DesktopDateEntry.hint(this.txtDeclaration);
+        DesktopDateEntry.hint(this.txtServed);
+        DesktopDateEntry.hint(this.txtDeclaration);
 
         this.tblDebtors.setModel(new DefaultTableModel(
                 new Object[]{"Drittschuldner", "gepfändet", "zugestellt", "Erklärung bis",
@@ -1296,8 +1297,8 @@ public class ThirdPartyDebtorDialog extends javax.swing.JDialog {
         if (this.measure == null || this.measure.getId() == null) {
             return;
         }
-        if (!com.jdimension.jlawyer.client.utils.DesktopDateEntry.check(this, this.txtServed, "Zustellungsdatum", false)
-                || !com.jdimension.jlawyer.client.utils.DesktopDateEntry.check(this, this.txtDeclaration, "Eingang der Erklärung", false)) {
+        if (!DesktopDateEntry.check(this, this.txtServed, "Zustellungsdatum", false)
+                || !DesktopDateEntry.check(this, this.txtDeclaration, "Eingang der Erklärung", false)) {
             return;
         }
 
@@ -1410,7 +1411,7 @@ public class ThirdPartyDebtorDialog extends javax.swing.JDialog {
         }
         Date receivedOn;
         try {
-            receivedOn = com.jdimension.jlawyer.client.utils.DesktopDateEntry.requiredDay(entered);
+            receivedOn = DesktopDateEntry.requiredDay(entered);
         } catch (IllegalArgumentException ex) {
             JOptionPane.showMessageDialog(this,
                     ex.getMessage(),
@@ -1475,7 +1476,7 @@ public class ThirdPartyDebtorDialog extends javax.swing.JDialog {
         }
         Date paidOn;
         try {
-            paidOn = com.jdimension.jlawyer.client.utils.DesktopDateEntry.requiredDay(enteredDate);
+            paidOn = DesktopDateEntry.requiredDay(enteredDate);
         } catch (IllegalArgumentException ex) {
             JOptionPane.showMessageDialog(this,
                     ex.getMessage(),

@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Eight-digit dates in desktop date-only input
-Every directly editable desktop field dedicated solely to a calendar date MUST accept exactly `DDMMYYYY` and `DD.MM.YYYY`, normalize a valid undotted form to `DD.MM.YYYY` visibly no later than leaving the field, and reject impossible dates with a useful error when committing the input. Empty form fields MUST show `TTMMJJJJ` as a gray placeholder that is not treated as a value. The year MUST have four digits; the client MUST NOT guess a century.
+Every directly editable desktop field dedicated solely to a calendar date MUST accept `DDMMYYYY` and dotted dates with one or two digits each for day and month (`D.M.YYYY`), normalize valid input to `DD.MM.YYYY` visibly no later than leaving the field, and reject impossible dates with a useful error when committing the input. Empty form fields MUST show `TTMMJJJJ` as a gray placeholder that is not treated as a value. The year MUST have four digits; the client MUST NOT guess a century.
 
 #### Scenario: Empty date field
 - **WHEN** a user opens a form with an empty, editable date-only field
@@ -18,6 +18,10 @@ Every directly editable desktop field dedicated solely to a calendar date MUST a
 #### Scenario: Existing dotted format
 - **WHEN** a user commits `28.06.1979` in a directly editable date-only field
 - **THEN** the date remains `28.06.1979`
+
+#### Scenario: Short dotted day and month
+- **WHEN** a user types `1.3.2025` in a directly editable date-only field and moves to another field
+- **THEN** the field displays `01.03.2025`
 
 #### Scenario: Ambiguous or impossible date
 - **WHEN** a user commits `280679` or `31022024` in such a field

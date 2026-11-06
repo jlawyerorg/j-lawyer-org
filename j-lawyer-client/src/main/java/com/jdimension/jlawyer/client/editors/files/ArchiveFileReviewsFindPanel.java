@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.client.print.ReviewsStub;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.client.utils.DesktopDateEntry;
 import com.jdimension.jlawyer.client.utils.TableUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AppUserBean;
@@ -711,8 +712,8 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
      */
     public ArchiveFileReviewsFindPanel() {
         initComponents();
-        com.jdimension.jlawyer.client.utils.DesktopDateEntry.installChooser(this.txtFromDate);
-        com.jdimension.jlawyer.client.utils.DesktopDateEntry.installChooser(this.txtToDate);
+        DesktopDateEntry.installChooser(this.txtFromDate);
+        DesktopDateEntry.installChooser(this.txtToDate);
         this.cmdReset.setVerifyInputWhenFocusTarget(false);
         
         if (UserSettings.getInstance().isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
@@ -1194,8 +1195,8 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
     }//GEN-LAST:event_tblResultsMouseClicked
 
     private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
-        if (!com.jdimension.jlawyer.client.utils.DesktopDateEntry.checkChooser(this, this.txtFromDate, "Zeitraum von")
-                || !com.jdimension.jlawyer.client.utils.DesktopDateEntry.checkChooser(this, this.txtToDate, "Zeitraum bis")) {
+        if (!DesktopDateEntry.checkChooser(this, this.txtFromDate, "Zeitraum von")
+                || !DesktopDateEntry.checkChooser(this, this.txtToDate, "Zeitraum bis")) {
             return;
         }
         // perform search here
@@ -1226,8 +1227,8 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
     }//GEN-LAST:event_rdAllStatusesActionPerformed
 
     private void cmdPrintActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPrintActionPerformed
-        if (!com.jdimension.jlawyer.client.utils.DesktopDateEntry.checkChooser(this, this.txtFromDate, "Zeitraum von")
-                || !com.jdimension.jlawyer.client.utils.DesktopDateEntry.checkChooser(this, this.txtToDate, "Zeitraum bis")) {
+        if (!DesktopDateEntry.checkChooser(this, this.txtFromDate, "Zeitraum von")
+                || !DesktopDateEntry.checkChooser(this, this.txtToDate, "Zeitraum bis")) {
             return;
         }
         try {

@@ -686,6 +686,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.DesktopDateEntry;
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.JTextFieldLimit;
@@ -806,9 +807,9 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.invoicesPerCase = new HashMap<>();
         initComponents();
         this.lblAge.setText("");
-        com.jdimension.jlawyer.client.utils.DesktopDateEntry.hint(this.txtBirthDate);
-        com.jdimension.jlawyer.client.utils.DesktopDateEntry.hint(this.txtDeathDate);
-        com.jdimension.jlawyer.client.utils.DesktopDateEntry.hint(this.txtSepaSince);
+        DesktopDateEntry.hint(this.txtBirthDate);
+        DesktopDateEntry.hint(this.txtDeathDate);
+        DesktopDateEntry.hint(this.txtSepaSince);
 
         if (this instanceof NewAddressPanel) {
             jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-19.png")));
@@ -4911,15 +4912,15 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
                 this.dto.getDateOfDeath(), this.txtDeathDate.getText());
         boolean sepaChanged = this.dto == null || !StringUtils.equals(
                 this.dto.getSepaSince(), this.txtSepaSince.getText());
-        if (birthChanged && !com.jdimension.jlawyer.client.utils.DesktopDateEntry.check(
+        if (birthChanged && !DesktopDateEntry.check(
                 this, this.txtBirthDate, "Geburtsdatum", false)) {
             return false;
         }
-        if (deathChanged && !com.jdimension.jlawyer.client.utils.DesktopDateEntry.check(
+        if (deathChanged && !DesktopDateEntry.check(
                 this, this.txtDeathDate, "Sterbedatum", false)) {
             return false;
         }
-        if (sepaChanged && !com.jdimension.jlawyer.client.utils.DesktopDateEntry.check(
+        if (sepaChanged && !DesktopDateEntry.check(
                 this, this.txtSepaSince, "SEPA-Mandat seit", false)) {
             return false;
         }

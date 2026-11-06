@@ -666,6 +666,7 @@ import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.DesktopDateEntry;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ClaimLedger;
 import com.jdimension.jlawyer.pojo.ClaimStatement;
@@ -707,7 +708,7 @@ public class ClaimStatementDialog extends javax.swing.JDialog {
     public ClaimStatementDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
-        com.jdimension.jlawyer.client.utils.DesktopDateEntry.hint(this.txtKeyDate);
+        DesktopDateEntry.hint(this.txtKeyDate);
         this.txtKeyDate.setText(this.df.format(new Date()));
     }
 
@@ -744,7 +745,7 @@ public class ClaimStatementDialog extends javax.swing.JDialog {
         if (this.ledger == null || this.ledger.getId() == null) {
             return;
         }
-        if (!com.jdimension.jlawyer.client.utils.DesktopDateEntry.check(this, this.txtKeyDate, "Stichtag", true)) {
+        if (!DesktopDateEntry.check(this, this.txtKeyDate, "Stichtag", true)) {
             return;
         }
 
@@ -916,7 +917,7 @@ public class ClaimStatementDialog extends javax.swing.JDialog {
         if (this.statement == null) {
             return;
         }
-        if (!com.jdimension.jlawyer.client.utils.DesktopDateEntry.check(this, this.txtKeyDate, "Stichtag", true)) {
+        if (!DesktopDateEntry.check(this, this.txtKeyDate, "Stichtag", true)) {
             return;
         }
 
@@ -944,7 +945,7 @@ public class ClaimStatementDialog extends javax.swing.JDialog {
         if (this.ledger == null || this.ledger.getId() == null) {
             return;
         }
-        if (!com.jdimension.jlawyer.client.utils.DesktopDateEntry.check(this, this.txtKeyDate, "Stichtag", true)) {
+        if (!DesktopDateEntry.check(this, this.txtKeyDate, "Stichtag", true)) {
             return;
         }
 

@@ -699,9 +699,13 @@ public class DateUtils {
         if (value.matches("[0-9]{8}")) {
             value = value.substring(0, 2) + "." + value.substring(2, 4)
                     + "." + value.substring(4);
+        } else if (value.matches("[0-9]{1,2}\\.[0-9]{1,2}\\.[0-9]{4}")) {
+            String[] parts = value.split("\\.");
+            value = String.format(Locale.ROOT, "%02d.%02d.%s",
+                    Integer.parseInt(parts[0]), Integer.parseInt(parts[1]), parts[2]);
         }
         if (!value.matches("[0-9]{2}\\.[0-9]{2}\\.[0-9]{4}")) {
-            throw new IllegalArgumentException("Bitte TT.MM.JJJJ oder TTMMJJJJ eingeben (vierstelliges Jahr).");
+            throw new IllegalArgumentException("Bitte TTMMJJJJ, TT.MM.JJJJ oder T.M.JJJJ eingeben (vierstelliges Jahr).");
         }
         try {
             LocalDate day = LocalDate.parse(value, DESKTOP_DAY_FORMAT);

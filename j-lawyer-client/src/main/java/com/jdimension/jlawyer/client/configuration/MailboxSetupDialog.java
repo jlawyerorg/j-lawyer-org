@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.DesktopDateEntry;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.TableUtils;
@@ -718,7 +719,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
     public MailboxSetupDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
-        com.jdimension.jlawyer.client.utils.DesktopDateEntry.hint(this.txtSecretExpiry);
+        DesktopDateEntry.hint(this.txtSecretExpiry);
 
         this.htmlEmailSig = new WebViewHtmlEditorPanel();
         this.jPanel4.add(this.htmlEmailSig);
@@ -1704,7 +1705,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
 
         if (row >= 0) {
 
-            if (!com.jdimension.jlawyer.client.utils.DesktopDateEntry.check(
+            if (!DesktopDateEntry.check(
                     this, this.txtSecretExpiry, "Ablaufdatum des Client-Geheimnisses", false)) {
                 return;
             }

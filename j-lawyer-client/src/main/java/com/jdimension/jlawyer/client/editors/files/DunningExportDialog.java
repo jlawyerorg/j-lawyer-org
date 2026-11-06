@@ -666,6 +666,7 @@ import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.DesktopDateEntry;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ClaimComponent;
 import com.jdimension.jlawyer.persistence.ClaimLedger;
@@ -753,7 +754,7 @@ public class DunningExportDialog extends javax.swing.JDialog {
         this.dunningCase = dunningCase;
         this.ledger = ledger;
         initComponents();
-        com.jdimension.jlawyer.client.utils.DesktopDateEntry.hint(this.txtOrderDate);
+        DesktopDateEntry.hint(this.txtOrderDate);
         this.tblClaims.setToolTipText("vom / Zinsen bis: TT.MM.JJJJ oder TTMMJJJJ (vierstelliges Jahr)");
 
         this.tblClaims.setModel(new DefaultTableModel(
@@ -771,11 +772,11 @@ public class DunningExportDialog extends javax.swing.JDialog {
         });
         this.tblClaims.getColumnModel().getColumn(COL_INCLUDED).setMaxWidth(30);
         JTextField dateField = new JTextField();
-        com.jdimension.jlawyer.client.utils.DesktopDateEntry.hint(dateField);
+        DesktopDateEntry.hint(dateField);
         DefaultCellEditor dateEditor = new DefaultCellEditor(dateField) {
             @Override
             public boolean stopCellEditing() {
-                com.jdimension.jlawyer.client.utils.DesktopDateEntry.normalizeCompleteDigits(dateField);
+                DesktopDateEntry.normalizeCompleteDate(dateField);
                 return super.stopCellEditing();
             }
         };
@@ -1066,7 +1067,7 @@ public class DunningExportDialog extends javax.swing.JDialog {
      * @return whether it could be written
      */
     private boolean writeBack() {
-        if (!com.jdimension.jlawyer.client.utils.DesktopDateEntry.check(this, this.txtOrderDate, "Auftragsdatum", false)) {
+        if (!DesktopDateEntry.check(this, this.txtOrderDate, "Auftragsdatum", false)) {
             return false;
         }
         this.dunningCase.setOrderDate(parseDate(this.txtOrderDate.getText()));

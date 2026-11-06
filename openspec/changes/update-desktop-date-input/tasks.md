@@ -5,7 +5,7 @@
 
 ## 2. Implementierung nach Review/Freigabe
 
-- [ ] 2.1 Gemeinsame strikte Prüfung echter Daten und Normalisierung von genau `TTMMJJJJ` auf `TT.MM.JJJJ` schaffen; punktiertes Datum und vierstelliges Jahr zulassen, keine Jahrhundertvermutung oder allgemeine Zukunftsgrenze.
+- [ ] 2.1 Gemeinsame strikte Prüfung echter Daten und Normalisierung von `TTMMJJJJ` sowie punktierten Eingaben mit ein- oder zweistelligem Tag und Monat auf `TT.MM.JJJJ` schaffen; ein vierstelliges Jahr verlangen, keine Jahrhundertvermutung oder allgemeine Zukunftsgrenze.
 - [ ] 2.2 Gemeinsame Logik an jedes bestätigte Feld aus 1.1 und dessen Speicherpfad anschließen, auch `JFormattedTextField` gesondert berücksichtigen; gültige achtstellige Eingaben spätestens beim Feldwechsel sichtbar punktieren, ungültige Eingaben beim Übernehmen erklären und `TTMMJJJJ` grau in leeren Feldern anzeigen, ohne es als Wert zu speichern; `.form`-Dateien konsistent halten.
 - [ ] 2.3 Persönliche Daten in Hauptmaske und Schnellerfassung zusätzlich auf Zukunft und bei neuen Widersprüchen Tod vor Geburt prüfen; Leerwerte, unveränderte Altwerte und Altersanzeige berücksichtigen.
 - [ ] 2.4 Mit fiktiven Daten automatisiert und manuell leeren Hinweis, Feldwechsel, Punkt-/Zifferneingabe, ungültige Daten, Schaltjahr, Zukunftsregeln, Altwerte, Kontakte, Buchhaltung, Fälligkeiten, Fristen, Kalenderauswahl, Datumstabellenzellen und die zwei `JDateChooser`-Texteditoren prüfen.

@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
+import com.jdimension.jlawyer.client.utils.DesktopDateEntry;
 import com.jdimension.jlawyer.persistence.DunningCaseStatus;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -703,7 +704,7 @@ public class DunningStatusDialog extends javax.swing.JDialog {
     public DunningStatusDialog(java.awt.Frame parent, boolean modal, DunningCaseStatus current) {
         super(parent, modal);
         initComponents();
-        com.jdimension.jlawyer.client.utils.DesktopDateEntry.hint(this.txtEventDate);
+        DesktopDateEntry.hint(this.txtEventDate);
 
         for (DunningCaseStatus status : DunningCaseStatus.values()) {
             this.selectable.add(status);
@@ -937,7 +938,7 @@ public class DunningStatusDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdSelectEventDateActionPerformed
 
     private void cmdOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdOkActionPerformed
-        if (!com.jdimension.jlawyer.client.utils.DesktopDateEntry.check(this, this.txtEventDate, "Ereignisdatum", true)) {
+        if (!DesktopDateEntry.check(this, this.txtEventDate, "Ereignisdatum", true)) {
             return;
         }
         if (getStatus() == null) {

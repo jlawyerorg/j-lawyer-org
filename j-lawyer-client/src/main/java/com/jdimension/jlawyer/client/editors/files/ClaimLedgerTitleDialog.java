@@ -663,6 +663,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
+import com.jdimension.jlawyer.client.utils.DateUtils;
+import com.jdimension.jlawyer.client.utils.DesktopDateEntry;
 import com.jdimension.jlawyer.persistence.EnforcementTitle;
 import com.jdimension.jlawyer.persistence.EnforcementTitleType;
 import java.text.SimpleDateFormat;
@@ -706,9 +708,9 @@ public class ClaimLedgerTitleDialog extends javax.swing.JDialog {
     public ClaimLedgerTitleDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
-        com.jdimension.jlawyer.client.utils.DesktopDateEntry.hint(this.txtIssueDate);
-        com.jdimension.jlawyer.client.utils.DesktopDateEntry.hint(this.txtClauseDate);
-        com.jdimension.jlawyer.client.utils.DesktopDateEntry.hint(this.txtServiceDate);
+        DesktopDateEntry.hint(this.txtIssueDate);
+        DesktopDateEntry.hint(this.txtClauseDate);
+        DesktopDateEntry.hint(this.txtServiceDate);
 
         for (EnforcementTitleType t : EnforcementTitleType.values()) {
             this.cmbType.addItem(t);
@@ -783,8 +785,8 @@ public class ClaimLedgerTitleDialog extends javax.swing.JDialog {
             return null;
         }
         try {
-            return this.df.parse(text.trim());
-        } catch (Exception ex) {
+            return DateUtils.parseDesktopDay(text);
+        } catch (IllegalArgumentException ex) {
             return null;
         }
     }
@@ -1044,9 +1046,9 @@ public class ClaimLedgerTitleDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_txtIssueDateFocusLost
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
-        if (!com.jdimension.jlawyer.client.utils.DesktopDateEntry.check(this, this.txtIssueDate, "Ausstellungsdatum", false)
-                || !com.jdimension.jlawyer.client.utils.DesktopDateEntry.check(this, this.txtClauseDate, "Klauseldatum", false)
-                || !com.jdimension.jlawyer.client.utils.DesktopDateEntry.check(this, this.txtServiceDate, "Zustellungsdatum", false)) {
+        if (!DesktopDateEntry.check(this, this.txtIssueDate, "Ausstellungsdatum", false)
+                || !DesktopDateEntry.check(this, this.txtClauseDate, "Klauseldatum", false)
+                || !DesktopDateEntry.check(this, this.txtServiceDate, "Zustellungsdatum", false)) {
             return;
         }
         Date issueDate = parseDate(this.txtIssueDate.getText());

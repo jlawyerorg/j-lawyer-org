@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
+import com.jdimension.jlawyer.client.utils.DesktopDateEntry;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.CaseAccountEntry;
@@ -712,7 +713,7 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
         dateText.setOverwriteMode(false);
         this.txtDate.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(dateText));
         this.txtDate.setFocusLostBehavior(javax.swing.JFormattedTextField.PERSIST);
-        com.jdimension.jlawyer.client.utils.DesktopDateEntry.hint(this.txtDate);
+        DesktopDateEntry.hint(this.txtDate);
         this.cmbInvoice.setRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
