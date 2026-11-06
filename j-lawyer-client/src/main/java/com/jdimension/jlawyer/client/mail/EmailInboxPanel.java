@@ -4343,11 +4343,16 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     }
 
     /**
-     * Returns a copy of the given EML where all file attachments (body parts
-     * with a non-empty filename) have been removed, keeping the message body
-     * and any inline parts. Used when saving a message "without attachments" to
-     * a case. Mirrors the behaviour of the legacy IMAP save path so that both
-     * server-based and IMAP mailboxes strip attachments consistently.
+     * Returns a copy of the given EML where all file attachments have been
+     * removed, keeping the message body. Used when saving a message "without
+     * attachments" to a case, for both server-based and IMAP mailboxes.
+     * <p>
+     * Attachments are removed on every level of the MIME tree (e.g. Apple Mail
+     * nests them in multipart/alternative, S/MIME signed mails in
+     * multipart/signed). A signed message whose attachments are removed is
+     * turned into multipart/mixed without the signature, because the signature
+     * would no longer be valid. A message without attachments is returned
+     * unchanged, so its signature stays intact. The original Message-ID is kept.
      *
      * @param eml the full message as EML bytes
      * @return the EML bytes without file attachments
@@ -4358,22 +4363,113 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         Session session = Session.getDefaultInstance(System.getProperties(), null);
         MimeMessage copiedMsg = new MimeMessage(session, bis);
         bis.close();
-        if (copiedMsg.isMimeType("multipart/*")) {
-            MimeMultipart mmp = (MimeMultipart) copiedMsg.getContent();
-            for (int i = 0; i < mmp.getCount(); i++) {
-                BodyPart part = mmp.getBodyPart(i);
-                if (!StringUtils.isEmpty(part.getFileName())) {
-                    mmp.removeBodyPart(i);
-                    i--;
-                }
-            }
-            copiedMsg.setContent(mmp);
-            copiedMsg.saveChanges();
+        if (!containsFileAttachment(copiedMsg)) {
+            return eml;
+        }
+
+        String messageId = copiedMsg.getMessageID();
+        Object content = copiedMsg.isMimeType("multipart/*") ? copiedMsg.getContent() : null;
+        MimeMultipart stripped = null;
+        if (content instanceof MimeMultipart) {
+            stripped = stripFileAttachments((MimeMultipart) content);
+        }
+        if (stripped == null) {
+            // the message consisted of attachments only
+            copiedMsg.setText("", "UTF-8");
+        } else {
+            copiedMsg.setContent(stripped);
+        }
+        copiedMsg.saveChanges();
+        if (messageId != null) {
+            // saveChanges() generates a new Message-ID
+            copiedMsg.setHeader("Message-ID", messageId);
         }
         ByteArrayOutputStream bOut = new ByteArrayOutputStream();
         copiedMsg.writeTo(bOut);
         bOut.close();
         return bOut.toByteArray();
+    }
+
+    /**
+     * Checks whether a part is a file attachment: a leaf part with a filename,
+     * or an attached message (message/rfc822).
+     */
+    private static boolean isFileAttachment(Part part) throws MessagingException {
+        if (part.isMimeType("multipart/*")) {
+            return false;
+        }
+        if (part.isMimeType("message/rfc822")) {
+            return true;
+        }
+        return !StringUtils.isEmpty(part.getFileName()) && !isSignaturePart(part);
+    }
+
+    private static boolean isSignaturePart(Part part) throws MessagingException {
+        return part.isMimeType("application/pkcs7-signature")
+                || part.isMimeType("application/x-pkcs7-signature")
+                || part.isMimeType("application/pgp-signature");
+    }
+
+    /**
+     * Checks recursively whether a part or any of its sub parts is a file
+     * attachment.
+     */
+    private static boolean containsFileAttachment(Part part) throws Exception {
+        if (part.isMimeType("multipart/*")) {
+            Object content = part.getContent();
+            if (content instanceof Multipart) {
+                Multipart mp = (Multipart) content;
+                for (int i = 0; i < mp.getCount(); i++) {
+                    if (containsFileAttachment(mp.getBodyPart(i))) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+        return isFileAttachment(part);
+    }
+
+    /**
+     * Removes file attachments from a multipart and all nested multiparts.
+     * Nested multiparts are written back to their parent part, empty nested
+     * multiparts are removed. A multipart/signed is returned as multipart/mixed
+     * without its signature part.
+     *
+     * @param mp the multipart to strip
+     * @return the stripped multipart, or null if no part is left
+     */
+    private static MimeMultipart stripFileAttachments(MimeMultipart mp) throws Exception {
+        boolean signed = new javax.mail.internet.ContentType(mp.getContentType()).match("multipart/signed");
+        for (int i = mp.getCount() - 1; i >= 0; i--) {
+            BodyPart part = mp.getBodyPart(i);
+            if (part.isMimeType("multipart/*")) {
+                Object nestedContent = part.getContent();
+                if (nestedContent instanceof MimeMultipart) {
+                    MimeMultipart nested = stripFileAttachments((MimeMultipart) nestedContent);
+                    if (nested == null) {
+                        mp.removeBodyPart(i);
+                    } else {
+                        part.setContent(nested);
+                    }
+                }
+            } else if (isFileAttachment(part) || (signed && isSignaturePart(part))) {
+                mp.removeBodyPart(i);
+            }
+        }
+        if (mp.getCount() == 0) {
+            return null;
+        }
+        if (signed) {
+            MimeMultipart mixed = new MimeMultipart("mixed");
+            while (mp.getCount() > 0) {
+                BodyPart part = mp.getBodyPart(0);
+                mp.removeBodyPart(0);
+                mixed.addBodyPart(part);
+            }
+            return mixed;
+        }
+        return mp;
     }
 
     @Override
