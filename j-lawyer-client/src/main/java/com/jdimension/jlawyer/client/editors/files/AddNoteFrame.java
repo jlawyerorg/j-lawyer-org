@@ -740,6 +740,8 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
         this.initializing = true;
         this.aFile = aFile;
         initComponents();
+        // design kit: navy header like the glass headers of the editors
+        com.jdimension.jlawyer.client.ui.theme.DialogStyle.styleHeader(this.jPanel2);
 
         this.htmlNoteEditor = new WebViewHtmlEditorPanel();
         this.htmlContainerPanel.add(this.htmlNoteEditor);

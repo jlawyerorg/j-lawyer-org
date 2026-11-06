@@ -681,6 +681,11 @@ import javax.swing.JFrame;
 public class FrameUtils {
 
     public static void centerFrame(JFrame frame, JFrame parent) {
+        // basic look of the design kit for working windows (e-mail, notes, ...) - never for the
+        // main window
+        if (frame != null && frame != com.jdimension.jlawyer.client.editors.EditorsRegistry.getInstance().getMainWindow()) {
+            com.jdimension.jlawyer.client.ui.theme.DialogStyle.apply(frame);
+        }
         centerWindowOnParent(frame, parent);
     }
 
