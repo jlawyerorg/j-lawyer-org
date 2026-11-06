@@ -711,6 +711,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
      */
     public ArchiveFileReviewsFindPanel() {
         initComponents();
+        this.applyModernLook();
         
         if (UserSettings.getInstance().isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
             this.detailsEditorClass = EditArchiveFileDetailsPanel.class.getName();
@@ -761,6 +762,19 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
     }
 
     /**
+     * Applies the editor design kit: glass tool bar, criteria and results on light cards.
+     */
+    private void applyModernLook() {
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleHeaderButtons(this.cmdExport, this.cmdPrint, this.cmdRefresh);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleTable(this.tblResults, this.jScrollPane1);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.transparentInsideCards(this);
+        // date choosers are panels of their own and would show a grey box on the card
+        this.txtFromDate.setOpaque(false);
+        this.txtToDate.setOpaque(false);
+        this.inputFulltextSearch.putClientProperty(com.formdev.flatlaf.FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
+    }
+
+    /**
      * The search is a tab of the calendar overview and does not paint a background of its own;
      * the image is only passed on to the cases opened from the results.
      */
@@ -783,9 +797,10 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
         mnuOpenArchiveFile = new javax.swing.JMenuItem();
         grpStatus = new javax.swing.ButtonGroup();
         grpType = new javax.swing.ButtonGroup();
+        cardResults = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblResults = new javax.swing.JTable();
-        jPanel1 = new javax.swing.JPanel();
+        jPanel1 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         txtFromDate = new com.toedter.calendar.JDateChooser();
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
@@ -806,7 +821,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
         jLabel6 = new javax.swing.JLabel();
         jLabel7 = new javax.swing.JLabel();
         cmbAssignee = new javax.swing.JComboBox<>();
-        jPanel2 = new javax.swing.JPanel();
+        jPanel2 = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
         cmdExport = new javax.swing.JButton();
         cmdRefresh = new javax.swing.JButton();
         cmdPrint = new javax.swing.JButton();
@@ -843,7 +858,10 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
         });
         jScrollPane1.setViewportView(tblResults);
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Suchkriterien"));
+        cardResults.setLayout(new java.awt.BorderLayout());
+        cardResults.add(jScrollPane1, java.awt.BorderLayout.CENTER);
+
+        jPanel1.setTitle("Suchkriterien");
 
         txtFromDate.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
             public void propertyChange(java.beans.PropertyChangeEvent evt) {
@@ -1116,7 +1134,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(jScrollPane1)
+                    .add(cardResults)
                     .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
@@ -1128,7 +1146,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 214, Short.MAX_VALUE)
+                .add(cardResults, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 214, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -1389,8 +1407,8 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel2;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel1;
+    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel labelSearchAZ;
     private javax.swing.JMenuItem mnuOpenArchiveFile;
@@ -1405,6 +1423,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
     private javax.swing.JTable tblResults;
     private com.toedter.calendar.JDateChooser txtFromDate;
     private com.toedter.calendar.JDateChooser txtToDate;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardResults;
     // End of variables declaration//GEN-END:variables
 
     @Override

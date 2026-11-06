@@ -865,12 +865,51 @@ public final class EditorStyle {
         tabs.putClientProperty("JTabbedPane.tabType", "underlined");
         tabs.putClientProperty(FlatClientProperties.STYLE, MAIN_TABS_STYLE);
         tabs.setFont(tabs.getFont().deriveFont(java.awt.Font.BOLD));
+        // default for tabs without a color of their own, e.g. tabs added later at runtime
+        tabs.setForeground(UiColors.TEXT_ON_GLASS);
         for (int i = 0; i < tabs.getTabCount(); i++) {
-            tabs.setForegroundAt(i, UiColors.TEXT_ON_GLASS);
-            Icon icon = tabs.getIconAt(i);
-            if (icon != null && !(icon instanceof SidebarIcon)) {
-                tabs.setIconAt(i, new SidebarIcon(icon, UiColors.TEXT_ON_GLASS, 16));
+            styleMainTab(tabs, i);
+        }
+        whiteTabAreaButtons(tabs);
+        if (tabs.getClientProperty(MAIN_TABS_LISTENER_KEY) == null) {
+            tabs.putClientProperty(MAIN_TABS_LISTENER_KEY, Boolean.TRUE);
+            // editors like the messaging center add tabs at runtime - style them the same way
+            tabs.addContainerListener(new java.awt.event.ContainerAdapter() {
+                @Override
+                public void componentAdded(java.awt.event.ContainerEvent e) {
+                    int index = tabs.indexOfComponent(e.getChild());
+                    if (index >= 0) {
+                        styleMainTab(tabs, index);
+                    }
+                }
+            });
+        }
+    }
+
+    private static final String MAIN_TABS_LISTENER_KEY = "jlawyer.editorStyle.mainTabsListener";
+
+    /**
+     * The scroll and "more tabs" buttons of a tab bar with many tabs take their arrow color from the
+     * global theme (black) - on the dark background they need white arrows and a glass hover.
+     */
+    private static void whiteTabAreaButtons(JTabbedPane tabs) {
+        // the buttons are direct children of the tab pane - tab contents (e.g. combo box arrows on
+        // light cards) are left alone
+        for (Component child : tabs.getComponents()) {
+            if (child instanceof com.formdev.flatlaf.ui.FlatArrowButton && tabs.indexOfComponent(child) < 0) {
+                ((com.formdev.flatlaf.ui.FlatArrowButton) child).updateStyle(
+                        javax.swing.UIManager.getString("TabbedPane.arrowType"),
+                        UiColors.TEXT_ON_GLASS, new Color(255, 255, 255, 90), UiColors.TEXT_ON_GLASS,
+                        new Color(255, 255, 255, 31), UiColors.TEXT_ON_GLASS, new Color(255, 255, 255, 51));
             }
+        }
+    }
+
+    private static void styleMainTab(JTabbedPane tabs, int index) {
+        tabs.setForegroundAt(index, UiColors.TEXT_ON_GLASS);
+        Icon icon = tabs.getIconAt(index);
+        if (icon != null && !(icon instanceof SidebarIcon)) {
+            tabs.setIconAt(index, new SidebarIcon(icon, UiColors.TEXT_ON_GLASS, 16));
         }
     }
 
@@ -1017,6 +1056,16 @@ public final class EditorStyle {
     public static void styleSplitPane(JSplitPane split) {
         ComponentUtils.decorateSplitPane(split, new Color(0, 0, 0, 0));
         split.setOpaque(false);
+    }
+
+    /**
+     * A split pane inside a light card: the divider is a thin separator line instead of the dark
+     * bar used on the background. Replaces {@link ComponentUtils#decorateSplitPane(JSplitPane)}.
+     *
+     * @param split the split pane
+     */
+    public static void styleCardSplitPane(JSplitPane split) {
+        ComponentUtils.decorateSplitPane(split, UiColors.SEPARATOR);
     }
 
     /**

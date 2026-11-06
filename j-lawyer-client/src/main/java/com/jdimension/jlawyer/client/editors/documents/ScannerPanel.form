@@ -104,7 +104,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="lblPanelTitle" max="32767" attributes="0"/>
                   </Group>
-                  <Component id="jTabbedPane1" alignment="0" max="32767" attributes="0"/>
+                  <Component id="jTabbedPane1" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -112,14 +112,14 @@
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" alignment="0" attributes="0">
+          <Group type="102" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="jLabel18" alignment="0" min="-2" max="-2" attributes="0"/>
-                  <Component id="lblPanelTitle" alignment="0" min="-2" pref="40" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="2" attributes="0">
+                  <Component id="jLabel18" alignment="2" min="-2" max="-2" attributes="0"/>
+                  <Component id="lblPanelTitle" alignment="2" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jTabbedPane1" pref="410" max="32767" attributes="0"/>
+              <Component id="jTabbedPane1" min="-2" pref="0" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
@@ -153,7 +153,7 @@
 
       <Layout class="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout"/>
       <SubComponents>
-        <Container class="javax.swing.JPanel" name="jPanel1">
+        <Container class="com.jdimension.jlawyer.client.ui.theme.SectionCardPanel" name="jPanel1">
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
               <JTabbedPaneConstraints tabName="lokale Scanner">
@@ -386,7 +386,7 @@
             </Container>
           </SubComponents>
         </Container>
-        <Container class="javax.swing.JPanel" name="pnlDropscan">
+        <Container class="com.jdimension.jlawyer.client.ui.theme.SectionCardPanel" name="pnlDropscan">
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
               <JTabbedPaneConstraints tabName="Dropscan">
