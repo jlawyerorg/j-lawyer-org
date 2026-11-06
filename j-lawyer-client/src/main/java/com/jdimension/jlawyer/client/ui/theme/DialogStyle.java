@@ -849,8 +849,28 @@ public class DialogStyle {
             // calendar, an editor panel) are left as they are, including everything they contain
             if (c instanceof Container && !(c instanceof JTable) && isStyledContainer(c)) {
                 styleTree((Container) c, childInsideCard || c instanceof SectionCardPanel);
+            } else if (c instanceof JPanel && c.isOpaque() && hasDefaultBackground(c) && !isStyledContainer(c)) {
+                // a panel of its own class without an own colour (e.g. the quick date selection)
+                // shows the page or card behind it instead of the default grey - its content stays
+                ((JPanel) c).setOpaque(false);
             }
         }
+    }
+
+    /**
+     * Applies the basic look to the content of a panel of its own class, e.g. the single panel a
+     * dialog consists of - normally such panels are left as they are.
+     *
+     * @param panel the panel
+     */
+    public static void styleContent(JComponent panel) {
+        if (panel == null) {
+            return;
+        }
+        if (hasDefaultBackground(panel)) {
+            panel.setOpaque(false);
+        }
+        styleTree(panel, false);
     }
 
     /**

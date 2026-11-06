@@ -692,6 +692,7 @@ public class ProgressIndicator extends javax.swing.JDialog {
     public ProgressIndicator(JFrame parent, boolean modal) {
         super(parent, modal);
         initComponents();
+        this.applyModernLook();
         
         this.setLocationRelativeTo(null);
         
@@ -712,6 +713,7 @@ public class ProgressIndicator extends javax.swing.JDialog {
     public ProgressIndicator(JDialog parent, boolean modal) {
         super(parent, modal);
         initComponents();
+        this.applyModernLook();
         
         this.setLocationRelativeTo(null);
         
@@ -724,7 +726,17 @@ public class ProgressIndicator extends javax.swing.JDialog {
         
     }
     
-    public void setAction(ProgressableAction a) {
+    /**
+     * Design kit: the basic look of dialogs and a clearly visible, rounded progress bar.
+     */
+    private void applyModernLook() {
+        this.progress.putClientProperty(com.formdev.flatlaf.FlatClientProperties.STYLE,
+                "arc: 999; foreground: #0e72b5; background: #dbe3ec");
+        this.progress.setPreferredSize(new java.awt.Dimension(this.progress.getPreferredSize().width, 8));
+        com.jdimension.jlawyer.client.ui.theme.DialogStyle.apply(this);
+    }
+
+        public void setAction(ProgressableAction a) {
         this.action=a;
     }
     
