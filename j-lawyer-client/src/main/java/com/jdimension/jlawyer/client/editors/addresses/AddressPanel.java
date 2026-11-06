@@ -805,6 +805,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.dto = null;
         this.invoicesPerCase = new HashMap<>();
         initComponents();
+        this.applyModernLook();
         this.lblAge.setText("");
 
         if (this instanceof NewAddressPanel) {
@@ -1064,7 +1065,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
             this.cmdNewSmsWithEncryptionPassword.setEnabled(false);
             this.chkEncryption.setSelected(false);
         }
-        this.lblHeaderInfo.setText(dto.toDisplayName());
+        this.setHeaderInfo();
         this.txtBankAccount.setText(dto.getBankAccount());
         this.txtBankAccountOwner.setText(dto.getBankAccountOwner());
         this.txtBankCode.setText(dto.getBankCode());
@@ -1620,13 +1621,13 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         jTabbedPane1 = new javax.swing.JTabbedPane();
         jPanel13 = new javax.swing.JPanel();
         jPanel22 = new javax.swing.JPanel();
-        jPanel14 = new javax.swing.JPanel();
+        jPanel14 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
         tagPanel = new javax.swing.JPanel();
-        jPanel19 = new javax.swing.JPanel();
+        jPanel19 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         txtNoticePane = new javax.swing.JScrollPane();
         txtNotice = new javax.swing.JTextArea();
-        jPanel27 = new javax.swing.JPanel();
+        jPanel27 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jPanel28 = new javax.swing.JPanel();
         jLabel48 = new javax.swing.JLabel();
         lblOverviewOrg = new javax.swing.JLabel();
@@ -1641,7 +1642,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         cmdAttributesFromClipboard = new javax.swing.JButton();
         cmdNewCase = new javax.swing.JButton();
         pnlInvoicesChart = new javax.swing.JPanel();
-        jPanel7 = new javax.swing.JPanel();
+        jPanel7 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         rdGenderFemale = new javax.swing.JRadioButton();
         rdGenderMale = new javax.swing.JRadioButton();
         rdGenderDivers = new javax.swing.JRadioButton();
@@ -1683,7 +1684,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         lblAge = new javax.swing.JLabel();
         txtFirstName2 = new javax.swing.JTextField();
         jPanel26 = new javax.swing.JPanel();
-        jPanel20 = new javax.swing.JPanel();
+        jPanel20 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jLabel3 = new javax.swing.JLabel();
         txtCompany = new javax.swing.JTextField();
         txtDepartment = new javax.swing.JTextField();
@@ -1694,12 +1695,12 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         txtRegCourt = new javax.swing.JTextField();
         jLabel37 = new javax.swing.JLabel();
         jLabel38 = new javax.swing.JLabel();
-        jPanel25 = new javax.swing.JPanel();
+        jPanel25 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jLabel53 = new javax.swing.JLabel();
         txtLeitwegId = new javax.swing.JTextField();
         jLabel54 = new javax.swing.JLabel();
         jPanel18 = new javax.swing.JPanel();
-        jPanel2 = new javax.swing.JPanel();
+        jPanel2 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jLabel4 = new javax.swing.JLabel();
         jLabel5 = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
@@ -1718,7 +1719,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         cmdCopyAddressToClipboard = new javax.swing.JButton();
         cmbState = new javax.swing.JComboBox<>();
         jLabel55 = new javax.swing.JLabel();
-        jPanel3 = new javax.swing.JPanel();
+        jPanel3 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jLabel8 = new javax.swing.JLabel();
         jLabel9 = new javax.swing.JLabel();
         jLabel10 = new javax.swing.JLabel();
@@ -1741,14 +1742,14 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         jLabel61 = new javax.swing.JLabel();
         cmdSendEmailHome = new javax.swing.JButton();
         cmdSendEmailMisc = new javax.swing.JButton();
-        jPanel17 = new javax.swing.JPanel();
+        jPanel17 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         txtBeaSafeId = new javax.swing.JTextField();
         jLabel26 = new javax.swing.JLabel();
         cmdGetDataFromBea = new javax.swing.JButton();
         cmdShowBeaIdentity = new javax.swing.JButton();
         cmdSendBea = new javax.swing.JButton();
         jPanel8 = new javax.swing.JPanel();
-        jPanel5 = new javax.swing.JPanel();
+        jPanel5 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jLabel15 = new javax.swing.JLabel();
         txtInsuranceNumber = new javax.swing.JTextField();
         chkLegalProtection = new javax.swing.JCheckBox();
@@ -1756,7 +1757,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         jLabel20 = new javax.swing.JLabel();
         txtInsurant = new javax.swing.JTextField();
         jLabel57 = new javax.swing.JLabel();
-        jPanel4 = new javax.swing.JPanel();
+        jPanel4 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jLabel12 = new javax.swing.JLabel();
         jLabel13 = new javax.swing.JLabel();
         jLabel14 = new javax.swing.JLabel();
@@ -1772,7 +1773,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         jLabel56 = new javax.swing.JLabel();
         txtBankAccountOwner = new javax.swing.JTextField();
         cmdPopuplateAccountOwner = new javax.swing.JButton();
-        jPanel11 = new javax.swing.JPanel();
+        jPanel11 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jLabel21 = new javax.swing.JLabel();
         txtTrafficInsuranceNumber = new javax.swing.JTextField();
         chkTrafficLegalProtection = new javax.swing.JCheckBox();
@@ -1780,7 +1781,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         txtTrafficInsurance = new javax.swing.JTextField();
         txtTrafficInsurant = new javax.swing.JTextField();
         jLabel58 = new javax.swing.JLabel();
-        jPanel12 = new javax.swing.JPanel();
+        jPanel12 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jLabel23 = new javax.swing.JLabel();
         txtMotorInsuranceNumber = new javax.swing.JTextField();
         cmbMotorInsurance = new javax.swing.JComboBox();
@@ -1788,24 +1789,24 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         chkMotorLegalProtection = new javax.swing.JCheckBox();
         txtMotorInsurant = new javax.swing.JTextField();
         jLabel59 = new javax.swing.JLabel();
-        jPanel21 = new javax.swing.JPanel();
+        jPanel21 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jLabel34 = new javax.swing.JLabel();
         txtVatId = new javax.swing.JTextField();
         jLabel35 = new javax.swing.JLabel();
         txtTin = new javax.swing.JTextField();
         chkTaxDeduction = new javax.swing.JCheckBox();
-        pnlDocuments = new javax.swing.JPanel();
+        pnlDocuments = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         cmdAdd = new javax.swing.JButton();
         cmdAddFromTemplate = new javax.swing.JButton();
         jScrollPane4 = new javax.swing.JScrollPane();
         tblContents = new javax.swing.JTable();
         jPanel9 = new javax.swing.JPanel();
-        jPanel6 = new javax.swing.JPanel();
+        jPanel6 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jLabel16 = new javax.swing.JLabel();
         jLabel17 = new javax.swing.JLabel();
         cmbSalutation = new javax.swing.JComboBox();
         cmbComplimentaryClose = new javax.swing.JComboBox();
-        jPanel15 = new javax.swing.JPanel();
+        jPanel15 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         lblCustom1 = new javax.swing.JLabel();
         txtCustom1 = new javax.swing.JTextField();
         lblCustom2 = new javax.swing.JLabel();
@@ -1813,20 +1814,21 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         lblCustom3 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         taCustom3 = new javax.swing.JTextArea();
-        jPanel10 = new javax.swing.JPanel();
+        jPanel10 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
         pnlCasesForContact = new javax.swing.JPanel();
-        pnlRelationsTab = new javax.swing.JPanel();
+        pnlRelationsTab = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jScrollPane11 = new javax.swing.JScrollPane();
         pnlRelationsForContact = new javax.swing.JPanel();
         cmdAddRelation = new javax.swing.JButton();
         cmdShowRelationGraph = new javax.swing.JButton();
         lblHeaderInfo = new javax.swing.JLabel();
         jPanel23 = new javax.swing.JPanel();
+        pnlHeaderRight = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
         chkEncryption = new javax.swing.JToggleButton();
-        jPanel16 = new javax.swing.JPanel();
+        jPanel16 = new com.jdimension.jlawyer.client.editors.history.GlassCardPanel();
         cmdToEditMode = new javax.swing.JButton();
         cmdSave = new javax.swing.JButton();
         cmdBackToSearch = new javax.swing.JButton();
@@ -1886,7 +1888,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         jPanel22.setLayout(new java.awt.GridLayout(1, 2));
 
-        jPanel14.setBorder(javax.swing.BorderFactory.createTitledBorder("Etiketten"));
+        jPanel14.setTitle("Etiketten");
 
         jScrollPane3.setBorder(null);
 
@@ -1906,7 +1908,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         jPanel22.add(jPanel14);
 
-        jPanel19.setBorder(javax.swing.BorderFactory.createTitledBorder("Notizen"));
+        jPanel19.setTitle("Notizen");
 
         txtNoticePane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
@@ -2088,7 +2090,6 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         jPanel24.setLayout(new java.awt.GridLayout(1, 2));
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createTitledBorder("Natürliche Person")));
 
         jLabel1.setText("Name:");
 
@@ -2312,6 +2313,8 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         jPanel24.add(jPanel1);
 
+        jPanel7.setTitle("Natürliche Person");
+
         org.jdesktop.layout.GroupLayout jPanel7Layout = new org.jdesktop.layout.GroupLayout(jPanel7);
         jPanel7.setLayout(jPanel7Layout);
         jPanel7Layout.setHorizontalGroup(
@@ -2350,7 +2353,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         jTabbedPane1.addTab("Person", new javax.swing.ImageIcon(getClass().getResource("/icons16/identity.png")), jPanel7); // NOI18N
 
-        jPanel20.setBorder(javax.swing.BorderFactory.createTitledBorder("Juristische Person"));
+        jPanel20.setTitle("Juristische Person");
 
         jLabel3.setText("Unternehmen:");
 
@@ -2411,7 +2414,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .addContainerGap())
         );
 
-        jPanel25.setBorder(javax.swing.BorderFactory.createTitledBorder("elektronische Rechnung"));
+        jPanel25.setTitle("elektronische Rechnung");
 
         jLabel53.setText("Leitweg-ID:");
 
@@ -2465,7 +2468,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         jTabbedPane1.addTab("Organisation", new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_business_black_48dp.png")), jPanel26); // NOI18N
 
-        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createTitledBorder("Adresse")));
+        jPanel2.setTitle("Adresse");
 
         jLabel4.setText("Straße:");
 
@@ -2576,7 +2579,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createTitledBorder("Kontaktdaten")));
+        jPanel3.setTitle("Kontaktdaten");
 
         jLabel8.setText("Telefon:");
 
@@ -2764,7 +2767,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        jPanel17.setBorder(javax.swing.BorderFactory.createTitledBorder("beA / EGVP / beBPo / eBO / beN / beSt / MJP"));
+        jPanel17.setTitle("beA / EGVP / beBPo / eBO / beN / beSt / MJP");
 
         jLabel26.setText("Safe ID:");
 
@@ -2844,7 +2847,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         jTabbedPane1.addTab("Kontakt", new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_home_black_48dp.png")), jPanel18); // NOI18N
 
-        jPanel5.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createTitledBorder("allgemeiner Rechtsschutz")));
+        jPanel5.setTitle("allgemeiner Rechtsschutz");
 
         jLabel15.setText("Versicherungsschein:");
 
@@ -2896,7 +2899,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .addContainerGap())
         );
 
-        jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createTitledBorder("Bankverbindung")));
+        jPanel4.setTitle("Bankverbindung");
 
         jLabel12.setText("Bank:");
 
@@ -3002,7 +3005,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .addContainerGap())
         );
 
-        jPanel11.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createTitledBorder("Verkehrsrechtsschutz")));
+        jPanel11.setTitle("Verkehrsrechtsschutz");
 
         jLabel21.setText("Versicherungsschein:");
 
@@ -3052,7 +3055,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .addContainerGap(7, Short.MAX_VALUE))
         );
 
-        jPanel12.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createTitledBorder("Kraftfahrtversicherung")));
+        jPanel12.setTitle("Kraftfahrtversicherung");
 
         jLabel23.setText("Versicherungsschein:");
 
@@ -3102,7 +3105,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .addContainerGap())
         );
 
-        jPanel21.setBorder(javax.swing.BorderFactory.createTitledBorder("Steuern"));
+        jPanel21.setTitle("Steuern");
 
         jLabel34.setText("USt-ID:");
 
@@ -3229,7 +3232,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         jTabbedPane1.addTab("Dokumente", new javax.swing.ImageIcon(getClass().getResource("/icons/folder_documents.png")), pnlDocuments); // NOI18N
 
-        jPanel6.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createTitledBorder("Dokumente")));
+        jPanel6.setTitle("Dokumente");
 
         jLabel16.setText("Begrüßung:");
 
@@ -3465,7 +3468,6 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
             }
         });
 
-        jPanel16.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
         jPanel16.setOpaque(false);
 
         cmdToEditMode.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png"))); // NOI18N
@@ -3530,6 +3532,34 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         lblEncryption.setForeground(new java.awt.Color(255, 255, 255));
         lblEncryption.setText("unverschlüsselt");
 
+        pnlHeaderRight.setOpaque(false);
+
+        org.jdesktop.layout.GroupLayout pnlHeaderRightLayout = new org.jdesktop.layout.GroupLayout(pnlHeaderRight);
+        pnlHeaderRight.setLayout(pnlHeaderRightLayout);
+        pnlHeaderRightLayout.setHorizontalGroup(
+            pnlHeaderRightLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlHeaderRightLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(pnlHeaderRightLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                    .add(pnlHeaderRightLayout.createSequentialGroup()
+                        .add(chkEncryption)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdNewSmsWithEncryptionPassword))
+                    .add(lblEncryption))
+                .addContainerGap())
+        );
+        pnlHeaderRightLayout.setVerticalGroup(
+            pnlHeaderRightLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlHeaderRightLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(pnlHeaderRightLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+                    .add(chkEncryption)
+                    .add(cmdNewSmsWithEncryptionPassword))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(lblEncryption)
+                .addContainerGap())
+        );
+
         org.jdesktop.layout.GroupLayout jPanel23Layout = new org.jdesktop.layout.GroupLayout(jPanel23);
         jPanel23.setLayout(jPanel23Layout);
         jPanel23Layout.setHorizontalGroup(
@@ -3540,29 +3570,15 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .add(jLabel18)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .add(162, 162, 162)
-                .add(jPanel23Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel23Layout.createSequentialGroup()
-                        .add(chkEncryption)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdNewSmsWithEncryptionPassword))
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, lblEncryption)))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(pnlHeaderRight, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
         );
         jPanel23Layout.setVerticalGroup(
-            jPanel23Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel23Layout.createSequentialGroup()
-                .add(jPanel23Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                    .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel16, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .add(0, 0, Short.MAX_VALUE))
-            .add(jPanel23Layout.createSequentialGroup()
-                .add(jPanel23Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(cmdNewSmsWithEncryptionPassword)
-                    .add(chkEncryption))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(lblEncryption)
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            jPanel23Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+            .add(jPanel16, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .add(jLabel18)
+            .add(lblPanelTitle)
+            .add(pnlHeaderRight, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
         );
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
@@ -3572,7 +3588,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(lblHeaderInfo, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(lblHeaderInfo, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(jTabbedPane1)
                     .add(jPanel23, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
@@ -3589,6 +3605,33 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    /**
+     * Shows the name of the contact prominently in the header, with zip code and city as detail.
+     */
+    private void setHeaderInfo() {
+        String place = (StringUtils.nonEmpty(this.dto.getZipCode()) + " " + StringUtils.nonEmpty(this.dto.getCity())).trim();
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.setContextTitle(this.lblHeaderInfo, null, this.dto.toDisplayName(), place);
+    }
+
+    /**
+     * Applies the editor design kit: header and tabs on dark glass, working areas on light cards.
+     */
+    private void applyModernLook() {
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleContextTitle(this.lblPanelTitle, this.lblHeaderInfo);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleHeaderButtons(this.cmdBackToSearch, this.cmdToEditMode, this.cmdSave,
+                this.cmdNewSmsWithEncryptionPassword);
+        this.chkEncryption.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleMainTabs(this.jTabbedPane1);
+        // tabs whose content are cards: the background shows between the cards
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.transparent(this.jPanel13, this.jPanel22, this.jPanel26, this.jPanel18,
+                this.jPanel8, this.jPanel9);
+        // wrapper panels inside the cards, e.g. in the person tab
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.transparentInsideCards(this);
+
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleTable(this.tblContents, this.jScrollPane4);
+    }
 
     private void cmdChooseCityActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdChooseCityActionPerformed
         CitySearchDialog dlg = new CitySearchDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.txtZipCode, this.txtCity);
@@ -5168,31 +5211,32 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel10;
-    private javax.swing.JPanel jPanel11;
-    private javax.swing.JPanel jPanel12;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel10;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel11;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel12;
     private javax.swing.JPanel jPanel13;
-    private javax.swing.JPanel jPanel14;
-    private javax.swing.JPanel jPanel15;
-    private javax.swing.JPanel jPanel16;
-    private javax.swing.JPanel jPanel17;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel14;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel15;
+    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel jPanel16;
+    private com.jdimension.jlawyer.client.editors.history.GlassCardPanel pnlHeaderRight;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel17;
     private javax.swing.JPanel jPanel18;
-    private javax.swing.JPanel jPanel19;
-    private javax.swing.JPanel jPanel2;
-    private javax.swing.JPanel jPanel20;
-    private javax.swing.JPanel jPanel21;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel19;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel2;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel20;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel21;
     private javax.swing.JPanel jPanel22;
     private javax.swing.JPanel jPanel23;
     private javax.swing.JPanel jPanel24;
-    private javax.swing.JPanel jPanel25;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel25;
     private javax.swing.JPanel jPanel26;
-    private javax.swing.JPanel jPanel27;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel27;
     private javax.swing.JPanel jPanel28;
-    private javax.swing.JPanel jPanel3;
-    private javax.swing.JPanel jPanel4;
-    private javax.swing.JPanel jPanel5;
-    private javax.swing.JPanel jPanel6;
-    private javax.swing.JPanel jPanel7;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel3;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel4;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel5;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel6;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel7;
     private javax.swing.JPanel jPanel8;
     private javax.swing.JPanel jPanel9;
     private javax.swing.JScrollPane jScrollPane1;
@@ -5222,8 +5266,8 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JMenuItem mnuRenameDocument;
     private javax.swing.JPanel pnlCasesForContact;
     private javax.swing.JPanel pnlRelationsForContact;
-    private javax.swing.JPanel pnlRelationsTab;
-    private javax.swing.JPanel pnlDocuments;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel pnlRelationsTab;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel pnlDocuments;
     private javax.swing.JPanel pnlInvoicesChart;
     private javax.swing.JPopupMenu popDocuments;
     private javax.swing.JPopupMenu popHeader;
@@ -5730,7 +5774,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
                 EventBroker eb = EventBroker.getInstance();
                 eb.publishEvent(new ContactUpdatedEvent(this.dto));
             }
-            this.lblHeaderInfo.setText(this.dto.toDisplayName());
+            this.setHeaderInfo();
 
             // we need to update the search tables because they pass their cached DTOs to the editors
             // without updating, they would still have the old invalid data
