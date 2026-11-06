@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.client.print.ReviewsStub;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.client.utils.DesktopDateEntry;
 import com.jdimension.jlawyer.client.utils.TableUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AppUserBean;
@@ -712,6 +713,9 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
     public ArchiveFileReviewsFindPanel() {
         initComponents();
         this.applyModernLook();
+        DesktopDateEntry.installChooser(this.txtFromDate);
+        DesktopDateEntry.installChooser(this.txtToDate);
+        this.cmdReset.setVerifyInputWhenFocusTarget(false);
         
         if (UserSettings.getInstance().isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
             this.detailsEditorClass = EditArchiveFileDetailsPanel.class.getName();
@@ -1209,6 +1213,10 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
     }//GEN-LAST:event_tblResultsMouseClicked
 
     private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
+        if (!DesktopDateEntry.checkChooser(this, this.txtFromDate, "Zeitraum von")
+                || !DesktopDateEntry.checkChooser(this, this.txtToDate, "Zeitraum bis")) {
+            return;
+        }
         // perform search here
         ThreadUtils.setWaitCursor(this);
         Date fromDate=this.txtFromDate.getDate();
@@ -1237,6 +1245,10 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
     }//GEN-LAST:event_rdAllStatusesActionPerformed
 
     private void cmdPrintActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPrintActionPerformed
+        if (!DesktopDateEntry.checkChooser(this, this.txtFromDate, "Zeitraum von")
+                || !DesktopDateEntry.checkChooser(this, this.txtToDate, "Zeitraum bis")) {
+            return;
+        }
         try {
             
             ReviewsStub printStub=this.getPrintValues();

@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
+import com.jdimension.jlawyer.client.utils.DesktopDateEntry;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.CaseAccountEntry;
@@ -705,6 +706,14 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
     }
     
     private void initialize() {
+        // The generated DateFormatter interprets an unfinished eight-digit input
+        // before it reaches getEntry(). Keep raw text until the explicit date check.
+        javax.swing.text.DefaultFormatter dateText = new javax.swing.text.DefaultFormatter();
+        dateText.setAllowsInvalid(true);
+        dateText.setOverwriteMode(false);
+        this.txtDate.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(dateText));
+        this.txtDate.setFocusLostBehavior(javax.swing.JFormattedTextField.PERSIST);
+        DesktopDateEntry.hint(this.txtDate);
         this.cmbInvoice.setRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -1160,11 +1169,16 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
      * @return the entry
      */
     public CaseAccountEntry getEntry() throws Exception {
+        String date = com.jdimension.jlawyer.client.utils.DateUtils.normalizeDesktopDay(this.txtDate.getText());
+        if (date.isEmpty()) {
+            throw new IllegalArgumentException("Bitte ein Buchungsdatum eingeben.");
+        }
+        this.txtDate.setText(date);
         if (this.entry == null) {
             this.entry = new CaseAccountEntry();
         }
         this.entry.setArchiveFileKey(this.getCaseEntry());
-        this.entry.setEntryDate(this.df.parse(this.txtDate.getText()));
+        this.entry.setEntryDate(com.jdimension.jlawyer.client.utils.DateUtils.parseDesktopDay(date));
         this.entry.setContact(this.recipientAddress);
         this.entry.setDescription(this.taDescription.getText());
         this.entry.setEarnings(BigDecimal.valueOf(((Number) txtEarnings.getValue()).doubleValue()));

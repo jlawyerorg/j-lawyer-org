@@ -666,6 +666,7 @@ import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.DesktopDateEntry;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ClaimComponent;
 import com.jdimension.jlawyer.persistence.ClaimLedger;
@@ -683,7 +684,9 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import javax.swing.DefaultCellEditor;
 import javax.swing.JOptionPane;
+import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 import org.apache.log4j.Logger;
 
@@ -751,6 +754,8 @@ public class DunningExportDialog extends javax.swing.JDialog {
         this.dunningCase = dunningCase;
         this.ledger = ledger;
         initComponents();
+        DesktopDateEntry.hint(this.txtOrderDate);
+        this.tblClaims.setToolTipText("vom / Zinsen bis: TT.MM.JJJJ oder TTMMJJJJ (vierstelliges Jahr)");
 
         this.tblClaims.setModel(new DefaultTableModel(
                 new Object[]{"", "Position", "Art", "Betrag", "Rechnungsnr.", "vom",
@@ -766,6 +771,17 @@ public class DunningExportDialog extends javax.swing.JDialog {
             }
         });
         this.tblClaims.getColumnModel().getColumn(COL_INCLUDED).setMaxWidth(30);
+        JTextField dateField = new JTextField();
+        DesktopDateEntry.hint(dateField);
+        DefaultCellEditor dateEditor = new DefaultCellEditor(dateField) {
+            @Override
+            public boolean stopCellEditing() {
+                DesktopDateEntry.normalizeCompleteDate(dateField);
+                return super.stopCellEditing();
+            }
+        };
+        this.tblClaims.getColumnModel().getColumn(COL_CLAIM_FROM).setCellEditor(dateEditor);
+        this.tblClaims.getColumnModel().getColumn(COL_INTEREST_TO).setCellEditor(dateEditor);
 
         loadHeader();
         loadComponents();
@@ -1020,12 +1036,40 @@ public class DunningExportDialog extends javax.swing.JDialog {
         return claims;
     }
 
+    private boolean checkInterestDates() {
+        DefaultTableModel model = (DefaultTableModel) this.tblClaims.getModel();
+        int[] dateColumns = {COL_CLAIM_FROM, COL_INTEREST_TO};
+        for (int row = 0; row < model.getRowCount(); row++) {
+            if (!Boolean.TRUE.equals(model.getValueAt(row, COL_INCLUDED))) {
+                continue;
+            }
+            for (int column : dateColumns) {
+                String label = column == COL_CLAIM_FROM ? "vom" : "Zinsen bis";
+                Object raw = model.getValueAt(row, column);
+                try {
+                    String normalized = com.jdimension.jlawyer.client.utils.DateUtils.normalizeDesktopDay(
+                            raw == null ? "" : raw.toString());
+                    model.setValueAt(normalized, row, column);
+                } catch (IllegalArgumentException ex) {
+                    JOptionPane.showMessageDialog(this, "Position " + (row + 1) + ", " + label + ": " + ex.getMessage(),
+                            "Ungültiges Datum", JOptionPane.WARNING_MESSAGE);
+                    this.tblClaims.changeSelection(row, column, false, false);
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     /**
      * Writes what was entered here back to the procedure.
      *
      * @return whether it could be written
      */
     private boolean writeBack() {
+        if (!DesktopDateEntry.check(this, this.txtOrderDate, "Auftragsdatum", false)) {
+            return false;
+        }
         this.dunningCase.setOrderDate(parseDate(this.txtOrderDate.getText()));
         this.dunningCase.setOffsetAmount(parseAmount(this.txtOffsetAmount.getText()));
         this.dunningCase.setSpecialEffort(this.chkSpecialEffort.isSelected());
@@ -1316,6 +1360,12 @@ public class DunningExportDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdSelectOrderDateActionPerformed
 
     private void cmdValidateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdValidateActionPerformed
+        if (this.tblClaims.isEditing()) {
+            this.tblClaims.getCellEditor().stopCellEditing();
+        }
+        if (!checkInterestDates()) {
+            return;
+        }
         this.txtClaimValue.setText(currencyFormat.format(sumOfSelected()));
 
         BigDecimal claimValue = parseAmount(this.txtClaimValue.getText());
@@ -1361,6 +1411,9 @@ public class DunningExportDialog extends javax.swing.JDialog {
     private void cmdExportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportActionPerformed
         if (this.tblClaims.isEditing()) {
             this.tblClaims.getCellEditor().stopCellEditing();
+        }
+        if (!checkInterestDates()) {
+            return;
         }
         this.txtClaimValue.setText(currencyFormat.format(sumOfSelected()));
 

@@ -666,6 +666,7 @@ import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.DesktopDateEntry;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ClaimLedger;
 import com.jdimension.jlawyer.pojo.ClaimStatement;
@@ -707,6 +708,7 @@ public class ClaimStatementDialog extends javax.swing.JDialog {
     public ClaimStatementDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
+        DesktopDateEntry.hint(this.txtKeyDate);
         this.txtKeyDate.setText(this.df.format(new Date()));
     }
 
@@ -741,6 +743,9 @@ public class ClaimStatementDialog extends javax.swing.JDialog {
      */
     private void loadStatement() {
         if (this.ledger == null || this.ledger.getId() == null) {
+            return;
+        }
+        if (!DesktopDateEntry.check(this, this.txtKeyDate, "Stichtag", true)) {
             return;
         }
 
@@ -912,6 +917,9 @@ public class ClaimStatementDialog extends javax.swing.JDialog {
         if (this.statement == null) {
             return;
         }
+        if (!DesktopDateEntry.check(this, this.txtKeyDate, "Stichtag", true)) {
+            return;
+        }
 
         JFileChooser chooser = new JFileChooser();
         chooser.setSelectedFile(new java.io.File("Forderungsaufstellung_"
@@ -935,6 +943,9 @@ public class ClaimStatementDialog extends javax.swing.JDialog {
 
     private void cmdStorePdfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdStorePdfActionPerformed
         if (this.ledger == null || this.ledger.getId() == null) {
+            return;
+        }
+        if (!DesktopDateEntry.check(this, this.txtKeyDate, "Stichtag", true)) {
             return;
         }
 

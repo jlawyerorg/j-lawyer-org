@@ -686,6 +686,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.DesktopDateEntry;
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.JTextFieldLimit;
@@ -807,6 +808,9 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         initComponents();
         this.applyModernLook();
         this.lblAge.setText("");
+        DesktopDateEntry.hint(this.txtBirthDate);
+        DesktopDateEntry.hint(this.txtDeathDate);
+        DesktopDateEntry.hint(this.txtSepaSince);
 
         if (this instanceof NewAddressPanel) {
             jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-19.png")));
@@ -1367,6 +1371,9 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
     public boolean confirmSave(String question, String tagToActivate) {
         int response = JOptionPane.showConfirmDialog(this, question, "Adresse speichern", JOptionPane.YES_NO_OPTION);
         if (response == JOptionPane.YES_OPTION) {
+            if (!checkContactDates()) {
+                return false;
+            }
             ClientSettings settings = ClientSettings.getInstance();
             EditorsRegistry.getInstance().updateStatus("Adresse wird gespeichert...");
             try {
@@ -4940,14 +4947,48 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         dlg.setVisible(true);
     }
 
+    /** Validate edited dates only, so unrelated changes never rewrite old contact dates. */
+    private boolean checkContactDates() {
+        boolean birthChanged = this.dto == null || !StringUtils.equals(
+                this.dto.getBirthDate(), this.txtBirthDate.getText());
+        boolean deathChanged = this.dto == null || !StringUtils.equals(
+                this.dto.getDateOfDeath(), this.txtDeathDate.getText());
+        boolean sepaChanged = this.dto == null || !StringUtils.equals(
+                this.dto.getSepaSince(), this.txtSepaSince.getText());
+        if (birthChanged && !DesktopDateEntry.check(
+                this, this.txtBirthDate, "Geburtsdatum", false)) {
+            return false;
+        }
+        if (deathChanged && !DesktopDateEntry.check(
+                this, this.txtDeathDate, "Sterbedatum", false)) {
+            return false;
+        }
+        if (sepaChanged && !DesktopDateEntry.check(
+                this, this.txtSepaSince, "SEPA-Mandat seit", false)) {
+            return false;
+        }
+
+        try {
+            com.jdimension.jlawyer.client.utils.DateUtils.validatePersonalDays(
+                    this.txtBirthDate.getText(), this.txtDeathDate.getText(),
+                    birthChanged, deathChanged, LocalDate.now());
+        } catch (com.jdimension.jlawyer.client.utils.DateUtils.PersonalDateException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Ungültiges Datum", JOptionPane.WARNING_MESSAGE);
+            (ex.getField() == com.jdimension.jlawyer.client.utils.DateUtils.PersonalDateField.BIRTH
+                    ? this.txtBirthDate : this.txtDeathDate).requestFocusInWindow();
+            return false;
+        }
+        updateAge();
+        return true;
+    }
+
     private void updateAge() {
         Date birth = null;
         Date death = null;
-        SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
         boolean dead = false;
         if (this.txtDeathDate.getText() != null && !("".equalsIgnoreCase(this.txtDeathDate.getText().trim()))) {
             try {
-                death = df.parse(this.txtDeathDate.getText());
+                death = com.jdimension.jlawyer.client.utils.DateUtils.parseDesktopDay(this.txtDeathDate.getText());
                 if (death.before(new Date())) {
                     dead = true;
                 }
@@ -4958,7 +4999,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         if (this.txtBirthDate.getText() != null && !("".equalsIgnoreCase(this.txtBirthDate.getText().trim()))) {
             try {
-                birth = df.parse(this.txtBirthDate.getText());
+                birth = com.jdimension.jlawyer.client.utils.DateUtils.parseDesktopDay(this.txtBirthDate.getText());
             } catch (Throwable t) {
 
             }
@@ -5701,6 +5742,10 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
     public boolean save() {
         if ((this.txtName.getText() == null || "".equals(this.txtName.getText())) && (this.txtCompany.getText() == null || "".equals(this.txtCompany.getText()))) {
             JOptionPane.showMessageDialog(this, "Es muss mindestens ein Name oder ein Firmenname angegeben werden, um eine Adresse zu speichern.", "Adressen - Gültigkeitsprüfung", JOptionPane.INFORMATION_MESSAGE);
+            return false;
+        }
+
+        if (!checkContactDates()) {
             return false;
         }
 

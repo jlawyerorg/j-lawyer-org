@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.DesktopDateEntry;
 import com.jdimension.jlawyer.persistence.EnforcementMeasure;
 import com.jdimension.jlawyer.persistence.EnforcementMeasureType;
 import com.jdimension.jlawyer.persistence.EnforcementTitle;
@@ -762,6 +763,8 @@ public class EnforcementMeasureDialog extends javax.swing.JDialog {
     public EnforcementMeasureDialog(java.awt.Dialog parent, boolean modal) {
         super(parent, modal);
         initComponents();
+        DesktopDateEntry.hint(this.txtOrderedDate);
+        DesktopDateEntry.hint(this.txtDispatchedDate);
 
         this.cmbMeasureType.addActionListener(e -> updateHint());
         this.cmbMeasureType.addActionListener(e -> updateDispatchHint());
@@ -1183,6 +1186,10 @@ public class EnforcementMeasureDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmbTitleActionPerformed
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
+        if (!DesktopDateEntry.check(this, this.txtOrderedDate, "Anordnungsdatum", true)
+                || !DesktopDateEntry.check(this, this.txtDispatchedDate, "Absendedatum", false)) {
+            return;
+        }
         EnforcementMeasureOption option = selectedOption();
         if (option == null || (!option.isAvailable() && this.edited == null)) {
             JOptionPane.showMessageDialog(this,
