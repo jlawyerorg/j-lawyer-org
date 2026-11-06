@@ -768,7 +768,8 @@ public class FoldersListPanel extends javax.swing.JPanel {
         cell.setParentFolder(null);
         cell.setSelected(true, false);
         if (unselectedIds.contains(rootFolder.getId())) {
-            cell.setSelected(false);
+            // the selection is saved already
+            cell.setSelected(false, false);
         }
         this.pnlFolders.add(cell, gbc);
 
@@ -847,7 +848,7 @@ public class FoldersListPanel extends javax.swing.JPanel {
                 childNode.setParentFolder(folder);
                 childNode.setSelected(true, false);
                 if (unselectedIds.contains(child.getId())) {
-                    childNode.setSelected(false);
+                    childNode.setSelected(false, false);
                 }
                 boolean hasChildren = child.getChildren() != null && !child.getChildren().isEmpty();
                 boolean isCollapsed = this.collapsedFolderIds.contains(child.getId());
@@ -881,13 +882,16 @@ public class FoldersListPanel extends javax.swing.JPanel {
     }
 
     public void folderRemoved(CaseFolder parent, CaseFolder removedFolder) {
+        // the folders may have been loaded again while the dialog was open
+        CaseFolder shownParent = currentFolder(this.rootFolder, parent);
+        CaseFolder shownRemovedFolder = currentFolder(this.rootFolder, removedFolder);
 
         ArrayList<String> folderIds = new ArrayList<>();
-        this.collectSubtreeIds(removedFolder, folderIds);
+        this.collectSubtreeIds(shownRemovedFolder, folderIds);
 
         this.caseFolderPanel.removeDocumentsInFolders(folderIds);
         
-        parent.getChildren().remove(removedFolder);
+        shownParent.getChildren().remove(shownRemovedFolder);
         
         // need to rebuild the popup menu with all the folders
         this.caseFolderPanel.setRootFolder(this.getRootFolder(), this.getUnselectedFolderIds());
@@ -896,6 +900,56 @@ public class FoldersListPanel extends javax.swing.JPanel {
         this.repaint();
         this.forceRelayout();
         this.renderEmptyFullState();
+    }
+
+    /**
+     * A dialog for a folder keeps the folder it was opened for, while the folders shown may have
+     * been loaded again meanwhile.
+     *
+     * @param shownRoot the root of the folders shown now
+     * @param folder a folder of the case
+     * @return the folder with the same id among the folders shown now, or the given folder if it
+     * is not shown
+     */
+    static CaseFolder currentFolder(CaseFolder shownRoot, CaseFolder folder) {
+        if (shownRoot == null || folder == null) {
+            return folder;
+        }
+        CaseFolder shown = findFolder(shownRoot, folder.getId());
+        return shown != null ? shown : folder;
+    }
+
+    /**
+     * Adds a new folder to its parent, once. The folders shown may have been loaded again while
+     * the folder was being created, maybe already with the new folder. The given parent gets the
+     * new folder too, because the caller may keep using it, e.g. an upload of a directory tree
+     * looks up the folders it has created there.
+     *
+     * @param shownRoot the root of the folders shown now
+     * @param parent the parent the folder has been created in
+     * @param newFolder the new folder
+     */
+    static void addFolder(CaseFolder shownRoot, CaseFolder parent, CaseFolder newFolder) {
+        if (!parent.getChildren().contains(newFolder)) {
+            parent.getChildren().add(newFolder);
+        }
+        List<CaseFolder> shownChildren = currentFolder(shownRoot, parent).getChildren();
+        if (!shownChildren.contains(newFolder)) {
+            shownChildren.add(newFolder);
+        }
+    }
+
+    private static CaseFolder findFolder(CaseFolder folder, String id) {
+        if (id != null && id.equals(folder.getId())) {
+            return folder;
+        }
+        for (CaseFolder child : folder.getChildren()) {
+            CaseFolder found = findFolder(child, id);
+            if (found != null) {
+                return found;
+            }
+        }
+        return null;
     }
 
     private void collectSubtreeIds(CaseFolder f, ArrayList<String> ids) {
@@ -934,8 +988,7 @@ public class FoldersListPanel extends javax.swing.JPanel {
     }
 
     public void folderAdded(CaseFolder parent, CaseFolder newFolder) {
-        
-        parent.getChildren().add(newFolder);
+        addFolder(this.rootFolder, parent, newFolder);
         this.caseFolderPanel.setRootFolder(this.getRootFolder(), this.getUnselectedFolderIds());
         this.revalidate();
         this.repaint();
@@ -952,7 +1005,7 @@ public class FoldersListPanel extends javax.swing.JPanel {
         }
     }
 
-    private ArrayList<String> getUnselectedFolderIds() {
+    ArrayList<String> getUnselectedFolderIds() {
         ArrayList<String> ids = new ArrayList<>();
         for (Component c : this.pnlFolders.getComponents()) {
             if (c instanceof FolderListCell) {
@@ -1009,7 +1062,10 @@ public class FoldersListPanel extends javax.swing.JPanel {
     }
 
     void folderUpdated(CaseFolder folder) {
-        this.caseFolderPanel.updateDocumentsInFolder(folder);
+        // the folders may have been loaded again while the dialog was open
+        CaseFolder shownFolder = currentFolder(this.rootFolder, folder);
+        shownFolder.setName(folder.getName());
+        this.caseFolderPanel.updateDocumentsInFolder(shownFolder);
         // rebuild the "move to folder" menu so renamed folders show their new name,
         // mirroring what folderAdded / folderRemoved already do
         this.caseFolderPanel.setRootFolder(this.getRootFolder(), this.getUnselectedFolderIds());
@@ -1029,6 +1085,26 @@ public class FoldersListPanel extends javax.swing.JPanel {
      */
     public void resetExpansionState() {
         this.collapsedFolderIds.clear();
+        this.applyExpansionVisibility();
+        this.forceRelayout();
+    }
+
+    /**
+     * @return the ids of the collapsed folders
+     */
+    java.util.Set<String> getCollapsedFolderIds() {
+        return new java.util.HashSet<>(this.collapsedFolderIds);
+    }
+
+    /**
+     * Collapses the given folders and expands all others, e.g. to restore the state after the
+     * folders have been loaded again.
+     *
+     * @param folderIds the ids of the folders to show collapsed
+     */
+    void setCollapsedFolderIds(java.util.Set<String> folderIds) {
+        this.collapsedFolderIds.clear();
+        this.collapsedFolderIds.addAll(folderIds);
         this.applyExpansionVisibility();
         this.forceRelayout();
     }

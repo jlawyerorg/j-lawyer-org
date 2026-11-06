@@ -720,7 +720,22 @@ import themes.colors.DefaultColorTheme;
  */
 public class ComponentUtils {
 
+    /**
+     * Shows a hint inside a password field (FlatLaf placeholder text) and as tooltip when a value
+     * is stored on the server. Stored passwords are never sent to the client, so the field stays
+     * empty and an empty field keeps the stored value.
+     *
+     * @param field the password field
+     * @param stored whether a value is stored on the server
+     */
+    public static void setStoredSecretHint(javax.swing.text.JTextComponent field, boolean stored) {
+        field.putClientProperty("JTextField.placeholderText", stored ? STORED_SECRET_HINT : null);
+        field.setToolTipText(stored ? STORED_SECRET_HINT : null);
+    }
+
     private static final Logger log = Logger.getLogger(ComponentUtils.class.getName());
+
+    private static final String STORED_SECRET_HINT = "gespeichert - leer lassen, um es beizubehalten";
 
     private static final String TAB_BASE_TITLE = "jlawyer.tabBaseTitle";
 

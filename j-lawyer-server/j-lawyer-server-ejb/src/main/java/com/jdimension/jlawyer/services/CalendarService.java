@@ -684,6 +684,7 @@ import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.server.constants.ArchiveFileConstants;
 import com.jdimension.jlawyer.server.services.settings.UserSettingsKeys;
 import com.jdimension.jlawyer.server.utils.SecurityUtils;
+import com.jdimension.jlawyer.security.CryptoProvider;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import de.jollyday.CalendarHierarchy;
 import de.jollyday.Holiday;
@@ -1492,7 +1493,12 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     @Override
     @RolesAllowed({"loginRole"})
     public List<CalendarSetup> getAllCalendarSetups() {
-        return this.calendarSetups.findAll();
+        // cloud passwords are write-only, the server reads them itself when syncing
+        List<CalendarSetup> result = new ArrayList<>();
+        for (CalendarSetup cs : this.calendarSetups.findAll()) {
+            result.add(cs.copyWithoutPassword());
+        }
+        return result;
     }
 
     @Override
@@ -1504,7 +1510,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
             for (CalendarAccess ca : acc) {
                 CalendarSetup cs = this.calendarSetups.find(ca.getCalendarId());
                 if (cs != null) {
-                    returnList.add(cs);
+                    returnList.add(cs.copyWithoutPassword());
                 }
             }
         }
@@ -1525,14 +1531,21 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         } catch (Exception ex) {
             log.error("Could not add calendar privilege for calendar setup " + csId + " to user " + principalId, ex);
         }
-        return this.calendarSetups.find(csId);
+        return this.calendarSetups.find(csId).copyWithoutPassword();
     }
 
     @Override
     @RolesAllowed({"adminRole"})
     public CalendarSetup updateCalendarSetup(CalendarSetup cs) {
+        if (ServerStringUtils.isEmpty(cs.getCloudPassword())) {
+            // passwords are write-only: an empty password keeps the stored one
+            CalendarSetup stored = this.calendarSetups.find(cs.getId());
+            if (stored != null) {
+                cs.setCloudPassword(stored.getCloudPassword());
+            }
+        }
         this.calendarSetups.edit(cs);
-        return this.calendarSetups.find(cs.getId());
+        return this.calendarSetups.find(cs.getId()).copyWithoutPassword();
     }
 
     @Override
@@ -1709,6 +1722,25 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
             nc.setSubpathPrefix(path);
         }
         return nc.getAllCalendars();
+    }
+
+    private static String trimmed(String s) {
+        return s == null ? "" : s.trim();
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public List listCalendarsForSetup(String setupId, String host, boolean ssl, int port, String user, String password, String path) throws Exception {
+        String pwd = password;
+        if (ServerStringUtils.isEmpty(pwd) && setupId != null) {
+            CalendarSetup stored = this.calendarSetups.find(setupId);
+            // the stored password is only used for the stored server and user - otherwise it could be sent anywhere
+            if (stored != null && !ServerStringUtils.isEmpty(stored.getCloudPassword())
+                    && trimmed(host).equals(trimmed(stored.getCloudHost())) && trimmed(user).equals(trimmed(stored.getCloudUser()))) {
+                pwd = CryptoProvider.newCrypto().decrypt(stored.getCloudPassword());
+            }
+        }
+        return this.listCalendars(host, ssl, port, user, pwd, path);
     }
 
     @Override

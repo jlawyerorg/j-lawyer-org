@@ -699,19 +699,19 @@ public interface ArchiveFileBeanFacadeLocal {
     int count();
 
     /**
-     * Returns one page of cases restricted to {@code allowedIds}, optionally filtered by
+     * Returns one page of the cases visible to members of {@code groupIds}, optionally filtered by
      * archived state and a case-insensitive search term (name, file number, reason, subject
      * field, lawyer), ordered by last change descending.
      *
-     * @param allowedIds the case ids the caller may see (ACL pre-filtered); empty ⇒ no results
+     * @param groupIds   the caller's group ids; visibility as in SecurityUtils.getAllowedCasesForUser
      * @param search     search term, or {@code null}/blank for no text filter
      * @param archived   {@code true}/{@code false} to filter by archived state, or {@code null} for both
      * @param offset     0-based row offset
      * @param limit      page size (clamped to 1..200; ≤0 defaults to 50)
      */
-    List<ArchiveFileBean> findOverviewPage(Collection<String> allowedIds, String search, Boolean archived, int offset, int limit);
+    List<ArchiveFileBean> findOverviewPage(Collection<String> groupIds, String search, Boolean archived, int offset, int limit);
 
     /** Total number of cases matching {@link #findOverviewPage} (ignoring offset/limit). */
-    long countOverview(Collection<String> allowedIds, String search, Boolean archived);
+    long countOverview(Collection<String> groupIds, String search, Boolean archived);
 
 }

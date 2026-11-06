@@ -716,6 +716,8 @@ public interface CalendarServiceLocal {
 
     List listCalendars(String host, boolean ssl, int port, String user, String password, String path) throws Exception;
 
+    List listCalendarsForSetup(String setupId, String host, boolean ssl, int port, String user, String password, String path) throws Exception;
+
     void runFullCalendarSync();
 
     CalendarEntryTemplate addCalendarEntryTemplate(CalendarEntryTemplate template) throws Exception;

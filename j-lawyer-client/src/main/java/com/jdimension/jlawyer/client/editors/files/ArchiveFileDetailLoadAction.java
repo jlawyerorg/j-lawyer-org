@@ -995,6 +995,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
                 ip.setEntry(this.caseDto, inv, addressesForCase);
                 this.invoicesPanel.add(ip);
             }
+            SwingUtilities.invokeLater(() -> this.owner.applyInvoiceSortAndFilter());
             this.claimLedgersPanel.removeAll();
             for(ClaimLedger cl: ledgers) {
                 ClaimLedgerEntryPanel clp=new ClaimLedgerEntryPanel(this.owner);

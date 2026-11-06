@@ -1973,6 +1973,8 @@
     "empty": "Empty bin",
     "retention": "auto-delete after",
     "days": "days",
+    "retentionDisabled": "no automatic deletion",
+    "retentionHint": "0 = no automatic deletion",
     "emptyState": "The recycle bin is empty.",
     "restore": "Restore",
     "deleteForever": "Delete permanently",

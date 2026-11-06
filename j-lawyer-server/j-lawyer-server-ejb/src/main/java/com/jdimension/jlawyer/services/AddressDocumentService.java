@@ -881,7 +881,9 @@ public class AddressDocumentService implements AddressDocumentServiceRemote, Add
         }
 
         String localBaseDir = getBaseDir();
-        String src = localBaseDir + "templates" + templateFolder + System.getProperty("file.separator") + templateName;
+        // template folder and name come from the caller - they must not lead out of the template directory
+        String src = localBaseDir + "templates" + templateFolder + System.getProperty("file.separator") + ServerFileUtils.requireSimpleName(templateName);
+        ServerFileUtils.requireWithin(localBaseDir + "templates", src);
 
         String ext = "";
         try {
@@ -909,13 +911,13 @@ public class AddressDocumentService implements AddressDocumentServiceRemote, Add
             ServerFileUtils.copyFile(src, dstId);
         } else if (letterHead.toLowerCase().endsWith(".png") || letterHead.toLowerCase().endsWith(".jpg") || letterHead.toLowerCase().endsWith(".jpeg")) {
             ServerFileUtils.copyFile(src, dstId);
-            String srcHead = localBaseDir + "letterheads" + System.getProperty("file.separator") + letterHead;
+            String srcHead = localBaseDir + "letterheads" + System.getProperty("file.separator") + ServerFileUtils.requireSimpleName(letterHead);
             if (!(new File(srcHead).exists())) {
                 throw new Exception("Briefkopf " + letterHead + " existiert nicht!");
             }
             LibreOfficeAccess.applyHeaderGraphic(srcHead, dstId, templateName);
         } else {
-            String srcHead = localBaseDir + "letterheads" + System.getProperty("file.separator") + letterHead;
+            String srcHead = localBaseDir + "letterheads" + System.getProperty("file.separator") + ServerFileUtils.requireSimpleName(letterHead);
             ServerFileUtils.copyFile(srcHead, dstId);
             if (!(new File(srcHead).exists())) {
                 throw new Exception("Briefkopf " + letterHead + " existiert nicht!");
@@ -1069,7 +1071,8 @@ public class AddressDocumentService implements AddressDocumentServiceRemote, Add
             }
         } else {
             File byName = new File(dst + db.getName());
-            if (byName.exists() && !byName.delete()) {
+            // legacy files were stored under their name - a name with path elements cannot be one of them
+            if (ServerFileUtils.isSimpleName(db.getName()) && byName.exists() && !byName.delete()) {
                 log.error("Dokument " + byName.getAbsolutePath() + " konnte nicht gelöscht werden!");
             }
         }

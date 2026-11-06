@@ -927,7 +927,18 @@ public class CalculationPlugin implements Comparable {
     @Override
     public int compareTo(Object o) {
         if (o instanceof CalculationPlugin) {
-            return this.getName().compareTo(((CalculationPlugin) o).getName());
+            String name1 = this.getName();
+            String name2 = ((CalculationPlugin) o).getName();
+            if (name1 == null && name2 == null) {
+                return 0;
+            }
+            if (name1 == null) {
+                return -1;
+            }
+            if (name2 == null) {
+                return 1;
+            }
+            return name1.compareTo(name2);
         } else {
             return -1;
         }

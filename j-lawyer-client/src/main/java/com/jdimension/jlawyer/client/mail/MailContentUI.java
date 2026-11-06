@@ -764,6 +764,7 @@ import themes.colors.DefaultColorTheme;
 public class MailContentUI extends javax.swing.JPanel implements HyperlinkListener, AssistantFlowAdapter {
 
     private static final Logger log = Logger.getLogger(MailContentUI.class.getName());
+    private static final String WHITELIST_LINK = "jlawyer://addtowhitelist";
     private static final String HTML_WARNING = "<html><head>\n"
             + "    <style>\n"
             + "\n"
@@ -796,7 +797,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             + "    </style>\n"
             + "  </head><body><p>&nbsp;</p><p align=\"center\"><font color=\"#DE313B\"><b>HTML-Inhalte werden zum Schutz vor Spam erst nach Best&auml;tigung angezeigt.<br/>Der Absender dieser E-Mail wird dann permanent als vertrauensw&uuml;rdig eingestuft.</b></font></p><p>&nbsp;</p><p align=\"center\">"
             + ""
-            + "<a href=\"jlawyer://addtowhitelist\" class=\"myButton\">Absender ist vertrauenswürdig</a></p>\n"
+            + "<a href=\"" + WHITELIST_LINK + "\" class=\"myButton\">Absender ist vertrauenswürdig</a></p>\n"
             + "\n"
             + "        "
             + "</body></html>";
@@ -903,8 +904,11 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
                                     final String hrefValue = href;
                                     SwingUtilities.invokeLater(() -> {
-                                        if (hrefValue.contains("jlawyer://addtowhitelist")) {
-                                            showHtml();
+                                        if (WHITELIST_LINK.equals(hrefValue.trim())) {
+                                            // only the button of the warning page, not a link within a mail
+                                            if (HTML_WARNING.equals(body)) {
+                                                showHtml();
+                                            }
                                         } else if (hrefValue.toLowerCase().startsWith("mailto:")) {
                                             SendEmailFrame dlg = new SendEmailFrame(false);
                                             FrameUtils.centerFrame(dlg, null);
@@ -916,7 +920,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                                             EditorsRegistry.getInstance().registerFrame(dlg);
                                             dlg.setVisible(true);
                                         } else {
-                                            DesktopUtils.openBrowser(hrefValue);
+                                            DesktopUtils.openExternalLink(hrefValue);
                                         }
                                     });
                                 };
@@ -1171,6 +1175,10 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
     }
 
     private void setBody(String b, String mimeType) {
+        if (b != null && mimeType != null && mimeType.toLowerCase().startsWith(ContentTypes.TEXT_HTML) && !HTML_WARNING.equals(b)) {
+            b = HtmlSanitizer.sanitize(b);
+        }
+        final String content = b;
         this.body = b;
         this.contentType = mimeType;
         Platform.setImplicitExit(false);
@@ -1178,7 +1186,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             try {
                 WebViewRegister reg = WebViewRegister.getInstance();
                 WebView webView1 = reg.get(webViewId);
-                webView1.getEngine().loadContent(b, mimeType);
+                webView1.getEngine().loadContent(content, mimeType);
             } catch (Throwable t) {
                 log.error("Unable to display mail content", t);
             }
@@ -1430,15 +1438,9 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
                 html = html.replaceAll("font-size:.{1,7}pt", "font-size:13pt");
 
-                // skip HTML warning for document previews (no folder) - the file is already saved in the case
-                boolean warn = msg.getFolder() != null && UserSettings.getInstance().getSettingAsBoolean(UserSettings.CONF_MAIL_WARNSENDERUNKNOWN, true);
-                if (warn) {
-                    ClientSettings s = ClientSettings.getInstance();
-                    String whitelist = s.getConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, "");
-                    int index = whitelist.indexOf(getFromAddress(lblFrom.getText(), msg));
-                    if (index > -1) {
-                        warn = false;
-                    }
+                boolean warn = UserSettings.getInstance().getSettingAsBoolean(UserSettings.CONF_MAIL_WARNSENDERUNKNOWN, true);
+                if (warn && isWhitelisted(getFromAddress(lblFrom.getText(), msg))) {
+                    warn = false;
                 }
                 if (!warn) {
                     contentUI.setBody(html, ContentTypes.TEXT_HTML);
@@ -1483,13 +1485,8 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 }
 
                 boolean warn = UserSettings.getInstance().getSettingAsBoolean(UserSettings.CONF_MAIL_WARNSENDERUNKNOWN, true);
-                if (warn) {
-                    ClientSettings s = ClientSettings.getInstance();
-                    String whitelist = s.getConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, "");
-                    int index = whitelist.indexOf(getFromAddress(lblFrom.getText(), copiedMsg));
-                    if (index > -1) {
-                        warn = false;
-                    }
+                if (warn && isWhitelisted(getFromAddress(lblFrom.getText(), copiedMsg))) {
+                    warn = false;
                 }
                 if (!warn) {
                     contentUI.setBody(body, ContentTypes.TEXT_HTML);
@@ -1637,13 +1634,8 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             contentUI.setContentType(ContentTypes.TEXT_HTML);
 
             boolean warn = UserSettings.getInstance().getSettingAsBoolean(UserSettings.CONF_MAIL_WARNSENDERUNKNOWN, true);
-            if (warn && msg.getFromEmail() != null) {
-                ClientSettings s = ClientSettings.getInstance();
-                String whitelist = s.getConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, "");
-                int index = whitelist.indexOf(msg.getFromEmail());
-                if (index > -1) {
-                    warn = false;
-                }
+            if (warn && isWhitelisted(msg.getFromEmail())) {
+                warn = false;
             }
             if (!warn) {
                 contentUI.setBody(htmlContent, ContentTypes.TEXT_HTML);
@@ -2095,7 +2087,8 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
     }//GEN-LAST:event_lstAttachmentsMouseReleased
 
     private void lstAttachmentsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstAttachmentsMouseClicked
-        if (evt.getClickCount() == 2 && this.lstAttachments.getSelectedValue() != null) {
+        // on macOS, Control+click opens the context menu - it must not open the attachment
+        if (evt.getClickCount() == 2 && evt.getButton() == MouseEvent.BUTTON1 && !(SystemUtils.isMacOs() && evt.isControlDown()) && this.lstAttachments.getSelectedValue() != null) {
             try {
                 byte[] data = null;
                 if (this.emlMsgContainer != null && this.emlMsgContainer.isServerBased()) {
@@ -2437,6 +2430,55 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         return whiteListEntry;
     }
 
+    /**
+     * @param sender the sender address, optionally with a display name ("Name &lt;a@b.de&gt;")
+     * @return true if the sender is on the list of trusted senders (exact address, ignoring case)
+     */
+    static boolean isWhitelisted(String sender) {
+        String whitelist = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, "");
+        return isWhitelisted(whitelist, sender);
+    }
+
+    static boolean isWhitelisted(String whitelist, String sender) {
+        String address = normalizeAddress(sender);
+        if (address == null || whitelist == null) {
+            return false;
+        }
+        for (String entry : whitelist.split(",")) {
+            String e = entry.trim();
+            if (e.startsWith("{")) {
+                e = e.substring(1);
+            }
+            if (e.endsWith("}")) {
+                e = e.substring(0, e.length() - 1);
+            }
+            if (address.equals(normalizeAddress(e))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @param s an address, optionally with a display name
+     * @return the bare address in lower case, or null if there is none
+     */
+    static String normalizeAddress(String s) {
+        if (s == null) {
+            return null;
+        }
+        String a = s.trim();
+        int open = a.lastIndexOf('<');
+        int close = a.lastIndexOf('>');
+        if (open > -1 && close > open) {
+            a = a.substring(open + 1, close).trim();
+        }
+        if (a.isEmpty()) {
+            return null;
+        }
+        return a.toLowerCase(java.util.Locale.ROOT);
+    }
+
     private void showHtml() {
         this.setBody(this.cachedHtml, ContentTypes.TEXT_HTML);
         ClientSettings s = ClientSettings.getInstance();
@@ -2499,7 +2541,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 EditorsRegistry.getInstance().registerFrame(dlg);
                 dlg.setVisible(true);
             } else {
-                DesktopUtils.openBrowser(url);
+                DesktopUtils.openExternalLink(url);
             }
         }
 
@@ -2873,12 +2915,8 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
                 boolean warn = mailContentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)
                         && UserSettings.getInstance().getSettingAsBoolean(UserSettings.CONF_MAIL_WARNSENDERUNKNOWN, true);
-                if (warn && finalDto.getFrom() != null) {
-                    ClientSettings s = ClientSettings.getInstance();
-                    String whitelist = s.getConfiguration(ClientSettings.CONF_MAIL_HTMLWHITELIST, "");
-                    if (whitelist.indexOf(finalDto.getFrom()) > -1) {
-                        warn = false;
-                    }
+                if (warn && isWhitelisted(finalDto.getFrom())) {
+                    warn = false;
                 }
                 if (!warn) {
                     this.setBody(mailBody, mailContentType);

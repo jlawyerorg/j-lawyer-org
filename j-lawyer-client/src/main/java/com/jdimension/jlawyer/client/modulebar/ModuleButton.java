@@ -678,13 +678,22 @@ import com.jdimension.jlawyer.client.events.ScannerStatusEvent;
 import com.jdimension.jlawyer.server.modules.ModuleMetadata;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.RenderingHints;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import javax.swing.Icon;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import org.apache.log4j.Logger;
-import themes.colors.DefaultColorTheme;
 
 /**
+ * One module entry of the dark sidebar: icon, name and an optional counter badge. Hover and the
+ * active state are shown as an animated, rounded "pill"; the active module also gets a green
+ * marker on the left. In collapsed mode only the icon is shown and the badge becomes a dot.
  *
  * @author jens
  */
@@ -692,30 +701,45 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
 
     private static final Logger log = Logger.getLogger(ModuleButton.class.getName());
 
+    static final int ICON_SIZE = 24;
+    private static final int PILL_INSET = 4;
+    private static final int PILL_ARC = 12;
+    private static final int MARKER_WIDTH = 3;
+    private static final int ANIMATION_STEP_MS = 15;
+    private static final float HOVER_STEP = ANIMATION_STEP_MS / 120f;
+    private static final float ACTIVE_STEP = ANIMATION_STEP_MS / 180f;
+
     private ModuleMetadata module = null;
-
-    private Color defaultBackColor=Color.GRAY;
-
     private String editorClass = null;
-
     private Icon icon = null;
     private Icon rollOverIcon = null;
-    
-    private String indicatorValue="";
-    protected boolean resetIndicatorOnClick=false;
+    private Icon sidebarIcon = null;
+    private Icon sidebarActiveIcon = null;
+    private String indicatorValue = "";
+    protected boolean resetIndicatorOnClick = false;
     private java.util.HashMap<Integer, Integer> eventTypeCounts = new java.util.HashMap<>();
+
+    private boolean hover = false;
+    private boolean active = false;
+    private boolean collapsed = false;
+    private float hoverAlpha = 0f;
+    private float activeAlpha = 0f;
+    private final Timer animator;
+
+    // badge state for the collapsed mode: 0 = none, 1 = seen, 2 = new
+    private int badgeState = 0;
 
     /**
      * Creates new form ModuleButton
+     *
      * @param m
      */
     public ModuleButton(ModuleMetadata m) {
         initComponents();
-        this.defaultBackColor=this.getBackground();
+        this.setOpaque(false);
         this.module = m;
-        this.resetIndicatorOnClick=m.isResetIndicatorOnClick();
-        
-        
+        this.resetIndicatorOnClick = m.isResetIndicatorOnClick();
+
         if (m.getStatusEventType() > 0) {
             EventBroker b = EventBroker.getInstance();
             b.subscribeConsumer(this, m.getStatusEventType());
@@ -726,26 +750,24 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
         }
 
         this.editorClass = m.getEditorClass();
-
         this.icon = m.getDefaultIcon();
         this.rollOverIcon = m.getRolloverIcon();
-
-        this.iconButton.setIcon(this.icon);
+        this.sidebarIcon = new SidebarIcon(this.icon, SidebarColors.TEXT, ICON_SIZE);
+        this.sidebarActiveIcon = new SidebarIcon(this.icon, SidebarColors.ACCENT, ICON_SIZE);
+        this.iconButton.setIcon(this.sidebarIcon);
 
         boolean mod = m.getModuleName().length() > 0;
         boolean ed = m.getEditorName().length() > 0;
-
         if (mod && ed) {
-            setText("<html><b>" + m.getEditorName() + "</b></html>");
+            setText(m.getEditorName());
         } else if (mod) {
-            setText("<html><b>" + m.getModuleName() + "</b></html>");
+            setText(m.getModuleName());
         } else if (ed) {
-            setText("<html><b>" + m.getEditorName() + "</b></html>");
+            setText(m.getEditorName());
         } else {
             setText("*");
         }
-
-        if(m.getHotKey()!=null) {
+        if (m.getHotKey() != null) {
             setToolTipText("<html>" + m.getFullName() + "<br/>Tastenk&uuml;rzel: <b>[" + m.getHotKeyName() + "]</b></html>");
         } else {
             setToolTipText(m.getFullName());
@@ -753,8 +775,31 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
 
         this.lblIndicator.setText("");
         this.lblIndicator.setIcon(null);
+        this.lblModuleName.setForeground(SidebarColors.TEXT_INACTIVE);
 
+        this.animator = new Timer(ANIMATION_STEP_MS, e -> this.animate());
 
+        // hover and click also on the gaps between the child components
+        MouseAdapter panelMouse = new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                setHover(true);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                updateHoverFromPointer(e);
+            }
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (SwingUtilities.isLeftMouseButton(e)) {
+                    actionPerformed();
+                }
+            }
+        };
+        this.addMouseListener(panelMouse);
+        this.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
     }
 
     public void setText(String text) {
@@ -773,6 +818,128 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
     }
 
     /**
+     * @return the editor class this button opens, may be null
+     */
+    public String getEditorClass() {
+        return this.editorClass;
+    }
+
+    /**
+     * Marks this module as the active one (or not), with a short fade animation.
+     *
+     * @param active true for the active module
+     */
+    public void setActive(boolean active) {
+        if (this.active == active) {
+            return;
+        }
+        this.active = active;
+        this.iconButton.setIcon(active ? this.sidebarActiveIcon : this.sidebarIcon);
+        this.lblModuleName.setForeground(active ? SidebarColors.TEXT : SidebarColors.TEXT_INACTIVE);
+        this.animator.start();
+    }
+
+    public boolean isActive() {
+        return this.active;
+    }
+
+    /**
+     * Switches between the full entry and the icon-only entry.
+     *
+     * @param collapsed true for icon only
+     */
+    public void setCollapsed(boolean collapsed) {
+        this.collapsed = collapsed;
+        this.lblModuleName.setVisible(!collapsed);
+        this.lblIndicator.setVisible(!collapsed);
+        this.revalidate();
+        this.repaint();
+    }
+
+    private void setHover(boolean hover) {
+        if (this.hover == hover) {
+            return;
+        }
+        this.hover = hover;
+        this.animator.start();
+    }
+
+    /**
+     * Ends the hover state only if the pointer really left this entry - moving between the icon,
+     * the label and the badge must not flicker.
+     */
+    private void updateHoverFromPointer(MouseEvent e) {
+        Point p = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), this);
+        this.setHover(p.x >= 0 && p.y >= 0 && p.x < this.getWidth() && p.y < this.getHeight());
+    }
+
+    private void animate() {
+        float hoverTarget = this.hover ? 1f : 0f;
+        float activeTarget = this.active ? 1f : 0f;
+        this.hoverAlpha = approach(this.hoverAlpha, hoverTarget, HOVER_STEP);
+        this.activeAlpha = approach(this.activeAlpha, activeTarget, ACTIVE_STEP);
+        if (this.hoverAlpha == hoverTarget && this.activeAlpha == activeTarget) {
+            this.animator.stop();
+        }
+        this.repaint();
+    }
+
+    private static float approach(float value, float target, float step) {
+        if (value < target) {
+            return Math.min(target, value + step);
+        }
+        return Math.max(target, value - step);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        Graphics2D g2 = (Graphics2D) g.create();
+        try {
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            int x = PILL_INSET;
+            int y = 2;
+            int w = this.getWidth() - 2 * PILL_INSET;
+            int h = this.getHeight() - 4;
+            if (this.hoverAlpha > 0f) {
+                g2.setColor(SidebarColors.fade(SidebarColors.HOVER, this.hoverAlpha));
+                g2.fillRoundRect(x, y, w, h, PILL_ARC, PILL_ARC);
+            }
+            if (this.activeAlpha > 0f) {
+                g2.setColor(SidebarColors.fade(SidebarColors.ACTIVE, this.activeAlpha));
+                g2.fillRoundRect(x, y, w, h, PILL_ARC, PILL_ARC);
+                // the marker grows from the middle
+                int mh = Math.round((h - 8) * this.activeAlpha);
+                g2.setColor(SidebarColors.fade(SidebarColors.ACCENT, this.activeAlpha));
+                g2.fillRoundRect(0, y + (h - mh) / 2, MARKER_WIDTH, mh, MARKER_WIDTH, MARKER_WIDTH);
+            }
+        } finally {
+            g2.dispose();
+        }
+        super.paintComponent(g);
+    }
+
+    @Override
+    protected void paintChildren(Graphics g) {
+        super.paintChildren(g);
+        if (this.collapsed && this.badgeState > 0) {
+            // badge as a dot at the upper right corner of the icon
+            Graphics2D g2 = (Graphics2D) g.create();
+            try {
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                int d = 9;
+                int cx = this.iconButton.getX() + this.iconButton.getWidth() - d + 2;
+                int cy = this.iconButton.getY() + (this.iconButton.getHeight() - ICON_SIZE) / 2 - 2;
+                g2.setColor(SidebarColors.BACKGROUND_TOP);
+                g2.fillOval(cx - 1, cy - 1, d + 2, d + 2);
+                g2.setColor(this.badgeState == 2 ? SidebarColors.BADGE_NEW : Color.WHITE);
+                g2.fillOval(cx, cy, d, d);
+            } finally {
+                g2.dispose();
+            }
+        }
+    }
+
+    /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
      * regenerated by the Form Editor.
@@ -788,12 +955,16 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
 
         jLabel2.setText("jLabel2");
 
+        setOpaque(false);
+
         iconButton.setFont(iconButton.getFont().deriveFont(iconButton.getFont().getStyle() & ~java.awt.Font.BOLD, iconButton.getFont().getSize()-2));
         iconButton.setForeground(new java.awt.Color(255, 255, 255));
         iconButton.setBorder(null);
         iconButton.setBorderPainted(false);
         iconButton.setContentAreaFilled(false);
         iconButton.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        iconButton.setFocusPainted(false);
+        iconButton.setOpaque(false);
         iconButton.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseExited(java.awt.event.MouseEvent evt) {
                 iconButtonMouseExited(evt);
@@ -809,6 +980,7 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
         });
 
         lblModuleName.setFont(lblModuleName.getFont().deriveFont(lblModuleName.getFont().getStyle() | java.awt.Font.BOLD));
+        lblModuleName.setForeground(new java.awt.Color(255, 255, 255));
         lblModuleName.setText("jLabel1");
         lblModuleName.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         lblModuleName.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -824,9 +996,10 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
         });
 
         lblIndicator.setFont(lblIndicator.getFont().deriveFont(lblIndicator.getFont().getStyle() | java.awt.Font.BOLD, lblIndicator.getFont().getSize()-2));
-        lblIndicator.setForeground(new java.awt.Color(102, 102, 102));
+        lblIndicator.setForeground(new java.awt.Color(255, 255, 255));
         lblIndicator.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
         lblIndicator.setText("3");
+        lblIndicator.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         lblIndicator.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lblIndicatorMouseClicked(evt);
@@ -844,40 +1017,40 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(10, 10, 10)
+                .addGap(16, 16, 16)
                 .addComponent(iconButton)
-                .addGap(5, 5, 5)
-                .addComponent(lblModuleName)
+                .addGap(10, 10, 10)
+                .addComponent(lblModuleName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGap(5, 5, 5)
                 .addComponent(lblIndicator)
-                .addGap(5, 5, 5))
+                .addGap(10, 10, 10))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(lblModuleName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(iconButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(lblIndicator, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(6, 6, 6)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                    .addComponent(lblModuleName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(iconButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lblIndicator, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(6, 6, 6))
         );
     }// </editor-fold>//GEN-END:initComponents
 
     private void lblModuleNameMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblModuleNameMouseEntered
-        this.setBackground(this.defaultBackColor.brighter().brighter());
-        this.iconButton.setIcon(this.getRollOverIcon());
+        this.setHover(true);
     }//GEN-LAST:event_lblModuleNameMouseEntered
 
     private void lblModuleNameMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblModuleNameMouseExited
-        this.setBackground(this.defaultBackColor);
-        this.iconButton.setIcon(this.getIcon());
+        this.updateHoverFromPointer(evt);
     }//GEN-LAST:event_lblModuleNameMouseExited
 
     private void iconButtonMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_iconButtonMouseEntered
-        this.setBackground(this.defaultBackColor.brighter().brighter());
-        this.iconButton.setIcon(this.getRollOverIcon());
+        this.setHover(true);
     }//GEN-LAST:event_iconButtonMouseEntered
 
     private void iconButtonMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_iconButtonMouseExited
-        this.setBackground(this.defaultBackColor);
-        this.iconButton.setIcon(this.getIcon());
+        this.updateHoverFromPointer(evt);
     }//GEN-LAST:event_iconButtonMouseExited
 
     private void iconButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_iconButtonActionPerformed
@@ -893,13 +1066,11 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
     }//GEN-LAST:event_lblIndicatorMouseClicked
 
     private void lblIndicatorMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblIndicatorMouseEntered
-        this.setBackground(this.defaultBackColor.brighter().brighter());
-        this.iconButton.setIcon(this.getRollOverIcon());
+        this.setHover(true);
     }//GEN-LAST:event_lblIndicatorMouseEntered
 
     private void lblIndicatorMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblIndicatorMouseExited
-        this.setBackground(this.defaultBackColor);
-        this.iconButton.setIcon(this.getIcon());
+        this.updateHoverFromPointer(evt);
     }//GEN-LAST:event_lblIndicatorMouseExited
 
     public void actionPerformed() {
@@ -910,9 +1081,7 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
                 if (editor instanceof PopulateOptionsEditor) {
                     ((PopulateOptionsEditor) editor).populateOptions();
                 }
-
                 EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
-
             } catch (Exception ex) {
                 log.error("Error creating editor from class " + editorClass, ex);
                 JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.loadingeditor") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.ERROR_MESSAGE);
@@ -920,18 +1089,15 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
             try {
                 this.updateIndicator(Integer.parseInt(this.indicatorValue));
             } catch (Throwable t) {
-                
+                // no numeric indicator
             }
-            
-            if(this.resetIndicatorOnClick)
+            if (this.resetIndicatorOnClick) {
                 this.updateIndicator(0);
-            
-            setForeground(this.defaultBackColor);
+            }
         } else {
             EditorsRegistry.getInstance().setMainEditorsPaneView(null);
         }
     }
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton iconButton;
@@ -952,6 +1118,9 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
      */
     public void setIcon(Icon icon) {
         this.icon = icon;
+        this.sidebarIcon = new SidebarIcon(icon, SidebarColors.TEXT, ICON_SIZE);
+        this.sidebarActiveIcon = new SidebarIcon(icon, SidebarColors.ACCENT, ICON_SIZE);
+        this.iconButton.setIcon(this.active ? this.sidebarActiveIcon : this.sidebarIcon);
     }
 
     /**
@@ -998,6 +1167,7 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
         } else if (e instanceof MissingCalendarEntriesEvent) {
             count = ((MissingCalendarEntriesEvent) e).getCasesWithoutEvent();
         }
+
         eventTypeCounts.put(e.getType(), count);
         int total = 0;
         for (int c : eventTypeCounts.values()) {
@@ -1007,7 +1177,6 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
     }
 
     private void updateIndicator(int incomingValue) {
-
         SwingUtilities.invokeLater(() -> {
             String currentValue = indicatorValue;
             int cVal = 0;
@@ -1016,18 +1185,21 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
             } catch (Throwable t) {
                 // cVal remains 0
             }
+
             lblIndicator.setText("");
             if (incomingValue > cVal) {
-                lblIndicator.setIcon(new BadgeIcon(String.valueOf(incomingValue), DefaultColorTheme.COLOR_LOGO_RED, lblIndicator.getFont()));
-                setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
+                lblIndicator.setIcon(new BadgeIcon(String.valueOf(incomingValue), SidebarColors.BADGE_NEW, lblIndicator.getFont()));
+                this.badgeState = 2;
             } else if (incomingValue == 0) {
                 lblIndicator.setIcon(null);
+                this.badgeState = 0;
             } else {
-                lblIndicator.setIcon(new BadgeIcon(String.valueOf(incomingValue), DefaultColorTheme.COLOR_LOGO_BLUE, lblIndicator.getFont()));
+                lblIndicator.setIcon(new BadgeIcon(String.valueOf(incomingValue), SidebarColors.BADGE_SEEN, lblIndicator.getFont()));
+                this.badgeState = 1;
             }
             indicatorValue = "" + incomingValue;
+            this.repaint();
         });
-
     }
 
     /**
@@ -1043,5 +1215,4 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
     public void setResetIndicatorOnClick(boolean resetIndicatorOnClick) {
         this.resetIndicatorOnClick = resetIndicatorOnClick;
     }
-
 }

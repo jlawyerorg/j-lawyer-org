@@ -664,7 +664,9 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.pojo.DataBucket;
+import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
+import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
 import org.jlawyer.databucket.DataBucketUtils;
 
@@ -675,18 +677,13 @@ import org.jlawyer.databucket.DataBucketUtils;
 @Stateless
 public class DataBucketLoader implements DataBucketLoaderRemote, DataBucketLoaderLocal {
 
+    @Resource
+    private SessionContext context;
+
     @Override
     @RolesAllowed({"loginRole"})
     public DataBucket nextBucket(DataBucket bucket) throws Exception {
-        DataBucket next = bucket.next();
-        if (next != null) {
-            DataBucketUtils.fillBucket(next);
-            if (next.isLast()) {
-                DataBucketUtils.removeLocalFile(next);
-            }
-        }
-
-        return next;
+        return DataBucketUtils.nextBucket(bucket, context.getCallerPrincipal().getName());
     }
 
 }

@@ -147,6 +147,7 @@
                                               <Component id="jLabel14" min="-2" max="-2" attributes="0"/>
                                               <EmptySpace min="-2" pref="1" max="-2" attributes="0"/>
                                           </Group>
+                                          <Component id="chkNoEncryption" alignment="0" max="32767" attributes="0"/>
                                           <Component id="txtDbPort" max="32767" attributes="0"/>
                                           <Component id="txtDbName" alignment="1" max="32767" attributes="0"/>
                                       </Group>
@@ -217,6 +218,8 @@
                               <Component id="jLabel13" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                       </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="chkNoEncryption" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="cmdCancel" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -431,6 +434,14 @@
                 </Property>
                 <Property name="toolTipText" type="java.lang.String" value="bei Angabe eines Passwortes wird die Datensicherung verschl&#xfc;sselt und passwortgesch&#xfc;tzt"/>
               </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="chkNoEncryption">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Datensicherung nicht verschl&#xfc;sseln"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="chkNoEncryptionActionPerformed"/>
+              </Events>
             </Component>
             <Component class="javax.swing.JTextField" name="txtDbHost">
             </Component>

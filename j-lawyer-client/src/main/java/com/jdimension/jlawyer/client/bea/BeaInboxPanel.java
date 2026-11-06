@@ -677,8 +677,6 @@ import com.jdimension.jlawyer.client.editors.files.BulkSaveDialog;
 import com.jdimension.jlawyer.client.editors.files.BulkSaveEntry;
 import com.jdimension.jlawyer.client.editors.files.DescendingDateTimeStringComparator;
 import com.jdimension.jlawyer.client.editors.files.FileNumberComparatorArchiveFileBean;
-import com.jdimension.jlawyer.client.events.BeaStatusEvent;
-import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.mail.sidebar.CreateNewAddressPanel;
 import com.jdimension.jlawyer.client.mail.sidebar.ExtractedPhoneNumbersPanel;
 import com.jdimension.jlawyer.client.mail.sidebar.NavigateToAddressPanel;
@@ -789,7 +787,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             new Thread(() -> {
                 try {
                     int tempFolders = BeaAccess.countTempFolders();
-                    int tempFoldersLimit = ServerSettings.getInstance().getSettingAsInt("jlawyer.server.bea.maxtempfolders", 500);
+                    int tempFoldersLimit = ServerSettings.getInstance().getSettingAsInt(ServerSettings.SERVERCONF_BEA_MAXTEMPFOLDERS, 500);
                     if (tempFolders > tempFoldersLimit) {
                         SwingUtilities.invokeLater(() -> {
                             lblTempFilesWarning.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/messagebox_warning.png"))); // NOI18N
@@ -1015,23 +1013,13 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
         }
 
-        // count unread messages from already-loaded headers and publish status
+        // count unread messages of all inboxes and publish status - one event with the total, each event replaces the previous count
         try {
-            for (String safeId : inboxFolders.keySet()) {
-                BeaFolder inbox = inboxFolders.get(safeId);
-                if (inbox != null) {
-                    EditorsRegistry.getInstance().updateStatus("Nachrichtenübersicht wird geladen für " + inbox.getName() + "...");
-                    List<BeaMessageHeader> messages = BeaAccess.getInstance().getFolderOverview(safeId, inbox, BeaAccess.getFilter(inbox.getType()));
-                    int unread = 0;
-                    for (BeaMessageHeader mh : messages) {
-                        if (!mh.isRead()) {
-                            unread++;
-                        }
-                    }
-                    BeaStatusEvent e = new BeaStatusEvent(unread);
-                    EventBroker.getInstance().publishEvent(e);
-                }
-            }
+            // if the count can not be determined (a postbox without inbox, or an error), nothing is published and the indicator keeps its previous value
+            BeaUnreadCounter.publishUnread(inboxes.size(), inboxFolders, (safeId, inbox) -> {
+                EditorsRegistry.getInstance().updateStatus("Nachrichtenübersicht wird geladen für " + inbox.getName() + "...");
+                return BeaAccess.getInstance().getFolderOverview(safeId, inbox, BeaAccess.getFilter(inbox.getType()));
+            });
         } catch (Throwable t) {
             log.error(t);
         }
@@ -1812,6 +1800,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         // Execute deletion in background
         new javax.swing.SwingWorker<java.util.List<Integer>, Void>() {
             private Exception error = null;
+            private int failed = 0;
+            private String lastFailure = "";
 
             @Override
             protected java.util.List<Integer> doInBackground() throws Exception {
@@ -1838,9 +1828,13 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                             }
                             if (success) {
                                 successfulIndices.add(modelIndices[i]);
+                            } else {
+                                failed++;
                             }
                         } catch (Throwable ex) {
                             log.error(ex);
+                            failed++;
+                            lastFailure = ex.getMessage() != null ? ex.getMessage() : ex.toString();
                         }
                     }
                 } catch (Exception ex) {
@@ -1857,6 +1851,9 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
                 if (error != null) {
                     JOptionPane.showMessageDialog(BeaInboxPanel.this, "Fehler beim Löschen: " + error.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                } else if (failed > 0) {
+                    // same feedback as when emptying the trash - otherwise the messages just stay without any hint
+                    JOptionPane.showMessageDialog(BeaInboxPanel.this, "" + failed + " Nachricht(en) konnten nicht gelöscht werden" + (lastFailure.isEmpty() ? "." : ", letzte Meldung: " + lastFailure), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 }
 
                 try {

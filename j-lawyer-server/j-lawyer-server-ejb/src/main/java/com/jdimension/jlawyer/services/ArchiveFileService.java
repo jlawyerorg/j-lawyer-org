@@ -2431,7 +2431,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     private boolean skipSearchIndex() {
         if ((System.currentTimeMillis() - lastSearchIndexSkipCheck) > (1000l * 60l * 5l)) {
             skipSearchIndex = false;
-            ServerSettingsBean s = this.settingsFacade.find("jlawyer.server.searchindex.skip");
+            ServerSettingsBean s = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_SEARCHINDEX_SKIP);
             if (s != null) {
                 skipSearchIndex = "1".equals(s.getSettingValue()) || "true".equalsIgnoreCase(s.getSettingValue());
             }
@@ -2849,6 +2849,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    @RolesAllowed({"readArchiveFileRole"})
     public Collection<ArchiveFileAddressesBean> getArchiveFileAddressesForAddress(String adressId) {
 
         List<Group> userGroups = new ArrayList<>();
@@ -2915,7 +2916,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
             File prvFile = new File(prvName);
             File prvFileId = new File(prvId);
-            if (prvFile.exists()) {
+            if (ServerFileUtils.isSimpleName(db.getName()) && prvFile.exists()) {
                 prvFile.renameTo(prvFileId);
             }
 
@@ -3938,6 +3939,21 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @RolesAllowed({"readArchiveFileRole"})
     public DocumentPreview getDocumentPreview(String id, String previewType) throws Exception {
 
+        ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(id);
+        if (db == null) {
+            log.error("Document with id " + id + " does not exist");
+            throw new Exception("Dokument mit ID " + id + " existiert nicht!");
+        }
+        SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), db.getArchiveFileKey(), this.securityFacade, this.getAllowedGroups(db.getArchiveFileKey()));
+
+        return this.getDocumentPreviewImpl(id, previewType);
+    }
+
+    /**
+     * Returns a document preview without any permission check - callers must have checked case access before.
+     */
+    private DocumentPreview getDocumentPreviewImpl(String id, String previewType) throws Exception {
+
         ServerSettingsBean sb = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_STIRLINGPDF_ENDPOINT);
         StirlingPdfAPI pdfApi = null;
         if (sb != null && !ServerStringUtils.isEmpty(sb.getSettingValue())) {
@@ -4008,13 +4024,23 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    @RolesAllowed({"readArchiveFileRole"})
     public List<ArchiveFileHistoryBean> getHistoryByDateInterval(Date fromDate, Date toDate, int limit) {
         return filterHistory(this.archiveFileHistoryFacade.findByDateInterval(fromDate, toDate, limit), context.getCallerPrincipal().getName());
     }
 
     @Override
+    @RolesAllowed({"readArchiveFileRole"})
     public List<ArchiveFileHistoryBean> getHistoryByPrincipalAndDateInterval(String principal, Date fromDate, Date toDate, int limit) {
         return filterHistory(this.archiveFileHistoryFacade.findByPrincipalAndDateInterval(principal, fromDate, toDate, limit), context.getCallerPrincipal().getName());
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<ArchiveFileHistoryBean> searchHistory(Date fromDate, Date toDate, List<String> principals, String caseQuery, String textQuery, int limit) throws Exception {
+        String caller = context.getCallerPrincipal().getName();
+        List<String> groupIds = SecurityUtils.getGroupIdsForUser(caller, this.securityFacade);
+        return this.archiveFileHistoryFacade.search(fromDate, toDate, principals, caseQuery, textQuery, groupIds, limit);
     }
 
     private List<ArchiveFileHistoryBean> filterHistory(List<ArchiveFileHistoryBean> inputList, String principalId) {
@@ -4245,7 +4271,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 writer.write("</ul></body></html>");
             }
 
-            DataBucket bucket = DataBucketUtils.newBucket(uniqueDirName + ".zip");
+            DataBucket bucket = DataBucketUtils.newBucket(uniqueDirName + ".zip", context.getCallerPrincipal().getName());
             String zipFile = DataBucketUtils.getLocalFile(bucket);
             AdvancedHtmlExport.zipDirectory(tmpDir, zipFile);
             File zip = new File(zipFile);
@@ -4270,7 +4296,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             AdvancedHtmlExport export = new AdvancedHtmlExport(tmpDir, this, this.calendarFacade);
             exportPath = export.export(dto, null);
 
-            DataBucket bucket = DataBucketUtils.newBucket(caseId + ".zip");
+            DataBucket bucket = DataBucketUtils.newBucket(caseId + ".zip", context.getCallerPrincipal().getName());
             String zipFile = DataBucketUtils.getLocalFile(bucket);
             AdvancedHtmlExport.zipDirectory(exportPath, zipFile);
             File zip = new File(zipFile);
@@ -4306,22 +4332,22 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public List<ArchiveFileBean> getManagedCasesPage(String search, Boolean archived, int offset, int limit) {
-        return this.archiveFileFacade.findOverviewPage(allowedCaseIdsForCaller(), search, archived, offset, limit);
+        return this.archiveFileFacade.findOverviewPage(groupIdsForCaller(), search, archived, offset, limit);
     }
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public long countManagedCases(String search, Boolean archived) {
-        return this.archiveFileFacade.countOverview(allowedCaseIdsForCaller(), search, archived);
+        return this.archiveFileFacade.countOverview(groupIdsForCaller(), search, archived);
     }
 
-    /** Case ids the current caller may access (owner group / allowed group / unprotected). */
-    private Set<String> allowedCaseIdsForCaller() {
+    /** Group ids of the current caller, for the case visibility rule (see SecurityUtils.caseVisibilityJpql). */
+    private List<String> groupIdsForCaller() {
         try {
-            return SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
+            return SecurityUtils.getGroupIdsForUser(context.getCallerPrincipal().getName(), this.securityFacade);
         } catch (Exception ex) {
-            log.error("Unable to determine allowed cases for user " + context.getCallerPrincipal().getName(), ex);
-            throw new EJBException("Akten für Nutzer '" + context.getCallerPrincipal().getName() + "' konnten nicht ermittelt werden.", ex);
+            log.error("Unable to determine groups for user " + context.getCallerPrincipal().getName(), ex);
+            throw new EJBException("Gruppen für Nutzer '" + context.getCallerPrincipal().getName() + "' konnten nicht ermittelt werden.", ex);
         }
     }
 
@@ -5139,7 +5165,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             localBaseDir = localBaseDir + System.getProperty("file.separator");
         }
 
-        String src = localBaseDir + "templates" + templateFolder + System.getProperty("file.separator") + templateName;
+        // template folder and name come from the caller - they must not lead out of the template directory
+        String src = localBaseDir + "templates" + templateFolder + System.getProperty("file.separator") + ServerFileUtils.requireSimpleName(templateName);
+        ServerFileUtils.requireWithin(localBaseDir + "templates", src);
         String dst = localBaseDir + "archivefiles" + System.getProperty("file.separator") + aFile.getId() + System.getProperty("file.separator");
 
         String ext = "";
@@ -5169,7 +5197,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             ServerFileUtils.copyFile(src, dstId);
         } else if (letterHead.toLowerCase().endsWith(".png") || letterHead.toLowerCase().endsWith(".jpg") || letterHead.toLowerCase().endsWith(".jpeg")) {
             ServerFileUtils.copyFile(src, dstId);
-            String srcHead = localBaseDir + "letterheads" + System.getProperty("file.separator") + letterHead;
+            String srcHead = localBaseDir + "letterheads" + System.getProperty("file.separator") + ServerFileUtils.requireSimpleName(letterHead);
             if (!(new File(srcHead).exists())) {
                 throw new Exception("Briefkopf " + letterHead + " existiert nicht!");
             }
@@ -5177,7 +5205,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             LibreOfficeAccess.applyHeaderGraphic(srcHead, dstId, templateName);
         } else {
             // new document equals the head template
-            String srcHead = localBaseDir + "letterheads" + System.getProperty("file.separator") + letterHead;
+            String srcHead = localBaseDir + "letterheads" + System.getProperty("file.separator") + ServerFileUtils.requireSimpleName(letterHead);
             ServerFileUtils.copyFile(srcHead, dstId);
             if (!(new File(srcHead).exists())) {
                 throw new Exception("Briefkopf " + letterHead + " existiert nicht!");
@@ -5789,7 +5817,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
-    @RolesAllowed({"adminRole"})
+    @RolesAllowed({"loginRole"})
     public void addFolderTemplate(DocumentFolderTemplate template) throws Exception {
         Object o = this.folderTemplateFacade.findByName(template.getName());
         if (o != null) {
@@ -5812,7 +5840,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
-    @RolesAllowed({"adminRole"})
+    @RolesAllowed({"loginRole"})
     public void removeFolderTemplate(String name) {
         DocumentFolderTemplate t = this.folderTemplateFacade.findByName(name);
         if (t != null) {
@@ -5822,7 +5850,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
-    @RolesAllowed({"adminRole"})
+    @RolesAllowed({"loginRole"})
     public void updateFolderTemplate(DocumentFolderTemplate template) {
         DocumentFolderTemplate t = this.folderTemplateFacade.find(template.getId());
         if (t != null) {
@@ -5838,6 +5866,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    @RolesAllowed({"loginRole"})
     public DocumentFolder addFolderToTemplate(String templateName, DocumentFolder folder) throws Exception {
 
         DocumentFolderTemplate t = this.folderTemplateFacade.findByName(templateName);
@@ -5870,6 +5899,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    @RolesAllowed({"loginRole"})
     public void removeFolderFromTemplate(String folderId) throws Exception {
 
         if (folderId == null || "".equals(folderId)) {
@@ -5886,6 +5916,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    @RolesAllowed({"loginRole"})
     public DocumentFolder renameFolderInTemplate(String folderId, String newName) throws Exception {
 
         if (folderId == null || "".equals(folderId)) {
@@ -5904,6 +5935,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    @RolesAllowed({"loginRole"})
     public void cloneFolderTemplate(String sourceTemplateName, String targetTemplateName) throws Exception {
         DocumentFolderTemplate source = this.getFolderTemplate(sourceTemplateName);
         DocumentFolderTemplate target = new DocumentFolderTemplate();
@@ -6261,7 +6293,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } else {
             String dstByName = dst + db.getName();
             dbFile = new File(dstByName);
-            if (dbFile.exists()) {
+            // legacy files were stored under their name - a name with path elements cannot be one of them
+            if (ServerFileUtils.isSimpleName(db.getName()) && dbFile.exists()) {
                 boolean deleted = dbFile.delete();
                 if (!deleted) {
                     // could not delete document, but still let's continue with removal
@@ -6364,6 +6397,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             }
         }
 
+        // a retention of 0 or less disables automatic purging - without this guard, 0 would purge the whole bin
+        if (retentionDays <= 0) {
+            log.info("automatic purging of the documents bin is disabled (retention days: " + retentionDays + ")");
+            return;
+        }
+
         Collection<ArchiveFileDocumentsBean> deleted = this.archiveFileDocumentsFacade.findDeleted();
         long retentionMillis = (long) retentionDays * 24l * 60l * 60l * 1000l;
         long now = System.currentTimeMillis();
@@ -6393,7 +6432,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), db.getArchiveFileKey(), this.securityFacade, this.getAllowedGroups(db.getArchiveFileKey()));
 
-        DocumentPreview preview = this.getDocumentPreview(docId, DocumentPreview.TYPE_TEXT);
+        DocumentPreview preview = this.getDocumentPreviewImpl(docId, DocumentPreview.TYPE_TEXT);
         if (preview == null || ServerStringUtils.isEmpty(preview.getText())) {
             return new ArrayList<>();
         }
@@ -6534,6 +6573,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (new File(dir + docId).exists()) {
             return;
         }
+        if (!ServerFileUtils.isSimpleName(docName)) {
+            // legacy files were stored under their name - a name with path elements cannot be one of them
+            return;
+        }
 
         File dstDir = new File(dir);
         dstDir.mkdirs();
@@ -6575,7 +6618,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             throw new Exception("Dokument " + db.getName() + " existiert nicht!");
         }
 
-        DataBucket bucket = DataBucketUtils.newBucket(db.getName());
+        DataBucket bucket = DataBucketUtils.newBucket(db.getName(), context.getCallerPrincipal().getName());
         String bucketFile = DataBucketUtils.getLocalFile(bucket);
 
         Path srcPath = Paths.get(dstId);
@@ -6846,13 +6889,17 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             );
         }
 
-        // Bruttosumme berechnen
-        for (Map.Entry<BigDecimal, BigDecimal> entry : taxRateToNetSum.entrySet()) {
-            BigDecimal taxRate = entry.getKey();
-            BigDecimal netSum = entry.getValue();
-            BigDecimal taxFactor = taxRate.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
-            BigDecimal grossPart = netSum.multiply(BigDecimal.ONE.add(taxFactor)).setScale(2, RoundingMode.HALF_UP);
-            newTotalGross = newTotalGross.add(grossPart);
+        // Bruttosumme berechnen - ohne ausgewiesene USt (smallBusiness=false) entspricht sie wie im Belegdialog der Nettosumme
+        if (invoice.isSmallBusiness()) {
+            for (Map.Entry<BigDecimal, BigDecimal> entry : taxRateToNetSum.entrySet()) {
+                BigDecimal taxRate = entry.getKey();
+                BigDecimal netSum = entry.getValue();
+                BigDecimal taxFactor = taxRate.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
+                BigDecimal grossPart = netSum.multiply(BigDecimal.ONE.add(taxFactor)).setScale(2, RoundingMode.HALF_UP);
+                newTotalGross = newTotalGross.add(grossPart);
+            }
+        } else {
+            newTotalGross = newTotalNet;
         }
 
         // Gesamtsummen setzen (mit kaufmännischer Rundung)
@@ -6982,7 +7029,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             this.invoicesFacade.edit(updatedInvoice);
             this.updateInvoiceTotal(invoice.getId());
 
-            this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Beleg geändert (" + updatedInvoice.getInvoiceNumber() + ", " + updatedInvoice.getStatusString() + ", " + updatedInvoice.getInvoiceType().getDisplayName() + ")");
+            // invoices may have no type yet, the type is assigned afterwards via updateInvoiceType
+            String typeName = updatedInvoice.getInvoiceType() != null ? updatedInvoice.getInvoiceType().getDisplayName() : "ohne Belegart";
+            this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Beleg geändert (" + updatedInvoice.getInvoiceNumber() + ", " + updatedInvoice.getStatusString() + ", " + typeName + ")");
 
             return this.invoicesFacade.find(updatedInvoice.getId());
         } else {
@@ -7108,13 +7157,6 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     || (existingInvoice.getInvoiceType() != null && invoiceType != null && !(existingInvoice.getInvoiceType().getId().equals(invoiceType.getId())));
             if (poolChange || typeChange) {
                 // types have changed
-                if (typeChange) {
-                    if (invoiceType != null) {
-                        existingInvoice.setInvoiceType(this.invoicesTypesFacade.find(invoiceType.getId()));
-                    } else {
-                        existingInvoice.setInvoiceType(null);
-                    }
-                }
                 if (poolChange) {
                     InvoicePool pool = null;
                     if (invoicePool != null) {
@@ -7129,12 +7171,30 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                         throw new Exception("Ungültiger Rechnungsnummernkreis");
                     }
 
-                    existingInvoice.setInvoiceNumber(this.invoiceService.nextInvoiceNumber(pool));
+                    String newInvoiceNumber = this.invoiceService.nextInvoiceNumber(pool);
+                    // check for conflicting invoice numbers before the invoice is modified
+                    Invoice conflictingInvoice = this.invoicesFacade.findByInvoiceNumber(newInvoiceNumber);
+                    if (conflictingInvoice != null && !conflictingInvoice.getId().equals(existingInvoice.getId())) {
+                        throw new Exception("Es gibt bereits einen Beleg mit der Nummer '" + newInvoiceNumber + "' - bitte die Einstellungen des Nummernkreises '" + pool.getDisplayName() + "' prüfen!");
+                    }
+
+                    existingInvoice.setInvoiceNumber(newInvoiceNumber);
                     existingInvoice.setSmallBusiness(pool.isSmallBusiness());
                     existingInvoice.setLastPoolId(pool.getId());
                 }
+                if (typeChange) {
+                    if (invoiceType != null) {
+                        existingInvoice.setInvoiceType(this.invoicesTypesFacade.find(invoiceType.getId()));
+                    } else {
+                        existingInvoice.setInvoiceType(null);
+                    }
+                }
 
                 this.invoicesFacade.edit(existingInvoice);
+                if (poolChange) {
+                    // the pool determines whether VAT is shown, which changes the gross total
+                    this.updateInvoiceTotal(existingInvoice.getId());
+                }
                 this.addCaseHistory(new StringGenerator().getID().toString(), aFile, "Belegart oder Nummernkreis geändert (" + existingInvoice.getInvoiceNumber() + ", " + existingInvoice.getInvoiceType().getDisplayName() + ")");
             }
 
@@ -7279,7 +7339,14 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public Invoice copyInvoice(String invoiceId, String toCaseId, InvoicePool invoicePool, boolean asCredit, boolean markAsCopy, Date periodFrom, Date periodTo, Date due) throws Exception {
 
         Invoice oldInvoice = this.invoicesFacade.find(invoiceId);
-        
+        if (oldInvoice == null) {
+            throw new Exception("Rechnung " + invoiceId + " existiert nicht.");
+        }
+
+        // the caller must be allowed to see the source case, not only the target case
+        ArchiveFileBean sourceCase = oldInvoice.getArchiveFileKey();
+        SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), sourceCase, this.securityFacade, this.getAllowedGroups(sourceCase));
+
         if(invoicePool==null) {
             invoicePool=this.invoicesPoolsFacade.find(oldInvoice.getLastPoolId());
         }
@@ -7521,7 +7588,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public Timesheet getTimesheet(String timesheetId) throws Exception {
-        return this.timesheetFacade.find(timesheetId);
+        Timesheet sheet = this.timesheetFacade.find(timesheetId);
+        if (sheet != null) {
+            this.checkTimesheetAccess(sheet);
+        }
+        return sheet;
     }
 
     @Override
@@ -7589,6 +7660,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public List<TimesheetPosition> getOpenTimesheetPositions(String principal) throws Exception {
+        this.checkOwnPrincipal(principal);
         return this.timesheetPositionsFacade.findOpenByPrincipal(principal);
 
     }
@@ -7646,6 +7718,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public List<TimesheetPosition> getLastTimesheetPositions(String caseId, String principal) throws Exception {
+        this.checkOwnPrincipal(principal);
         // returns the timesheet positions last used by the user
         //   any open position
         //   latest closed position for timesheets that have no open position (provide access to last used log)
@@ -7743,6 +7816,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (sheet == null) {
             throw new Exception(MSG_MISSING_TIMESHEET);
         }
+        this.checkTimesheetAccess(sheet);
 
         // Time can be logged for another user: honour an explicitly provided principal, otherwise
         // fall back to the authenticated caller (the desktop client always sends its own principal).
@@ -7855,12 +7929,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (sheet == null) {
             throw new Exception(MSG_MISSING_TIMESHEET);
         }
+        this.checkTimesheetAccess(sheet);
 
         if (position.getId() == null) {
             throw new Exception(MSG_MISSING_TIMESHEETPOS);
         } else {
             // stop existing position
-            TimesheetPosition existing = this.timesheetPositionsFacade.find(position.getId());
+            TimesheetPosition existing = this.findPositionOfTimesheet(position.getId(), timesheetId);
             if (existing.getStarted() == null) {
                 throw new Exception("Zeiterfassungsposition wurde nie gestartet, kann nicht beendet werden!");
             }
@@ -7907,13 +7982,14 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (sheet == null) {
             throw new Exception(MSG_MISSING_TIMESHEET);
         }
+        this.checkTimesheetAccess(sheet);
 
         if (position.getId() == null) {
             throw new Exception("Zeiterfassungsposition muss erst gestartet werden!");
 
         } else {
             // stop existing position
-            TimesheetPosition existing = this.timesheetPositionsFacade.find(position.getId());
+            TimesheetPosition existing = this.findPositionOfTimesheet(position.getId(), timesheetId);
             if (existing == null) {
                 throw new Exception(MSG_MISSING_TIMESHEETPOS);
             }
@@ -7981,7 +8057,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
 
         if (allowed) {
-            TimesheetPosition removePos = this.timesheetPositionsFacade.find(position.getId());
+            TimesheetPosition removePos = this.findPositionOfTimesheet(position.getId(), timesheetId);
             this.timesheetPositionsFacade.remove(removePos);
 
             if (timesheet.isLimited()) {
@@ -8023,7 +8099,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         if (allowed) {
             for (TimesheetPosition p : positions) {
-                TimesheetPosition updatePos = this.timesheetPositionsFacade.find(p.getId());
+                TimesheetPosition updatePos = this.findPositionOfTimesheet(p.getId(), timesheetId);
                 updatePos.setDescription(p.getDescription());
                 updatePos.setName(p.getName());
                 updatePos.setStarted(p.getStarted());
@@ -8113,6 +8189,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         for (String positionId : positionIds) {
             TimesheetPosition updatePos = this.timesheetPositionsFacade.find(positionId);
+            if (updatePos != null && updatePos.getTimesheet() != null) {
+                this.checkTimesheetAccess(updatePos.getTimesheet());
+            }
             if (updatePos.getInvoice() != null) {
                 throw new Exception("Mindestens eine Buchung ist aktuell einer Rechnung zugeordnet. Bitte Rechnung (oder deren Position(en)) löschen.");
             }
@@ -8158,7 +8237,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
 
         if (allowed) {
-            TimesheetPosition updatePos = this.timesheetPositionsFacade.find(position.getId());
+            TimesheetPosition updatePos = this.findPositionOfTimesheet(position.getId(), timesheetId);
             updatePos.setDescription(position.getDescription());
             if (invoiceId == null) {
                 updatePos.setInvoice(null);
@@ -8214,6 +8293,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (sheet == null) {
             throw new Exception(MSG_MISSING_TIMESHEET);
         }
+        this.checkTimesheetAccess(sheet);
 
         // only updates metadata, not the actual timestamps (which is done via start and stop methods)
         position.setId(new StringGenerator().getID().toString());
@@ -8339,6 +8419,79 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public CaseAccountEntry getAccountEntry(String entryId) throws Exception {
+        CaseAccountEntry entry = this.accountEntries.find(entryId);
+        if (entry == null) {
+            return null;
+        }
+        if (!this.isCaseAccessible(entry.getArchiveFileKey())) {
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+        }
+        return entry;
+    }
+
+    /**
+     * @param aFile a case, may be null
+     * @return true if the caller is allowed to access the case (or there is no case)
+     */
+    private boolean isCaseAccessible(ArchiveFileBean aFile) {
+        String principalId = context.getCallerPrincipal().getName();
+        if (aFile == null || principalId == null) {
+            return true;
+        }
+        List<Group> userGroups = new ArrayList<>();
+        try {
+            userGroups = this.securityFacade.getGroupsForUser(principalId);
+        } catch (Throwable t) {
+            log.error("Unable to determine groups for user " + principalId, t);
+        }
+        return SecurityUtils.checkGroupsForCase(userGroups, this.archiveFileFacade.find(aFile.getId()), this.caseGroupsFacade);
+    }
+
+    /**
+     * Throws if the caller is not allowed to access the case of the given timesheet.
+     */
+    private void checkTimesheetAccess(Timesheet sheet) throws Exception {
+        if (!this.isCaseAccessible(sheet.getArchiveFileKey())) {
+            throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+        }
+    }
+
+    /**
+     * @param positionId ID of a timesheet position
+     * @param timesheetId the timesheet the position must belong to
+     * @return the position, or null if it does not exist
+     * @throws Exception if the position belongs to another timesheet
+     */
+    private TimesheetPosition findPositionOfTimesheet(String positionId, String timesheetId) throws Exception {
+        if (positionId == null) {
+            return null;
+        }
+        TimesheetPosition pos = this.timesheetPositionsFacade.find(positionId);
+        if (pos != null && (pos.getTimesheet() == null || !pos.getTimesheet().getId().equals(timesheetId))) {
+            log.warn("timesheet position " + positionId + " does not belong to timesheet " + timesheetId);
+            throw new Exception(MSG_MISSING_TIMESHEETPOS);
+        }
+        return pos;
+    }
+
+    /**
+     * Throws if the given principal is not the caller (administrators may query other users).
+     */
+    private void checkOwnPrincipal(String principal) throws Exception {
+        String caller = context.getCallerPrincipal().getName();
+        if (principal != null && principal.equals(caller)) {
+            return;
+        }
+        if (context.isCallerInRole("adminRole")) {
+            return;
+        }
+        log.warn("user " + caller + " requested timesheet positions of " + principal);
+        throw new Exception("Keine Berechtigung für die Zeiterfassung anderer Nutzer");
+    }
+
+    @Override
     public List<CaseAccountEntry> getAccountEntriesUnrestricted(String caseId) throws Exception {
         return getAccountEntriesImpl(caseId);
     }
@@ -8436,6 +8589,19 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (allowed) {
 
             CaseAccountEntry updatedEntry = this.accountEntries.find(accountEntry.getId());
+            if (updatedEntry == null) {
+                throw new Exception("Eintrag im Aktenkonto kann nicht gefunden werden");
+            }
+            if (updatedEntry.getArchiveFileKey() == null || !updatedEntry.getArchiveFileKey().getId().equals(caseId)) {
+                log.warn("user " + principalId + " tried to update account entry " + updatedEntry.getId() + " via case " + caseId);
+                throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+            }
+            if (accountEntry.getInvoice() != null) {
+                Invoice linkedInvoice = this.invoicesFacade.find(accountEntry.getInvoice().getId());
+                if (linkedInvoice == null || !this.isCaseAccessible(linkedInvoice.getArchiveFileKey())) {
+                    throw new Exception(MSG_MISSINGPRIVILEGE_CASE);
+                }
+            }
             updatedEntry.setContact(accountEntry.getContact());
             updatedEntry.setEntryDate(accountEntry.getEntryDate());
             updatedEntry.setDescription(accountEntry.getDescription());
@@ -8550,7 +8716,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (locked) {
 
             // check if locking is enabled for this file type
-            ServerSettingsBean s = this.settingsFacade.find("jlawyer.server.documents.lock.filetypes");
+            ServerSettingsBean s = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_DOCUMENTS_LOCK_FILETYPES);
             String extensionList = null;
             if (s != null) {
                 extensionList = s.getSettingValue();

@@ -666,13 +666,19 @@ package com.jdimension.jlawyer.client.utils;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.DataLine;
-import javax.sound.sampled.Line;
+import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.Mixer;
+import javax.sound.sampled.TargetDataLine;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.JComboBox;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -680,35 +686,226 @@ import javax.swing.JComboBox;
  */
 public class AudioUtils {
     
+    private static final Logger log = Logger.getLogger(AudioUtils.class.getName());
+
+    // sample rates tried when opening a microphone, the target rate (16 kHz) first so that no conversion is needed whenever possible
+    private static final float[] CAPTURE_SAMPLE_RATES = {16000f, 48000f, 44100f, 32000f, 22050f, 24000f, 96000f, 88200f, 11025f, 8000f};
+
+    /**
+     * Fills the given combo box with all microphones that can deliver audio in
+     * a format that can be recorded - either directly in the target format
+     * (see {@link #getAudioFormat()}) or in a 16 bit PCM format that is
+     * converted while recording. Each device is listed only once.
+     *
+     * @param cmbDevices combo box to populate
+     */
     public static void populateMicrophoneDevices(JComboBox cmbDevices) {
-        String lastDevice=ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_SOUND_LASTRECORDINGDEVICE, null);
-        AudioFormat audioFormat=getAudioFormat();
-        
-        Mixer.Info[] mixerInfos = AudioSystem.getMixerInfo();
-        for (Mixer.Info mixerInfo : mixerInfos) {
+        String lastDevice = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_SOUND_LASTRECORDINGDEVICE, null);
+
+        Set<String> deviceNames = new LinkedHashSet<>();
+        for (Mixer.Info mixerInfo : AudioSystem.getMixerInfo()) {
+            try {
+                Mixer mixer = AudioSystem.getMixer(mixerInfo);
+                if (!getCaptureFormats(mixer).isEmpty()) {
+                    deviceNames.add(mixerInfo.getName());
+                }
+            } catch (Exception ex) {
+                log.warn("Unable to query audio device " + mixerInfo.getName(), ex);
+            }
+        }
+        for (String name : deviceNames) {
+            cmbDevices.addItem(name);
+        }
+
+        if (lastDevice != null) {
+            cmbDevices.setSelectedItem(lastDevice);
+        }
+    }
+
+    /**
+     * Opens the microphone with the given name for recording. The returned
+     * line delivers audio in the target format (see {@link #getAudioFormat()}),
+     * regardless of the formats the device supports natively. The line is
+     * opened, but not yet started.
+     *
+     * @param deviceName name of the mixer as listed by
+     * {@link #populateMicrophoneDevices(JComboBox)}
+     * @return the opened microphone line
+     * @throws LineUnavailableException if the device does not exist or none of
+     * its supported formats could be opened
+     */
+    public static MicrophoneLine openMicrophone(String deviceName) throws LineUnavailableException {
+        if (deviceName == null) {
+            throw new LineUnavailableException("Kein Aufnahmegerät ausgewählt.");
+        }
+        boolean deviceFound = false;
+        LineUnavailableException lastError = null;
+        for (Mixer.Info mixerInfo : AudioSystem.getMixerInfo()) {
+            if (!mixerInfo.getName().equals(deviceName)) {
+                continue;
+            }
             Mixer mixer = AudioSystem.getMixer(mixerInfo);
-            Line.Info[] lineInfos = mixer.getTargetLineInfo();
-            for (Line.Info lineInfo : lineInfos) {
-                if (lineInfo instanceof DataLine.Info) {
-                    DataLine.Info dataLineInfo = (DataLine.Info) lineInfo;
-                    AudioFormat[] formats = dataLineInfo.getFormats();
-                    for (AudioFormat format : formats) {
-                        if (format.getEncoding().equals(AudioFormat.Encoding.PCM_SIGNED)
-                                && format.getSampleSizeInBits() == audioFormat.getSampleSizeInBits()
-                                && format.getChannels() == audioFormat.getChannels()) {
-                            // Display sample rate in Hz
-                            cmbDevices.addItem(mixerInfo.getName());
-                            break;
-                        }
+            for (AudioFormat captureFormat : getCaptureFormats(mixer)) {
+                deviceFound = true;
+                TargetDataLine line = null;
+                try {
+                    line = (TargetDataLine) mixer.getLine(new DataLine.Info(TargetDataLine.class, captureFormat));
+                    line.open(captureFormat);
+                    MicrophoneLine microphone = new MicrophoneLine(line, captureFormat);
+                    log.info("Starting recording from device '" + deviceName + "' at " + (captureFormat.getSampleRate() / 1000f) + " kHz, "
+                            + (captureFormat.getChannels() == 1 ? "mono" : captureFormat.getChannels() + " channels")
+                            + (microphone.convert ? ", converted to " + (getAudioFormat().getSampleRate() / 1000f) + " kHz mono" : ""));
+                    return microphone;
+                } catch (LineUnavailableException | IllegalArgumentException | SecurityException ex) {
+                    log.warn("Unable to open " + deviceName + " using " + captureFormat + ": " + ex.getMessage());
+                    if (line != null) {
+                        line.close();
+                    }
+                    lastError = new LineUnavailableException(ex.getMessage());
+                }
+            }
+        }
+        if (!deviceFound) {
+            throw new LineUnavailableException("Aufnahmegerät '" + deviceName + "' nicht gefunden oder nicht unterstützt.");
+        }
+        throw lastError;
+    }
+
+    // all 16 bit PCM formats supported by the mixer that can be converted to the target format, best match first
+    private static List<AudioFormat> getCaptureFormats(Mixer mixer) {
+        List<AudioFormat> formats = new ArrayList<>();
+        for (float sampleRate : CAPTURE_SAMPLE_RATES) {
+            for (int channels = 1; channels <= 2; channels++) {
+                for (boolean bigEndian : new boolean[]{false, true}) {
+                    AudioFormat format = new AudioFormat(sampleRate, 16, channels, true, bigEndian);
+                    if (mixer.isLineSupported(new DataLine.Info(TargetDataLine.class, format))) {
+                        formats.add(format);
                     }
                 }
             }
         }
-        
-        if(lastDevice!=null)
-            cmbDevices.setSelectedItem(lastDevice);
+        return formats;
     }
-    
+
+    /**
+     * A microphone line that delivers audio in the target format (see
+     * {@link #getAudioFormat()}). If the device does not support that format
+     * natively, audio is captured in a supported 16 bit PCM format and
+     * converted to mono / 16 kHz / little endian while reading.
+     */
+    public static final class MicrophoneLine {
+
+        private final TargetDataLine line;
+        private final AudioFormat captureFormat;
+        private final boolean convert;
+        private final int channels;
+        private final boolean bigEndian;
+        // number of captured frames per output frame
+        private final double ratio;
+
+        private byte[] raw = null;
+        private double inputPosition = 0d;
+        private double nextOutputPosition;
+        private long sampleSum = 0;
+        private int sampleCount = 0;
+        private int lastSample = 0;
+
+        private MicrophoneLine(TargetDataLine line, AudioFormat captureFormat) {
+            this.line = line;
+            this.captureFormat = captureFormat;
+            AudioFormat target = getAudioFormat();
+            this.convert = !captureFormat.matches(target);
+            this.channels = captureFormat.getChannels();
+            this.bigEndian = captureFormat.isBigEndian();
+            this.ratio = captureFormat.getSampleRate() / target.getSampleRate();
+            this.nextOutputPosition = this.ratio;
+        }
+
+        /**
+         * @return the format the device is actually recording in
+         */
+        public AudioFormat getCaptureFormat() {
+            return captureFormat;
+        }
+
+        public void start() {
+            line.start();
+        }
+
+        public void stop() {
+            line.stop();
+        }
+
+        public void close() {
+            line.close();
+        }
+
+        /**
+         * Reads recorded audio in the target format. Blocks until audio is
+         * available, like {@link TargetDataLine#read(byte[], int, int)}.
+         *
+         * @param buffer buffer to write to
+         * @param offset offset in the buffer
+         * @param length maximum number of bytes to read, should be at least a
+         * few hundred bytes
+         * @return number of bytes written to the buffer, never negative
+         */
+        public int read(byte[] buffer, int offset, int length) {
+            int maxOutputFrames = length / 2;
+            if (!convert) {
+                return Math.max(0, line.read(buffer, offset, maxOutputFrames * 2));
+            }
+
+            // read as many captured frames as fit into the output buffer after conversion
+            int frameSize = captureFormat.getFrameSize();
+            int inputFrames = Math.max(1, (int) Math.floor((maxOutputFrames - 1) * ratio));
+            int inputBytes = inputFrames * frameSize;
+            if (raw == null || raw.length < inputBytes) {
+                raw = new byte[inputBytes];
+            }
+            int bytesRead = line.read(raw, 0, inputBytes);
+            if (bytesRead <= 0) {
+                return 0;
+            }
+
+            int out = offset;
+            int outEnd = offset + maxOutputFrames * 2;
+            int frames = bytesRead / frameSize;
+            for (int i = 0; i < frames; i++) {
+                // downmix to mono, averaging all samples belonging to one output sample
+                int frameStart = i * frameSize;
+                for (int c = 0; c < channels; c++) {
+                    sampleSum += readSample(raw, frameStart + c * 2);
+                    sampleCount++;
+                }
+                inputPosition += 1d;
+                while (inputPosition >= nextOutputPosition && out < outEnd) {
+                    int sample = sampleCount > 0 ? (int) (sampleSum / sampleCount) : lastSample;
+                    lastSample = sample;
+                    sampleSum = 0;
+                    sampleCount = 0;
+                    buffer[out++] = (byte) (sample & 0xFF);
+                    buffer[out++] = (byte) ((sample >> 8) & 0xFF);
+                    nextOutputPosition += ratio;
+                }
+            }
+            // keep the positions small to avoid losing precision on long recordings
+            if (inputPosition > 1000000d) {
+                inputPosition -= 1000000d;
+                nextOutputPosition -= 1000000d;
+            }
+            return out - offset;
+        }
+
+        private int readSample(byte[] data, int index) {
+            if (bigEndian) {
+                return (data[index] << 8) | (data[index + 1] & 0xFF);
+            } else {
+                return (data[index + 1] << 8) | (data[index] & 0xFF);
+            }
+        }
+    }
+
     public static AudioFormat getAudioFormat() {
 
         return new AudioFormat(

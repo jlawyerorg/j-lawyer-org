@@ -916,7 +916,7 @@ public class SendAction extends ProgressableAction {
                 smtpProps.setProperty("mail." + ms.getEmailInType() + ".ssl.enable", "true");
             }
             ServerSettings sset = ServerSettings.getInstance();
-            String trustedServers = sset.getSetting("mail.imaps.ssl.trust", "");
+            String trustedServers = sset.getSetting(com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys.SERVERCONF_MAIL_IMAPS_SSLTRUST, "");
             if (trustedServers.length() > 0) {
                 smtpProps.put("mail.imaps.ssl.trust", trustedServers);
             }
@@ -1155,7 +1155,7 @@ public class SendAction extends ProgressableAction {
                     imapProps.setProperty("mail." + ms.getEmailInType() + ".ssl.enable", "true");
                 }
                 ServerSettings sset = ServerSettings.getInstance();
-                String trustedServers = sset.getSetting("mail.imaps.ssl.trust", "");
+                String trustedServers = sset.getSetting(com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys.SERVERCONF_MAIL_IMAPS_SSLTRUST, "");
                 if (trustedServers.length() > 0) {
                     imapProps.put("mail.imaps.ssl.trust", trustedServers);
                 }
@@ -1258,14 +1258,15 @@ public class SendAction extends ProgressableAction {
                     if (!docName.toLowerCase().endsWith(".eml")) docName += ".eml";
 
                     docName = FileUtils.getNewFileName(this.archiveFile, docName, new Date(), true, this.indicator, "Datei benennen");
+                    // null when the user cancelled the file name dialog - the e-mail is then not saved to the case
                     if (docName != null && docName.trim().length() == 0) {
                         docName = "E-Mail";
                     }
-                    if (!docName.toLowerCase().endsWith(".eml")) {
+                    if (docName != null && !docName.toLowerCase().endsWith(".eml")) {
                         docName = docName + ".eml";
                     }
 
-                    boolean documentExists = caseSvc.doesDocumentExist(this.archiveFile.getId(), docName);
+                    boolean documentExists = docName != null && caseSvc.doesDocumentExist(this.archiveFile.getId(), docName);
                     while (documentExists) {
                         docName = FileUtils.getNewFileName(this.archiveFile, docName, new Date(), true, this.indicator, "Datei benennen");
                         if (docName == null || "".equals(docName)) {

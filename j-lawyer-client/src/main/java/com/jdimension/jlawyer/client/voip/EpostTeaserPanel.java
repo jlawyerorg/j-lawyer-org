@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.voip;
 
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.security.CryptoProvider;
@@ -692,7 +693,9 @@ public class EpostTeaserPanel extends javax.swing.JPanel {
         this.lblEpostOrder.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
         this.cmdCopyInstId.setText("");
         this.txtInstallationId.setText(ServerSettings.getInstance().getInstallationId());
-        this.txtEpostRegistrationCode.setText(ServerSettings.getInstance().getSetting(ServerSettings.SERVERCONF_EPOSTVENDORID_ENCRYPTED, ""));
+        // the code is write-only: the server never returns it, an empty field keeps the stored code
+        this.txtEpostRegistrationCode.setText("");
+        ComponentUtils.setStoredSecretHint(this.txtEpostRegistrationCode, ServerSettings.getInstance().hasSetting(ServerSettings.SERVERCONF_EPOSTVENDORID_ENCRYPTED));
     }
 
     /**
@@ -820,8 +823,6 @@ public class EpostTeaserPanel extends javax.swing.JPanel {
                 JOptionPane.showMessageDialog(this, "Ungültiger Code: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
             
-        } else {
-            ServerSettings.getInstance().setSetting(ServerSettings.SERVERCONF_EPOSTVENDORID_ENCRYPTED, "");
         }
         this.dialogParent.setVisible(false);
         this.dialogParent.dispose();
