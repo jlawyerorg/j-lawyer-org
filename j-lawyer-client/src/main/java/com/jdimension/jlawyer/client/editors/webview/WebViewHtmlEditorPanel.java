@@ -1170,8 +1170,11 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
      *
      * WARNING: On macOS, calling this from EDT while JavaFX thread is waiting
      * can cause a deadlock. Prefer triggerAsyncClipboardRefresh() instead.
+     *
+     * @return the HTML read from the clipboard - null if there is none, on error or when not
+     * called on the EDT (the refresh then happens later)
      */
-    private void refreshClipboardCache() {
+    private String refreshClipboardCache() {
         // If not on EDT, use background refresh to avoid potential issues
         if (!SwingUtilities.isEventDispatchThread()) {
             if (SystemUtils.isMacOs()) {
@@ -1179,10 +1182,10 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
                 log.debug("refreshClipboardCache called off-EDT on macOS - using background refresh instead");
                 log.error("TODO: re-enable triggerAsyncClipboardRefresh on macOS");
                 triggerAsyncClipboardRefresh();
-                return;
+                return null;
             }
             SwingUtilities.invokeLater(this::refreshClipboardCache);
-            return;
+            return null;
         }
 
         try {
@@ -1192,9 +1195,12 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
             String html = readHtmlFromClipboard(clipboard);
 
             if (html != null) {
-                cachedClipboardHTML = parseWindowsHtmlFormat(html);
+                // returned from the local variable: a background refresh may overwrite the cache field meanwhile
+                String parsedHtml = parseWindowsHtmlFormat(html);
+                cachedClipboardHTML = parsedHtml;
                 clipboardCacheTimestamp = System.currentTimeMillis();
-                log.debug("EDT cached HTML from clipboard: " + cachedClipboardHTML.length() + " chars");
+                log.debug("EDT cached HTML from clipboard: " + parsedHtml.length() + " chars");
+                return parsedHtml;
             } else {
                 cachedClipboardHTML = null;
                 clipboardCacheTimestamp = System.currentTimeMillis();
@@ -1206,6 +1212,7 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
             cachedClipboardHTML = null;
             clipboardCacheTimestamp = System.currentTimeMillis();
         }
+        return null;
     }
 
     /**
@@ -1491,15 +1498,17 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
          * @see #refreshClipboardCacheInBackground()
          */
         public String getClipboardHTML() {
-            // Return cached value if fresh enough
+            // Return cached value if fresh enough - on macOS only, where the clipboard cannot be read
+            // synchronously (see below). The cache is not invalidated when something new is copied, so
+            // elsewhere it would return the previous clipboard content (#3593).
             long age = System.currentTimeMillis() - clipboardCacheTimestamp;
-            if (age < CLIPBOARD_CACHE_TTL_MS && cachedClipboardHTML != null) {
+            if (SystemUtils.isMacOs() && age < CLIPBOARD_CACHE_TTL_MS && cachedClipboardHTML != null) {
                 log.debug("Returning cached clipboard HTML: " + cachedClipboardHTML.length() + " chars (age=" + age + "ms)");
                 return cachedClipboardHTML;
             }
 
-            // Cache is stale or empty
-            log.debug("Clipboard cache stale or empty (age=" + age + "ms)");
+            // Cache is stale, empty or not used on this platform
+            log.debug("Clipboard cache not used (age=" + age + "ms)");
 
             // On macOS, never wait for EDT - return stale cache and trigger async refresh
             if (SystemUtils.isMacOs()) {
@@ -1523,8 +1532,7 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
 
             SwingUtilities.invokeLater(() -> {
                 try {
-                    refreshClipboardCache();
-                    future.complete(cachedClipboardHTML);
+                    future.complete(refreshClipboardCache());
                 } catch (Exception e) {
                     log.warn("Error during sync clipboard refresh: " + e.getMessage());
                     future.complete(null);
@@ -1539,18 +1547,15 @@ public class WebViewHtmlEditorPanel extends JPanel implements EditorImplementati
                     return result;
                 }
             } catch (java.util.concurrent.TimeoutException e) {
-                log.debug("Clipboard refresh timed out, returning cached value");
+                log.debug("Clipboard refresh timed out, leaving the paste to the browser");
             } catch (Exception e) {
                 log.warn("Error waiting for clipboard refresh: " + e.getMessage());
             }
 
-            // Return whatever we have (may be null or stale)
-            if (cachedClipboardHTML != null) {
-                log.debug("Returning stale cached clipboard HTML: " + cachedClipboardHTML.length() + " chars");
-            } else {
-                log.debug("No HTML flavor found in clipboard cache");
-            }
-            return cachedClipboardHTML;
+            // No HTML read just now: do not return the cache, it may hold a previous clipboard content.
+            // With null the paste handler uses the plain text of the paste event or lets the browser paste.
+            log.debug("No HTML from clipboard refresh");
+            return null;
         }
     }
 
