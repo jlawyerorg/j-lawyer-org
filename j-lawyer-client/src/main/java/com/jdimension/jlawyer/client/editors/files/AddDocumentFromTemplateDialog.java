@@ -697,6 +697,7 @@ import java.util.*;
 import javax.swing.DefaultListModel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JTextField;
 import javax.swing.table.TableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
@@ -740,6 +741,11 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private ArchiveFilePanel casePanel = null;
 
     private DocumentNameTemplate nameTemplate = null;
+
+    /**
+     * Decides which file name is shown after the template was evaluated again.
+     */
+    private final FileNameSuggestion fileNameSuggestion = new FileNameSuggestion();
 
     public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, ArchiveFilePanel casePanel, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved) {
         this(parent, modal, casePanel, targetTable, aFile, involved, null, null, false, null, null, null, null, null, null);
@@ -1790,7 +1796,46 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
     }//GEN-LAST:event_formComponentResized
 
+    /**
+     * Decides which file name the dialog shows after the template was evaluated again. A name the user typed is kept
+     * when only the parties or the letterhead change, also over several changes, until another template or name
+     * template is chosen (issue #3234).
+     */
+    static final class FileNameSuggestion {
+
+        /**
+         * The generated name as the field showed it last, null before the first evaluation.
+         */
+        private String shownGeneratedName = null;
+
+        /**
+         * Shows the generated name in the field, unless keepEditedName is set and the user has changed the generated
+         * name that was shown last.
+         *
+         * @param field the file name field
+         * @param generatedName the name generated from the template
+         * @param keepEditedName true if only the parties or the letterhead changed
+         */
+        void showIn(JTextField field, String generatedName, boolean keepEditedName) {
+            boolean edited = this.shownGeneratedName != null && !this.shownGeneratedName.equals(field.getText());
+            if (keepEditedName && edited) {
+                // the generated name is not shown, so the next change still sees the typed name as edited
+                return;
+            }
+            field.setText(generatedName);
+            // remember what the field shows - it turns line breaks, e.g. from a multi-line placeholder, into spaces
+            this.shownGeneratedName = field.getText();
+        }
+    }
+
     private void templateSelection() {
+        this.templateSelection(false);
+    }
+
+    /**
+     * @param keepEditedName true if only the parties or the letterhead changed - a file name the user typed is kept then
+     */
+    private void templateSelection(boolean keepEditedName) {
         if (!(this.tblPlaceHolders.getModel() instanceof ArchiveFileTemplatePlaceHoldersTableModel)) {
             return;
         }
@@ -1860,7 +1905,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                 }
 
                 docName = FileUtils.sanitizeFileName(docName);
-                this.txtFileName.setText(docName);
+                this.fileNameSuggestion.showIn(this.txtFileName, docName, keepEditedName);
 
             } catch (Exception ex) {
                 log.error("Error getting new document name", ex);
@@ -1996,7 +2041,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             }
         }
 
-        this.templateSelection();
+        this.templateSelection(true);
     }//GEN-LAST:event_cmbLetterHeadsActionPerformed
 
     private void chkGeneratePDFActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkGeneratePDFActionPerformed
@@ -2176,7 +2221,8 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
     @Override
     public void selectedPartiesUpdated() {
-        this.templateSelection();
+        // a file name the user typed is kept (issue #3234)
+        this.templateSelection(true);
     }
 
     /**
