@@ -867,6 +867,127 @@ public class AiChatTranscript {
         return s == null ? "" : s;
     }
 
+    // the case reference sentence the client prepends to chats started from a case
+    private static final java.util.regex.Pattern CASE_REFERENCE = java.util.regex.Pattern.compile("Nutze für die folgende Konversation die Akte mit ID [^\\r\\n]*");
+    // header of a document text the client passes to the assistant
+    private static final java.util.regex.Pattern DOCUMENT_HEADER = java.util.regex.Pattern.compile("(?m)^Dokument \".*\" \\(ID [^)]*\\) vom ");
+    // user messages of resumed chats may still contain context unknown to this session
+    private static final int EXPORT_USER_MSG_MAX_LENGTH = 2000;
+
+    /**
+     * Renders transcript entries as markdown that is meant to be read by humans: user and
+     * assistant messages as quotes, tool calls as a short list of descriptions. Context that the
+     * client appended to user messages (document texts, mail content, case reference) is replaced
+     * by a short hint.
+     *
+     * @param entries the entries, typically from {@link #toEntries}
+     * @param injectedContexts context texts known to have been appended to user messages
+     * @param defaultPrincipalId shown for user entries that do not name their author
+     * @return the markdown, or an empty string if there is nothing to show
+     */
+    public static String toMarkdown(List<Entry> entries, java.util.Collection<String> injectedContexts, String defaultPrincipalId) {
+        if (entries == null || entries.isEmpty()) {
+            return "";
+        }
+        StringBuilder md = new StringBuilder();
+        md.append("## Chat-Verlauf\n\n");
+        boolean inToolList = false;
+        for (Entry e : entries) {
+            if (e.getKind() == Entry.KIND_TOOL) {
+                if (!inToolList) {
+                    md.append("*Verwendete Werkzeuge:*\n\n");
+                    inToolList = true;
+                }
+                md.append("- ").append(e.getText().replace("\r", " ").replace("\n", " ")).append("\n");
+                continue;
+            }
+            if (inToolList) {
+                md.append("\n");
+                inToolList = false;
+            }
+
+            String speaker;
+            String text;
+            if (e.getKind() == Entry.KIND_USER) {
+                speaker = e.getPrincipalId() != null ? e.getPrincipalId() : nullToEmpty(defaultPrincipalId);
+                text = cleanUserText(e.getText(), injectedContexts);
+            } else {
+                speaker = "Assistent Ingo";
+                text = e.getText().trim();
+            }
+            if (text.isEmpty()) {
+                continue;
+            }
+            md.append("**").append(speaker).append("**\n\n");
+            appendQuote(md, text);
+            md.append("\n");
+        }
+        if (inToolList) {
+            md.append("\n");
+        }
+        return md.toString();
+    }
+
+    private static String cleanUserText(String text, java.util.Collection<String> injectedContexts) {
+        String cleaned = nullToEmpty(text);
+        List<String> hints = new ArrayList<>();
+        if (injectedContexts != null) {
+            for (String ctx : injectedContexts) {
+                if (ctx == null || ctx.trim().isEmpty() || !cleaned.contains(ctx)) {
+                    continue;
+                }
+                cleaned = cleaned.replace(ctx, "");
+                String hint = describeContext(ctx);
+                if (hint != null && !hints.contains(hint)) {
+                    hints.add(hint);
+                }
+            }
+        }
+        cleaned = CASE_REFERENCE.matcher(cleaned).replaceAll("").trim();
+        if (cleaned.length() > EXPORT_USER_MSG_MAX_LENGTH) {
+            cleaned = cleaned.substring(0, EXPORT_USER_MSG_MAX_LENGTH).trim() + " … *(gekürzt)*";
+        }
+        if (!hints.isEmpty()) {
+            if (!cleaned.isEmpty()) {
+                cleaned = cleaned + "\n\n";
+            }
+            cleaned = cleaned + "*(+ " + String.join(", ", hints) + ")*";
+        }
+        return cleaned;
+    }
+
+    /**
+     * @return a short description of a context text, or null if it only carried the case
+     * reference
+     */
+    private static String describeContext(String ctx) {
+        java.util.regex.Matcher m = DOCUMENT_HEADER.matcher(ctx);
+        int documents = 0;
+        while (m.find()) {
+            documents++;
+        }
+        if (documents == 1) {
+            return "Inhalt von 1 Dokument";
+        }
+        if (documents > 1) {
+            return "Inhalt von " + documents + " Dokumenten";
+        }
+        String trimmed = ctx.trim();
+        if (trimmed.startsWith("--- E-Mail ---")) {
+            return "Inhalt der E-Mail";
+        }
+        if (CASE_REFERENCE.matcher(trimmed).replaceAll("").trim().isEmpty()) {
+            return null;
+        }
+        return "übergebener Kontext";
+    }
+
+    private static void appendQuote(StringBuilder md, String text) {
+        for (String line : text.split("\\r?\\n", -1)) {
+            md.append(line.isEmpty() ? ">" : "> " + line).append("\n");
+        }
+    }
+
     /**
      * Creates the compact line a transcript shows for a tool call, in the colours of its risk
      * level.

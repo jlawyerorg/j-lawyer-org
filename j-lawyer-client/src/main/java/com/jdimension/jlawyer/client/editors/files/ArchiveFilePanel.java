@@ -10749,7 +10749,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 return;
             }
 
-            AssistantInputAdapter contextAdapter = new AssistantInputAdapter() {
+            // inputs only carry the case reference (no document texts), results are
+            // taken over by this panel - stored as a markdown document in the case
+            AssistantFlowAdapter contextAdapter = new AssistantFlowAdapter() {
                 @Override
                 public List<InputData> getInputs(AiCapability c) {
                     List<InputData> inputs = new ArrayList<>();
@@ -10763,6 +10765,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 public List<Message> getMessages(AiCapability c) { return Collections.emptyList(); }
                 @Override
                 public boolean isCaseView() { return true; }
+                @Override
+                public String getPrompt(AiCapability c) { return null; }
+                @Override
+                public List<ParameterData> getParameters(AiCapability c) { return new ArrayList<>(); }
+                @Override
+                public void processOutput(AiCapability c, AiRequestStatus status) { ArchiveFilePanel.this.processOutput(c, status); }
+                @Override
+                public void processOutput(Map<String, String> output) { ArchiveFilePanel.this.processOutput(output); }
+                @Override
+                public void processError(AiCapability c, AiRequestStatus status) { ArchiveFilePanel.this.processError(c, status); }
             };
 
             JPopupMenu popup = new JPopupMenu();

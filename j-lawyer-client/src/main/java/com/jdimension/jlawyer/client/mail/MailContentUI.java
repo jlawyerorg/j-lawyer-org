@@ -2685,8 +2685,13 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
         SendEmailFrame dlg = null;
         if (this.emlMsgContainer != null) {
-            Message m = emlMsgContainer.getMessage();
-            dlg = EmailUtils.reply(m, prependText, this.getBody(), this.getContentType());
+            if (this.emlMsgContainer.isServerBased()) {
+                // server based mailboxes (e.g. the inbox) carry a DTO - getMessage() is null there
+                dlg = EmailUtils.reply(this.emlMsgContainer.getMessageDTO(), this.emlMsgContainer.getMailboxId(), prependText, this.getBody(), this.getContentType());
+            } else {
+                Message m = emlMsgContainer.getMessage();
+                dlg = EmailUtils.reply(m, prependText, this.getBody(), this.getContentType());
+            }
         } else {
             dlg = EmailUtils.reply(this.outlookMsgContainer, prependText, this.getBody(), this.getContentType());
         }

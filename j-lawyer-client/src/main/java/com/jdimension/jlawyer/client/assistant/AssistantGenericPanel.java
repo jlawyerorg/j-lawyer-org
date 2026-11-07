@@ -173,6 +173,8 @@ public class AssistantGenericPanel extends JDialog {
         this.config = config;
         this.capability = c;
         this.inputAdapter = inputAdapter;
+        // only a flow adapter can take over the result - hide the button for pure input adapters
+        this.cmdProcessOutput.setVisible(inputAdapter instanceof AssistantFlowAdapter);
 
         javax.swing.Icon providerIcon = AssistantAccess.getProviderIcon32(c.getModelRef());
         if (providerIcon != null) {

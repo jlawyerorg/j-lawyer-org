@@ -168,6 +168,10 @@ public class AssistantChatPanel extends JDialog {
     // tracks whether the first message has been sent (to include input data)
     private boolean isFirstMessage = true;
 
+    // context texts (document texts, case reference, mail content...) that were appended to user
+    // messages of this conversation - left out when the chat is taken over as markdown
+    private final List<String> injectedContexts = java.util.Collections.synchronizedList(new ArrayList<>());
+
     // the stored chat this conversation is saved to; replaced by a new reference on reset, so a
     // save still pending for the previous conversation cannot attach itself to the new one
     private StoredChatRef storedChat = new StoredChatRef();
@@ -237,6 +241,8 @@ public class AssistantChatPanel extends JDialog {
         this.config = config;
         this.capability = c;
         this.inputAdapter = inputAdapter;
+        // only a flow adapter can take over the result - hide the button for pure input adapters
+        this.cmdProcessOutput.setVisible(inputAdapter instanceof AssistantFlowAdapter);
 
         javax.swing.Icon providerIcon = AssistantAccess.getProviderIcon32(c.getModelRef());
         if (providerIcon != null) {
@@ -829,11 +835,14 @@ public class AssistantChatPanel extends JDialog {
                         }
                         if (inputText != null && !inputText.trim().isEmpty()) {
                             fullPrompt = fullPrompt + System.lineSeparator() + System.lineSeparator() + inputText;
+                            injectedContexts.add(inputText);
                         }
                         isFirstMessage = false;
                     } else if (taInputString.getSelectedText() != null) {
                         // Subsequent messages: only include manually selected text
-                        fullPrompt = fullPrompt + System.lineSeparator() + System.lineSeparator() + taInputString.getSelectedText();
+                        String selectedInput = taInputString.getSelectedText();
+                        fullPrompt = fullPrompt + System.lineSeparator() + System.lineSeparator() + selectedInput;
+                        injectedContexts.add(selectedInput);
                     }
 
                     Message outgoingMessage = new Message();
@@ -1411,44 +1420,21 @@ public class AssistantChatPanel extends JDialog {
         if (this.inputAdapter instanceof AssistantFlowAdapter && this.result != null) {
 
             if (result.getResponse() != null && result.getResponse().getOutputData() != null) {
-                OutputData intro = new OutputData();
-                intro.setType(OutputData.TYPE_STRING);
-                intro.setStringData("## Chat-Verlauf: " + System.lineSeparator() + System.lineSeparator());
-                result.getResponse().getOutputData().add(intro);
-                for (Message msg : this.messages) {
+                // human readable transcript: no tool results, tool calls as short descriptions,
+                // injected context left out - the final answer is already part of the output
+                List<AiChatTranscript.Entry> entries = AiChatTranscript.toEntries(this.messages, this.toolRegistry, this.capability.getModelRef());
+                if (!entries.isEmpty() && entries.get(entries.size() - 1).getKind() == AiChatTranscript.Entry.KIND_ASSISTANT) {
+                    entries = new ArrayList<>(entries.subList(0, entries.size() - 1));
+                }
+                List<String> contexts;
+                synchronized (this.injectedContexts) {
+                    contexts = new ArrayList<>(this.injectedContexts);
+                }
+                String transcript = AiChatTranscript.toMarkdown(entries, contexts, UserSettings.getInstance().getCurrentUser().getPrincipalId());
+                if (!transcript.isEmpty()) {
                     OutputData od = new OutputData();
                     od.setType(OutputData.TYPE_STRING);
-
-                    String role = msg.getRole();
-                    String displayRole;
-                    String iconBase64 = null;
-
-                    if ("user".equalsIgnoreCase(role)) {
-                        displayRole = UserSettings.getInstance().getCurrentUser().getPrincipalId();
-                        ImageIcon icon = UserSettings.getInstance().getUserSmallIcon(displayRole);
-                        iconBase64 = encodeImageIconToBase64(icon);
-                    } else {
-                        displayRole = "Assistent Ingo";
-                        ImageIcon icon = new ImageIcon(getClass().getResource("/icons16/material/j-lawyer-ai.png"));
-                        iconBase64 = encodeImageIconToBase64(icon);
-                    }
-
-                    StringBuilder md = new StringBuilder();
-
-                    if (iconBase64 != null) {
-                        md.append("![icon](data:image/png;base64,")
-                                .append(iconBase64)
-                                .append(") ");
-                    }
-                    md.append(" **").append(displayRole).append("**\n\n");
-
-                    String[] lines = msg.getContent().split("\\r?\\n");
-                    for (String line : lines) {
-                        md.append("> ").append(line).append("\n");
-                    }
-                    md.append("\n");
-
-                    od.setStringData(md.toString());
+                    od.setStringData(transcript);
                     result.getResponse().getOutputData().add(od);
                 }
             }
@@ -1457,27 +1443,6 @@ public class AssistantChatPanel extends JDialog {
         }
         this.setVisible(false);
         this.dispose();
-    }
-
-    private static String encodeImageIconToBase64(ImageIcon icon) {
-        if (icon == null) {
-            return null;
-        }
-        try {
-            java.awt.Image img = icon.getImage();
-            BufferedImage bImg = new BufferedImage(
-                    img.getWidth(null), img.getHeight(null), BufferedImage.TYPE_INT_ARGB);
-            Graphics2D g2d = bImg.createGraphics();
-            g2d.drawImage(img, 0, 0, null);
-            g2d.dispose();
-
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ImageIO.write(bImg, "png", baos);
-            return Base64.getEncoder().encodeToString(baos.toByteArray());
-        } catch (Exception e) {
-            log.error("Error rendering icon to base 64", e);
-            return null;
-        }
     }
 
     private void cmdInterruptActionPerformed(java.awt.event.ActionEvent evt) {
@@ -1522,6 +1487,7 @@ public class AssistantChatPanel extends JDialog {
         this.pnlMessages.repaint();
         this.taPrompt.setText(this.initialPrompt);
         this.isFirstMessage = true;
+        this.injectedContexts.clear();
         this.updateWordCount();
     }
 
