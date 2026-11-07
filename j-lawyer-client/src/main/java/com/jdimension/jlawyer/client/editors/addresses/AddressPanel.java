@@ -1058,6 +1058,29 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         }
     }
 
+    /**
+     * Takes over text typed into the editable insurance fields. Unlike the
+     * other editable dropdowns they have no autocompletion, which takes over
+     * every keystroke, so typed text only reaches the selection when the field
+     * loses the focus - e.g. clicking the sidebar does not take it.
+     */
+    protected void commitEditableComboBoxes() {
+        for (javax.swing.JComboBox cmb : new javax.swing.JComboBox[]{this.cmbInsurance, this.cmbMotorInsurance}) {
+            Object typed = cmb.getEditor().getItem();
+            if (typed != null && !typed.equals(cmb.getSelectedItem())) {
+                cmb.setSelectedItem(typed);
+            }
+        }
+    }
+
+    /**
+     * @return true if the displayed contact has already been saved on the
+     * server
+     */
+    protected boolean isContactSaved() {
+        return this.dto != null && this.dto.getId() != null;
+    }
+
     public void setAddressDTO(AddressBean dto) {
         this.dto = dto;
         this.invoicesPerCase.clear();
@@ -1442,6 +1465,8 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
 
     public void clearInputs() {
         this.dto = null;
+        // without an address this empties the documents table and the cached documents
+        this.loadAddressDocuments();
         this.clearOverview();
         this.invoicesPerCase.clear();
         this.encryptionPwd = null;
@@ -1452,6 +1477,9 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.txtBankAccountOwner.setText("");
         this.txtBankCode.setText("");
         this.txtBankName.setText("");
+        this.txtSepaReference.setText("");
+        this.txtSepaSince.setText("");
+        this.txtLeitwegId.setText("");
         this.txtCity.setText("");
         this.txtCompany.setText("");
         this.txtDepartment.setText("");
@@ -1496,6 +1524,9 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.txtCustom2.setText("");
         this.taCustom3.setText("");
         this.txtBirthDate.setText("");
+        // age, deceased and minor hints are calculated by updateAge() and would otherwise stay from the previous contact
+        this.lblAge.setText("");
+        this.lblAge.setIcon(null);
 
         this.txtDistrict.setText("");
         this.txtNotice.setText("");
@@ -5370,6 +5401,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
 
     @Override
     public boolean isDirty() {
+        this.commitEditableComboBoxes();
         if (!this.cmdSave.isEnabled()) {
             return false;
         }
@@ -5751,6 +5783,8 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         ClientSettings settings = ClientSettings.getInstance();
         EditorsRegistry.getInstance().updateStatus("Adresse wird gespeichert...");
+        // the last saved state - restored if saving fails, so that isDirty() still compares against it
+        AddressBean lastSaved = this.dto;
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             AddressServiceRemote addressService = locator.lookupAddressServiceRemote();
@@ -5840,6 +5874,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
             EditorsRegistry.getInstance().updateStatus("Adresse gespeichert.", 5000);
 
         } catch (Exception ex) {
+            this.dto = lastSaved;
             log.error("Error saving address", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus();

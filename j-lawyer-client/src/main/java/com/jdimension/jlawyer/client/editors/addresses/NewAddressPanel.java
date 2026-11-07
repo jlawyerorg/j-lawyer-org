@@ -736,7 +736,22 @@ public class NewAddressPanel extends AddressPanel implements ResetOnDisplayEdito
     }
 
     @Override
+    public void populateOptions() {
+        // a contact saved already (e.g. before activating a tag) keeps its selections - selecting "new" again
+        // repopulates the options before asking whether to save, which would reset all dropdowns to blank
+        if (this.isContactSaved()) {
+            return;
+        }
+        super.populateOptions();
+    }
+
+    @Override
     public boolean isDirty() {
+        this.commitEditableComboBoxes();
+        if (this.isContactSaved()) {
+            // compare against the saved contact instead of checking for non-empty fields
+            return super.isDirty();
+        }
         
         if (!StringUtils.isEmpty(this.txtBankAccount.getText())) {
             return true;
@@ -838,6 +853,12 @@ public class NewAddressPanel extends AddressPanel implements ResetOnDisplayEdito
     @Override
     public boolean needsReset() {
         return true;
+    }
+
+    @Override
+    public boolean needsResetOnReselect() {
+        // the contact has been saved already, e.g. before activating a tag - selecting "new" again starts a new contact
+        return this.isContactSaved();
     }
     
     
