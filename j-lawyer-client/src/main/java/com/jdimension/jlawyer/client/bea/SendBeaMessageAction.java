@@ -681,6 +681,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.function.Consumer;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -705,6 +706,7 @@ import com.jdimension.jlawyer.services.bea.rest.BeaSendMessageRequest;
 public class SendBeaMessageAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(SendBeaMessageAction.class.getName());
+    private static final long PROCESS_CARD_MAX_WAIT_MS = 120000l;
     List<BeaAttachmentMetadata> attachments = null;
     private boolean readReceipt = false;
     private BeaListItem authority = null;
@@ -720,6 +722,7 @@ public class SendBeaMessageAction extends ProgressableAction {
     private String azSender = null;
     private String azRecipient = null;
     private List<String> sentDocumentIds = null;
+    private Consumer<List<BeaIdentity>> partialSendListener = null;
 
     private String msgType = BeaMessage.MESSAGETYPE_ALLGEMEINE_NACHRICHT;
 
@@ -784,27 +787,66 @@ public class SendBeaMessageAction extends ProgressableAction {
 
     /**
      * @param sentDocumentIds the case documents that are attached - they get the first
-     * recipient as "An" unless they already have a correspondent
+     * recipient the message was actually sent to as "An" unless they already have a correspondent
      */
     public void setSentDocumentIds(List<String> sentDocumentIds) {
         this.sentDocumentIds = sentDocumentIds;
     }
 
-    // once the message went out to the first recipient: record it on the attached documents
-    private void markDocumentsSent() {
-        if (this.sentDocumentIds == null || this.sentDocumentIds.isEmpty() || this.recipients == null || this.recipients.isEmpty() || this.recipients.get(0) == null) {
+    /**
+     * @param partialSendListener called with the recipients that already received the message
+     * when sending failed for others, so a retry does not send it to them again
+     */
+    public void setPartialSendListener(Consumer<List<BeaIdentity>> partialSendListener) {
+        this.partialSendListener = partialSendListener;
+    }
+
+    // once all recipients are processed: record the first one that received the message on the attached documents
+    private void markDocumentsSent(List<BeaIdentity> sentTo) {
+        if (this.sentDocumentIds == null || this.sentDocumentIds.isEmpty() || sentTo.isEmpty()) {
             return;
         }
         List<String> ids = this.sentDocumentIds;
         this.sentDocumentIds = null;
         try {
-            BeaIdentity first = this.recipients.get(0);
+            BeaIdentity first = sentTo.get(0);
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            locator.lookupArchiveFileServiceRemote().markDocumentsSent(ids, DocumentMetadata.KEY_BEA_SAFEID, first.getSafeId(), first.toString(), this.recipients.size() - 1);
+            locator.lookupArchiveFileServiceRemote().markDocumentsSent(ids, DocumentMetadata.KEY_BEA_SAFEID, first.getSafeId(), first.toString(), sentTo.size() - 1);
         } catch (Exception ex) {
             log.error("Unable to record the recipient on sent documents", ex);
         }
+    }
+
+    // an unsuccessful process card without entries and without an error is not a result yet
+    private static boolean hasResult(BeaProcessCard card) {
+        if (card == null) {
+            return false;
+        }
+        boolean hasEntries = card.getEntries() != null && !card.getEntries().isEmpty();
+        boolean hasError = card.getExceptionMessage() != null && !card.getExceptionMessage().isEmpty();
+        return card.isSuccess() || hasEntries || hasError;
+    }
+
+    // the pauses only keep the status readable. This worker thread belongs to ProgressableAction, which cancels
+    // via a flag and never interrupts it - so an interruption only ends the pause and must not break later calls
+    private static void pause(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException ie) {
+            log.debug("Pause interrupted", ie);
+        }
+    }
+
+    private static String names(List<BeaIdentity> identities) {
+        StringBuilder sb = new StringBuilder();
+        for (BeaIdentity i : identities) {
+            if (sb.length() > 0) {
+                sb.append("\n");
+            }
+            sb.append(i.toString());
+        }
+        return sb.toString();
     }
 
     @Override
@@ -813,11 +855,31 @@ public class SendBeaMessageAction extends ProgressableAction {
         this.progress("Verbinde...");
         BeaAccess bea = BeaAccess.getInstance();
 
+        // outcomes are collected per recipient, so a problem with one recipient does not keep the message from the others.
+        // failures keep the send dialog open, warnings concern messages that have been sent and must not be sent again
+        List<BeaIdentity> sentTo = new ArrayList<>();
+        List<String> failures = new ArrayList<>();
+        List<String> warnings = new ArrayList<>();
+        // beA rejected the content itself, so sending to further recipients would fail the same way
+        boolean contentRejected = false;
+        // only worth the hint when a message may have reached beA although it is reported as failed
+        boolean adviseBeaCheck = false;
+
         for (BeaIdentity to : recipients) {
 
             if(to==null)
                 continue;
-            
+
+            if (this.isCancelled()) {
+                failures.add(to.toString() + ": nicht gesendet, Versand abgebrochen");
+                continue;
+            }
+
+            if (contentRejected) {
+                failures.add(to.toString() + ": nicht gesendet, Inhalt vom beA abgelehnt");
+                continue;
+            }
+
             BeaMessage sentMessage = null;
             String recipientsText = "";
 
@@ -861,23 +923,71 @@ public class SendBeaMessageAction extends ProgressableAction {
                 sentMessage = bea.sendMessage(senderSafeId, request);
 
             } catch (Exception ex) {
-                log.error(ex);
+                log.error("Unable to send beA message to " + to.toString(), ex);
                 BeaInvalidCharactersException invalidChars = BeaCharacterViolationFormatter.find(ex);
                 if (invalidChars != null) {
-                    JOptionPane.showMessageDialog(this.indicator, "Nachricht kann nicht gesendet werden.\n\n" + BeaCharacterViolationFormatter.format(invalidChars, this.attachments), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    // beA rejected the content before sending (subject, body, file numbers, attachment names) - it is the
+                    // same for every recipient, so the remaining ones are not attempted
+                    failures.add(to.toString() + ": Nachricht kann nicht gesendet werden.\n\n" + BeaCharacterViolationFormatter.format(invalidChars, this.attachments));
+                    contentRejected = true;
                 } else {
-                    JOptionPane.showMessageDialog(this.indicator, "Nachricht kann nicht gesendet werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    // the request may have reached beA before the error (e.g. a timeout), so delivery is unclear rather than failed
+                    failures.add(to.toString() + ": Versand fehlgeschlagen oder Status unklar - " + ex.getMessage());
+                    adviseBeaCheck = true;
                 }
-                // error has already been shown - do not rethrow, ProgressableAction would show it a second time
-                return false;
+                // no dialog here: all errors are shown once, in the summary that ProgressableAction displays at the end
+                continue;
             }
 
-            this.markDocumentsSent();
+            // the send response may already carry the process card - only poll if it does not
+            BeaProcessCard p = hasResult(sentMessage.getProcessCard()) ? sentMessage.getProcessCard() : null;
+            // null if the EGVP check failed - then wait for the process card anyway instead of silently skipping it
+            Boolean egvpStatus = BeaAccess.getEgvpPostBoxStatusBySafeId(to.getSafeId());
+            boolean isEgvpRecipient = !Boolean.FALSE.equals(egvpStatus);
 
-            BeaProcessCard p = null;
-            boolean isEgvpRecipient = BeaAccess.isEgvpPostBoxBySafeId(to.getSafeId());
+            // wait for the process card independently of saving the message to the case,
+            // otherwise sending without "als Dokument speichern" always reports a missing process card
+            if (isEgvpRecipient && p == null) {
+                this.progress("Warten auf EGVP-Laufzettel...");
+                if (sentMessage.getId() == null) {
+                    log.error("Sent message to " + to.getSafeId() + " has no id - unable to retrieve its process card");
+                } else {
+                    long deadline = System.nanoTime() + PROCESS_CARD_MAX_WAIT_MS * 1000000l;
+                    Throwable lastError = null;
+                    // no new lookup once the deadline has passed - a lookup that is already running may still exceed it
+                    while (!this.isCancelled() && System.nanoTime() < deadline) {
+                        try {
+                            BeaProcessCard card = bea.getProcessCards(this.fromSafeId, sentMessage.getId());
+                            // an empty placeholder is not a result - keep waiting instead of reporting a failed delivery
+                            if (hasResult(card)) {
+                                p = card;
+                            }
+                        } catch (Throwable t) {
+                            // retry until the deadline, the message itself has already been sent
+                            lastError = t;
+                        }
+                        if (p != null) {
+                            sentMessage.setProcessCard(p);
+                            break;
+                        }
+                        if (System.nanoTime() >= deadline) {
+                            break;
+                        }
+                        try {
+                            Thread.sleep(1000l);
+                        } catch (InterruptedException ie) {
+                            // an interruption ends the wait; as before, the interrupt flag is not set again, so the calls that follow keep working
+                            break;
+                        }
+                    }
+                    if (p == null && lastError != null) {
+                        log.error("Could not retrieve process card for message " + sentMessage.getId(), lastError);
+                    }
+                }
+            }
 
             Throwable storeException = null;
+            String savedAs = null;
             try {
                 if (this.archiveFile != null) {
 
@@ -889,31 +999,6 @@ public class SendBeaMessageAction extends ProgressableAction {
 
                     BeaMessage msgEx = sentMessage;
 
-                    this.progress("Warten auf EGVP-Laufzettel...");
-
-                    if (isEgvpRecipient) {
-                        long maxWaitTime = 120000l;
-                        long start = System.currentTimeMillis();
-                        long waited = 0;
-                        while (p == null && waited < maxWaitTime) {
-                            if (this.isCancelled()) {
-                                break;
-                            }
-                            p = bea.getProcessCards(this.fromSafeId, sentMessage.getId());
-                            if (p != null) {
-                                msgEx.setProcessCard(p);
-                                break;
-                            } else {
-                                waited = System.currentTimeMillis() - start;
-                                try {
-                                    Thread.sleep(1000l);
-                                } catch (Throwable t) {
-
-                                }
-                            }
-                        }
-                    }
-
                     if (!this.isCancelled()) {
                         this.progress("Speichern in Akte " + this.archiveFile.getFileNumber());
                         BeaAccess.addSignatureVerification(bea, this.fromSafeId, msgEx);
@@ -924,22 +1009,21 @@ public class SendBeaMessageAction extends ProgressableAction {
                             receivedPrefix = new java.util.Date();
                         }
                         String newName = com.jdimension.jlawyer.client.utils.FileUtils.getNewFileName(this.archiveFile, mex.getFileName(), receivedPrefix, true, this.indicator, "Datei benennen");
-                        if (newName == null) {
-                            return false;
+                        // null: naming was cancelled - the message has been sent anyway, so only this copy is not saved
+                        if (newName != null) {
+                            if (newName.trim().length() == 0) {
+                                newName = "beA-Nachricht";
+                            }
+                            if (newName.length() > 228) {
+                                newName = newName.substring(0, 227);
+                            }
+
+                            if (!newName.toLowerCase().endsWith(".bea")) {
+                                newName = newName + ".bea";
+                            }
                         }
 
-                        if (newName.trim().length() == 0) {
-                            newName = "beA-Nachricht";
-                        }
-                        if (newName.length() > 228) {
-                            newName = newName.substring(0, 227);
-                        }
-
-                        if (!newName.toLowerCase().endsWith(".bea")) {
-                            newName = newName + ".bea";
-                        }
-
-                        boolean documentExists = afs.doesDocumentExist(this.archiveFile.getId(), newName);
+                        boolean documentExists = newName != null && afs.doesDocumentExist(this.archiveFile.getId(), newName);
                         while (documentExists) {
                             newName = com.jdimension.jlawyer.client.utils.FileUtils.getNewFileName(this.archiveFile, newName, receivedPrefix, true, this.indicator, "Datei benennen");
                             if (newName == null || "".equals(newName)) {
@@ -948,10 +1032,11 @@ public class SendBeaMessageAction extends ProgressableAction {
                             documentExists = afs.doesDocumentExist(this.archiveFile.getId(), newName);
                         }
 
-                        if (newName != null) {
+                        if (newName != null && !newName.isEmpty()) {
 
                             DocumentMetadata sentMetadata = DocumentOrigin.outgoing(this.subject, DocumentMetadata.KEY_BEA_SAFEID, to.getSafeId(), to.toString(), 0).withDate(sentMessage.getReceptionTime() != null ? sentMessage.getReceptionTime() : new Date()).toMetadata(afs, this.archiveFile.getId(), null);
                             ArchiveFileDocumentsBean newDoc = afs.addDocument(this.archiveFile.getId(), newName, mex.getContent(), "", null, sentMetadata);
+                            savedAs = newName;
 
                             if (this.documentTag != null && !("".equals(this.documentTag))) {
                                 afs.setDocumentTag(newDoc.getId(), new DocumentTagsBean(newDoc.getId(), this.documentTag), true);
@@ -988,17 +1073,14 @@ public class SendBeaMessageAction extends ProgressableAction {
                 storeException = t;
             }
 
-            boolean egvpError = false;
+            // a process card is evaluated whenever there is one, the EGVP status only decides whether to wait for it
             final BeaProcessCard pCheck = p;
-            if (isEgvpRecipient && pCheck == null) {
-                egvpError = true;
-                SwingUtilities.invokeLater(() -> {
-                    indicator.setProgressStringError("Nachricht ohne EGVP-Laufzettel - bitte prüfen!");
-                });
-                Thread.sleep(3000);
-            } else if (isEgvpRecipient && p != null) {
-                if (!(p.isSuccess())) {
-                    egvpError = true;
+            if (pCheck != null) {
+                if (pCheck.isSuccess()) {
+                    sentTo.add(to);
+                } else {
+                    failures.add(to.toString() + ": EGVP-Laufzettel meldet fehlerhaften Nachrichtenversand");
+                    adviseBeaCheck = true;
                 }
                 SwingUtilities.invokeLater(() -> {
                     if (pCheck.isSuccess()) {
@@ -1007,25 +1089,71 @@ public class SendBeaMessageAction extends ProgressableAction {
                         indicator.setProgressStringError("EGVP-Laufzettel: fehlerhafter Nachrichtenversand!");
                     }
                 });
-                Thread.sleep(5000);
+                pause(5000);
 
-            }
-
-            for (BeaAttachmentMetadata meta : this.attachments) {
-                File f = new File(meta.getUrl());
-                if (f.exists()) {
-                    LauncherFactory.cleanupTempFile(meta.getUrl());
+            } else if (isEgvpRecipient) {
+                sentTo.add(to);
+                if (egvpStatus == null) {
+                    warnings.add(to.toString() + ": EGVP-Prüfung fehlgeschlagen, kein Laufzettel erhalten");
+                } else {
+                    warnings.add(to.toString() + ": kein EGVP-Laufzettel erhalten");
                 }
+                SwingUtilities.invokeLater(() -> {
+                    indicator.setProgressStringError("Nachricht ohne EGVP-Laufzettel - bitte prüfen!");
+                });
+                pause(3000);
+            } else {
+                sentTo.add(to);
             }
 
             if (storeException != null) {
-                throw new Exception("Fehler beim Speichern: " + storeException.getMessage());
+                if (savedAs != null) {
+                    warnings.add(to.toString() + ": in der Akte gespeichert als " + savedAs + ", Nachbearbeitung fehlgeschlagen - " + storeException.getMessage());
+                } else {
+                    warnings.add(to.toString() + ": nicht in der Akte gespeichert - " + storeException.getMessage());
+                }
             }
 
-            if (egvpError) {
-                throw new Exception("Nachricht enthielt keinen EGVP-Laufzettel oder der Laufzettel enthielt Fehler - bitte Nachrichtenversand im beA prüfen.");
-            }
+        }
 
+        this.markDocumentsSent(sentTo);
+
+        for (BeaAttachmentMetadata meta : this.attachments) {
+            File f = new File(meta.getUrl());
+            if (f.exists()) {
+                LauncherFactory.cleanupTempFile(meta.getUrl());
+            }
+        }
+
+        if (!failures.isEmpty()) {
+            StringBuilder sb = new StringBuilder("Beim beA-Versand sind Fehler aufgetreten:\n");
+            sb.append(String.join("\n", failures));
+            if (!warnings.isEmpty()) {
+                sb.append("\n\nHinweise:\n").append(String.join("\n", warnings));
+            }
+            if (!sentTo.isEmpty()) {
+                sb.append("\n\nBereits versendet an:\n").append(names(sentTo));
+                if (this.partialSendListener != null) {
+                    this.partialSendListener.accept(new ArrayList<>(sentTo));
+                    sb.append("\nDiese Empfänger wurden aus der Empfängerliste entfernt.");
+                }
+            }
+            if (adviseBeaCheck || !sentTo.isEmpty()) {
+                sb.append("\n\nBitte vor einem erneuten Versand im beA-Postausgang prüfen, ob die Nachricht nicht doch angekommen ist.");
+            }
+            throw new Exception(sb.toString());
+        }
+
+        if (!warnings.isEmpty()) {
+            String message = "Die Nachricht wurde versendet, bitte den Versand im beA prüfen:\n\n" + String.join("\n", warnings);
+            try {
+                SwingUtilities.invokeAndWait(() -> {
+                    JOptionPane.showMessageDialog(this.indicator, message, com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
+                });
+            } catch (Exception ex) {
+                // the message has been sent - a problem showing the warning must not turn this into a failed send
+                log.error("Unable to show warnings after sending beA message: " + message, ex);
+            }
         }
 
         return true;
