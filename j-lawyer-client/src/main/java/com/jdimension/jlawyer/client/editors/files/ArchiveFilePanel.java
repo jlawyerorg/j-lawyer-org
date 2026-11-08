@@ -1236,6 +1236,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     ((JLabel) c).setText(accountEntryFormat.format((Float) value));
                     ((JLabel) c).setHorizontalAlignment(RIGHT);
                 }
+                // total of the entry (calculated, not persisted): bold, negative values in red
+                boolean totalColumn = table.convertColumnIndexToModel(column) == ACCOUNT_COLUMN_TOTAL;
+                c.setFont(totalColumn ? c.getFont().deriveFont(java.awt.Font.BOLD) : table.getFont());
+                if (!isSelected) {
+                    if (totalColumn && value instanceof Float && (Float) value < 0f) {
+                        c.setForeground(TOTALS_CAPTION_OUT);
+                    } else {
+                        c.setForeground(table.getForeground());
+                    }
+                }
                 if (!isSelected) {
                     if (row % 2 == 0) {
                         c.setBackground(com.jdimension.jlawyer.client.ui.theme.UiColors.TABLE_STRIPE);
@@ -4746,14 +4756,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             },
             new String [] {
-                "Datum", "von/an", "Einnahmen", "Ausgaben", "Fremdgeld ein", "Fremdgeld aus", "Auslagen ein", "Auslagen aus", "Beleg", "Kommentar"
+                "Datum", "von/an", "Einnahmen", "Ausgaben", "Fremdgeld ein", "Fremdgeld aus", "Auslagen ein", "Auslagen aus", "Gesamt", "Beleg", "Kommentar"
             }
         ) {
             Class[] types = new Class [] {
-                java.lang.Object.class, java.lang.Object.class, java.lang.Float.class, java.lang.Float.class, java.lang.Float.class, java.lang.Float.class, java.lang.Float.class, java.lang.Float.class, java.lang.Object.class, java.lang.String.class
+                java.lang.Object.class, java.lang.Object.class, java.lang.Float.class, java.lang.Float.class, java.lang.Float.class, java.lang.Float.class, java.lang.Float.class, java.lang.Float.class, java.lang.Float.class, java.lang.Object.class, java.lang.String.class
             };
             boolean[] canEdit = new boolean [] {
-                false, false, false, false, false, false, false, false, false, false
+                false, false, false, false, false, false, false, false, false, false, false
             };
 
             public Class getColumnClass(int columnIndex) {
@@ -9749,7 +9759,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_mnuSendEpostLetterActionPerformed
 
     private void addAccountEntryRow(CaseAccountEntry e) {
-        ((DefaultTableModel) this.tblAccountEntries.getModel()).addRow(new Object[]{new AccountEntryRowIdentifier(e), e.getContact(), e.getEarnings().floatValue(), e.getSpendings().floatValue(), e.getEscrowIn().floatValue(), e.getEscrowOut().floatValue(), e.getExpendituresIn().floatValue(), e.getExpendituresOut().floatValue(), e.getInvoice(), e.getDescription()});
+        ((DefaultTableModel) this.tblAccountEntries.getModel()).addRow(new Object[]{new AccountEntryRowIdentifier(e), e.getContact(), e.getEarnings().floatValue(), e.getSpendings().floatValue(), e.getEscrowIn().floatValue(), e.getEscrowOut().floatValue(), e.getExpendituresIn().floatValue(), e.getExpendituresOut().floatValue(), e.calculateTotal().floatValue(), e.getInvoice(), e.getDescription()});
         this.updateAccountTotals();
     }
 
@@ -12136,6 +12146,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             sp.setBorder(javax.swing.BorderFactory.createEmptyBorder());
         }
     }
+
+    // model index of the calculated "Gesamt" column of the case account table
+    private static final int ACCOUNT_COLUMN_TOTAL = 8;
 
     private static final Color TOTALS_CAPTION_IN = new Color(77, 124, 15);
     private static final Color TOTALS_CAPTION_OUT = new Color(185, 28, 28);

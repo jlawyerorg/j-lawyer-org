@@ -673,6 +673,8 @@ import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -681,7 +683,10 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JMenuItem;
+import javax.swing.JFormattedTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 /**
  *
@@ -694,6 +699,7 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
     private JDialog parentDialog = null;
     private AddressBean recipientAddress = null;
     private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+    private final DecimalFormat amountFormat = new DecimalFormat("#,##0.00");
 
     /**
      * Creates new form CaseAccountEntryPanel
@@ -714,6 +720,27 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
         this.txtDate.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(dateText));
         this.txtDate.setFocusLostBehavior(javax.swing.JFormattedTextField.PERSIST);
         DesktopDateEntry.hint(this.txtDate);
+
+        // sums of "ein" / "aus" are calculated while typing (#3505)
+        DocumentListener sumUpdater = new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                updateSums();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                updateSums();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                updateSums();
+            }
+        };
+        for (JFormattedTextField f : new JFormattedTextField[]{this.txtEarnings, this.txtSpendings, this.txtEscrowIn, this.txtEscrowOut, this.txtExpendituresIn, this.txtExpendituresOut}) {
+            f.getDocument().addDocumentListener(sumUpdater);
+        }
         this.cmbInvoice.setRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -812,6 +839,9 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
         jLabel10 = new javax.swing.JLabel();
         txtExpendituresIn = new javax.swing.JFormattedTextField();
         txtExpendituresOut = new javax.swing.JFormattedTextField();
+        lblSumCaption = new javax.swing.JLabel();
+        txtSumIn = new javax.swing.JTextField();
+        txtSumOut = new javax.swing.JTextField();
 
         jLabel1.setText("Datum:");
 
@@ -866,7 +896,7 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
             }
         });
 
-        jPanel1.setLayout(new java.awt.GridLayout(4, 3, 6, 6));
+        jPanel1.setLayout(new java.awt.GridLayout(5, 3, 6, 6));
         jPanel1.add(jLabel5);
 
         jLabel6.setText("ein");
@@ -961,6 +991,22 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
             }
         });
         jPanel1.add(txtExpendituresOut);
+
+        lblSumCaption.setFont(lblSumCaption.getFont().deriveFont(lblSumCaption.getFont().getStyle() | java.awt.Font.BOLD));
+        lblSumCaption.setText("Summe");
+        jPanel1.add(lblSumCaption);
+
+        txtSumIn.setEditable(false);
+        txtSumIn.setFont(txtSumIn.getFont().deriveFont(txtSumIn.getFont().getStyle() | java.awt.Font.BOLD));
+        txtSumIn.setText("0,00");
+        txtSumIn.setFocusable(false);
+        jPanel1.add(txtSumIn);
+
+        txtSumOut.setEditable(false);
+        txtSumOut.setFont(txtSumOut.getFont().deriveFont(txtSumOut.getFont().getStyle() | java.awt.Font.BOLD));
+        txtSumOut.setText("0,00");
+        txtSumOut.setFocusable(false);
+        jPanel1.add(txtSumOut);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -1154,6 +1200,7 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JLabel lblRecipient;
+    private javax.swing.JLabel lblSumCaption;
     private javax.swing.JPopupMenu popRecipients;
     private javax.swing.JTextArea taDescription;
     private javax.swing.JFormattedTextField txtDate;
@@ -1163,6 +1210,8 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
     private javax.swing.JFormattedTextField txtExpendituresIn;
     private javax.swing.JFormattedTextField txtExpendituresOut;
     private javax.swing.JFormattedTextField txtSpendings;
+    private javax.swing.JTextField txtSumIn;
+    private javax.swing.JTextField txtSumOut;
     // End of variables declaration//GEN-END:variables
 
     /**
@@ -1240,7 +1289,38 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
 
             this.cmbInvoice.setSelectedIndex(0);
         }
+        this.updateSums();
         this.txtDate.requestFocus();
+    }
+
+    /**
+     * Recalculates the read-only sums of the incoming and outgoing amounts
+     * from the current (possibly not yet committed) text of the amount fields.
+     */
+    private void updateSums() {
+        BigDecimal in = this.parseAmount(this.txtEarnings).add(this.parseAmount(this.txtEscrowIn)).add(this.parseAmount(this.txtExpendituresIn));
+        BigDecimal out = this.parseAmount(this.txtSpendings).add(this.parseAmount(this.txtEscrowOut)).add(this.parseAmount(this.txtExpendituresOut));
+        this.txtSumIn.setText(this.amountFormat.format(in));
+        this.txtSumOut.setText(this.amountFormat.format(out));
+        this.lblSumCaption.setText("Summe (Saldo " + this.amountFormat.format(in.subtract(out)) + ")");
+    }
+
+    /**
+     * Parses the text of an amount field; empty or invalid input counts as
+     * zero.
+     */
+    private BigDecimal parseAmount(JFormattedTextField field) {
+        String text = field.getText();
+        if (text == null || text.isBlank()) {
+            return BigDecimal.ZERO;
+        }
+        text = text.trim();
+        ParsePosition pos = new ParsePosition(0);
+        Number n = this.amountFormat.parse(text, pos);
+        if (n == null || pos.getIndex() != text.length()) {
+            return BigDecimal.ZERO;
+        }
+        return new BigDecimal(n.toString());
     }
 
     private void selectInvoice(Invoice i) {

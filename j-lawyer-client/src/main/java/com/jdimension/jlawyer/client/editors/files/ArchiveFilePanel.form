@@ -2101,7 +2101,7 @@
                           <Properties>
                             <Property name="autoCreateRowSorter" type="boolean" value="true"/>
                             <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.editors2.TableModelEditor">
-                              <Table columnCount="10" rowCount="0">
+                              <Table columnCount="11" rowCount="0">
                                 <Column editable="false" title="Datum" type="java.lang.Object"/>
                                 <Column editable="false" title="von/an" type="java.lang.Object"/>
                                 <Column editable="false" title="Einnahmen" type="java.lang.Float"/>
@@ -2110,12 +2110,18 @@
                                 <Column editable="false" title="Fremdgeld aus" type="java.lang.Float"/>
                                 <Column editable="false" title="Auslagen ein" type="java.lang.Float"/>
                                 <Column editable="false" title="Auslagen aus" type="java.lang.Float"/>
+                                <Column editable="false" title="Gesamt" type="java.lang.Float"/>
                                 <Column editable="false" title="Beleg" type="java.lang.Object"/>
                                 <Column editable="false" title="Kommentar" type="java.lang.String"/>
                               </Table>
                             </Property>
                             <Property name="columnModel" type="javax.swing.table.TableColumnModel" editor="org.netbeans.modules.form.editors2.TableColumnModelEditor">
                               <TableColumnModel selectionModel="0">
+                                <Column maxWidth="-1" minWidth="-1" prefWidth="-1" resizable="true">
+                                  <Title/>
+                                  <Editor/>
+                                  <Renderer/>
+                                </Column>
                                 <Column maxWidth="-1" minWidth="-1" prefWidth="-1" resizable="true">
                                   <Title/>
                                   <Editor/>
