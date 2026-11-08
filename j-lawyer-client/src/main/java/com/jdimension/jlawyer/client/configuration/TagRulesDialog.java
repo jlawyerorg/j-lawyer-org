@@ -736,6 +736,7 @@ public class TagRulesDialog extends javax.swing.JDialog {
         this.txtName.setText("");
         this.txtTags.setText("");
         this.chkCancelOnMatch.setSelected(true);
+        this.chkMarkFavorite.setSelected(false);
         this.rdAnd.setSelected(false);
         this.rdOr.setSelected(true);
         this.pnlTagRules.removeAll();
@@ -768,6 +769,7 @@ public class TagRulesDialog extends javax.swing.JDialog {
         txtTags = new javax.swing.JTextField();
         jLabel3 = new javax.swing.JLabel();
         chkCancelOnMatch = new javax.swing.JCheckBox();
+        chkMarkFavorite = new javax.swing.JCheckBox();
         rdOr = new javax.swing.JRadioButton();
         rdAnd = new javax.swing.JRadioButton();
         jLabel6 = new javax.swing.JLabel();
@@ -905,6 +907,9 @@ public class TagRulesDialog extends javax.swing.JDialog {
         chkCancelOnMatch.setSelected(true);
         chkCancelOnMatch.setText("bei Treffer keine weitere Regel anwenden");
 
+        chkMarkFavorite.setFont(chkMarkFavorite.getFont());
+        chkMarkFavorite.setText("Als Dokument-Favorit kennzeichnen");
+
         buttonGroup1.add(rdOr);
         rdOr.setFont(rdOr.getFont());
         rdOr.setSelected(true);
@@ -955,6 +960,7 @@ public class TagRulesDialog extends javax.swing.JDialog {
                             .addComponent(jLabel3)
                             .addComponent(jLabel5)
                             .addComponent(chkCancelOnMatch)
+                            .addComponent(chkMarkFavorite)
                             .addGroup(layout.createSequentialGroup()
                                 .addGap(6, 6, 6)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -988,6 +994,8 @@ public class TagRulesDialog extends javax.swing.JDialog {
                         .addComponent(jLabel3)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(txtTags, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(chkMarkFavorite)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jLabel6)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1054,6 +1062,7 @@ public class TagRulesDialog extends javax.swing.JDialog {
             r.setName(newNameObject.toString());
             r.setTagList("");
             r.setCancelOnMatch(true);
+            r.setMarkFavorite(false);
             r.setOperator(DocumentTagRule.OPERATOR_OR);
             r.setRuleConditions(new ArrayList<>());
             r.setSequenceNumber(sequenceNo);
@@ -1100,6 +1109,7 @@ public class TagRulesDialog extends javax.swing.JDialog {
             DocumentTagRule r = (DocumentTagRule) this.tblTagRules.getValueAt(row, 0);
             r.setName(this.txtName.getText());
             r.setCancelOnMatch(this.chkCancelOnMatch.isSelected());
+            r.setMarkFavorite(this.chkMarkFavorite.isSelected());
             r.setOperator(DocumentTagRule.OPERATOR_AND);
             if(this.rdOr.isSelected())
                 r.setOperator(DocumentTagRule.OPERATOR_OR);
@@ -1228,6 +1238,7 @@ public class TagRulesDialog extends javax.swing.JDialog {
         this.rdOr.setSelected(r.getOperator()==DocumentTagRule.OPERATOR_OR);
         this.rdAnd.setSelected(r.getOperator()==DocumentTagRule.OPERATOR_AND);
         this.chkCancelOnMatch.setSelected(r.isCancelOnMatch());
+        this.chkMarkFavorite.setSelected(r.isMarkFavorite());
         
         this.pnlTagRules.removeAll();
         this.pnlTagRules.revalidate();
@@ -1297,6 +1308,7 @@ public class TagRulesDialog extends javax.swing.JDialog {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JCheckBox chkCancelOnMatch;
+    private javax.swing.JCheckBox chkMarkFavorite;
     private javax.swing.JButton cmdAdd;
     private javax.swing.JButton cmdAddRule;
     private javax.swing.JButton cmdClose;

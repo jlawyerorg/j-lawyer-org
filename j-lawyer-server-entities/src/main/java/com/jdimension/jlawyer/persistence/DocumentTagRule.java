@@ -711,6 +711,9 @@ public class DocumentTagRule implements Serializable {
     @Column(name = "cancel_onmatch")
     private boolean cancelOnMatch;
     
+    @Column(name = "mark_favorite")
+    private boolean markFavorite;
+    
     @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "rule", fetch = FetchType.EAGER)
     private List<DocumentTagRuleCondition> ruleConditions;
     
@@ -831,6 +834,21 @@ public class DocumentTagRule implements Serializable {
      */
     public void setCancelOnMatch(boolean cancelOnMatch) {
         this.cancelOnMatch = cancelOnMatch;
+    }
+
+    /**
+     * @return true if matching documents are marked as favorite
+     */
+    public boolean isMarkFavorite() {
+        return markFavorite;
+    }
+
+    /**
+     * @param markFavorite true if matching documents should be marked as
+     * favorite
+     */
+    public void setMarkFavorite(boolean markFavorite) {
+        this.markFavorite = markFavorite;
     }
 
     

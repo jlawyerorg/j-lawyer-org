@@ -2340,7 +2340,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (allRules != null) {
             // iterate over all rules
             for (DocumentTagRule rule : allRules) {
-                if (!ServerStringUtils.isEmpty(rule.getTagList()) && !rule.getRuleConditions().isEmpty() && !ServerStringUtils.isEmpty(doc.getName())) {
+                boolean hasActions = !ServerStringUtils.isEmpty(rule.getTagList()) || rule.isMarkFavorite();
+                if (hasActions && !rule.getRuleConditions().isEmpty() && !ServerStringUtils.isEmpty(doc.getName())) {
                     boolean match = false;
                     String docName = doc.getName().toLowerCase();
                     if (rule.getOperator() == DocumentTagRule.OPERATOR_OR) {
@@ -2386,7 +2387,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     }
 
                     if (match) {
-                        String tagList = rule.getTagList();
+                        String tagList = rule.getTagList() != null ? rule.getTagList() : "";
                         for (String tag : tagList.split(",")) {
                             tag = tag.trim();
                             if (ServerStringUtils.isEmpty(tag)) {
@@ -2416,12 +2417,22 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                             }
                         }
 
+                        if (rule.isMarkFavorite() && !doc.isFavorite()) {
+                            try {
+                                doc.setFavorite(true);
+                                doc.bumpVersion(false);
+                                this.archiveFileDocumentsFacade.edit(doc);
+                            } catch (Exception ex) {
+                                log.error("Could not mark document " + doc.getName() + "[" + doc.getId() + "] as favorite", ex);
+                            }
+                        }
+
                         if (rule.isCancelOnMatch()) {
                             break;
                         }
                     }
                 } else {
-                    log.warn("Auto-tagging rule " + rule.getName() + " has an empty tag list or empty conditions list");
+                    log.warn("Auto-tagging rule " + rule.getName() + " has no actions (tags / favorite) or an empty conditions list");
                 }
             }
         }

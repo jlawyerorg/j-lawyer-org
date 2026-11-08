@@ -690,7 +690,11 @@ public class DocumentTagRuleTableCellRenderer extends DefaultTableCellRenderer {
                 ((JLabel) ((Component) returnRenderer)).setText(r.getName());
                 break;
             case 1:
-                ((JLabel) ((Component) returnRenderer)).setText(r.getTagList());
+                String actions = r.getTagList() != null ? r.getTagList().trim() : "";
+                if (r.isMarkFavorite()) {
+                    actions = actions.isEmpty() ? "★ Favorit" : actions + ", ★ Favorit";
+                }
+                ((JLabel) ((Component) returnRenderer)).setText(actions);
                 break;
             default:
                 break;
