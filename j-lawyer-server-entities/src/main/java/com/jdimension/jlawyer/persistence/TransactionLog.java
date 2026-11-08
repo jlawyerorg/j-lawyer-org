@@ -709,7 +709,7 @@ public class TransactionLog implements Serializable {
     @Column(name = "case_id")
     private String caseId;
     
-    @Column(name = "details")
+    @Column(name = "details", columnDefinition = "TEXT")
     private String details;
     
     public TransactionLog() {
