@@ -819,6 +819,10 @@ public class BankTransactionMatcher {
         if (paymentMatch != null) {
             p.setPayment(paymentMatch);
             p.setRecipient(paymentMatch.getContact());
+            // identified by its payment number: mark as executed right away (outgoing transactions only)
+            if (tx.getAmount() < 0 && BankTransactionProposal.isOpenPayment(paymentMatch)) {
+                p.setMarkPaymentExecuted(true);
+            }
         } else if (invoiceMatch != null) {
             p.setInvoice(invoiceMatch);
             p.setEntryInvoice(invoiceMatch);
@@ -833,8 +837,11 @@ public class BankTransactionMatcher {
     }
 
     /**
-     * Preselects the first open payment and the first unpaid invoice of the
-     * proposal's case, including the booking contact. Used when the case is
+     * Preselects invoice or payment of the proposal's case, but only if the
+     * assignment is unambiguous: incoming transactions get the only open
+     * invoice with the transaction amount, outgoing transactions the only open
+     * payment with the transaction amount (the sign is ignored). Otherwise
+     * nothing is preselected and the user has to choose. Used when the case is
      * known but no invoice or payment number was found in the purpose.
      *
      * @param p proposal with an assigned case
@@ -842,28 +849,36 @@ public class BankTransactionMatcher {
      */
     public void prefillFromCase(BankTransactionProposal p) throws Exception {
         this.loadCaseDetails(p);
-        Payment openPayment = null;
-        for (Payment cp : p.getCasePayments()) {
-            if (cp.getStatus() != Payment.STATUS_EXECUTED) {
-                openPayment = cp;
-                break;
+        if (p.getTransaction().getAmount() < 0) {
+            Payment candidate = null;
+            int matches = 0;
+            for (Payment cp : p.getCasePayments()) {
+                if (BankTransactionProposal.isOpenPayment(cp) && p.isTransactionAmount(cp.getTotal())) {
+                    candidate = cp;
+                    matches++;
+                }
             }
-        }
-        Invoice openInvoice = null;
-        for (Invoice ci : p.getCaseInvoices()) {
-            if (ci.getStatus() != Invoice.STATUS_PAID) {
-                openInvoice = ci;
-                break;
+            if (matches == 1) {
+                p.setPayment(candidate);
+                p.setRecipient(candidate.getContact());
+                p.setMarkPaymentExecuted(true);
+                p.appendMatchReason("einzige offene Zahlung mit diesem Betrag");
             }
-        }
-        if (openPayment != null) {
-            p.setPayment(openPayment);
-            p.setRecipient(openPayment.getContact());
-        }
-        if (openInvoice != null) {
-            p.setInvoice(openInvoice);
-            p.setEntryInvoice(openInvoice);
-            p.setRecipient(openInvoice.getContact());
+        } else {
+            Invoice candidate = null;
+            int matches = 0;
+            for (Invoice ci : p.getCaseInvoices()) {
+                if (BankTransactionProposal.isOpenInvoice(ci) && p.isTransactionAmount(ci.getTotalGross())) {
+                    candidate = ci;
+                    matches++;
+                }
+            }
+            if (matches == 1) {
+                p.setInvoice(candidate);
+                p.setEntryInvoice(candidate);
+                p.setRecipient(candidate.getContact());
+                p.appendMatchReason("einzige offene Rechnung mit diesem Betrag");
+            }
         }
     }
 
@@ -881,12 +896,23 @@ public class BankTransactionMatcher {
         String caseId = p.getCaseMatch().getId();
         List<Invoice> invoices = locator.lookupArchiveFileServiceRemote().getInvoices(caseId);
         List<Payment> payments = locator.lookupArchiveFileServiceRemote().getPayments(caseId);
-        List<AddressBean> addresses = locator.lookupArchiveFileServiceRemote().getAddressesForCase(caseId);
+        List<ArchiveFileAddressesBean> parties = locator.lookupArchiveFileServiceRemote().getInvolvementDetailsForCase(caseId);
+        // distinct contacts of the case, a contact may be involved in several roles
+        List<AddressBean> addresses = new ArrayList<>();
+        if (parties != null) {
+            for (ArchiveFileAddressesBean party : parties) {
+                AddressBean ad = party.getAddressKey();
+                if (ad != null && addresses.stream().noneMatch(a -> a.getId().equals(ad.getId()))) {
+                    addresses.add(ad);
+                }
+            }
+        }
         Collection<ArchiveFileTagsBean> tags = locator.lookupArchiveFileServiceRemote().getTags(caseId);
 
         p.setCaseInvoices(invoices != null ? new ArrayList<>(invoices) : new ArrayList<>());
         p.setCasePayments(payments != null ? new ArrayList<>(payments) : new ArrayList<>());
-        p.setCaseAddresses(addresses != null ? new ArrayList<>(addresses) : new ArrayList<>());
+        p.setCaseAddresses(addresses);
+        p.setCaseParties(parties != null ? new ArrayList<>(parties) : new ArrayList<>());
         p.getCurrentCaseTags().clear();
         if (tags != null) {
             for (ArchiveFileTagsBean t : tags) {

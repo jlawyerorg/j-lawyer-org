@@ -676,6 +676,7 @@ import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.Payment;
@@ -998,12 +999,13 @@ public class BankTransactionEntryPanel extends javax.swing.JPanel {
             Payment pay = this.proposal.getPayment();
             this.chkMarkInvoicePaid.setSelected(this.proposal.isMarkInvoicePaid());
             this.chkMarkInvoicePaid.setEnabled(editable && hasCase && inv != null && (inv.getStatus() != Invoice.STATUS_PAID || this.proposal.isMarkInvoicePaid()));
-            this.cmbInvoices.setEnabled(editable && hasCase && this.cmbInvoices.getItemCount() > 0);
+            // the first item is always the empty selection
+            this.cmbInvoices.setEnabled(editable && hasCase && this.cmbInvoices.getItemCount() > 1);
             this.setInvoiceInfo(this.lblInvoiceInfo, inv);
 
             this.chkMarkPaymentExecuted.setSelected(this.proposal.isMarkPaymentExecuted());
             this.chkMarkPaymentExecuted.setEnabled(editable && hasCase && pay != null && amount < 0 && (pay.getStatus() != Payment.STATUS_EXECUTED || this.proposal.isMarkPaymentExecuted()));
-            this.cmbPayments.setEnabled(editable && hasCase && this.cmbPayments.getItemCount() > 0);
+            this.cmbPayments.setEnabled(editable && hasCase && this.cmbPayments.getItemCount() > 1);
             this.lblPaymentInfo.setText(pay != null && pay.getTotal() != null ? "Zahlungsbetrag: " + nf.format(pay.getTotal()) : "");
 
             this.chkCreateCaseAccountEntry.setSelected(this.proposal.isCreateAccountEntry());
@@ -1059,12 +1061,19 @@ public class BankTransactionEntryPanel extends javax.swing.JPanel {
             }
             this.cmbEntryType.setSelectedItem(this.proposal.getEntryType());
 
-            for (Invoice i : this.getSelectableInvoices()) {
+            // invoices to be marked as paid: open ones only, nothing preselected unless assigned
+            this.cmbInvoices.addItem("");
+            for (Invoice i : this.getOpenInvoices()) {
                 this.cmbInvoices.addItem(i.getInvoiceNumber());
+            }
+            // the case account entry may refer to any invoice of the case
+            for (Invoice i : this.getSelectableInvoices()) {
                 this.cmbEntryInvoice.addItem(i.getInvoiceNumber());
             }
             if (this.proposal.getInvoice() != null) {
                 this.cmbInvoices.setSelectedItem(this.proposal.getInvoice().getInvoiceNumber());
+            } else {
+                this.cmbInvoices.setSelectedItem("");
             }
             if (this.proposal.getEntryInvoice() != null) {
                 this.cmbEntryInvoice.setSelectedItem(this.proposal.getEntryInvoice().getInvoiceNumber());
@@ -1072,20 +1081,34 @@ public class BankTransactionEntryPanel extends javax.swing.JPanel {
                 this.cmbEntryInvoice.setSelectedItem("");
             }
 
+            this.cmbPayments.addItem("");
             for (Payment p : this.getSelectablePayments()) {
                 this.cmbPayments.addItem(p.getPaymentNumber());
             }
             if (this.proposal.getPayment() != null) {
                 this.cmbPayments.setSelectedItem(this.proposal.getPayment().getPaymentNumber());
+            } else {
+                this.cmbPayments.setSelectedItem("");
             }
 
             this.txtDescription.setText(StringUtils.nonNull(this.proposal.getDescription()));
             this.txtDescription.setCaretPosition(0);
 
             this.popRecipients.removeAll();
-            for (AddressBean ad : this.proposal.getCaseAddresses()) {
+            // parties with their role and role color, like in the payment dialog
+            for (ArchiveFileAddressesBean party : this.proposal.getCaseParties()) {
+                AddressBean ad = party.getAddressKey();
+                if (ad == null) {
+                    continue;
+                }
                 JMenuItem mi = new JMenuItem();
-                mi.setText(ad.toDisplayName());
+                if (party.getReferenceType() != null) {
+                    mi.setText(ad.toDisplayName() + " (" + party.getReferenceType().getName() + ")");
+                    mi.setBackground(new java.awt.Color(party.getReferenceType().getColor()));
+                    mi.setOpaque(true);
+                } else {
+                    mi.setText(ad.toDisplayName());
+                }
                 mi.setToolTipText(ad.toDisplayName() + " als Buchungskontakt verwenden");
                 mi.addActionListener((ActionEvent e) -> {
                     this.proposal.setRecipient(ad);
@@ -1112,9 +1135,35 @@ public class BankTransactionEntryPanel extends javax.swing.JPanel {
         return result;
     }
 
+    /**
+     * Invoices that may be marked as paid: the open invoices of the case plus
+     * the currently assigned one.
+     */
+    private List<Invoice> getOpenInvoices() {
+        List<Invoice> result = new ArrayList<>();
+        for (Invoice i : this.getSelectableInvoices()) {
+            boolean assigned = this.proposal.getInvoice() != null && this.proposal.getInvoice().getId().equals(i.getId());
+            if (assigned || BankTransactionProposal.isOpenInvoice(i)) {
+                result.add(i);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Payments that may be marked as executed: the open payments of the case
+     * plus the currently assigned one.
+     */
     private List<Payment> getSelectablePayments() {
         if (this.proposal.isCaseDetailsLoaded()) {
-            return this.proposal.getCasePayments();
+            List<Payment> result = new ArrayList<>();
+            for (Payment p : this.proposal.getCasePayments()) {
+                boolean assigned = this.proposal.getPayment() != null && this.proposal.getPayment().getId().equals(p.getId());
+                if (assigned || BankTransactionProposal.isOpenPayment(p)) {
+                    result.add(p);
+                }
+            }
+            return result;
         }
         List<Payment> result = new ArrayList<>();
         if (this.proposal.getPayment() != null) {
@@ -1139,7 +1188,9 @@ public class BankTransactionEntryPanel extends javax.swing.JPanel {
         if (paymentNumber == null || paymentNumber.toString().length() == 0) {
             return null;
         }
-        for (Payment p : this.getSelectablePayments()) {
+        // search all payments of the case - the combo box may still list a payment that is no longer open
+        List<Payment> candidates = this.proposal.isCaseDetailsLoaded() ? this.proposal.getCasePayments() : this.getSelectablePayments();
+        for (Payment p : candidates) {
             if (p.getPaymentNumber().equals(paymentNumber.toString())) {
                 return p;
             }
@@ -1611,6 +1662,10 @@ public class BankTransactionEntryPanel extends javax.swing.JPanel {
         this.proposal.setPayment(pay);
         if (pay == null || pay.getStatus() == Payment.STATUS_EXECUTED) {
             this.proposal.setMarkPaymentExecuted(false);
+        }
+        if (pay != null && pay.getContact() != null) {
+            // the payment's recipient becomes the booking contact
+            this.proposal.setRecipient(pay.getContact());
         }
         this.proposalChanged();
     }//GEN-LAST:event_cmbPaymentsItemStateChanged

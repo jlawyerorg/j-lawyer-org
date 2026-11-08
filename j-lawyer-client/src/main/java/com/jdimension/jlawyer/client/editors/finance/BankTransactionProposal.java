@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.editors.finance;
 
 import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.Payment;
@@ -752,6 +753,8 @@ public class BankTransactionProposal {
     private List<Invoice> caseInvoices = new ArrayList<>();
     private List<Payment> casePayments = new ArrayList<>();
     private List<AddressBean> caseAddresses = new ArrayList<>();
+    // parties of the case including their role, used to pick the booking contact
+    private List<ArchiveFileAddressesBean> caseParties = new ArrayList<>();
     private Set<String> currentCaseTags = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 
     private Status status = Status.OPEN;
@@ -790,6 +793,7 @@ public class BankTransactionProposal {
         this.caseInvoices = new ArrayList<>();
         this.casePayments = new ArrayList<>();
         this.caseAddresses = new ArrayList<>();
+        this.caseParties = new ArrayList<>();
         this.currentCaseTags = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
         this.createAccountEntry = newCase != null;
         if (this.status == Status.NO_MATCH && newCase != null) {
@@ -866,8 +870,17 @@ public class BankTransactionProposal {
         if (this.status == Status.DONE) {
             return "ausgeführt: " + String.join("  ·  ", this.executedActions);
         }
+        // the case is known, but no invoice (incoming) or payment (outgoing) could be assigned
+        String unassignedHint = null;
+        if (this.caseMatch != null) {
+            if (this.transaction.getAmount() >= 0 && this.invoice == null && this.entryInvoice == null) {
+                unassignedHint = "keine Rechnung zugeordnet";
+            } else if (this.transaction.getAmount() < 0 && this.payment == null) {
+                unassignedHint = "keine Zahlung zugeordnet";
+            }
+        }
         if (!this.hasActions()) {
-            return "keine Aktionen";
+            return unassignedHint != null ? "keine Aktionen  ·  " + unassignedHint : "keine Aktionen";
         }
         DecimalFormat nf = new DecimalFormat("#,##0.00");
         List<String> parts = new ArrayList<>();
@@ -897,6 +910,9 @@ public class BankTransactionProposal {
                 tags.add("-" + t);
             }
             parts.add("Etiketten: " + String.join(", ", tags));
+        }
+        if (unassignedHint != null) {
+            parts.add(unassignedHint);
         }
         return String.join("  ·  ", parts);
     }
@@ -1039,6 +1055,65 @@ public class BankTransactionProposal {
 
     public void setCaseAddresses(List<AddressBean> caseAddresses) {
         this.caseAddresses = caseAddresses;
+    }
+
+    /**
+     * @return the parties of the case including their role
+     */
+    public List<ArchiveFileAddressesBean> getCaseParties() {
+        return caseParties;
+    }
+
+    /**
+     * @param caseParties the parties of the case including their role
+     */
+    public void setCaseParties(List<ArchiveFileAddressesBean> caseParties) {
+        this.caseParties = caseParties;
+    }
+
+    /**
+     * Adds a detail to the reason why the case (and invoice / payment) has
+     * been assigned.
+     *
+     * @param detail the additional reason
+     */
+    public void appendMatchReason(String detail) {
+        if (this.matchReason == null || this.matchReason.isEmpty()) {
+            this.matchReason = detail;
+        } else {
+            this.matchReason = this.matchReason + ", " + detail;
+        }
+    }
+
+    /**
+     * @param inv an invoice
+     * @return true if the invoice is neither paid nor cancelled
+     */
+    public static boolean isOpenInvoice(Invoice inv) {
+        return inv != null && inv.getStatus() != Invoice.STATUS_PAID && inv.getStatus() != Invoice.STATUS_CANCELLED;
+    }
+
+    /**
+     * @param pay a payment
+     * @return true if the payment is neither executed nor cancelled
+     */
+    public static boolean isOpenPayment(Payment pay) {
+        return pay != null && pay.getStatus() != Payment.STATUS_EXECUTED && pay.getStatus() != Payment.STATUS_CANCELLED;
+    }
+
+    /**
+     * Compares an amount with the amount of the transaction, ignoring the sign
+     * (payments are positive, outgoing transactions negative).
+     *
+     * @param amount amount of an invoice or payment
+     * @return true if both amounts are equal
+     */
+    public boolean isTransactionAmount(BigDecimal amount) {
+        if (amount == null) {
+            return false;
+        }
+        BigDecimal txAmount = BigDecimal.valueOf(Math.abs(this.transaction.getAmount())).setScale(2, RoundingMode.HALF_UP);
+        return txAmount.compareTo(amount.abs().setScale(2, RoundingMode.HALF_UP)) == 0;
     }
 
     public Set<String> getCurrentCaseTags() {
