@@ -6820,6 +6820,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         mp1.setContextForeground(DefaultColorTheme.COLOR_DARK_GREY);
         mp1.setShowCaseContext(false);
         mp1.setMaxDocumentChars(40);
+        // the case's messages read more like a log than a chat - wider bubbles, less empty space
+        mp1.setBubbleWidthRatio(0.9f);
         pnlMessages.add(mp1);
         pnlMessages.repaint();
 

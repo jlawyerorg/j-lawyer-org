@@ -1095,6 +1095,16 @@ public class MessagePanel extends javax.swing.JPanel implements CaseDropTarget {
     }
 
     /**
+     * Sets the share of a wide list the bubble may take up at most, see
+     * CalloutPanelComponent.setBubbleWidthRatio.
+     *
+     * @param bubbleWidthRatio between 0 and 1, default 0.75
+     */
+    public void setBubbleWidthRatio(float bubbleWidthRatio) {
+        this.calloutPanelComponent1.setBubbleWidthRatio(bubbleWidthRatio);
+    }
+
+    /**
      * @param maxDocumentChars the maxDocumentChars to set
      */
     public void setMaxDocumentChars(int maxDocumentChars) {

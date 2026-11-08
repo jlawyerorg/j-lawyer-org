@@ -791,6 +791,8 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
     private static final Map<String, javax.swing.Icon> ACTION_ICONS = new ConcurrentHashMap<>();
 
     private boolean hover = false;
+    // share of a wide list a bubble may take up at most, see setBubbleWidthRatio
+    private float bubbleWidthRatio = 0.75f;
     // optional row of chips (case, document) shown as footer inside the bubble
     private javax.swing.JComponent footer = null;
     private static final int FOOTER_GAP = 7;
@@ -1174,8 +1176,8 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
 
         int avatarSpace = this.isOwnMessage() ? 0 : AVATAR_SIZE + AVATAR_GAP;
         int avail = Math.max(140, width - 2 * BUBBLE_MARGIN - avatarSpace);
-        // chat look: bubbles take up to three quarters of a wide list, the full width of a narrow one
-        int maxBubble = avail < 480 ? avail : Math.max(480, (int) (avail * 0.75));
+        // chat look: bubbles take up to a share (default three quarters) of a wide list, the full width of a narrow one
+        int maxBubble = avail < 480 ? avail : Math.max(480, (int) (avail * this.bubbleWidthRatio));
         geo.receiptW = (this.read != READ_NOTAPPLICABLE) ? READ_RECEIPT_WIDTH + 6 : 0;
         int textMax = Math.max(40, maxBubble - 2 * PADDING_H - geo.receiptW);
 
@@ -1617,6 +1619,19 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
             rest = rest.substring(idx + token.length());
         }
         return cx - x;
+    }
+
+    /**
+     * Sets the share of a wide list a bubble may take up at most. Narrow lists always use their
+     * full width.
+     *
+     * @param bubbleWidthRatio between 0 and 1, default 0.75
+     */
+    public void setBubbleWidthRatio(float bubbleWidthRatio) {
+        this.bubbleWidthRatio = Math.max(0.1f, Math.min(1f, bubbleWidthRatio));
+        this.lastPreferredWidth = -1;
+        this.revalidate();
+        this.repaint();
     }
 
     /**
