@@ -777,9 +777,11 @@ public class PaymentMgmtEntryPanel extends com.jdimension.jlawyer.client.ui.them
         }
 
         if (payment.getContact() != null) {
-            this.lblRecipient.setText("an: " + payment.getContact().toDisplayName());
+            this.lblRecipient.setText("an: " + PaymentEntryPanel.recipientText(payment.getContact(), addresses));
+            this.lblRecipient.setToolTipText(this.lblRecipient.getText());
         } else {
             this.lblRecipient.setText(" ");
+            this.lblRecipient.setToolTipText(null);
         }
         
         if(!StringUtils.isEmpty(payment.getSender())) {
