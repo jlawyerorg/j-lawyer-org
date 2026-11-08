@@ -760,6 +760,8 @@ public class BankTransactionProposal {
     // actions that have already been executed successfully, kept for display and to avoid running them twice
     private final List<String> executedActions = new ArrayList<>();
     private boolean transactionLogged = false;
+    // id of the transaction log entry written for this proposal, used to append details of later runs
+    private String transactionLogId = null;
 
     public BankTransactionProposal(BankTransaction transaction) {
         this.transaction = transaction;
@@ -1065,6 +1067,22 @@ public class BankTransactionProposal {
 
     public void setTransactionLogged(boolean transactionLogged) {
         this.transactionLogged = transactionLogged;
+    }
+
+    /**
+     * @return id of the transaction log entry written for this proposal, or
+     * null if none has been written yet
+     */
+    public String getTransactionLogId() {
+        return transactionLogId;
+    }
+
+    /**
+     * @param transactionLogId id of the transaction log entry written for this
+     * proposal
+     */
+    public void setTransactionLogId(String transactionLogId) {
+        this.transactionLogId = transactionLogId;
     }
 
     public void setErrorMessage(String errorMessage) {

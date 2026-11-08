@@ -668,9 +668,11 @@ import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.persistence.CaseAccountEntry;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.Payment;
+import com.jdimension.jlawyer.persistence.TransactionLog;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -685,6 +687,8 @@ public class BankTransactionProcessor {
 
     // expires after 1.5yrs
     private static final int TRANSACTIONLOG_EXPIRY_DAYS = 550;
+
+    private final DecimalFormat nf = new DecimalFormat("#,##0.00");
 
     private final JLawyerServiceLocator locator;
     private final List<Invoice> openInvoices;
@@ -711,6 +715,8 @@ public class BankTransactionProcessor {
         BankTransaction tx = p.getTransaction();
 
         boolean processed = false;
+        // human readable booking details, stored with the transaction log (#3333)
+        List<String> details = new ArrayList<>();
         try {
             List<Invoice> invoicesForCase = null;
             if ((p.isMarkInvoicePaid() && p.getInvoice() != null) || (p.isCreateAccountEntry() && p.getEntryInvoice() != null)) {
@@ -731,6 +737,7 @@ public class BankTransactionProcessor {
                 }
                 p.getInvoice().setStatus(Invoice.STATUS_PAID);
                 p.getExecutedActions().add("Rechnung " + target.getInvoiceNumber() + " bezahlt");
+                details.add("Rechnung " + target.getInvoiceNumber() + formatAmount(target.getTotalGross()) + " als bezahlt markiert");
                 p.setMarkInvoicePaid(false);
                 processed = true;
             }
@@ -756,6 +763,7 @@ public class BankTransactionProcessor {
                 }
                 p.getPayment().setStatus(Payment.STATUS_EXECUTED);
                 p.getExecutedActions().add("Zahlung " + target.getPaymentNumber() + " ausgeführt");
+                details.add("Zahlung " + target.getPaymentNumber() + formatAmount(target.getTotal()) + " als ausgeführt markiert");
                 p.setMarkPaymentExecuted(false);
                 processed = true;
             }
@@ -805,6 +813,18 @@ public class BankTransactionProcessor {
 
                 locator.lookupArchiveFileServiceRemote().addAccountEntry(caseId, entry);
                 p.getExecutedActions().add("Aktenkonto: " + p.getEntryType().toString());
+                StringBuilder entryDetails = new StringBuilder();
+                entryDetails.append("Aktenkonto: ").append(p.getEntryType().toString()).append(" ").append(nf.format(amount)).append(" €");
+                if (p.getRecipient() != null) {
+                    entryDetails.append(", Beteiligter: ").append(p.getRecipient().toDisplayName());
+                }
+                if (entryInvoice != null) {
+                    entryDetails.append(", Rechnung: ").append(entryInvoice.getInvoiceNumber());
+                }
+                if (p.getDescription() != null && !p.getDescription().isBlank()) {
+                    entryDetails.append(", Text: ").append(p.getDescription().replace('\n', ' ').trim());
+                }
+                details.add(entryDetails.toString());
                 p.setCreateAccountEntry(false);
                 processed = true;
             }
@@ -814,6 +834,7 @@ public class BankTransactionProcessor {
                 p.getTagsToSet().remove(tag);
                 p.getCurrentCaseTags().add(tag);
                 p.getExecutedActions().add("Etikett +" + tag);
+                details.add("Etikett gesetzt: " + tag);
                 processed = true;
             }
             for (String tag : new ArrayList<>(p.getTagsToRemove())) {
@@ -821,14 +842,33 @@ public class BankTransactionProcessor {
                 p.getTagsToRemove().remove(tag);
                 p.getCurrentCaseTags().remove(tag);
                 p.getExecutedActions().add("Etikett -" + tag);
+                details.add("Etikett entfernt: " + tag);
                 processed = true;
             }
         } finally {
-            if (processed && !p.isTransactionLogged()) {
-                locator.lookupSystemManagementRemote().addTransactionLog(tx.toHashInput(), TRANSACTIONLOG_EXPIRY_DAYS);
-                p.setTransactionLogged(true);
+            if (processed) {
+                if (!p.isTransactionLogged()) {
+                    details.add(0, "Akte: " + p.getCaseMatch().getFileNumber() + " " + nonNull(p.getCaseMatch().getName()).trim());
+                    TransactionLog txLog = locator.lookupSystemManagementRemote().addTransactionLog(tx.toHashInput(), TRANSACTIONLOG_EXPIRY_DAYS, caseId, String.join("\n", details));
+                    p.setTransactionLogged(true);
+                    p.setTransactionLogId(txLog != null ? txLog.getId() : null);
+                } else if (p.getTransactionLogId() != null) {
+                    // a previous run failed after executing some actions - record the actions of this run as well
+                    locator.lookupSystemManagementRemote().appendTransactionLogDetails(p.getTransactionLogId(), String.join("\n", details));
+                }
             }
         }
+    }
+
+    private String formatAmount(BigDecimal amount) {
+        if (amount == null) {
+            return "";
+        }
+        return " (" + nf.format(amount) + " €)";
+    }
+
+    private static String nonNull(String s) {
+        return s != null ? s : "";
     }
 
     private static Invoice findInvoice(List<Invoice> invoices, Invoice wanted) {

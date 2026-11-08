@@ -663,13 +663,25 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.finance;
 
+import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
+import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
+import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
+import com.jdimension.jlawyer.client.editors.files.ViewArchiveFileDetailsPanel;
+import com.jdimension.jlawyer.client.desktop.DesktopPanel;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.Invoice;
 import com.jdimension.jlawyer.persistence.Payment;
+import com.jdimension.jlawyer.persistence.TransactionLog;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -680,6 +692,7 @@ import java.util.List;
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.apache.log4j.Logger;
@@ -761,6 +774,16 @@ public class BankTransactionEntryPanel extends javax.swing.JPanel {
         this.lblPurpose.setText(StringUtils.nonNull(tx.getBookingType()) + ": " + purpose);
         this.lblPurpose.setToolTipText("<html><b>" + StringUtils.nonNull(tx.getBookingType()) + "</b><br/>" + purpose.replace("&", "&amp;").replace("<", "&lt;") + "</html>");
 
+        // clicking the "already booked" status shows the details of the original booking (#3333)
+        this.lblStatus.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                if (hasDuplicateDetails()) {
+                    showDuplicateDetails();
+                }
+            }
+        });
+
         this.txtDescription.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
@@ -816,6 +839,66 @@ public class BankTransactionEntryPanel extends javax.swing.JPanel {
         return proposal;
     }
 
+    private boolean hasDuplicateDetails() {
+        return this.proposal.getStatus() == BankTransactionProposal.Status.DUPLICATE
+                && this.proposal.getDuplicate() != null
+                && !StringUtils.isEmpty(this.proposal.getDuplicate().getDetails());
+    }
+
+    private static String escapeHtml(String s) {
+        return StringUtils.nonNull(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    }
+
+    /**
+     * Shows the details of the original booking of an already processed
+     * transaction and offers to open the case it was booked to.
+     */
+    private void showDuplicateDetails() {
+        TransactionLog dup = this.proposal.getDuplicate();
+        String message = "Gebucht von " + dup.getPrincipal() + " am " + df.format(dup.getProcessedDate()) + ":" + System.lineSeparator() + System.lineSeparator()
+                + dup.getDetails().replace("\n", System.lineSeparator());
+        if (StringUtils.isEmpty(dup.getCaseId())) {
+            JOptionPane.showMessageDialog(this, message, "Buchungsdetails", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        Object[] options = {"Akte öffnen", "Schließen"};
+        int choice = JOptionPane.showOptionDialog(this, message, "Buchungsdetails", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, options[1]);
+        if (choice == 0) {
+            openCase(dup.getCaseId());
+        }
+    }
+
+    private void openCase(String caseId) {
+        try {
+            ArchiveFileBean aFile = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties()).lookupArchiveFileServiceRemote().getArchiveFile(caseId);
+            if (aFile == null) {
+                JOptionPane.showMessageDialog(this, "Die Akte existiert nicht mehr.", "Akte öffnen", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            Object editor;
+            if (UserSettings.getInstance().isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
+                editor = EditorsRegistry.getInstance().getEditor(EditArchiveFileDetailsPanel.class.getName());
+            } else {
+                editor = EditorsRegistry.getInstance().getEditor(ViewArchiveFileDetailsPanel.class.getName());
+            }
+            Object desktop = EditorsRegistry.getInstance().getEditor(DesktopPanel.class.getName());
+            if (editor instanceof ThemeableEditor && desktop instanceof DesktopPanel) {
+                ((ThemeableEditor) editor).setBackgroundImage(((DesktopPanel) desktop).getBackgroundImage());
+            }
+            if (editor instanceof PopulateOptionsEditor) {
+                ((PopulateOptionsEditor) editor).populateOptions();
+            }
+
+            ((ArchiveFilePanel) editor).setArchiveFileDTO(aFile);
+            ((ArchiveFilePanel) editor).setOpenedFromEditorClass(DesktopPanel.class.getName());
+            EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
+        } catch (Exception ex) {
+            log.error("Error opening case " + caseId, ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Öffnen der Akte: " + ex.getMessage(), "Akte öffnen", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     /**
      * Updates header, status, summary and enabled states from the proposal.
      */
@@ -868,8 +951,14 @@ public class BankTransactionEntryPanel extends javax.swing.JPanel {
                 case DUPLICATE:
                     this.lblStatus.setIcon(ICON_WARNING);
                     this.lblStatus.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
-                    if (this.proposal.getDuplicate() != null) {
-                        this.lblStatus.setText("Wurde bereits gebucht (" + this.proposal.getDuplicate().getPrincipal() + " am " + df.format(this.proposal.getDuplicate().getProcessedDate()) + ")");
+                    TransactionLog dup = this.proposal.getDuplicate();
+                    if (dup != null) {
+                        String statusText = "Wurde bereits gebucht (" + dup.getPrincipal() + " am " + df.format(dup.getProcessedDate()) + ")";
+                        if (hasDuplicateDetails()) {
+                            String firstLine = dup.getDetails().split("\n", 2)[0];
+                            statusText = statusText + " – " + firstLine + " – Klick für Details";
+                        }
+                        this.lblStatus.setText(statusText);
                     } else {
                         this.lblStatus.setText("Wurde bereits gebucht");
                     }
@@ -895,7 +984,14 @@ public class BankTransactionEntryPanel extends javax.swing.JPanel {
                     break;
             }
             this.lblStatus.setVisible(this.lblStatus.getText().length() > 0);
-            this.lblStatus.setToolTipText(this.lblStatus.getText());
+            if (hasDuplicateDetails()) {
+                this.lblStatus.setToolTipText("<html><b>Gebucht von " + escapeHtml(this.proposal.getDuplicate().getPrincipal()) + " am " + df.format(this.proposal.getDuplicate().getProcessedDate()) + "</b><br/>"
+                        + escapeHtml(this.proposal.getDuplicate().getDetails()).replace("\n", "<br/>") + "</html>");
+                this.lblStatus.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            } else {
+                this.lblStatus.setToolTipText(this.lblStatus.getText());
+                this.lblStatus.setCursor(Cursor.getDefaultCursor());
+            }
 
             // detail area
             Invoice inv = this.proposal.getInvoice();

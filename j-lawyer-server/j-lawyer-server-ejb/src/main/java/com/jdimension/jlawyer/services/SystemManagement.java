@@ -2836,20 +2836,20 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @RolesAllowed(value = {"loginRole"})
     public TransactionLog addTransactionLog(String hashInput, int expiryDays) throws Exception {
+        return this.addTransactionLog(hashInput, expiryDays, null, null);
+    }
+
+    @Override
+    @RolesAllowed(value = {"loginRole"})
+    public TransactionLog addTransactionLog(String hashInput, int expiryDays, String caseId, String details) throws Exception {
         StringGenerator idGen = new StringGenerator();
         String id = idGen.getID().toString();
 
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        byte[] hashBytes = digest.digest(hashInput.getBytes(StandardCharsets.UTF_8));
-
-        StringBuilder checksum = new StringBuilder();
-        for (byte b : hashBytes) {
-            checksum.append(String.format("%02x", b));
-        }
-
         TransactionLog txLog = new TransactionLog(id);
-        txLog.setChecksum(checksum.toString());
+        txLog.setChecksum(transactionChecksum(hashInput));
         txLog.setPrincipal(this.context.getCallerPrincipal().getName());
+        txLog.setCaseId(caseId);
+        txLog.setDetails(details);
         java.util.Date processedDate = new java.util.Date();
         txLog.setProcessedDate(processedDate);
 
@@ -2864,7 +2864,30 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed(value = {"loginRole"})
+    public TransactionLog appendTransactionLogDetails(String logId, String details) throws Exception {
+        TransactionLog txLog = this.txLogFacade.find(logId);
+        if (txLog == null) {
+            throw new Exception("Transaktionsprotokoll " + logId + " nicht gefunden");
+        }
+        if (details != null && !details.isBlank()) {
+            String existing = txLog.getDetails();
+            if (existing == null || existing.isBlank()) {
+                txLog.setDetails(details);
+            } else {
+                txLog.setDetails(existing + "\n" + details);
+            }
+            this.txLogFacade.edit(txLog);
+        }
+        return txLog;
+    }
+
+    @Override
+    @RolesAllowed(value = {"loginRole"})
     public TransactionLog getTransactionLog(String hashInput) throws Exception {
+        return this.txLogFacade.findByChecksum(transactionChecksum(hashInput));
+    }
+
+    private static String transactionChecksum(String hashInput) throws Exception {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
         byte[] hashBytes = digest.digest(hashInput.getBytes(StandardCharsets.UTF_8));
 
@@ -2872,7 +2895,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         for (byte b : hashBytes) {
             checksum.append(String.format("%02x", b));
         }
-        return this.txLogFacade.findByChecksum(checksum.toString());
+        return checksum.toString();
     }
 
     @Schedule(dayOfWeek = "1-7", hour = "3", minute = "41", second = "0", persistent = false)

@@ -706,6 +706,12 @@ public class TransactionLog implements Serializable {
     @Column(name = "tx_checksum")
     private String checksum;
     
+    @Column(name = "case_id")
+    private String caseId;
+    
+    @Column(name = "details")
+    private String details;
+    
     public TransactionLog() {
     }
 
@@ -820,6 +826,38 @@ public class TransactionLog implements Serializable {
      */
     public void setChecksum(String checksum) {
         this.checksum = checksum;
+    }
+
+    /**
+     * @return the id of the case the transaction was booked to, may be null
+     * for log entries created before booking details were recorded
+     */
+    public String getCaseId() {
+        return caseId;
+    }
+
+    /**
+     * @param caseId the id of the case the transaction was booked to
+     */
+    public void setCaseId(String caseId) {
+        this.caseId = caseId;
+    }
+
+    /**
+     * @return a human readable, line separated description of the actions
+     * executed for the transaction (case, invoice, payment, case account entry,
+     * tags), may be null for older log entries
+     */
+    public String getDetails() {
+        return details;
+    }
+
+    /**
+     * @param details a human readable, line separated description of the
+     * executed actions
+     */
+    public void setDetails(String details) {
+        this.details = details;
     }
 
     
