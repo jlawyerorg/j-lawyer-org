@@ -899,9 +899,11 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
         jPanel1.setLayout(new java.awt.GridLayout(5, 3, 6, 6));
         jPanel1.add(jLabel5);
 
+        jLabel6.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jLabel6.setText("ein");
         jPanel1.add(jLabel6);
 
+        jLabel7.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jLabel7.setText("aus");
         jPanel1.add(jLabel7);
 
@@ -909,6 +911,7 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
         jPanel1.add(jLabel8);
 
         txtEarnings.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#,##0.00"))));
+        txtEarnings.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         txtEarnings.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent evt) {
                 txtEarningsFocusGained(evt);
@@ -922,6 +925,7 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
         jPanel1.add(txtEarnings);
 
         txtSpendings.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#,##0.00"))));
+        txtSpendings.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         txtSpendings.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent evt) {
                 txtSpendingsFocusGained(evt);
@@ -938,6 +942,7 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
         jPanel1.add(jLabel9);
 
         txtEscrowIn.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#,##0.00"))));
+        txtEscrowIn.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         txtEscrowIn.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent evt) {
                 txtEscrowInFocusGained(evt);
@@ -951,6 +956,7 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
         jPanel1.add(txtEscrowIn);
 
         txtEscrowOut.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#,##0.00"))));
+        txtEscrowOut.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         txtEscrowOut.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent evt) {
                 txtEscrowOutFocusGained(evt);
@@ -967,6 +973,7 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
         jPanel1.add(jLabel10);
 
         txtExpendituresIn.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#,##0.00"))));
+        txtExpendituresIn.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         txtExpendituresIn.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent evt) {
                 txtExpendituresInFocusGained(evt);
@@ -980,6 +987,7 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
         jPanel1.add(txtExpendituresIn);
 
         txtExpendituresOut.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#,##0.00"))));
+        txtExpendituresOut.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         txtExpendituresOut.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent evt) {
                 txtExpendituresOutFocusGained(evt);
@@ -997,12 +1005,14 @@ public class CaseAccountEntryPanel extends javax.swing.JPanel {
         jPanel1.add(lblSumCaption);
 
         txtSumIn.setEditable(false);
+        txtSumIn.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         txtSumIn.setFont(txtSumIn.getFont().deriveFont(txtSumIn.getFont().getStyle() | java.awt.Font.BOLD));
         txtSumIn.setText("0,00");
         txtSumIn.setFocusable(false);
         jPanel1.add(txtSumIn);
 
         txtSumOut.setEditable(false);
+        txtSumOut.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         txtSumOut.setFont(txtSumOut.getFont().deriveFont(txtSumOut.getFont().getStyle() | java.awt.Font.BOLD));
         txtSumOut.setText("0,00");
         txtSumOut.setFocusable(false);
