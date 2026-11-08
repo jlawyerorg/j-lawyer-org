@@ -774,51 +774,103 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
         this.cmdUseSelection.setToolTipText(tooltipText);
     }
 
+    // the folder structure must always stay visible, whatever divider location was stored
+    private static final int MIN_FOLDER_WIDTH = 160;
+    private static final double DEFAULT_FOLDER_RATIO = 0.3d;
+
+    private String folderWidthSettingKey() {
+        return "split." + SearchAndAssignDialog.class.getName() + ".split.folderWidth";
+    }
+
+    /**
+     * Sets up the divider between search results and folder structure: the width of the folder
+     * structure is stored when the user moves the divider and restored when the dialog is shown.
+     * Since the results take all extra space on resize (resize weight 1.0), the width of the
+     * folder area is stored instead of the divider location. A minimum width is enforced in any
+     * case, so the user always sees that there is a folder structure.
+     */
+    private void initFolderSplit() {
+        int minWidth = com.formdev.flatlaf.util.UIScale.scale(MIN_FOLDER_WIDTH);
+        // honoured by JSplitPane while dragging the divider
+        this.jScrollPane2.setMinimumSize(new java.awt.Dimension(minWidth, 0));
+
+        final java.util.concurrent.atomic.AtomicBoolean restored = new java.util.concurrent.atomic.AtomicBoolean(false);
+        this.split.addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent e) {
+                if (split.getWidth() <= 0) {
+                    return;
+                }
+                if (restored.compareAndSet(false, true)) {
+                    int folderWidth = -1;
+                    try {
+                        String stored = ClientSettings.getInstance().getConfiguration(folderWidthSettingKey(), "");
+                        if (stored != null && !stored.isEmpty()) {
+                            folderWidth = Integer.parseInt(stored);
+                        }
+                    } catch (Throwable t) {
+                        log.warn("invalid stored folder width in search and assign dialog", t);
+                    }
+                    if (folderWidth <= 0) {
+                        folderWidth = (int) (split.getWidth() * DEFAULT_FOLDER_RATIO);
+                    }
+                    split.setDividerLocation(clampDividerLocation(split.getWidth() - split.getDividerSize() - folderWidth));
+                } else {
+                    ensureMinimumFolderWidth();
+                }
+            }
+        });
+
+        // a stored or programmatically set location must never hide the folders
+        this.split.addPropertyChangeListener(javax.swing.JSplitPane.DIVIDER_LOCATION_PROPERTY, evt -> ensureMinimumFolderWidth());
+
+        // persist only after the user moved the divider
+        javax.swing.plaf.basic.BasicSplitPaneDivider divider = ((javax.swing.plaf.basic.BasicSplitPaneUI) this.split.getUI()).getDivider();
+        if (divider != null) {
+            divider.addMouseListener(new java.awt.event.MouseAdapter() {
+                @Override
+                public void mouseReleased(java.awt.event.MouseEvent e) {
+                    if (split.getWidth() <= 0) {
+                        return;
+                    }
+                    int folderWidth = split.getWidth() - split.getDividerSize() - split.getDividerLocation();
+                    if (folderWidth > 0) {
+                        ClientSettings.getInstance().setConfiguration(folderWidthSettingKey(), String.valueOf(folderWidth));
+                    }
+                }
+            });
+        }
+    }
+
+    /**
+     * @return the given divider location, limited so that the folder structure keeps its minimum
+     * width - if the dialog is too narrow for that, the folders get half of the width
+     */
+    private int clampDividerLocation(int location) {
+        int width = this.split.getWidth();
+        int available = width - this.split.getDividerSize();
+        int minFolder = Math.min(com.formdev.flatlaf.util.UIScale.scale(MIN_FOLDER_WIDTH), available / 2);
+        int max = available - minFolder;
+        return Math.max(0, Math.min(location, max));
+    }
+
+    private void ensureMinimumFolderWidth() {
+        if (this.split.getWidth() <= 0) {
+            return;
+        }
+        int location = this.split.getDividerLocation();
+        int clamped = clampDividerLocation(location);
+        if (clamped != location) {
+            this.split.setDividerLocation(clamped);
+        }
+    }
+
     private void initialize() {
         // design kit: a transparent gap between results and folders, a search icon in the field
         com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleSplitPane(this.split);
         this.txtSearchString.putClientProperty(com.formdev.flatlaf.FlatClientProperties.TEXT_FIELD_LEADING_ICON,
                 new com.formdev.flatlaf.icons.FlatSearchIcon());
-        // Use persisted divider if available; otherwise apply a sensible default once
-        String savedDivider = ClientSettings.getInstance()
-                .getConfiguration("split." + this.getClass().getName() + ".split", "");
-        if (savedDivider == null || savedDivider.isEmpty()) {
-            this.split.setDividerLocation(0.7d);
-        }
-        ComponentUtils.restoreSplitPane(split, this.getClass(), "split");
-
-        // Defer persistence and only store after explicit user interaction with the divider
-        final javax.swing.plaf.basic.BasicSplitPaneDivider divider =
-                ((javax.swing.plaf.basic.BasicSplitPaneUI) split.getUI()).getDivider();
-        final java.util.concurrent.atomic.AtomicBoolean userMoved = new java.util.concurrent.atomic.AtomicBoolean(false);
-
-        if (divider != null) {
-            divider.addMouseListener(new java.awt.event.MouseAdapter() {
-                @Override
-                public void mousePressed(java.awt.event.MouseEvent e) {
-                    userMoved.set(true);
-                }
-                @Override
-                public void mouseReleased(java.awt.event.MouseEvent e) {
-                    // persist on release to capture final location
-                    if (userMoved.get() && split.getDividerLocation() > 0) {
-                        ClientSettings s = ClientSettings.getInstance();
-                        s.setConfiguration("split." + SearchAndAssignDialog.this.getClass().getName() + ".split",
-                                String.valueOf(split.getDividerLocation()));
-                    }
-                }
-            });
-        }
-        // Also guard the property change persistence; only when userMoved is true will we store
-        split.addPropertyChangeListener(evt -> {
-            if (javax.swing.JSplitPane.DIVIDER_LOCATION_PROPERTY.equals(evt.getPropertyName())) {
-                if (userMoved.get() && split.getDividerLocation() > 0) {
-                    ClientSettings s = ClientSettings.getInstance();
-                    s.setConfiguration("split." + SearchAndAssignDialog.this.getClass().getName() + ".split",
-                            String.valueOf(split.getDividerLocation()));
-                }
-            }
-        });
+        initFolderSplit();
 
         this.treeFolders.setCellRenderer(new CaseFolderCellRenderer());
 
