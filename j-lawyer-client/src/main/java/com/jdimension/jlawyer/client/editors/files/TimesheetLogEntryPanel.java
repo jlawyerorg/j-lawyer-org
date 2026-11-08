@@ -821,6 +821,8 @@ public class TimesheetLogEntryPanel extends com.jdimension.jlawyer.client.ui.the
         this.entryCase = entryCase;
         this.entrySheet = ts;
         this.lblProject.setText(entryCase.getFileNumber() + " " + entryCase.getName() + ": " + ts.getName());
+        // long case names are truncated by the layout - the full text is available as tooltip
+        this.lblProject.setToolTipText(this.lblProject.getText());
         if (tsp.getName().trim().isEmpty()) {
             this.cmbTemplate.setSelectedIndex(0);
         } else {
@@ -1043,7 +1045,7 @@ public class TimesheetLogEntryPanel extends com.jdimension.jlawyer.client.ui.the
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabel1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblProject, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(lblProject, 0, 100, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdEdit)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
