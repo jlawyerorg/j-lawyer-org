@@ -931,6 +931,19 @@ public class DialogStyle {
     }
 
     /**
+     * A regular (non-primary) rounded button. Use it for a button whose text would otherwise make
+     * it a primary button (e.g. "Erstellen"), when another button is the dialog's main action.
+     *
+     * @param b the button
+     */
+    public static void styleSecondary(AbstractButton b) {
+        if (b == null) {
+            return;
+        }
+        b.putClientProperty(FlatClientProperties.STYLE, BUTTON_STYLE);
+    }
+
+    /**
      * The confirming action of a dialog or window as blue primary button with a white icon.
      *
      * @param b the button

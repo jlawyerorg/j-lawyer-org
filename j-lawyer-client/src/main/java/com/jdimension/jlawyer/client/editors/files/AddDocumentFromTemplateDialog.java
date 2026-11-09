@@ -697,6 +697,7 @@ import java.util.*;
 import javax.swing.DefaultListModel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.SwingWorker;
 import javax.swing.table.TableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
@@ -740,6 +741,13 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private ArchiveFilePanel casePanel = null;
 
     private DocumentNameTemplate nameTemplate = null;
+
+    // incremented on every template analysis, used to discard results of outdated background analyses
+    private volatile long templateSelectionGeneration = 0;
+    // folder id + template name of the most recently analyzed template
+    private String lastTemplateSelectionKey = null;
+    // true while the letterhead combobox is changed programmatically
+    private boolean ignoreLetterHeadEvents = false;
 
     public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, ArchiveFilePanel casePanel, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved) {
         this(parent, modal, casePanel, targetTable, aFile, involved, null, null, false, null, null, null, null, null, null);
@@ -863,6 +871,10 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         });
 
         initComponents();
+
+        // "Erstellen und Öffnen" is the primary action, not "Erstellen"
+        com.jdimension.jlawyer.client.ui.theme.DialogStyle.styleSecondary(this.cmdAdd);
+        com.jdimension.jlawyer.client.ui.theme.DialogStyle.stylePrimary(this.cmdAddAndOpen, null);
 
         this.quickDateSelectionPanel.setTarget(this.txtReviewDateField);
 
@@ -1098,6 +1110,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         cmdNameTemplate = new javax.swing.JButton();
         cmdMoveToFolder = new javax.swing.JButton();
         cmdAddAndOpen = new javax.swing.JButton();
+        lblTemplateStatus = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         addComponentListener(new java.awt.event.ComponentAdapter() {
@@ -1516,18 +1529,22 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             }
         });
 
+        lblTemplateStatus.setText(" ");
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
-                .add(341, 341, 341)
+                .addContainerGap()
+                .add(lblTemplateStatus, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(cmdAddAndOpen)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(cmdAdd)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(cmdCancel)
-                .addContainerGap(30, Short.MAX_VALUE))
+                .addContainerGap())
             .add(org.jdesktop.layout.GroupLayout.TRAILING, splitMain, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
@@ -1538,7 +1555,8 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmdCancel)
                     .add(cmdAdd)
-                    .add(cmdAddAndOpen))
+                    .add(cmdAddAndOpen)
+                    .add(lblTemplateStatus))
                 .add(12, 12, 12))
         );
 
@@ -1790,118 +1808,212 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
     }//GEN-LAST:event_formComponentResized
 
+    /**
+     * Holds the results of the remote calls executed when a template is
+     * selected.
+     */
+    private static class TemplateSelectionResult {
+
+        private String docName = null;
+        private Exception docNameError = null;
+        private HashMap<String, Object> placeHolderValues = null;
+        private Exception placeHolderError = null;
+    }
+
     private void templateSelection() {
         if (!(this.tblPlaceHolders.getModel() instanceof ArchiveFileTemplatePlaceHoldersTableModel)) {
             return;
         }
 
-        if (this.lstTemplates.getSelectedValue() != null && !"".equals(this.lstTemplates.getSelectedValue())) {
-            this.cmdAdd.setEnabled(true);
-            this.cmdAddAndOpen.setEnabled(true);
-            ClientSettings settings = ClientSettings.getInstance();
-            EditorsRegistry.getInstance().updateStatus("Analysiere Dokumentvorlage...");
-            
-            List<PartiesPanelEntry> selectedParties = this.pnlPartiesPanel.getSelectedParties(this.allPartyTypes);
-            List<PartiesTriplet> partiesTriplets = new ArrayList<>();
-            for (PartiesPanelEntry pe : selectedParties) {
-                PartiesTriplet triplet = new PartiesTriplet(pe.getAddress(), pe.getReferenceType(), pe.getInvolvement());
-                partiesTriplets.add(triplet);
+        // any running template analysis is outdated now
+        final long generation = ++this.templateSelectionGeneration;
+
+        if (this.lstTemplates.getSelectedValue() == null || "".equals(this.lstTemplates.getSelectedValue()) || this.treeFolders.getSelectionPath() == null) {
+            this.lastTemplateSelectionKey = null;
+            this.lblTemplateStatus.setText(" ");
+            this.cmdAdd.setEnabled(false);
+            this.cmdAddAndOpen.setEnabled(false);
+            String[] colNames = new String[]{"Platzhalter", "Wert"};
+            ArchiveFileTemplatePlaceHoldersTableModel model = new ArchiveFileTemplatePlaceHoldersTableModel(colNames, 0);
+            ThreadUtils.setTableModel(this.tblPlaceHolders, model);
+            return;
+        }
+
+        // collect all UI state on the EDT before going to the background
+        ClientSettings settings = ClientSettings.getInstance();
+        final String templateFileName = this.lstTemplates.getSelectedValue().toString();
+        DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+        final GenericNode gn = (GenericNode) tn.getUserObject();
+        this.lastTemplateSelectionKey = gn.getId() + "/" + templateFileName;
+
+        List<PartiesPanelEntry> selectedParties = this.pnlPartiesPanel.getSelectedParties(this.allPartyTypes);
+        final List<PartiesTriplet> partiesTriplets = new ArrayList<>();
+        for (PartiesPanelEntry pe : selectedParties) {
+            PartiesTriplet triplet = new PartiesTriplet(pe.getAddress(), pe.getReferenceType(), pe.getInvolvement());
+            partiesTriplets.add(triplet);
+        }
+
+        // avoid ANWALT being replaced before ANWALT2 --> start with longest placeholders first
+        ArrayList<PartyTypeBean> apt = new ArrayList<>(this.allPartyTypes);
+        Comparator<PartyTypeBean> prefixLengthComparator = (PartyTypeBean t1, PartyTypeBean t2) -> {
+            int l1 = (t1 == null || t1.getPlaceHolder() == null) ? 0 : t1.getPlaceHolder().length();
+            int l2 = (t2 == null || t2.getPlaceHolder() == null) ? 0 : t2.getPlaceHolder().length();
+            return Integer.compare(l1, l2);
+        };
+        Collections.sort(apt, prefixLengthComparator);
+        Collections.reverse(apt);
+        final LinkedHashMap<String, String> partyNameReplacements = new LinkedHashMap<>();
+        for (PartyTypeBean ptb : apt) {
+            PartiesPanelEntry party = this.pnlPartiesPanel.getSelectedParty(ptb);
+            if (party != null) {
+                String contactName = party.getAddress().toDisplayName();
+                contactName = StringUtils.removeSonderzeichen(contactName);
+                partyNameReplacements.put(ptb.getPlaceHolder(), contactName);
+            }
+        }
+
+        this.chkGeneratePDF.setSelected(false);
+        String autoGeneratePdf = settings.getConfiguration(ClientSettings.CONF_DOCUMENTS_AUTOGENERATEPDF + gn.getId() + templateFileName, "0");
+        if ("1".equals(autoGeneratePdf)) {
+            this.chkGeneratePDF.setSelected(true);
+        }
+
+        String letterHead = settings.getConfiguration(ClientSettings.CONF_DOCUMENTS_LETTERHEAD + gn.getId() + templateFileName, "");
+        // JComboBox.setSelectedItem always fires an ActionEvent - do not trigger another template analysis
+        this.ignoreLetterHeadEvents = true;
+        try {
+            this.cmbLetterHeads.setSelectedItem(letterHead);
+        } finally {
+            this.ignoreLetterHeadEvents = false;
+        }
+        final String letterHeadName = (this.cmbLetterHeads.getSelectedItem() == null) ? "" : this.cmbLetterHeads.getSelectedItem().toString();
+        final String dictateSign = this.cmbDictateSigns.getSelectedItem() == null ? "" : this.cmbDictateSigns.getSelectedItem().toString();
+        final DocumentNameTemplate currentNameTemplate = this.nameTemplate;
+
+        // placeholder values are incomplete until the analysis has finished
+        this.cmdAdd.setEnabled(false);
+        this.cmdAddAndOpen.setEnabled(false);
+        this.lblTemplateStatus.setText("Analysiere Dokumentvorlage...");
+
+        SwingWorker<TemplateSelectionResult, String> worker = new SwingWorker<TemplateSelectionResult, String>() {
+            @Override
+            protected TemplateSelectionResult doInBackground() throws Exception {
+                TemplateSelectionResult result = new TemplateSelectionResult();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+
+                try {
+                    publish("Ermittle Dateinamen...");
+                    String extension = FileUtils.getExtension(templateFileName);
+                    String docName = locator.lookupArchiveFileServiceRemote().getNewDocumentName(templateFileName, new Date(), currentNameTemplate);
+
+                    if (isOutdated()) {
+                        return null;
+                    }
+                    publish("Ermittle Platzhalterwerte für Dateinamen...");
+                    HashMap<String, Object> placeHolders = TemplatesUtil.getPlaceHolderValues(docName, aFile, partiesTriplets, invoice, invoiceSender, allPartyTypes, formPlaceHolders, formPlaceHolderValues, caseLawyer, caseAssistant);
+                    docName = TemplatesUtil.replacePlaceHolders(docName, placeHolders);
+
+                    // remove any extension, because of the template it might be somewhere in the middle of the new name
+                    docName = docName.replace("." + extension, "");
+
+                    if (invoice != null && invoice.getInvoiceNumber() != null) {
+                        docName = docName.replace("BELNR", invoice.getInvoiceNumber());
+                    }
+
+                    for (Map.Entry<String, String> e : partyNameReplacements.entrySet()) {
+                        docName = docName.replaceAll(e.getKey(), e.getValue());
+                    }
+
+                    result.docName = FileUtils.sanitizeFileName(docName);
+                } catch (Exception ex) {
+                    log.error("Error getting new document name", ex);
+                    result.docNameError = ex;
+                }
+
+                try {
+                    if (isOutdated()) {
+                        return null;
+                    }
+                    publish("Lese Platzhalter aus Vorlage...");
+                    List<String> placeHoldersBody = locator.lookupSystemManagementRemote().getPlaceHoldersForTemplate(SystemManagementRemote.TEMPLATE_TYPE_BODY, gn, templateFileName, formPlaceHolders);
+                    if (!"".equalsIgnoreCase(letterHeadName)) {
+                        if (isOutdated()) {
+                            return null;
+                        }
+                        publish("Lese Platzhalter aus Briefkopf...");
+                        List<String> placeHoldersHead = locator.lookupSystemManagementRemote().getPlaceHoldersForTemplate(SystemManagementRemote.TEMPLATE_TYPE_HEAD, new GenericNode(null, null, "/"), letterHeadName, formPlaceHolders);
+                        for (String phh : placeHoldersHead) {
+                            if (!placeHoldersBody.contains(phh)) {
+                                placeHoldersBody.add(phh);
+                            }
+                        }
+                    }
+
+                    Collections.sort(placeHoldersBody);
+                    HashMap<String, Object> ht = new HashMap<>();
+                    for (String ph : placeHoldersBody) {
+                        ht.put(ph, "");
+                    }
+
+                    if (isOutdated()) {
+                        return null;
+                    }
+                    publish("Ermittle Platzhalterwerte (" + placeHoldersBody.size() + " Platzhalter)...");
+                    result.placeHolderValues = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, aFile, partiesTriplets, dictateSign, calculationTable, formPlaceHolderValues, caseLawyer, caseAssistant, author, invoice, invoiceSender, invoiceTable, timesheetsTable, timesheetSummaryTable, giroCode, ingoText);
+                } catch (Exception ex) {
+                    log.error("Error loading template placeholders", ex);
+                    result.placeHolderError = ex;
+                }
+                return result;
             }
 
-            String templateFileName = this.lstTemplates.getSelectedValue().toString();
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-
-                String extension = FileUtils.getExtension(templateFileName);
-                String docName = locator.lookupArchiveFileServiceRemote().getNewDocumentName(templateFileName, new Date(), this.nameTemplate);
-
-                HashMap<String, Object> placeHolders = TemplatesUtil.getPlaceHolderValues(docName, this.aFile, partiesTriplets, this.invoice, this.invoiceSender, this.allPartyTypes, this.formPlaceHolders, this.formPlaceHolderValues, this.caseLawyer, this.caseAssistant);
-                docName = TemplatesUtil.replacePlaceHolders(docName, placeHolders);
-
-                // remove any extension, because of the template it might be somewhere in the middle of the new name
-                docName = docName.replace("." + extension, "");
-
-                if (this.invoice != null && this.invoice.getInvoiceNumber() != null) {
-                    docName = docName.replace("BELNR", this.invoice.getInvoiceNumber());
-                }
-                
-                // avoid ANWALT being replaced before ANWALT2 --> start with longest placeholders first
-                ArrayList<PartyTypeBean> apt = new ArrayList(this.allPartyTypes);
-                Comparator<PartyTypeBean> prefixLengthComparator = (PartyTypeBean t1, PartyTypeBean t2) -> {
-                    String prefix1 = null;
-                    String prefix2 = null;
-                    if (t1 != null) {
-                        prefix1 = t1.getPlaceHolder();
-                    }
-                    if (t2 != null) {
-                        prefix2 = t2.getPlaceHolder();
-                    }
-
-                    int l1 = 0;
-                    if (prefix1 != null) {
-                        l1 = prefix1.length();
-                    }
-                    int l2 = 0;
-                    if (prefix2 != null) {
-                        l2 = prefix2.length();
-                    }
-                    return Integer.compare(l1, l2);
-                };
-                Collections.sort(apt, prefixLengthComparator);
-                Collections.reverse(apt);
-
-                for (PartyTypeBean ptb : apt) {
-                    PartiesPanelEntry party = this.pnlPartiesPanel.getSelectedParty(ptb);
-                    if (party != null) {
-                        String contactName = party.getAddress().toDisplayName();
-                        contactName = StringUtils.removeSonderzeichen(contactName);
-                        docName = docName.replaceAll(ptb.getPlaceHolder(), contactName);
-                    }
-                }
-
-                docName = FileUtils.sanitizeFileName(docName);
-                this.txtFileName.setText(docName);
-
-            } catch (Exception ex) {
-                log.error("Error getting new document name", ex);
-                ThreadUtils.showErrorDialog(this, "Fehler beim Anwenden der Dateinamensvorschrift", "Dateinamen");
+            private boolean isOutdated() {
+                return generation != templateSelectionGeneration;
             }
 
-            try {
+            @Override
+            protected void process(List<String> chunks) {
+                if (!isOutdated() && !chunks.isEmpty()) {
+                    lblTemplateStatus.setText(chunks.get(chunks.size() - 1));
+                }
+            }
 
-                DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
-                GenericNode gn = (GenericNode) tn.getUserObject();
-                this.chkGeneratePDF.setSelected(false);
-                String autoGeneratePdf = settings.getConfiguration(ClientSettings.CONF_DOCUMENTS_AUTOGENERATEPDF + gn.getId() + this.lstTemplates.getSelectedValue().toString(), "0");
-                if ("1".equals(autoGeneratePdf)) {
-                    this.chkGeneratePDF.setSelected(true);
+            @Override
+            protected void done() {
+                if (isOutdated()) {
+                    return;
                 }
 
-                String letterHead = settings.getConfiguration(ClientSettings.CONF_DOCUMENTS_LETTERHEAD + gn.getId() + this.lstTemplates.getSelectedValue().toString(), "");
-                this.cmbLetterHeads.setSelectedItem(letterHead);
-
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                List<String> placeHoldersBody = locator.lookupSystemManagementRemote().getPlaceHoldersForTemplate(SystemManagementRemote.TEMPLATE_TYPE_BODY, gn, this.lstTemplates.getSelectedValue().toString(), this.formPlaceHolders);
-                List<String> placeHoldersHead = new ArrayList<>();
-                if (this.cmbLetterHeads.getSelectedItem() != null && !("".equalsIgnoreCase(this.cmbLetterHeads.getSelectedItem().toString()))) {
-                    placeHoldersHead = locator.lookupSystemManagementRemote().getPlaceHoldersForTemplate(SystemManagementRemote.TEMPLATE_TYPE_HEAD, new GenericNode(null, null, "/"), this.cmbLetterHeads.getSelectedItem().toString(), this.formPlaceHolders);
+                TemplateSelectionResult result;
+                try {
+                    result = get();
+                } catch (Exception ex) {
+                    log.error("Error analyzing template " + templateFileName, ex);
+                    result = new TemplateSelectionResult();
+                    result.placeHolderError = ex;
                 }
-                for (String phh : placeHoldersHead) {
-                    if (!placeHoldersBody.contains(phh)) {
-                        placeHoldersBody.add(phh);
-                    }
+                if (result == null) {
+                    return;
                 }
 
+                lblTemplateStatus.setText(" ");
+                cmdAdd.setEnabled(true);
+                cmdAddAndOpen.setEnabled(true);
+
+                if (result.docNameError != null) {
+                    JOptionPane.showMessageDialog(AddDocumentFromTemplateDialog.this, "Fehler beim Anwenden der Dateinamensvorschrift", "Dateinamen", JOptionPane.ERROR_MESSAGE);
+                } else if (result.docName != null) {
+                    txtFileName.setText(result.docName);
+                }
+
+                if (result.placeHolderError != null) {
+                    JOptionPane.showMessageDialog(AddDocumentFromTemplateDialog.this, "Fehler Laden der Dokumentvorlagen: " + result.placeHolderError.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                HashMap<String, Object> ht = result.placeHolderValues;
                 String[] colNames = new String[]{"Platzhalter", "Wert"};
                 ArchiveFileTemplatePlaceHoldersTableModel model = new ArchiveFileTemplatePlaceHoldersTableModel(colNames, 0);
-
-                Collections.sort(placeHoldersBody);
-                HashMap<String, Object> ht = new HashMap<>();
-                for (String ph : placeHoldersBody) {
-                    ht.put(ph, "");
-                }
-                ht = locator.lookupSystemManagementRemote().getPlaceHolderValues(ht, aFile, partiesTriplets, this.cmbDictateSigns.getSelectedItem().toString(), this.calculationTable, this.formPlaceHolderValues, caseLawyer, caseAssistant, author, this.invoice, this.invoiceSender, this.invoiceTable, this.timesheetsTable, this.timesheetSummaryTable, giroCode, ingoText);
-
                 int emptyValues = 0;
                 for (String key : ht.keySet()) {
                     if (key.startsWith("[[SCRIPT:")) {
@@ -1913,20 +2025,19 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                         emptyValues++;
                     }
                 }
-                
-                if(emptyValues>0) {
-                    this.tabPlaceholders.setIconAt(1, new javax.swing.ImageIcon(getClass().getResource("/icons/messagebox_warning.png")));
+
+                if (emptyValues > 0) {
+                    tabPlaceholders.setIconAt(1, new javax.swing.ImageIcon(getClass().getResource("/icons/messagebox_warning.png")));
                 } else {
-                    this.tabPlaceholders.setIconAt(1, null);
+                    tabPlaceholders.setIconAt(1, null);
                 }
-                this.tabPlaceholders.setToolTipTextAt(1, emptyValues + " leere Platzhalterwerte");
-                
-                ThreadUtils.setTableModel(this.tblPlaceHolders, model);
+                tabPlaceholders.setToolTipTextAt(1, emptyValues + " leere Platzhalterwerte");
+
+                ThreadUtils.setTableModel(tblPlaceHolders, model);
 
                 ArrayList<PartyTypeBean> partiesInTemplate = new ArrayList<>();
-                for (PartyTypeBean p : this.allPartyTypes) {
-                    for (Object key : ht.keySet()) {
-                        String keyName = key.toString();
+                for (PartyTypeBean p : allPartyTypes) {
+                    for (String keyName : ht.keySet()) {
                         if (keyName.contains("{{" + p.getPlaceHolder() + "_")) {
                             partiesInTemplate.add(p);
                             break;
@@ -1934,22 +2045,10 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                     }
                 }
 
-                this.pnlPartiesPanel.expandParties(partiesInTemplate);
-
-            } catch (Exception ex) {
-                log.error("Error loading template names", ex);
-                JOptionPane.showMessageDialog(this, "Fehler Laden der Dokumentvorlagen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                EditorsRegistry.getInstance().clearStatus();
-                return;
+                pnlPartiesPanel.expandParties(partiesInTemplate);
             }
-            EditorsRegistry.getInstance().clearStatus();
-        } else {
-            this.cmdAdd.setEnabled(false);
-            this.cmdAddAndOpen.setEnabled(false);
-            String[] colNames = new String[]{"Platzhalter", "Wert"};
-            ArchiveFileTemplatePlaceHoldersTableModel model = new ArchiveFileTemplatePlaceHoldersTableModel(colNames, 0);
-            ThreadUtils.setTableModel(this.tblPlaceHolders, model);
-        }
+        };
+        worker.execute();
     }
 
     private void lstTemplatesMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstTemplatesMouseClicked
@@ -1970,6 +2069,16 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     }//GEN-LAST:event_cmdClearFilterActionPerformed
 
     private void lstTemplatesKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_lstTemplatesKeyReleased
+        // only re-analyze when the key actually changed the selected template
+        String currentKey = null;
+        if (this.lstTemplates.getSelectedValue() != null && this.treeFolders.getSelectionPath() != null) {
+            DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+            GenericNode gn = (GenericNode) tn.getUserObject();
+            currentKey = gn.getId() + "/" + this.lstTemplates.getSelectedValue().toString();
+        }
+        if (Objects.equals(currentKey, this.lastTemplateSelectionKey)) {
+            return;
+        }
         this.lstTemplatesMouseClicked(null);
     }//GEN-LAST:event_lstTemplatesKeyReleased
 
@@ -1985,6 +2094,9 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     }//GEN-LAST:event_cmdAddAndOpenActionPerformed
 
     private void cmbLetterHeadsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbLetterHeadsActionPerformed
+        if (this.ignoreLetterHeadEvents) {
+            return;
+        }
 
         if (this.treeFolders.getSelectionPath() != null && this.lstTemplates.getSelectedValue() != null) {
             DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
@@ -2156,6 +2268,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JSplitPane jSplitPane1;
+    private javax.swing.JLabel lblTemplateStatus;
     private javax.swing.JList lstTemplates;
     private com.jdimension.jlawyer.client.editors.files.PartiesPanel pnlPartiesPanel;
     private javax.swing.JPopupMenu popMoveToFolder;
