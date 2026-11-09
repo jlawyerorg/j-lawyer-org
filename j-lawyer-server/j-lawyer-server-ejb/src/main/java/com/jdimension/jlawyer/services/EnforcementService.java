@@ -1203,6 +1203,52 @@ public class EnforcementService implements EnforcementServiceRemote, Enforcement
     }
 
     @Override
+    @RolesAllowed({"loginRole"})
+    public List<EnforcementMeasureType> getAllMeasureTypes() throws Exception {
+        List<EnforcementMeasureType> types = new ArrayList<>(this.measureTypesFacade.findAll());
+        // findAll() kennt keine Reihenfolge; angezeigt wird in der, in der angeboten wird
+        types.sort((a, b) -> Integer.compare(a.getSequenceNumber(), b.getSequenceNumber()));
+        for (EnforcementMeasureType type : types) {
+            withForms(type);
+        }
+        return types;
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public EnforcementMeasureType updateMeasureType(EnforcementMeasureType type) throws Exception {
+        if (type == null || type.getId() == null) {
+            throw new Exception("Es wurde keine Maßnahmeart übergeben!");
+        }
+        EnforcementMeasureType stored = this.measureTypesFacade.find(type.getId());
+        if (stored == null) {
+            throw new Exception("Die Maßnahmeart existiert nicht!");
+        }
+        if (type.getName() == null || type.getName().trim().isEmpty()) {
+            throw new Exception("Die Bezeichnung der Maßnahmeart darf nicht leer sein!");
+        }
+        if (type.getFollowUpDays() < 0) {
+            throw new Exception("Die Wiedervorlagefrist darf nicht negativ sein!");
+        }
+        String description = type.getDescription();
+        if (description != null && description.length() > 1000) {
+            throw new Exception("Die Beschreibung darf höchstens 1000 Zeichen lang sein!");
+        }
+
+        // Nur was die Kanzlei einstellen darf. Adressat, Formulare und die Merkmale, an denen die
+        // Rechtslogik hängt (Titel erforderlich, Drittschuldner, Vermögensauskunft), gehören zur
+        // Art selbst - ein Client, der sie mitschickt, ändert sie damit nicht.
+        stored.setName(type.getName().trim());
+        stored.setDescription(description);
+        stored.setSequenceNumber(type.getSequenceNumber());
+        stored.setFollowUpDays(type.getFollowUpDays());
+        stored.setActive(type.isActive());
+        this.measureTypesFacade.edit(stored);
+
+        return withForms(this.measureTypesFacade.find(stored.getId()));
+    }
+
+    @Override
     @RolesAllowed({"readArchiveFileRole"})
     public List<EnforcementMeasure> getMeasures(String ledgerId) throws Exception {
         List<EnforcementMeasure> measures = this.measuresFacade.findByLedger(requireLedger(ledgerId));
@@ -1674,7 +1720,13 @@ public class EnforcementService implements EnforcementServiceRemote, Enforcement
         debtor.setId(new StringGenerator().getID().toString());
         debtor.setMeasure(measure);
         // Die Frist laeuft ab Zustellung; wird die gleich mit erfasst, laeuft sie ab sofort mit.
-        applyServiceDate(debtor, debtor.getServedDate());
+        // applyServiceDate erkennt nur eine Aenderung gegenueber dem Objekt - ein neuer
+        // Drittschuldner hat noch kein Zustellungsdatum, das mitgeschickte ist die Aenderung.
+        Date servedOn = debtor.getServedDate();
+        debtor.setServedDate(null);
+        debtor.setDeclarationDue(null);
+        debtor.setReviewId(null);
+        applyServiceDate(debtor, servedOn);
         this.thirdPartyDebtorsFacade.create(debtor);
         return this.thirdPartyDebtorsFacade.find(debtor.getId());
     }

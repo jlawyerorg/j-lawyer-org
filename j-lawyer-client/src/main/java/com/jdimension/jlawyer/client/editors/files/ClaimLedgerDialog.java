@@ -754,6 +754,10 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         com.jdimension.jlawyer.client.ui.theme.DialogStyle.styleHeader(this.lblHeader);
 
         this.dateTo = new Date();
+
+        // Bucht der Reiter "Mahnverfahren" Gebühren, sollen Positionen und Buchungen hier sofort
+        // erscheinen und nicht erst nach erneutem Öffnen des Kontos
+        this.pnlCourtDunning.setLedgerChangedCallback(this::reloadComponentsAndEntries);
         this.txtDateTo.setText(df.format(this.dateTo));
 
         this.jTabbedPane1.addChangeListener((javax.swing.event.ChangeEvent e) -> {
@@ -1049,6 +1053,44 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
         }
 
+    }
+
+    /**
+     * Reloads positions, bookings and totals of the current ledger, e.g. after another tab booked
+     * onto it. Name, description and the other tabs are left as they are.
+     */
+    private void reloadComponentsAndEntries() {
+        if (this.currentEntry == null || this.currentEntry.getId() == null) {
+            return;
+        }
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+            List<ClaimComponent> components = locator.lookupArchiveFileServiceRemote().getClaimComponents(this.currentEntry.getId());
+            List<ClaimLedgerEntry> entries = locator.lookupArchiveFileServiceRemote().getClaimLedgerEntries(this.currentEntry.getId());
+
+            this.tblComponents.setModel(new ComponentTableModel(components));
+            this.tblLedger.setModel(new LedgerTableModel(entries));
+            SummaryTableModel summaryModel = new SummaryTableModel(entries);
+            this.tblSummary.setModel(summaryModel);
+
+            this.tblComponents.getColumnModel().getColumn(0).setCellRenderer(new CurrencyRenderer());
+            this.tblLedger.getColumnModel().getColumn(2).setCellRenderer(new CurrencyRenderer());
+            for (int col = 2; col <= 6; col++) {
+                this.tblSummary.getColumnModel().getColumn(col).setCellRenderer(new CurrencyRenderer());
+            }
+
+            ClaimLedgerTotals totals = locator.lookupArchiveFileServiceRemote().calculateClaimLedgerTotals(this.currentEntry.getId(), this.dateTo);
+            summaryModel.setDynamicTotals(totals, this.dateTo);
+
+            ComponentUtils.autoSizeColumns(this.tblComponents);
+            ComponentUtils.autoSizeColumns(this.tblLedger);
+            ComponentUtils.autoSizeColumns(this.tblSummary);
+        } catch (Exception ex) {
+            log.error("Unable to reload the claim ledger " + this.currentEntry.getId(), ex);
+            JOptionPane.showMessageDialog(this, "Das Forderungskonto konnte nicht neu geladen werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+        this.updateTotals();
+        updateTimeline(this.currentEntry);
     }
 
     private void loadBaseInterestRates() {
@@ -1850,20 +1892,11 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 ((ComponentTableModel) this.tblComponents.getModel()).addComponent(cmp);
 
                 // 1. ComponentType → LedgerEntryType mappen
-                LedgerEntryType entryType = null;
-                switch (cmp.getType()) {
-                    case MAIN_CLAIM:
-                        entryType = LedgerEntryType.MAIN_CLAIM;
-                        break;
-                    case COST_INTEREST_BEARING:
-                        entryType = LedgerEntryType.COST;
-                        break;
-                    case COST_NON_INTEREST_BEARING:
-                        entryType = LedgerEntryType.COST;
-                        break;
-                    default:
-                        throw new IllegalArgumentException("Unbekannter ComponentType: " + cmp.getType());
-                }
+                // Hauptforderungen (auch laufende) als MAIN_CLAIM, alle übrigen Positionen als
+                // Kosten - auch ein Zinsrückstand: er ist ein fester Betrag, eine INTEREST-Buchung
+                // würde serverseitig eine Zinsberechnung über die Position auslösen.
+                LedgerEntryType entryType = (cmp.getType() != null && cmp.getType().isMainClaim())
+                        ? LedgerEntryType.MAIN_CLAIM : LedgerEntryType.COST;
 
                 // 2. Initiales Buchungsdatum festlegen
                 Date initialDate = null;
@@ -1883,7 +1916,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                     if (interestRule.getInterestType().equals(InterestType.FIXED)) {
                         initialEntry.setComment(initialEntry.getComment() + ", fest verzinst mit " + percentageFormat.format(interestRule.getFixedRate()) + "% Zinsen");
                     } else {
-                        initialEntry.setComment(initialEntry.getComment() + ", verzinst mit " + percentageFormat.format(interestRule.getBaseMargin()) + "% Zinsen über dem Basizinssatz");
+                        initialEntry.setComment(initialEntry.getComment() + ", verzinst mit " + percentageFormat.format(interestRule.getBaseMargin()) + "% Zinsen über dem Basiszinssatz");
                     }
                 }
                 initialEntry.setComponent(cmp);                       // Referenz auf Komponente
@@ -1899,7 +1932,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
 
             } catch (Exception ex) {
                 log.error("error saving claim component", ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Forderungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Forderungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
 
             ComponentUtils.autoSizeColumns(this.tblComponents);
@@ -1970,7 +2003,7 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
                 ((LedgerTableModel) this.tblLedger.getModel()).removeEntriesByComponentId(cmp.getId());
             } catch (Exception ex) {
                 log.error("error deleting claim component", ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Löchen der Forderungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Fehler beim Löschen der Forderungsposition: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
 
             ComponentUtils.autoSizeColumns(this.tblComponents);

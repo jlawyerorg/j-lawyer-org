@@ -883,12 +883,83 @@ public class DunningDeadlineCalculatorTest {
     }
 
     @Test
-    public void aCompletedProcedureStillShowsWhatItProduced() {
+    public void aCompletedProcedureHasNothingMoreDue() {
         DunningCase c = served(date(2026, 4, 8));
+        c.setVbServedDate(date(2026, 6, 3));
         c.setStatus(DunningCaseStatus.COMPLETED);
 
-        assertFalse("a finished procedure keeps its dates; they are history, not noise",
-                calculator.computeDeadlines(c, 7).isEmpty());
+        // the deadlines placed earlier are closed by the synchronisation and kept as history; an
+        // open one would mark a finished procedure as overdue for ever
+        assertTrue(calculator.computeDeadlines(c, 7).isEmpty());
+    }
+
+    @Test
+    public void theMahnbescheidPeriodsEndWhenTheVollstreckungsbescheidIsAppliedFor() {
+        for (DunningCaseStatus status : Arrays.asList(DunningCaseStatus.VB_APPLIED,
+                DunningCaseStatus.VB_ISSUED, DunningCaseStatus.VB_SERVED)) {
+            DunningCase c = served(date(2026, 4, 8));
+            c.setStatus(status);
+
+            List<DunningDeadline> all = calculator.computeDeadlines(c, 7);
+            assertNull("objection period still open in status " + status,
+                    of(all, DunningDeadlineType.OBJECTION_PERIOD));
+            assertNull("VB application still due in status " + status,
+                    of(all, DunningDeadlineType.VB_APPLICATION));
+            assertNull("a Mahnbescheid with a VB applied for cannot lapse (§ 701 ZPO), status " + status,
+                    of(all, DunningDeadlineType.MB_LAPSE));
+        }
+    }
+
+    @Test
+    public void theRecordedApplicationDateAloneEndsTheMahnbescheidPeriods() {
+        DunningCase c = served(date(2026, 4, 8));
+        c.setVbAppliedDate(date(2026, 4, 23));
+
+        assertTrue(calculator.computeDeadlines(c, 7).isEmpty());
+    }
+
+    @Test
+    public void anObjectionEndsTheMahnbescheidPeriods() {
+        DunningCase c = served(date(2026, 4, 8));
+        c.setStatus(DunningCaseStatus.OBJECTION);
+        c.setObjectionDate(date(2026, 4, 15));
+
+        List<DunningDeadline> all = calculator.computeDeadlines(c, 7);
+        assertEquals(1, all.size());
+        assertEquals(DunningDeadlineType.STATEMENT_OF_CLAIM, all.get(0).getType());
+    }
+
+    @Test
+    public void theReferralEndsTheStatementOfClaimDeadline() {
+        DunningCase c = served(date(2026, 4, 8));
+        c.setStatus(DunningCaseStatus.OBJECTION);
+        c.setObjectionDate(date(2026, 4, 15));
+        c.setReferralDate(date(2026, 4, 20));
+
+        assertNull(of(calculator.computeDeadlines(c, 7), DunningDeadlineType.STATEMENT_OF_CLAIM));
+    }
+
+    @Test
+    public void theEinspruchEndsTheEinspruchPeriod() {
+        DunningCase c = served(date(2026, 4, 8));
+        c.setVbServedDate(date(2026, 6, 3));
+        c.setStatus(DunningCaseStatus.EINSPRUCH);
+        c.setEinspruchDate(date(2026, 6, 10));
+
+        assertTrue(calculator.computeDeadlines(c, 7).isEmpty());
+    }
+
+    @Test
+    public void aRegularlyCompletedProcedureLeavesOnlyTheEinspruchPeriodOpen() {
+        DunningCase c = served(date(2026, 4, 8));
+        c.setVbAppliedDate(date(2026, 4, 23));
+        c.setVbIssuedDate(date(2026, 5, 6));
+        c.setVbServedDate(date(2026, 5, 13));
+        c.setStatus(DunningCaseStatus.VB_SERVED);
+
+        List<DunningDeadline> all = calculator.computeDeadlines(c, 7);
+        assertEquals(1, all.size());
+        assertEquals(DunningDeadlineType.EINSPRUCH_PERIOD, all.get(0).getType());
     }
 
     @Test

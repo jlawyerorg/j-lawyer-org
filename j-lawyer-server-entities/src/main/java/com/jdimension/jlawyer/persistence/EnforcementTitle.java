@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.persistence;
 
 import java.io.Serializable;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -689,9 +690,9 @@ import javax.xml.bind.annotation.XmlRootElement;
  * An enforcement title (Titel) a claim ledger rests on.
  *
  * Enforcement requires three formal prerequisites - the title itself, the enforceable copy with
- * its clause (Klausel) and service on the debtor (Zustellung). A title established by judgment or
- * order is subject to the 30-year limitation period of § 197 Abs. 1 Nr. 3 BGB, which is computed
- * from the date of issue.
+ * its clause (Klausel) and service on the debtor (Zustellung). A titled claim is subject to the
+ * 30-year limitation period of § 197 Abs. 1 Nr. 3 and 4 BGB, which starts with the finality of the
+ * decision or the creation of the title (§ 201 BGB) - see {@link #computeLimitationDate()}.
  *
  * @author jens
  */
@@ -708,7 +709,7 @@ public class EnforcementTitle implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * Limitation period of a titled claim under § 197 Abs. 1 Nr. 3 BGB, in years.
+     * Limitation period of a titled claim under § 197 Abs. 1 Nr. 3 and 4 BGB, in years.
      */
     public static final int LIMITATION_YEARS = 30;
 
@@ -734,6 +735,15 @@ public class EnforcementTitle implements Serializable {
     @Column(name = "issue_date")
     @Temporal(TemporalType.DATE)
     private Date issueDate;
+
+    /**
+     * The day the decision became final (Rechtskraft). The 30-year limitation of a decision starts
+     * here rather than on the date of issue (§ 201 BGB). Null where it is not known or where the
+     * kind of title has no finality (settlement, notarial deed).
+     */
+    @Column(name = "finality_date")
+    @Temporal(TemporalType.DATE)
+    private Date finalityDate;
 
     @Column(name = "clause_date")
     @Temporal(TemporalType.DATE)
@@ -814,18 +824,58 @@ public class EnforcementTitle implements Serializable {
     }
 
     /**
-     * Computes the date on which the titled claim becomes time-barred under § 197 Abs. 1 Nr. 3 BGB,
-     * 30 years after the title was issued.
+     * Computes the date on which the titled claim becomes time-barred, 30 years after the start of
+     * the limitation period (§ 197 Abs. 1 Nr. 3 and 4 BGB).
      *
-     * @return the limitation date, or null if the title carries no date of issue
+     * The period starts with the finality (Rechtskraft) of the decision or with the creation
+     * (Errichtung) of the enforceable title (§ 201 BGB):
+     * <ul>
+     * <li>if a finality date is recorded and the kind of title becomes final at all
+     * ({@link EnforcementTitleType#isBecomingFinal()}), the period runs from the finality date;</li>
+     * <li>otherwise it runs from the date of issue - which is the creation date for a settlement or
+     * a notarial deed, and the earliest possible start (hence a conservative, early date) for a
+     * decision whose finality has not been recorded.</li>
+     * </ul>
+     *
+     * Not covered: for claims to recurring payments falling due in the future (künftig fällig
+     * werdende regelmäßig wiederkehrende Leistungen) the regular limitation period applies instead
+     * (§ 197 Abs. 2 BGB) - this is per instalment and not computed here.
+     *
+     * @return the limitation date, or null if the title carries neither a usable finality date nor
+     * a date of issue
      */
     public Date computeLimitationDate() {
-        if (this.issueDate == null) {
+        Date start = computeLimitationStart();
+        if (start == null) {
             return null;
         }
-        LocalDate issued = this.issueDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        LocalDate limitation = issued.plusYears(LIMITATION_YEARS);
+        LocalDate limitation = toLocalDate(start).plusYears(LIMITATION_YEARS);
         return Date.from(limitation.atStartOfDay(ZoneId.systemDefault()).toInstant());
+    }
+
+    /**
+     * The day the 30-year limitation period starts, following the rule described at
+     * {@link #computeLimitationDate()}.
+     *
+     * @return the finality date where it applies, else the date of issue; null if neither is known
+     */
+    public Date computeLimitationStart() {
+        boolean finalityApplies = this.titleType == null || this.titleType.isBecomingFinal();
+        if (finalityApplies && this.finalityDate != null) {
+            return this.finalityDate;
+        }
+        return this.issueDate;
+    }
+
+    /**
+     * Converts a date to a local day without Date.toInstant(): a value read back through a
+     * {@code @Temporal(DATE)} mapping is a java.sql.Date, whose toInstant() throws by contract.
+     *
+     * @param date the date, not null
+     * @return the local day in the system time zone
+     */
+    private static LocalDate toLocalDate(Date date) {
+        return Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
     }
 
     @Override
@@ -941,6 +991,20 @@ public class EnforcementTitle implements Serializable {
      */
     public void setIssueDate(Date issueDate) {
         this.issueDate = issueDate;
+    }
+
+    /**
+     * @return the day the decision became final (Rechtskraft), or null if unknown or not applicable
+     */
+    public Date getFinalityDate() {
+        return finalityDate;
+    }
+
+    /**
+     * @param finalityDate the day the decision became final (Rechtskraft)
+     */
+    public void setFinalityDate(Date finalityDate) {
+        this.finalityDate = finalityDate;
     }
 
     /**

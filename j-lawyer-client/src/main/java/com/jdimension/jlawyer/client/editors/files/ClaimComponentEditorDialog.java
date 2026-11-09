@@ -670,6 +670,10 @@ import com.jdimension.jlawyer.persistence.ClaimComponentType;
 import com.jdimension.jlawyer.persistence.ClaimLedger;
 import com.jdimension.jlawyer.persistence.InterestRule;
 import com.jdimension.jlawyer.persistence.InterestType;
+import com.jdimension.jlawyer.persistence.InterestStartMode;
+import com.jdimension.jlawyer.pojo.DefaultInterestProposal;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.math.BigDecimal;
 import com.jdimension.jlawyer.referencedata.CatalogueAddition;
 import com.jdimension.jlawyer.referencedata.MainClaimCatalogueEntry;
@@ -779,6 +783,7 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
         this.txtAmount.setValue(entry.getPrincipalAmount());
         this.cmbType.setSelectedItem(entry.getType());
         this.tblInterestRules.setModel(new InterestRuleTableModel(interestRules));
+        this.chkInterestOnService.setSelected(entry.isInterestStartingOnService());
         showCatalogueOf(entry);
 
         // Status der Zinsregel-Elemente aktualisieren
@@ -795,6 +800,10 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
         this.entry.setName(this.txtName.getText());
         this.entry.setPrincipalAmount(BigDecimal.valueOf(((Number) this.txtAmount.getValue()).doubleValue()));
         this.entry.setType((ClaimComponentType) this.cmbType.getSelectedItem());
+        // Zinsbeginn ab Zustellung nur, wo überhaupt Zinsen laufen
+        this.entry.setInterestStartMode(this.chkInterestOnService.isSelected()
+                && this.entry.getType() != ClaimComponentType.COST_NON_INTEREST_BEARING
+                ? InterestStartMode.ON_SERVICE : InterestStartMode.FIXED_DATE);
         applyCatalogueTo(this.entry);
         return this.entry;
     }
@@ -1052,6 +1061,8 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
         jLabel6 = new javax.swing.JLabel();
         txtValidFrom = new javax.swing.JTextField();
         cmdValidFrom = new javax.swing.JButton();
+        chkInterestOnService = new javax.swing.JCheckBox();
+        cmdProposeDefaultInterest = new javax.swing.JButton();
         jSeparator1 = new javax.swing.JSeparator();
         jLabel7 = new javax.swing.JLabel();
         rdInterestFixed = new javax.swing.JRadioButton();
@@ -1206,6 +1217,17 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
             }
         });
 
+        chkInterestOnService.setText("erst ab Zustellung des Mahnbescheids");
+        chkInterestOnService.setToolTipText("<html>Zinsen laufen erst ab Zustellung des Mahnbescheids (z. B. Prozesszinsen, § 291 BGB).<br/>Wird die Zustellung erfasst, setzt j-lawyer.org das Datum \"gültig ab\" der Zinsregeln auf das Zustellungsdatum.</html>");
+
+        cmdProposeDefaultInterest.setText("Verzugszins vorschlagen");
+        cmdProposeDefaultInterest.setToolTipText("Verzugszins nach § 288 BGB anhand der Beteiligten und des Verzugsbeginns aus dem Mahnwesen vorschlagen");
+        cmdProposeDefaultInterest.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdProposeDefaultInterestActionPerformed(evt);
+            }
+        });
+
         jLabel7.setFont(jLabel7.getFont());
         jLabel7.setText("Zinsmodell:");
 
@@ -1301,11 +1323,16 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(txtComment)
                                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addComponent(cmdAddInterestRule)
+                                        .addGroup(layout.createSequentialGroup()
+                                            .addComponent(cmdAddInterestRule)
+                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                            .addComponent(cmdProposeDefaultInterest))
                                         .addGroup(layout.createSequentialGroup()
                                             .addComponent(txtValidFrom, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
                                             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                            .addComponent(cmdValidFrom))
+                                            .addComponent(cmdValidFrom)
+                                            .addGap(18, 18, 18)
+                                            .addComponent(chkInterestOnService))
                                         .addGroup(layout.createSequentialGroup()
                                             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                                 .addComponent(rdInterestBaseRelated)
@@ -1379,7 +1406,8 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel6)
                     .addComponent(txtValidFrom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(cmdValidFrom))
+                    .addComponent(cmdValidFrom)
+                    .addComponent(chkInterestOnService))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(rdInterestBaseRelated)
@@ -1397,7 +1425,9 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
                     .addComponent(txtComment, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel10))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(cmdAddInterestRule)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmdAddInterestRule)
+                    .addComponent(cmdProposeDefaultInterest))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmdRemoveInterestRule)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1439,6 +1469,64 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
         MultiCalDialog dlg = new MultiCalDialog(this.txtValidFrom, this, true);
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdValidFromActionPerformed
+
+    private void cmdProposeDefaultInterestActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdProposeDefaultInterestActionPerformed
+        if (this.ledger == null || this.ledger.getId() == null) {
+            return;
+        }
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+            // die Position ist bei einer neuen Forderung noch nicht gespeichert - der Vorschlag
+            // stützt sich dann allein auf das Konto und seine Beteiligten
+            String componentId = (this.entry == null) ? null : this.entry.getId();
+            DefaultInterestProposal proposal = locator.lookupClaimLedgerServiceRemote()
+                    .proposeDefaultInterest(this.ledger.getId(), componentId, null);
+            if (proposal == null) {
+                return;
+            }
+
+            if (proposal.getInterestType() == InterestType.FIXED) {
+                this.rdInterestFixed.setSelected(true);
+                this.txtInterestFixed.setValue(proposal.getMarginPercent());
+            } else {
+                this.rdInterestBaseRelated.setSelected(true);
+                this.txtInterestBaseRelated.setValue(proposal.getMarginPercent());
+            }
+            if (proposal.getRunningFrom() != null) {
+                this.txtValidFrom.setText(DAY_FORMAT.format(proposal.getRunningFrom()));
+            }
+            if (proposal.getLegalBasis() != null) {
+                this.txtComment.setText(proposal.getLegalBasis());
+            }
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("Vorschlag: ");
+            sb.append(proposal.getInterestType() == InterestType.FIXED ? "" : "Basiszinssatz + ");
+            sb.append(proposal.getMarginPercent() == null ? "0" : proposal.getMarginPercent().stripTrailingZeros().toPlainString());
+            sb.append(" Prozentpunkte");
+            if (proposal.getRunningFrom() != null) {
+                sb.append(" ab ").append(DAY_FORMAT.format(proposal.getRunningFrom()));
+            } else {
+                sb.append("\nEin Verzugsbeginn ist nicht bekannt - bitte das Datum \"gültig ab\" selbst eintragen.");
+            }
+            if (proposal.getReason() != null && !proposal.getReason().trim().isEmpty()) {
+                sb.append("\n\n").append(proposal.getReason());
+            }
+            if (proposal.isLumpSumApplicable()) {
+                sb.append("\n\nZusätzlich kann die Verzugspauschale von ")
+                        .append(proposal.getLumpSumAmount() == null ? "40,00" : proposal.getLumpSumAmount().setScale(2, java.math.RoundingMode.HALF_UP).toPlainString().replace('.', ','))
+                        .append(" EUR (§ 288 Abs. 5 BGB) als eigene Position erfasst werden.");
+                if (proposal.getLumpSumReason() != null && !proposal.getLumpSumReason().trim().isEmpty()) {
+                    sb.append("\n").append(proposal.getLumpSumReason());
+                }
+            }
+            sb.append("\n\nDie Werte sind in die Eingabefelder übernommen. Mit \"Hinzufügen\" wird die Zinsregel angelegt.");
+            JOptionPane.showMessageDialog(this, sb.toString(), "Verzugszins", JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception ex) {
+            log.error("unable to propose default interest", ex);
+            JOptionPane.showMessageDialog(this, "Der Verzugszins konnte nicht ermittelt werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdProposeDefaultInterestActionPerformed
 
     private void cmdAddInterestRuleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddInterestRuleActionPerformed
         if(this.rdInterestFixed.isSelected() && this.txtInterestFixed.getValue()==null) {
@@ -1533,6 +1621,8 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
         tblInterestRules.setEnabled(enabled);
         cmdAddInterestRule.setEnabled(enabled);
         cmdRemoveInterestRule.setEnabled(enabled);
+        cmdProposeDefaultInterest.setEnabled(enabled);
+        chkInterestOnService.setEnabled(enabled);
 
         // Separator
         jSeparator1.setEnabled(enabled);
@@ -1625,6 +1715,8 @@ public class ClaimComponentEditorDialog extends javax.swing.JDialog {
     private javax.swing.JButton cmdRemoveInterestRule;
     private javax.swing.JButton cmdSave;
     private javax.swing.JButton cmdValidFrom;
+    private javax.swing.JCheckBox chkInterestOnService;
+    private javax.swing.JButton cmdProposeDefaultInterest;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel2;

@@ -64,6 +64,10 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="cmdExportApplication" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
+                      <Component id="cmdExportVbApplication" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="cmdProposeFees" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Component id="cmdImportMessage" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                       <Component id="cmdRefresh" min="-2" max="-2" attributes="0"/>
@@ -110,6 +114,8 @@
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="cmdRecordStatus" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="cmdExportApplication" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmdExportVbApplication" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmdProposeFees" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="cmdImportMessage" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="cmdRefresh" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
@@ -271,6 +277,30 @@
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdExportApplicationActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdExportVbApplication">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons/filesave-separate.png"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="VB beantragen"/>
+        <Property name="toolTipText" type="java.lang.String" value="Erzeugt den Antrag auf Erlass des Vollstreckungsbescheids als EDA-Datei und legt ihn in der Akte ab."/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdExportVbApplicationActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdProposeFees">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons/money.png"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="Geb&#xfc;hren vorschlagen..."/>
+        <Property name="toolTipText" type="java.lang.String" value="Berechnet Gerichts- und Anwaltsgeb&#xfc;hren des Mahnverfahrens und bucht sie auf Wunsch als Verfahrenskosten in das Forderungskonto."/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdProposeFeesActionPerformed"/>
       </Events>
     </Component>
     <Component class="javax.swing.JButton" name="cmdImportMessage">

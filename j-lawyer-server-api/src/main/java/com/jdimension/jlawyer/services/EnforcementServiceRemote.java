@@ -796,6 +796,35 @@ public interface EnforcementServiceRemote {
     List<EnforcementMeasureType> getMeasureTypes() throws Exception;
 
     /**
+     * Returns every kind of measure in the catalogue, including those a firm has switched off, in
+     * the order they are offered.
+     *
+     * For the administration of the catalogue: a kind that has been switched off must remain
+     * visible there, or it could never be switched on again. The forms of each kind are included.
+     *
+     * @return all kinds, empty if the catalogue is empty
+     * @throws Exception if the catalogue cannot be read
+     */
+    List<EnforcementMeasureType> getAllMeasureTypes() throws Exception;
+
+    /**
+     * Stores the user-maintainable settings of a kind of measure.
+     *
+     * Only the designation, the description, the position in the offered order, the follow-up
+     * period and whether the kind is offered at all are taken over. The technical identifier, the
+     * addressee, the forms and the flags the legal logic depends on (title required, third-party
+     * debtor, asset disclosure) are left as stored - they are part of what the kind is, not a
+     * preference of the firm.
+     *
+     * Reserved for administrators.
+     *
+     * @param type the kind carrying the changed settings; identified by its id
+     * @return the stored kind, including its forms
+     * @throws Exception if the kind does not exist, the settings are invalid or cannot be stored
+     */
+    EnforcementMeasureType updateMeasureType(EnforcementMeasureType type) throws Exception;
+
+    /**
      * Returns the measures taken out of a claim ledger, oldest first.
      *
      * @param ledgerId id of the claim ledger

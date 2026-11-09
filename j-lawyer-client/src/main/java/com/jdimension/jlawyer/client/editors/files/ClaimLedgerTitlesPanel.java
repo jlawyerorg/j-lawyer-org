@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.client.events.ReviewUpdatedEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.persistence.ClaimComponent;
 import com.jdimension.jlawyer.persistence.ClaimLedger;
 import com.jdimension.jlawyer.persistence.EnforcementTitle;
 import com.jdimension.jlawyer.services.ClaimLedgerServiceRemote;
@@ -941,6 +942,23 @@ public class ClaimLedgerTitlesPanel extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    /**
+     * Loads the positions of the ledger, offered in the title dialog for the coverage of a title.
+     *
+     * @return the components of the ledger, or null if they could not be loaded - the dialog then
+     * leaves the coverage of the title untouched
+     */
+    private List<ClaimComponent> loadClaimComponents() {
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            return locator.lookupClaimLedgerServiceRemote().getClaimComponents(this.ledger.getId());
+        } catch (Exception ex) {
+            log.error("Unable to load the components of ledger " + this.ledger.getId(), ex);
+            return null;
+        }
+    }
+
     private void cmdAddTitleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddTitleActionPerformed
         if (this.ledger == null || this.ledger.getId() == null) {
             return;
@@ -948,6 +966,7 @@ public class ClaimLedgerTitlesPanel extends javax.swing.JPanel {
 
         ClaimLedgerTitleDialog dlg = new ClaimLedgerTitleDialog(EditorsRegistry.getInstance().getMainWindow(), true);
         dlg.setEnforcementTitle(null);
+        dlg.setClaimComponents(loadClaimComponents());
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
 
@@ -979,6 +998,7 @@ public class ClaimLedgerTitlesPanel extends javax.swing.JPanel {
 
         ClaimLedgerTitleDialog dlg = new ClaimLedgerTitleDialog(EditorsRegistry.getInstance().getMainWindow(), true);
         dlg.setEnforcementTitle(selected);
+        dlg.setClaimComponents(loadClaimComponents());
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
 

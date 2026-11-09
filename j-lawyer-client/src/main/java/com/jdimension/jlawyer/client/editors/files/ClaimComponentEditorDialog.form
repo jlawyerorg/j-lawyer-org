@@ -100,11 +100,17 @@
                               <EmptySpace min="-2" pref="14" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="txtComment" max="32767" attributes="0"/>
-                                  <Component id="cmdAddInterestRule" min="-2" max="-2" attributes="0"/>
+                                  <Group type="102" attributes="0">
+                                      <Component id="cmdAddInterestRule" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="cmdProposeDefaultInterest" min="-2" max="-2" attributes="0"/>
+                                  </Group>
                                   <Group type="102" attributes="0">
                                       <Component id="txtValidFrom" min="-2" pref="120" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="cmdValidFrom" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
+                                      <Component id="chkInterestOnService" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <Group type="102" attributes="0">
                                       <Group type="103" groupAlignment="0" attributes="0">
@@ -200,6 +206,7 @@
                   <Component id="jLabel6" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="txtValidFrom" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="cmdValidFrom" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="chkInterestOnService" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
@@ -221,7 +228,10 @@
                   <Component id="jLabel10" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
-              <Component id="cmdAddInterestRule" min="-2" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="cmdAddInterestRule" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmdProposeDefaultInterest" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="cmdRemoveInterestRule" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
@@ -395,6 +405,21 @@
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdValidFromActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JCheckBox" name="chkInterestOnService">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="erst ab Zustellung des Mahnbescheids"/>
+        <Property name="toolTipText" type="java.lang.String" value="&lt;html&gt;Zinsen laufen erst ab Zustellung des Mahnbescheids (z. B. Prozesszinsen, &#xa7; 291 BGB).&lt;br/&gt;Wird die Zustellung erfasst, setzt j-lawyer.org das Datum &quot;g&#xfc;ltig ab&quot; der Zinsregeln auf das Zustellungsdatum.&lt;/html&gt;"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdProposeDefaultInterest">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Verzugszins vorschlagen"/>
+        <Property name="toolTipText" type="java.lang.String" value="Verzugszins nach &#xa7; 288 BGB anhand der Beteiligten und des Verzugsbeginns aus dem Mahnwesen vorschlagen"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdProposeDefaultInterestActionPerformed"/>
       </Events>
     </Component>
     <Component class="javax.swing.JLabel" name="lblCatalogue">

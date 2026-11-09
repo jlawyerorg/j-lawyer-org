@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.CaseAccountEntry;
 import com.jdimension.jlawyer.persistence.CaseAccountEntryFacadeLocal;
 import com.jdimension.jlawyer.persistence.ClaimComponent;
+import com.jdimension.jlawyer.persistence.PaymentAllocationMode;
 import com.jdimension.jlawyer.persistence.ClaimComponentFacadeLocal;
 import com.jdimension.jlawyer.persistence.ClaimComponentType;
 import com.jdimension.jlawyer.persistence.ClaimLedger;
@@ -792,6 +793,12 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
     private ArchiveFileServiceLocal archiveFileService;
     @EJB
     private ArchiveFileBeanFacadeLocal archiveFileFacade;
+    @EJB
+    private com.jdimension.jlawyer.persistence.ArchiveFileAddressesBeanFacadeLocal caseAddressesFacade;
+    @EJB
+    private com.jdimension.jlawyer.persistence.PartyTypeBeanFacadeLocal partyTypesFacade;
+    @EJB
+    private com.jdimension.jlawyer.persistence.EnforcementThirdPartyDebtorFacadeLocal thirdPartyDebtorsFacade;
     @EJB
     private DunningStageFacadeLocal dunningStagesFacade;
     @EJB
@@ -990,7 +997,57 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
     @RolesAllowed({"readArchiveFileRole"})
     public List<EnforcementTitle> getTitles(String ledgerId) throws Exception {
         ClaimLedger ledger = requireLedger(ledgerId);
-        return this.enforcementTitlesFacade.findByLedger(ledger);
+        List<EnforcementTitle> titles = this.enforcementTitlesFacade.findByLedger(ledger);
+        for (EnforcementTitle t : titles) {
+            initializeCoveredComponents(t);
+        }
+        return titles;
+    }
+
+    /**
+     * Loads the lazy coverage of a title before it leaves the transaction, so the client can show
+     * and edit which positions the title covers.
+     *
+     * @param title the title, may be null
+     * @return the same title
+     */
+    private EnforcementTitle initializeCoveredComponents(EnforcementTitle title) {
+        if (title != null) {
+            title.getCoveredComponents().size();
+        }
+        return title;
+    }
+
+    /**
+     * Replaces the positions a title covers, as sent by the client, by the managed components of
+     * the title's ledger. A position of another ledger is refused rather than silently linked.
+     *
+     * @param ledger the ledger the title belongs to
+     * @param requested the positions as sent by the client, may be null
+     * @return the managed components, without duplicates
+     * @throws Exception if a position does not exist or belongs to another ledger
+     */
+    private List<ClaimComponent> resolveCoveredComponents(ClaimLedger ledger, List<ClaimComponent> requested) throws Exception {
+        List<ClaimComponent> resolved = new ArrayList<>();
+        if (requested == null) {
+            return resolved;
+        }
+        for (ClaimComponent c : requested) {
+            if (c == null || c.getId() == null) {
+                continue;
+            }
+            ClaimComponent managed = this.claimComponentsFacade.find(c.getId());
+            if (managed == null) {
+                throw new Exception("Die vom Titel erfasste Position existiert nicht mehr!");
+            }
+            if (managed.getLedger() == null || !ledger.getId().equals(managed.getLedger().getId())) {
+                throw new Exception("Die vom Titel erfasste Position gehört nicht zu diesem Forderungskonto!");
+            }
+            if (!resolved.contains(managed)) {
+                resolved.add(managed);
+            }
+        }
+        return resolved;
     }
 
     @Override
@@ -1007,13 +1064,14 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
 
         title.setId(new StringGenerator().getID().toString());
         title.setLedger(ledger);
+        title.setCoveredComponents(resolveCoveredComponents(ledger, title.getCoveredComponents()));
         title.setLimitationDate(title.computeLimitationDate());
 
         this.enforcementTitlesFacade.create(title);
 
         createLimitationFollowUp(ledger.getArchiveFileKey(), title, followUpLeadTimeDays);
 
-        return this.enforcementTitlesFacade.find(title.getId());
+        return initializeCoveredComponents(this.enforcementTitlesFacade.find(title.getId()));
     }
 
     @Override
@@ -1031,6 +1089,8 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
 
         title.setLedger(current.getLedger());
         title.setLimitationReviewId(current.getLimitationReviewId());
+        // the client sends detached copies of the positions - link the managed ones of this ledger
+        title.setCoveredComponents(resolveCoveredComponents(current.getLedger(), title.getCoveredComponents()));
         title.setLimitationDate(title.computeLimitationDate());
         this.enforcementTitlesFacade.edit(title);
 
@@ -1055,7 +1115,7 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
             }
         }
 
-        return this.enforcementTitlesFacade.find(title.getId());
+        return initializeCoveredComponents(this.enforcementTitlesFacade.find(title.getId()));
     }
 
     @Override
@@ -1923,7 +1983,8 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
      * A reminder without the debtor's name and address is useless, so the parties of the claim are
      * handed to the placeholder resolution rather than an empty list. Where a ledger party was
      * derived from a party of the case, that case role is passed along, so role-specific
-     * placeholders resolve as they do in a document written by hand.
+     * placeholders resolve as they do in a document written by hand. A party entered by hand takes
+     * the role of the same contact in the case, or else the default party type of its claim role.
      *
      * @param ledger the claim ledger
      * @return the parties, never null
@@ -1933,15 +1994,62 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
         if (ledger == null) {
             return triplets;
         }
+        List<ArchiveFileAddressesBean> caseInvolvements = null;
         for (ClaimLedgerParty p : this.claimLedgerPartiesFacade.findByLedger(ledger)) {
             if (p.getContact() == null) {
                 continue;
             }
             ArchiveFileAddressesBean involvement = p.getCaseContact();
-            PartyTypeBean partyType = involvement == null ? null : involvement.getReferenceType();
+            if (involvement == null || involvement.getReferenceType() == null) {
+                // entered by hand rather than taken from the case: if the same contact is a party
+                // of the case anyway, its role there is what role-specific placeholders refer to
+                if (caseInvolvements == null) {
+                    caseInvolvements = ledger.getArchiveFileKey() == null ? new ArrayList<>()
+                            : this.caseAddressesFacade.findByArchiveFileKey(ledger.getArchiveFileKey());
+                }
+                involvement = null;
+                for (ArchiveFileAddressesBean candidate : caseInvolvements) {
+                    if (candidate.getReferenceType() != null && candidate.getAddressKey() != null
+                            && p.getContact().getId() != null
+                            && p.getContact().getId().equals(candidate.getAddressKey().getId())) {
+                        involvement = candidate;
+                        break;
+                    }
+                }
+            }
+            PartyTypeBean partyType = involvement == null
+                    ? defaultPartyTypeFor(p.getRole()) : involvement.getReferenceType();
+            if (partyType == null) {
+                // the template placeholders are keyed by party type; without one there is nothing
+                // this party could be filled into
+                log.info("Claim ledger party " + p.getId() + " has no role in the case and no default "
+                        + "party type for its role, it is not available to the placeholders");
+                continue;
+            }
             triplets.add(new PartiesTriplet(p.getContact(), partyType, involvement));
         }
         return triplets;
+    }
+
+    /**
+     * The party type a ledger party without a role in the case is filled in as: the creditor as the
+     * client ("MANDANT"), the debtor as the opponent ("GEGNER") - the roles a reminder letter is
+     * written for. Returns null when the installation has no such party type.
+     *
+     * @param role the role of the party in the claim
+     * @return the party type, or null
+     */
+    private PartyTypeBean defaultPartyTypeFor(ClaimPartyRole role) {
+        if (role == null) {
+            return null;
+        }
+        String placeHolder = role == ClaimPartyRole.CREDITOR ? "MANDANT" : "GEGNER";
+        for (PartyTypeBean type : this.partyTypesFacade.findAll()) {
+            if (placeHolder.equalsIgnoreCase(type.getPlaceHolder())) {
+                return type;
+            }
+        }
+        return null;
     }
 
     /**
@@ -2042,6 +2150,41 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
      * @return the ledger
      * @throws Exception if it does not exist or the user may not access its case
      */
+    /**
+     * Resolves and checks the parent a ledger is to be filed under.
+     *
+     * The parent arrives as a detached object from the client; it is looked up again, and it has to
+     * belong to the same case, and must neither be the ledger itself nor one of its sub-ledgers -
+     * the statement that includes sub-ledgers would otherwise recurse for ever.
+     *
+     * @param ledger the managed ledger being updated
+     * @param requestedParent the parent as sent by the client, or null for none
+     * @return the managed parent, or null
+     * @throws Exception if the parent does not exist or would not be a valid parent
+     */
+    private ClaimLedger resolveParentLedger(ClaimLedger ledger, ClaimLedger requestedParent) throws Exception {
+        if (requestedParent == null || requestedParent.getId() == null) {
+            return null;
+        }
+        ClaimLedger parent = this.claimLedgersFacade.find(requestedParent.getId());
+        if (parent == null) {
+            throw new Exception("Das übergeordnete Forderungskonto existiert nicht!");
+        }
+        if (parent.getArchiveFileKey() == null || ledger.getArchiveFileKey() == null
+                || !parent.getArchiveFileKey().getId().equals(ledger.getArchiveFileKey().getId())) {
+            throw new Exception("Ein Unterkonto muss zur selben Akte gehören wie das übergeordnete Konto!");
+        }
+        ClaimLedger current = parent;
+        int guard = 0;
+        while (current != null && guard++ < 100) {
+            if (ledger.getId().equals(current.getId())) {
+                throw new Exception("Ein Forderungskonto kann nicht sich selbst oder einem seiner Unterkonten untergeordnet werden!");
+            }
+            current = current.getParentLedger();
+        }
+        return parent;
+    }
+
     private ClaimLedger requireLedger(String ledgerId) throws Exception {
         ClaimLedger ledger = this.claimLedgersFacade.find(ledgerId);
         if (ledger == null) {
@@ -2139,8 +2282,20 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
         if (title.getLimitationDate() != null) {
             sb.append(" am ").append(DATE_FORMAT.format(title.getLimitationDate()));
         }
-        sb.append(" (§ 197 Abs. 1 Nr. 3 BGB)");
+        sb.append(" (").append(limitationProvision(title)).append(")");
         return sb.toString();
+    }
+
+    /**
+     * The provision the limitation of a title rests on: judgments and other titles that become
+     * final fall under § 197 Abs. 1 Nr. 3 BGB, enforceable settlements and deeds under Nr. 4.
+     *
+     * @param title the title
+     * @return the provision, for display
+     */
+    private String limitationProvision(EnforcementTitle title) {
+        boolean deedOrSettlement = title.getTitleType() != null && !title.getTitleType().isBecomingFinal();
+        return deedOrSettlement ? "§ 197 Abs. 1 Nr. 4 BGB" : "§ 197 Abs. 1 Nr. 3 BGB";
     }
 
     /**
@@ -2206,7 +2361,7 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
         }
         if (title.getLimitationDate() != null) {
             sb.append("\n\nDer Titel verjährt am ").append(DATE_FORMAT.format(title.getLimitationDate()));
-            sb.append(" (§ 197 Abs. 1 Nr. 3 BGB). Soll weiter vollstreckt werden, ist die Verjährung "
+            sb.append(" (").append(limitationProvision(title)).append("). Soll weiter vollstreckt werden, ist die Verjährung "
                     + "vorher zu hemmen oder neu zu beginnen, etwa durch eine "
                     + "Vollstreckungshandlung (§ 212 Abs. 1 Nr. 2 BGB).");
         }
@@ -2358,7 +2513,7 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
             updatedLedger.setSurplusHandling(claimLedger.getSurplusHandling());
             updatedLedger.setConsumerLoan(claimLedger.isConsumerLoan());
             updatedLedger.setEffectiveCreditorCount(claimLedger.getEffectiveCreditorCount());
-            updatedLedger.setParentLedger(claimLedger.getParentLedger());
+            updatedLedger.setParentLedger(resolveParentLedger(updatedLedger, claimLedger.getParentLedger()));
 
             this.claimLedgersFacade.edit(updatedLedger);
 
@@ -2851,6 +3006,39 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
         return createPaymentSplit(proposal);
     }
 
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public PaymentSplitProposal calculatePaymentSplit(String ledgerId, BigDecimal amount,
+            String componentId, Date paymentDate) throws Exception {
+
+        ClaimLedger ledger = requireLedger(ledgerId);
+        if (amount == null || amount.signum() <= 0) {
+            throw new Exception("Der Zahlungsbetrag muss größer als null sein!");
+        }
+        Date day = paymentDate == null ? new Date() : paymentDate;
+
+        ClaimComponent original = null;
+        if (componentId != null) {
+            original = this.claimComponentsFacade.find(componentId);
+            if (original != null && (original.getLedger() == null
+                    || !ledgerId.equals(original.getLedger().getId()))) {
+                throw new Exception("Die Forderungsposition gehört nicht zu diesem Forderungskonto!");
+            }
+        }
+
+        // dieselbe Rechnung wie bei der automatischen Buchung - ein Vorschlag, der anders tilgt
+        // als das Konto es vorsieht, waere keiner
+        PaymentAllocationMode mode = ledger.getAllocationMode() == null
+                ? PaymentAllocationMode.LEGAL : ledger.getAllocationMode();
+        PaymentSplitCalculator calculator = new PaymentSplitCalculator(claimComponentsFacade,
+                claimComponentInterestRuleFacade, claimLedgerEntriesFacade, claimInterestCalculator());
+        PaymentSplitProposal proposal = calculator.calculateSplit(ledger, amount, original, day, mode,
+                null, mode == PaymentAllocationMode.TARGETED ? original : null);
+        proposal.setOriginalComponent(original);
+        return proposal;
+    }
+
+    @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public List<ClaimLedgerEntry> createPaymentSplit(PaymentSplitProposal proposal) throws Exception {
         String principalId = context.getCallerPrincipal().getName();
@@ -3029,7 +3217,15 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
         input.setDunningCases(this.dunningCasesFacade.findByLedger(ledger));
         input.setTitles(this.enforcementTitlesFacade.findByLedger(ledger));
         input.setMeasures(this.enforcementMeasuresFacade.findByLedger(ledger));
-        input.setEnforcementDeadlines(this.enforcementDeadlinesFacade.findByLedger(ledger));
+        List<com.jdimension.jlawyer.persistence.EnforcementMeasureDeadline> enforcementDeadlines =
+                new ArrayList<>();
+        for (com.jdimension.jlawyer.persistence.EnforcementMeasureDeadline d
+                : this.enforcementDeadlinesFacade.findByLedger(ledger)) {
+            if (!isFollowUpDone(d.getReviewId())) {
+                enforcementDeadlines.add(d);
+            }
+        }
+        input.setEnforcementDeadlines(enforcementDeadlines);
 
         // Die Fristen des Mahnverfahrens haengen an der Mahnsache und nicht am Konto; es sind
         // selten mehr als zwei Sachen, und die naechste Frist darf nicht davon abhaengen, in
@@ -3037,11 +3233,34 @@ public class ClaimLedgerService implements ClaimLedgerServiceRemote, ClaimLedger
         List<com.jdimension.jlawyer.persistence.DunningCaseDeadline> dunningDeadlines =
                 new ArrayList<>();
         for (com.jdimension.jlawyer.persistence.DunningCase dunningCase : input.getDunningCases()) {
-            dunningDeadlines.addAll(this.dunningDeadlinesFacade.findByDunningCase(dunningCase));
+            for (com.jdimension.jlawyer.persistence.DunningCaseDeadline d
+                    : this.dunningDeadlinesFacade.findByDunningCase(dunningCase)) {
+                if (!isFollowUpDone(d.getReviewId())) {
+                    dunningDeadlines.add(d);
+                }
+            }
         }
         input.setDunningDeadlines(dunningDeadlines);
+        input.setThirdPartyDebtors(this.thirdPartyDebtorsFacade.findByLedger(ledger));
 
         return new ClaimProcessStatusAssembler().assemble(input, new Date());
+    }
+
+    /**
+     * Whether the follow-up of a deadline has been marked as done in the calendar.
+     *
+     * Marking the follow-up as done is how a user says a deadline has been dealt with; a deadline
+     * that is done there must not keep the ledger marked as overdue.
+     *
+     * @param reviewId the id of the follow-up, or null
+     * @return true when the follow-up exists and is done
+     */
+    private boolean isFollowUpDone(String reviewId) {
+        if (reviewId == null) {
+            return false;
+        }
+        ArchiveFileReviewsBean review = this.archiveFileReviewsFacade.find(reviewId);
+        return review != null && review.isDone();
     }
 
     /**

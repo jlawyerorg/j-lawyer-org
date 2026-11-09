@@ -776,7 +776,7 @@ public class EdaStructureVerifier {
                 violations.add(new EdaViolation(i + 1, "BB", "SA",
                         "Ein Dateinachsatz steht mitten in der Datei."));
             }
-            if (!isFirst && !isLast && EdaMahnbescheidLayouts.findByRecordKey(line) == null) {
+            if (!isFirst && !isLast && layoutOf(line) == null) {
                 violations.add(new EdaViolation(i + 1, idOf(line), null,
                         "Zu diesem Satz ist keine Satzbeschreibung bekannt."));
             }
@@ -786,7 +786,7 @@ public class EdaStructureVerifier {
         boolean seenKennsatz = false;
         for (int i = 1; i < records.size() - 1; i++) {
             String line = records.get(i);
-            EdaRecordLayout layout = EdaMahnbescheidLayouts.findByRecordKey(line);
+            EdaRecordLayout layout = layoutOf(line);
             if (layout == null) {
                 continue;
             }
@@ -810,7 +810,7 @@ public class EdaStructureVerifier {
         int applicationRecords = 0;
         for (int i = 1; i < records.size() - 1; i++) {
             applicationRecords++;
-            EdaRecordLayout layout = EdaMahnbescheidLayouts.findByRecordKey(records.get(i));
+            EdaRecordLayout layout = layoutOf(records.get(i));
             if (layout != null && "KS".equals(layout.getKennzeichen())) {
                 applications++;
             }
@@ -855,8 +855,18 @@ public class EdaStructureVerifier {
         }
     }
 
-    private String idOf(String line) {
+    /**
+     * The layout a record line belongs to. The file header and trailer are shared by all
+     * applications, so a file of the Vollstreckungsbescheid application (Satzart 08) is verified
+     * against its own Satzbeschreibung under the same rules as the Mahnbescheid application.
+     */
+    private static EdaRecordLayout layoutOf(String line) {
         EdaRecordLayout layout = EdaMahnbescheidLayouts.findByRecordKey(line);
+        return layout != null ? layout : EdaVollstreckungsbescheidLayouts.findByRecordKey(line);
+    }
+
+    private String idOf(String line) {
+        EdaRecordLayout layout = layoutOf(line);
         return layout == null ? null : layout.getId();
     }
 }

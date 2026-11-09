@@ -890,8 +890,8 @@ public class ClaimLedgerEnforcementPanel extends javax.swing.JPanel {
         if (measure != null && !hasForms) {
             this.txtHint.setText("Für \"" + measure.getMeasureType() + "\" sieht die ZVFV kein "
                     + "amtliches Formular vor - eine Vollstreckungsandrohung oder eine Anfrage ist "
-                    + "ein Schreiben. Welche Formulare zu einer Maßnahmeart gehören, steht in den "
-                    + "Stammdaten der Maßnahmearten.");
+                    + "ein Schreiben. Welche Formulare zu einer Maßnahmeart gehören, ist unter "
+                    + "Einstellungen → Finanzen → Maßnahmearten zu sehen.");
             this.txtHint.setCaretPosition(0);
         }
     }

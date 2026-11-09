@@ -706,6 +706,10 @@ public interface EnforcementServiceLocal {
 
     List<EnforcementMeasureType> getMeasureTypes() throws Exception;
 
+    List<EnforcementMeasureType> getAllMeasureTypes() throws Exception;
+
+    EnforcementMeasureType updateMeasureType(EnforcementMeasureType type) throws Exception;
+
     List<EnforcementMeasure> getMeasures(String ledgerId) throws Exception;
 
     List<EnforcementMeasureOption> getMeasureOptions(String ledgerId, String titleId, Date day) throws Exception;

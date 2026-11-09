@@ -771,7 +771,8 @@ public class EnforcementMeasurePlanner {
             return "Es ist keine Maßnahmeart angegeben.";
         }
         if (!type.isActive()) {
-            return "Diese Maßnahmeart ist in den Einstellungen abgeschaltet.";
+            return "Diese Maßnahmeart ist abgeschaltet; sie kann unter Einstellungen → Finanzen → "
+                    + "Maßnahmearten wieder aktiviert werden.";
         }
 
         if (type.isRequiresTitle()) {

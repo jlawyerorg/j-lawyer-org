@@ -669,16 +669,13 @@ import com.jdimension.jlawyer.persistence.ClaimComponent;
 import com.jdimension.jlawyer.persistence.ClaimLedger;
 import com.jdimension.jlawyer.persistence.ClaimLedgerEntry;
 import com.jdimension.jlawyer.persistence.LedgerEntryType;
-import com.jdimension.jlawyer.persistence.PaymentAllocation;
 import com.jdimension.jlawyer.persistence.PaymentSplitProposal;
 import com.jdimension.jlawyer.pojo.ClaimComponentBalance;
 import com.jdimension.jlawyer.pojo.ClaimLedgerTotals;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
@@ -849,7 +846,7 @@ public class ClaimLedgerEntryEditorDialog extends javax.swing.JDialog {
 
         txtValue.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#,##0.00"))));
 
-        jLabel5.setText("Bezeichung:");
+        jLabel5.setText("Bezeichnung:");
 
         jLabel6.setText("Kommentar:");
 
@@ -1051,98 +1048,14 @@ public class ClaimLedgerEntryEditorDialog extends javax.swing.JDialog {
             BigDecimal paymentAmount = BigDecimal.valueOf(((Number) txtValue.getValue()).doubleValue());
             Date paymentDate = df.parse(txtDate.getText());
 
-            // Create calculator with server-side entity manager
-            // Since we're on client-side, we need to call the server
+            // Die Verteilung rechnet der Server: er kennt die Tilgungsreihenfolge des Kontos und
+            // verteilt damit genauso wie bei einer automatischen Buchung.
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
-            ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
-
-            // Calculate totals to get fresh data
-            ClaimLedgerTotals totals = afs.calculateClaimLedgerTotals(ledger.getId(), paymentDate);
-
-            // Create a basic proposal for the calculator
-            PaymentSplitProposal proposal = new PaymentSplitProposal(ledger, paymentAmount, paymentDate);
-            proposal.setOriginalComponent(selectedComponent);
+            PaymentSplitProposal proposal = locator.lookupClaimLedgerServiceRemote().calculatePaymentSplit(
+                    ledger.getId(), paymentAmount,
+                    selectedComponent == null ? null : selectedComponent.getId(), paymentDate);
             proposal.setDescription(txtDescription.getText());
             proposal.setComment(txtComment.getText());
-
-            // Calculate automatic split using server-side calculator
-            // For now, we do a simple client-side calculation
-            // TODO: Add server method to calculate split proposal
-            List<PaymentAllocation> allocations = new ArrayList<>();
-
-            // Get components sorted by legal order
-            List<ClaimComponent> sortedComponents = new ArrayList<>(components);
-            sortedComponents.sort((c1, c2) -> {
-                int p1 = getTilgungsPriority(c1);
-                int p2 = getTilgungsPriority(c2);
-                return Integer.compare(p1, p2);
-            });
-
-            BigDecimal remainingAmount = paymentAmount;
-            DecimalFormat currencyFormat = new DecimalFormat("#,##0.00");
-
-            // Payment allocation according to § 366/367 BGB: Interest before Principal
-            for (ClaimComponent comp : sortedComponents) {
-                if (remainingAmount.compareTo(BigDecimal.ZERO) <= 0) {
-                    break;
-                }
-
-                ClaimComponentBalance balance = totals.getComponentBalance(comp.getId());
-                if (balance == null || balance.getTotalOpenBalance().compareTo(BigDecimal.ZERO) <= 0) {
-                    continue;
-                }
-
-                BigDecimal openInterest = balance.getOpenInterest();
-                BigDecimal openPrincipal = balance.getOpenPrincipal();
-
-                // First: Pay interest (§ 367 BGB - Interest before Principal)
-                if (openInterest.compareTo(BigDecimal.ZERO) > 0 && remainingAmount.compareTo(BigDecimal.ZERO) > 0) {
-                    BigDecimal interestPayment = remainingAmount.min(openInterest);
-
-                    PaymentAllocation interestAllocation = new PaymentAllocation(comp, interestPayment);
-                    interestAllocation.setInterestAllocation(true);
-                    interestAllocation.setOriginalOpenAmount(openInterest);
-                    interestAllocation.setOpenInterestAmount(openInterest);
-                    interestAllocation.setOpenPrincipalAmount(openPrincipal);
-                    interestAllocation.setRemainingBalance(openInterest.subtract(interestPayment));
-                    interestAllocation.setFullyPaid(interestAllocation.getRemainingBalance().compareTo(BigDecimal.ZERO) == 0);
-                    interestAllocation.setLegalReference("§ 367 BGB (Zinsen vor Forderungsbetrag)");
-
-                    // Enhanced description with amount and context
-                    String desc = "Zinsen: " + currencyFormat.format(interestPayment) + " € (von "
-                        + currencyFormat.format(openInterest) + " € offen)";
-                    interestAllocation.setAllocationDescription(desc);
-
-                    allocations.add(interestAllocation);
-                    remainingAmount = remainingAmount.subtract(interestPayment);
-                }
-
-                // Second: Pay principal
-                if (openPrincipal.compareTo(BigDecimal.ZERO) > 0 && remainingAmount.compareTo(BigDecimal.ZERO) > 0) {
-                    BigDecimal principalPayment = remainingAmount.min(openPrincipal);
-
-                    PaymentAllocation principalAllocation = new PaymentAllocation(comp, principalPayment);
-                    principalAllocation.setInterestAllocation(false);
-                    principalAllocation.setOriginalOpenAmount(openPrincipal);
-                    principalAllocation.setOpenInterestAmount(openInterest);
-                    principalAllocation.setOpenPrincipalAmount(openPrincipal);
-                    principalAllocation.setRemainingBalance(openPrincipal.subtract(principalPayment));
-                    principalAllocation.setFullyPaid(principalAllocation.getRemainingBalance().compareTo(BigDecimal.ZERO) == 0);
-                    principalAllocation.setLegalReference("§ 366 BGB (Tilgungsreihenfolge)");
-
-                    // Enhanced description with amount and context
-                    String desc = "Forderungsbetrag: " + currencyFormat.format(principalPayment) + " € (von "
-                        + currencyFormat.format(openPrincipal) + " € offen)";
-                    principalAllocation.setAllocationDescription(desc);
-
-                    allocations.add(principalAllocation);
-                    remainingAmount = remainingAmount.subtract(principalPayment);
-                }
-            }
-
-            proposal.setAllocations(allocations);
-            proposal.setSurplus(remainingAmount);
-            proposal.setFollowsLegalOrder(true);
 
             // Open preview dialog
             PaymentSplitPreviewDialog previewDialog = new PaymentSplitPreviewDialog(this, true, proposal);
@@ -1161,22 +1074,6 @@ public class ClaimLedgerEntryEditorDialog extends javax.swing.JDialog {
                     "Fehler", javax.swing.JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_cmdShowSplitActionPerformed
-
-    private int getTilgungsPriority(ClaimComponent component) {
-        if (component.getType() == null) {
-            return 99;
-        }
-        switch (component.getType()) {
-            case COST_NON_INTEREST_BEARING:
-                return 1;
-            case COST_INTEREST_BEARING:
-                return 2;
-            case MAIN_CLAIM:
-                return 3;
-            default:
-                return 99;
-        }
-    }
 
     public void setCurrentTotals(ClaimLedgerTotals totals) {
         this.currentTotals = totals;

@@ -673,6 +673,8 @@ import com.jdimension.jlawyer.eda.EdaFieldLengthException;
 import com.jdimension.jlawyer.eda.EdaFile;
 import com.jdimension.jlawyer.eda.ClaimPeriod;
 import com.jdimension.jlawyer.eda.EdaMahnbescheidBuilder;
+import com.jdimension.jlawyer.eda.EdaVollstreckungsbescheidBuilder;
+import com.jdimension.jlawyer.eda.EdaVollstreckungsbescheidLayouts;
 import com.jdimension.jlawyer.referencedata.CatalogueAddition;
 import com.jdimension.jlawyer.eda.EdaProcessRepresentative;
 import com.jdimension.jlawyer.eda.EdaMahnbescheidLayouts;
@@ -688,6 +690,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ClaimComponent;
 import com.jdimension.jlawyer.persistence.ClaimComponentFacadeLocal;
+import com.jdimension.jlawyer.persistence.ClaimComponentType;
 import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
 import com.jdimension.jlawyer.persistence.ClaimPartyRole;
 import com.jdimension.jlawyer.persistence.CourtFacadeLocal;
@@ -702,6 +705,7 @@ import com.jdimension.jlawyer.pojo.DunningClaimInput;
 import com.jdimension.jlawyer.persistence.DunningCaseDeadline;
 import com.jdimension.jlawyer.persistence.DunningCaseDeadlineFacadeLocal;
 import com.jdimension.jlawyer.pojo.DunningMessageProposal;
+import com.jdimension.jlawyer.pojo.DunningFeeProposal;
 import com.jdimension.jlawyer.pojo.EdaDocumentView;
 import com.jdimension.jlawyer.pojo.DunningWorklistFilter;
 import com.jdimension.jlawyer.pojo.DunningWorklistRow;
@@ -719,6 +723,7 @@ import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.server.utils.SecurityUtils;
 import java.math.BigDecimal;
 import java.nio.charset.Charset;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Map;
@@ -798,6 +803,12 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
 
     @EJB
     private CourtFacadeLocal courtFacade;
+
+    @EJB
+    private DunningFeeServiceLocal dunningFeeService;
+
+    @EJB
+    private ClaimLedgerServiceLocal claimLedgerService;
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
@@ -925,6 +936,11 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
         dunningCase.setFileName(fileName);
         this.dunningCasesFacade.edit(dunningCase);
 
+        // the designations the application went out under are frozen now that it is stored: later
+        // documents and the application for the Vollstreckungsbescheid have to name the parties the
+        // way the court knows them, even if the contact is edited afterwards
+        freezeDesignations(parties);
+
         journal(dunningCase, previous, DunningCaseStatus.MB_APPLIED, now, DunningStatusSource.MANUAL,
                 this.exportPolicy.journalComment(repeat, document.getName()));
 
@@ -937,6 +953,155 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
         }
 
         return document;
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public ArchiveFileDocumentsBean exportVollstreckungsbescheidApplication(String dunningCaseId,
+            boolean paymentsReceived, boolean serviceByParty, BigDecimal postageCosts,
+            BigDecimal otherCosts, String otherCostsReason, boolean claimInterestOnCosts) throws Exception {
+
+        DunningCase dunningCase = requireCase(dunningCaseId);
+        ClaimLedger ledger = dunningCase.getLedger();
+
+        String refusal = this.exportPolicy.vbRefusalReason(dunningCase, LocalDate.now());
+        if (refusal != null) {
+            throw new Exception(refusal);
+        }
+        if (paymentsReceived) {
+            // the builder carries the declaration but not the payment records (ZAHL) the court then
+            // expects; an application that declares payments without listing them would be monied
+            throw new Exception("Ein Antrag mit Angaben zu Zahlungen des Antragsgegners nach Zustellung "
+                    + "des Mahnbescheids kann noch nicht elektronisch erzeugt werden. Bitte den Antrag "
+                    + "in diesem Fall über das Online-Mahnverfahren oder auf dem Vordruck stellen.");
+        }
+        if (otherCosts != null && otherCosts.signum() != 0
+                && (otherCostsReason == null || otherCostsReason.trim().isEmpty())) {
+            throw new Exception("Für die sonstigen Kosten ist die Bezeichnung anzugeben.");
+        }
+        boolean repeat = this.exportPolicy.isVbRepeat(dunningCase);
+
+        List<ClaimLedgerParty> debtors = partiesOf(
+                new ArrayList<>(this.claimLedgerPartiesFacade.findByLedger(ledger)), ClaimPartyRole.DEBTOR);
+        if (debtors.isEmpty()) {
+            throw new Exception("Im Forderungskonto ist kein Schuldner erfasst.");
+        }
+
+        AppUserBean lawyer = lawyerByKennziffer(dunningCase.getKennziffer());
+        String edaPrefix = lawyer == null ? null : lawyer.getDunningEdaPrefix();
+        if (edaPrefix == null || edaPrefix.trim().isEmpty()) {
+            throw new Exception("Für die Kennziffer " + dunningCase.getKennziffer() + " ist beim "
+                    + "Rechtsanwalt kein EDA-Kürzel hinterlegt (Benutzerverwaltung).");
+        }
+        String fileName = this.edaIdAllocator.allocate(edaPrefix);
+
+        // the eda exceptions would not deserialise on the client, see exportApplication
+        Date now = new Date();
+        String content;
+        try {
+            EdaFile file = new EdaVollstreckungsbescheidBuilder().buildFile(dunningCase, debtors,
+                    EdaVollstreckungsbescheidBuilder.NO_PAYMENTS,
+                    serviceByParty ? EdaVollstreckungsbescheidBuilder.SERVICE_BY_PARTY
+                            : EdaVollstreckungsbescheidBuilder.SERVICE_BY_COURT,
+                    postageCosts, otherCosts, otherCostsReason, claimInterestOnCosts, fileName, now);
+            content = file.write(dunningCase.getKennziffer());
+        } catch (EdaFieldLengthException | EdaEncodingException | IllegalArgumentException ex) {
+            log.error("Unable to build the EDA file for the Vollstreckungsbescheid of dunning case "
+                    + dunningCaseId, ex);
+            throw new Exception(ex.getMessage());
+        }
+
+        List<EdaViolation> violations = new EdaStructureVerifier()
+                .verify(content, EdaVollstreckungsbescheidLayouts.FORMAT_VOLLSTRECKUNGSBESCHEID);
+        if (!violations.isEmpty()) {
+            StringBuilder sb = new StringBuilder("Die erzeugte Datei ist strukturell fehlerhaft "
+                    + "und wurde nicht gespeichert:\n");
+            for (EdaViolation v : violations) {
+                sb.append("\n").append(v.toString());
+            }
+            throw new Exception(sb.toString());
+        }
+
+        ArchiveFileDocumentsBean document = this.archiveFileService.addDocument(
+                ledger.getArchiveFileKey().getId(),
+                this.exportPolicy.vbDocumentName(dunningCase, fileName),
+                content.getBytes(Charset.forName(EdaCharset.CHARSET_NAME)),
+                null, null);
+
+        // as with the Mahnbescheid: the status moves only once the file exists, and the day of the
+        // first application is kept on a repeat
+        DunningCaseStatus previous = dunningCase.getStatus();
+        dunningCase.setStatus(DunningCaseStatus.VB_APPLIED);
+        dunningCase.setStatusDate(now);
+        if (dunningCase.getVbAppliedDate() == null) {
+            this.statusPolicy.applyProceduralDate(dunningCase, DunningCaseStatus.VB_APPLIED, now);
+        }
+        dunningCase.setFileName(fileName);
+        this.dunningCasesFacade.edit(dunningCase);
+
+        journal(dunningCase, previous, DunningCaseStatus.VB_APPLIED, now, DunningStatusSource.MANUAL,
+                this.exportPolicy.vbJournalComment(repeat, document.getName()));
+
+        try {
+            // closes the objection period, the VB application reminder and the lapse of the
+            // Mahnbescheid, which no longer run once the Vollstreckungsbescheid is applied for
+            this.dunningDeadlineService.synchronizeDeadlines(dunningCase, 14);
+        } catch (Exception ex) {
+            log.error("Unable to synchronise deadlines after exporting the Vollstreckungsbescheid "
+                    + "application of dunning case " + dunningCaseId, ex);
+        }
+
+        return document;
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public DunningFeeProposal proposeFees(String dunningCaseId, BigDecimal claimValue,
+            boolean forEnforcementOrder, BigDecimal vatRate, BigDecimal businessFeeRate) throws Exception {
+
+        DunningCase dunningCase = requireCase(dunningCaseId);
+        BigDecimal value = claimValue != null ? claimValue : dunningCase.getAppliedPrincipal();
+        if (value == null || value.signum() <= 0) {
+            throw new Exception("Für die Gebühren ist ein Streitwert anzugeben.");
+        }
+        int creditors = partiesOf(new ArrayList<>(
+                this.claimLedgerPartiesFacade.findByLedger(dunningCase.getLedger())),
+                ClaimPartyRole.CREDITOR).size();
+        return this.dunningFeeService.proposeFees(value, forEnforcementOrder, creditors, vatRate,
+                businessFeeRate, null);
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public List<String> bookFees(String dunningCaseId, DunningFeeProposal proposal) throws Exception {
+
+        DunningCase dunningCase = requireCase(dunningCaseId);
+        if (proposal == null) {
+            throw new Exception("Es wurde kein Gebührenvorschlag übergeben!");
+        }
+        return this.dunningFeeService.bookFees(dunningCase.getLedger().getId(), proposal,
+                ClaimComponentType.COST_NON_INTEREST_BEARING, dunningCase.getId(), null);
+    }
+
+    /**
+     * Freezes the designation and address of every party that has none frozen yet.
+     *
+     * A party whose snapshot was taken before keeps it - an earlier filing stays reproducible. A
+     * failure for one party is logged and does not undo the application, which has been stored.
+     *
+     * @param parties the parties of the ledger
+     */
+    private void freezeDesignations(List<ClaimLedgerParty> parties) {
+        for (ClaimLedgerParty party : parties) {
+            if (party == null || party.getId() == null || party.hasSnapshot() || party.getContact() == null) {
+                continue;
+            }
+            try {
+                this.claimLedgerService.freezePartyDesignation(party.getId());
+            } catch (Exception ex) {
+                log.error("Unable to freeze the designation of claim ledger party " + party.getId(), ex);
+            }
+        }
     }
 
     @Override
@@ -1544,8 +1709,17 @@ public class DunningService implements DunningServiceRemote, DunningServiceLocal
             }
         }
 
-        this.worklistSelector.applyNextDeadline(row,
-                new ArrayList<>(this.dunningDeadlinesFacade.findByDunningCase(dunningCase)), today);
+        // a deadline whose follow-up has been marked as done has been dealt with, even if the
+        // procedure has not moved on in a way the deadline calculation could see
+        List<DunningCaseDeadline> openDeadlines = new ArrayList<>();
+        for (DunningCaseDeadline deadline : this.dunningDeadlinesFacade.findByDunningCase(dunningCase)) {
+            ArchiveFileReviewsBean review = deadline.getReviewId() == null
+                    ? null : this.archiveFileReviewsFacade.find(deadline.getReviewId());
+            if (review == null || !review.isDone()) {
+                openDeadlines.add(deadline);
+            }
+        }
+        this.worklistSelector.applyNextDeadline(row, openDeadlines, today);
         return row;
     }
 

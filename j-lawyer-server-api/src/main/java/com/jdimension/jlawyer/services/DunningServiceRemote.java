@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.persistence.DunningCaseEvent;
 import com.jdimension.jlawyer.persistence.DunningCaseStatus;
 import com.jdimension.jlawyer.pojo.DunningClaimInput;
 import com.jdimension.jlawyer.pojo.DunningMessageProposal;
+import com.jdimension.jlawyer.pojo.DunningFeeProposal;
 import com.jdimension.jlawyer.pojo.EdaDocumentView;
 import com.jdimension.jlawyer.pojo.DunningWorklistFilter;
 import com.jdimension.jlawyer.pojo.DunningWorklistRow;
@@ -734,6 +735,77 @@ public interface DunningServiceRemote {
      */
     ArchiveFileDocumentsBean exportApplication(String dunningCaseId, BigDecimal claimValue,
             List<DunningClaimInput> claims) throws Exception;
+
+    /**
+     * Produces the EDA file for an application for a Vollstreckungsbescheid (Satzart 08), stores it
+     * in the case and records that the application has gone out.
+     *
+     * The application answers a served Mahnbescheid, so the procedure must stand at "Mahnbescheid
+     * zugestellt" (or at "Vollstreckungsbescheid beantragt" for a corrected repeat), carry the
+     * service date and the court's file number, have no objection recorded, and the objection
+     * period must have run (§ 699 Abs. 1 S. 2 ZPO) without the Mahnbescheid having lapsed
+     * (§ 701 ZPO). The claim itself is not repeated - the court has it from the Mahnbescheid - but
+     * the debtors are named again, under their frozen designation where one was taken.
+     *
+     * As with the Mahnbescheid application the finished file is verified structurally and nothing is
+     * stored or changed if that fails. On success the procedure moves to "Vollstreckungsbescheid
+     * beantragt", the day of the first application is kept, the journal records the export and the
+     * deadlines are synchronised.
+     *
+     * @param dunningCaseId the procedure
+     * @param paymentsReceived whether the debtor has paid anything since service of the
+     * Mahnbescheid; applications declaring payments cannot be produced yet and are refused
+     * @param serviceByParty true if the applicant receives the engrossment and serves the
+     * enforcement order themselves, false for service by the court
+     * @param postageCosts costs for postage and telephone incurred after service, or null
+     * @param otherCosts further costs incurred after service, or null
+     * @param otherCostsReason what those further costs were; required where an amount is given
+     * @param claimInterestOnCosts whether interest on the procedural costs is claimed under
+     * § 104 ZPO
+     * @return the stored document
+     * @throws Exception if the procedure is not ready for this application, no EDA code is recorded
+     * for the filing lawyer, the file fails verification, or it cannot be stored; the message names
+     * what went wrong
+     */
+    ArchiveFileDocumentsBean exportVollstreckungsbescheidApplication(String dunningCaseId,
+            boolean paymentsReceived, boolean serviceByParty, BigDecimal postageCosts,
+            BigDecimal otherCosts, String otherCostsReason, boolean claimInterestOnCosts) throws Exception;
+
+    /**
+     * Proposes the court and lawyer fees of an application in the dunning procedure.
+     *
+     * Nothing is stored. The fee law in force on the current day applies; the number of creditors
+     * (for the increase under Nr. 1008 VV RVG) is taken from the claim ledger of the procedure.
+     *
+     * @param dunningCaseId the procedure
+     * @param claimValue the value the fees are computed from; if null, the principal applied for in
+     * the Mahnbescheid application is used
+     * @param forEnforcementOrder true for the application for a Vollstreckungsbescheid, false for the
+     * Mahnbescheid (only the latter triggers the court fee)
+     * @param vatRate the tax rate in percent, or null where no tax is to be charged
+     * @param businessFeeRate the rate of a Geschäftsgebühr already earned for the same matter, to be
+     * credited, or null where none was
+     * @return the proposal, never null
+     * @throws Exception if the procedure is not accessible, no value is known or no fee scale is in
+     * force
+     */
+    DunningFeeProposal proposeFees(String dunningCaseId, BigDecimal claimValue,
+            boolean forEnforcementOrder, BigDecimal vatRate, BigDecimal businessFeeRate) throws Exception;
+
+    /**
+     * Books the positions of a fee proposal into the claim ledger of the procedure as
+     * non-interest-bearing procedural costs.
+     *
+     * The amounts are booked as handed in, not recomputed. Positions of zero are skipped. Each
+     * entry references the procedure as its origin.
+     *
+     * @param dunningCaseId the procedure
+     * @param proposal the proposal as the user accepted it, typically from
+     * {@link #proposeFees(String, BigDecimal, boolean, BigDecimal, BigDecimal)}
+     * @return the ids of the created ledger entries
+     * @throws Exception if the procedure is not accessible or a booking fails
+     */
+    List<String> bookFees(String dunningCaseId, DunningFeeProposal proposal) throws Exception;
 
     /**
      * Reads the court messages in a document and proposes what each of them belongs to.

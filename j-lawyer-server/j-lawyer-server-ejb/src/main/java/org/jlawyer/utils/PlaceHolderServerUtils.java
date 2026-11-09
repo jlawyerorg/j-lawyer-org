@@ -798,6 +798,10 @@ public class PlaceHolderServerUtils extends PlaceHolders {
         for (PartiesTriplet ppe : selectedParties) {
             AddressBean selected = ppe.getAddress();
             PartyTypeBean ptb = ppe.getPartyType();
+            if (ptb == null || ptb.getPlaceHolder() == null || selected == null) {
+                // placeholders are keyed by party type - a party without one has nothing to fill
+                continue;
+            }
 
             if (placeHolders.containsKey(getPlaceHolderForType(_NAME, ptb.getPlaceHolder()))) {
                 placeHolders.put(getPlaceHolderForType(_NAME, ptb.getPlaceHolder()), val(selected.getName()));

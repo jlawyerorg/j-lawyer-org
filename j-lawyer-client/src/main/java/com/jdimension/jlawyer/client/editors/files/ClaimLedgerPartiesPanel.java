@@ -753,6 +753,8 @@ public class ClaimLedgerPartiesPanel extends javax.swing.JPanel {
             this.cmbSurplus.setEnabled(enabled);
             this.spnCreditorCount.setEnabled(enabled);
             this.chkConsumerLoan.setEnabled(enabled);
+            this.cmbParentLedger.setEnabled(enabled);
+            fillParentLedgers();
 
             if (ledger != null) {
                 this.cmbAllocationMode.setSelectedItem(ledger.getAllocationMode() == null
@@ -901,6 +903,88 @@ public class ClaimLedgerPartiesPanel extends javax.swing.JPanel {
     }
 
     /**
+     * Offers the other ledgers of the case as parent of this one.
+     *
+     * The ledger itself and its own sub-ledgers (at any depth) are left out: a ledger that is its
+     * own ancestor would make the statement with sub-ledgers run in circles.
+     */
+    private void fillParentLedgers() {
+        this.cmbParentLedger.removeAllItems();
+        this.cmbParentLedger.addItem(NO_PARENT);
+        if (this.ledger == null || this.ledger.getId() == null || this.caseDto == null) {
+            return;
+        }
+        List<ClaimLedger> all = new ArrayList<>();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+            List<ClaimLedger> ledgers = locator.lookupClaimLedgerServiceRemote().getClaimLedgers(this.caseDto.getId());
+            if (ledgers != null) {
+                all.addAll(ledgers);
+            }
+        } catch (Exception ex) {
+            log.error("Unable to load the claim ledgers of case " + this.caseDto.getId(), ex);
+        }
+
+        ParentLedgerChoice selected = null;
+        String currentParentId = this.ledger.getParentLedger() == null ? null : this.ledger.getParentLedger().getId();
+        for (ClaimLedger candidate : all) {
+            if (candidate.getId() == null || isSelfOrDescendant(candidate, all)) {
+                continue;
+            }
+            ParentLedgerChoice choice = new ParentLedgerChoice(candidate);
+            this.cmbParentLedger.addItem(choice);
+            if (candidate.getId().equals(currentParentId)) {
+                selected = choice;
+            }
+        }
+        this.cmbParentLedger.setSelectedItem(selected == null ? NO_PARENT : selected);
+    }
+
+    /**
+     * Whether a ledger is the one shown here or lies below it.
+     */
+    private boolean isSelfOrDescendant(ClaimLedger candidate, List<ClaimLedger> all) {
+        ClaimLedger current = candidate;
+        int guard = 0;
+        while (current != null && guard++ < 100) {
+            if (this.ledger.getId().equals(current.getId())) {
+                return true;
+            }
+            String parentId = current.getParentLedger() == null ? null : current.getParentLedger().getId();
+            current = null;
+            if (parentId != null) {
+                for (ClaimLedger l : all) {
+                    if (parentId.equals(l.getId())) {
+                        current = l;
+                        break;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private static final String NO_PARENT = "- keines (eigenständiges Konto) -";
+
+    /**
+     * A ledger offered as parent, shown by its name.
+     */
+    private static class ParentLedgerChoice {
+
+        private final ClaimLedger ledger;
+
+        ParentLedgerChoice(ClaimLedger ledger) {
+            this.ledger = ledger;
+        }
+
+        @Override
+        public String toString() {
+            return this.ledger.getName() == null || this.ledger.getName().trim().isEmpty()
+                    ? "(ohne Bezeichnung)" : this.ledger.getName();
+        }
+    }
+
+    /**
      * Writes the ledger master data edited here back to the server.
      */
     private void saveLedgerSettings() {
@@ -912,6 +996,9 @@ public class ClaimLedgerPartiesPanel extends javax.swing.JPanel {
         this.ledger.setSurplusHandling((SurplusHandling) this.cmbSurplus.getSelectedItem());
         this.ledger.setConsumerLoan(this.chkConsumerLoan.isSelected());
         this.ledger.setEffectiveCreditorCount(((Number) this.spnCreditorCount.getValue()).intValue());
+        Object parentChoice = this.cmbParentLedger.getSelectedItem();
+        this.ledger.setParentLedger(parentChoice instanceof ParentLedgerChoice
+                ? ((ParentLedgerChoice) parentChoice).ledger : null);
 
         try {
             ClientSettings settings = ClientSettings.getInstance();
@@ -946,6 +1033,8 @@ public class ClaimLedgerPartiesPanel extends javax.swing.JPanel {
         cmbSurplus = new javax.swing.JComboBox();
         lblCreditorCount = new javax.swing.JLabel();
         spnCreditorCount = new javax.swing.JSpinner();
+        lblParentLedger = new javax.swing.JLabel();
+        cmbParentLedger = new javax.swing.JComboBox();
         chkConsumerLoan = new javax.swing.JCheckBox();
         lblHint = new javax.swing.JLabel();
 
@@ -1012,6 +1101,16 @@ public class ClaimLedgerPartiesPanel extends javax.swing.JPanel {
 
         lblCreditorCount.setText("Anzahl Gläubiger (Nr. 1008 VV RVG):");
 
+        lblParentLedger.setText("Unterkonto von:");
+
+        cmbParentLedger.setModel(new javax.swing.DefaultComboBoxModel());
+        cmbParentLedger.setToolTipText("Ein Unterkonto wird in der Forderungsaufstellung des übergeordneten Kontos gesondert mit ausgewiesen (\"Unterkonten einbeziehen\").");
+        cmbParentLedger.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbParentLedgerActionPerformed(evt);
+            }
+        });
+
         chkConsumerLoan.setText("Verbraucherdarlehen (§ 497 Abs. 3 BGB)");
         chkConsumerLoan.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1042,12 +1141,14 @@ public class ClaimLedgerPartiesPanel extends javax.swing.JPanel {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                             .addComponent(lblAllocationMode)
                             .addComponent(lblSurplus)
-                            .addComponent(lblCreditorCount))
+                            .addComponent(lblCreditorCount)
+                            .addComponent(lblParentLedger))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(cmbAllocationMode, javax.swing.GroupLayout.PREFERRED_SIZE, 320, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(cmbSurplus, javax.swing.GroupLayout.PREFERRED_SIZE, 320, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(spnCreditorCount, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(cmbParentLedger, javax.swing.GroupLayout.PREFERRED_SIZE, 320, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(chkConsumerLoan))
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addComponent(lblHint, javax.swing.GroupLayout.DEFAULT_SIZE, 820, Short.MAX_VALUE))
@@ -1076,6 +1177,10 @@ public class ClaimLedgerPartiesPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblCreditorCount)
                     .addComponent(spnCreditorCount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblParentLedger)
+                    .addComponent(cmbParentLedger, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(chkConsumerLoan)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -1240,6 +1345,10 @@ public class ClaimLedgerPartiesPanel extends javax.swing.JPanel {
         saveLedgerSettings();
     }//GEN-LAST:event_cmbAllocationModeActionPerformed
 
+    private void cmbParentLedgerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbParentLedgerActionPerformed
+        saveLedgerSettings();
+    }//GEN-LAST:event_cmbParentLedgerActionPerformed
+
     private void chkConsumerLoanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkConsumerLoanActionPerformed
         if (this.chkConsumerLoan.isSelected()) {
             // § 497 Abs. 3 BGB reverses the statutory order, which the user should choose knowingly
@@ -1257,6 +1366,7 @@ public class ClaimLedgerPartiesPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox chkConsumerLoan;
     private javax.swing.JComboBox cmbAllocationMode;
+    private javax.swing.JComboBox cmbParentLedger;
     private javax.swing.JComboBox cmbSurplus;
     private javax.swing.JButton cmdAddParty;
     private javax.swing.JButton cmdEditParty;
@@ -1266,6 +1376,7 @@ public class ClaimLedgerPartiesPanel extends javax.swing.JPanel {
     private javax.swing.JLabel lblAllocationMode;
     private javax.swing.JLabel lblCreditorCount;
     private javax.swing.JLabel lblHint;
+    private javax.swing.JLabel lblParentLedger;
     private javax.swing.JLabel lblSurplus;
     private javax.swing.JSpinner spnCreditorCount;
     private javax.swing.JTable tblParties;

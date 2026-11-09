@@ -768,6 +768,9 @@ public interface ClaimLedgerServiceRemote {
     /**
      * Returns the enforcement titles recorded for a claim ledger, oldest first.
      *
+     * The positions each title covers ({@link EnforcementTitle#getCoveredComponents()}) are loaded,
+     * so the caller can show and edit them.
+     *
      * @param ledgerId id of the claim ledger
      * @return the titles of the ledger, empty if none are recorded
      * @throws Exception if the ledger does not exist or the user may not access its case
@@ -777,30 +780,38 @@ public interface ClaimLedgerServiceRemote {
     /**
      * Records an enforcement title for a claim ledger.
      *
-     * The limitation date under § 197 Abs. 1 Nr. 3 BGB is computed from the date of issue, and a
-     * follow-up is created on the case ahead of it, so that a title does not lapse unnoticed over
-     * the thirty years it stays enforceable.
+     * The limitation date under § 197 Abs. 1 Nr. 3/4 BGB is computed from the finality date of the
+     * decision where one is recorded and applies, otherwise from the date of issue (§ 201 BGB, see
+     * {@link EnforcementTitle#computeLimitationDate()}), and a follow-up is created on the case
+     * ahead of it, so that a title does not lapse unnoticed over the thirty years it stays
+     * enforceable.
+     *
+     * The covered positions of the title are linked to the managed components of the ledger;
+     * positions of another ledger are refused.
      *
      * @param ledgerId id of the claim ledger
      * @param title the title to record; its id is assigned by the server
      * @param followUpLeadTimeDays how many days before the limitation date the follow-up is due; a
      * value of zero or less suppresses the follow-up
-     * @return the stored title including its computed limitation date
-     * @throws Exception if the ledger does not exist or the user may not access its case
+     * @return the stored title including its computed limitation date and its covered positions
+     * @throws Exception if the ledger does not exist, the user may not access its case or a covered
+     * position does not belong to the ledger
      */
     EnforcementTitle addTitle(String ledgerId, EnforcementTitle title, int followUpLeadTimeDays) throws Exception;
 
     /**
      * Updates an enforcement title.
      *
-     * The limitation date is recomputed from the date of issue and the follow-up guarding it is
-     * moved accordingly. A follow-up already marked as done is left untouched and reported to the
-     * caller rather than silently reopened.
+     * The limitation date is recomputed (from the finality date where recorded and applicable,
+     * otherwise from the date of issue) and the follow-up guarding it is moved accordingly. A
+     * follow-up already marked as done is left untouched and reported to the caller rather than
+     * silently reopened. The covered positions are replaced by those passed with the title.
      *
      * @param title the title to update
      * @param followUpLeadTimeDays how many days before the limitation date the follow-up is due
-     * @return the stored title
-     * @throws Exception if the title does not exist or the user may not access its case
+     * @return the stored title including its covered positions
+     * @throws Exception if the title does not exist, the user may not access its case or a covered
+     * position does not belong to the ledger
      */
     EnforcementTitle updateTitle(EnforcementTitle title, int followUpLeadTimeDays) throws Exception;
 
@@ -1078,6 +1089,28 @@ public interface ClaimLedgerServiceRemote {
      * distribution does not add up to the payment
      */
     List<ClaimLedgerEntry> createPaymentSplit(PaymentSplitProposal proposal) throws Exception;
+
+    /**
+     * Calculates how a payment would be distributed over the positions of the ledger, without
+     * booking anything.
+     *
+     * The distribution follows the payment allocation mode configured for the ledger (statutory
+     * order of §§ 366, 367 BGB by default) and is the same one an automatic booking would use. In
+     * the targeted mode, the given position is the one the payment is directed at. The result can
+     * be shown to the user and, once approved, be passed to
+     * {@link #createPaymentSplit(PaymentSplitProposal)}.
+     *
+     * @param ledgerId the id of the claim ledger
+     * @param amount the payment amount, must be greater than zero
+     * @param componentId the id of the position the payment was entered on, or null
+     * @param paymentDate the date of the payment; open interest is calculated up to that day
+     * @return the proposed distribution, including any surplus and a warning where the mode
+     * deviates from the statutory order
+     * @throws Exception if the ledger does not exist, the user may not access its case or the
+     * amount is not positive
+     */
+    PaymentSplitProposal calculatePaymentSplit(String ledgerId, BigDecimal amount, String componentId,
+            Date paymentDate) throws Exception;
 
     /**
      * Removes a booking from a claim ledger.

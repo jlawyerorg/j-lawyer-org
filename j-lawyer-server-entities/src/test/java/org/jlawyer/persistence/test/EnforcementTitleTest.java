@@ -664,6 +664,7 @@ package org.jlawyer.persistence.test;
 
 import com.jdimension.jlawyer.persistence.EnforcementTitle;
 import com.jdimension.jlawyer.persistence.EnforcementTitleType;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
@@ -676,7 +677,7 @@ import org.junit.Test;
 
 /**
  * Verifies the formal prerequisites of enforcement and the 30-year limitation of § 197 Abs. 1
- * Nr. 3 BGB.
+ * Nr. 3 and 4 BGB, starting with finality or creation of the title (§ 201 BGB).
  *
  * @author jens
  */
@@ -687,7 +688,7 @@ public class EnforcementTitleTest {
     }
 
     private static LocalDate toLocalDate(Date d) {
-        return d.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        return Instant.ofEpochMilli(d.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
     }
 
     @Test
@@ -715,6 +716,60 @@ public class EnforcementTitleTest {
         EnforcementTitle title = new EnforcementTitle();
 
         assertNull(title.computeLimitationDate());
+    }
+
+    @Test
+    public void limitationRunsFromFinalityWhenRecorded() {
+        EnforcementTitle title = new EnforcementTitle();
+        title.setTitleType(EnforcementTitleType.URTEIL);
+        title.setIssueDate(date(2026, 4, 8));
+        title.setFinalityDate(date(2026, 5, 12));
+
+        assertEquals(LocalDate.of(2026, 5, 12), toLocalDate(title.computeLimitationStart()));
+        assertEquals(LocalDate.of(2056, 5, 12), toLocalDate(title.computeLimitationDate()));
+    }
+
+    @Test
+    public void limitationFallsBackToIssueWithoutFinality() {
+        EnforcementTitle title = new EnforcementTitle();
+        title.setTitleType(EnforcementTitleType.VOLLSTRECKUNGSBESCHEID);
+        title.setIssueDate(date(2026, 4, 8));
+
+        assertEquals(LocalDate.of(2056, 4, 8), toLocalDate(title.computeLimitationDate()));
+    }
+
+    @Test
+    public void finalityIsIgnoredForTitlesWithoutRechtskraft() {
+        // a notarial deed has no finality - the limitation starts with its creation (§ 201 BGB)
+        EnforcementTitle title = new EnforcementTitle();
+        title.setTitleType(EnforcementTitleType.NOTARIELLE_URKUNDE);
+        title.setIssueDate(date(2026, 4, 8));
+        title.setFinalityDate(date(2026, 6, 1));
+
+        assertEquals(LocalDate.of(2056, 4, 8), toLocalDate(title.computeLimitationDate()));
+    }
+
+    @Test
+    public void limitationFromFinalityAloneWithoutIssueDate() {
+        EnforcementTitle title = new EnforcementTitle();
+        title.setTitleType(EnforcementTitleType.URTEIL);
+        title.setFinalityDate(date(2026, 5, 12));
+
+        assertEquals(LocalDate.of(2056, 5, 12), toLocalDate(title.computeLimitationDate()));
+    }
+
+    @Test
+    public void limitationWorksWithSqlDatesAsReadFromTheDatabase() {
+        // Hibernate returns java.sql.Date for @Temporal(DATE); its toInstant() throws
+        EnforcementTitle title = new EnforcementTitle();
+        title.setTitleType(EnforcementTitleType.URTEIL);
+        title.setIssueDate(java.sql.Date.valueOf(LocalDate.of(2026, 4, 8)));
+
+        assertEquals(LocalDate.of(2056, 4, 8), toLocalDate(title.computeLimitationDate()));
+
+        title.setFinalityDate(java.sql.Date.valueOf(LocalDate.of(2026, 5, 12)));
+
+        assertEquals(LocalDate.of(2056, 5, 12), toLocalDate(title.computeLimitationDate()));
     }
 
     @Test

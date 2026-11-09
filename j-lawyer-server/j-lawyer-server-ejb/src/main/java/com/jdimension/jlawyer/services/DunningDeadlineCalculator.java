@@ -735,7 +735,11 @@ public class DunningDeadlineCalculator {
      *
      * Only dates that have actually been recorded produce deadlines: a procedure whose Mahnbescheid
      * has not been served yet has no objection period, and inventing one would put a date in the
-     * calendar that nothing supports. A withdrawn or referred procedure produces none at all.
+     * calendar that nothing supports. A withdrawn, referred or completed procedure produces none
+     * at all, and a deadline the procedure has moved past is no longer produced either: the periods
+     * of the Mahnbescheid end with an objection or the application for the Vollstreckungsbescheid,
+     * the statement of claim with the referral, the Einspruch period with the Einspruch. The
+     * synchronisation then closes what it had placed, instead of leaving it overdue for ever.
      *
      * @param dunningCase the procedure
      * @param leadTimeDays how many days before a deadline its reminder is placed; negative is
@@ -749,15 +753,35 @@ public class DunningDeadlineCalculator {
             return deadlines;
         }
         DunningCaseStatus status = dunningCase.getStatus();
-        if (status == DunningCaseStatus.WITHDRAWN || status == DunningCaseStatus.REFERRED) {
-            // nothing further is expected to happen, so nothing further is due
+        if (status == DunningCaseStatus.WITHDRAWN || status == DunningCaseStatus.REFERRED
+                || status == DunningCaseStatus.COMPLETED) {
+            // nothing further is expected to happen, so nothing further is due; the deadlines that
+            // were placed are closed by the synchronisation and stay as history
             return deadlines;
         }
 
         int lead = Math.max(0, leadTimeDays);
 
+        // where the procedure stands - the procedural dates and the status are both looked at, a
+        // court message sets the one, a manually recorded status at least the other
+        boolean objected = dunningCase.getObjectionDate() != null
+                || status == DunningCaseStatus.OBJECTION;
+        boolean vbApplied = dunningCase.getVbAppliedDate() != null
+                || dunningCase.getVbIssuedDate() != null
+                || dunningCase.getVbServedDate() != null
+                || status == DunningCaseStatus.VB_APPLIED
+                || status == DunningCaseStatus.VB_ISSUED
+                || status == DunningCaseStatus.VB_SERVED
+                || status == DunningCaseStatus.EINSPRUCH;
+        boolean referred = dunningCase.getReferralDate() != null;
+        boolean einspruchLodged = dunningCase.getEinspruchDate() != null
+                || status == DunningCaseStatus.EINSPRUCH;
+
         LocalDate mbServed = toLocalDate(dunningCase.getMbServedDate());
-        if (mbServed != null) {
+        // the periods running from the Mahnbescheid matter only until the procedure has moved on:
+        // an objection ends the waiting for the Vollstreckungsbescheid, and once that has been
+        // applied for the Mahnbescheid can no longer lapse (§ 701 ZPO)
+        if (mbServed != null && !objected && !vbApplied) {
             LocalDate objectionEnd = mbServed.plusWeeks(PERIOD_WEEKS);
             deadlines.add(deadline(DunningDeadlineType.OBJECTION_PERIOD, objectionEnd, lead,
                     "Die Widerspruchsfrist aus dem Mahnbescheid vom "
@@ -776,7 +800,7 @@ public class DunningDeadlineCalculator {
         }
 
         LocalDate objection = toLocalDate(dunningCase.getObjectionDate());
-        if (objection != null) {
+        if (objection != null && !referred) {
             deadlines.add(deadline(DunningDeadlineType.STATEMENT_OF_CLAIM, objection.plusWeeks(PERIOD_WEEKS),
                     lead, "Nach dem Widerspruch vom " + format(objection)
                     + " ist der Anspruch zu begründen oder die Abgabe an das Streitgericht zu "
@@ -784,7 +808,7 @@ public class DunningDeadlineCalculator {
         }
 
         LocalDate vbServed = toLocalDate(dunningCase.getVbServedDate());
-        if (vbServed != null) {
+        if (vbServed != null && !einspruchLodged) {
             deadlines.add(deadline(DunningDeadlineType.EINSPRUCH_PERIOD, vbServed.plusWeeks(PERIOD_WEEKS),
                     lead, "Die Einspruchsfrist aus dem Vollstreckungsbescheid vom "
                     + format(vbServed) + " endet an diesem Tag."));

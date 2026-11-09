@@ -746,7 +746,7 @@ public class EnforcementFormTemplateSelector {
         if (ofThatForm.isEmpty()) {
             return new Selection(null, "Für " + describe(formKey)
                     + " ist keine Formularvorlage hinterlegt. Sie lässt sich unter "
-                    + "Einstellungen → Zwangsvollstreckung → Formulare erfassen.");
+                    + "Einstellungen → Finanzen → Vollstreckungsformulare erfassen.");
         }
 
         List<EnforcementFormTemplate> valid = new ArrayList<>();

@@ -668,22 +668,46 @@ package com.jdimension.jlawyer.persistence;
  * @author jens
  */
 public enum EnforcementTitleType {
-    VOLLSTRECKUNGSBESCHEID("Vollstreckungsbescheid"),
-    URTEIL("Urteil"),
-    KOSTENFESTSETZUNGSBESCHLUSS("Kostenfestsetzungsbeschluss"),
-    PROZESSVERGLEICH("Prozessvergleich"),
-    NOTARIELLE_URKUNDE("notarielle Urkunde"),
-    ANERKENNTNIS("Anerkenntnis"),
-    OTHER("sonstiger Titel");
+    VOLLSTRECKUNGSBESCHEID("Vollstreckungsbescheid", true),
+    URTEIL("Urteil", true),
+    KOSTENFESTSETZUNGSBESCHLUSS("Kostenfestsetzungsbeschluss", true),
+    PROZESSVERGLEICH("Prozessvergleich", false),
+    NOTARIELLE_URKUNDE("notarielle Urkunde", false),
+    /**
+     * Acknowledgment - usually an Anerkenntnisurteil (§ 307 ZPO), which becomes final like any
+     * other judgment. Treated as capable of finality so the finality date can be recorded.
+     */
+    ANERKENNTNIS("Anerkenntnis", true),
+    /**
+     * Any other title. Whether it becomes final depends on what it is, so the finality date may be
+     * recorded and is used when present.
+     */
+    OTHER("sonstiger Titel", true);
 
     private final String label;
+    private final boolean becomesFinal;
 
-    EnforcementTitleType(String label) {
+    EnforcementTitleType(String label, boolean becomesFinal) {
         this.label = label;
+        this.becomesFinal = becomesFinal;
     }
 
     public String getLabel() {
         return label;
+    }
+
+    /**
+     * Whether a title of this kind becomes final (rechtskräftig).
+     *
+     * Decisions - judgment, Vollstreckungsbescheid (§ 700 Abs. 1 ZPO), cost assessment order - become
+     * final, and the limitation of § 197 Abs. 1 Nr. 3 BGB starts with their finality (§ 201 BGB). A
+     * settlement or a notarial deed (§ 197 Abs. 1 Nr. 4 BGB) has no finality; its limitation starts
+     * with the creation (Errichtung) of the title.
+     *
+     * @return true if a finality date is meaningful for this kind of title
+     */
+    public boolean isBecomingFinal() {
+        return becomesFinal;
     }
 
     @Override

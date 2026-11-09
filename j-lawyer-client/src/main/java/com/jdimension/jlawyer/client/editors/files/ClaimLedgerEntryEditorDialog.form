@@ -192,7 +192,7 @@
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel5">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Bezeichung:"/>
+        <Property name="text" type="java.lang.String" value="Bezeichnung:"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JTextField" name="txtComment">

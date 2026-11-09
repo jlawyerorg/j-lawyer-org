@@ -121,7 +121,7 @@
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/icons/editdelete.png"/>
         </Property>
-        <Property name="toolTipText" type="java.lang.String" value="Beleg l&#xf6;schen"/>
+        <Property name="toolTipText" type="java.lang.String" value="Forderungskonto l&#xf6;schen"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdDeleteActionPerformed"/>

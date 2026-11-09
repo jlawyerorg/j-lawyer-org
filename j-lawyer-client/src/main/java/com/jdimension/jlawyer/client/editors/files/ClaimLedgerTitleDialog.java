@@ -665,12 +665,22 @@ package com.jdimension.jlawyer.client.editors.files;
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.utils.DateUtils;
 import com.jdimension.jlawyer.client.utils.DesktopDateEntry;
+import com.jdimension.jlawyer.persistence.ClaimComponent;
+import com.jdimension.jlawyer.persistence.ClaimComponentType;
 import com.jdimension.jlawyer.persistence.EnforcementTitle;
 import com.jdimension.jlawyer.persistence.EnforcementTitleType;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import javax.swing.DefaultListModel;
+import javax.swing.DefaultListSelectionModel;
+import javax.swing.JCheckBox;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
+import javax.swing.ListCellRenderer;
+import javax.swing.ListSelectionModel;
 import org.apache.log4j.Logger;
 
 /**
@@ -679,8 +689,9 @@ import org.apache.log4j.Logger;
  * Enforcement requires three formal prerequisites - the title, the enforceable copy with its
  * clause and service on the debtor - so the dialog states which of them are still missing rather
  * than leaving the user to notice it when an enforcement application is refused. The limitation
- * date under § 197 Abs. 1 Nr. 3 BGB and the follow-up guarding it are computed by the server from
- * the date of issue.
+ * date under § 197 Abs. 1 Nr. 3/4 BGB and the follow-up guarding it are computed by the server from
+ * the finality date (Rechtskraft) where one is recorded and applies, else from the date of issue
+ * (§ 201 BGB). The dialog also records which positions of the ledger the title covers.
  *
  * @author jens
  */
@@ -696,8 +707,16 @@ public class ClaimLedgerTitleDialog extends javax.swing.JDialog {
 
     private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
 
+    private final DecimalFormat amountFormat = new DecimalFormat("#,##0.00 €");
+
     private EnforcementTitle title = null;
     private boolean saved = false;
+
+    /**
+     * The positions of the ledger offered for coverage. Null while they have not been passed in -
+     * the coverage of the title is then left untouched on save.
+     */
+    private List<ClaimComponent> components = null;
 
     /**
      * Creates the dialog.
@@ -709,6 +728,7 @@ public class ClaimLedgerTitleDialog extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
         DesktopDateEntry.hint(this.txtIssueDate);
+        DesktopDateEntry.hint(this.txtFinalityDate);
         DesktopDateEntry.hint(this.txtClauseDate);
         DesktopDateEntry.hint(this.txtServiceDate);
 
@@ -716,6 +736,82 @@ public class ClaimLedgerTitleDialog extends javax.swing.JDialog {
             this.cmbType.addItem(t);
         }
         this.spnLeadTime.setModel(new javax.swing.SpinnerNumberModel(DEFAULT_LEAD_TIME_DAYS, 0, 3650, 1));
+
+        // checkbox list: a click toggles a position instead of replacing the selection
+        this.lstComponents.setSelectionModel(new ToggleSelectionModel());
+        this.lstComponents.setCellRenderer(new ComponentCheckBoxRenderer());
+        this.lstComponents.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                updatePrerequisites();
+            }
+        });
+    }
+
+    /**
+     * Offers the positions of the ledger for the coverage of the title. Positions already covered
+     * by the title are checked.
+     *
+     * @param components the components of the claim ledger; null if they could not be loaded, in
+     * which case the list is disabled and the coverage of the title is left untouched on save
+     */
+    public void setClaimComponents(List<ClaimComponent> components) {
+        if (components == null) {
+            this.components = null;
+            this.lstComponents.setModel(new DefaultListModel<>());
+            this.lstComponents.setEnabled(false);
+            return;
+        }
+        this.components = new ArrayList<>(components);
+        this.lstComponents.setEnabled(true);
+        DefaultListModel<ClaimComponent> model = new DefaultListModel<>();
+        for (ClaimComponent c : this.components) {
+            model.addElement(c);
+        }
+        this.lstComponents.setModel(model);
+        applyCoverageSelection();
+    }
+
+    /**
+     * Checks the positions the title currently covers.
+     */
+    private void applyCoverageSelection() {
+        this.lstComponents.clearSelection();
+        if (this.title == null || this.components == null) {
+            return;
+        }
+        List<ClaimComponent> covered;
+        try {
+            covered = new ArrayList<>(this.title.getCoveredComponents());
+        } catch (RuntimeException ex) {
+            // coverage not loaded by the server - do not offer it, so saving cannot wipe it
+            log.warn("Coverage of title " + this.title.getId() + " is not available", ex);
+            this.components = null;
+            this.lstComponents.setEnabled(false);
+            return;
+        }
+        for (int i = 0; i < this.lstComponents.getModel().getSize(); i++) {
+            if (covered.contains(this.lstComponents.getModel().getElementAt(i))) {
+                this.lstComponents.getSelectionModel().addSelectionInterval(i, i);
+            }
+        }
+    }
+
+    /**
+     * @return the positions currently checked in the list
+     */
+    private List<ClaimComponent> selectedComponents() {
+        return new ArrayList<>(this.lstComponents.getSelectedValuesList());
+    }
+
+    /**
+     * Enables the finality date only for kinds of title that become final at all - a settlement or
+     * a notarial deed has no Rechtskraft, its limitation starts with its creation.
+     */
+    private void updateFinalityEnabled() {
+        Object selected = this.cmbType.getSelectedItem();
+        boolean applies = !(selected instanceof EnforcementTitleType) || ((EnforcementTitleType) selected).isBecomingFinal();
+        this.txtFinalityDate.setEnabled(applies);
+        this.cmdFinalityDate.setEnabled(applies);
     }
 
     /**
@@ -738,10 +834,13 @@ public class ClaimLedgerTitleDialog extends javax.swing.JDialog {
         this.txtIssuingBody.setText(nullSafe(this.title.getIssuingBody()));
         this.txtFileNumber.setText(nullSafe(this.title.getFileNumber()));
         this.txtIssueDate.setText(formatDate(this.title.getIssueDate()));
+        this.txtFinalityDate.setText(formatDate(this.title.getFinalityDate()));
         this.txtClauseDate.setText(formatDate(this.title.getClauseDate()));
         this.txtServiceDate.setText(formatDate(this.title.getServiceDate()));
         this.txtSubject.setText(nullSafe(this.title.getSubjectMatter()));
 
+        applyCoverageSelection();
+        updateFinalityEnabled();
         updatePrerequisites();
     }
 
@@ -792,12 +891,17 @@ public class ClaimLedgerTitleDialog extends javax.swing.JDialog {
     }
 
     /**
-     * Shows which of the three formal prerequisites of enforcement are still missing, and the
-     * limitation date that follows from the date of issue.
+     * Shows which of the three formal prerequisites of enforcement are still missing, the
+     * limitation date that follows from the finality date or the date of issue, and a hint on
+     * § 197 Abs. 2 BGB if the title covers recurring payments.
      */
     private void updatePrerequisites() {
         EnforcementTitle preview = new EnforcementTitle();
+        Object selectedType = this.cmbType.getSelectedItem();
+        EnforcementTitleType type = selectedType instanceof EnforcementTitleType ? (EnforcementTitleType) selectedType : null;
+        preview.setTitleType(type);
         preview.setIssueDate(parseDate(this.txtIssueDate.getText()));
+        preview.setFinalityDate(parseDate(this.txtFinalityDate.getText()));
         preview.setClauseDate(parseDate(this.txtClauseDate.getText()));
         preview.setServiceDate(parseDate(this.txtServiceDate.getText()));
 
@@ -812,8 +916,29 @@ public class ClaimLedgerTitleDialog extends javax.swing.JDialog {
 
         Date limitation = preview.computeLimitationDate();
         if (limitation != null) {
+            boolean becomesFinal = type == null || type.isBecomingFinal();
             sb.append("<br/>Verjährung des Titels: ").append(this.df.format(limitation));
-            sb.append(" (§ 197 Abs. 1 Nr. 3 BGB)");
+            if (!becomesFinal) {
+                sb.append(" (§§ 197 Abs. 1 Nr. 4, 201 BGB - 30 Jahre ab Errichtung des Titels)");
+            } else if (preview.getFinalityDate() != null) {
+                sb.append(" (§§ 197 Abs. 1 Nr. 3, 201 BGB - 30 Jahre ab Rechtskraft)");
+            } else {
+                sb.append(" (§§ 197 Abs. 1 Nr. 3, 201 BGB - vorläufig ab Erlass berechnet; die Frist beginnt erst mit Rechtskraft, bitte Datum der Rechtskraft erfassen)");
+            }
+        }
+
+        boolean recurring = false;
+        for (ClaimComponent c : selectedComponents()) {
+            if (c.getType() == ClaimComponentType.MAIN_CLAIM_RECURRING) {
+                recurring = true;
+                break;
+            }
+        }
+        if (recurring) {
+            sb.append("<br/><b>Hinweis:</b> Der Titel erfasst laufende wiederkehrende Leistungen. Für Raten, die erst nach ");
+            sb.append("Titulierung fällig werden, gilt statt 30 Jahren die regelmäßige Verjährung von drei Jahren ");
+            sb.append("(§ 197 Abs. 2 i.V.m. §§ 195, 199 BGB, jeweils ab Schluss des Jahres der Fälligkeit). ");
+            sb.append("Diese Fristen werden nicht automatisch berechnet.");
         }
         sb.append("</html>");
         this.lblPrerequisites.setText(sb.toString());
@@ -837,6 +962,9 @@ public class ClaimLedgerTitleDialog extends javax.swing.JDialog {
         lblIssueDate = new javax.swing.JLabel();
         txtIssueDate = new javax.swing.JTextField();
         cmdIssueDate = new javax.swing.JButton();
+        lblFinalityDate = new javax.swing.JLabel();
+        txtFinalityDate = new javax.swing.JTextField();
+        cmdFinalityDate = new javax.swing.JButton();
         lblClauseDate = new javax.swing.JLabel();
         txtClauseDate = new javax.swing.JTextField();
         cmdClauseDate = new javax.swing.JButton();
@@ -847,6 +975,9 @@ public class ClaimLedgerTitleDialog extends javax.swing.JDialog {
         txtSubject = new javax.swing.JTextField();
         lblLeadTime = new javax.swing.JLabel();
         spnLeadTime = new javax.swing.JSpinner();
+        lblComponents = new javax.swing.JLabel();
+        scrComponents = new javax.swing.JScrollPane();
+        lstComponents = new javax.swing.JList<>();
         lblPrerequisites = new javax.swing.JLabel();
         cmdSave = new javax.swing.JButton();
         cmdCancel = new javax.swing.JButton();
@@ -857,6 +988,11 @@ public class ClaimLedgerTitleDialog extends javax.swing.JDialog {
         lblType.setText("Titelart:");
 
         cmbType.setModel(new javax.swing.DefaultComboBoxModel());
+        cmbType.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbTypeActionPerformed(evt);
+            }
+        });
 
         lblIssuingBody.setText("Erlassende Stelle:");
 
@@ -879,6 +1015,23 @@ public class ClaimLedgerTitleDialog extends javax.swing.JDialog {
         cmdIssueDate.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdIssueDateActionPerformed(evt);
+            }
+        });
+
+        lblFinalityDate.setText("Rechtskraft am:");
+
+        txtFinalityDate.setText("");
+        txtFinalityDate.setToolTipText("Tag der Rechtskraft - ab hier läuft die 30-jährige Verjährung (§ 201 BGB). Leer lassen, wenn unbekannt; dann wird ab Erlass gerechnet.");
+        txtFinalityDate.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                txtFinalityDateFocusLost(evt);
+            }
+        });
+
+        cmdFinalityDate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule.png"))); // NOI18N
+        cmdFinalityDate.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdFinalityDateActionPerformed(evt);
             }
         });
 
@@ -909,6 +1062,12 @@ public class ClaimLedgerTitleDialog extends javax.swing.JDialog {
         txtSubject.setText("");
 
         lblLeadTime.setText("Wiedervorlage (Tage vorher):");
+
+        lblComponents.setText("Titulierte Positionen:");
+
+        lstComponents.setToolTipText("Positionen des Forderungskontos, die der Titel erfasst (maßgeblich für die Forderungsaufstellung, Anlagen 6 bis 8)");
+        lstComponents.setVisibleRowCount(5);
+        scrComponents.setViewportView(lstComponents);
 
         lblPrerequisites.setText("");
 
@@ -941,10 +1100,12 @@ public class ClaimLedgerTitleDialog extends javax.swing.JDialog {
                             .addComponent(lblIssuingBody)
                             .addComponent(lblFileNumber)
                             .addComponent(lblIssueDate)
+                            .addComponent(lblFinalityDate)
                             .addComponent(lblClauseDate)
                             .addComponent(lblServiceDate)
                             .addComponent(lblSubject)
-                            .addComponent(lblLeadTime))
+                            .addComponent(lblLeadTime)
+                            .addComponent(lblComponents))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(cmbType, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -952,10 +1113,15 @@ public class ClaimLedgerTitleDialog extends javax.swing.JDialog {
                             .addComponent(txtFileNumber, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(txtSubject, javax.swing.GroupLayout.PREFERRED_SIZE, 400, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(spnLeadTime, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(scrComponents, javax.swing.GroupLayout.PREFERRED_SIZE, 400, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(txtIssueDate, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(cmdIssueDate))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(txtFinalityDate, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdFinalityDate))
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(txtClauseDate, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -995,6 +1161,11 @@ public class ClaimLedgerTitleDialog extends javax.swing.JDialog {
                     .addComponent(cmdIssueDate))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblFinalityDate)
+                    .addComponent(txtFinalityDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cmdFinalityDate))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblClauseDate)
                     .addComponent(txtClauseDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(cmdClauseDate))
@@ -1011,8 +1182,12 @@ public class ClaimLedgerTitleDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblLeadTime)
                     .addComponent(spnLeadTime, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblComponents)
+                    .addComponent(scrComponents, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(lblPrerequisites, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(lblPrerequisites, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdSave)
@@ -1045,8 +1220,24 @@ public class ClaimLedgerTitleDialog extends javax.swing.JDialog {
         updatePrerequisites();
     }//GEN-LAST:event_txtIssueDateFocusLost
 
+    private void cmdFinalityDateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdFinalityDateActionPerformed
+        MultiCalDialog dlg = new MultiCalDialog(this.txtFinalityDate, this, true);
+        dlg.setVisible(true);
+        updatePrerequisites();
+    }//GEN-LAST:event_cmdFinalityDateActionPerformed
+
+    private void txtFinalityDateFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtFinalityDateFocusLost
+        updatePrerequisites();
+    }//GEN-LAST:event_txtFinalityDateFocusLost
+
+    private void cmbTypeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbTypeActionPerformed
+        updateFinalityEnabled();
+        updatePrerequisites();
+    }//GEN-LAST:event_cmbTypeActionPerformed
+
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
         if (!DesktopDateEntry.check(this, this.txtIssueDate, "Ausstellungsdatum", false)
+                || !DesktopDateEntry.check(this, this.txtFinalityDate, "Datum der Rechtskraft", false)
                 || !DesktopDateEntry.check(this, this.txtClauseDate, "Klauseldatum", false)
                 || !DesktopDateEntry.check(this, this.txtServiceDate, "Zustellungsdatum", false)) {
             return;
@@ -1058,14 +1249,29 @@ public class ClaimLedgerTitleDialog extends javax.swing.JDialog {
                     "Eingabe", JOptionPane.WARNING_MESSAGE);
             return;
         }
+        EnforcementTitleType type = (EnforcementTitleType) this.cmbType.getSelectedItem();
+        Date finalityDate = null;
+        if (type == null || type.isBecomingFinal()) {
+            finalityDate = parseDate(this.txtFinalityDate.getText());
+        }
+        if (finalityDate != null && issueDate != null && finalityDate.before(issueDate)) {
+            JOptionPane.showMessageDialog(this,
+                    "Die Rechtskraft kann nicht vor dem Erlassdatum eingetreten sein.",
+                    "Eingabe", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
 
-        this.title.setTitleType((EnforcementTitleType) this.cmbType.getSelectedItem());
+        this.title.setTitleType(type);
         this.title.setIssuingBody(this.txtIssuingBody.getText());
         this.title.setFileNumber(this.txtFileNumber.getText());
         this.title.setIssueDate(issueDate);
+        this.title.setFinalityDate(finalityDate);
         this.title.setClauseDate(parseDate(this.txtClauseDate.getText()));
         this.title.setServiceDate(parseDate(this.txtServiceDate.getText()));
         this.title.setSubjectMatter(this.txtSubject.getText());
+        if (this.components != null) {
+            this.title.setCoveredComponents(selectedComponents());
+        }
 
         this.saved = true;
         this.setVisible(false);
@@ -1078,15 +1284,88 @@ public class ClaimLedgerTitleDialog extends javax.swing.JDialog {
         this.dispose();
     }//GEN-LAST:event_cmdCancelActionPerformed
 
+    /**
+     * Selection model of a checkbox list: a click toggles the clicked entry and leaves the others
+     * as they are. Dragging after the click does not toggle further entries.
+     */
+    private static class ToggleSelectionModel extends DefaultListSelectionModel {
+
+        private boolean gestureStarted = false;
+
+        ToggleSelectionModel() {
+            setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        }
+
+        @Override
+        public void setSelectionInterval(int index0, int index1) {
+            if (getValueIsAdjusting()) {
+                // mouse gesture: only the press toggles, the drag that may follow is ignored
+                if (this.gestureStarted) {
+                    return;
+                }
+                this.gestureStarted = true;
+            }
+            if (isSelectedIndex(index0)) {
+                super.removeSelectionInterval(index0, index1);
+            } else {
+                super.addSelectionInterval(index0, index1);
+            }
+        }
+
+        @Override
+        public void setValueIsAdjusting(boolean isAdjusting) {
+            this.gestureStarted = false;
+            super.setValueIsAdjusting(isAdjusting);
+        }
+    }
+
+    /**
+     * Renders a position of the ledger as a checkbox with its name, kind and principal amount.
+     */
+    private class ComponentCheckBoxRenderer extends JCheckBox implements ListCellRenderer<Object> {
+
+        ComponentCheckBoxRenderer() {
+            setOpaque(true);
+        }
+
+        @Override
+        public java.awt.Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                boolean isSelected, boolean cellHasFocus) {
+            String text = String.valueOf(value);
+            if (value instanceof ClaimComponent) {
+                ClaimComponent c = (ClaimComponent) value;
+                StringBuilder sb = new StringBuilder();
+                sb.append(c.getName() == null ? "" : c.getName());
+                if (c.getType() != null) {
+                    sb.append(" (").append(c.getType().toString()).append(")");
+                }
+                if (c.getPrincipalAmount() != null) {
+                    sb.append(" - ").append(amountFormat.format(c.getPrincipalAmount()));
+                }
+                text = sb.toString();
+            }
+            setText(text);
+            setSelected(isSelected);
+            setBackground(list.getBackground());
+            setForeground(list.getForeground());
+            setEnabled(list.isEnabled());
+            setFont(list.getFont());
+            return this;
+        }
+    }
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox cmbType;
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdClauseDate;
+    private javax.swing.JButton cmdFinalityDate;
     private javax.swing.JButton cmdIssueDate;
     private javax.swing.JButton cmdSave;
     private javax.swing.JButton cmdServiceDate;
     private javax.swing.JLabel lblClauseDate;
+    private javax.swing.JLabel lblComponents;
     private javax.swing.JLabel lblFileNumber;
+    private javax.swing.JLabel lblFinalityDate;
     private javax.swing.JLabel lblIssueDate;
     private javax.swing.JLabel lblIssuingBody;
     private javax.swing.JLabel lblLeadTime;
@@ -1094,9 +1373,12 @@ public class ClaimLedgerTitleDialog extends javax.swing.JDialog {
     private javax.swing.JLabel lblServiceDate;
     private javax.swing.JLabel lblSubject;
     private javax.swing.JLabel lblType;
+    private javax.swing.JList<ClaimComponent> lstComponents;
+    private javax.swing.JScrollPane scrComponents;
     private javax.swing.JSpinner spnLeadTime;
     private javax.swing.JTextField txtClauseDate;
     private javax.swing.JTextField txtFileNumber;
+    private javax.swing.JTextField txtFinalityDate;
     private javax.swing.JTextField txtIssueDate;
     private javax.swing.JTextField txtIssuingBody;
     private javax.swing.JTextField txtServiceDate;

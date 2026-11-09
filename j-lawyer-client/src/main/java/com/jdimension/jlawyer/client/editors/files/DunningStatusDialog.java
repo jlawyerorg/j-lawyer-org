@@ -694,6 +694,8 @@ public class DunningStatusDialog extends javax.swing.JDialog {
 
     private boolean confirmed = false;
 
+    private DunningCaseStatus current = null;
+
     /**
      * Creates the dialog.
      *
@@ -705,6 +707,7 @@ public class DunningStatusDialog extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
         DesktopDateEntry.hint(this.txtEventDate);
+        this.current = current;
 
         for (DunningCaseStatus status : DunningCaseStatus.values()) {
             this.selectable.add(status);
@@ -953,6 +956,16 @@ public class DunningStatusDialog extends javax.swing.JDialog {
                     "Bitte ein gültiges Datum im Format TT.MM.JJJJ eingeben.",
                     "Hinweis", JOptionPane.INFORMATION_MESSAGE);
             return;
+        }
+        // nichts wird verweigert - Korrekturen müssen möglich bleiben -, aber ein ungewöhnlicher
+        // Übergang wird bewusst bestätigt statt versehentlich den Stand zurückzusetzen
+        String warning = DunningStatusTransitionCheck.warningFor(this.current, getStatus());
+        if (warning != null) {
+            int answer = JOptionPane.showConfirmDialog(this, warning + "\n\nStatus trotzdem erfassen?",
+                    "Status prüfen", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+            if (answer != JOptionPane.YES_OPTION) {
+                return;
+            }
         }
         this.confirmed = true;
         setVisible(false);

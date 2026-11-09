@@ -716,6 +716,7 @@ public class ClaimProcessStatusAssembler {
         private List<EnforcementMeasure> measures;
         private List<EnforcementMeasureDeadline> enforcementDeadlines;
         private List<DunningCaseDeadline> dunningDeadlines;
+        private List<com.jdimension.jlawyer.persistence.EnforcementThirdPartyDebtor> thirdPartyDebtors;
 
         public BigDecimal getOpenAmount() {
             return openAmount;
@@ -779,6 +780,18 @@ public class ClaimProcessStatusAssembler {
 
         public void setDunningDeadlines(List<DunningCaseDeadline> dunningDeadlines) {
             this.dunningDeadlines = dunningDeadlines;
+        }
+
+        public List<com.jdimension.jlawyer.persistence.EnforcementThirdPartyDebtor> getThirdPartyDebtors() {
+            return thirdPartyDebtors;
+        }
+
+        /**
+         * @param thirdPartyDebtors the third-party debtors of the ledger's attachments; their
+         * declaration period (§ 840 Abs. 1 ZPO) counts as a deadline until the declaration is in
+         */
+        public void setThirdPartyDebtors(List<com.jdimension.jlawyer.persistence.EnforcementThirdPartyDebtor> thirdPartyDebtors) {
+            this.thirdPartyDebtors = thirdPartyDebtors;
         }
     }
 
@@ -966,6 +979,18 @@ public class ClaimProcessStatusAssembler {
                     best = deadline.getDeadlineDate();
                     label = deadline.getDeadlineType() == null
                             ? "Frist" : deadline.getDeadlineType().getLabel();
+                }
+            }
+        }
+
+        if (input.getThirdPartyDebtors() != null) {
+            for (com.jdimension.jlawyer.persistence.EnforcementThirdPartyDebtor debtor : input.getThirdPartyDebtors()) {
+                if (debtor.getDeclarationDue() == null || debtor.getDeclarationReceived() != null) {
+                    continue;
+                }
+                if (best == null || debtor.getDeclarationDue().before(best)) {
+                    best = debtor.getDeclarationDue();
+                    label = "Drittschuldnererklärung (§ 840 ZPO)";
                 }
             }
         }

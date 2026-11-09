@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.persistence.ClaimLedger;
 import com.jdimension.jlawyer.persistence.EnforcementMeasure;
 import com.jdimension.jlawyer.persistence.EnforcementMeasureDeadline;
 import com.jdimension.jlawyer.persistence.EnforcementMeasureDocument;
+import com.jdimension.jlawyer.persistence.EnforcementThirdPartyDebtor;
 import com.jdimension.jlawyer.services.EnforcementServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.text.SimpleDateFormat;
@@ -784,12 +785,14 @@ public class ClaimLedgerDeadlinesPanel extends javax.swing.JPanel {
         }
 
         List<EnforcementMeasureDocument> documents;
+        List<EnforcementThirdPartyDebtor> thirdPartyDebtors;
         try {
             List<EnforcementMeasureDeadline> loaded = enforcement().getDeadlines(this.ledger.getId());
             if (loaded != null) {
                 this.deadlines.addAll(loaded);
             }
             documents = enforcement().getMeasureDocuments(this.ledger.getId());
+            thirdPartyDebtors = enforcement().getThirdPartyDebtorsOfLedger(this.ledger.getId());
         } catch (Exception ex) {
             log.error("Unable to load the enforcement deadlines of ledger " + this.ledger.getId(), ex);
             JOptionPane.showMessageDialog(this,
@@ -804,6 +807,23 @@ public class ClaimLedgerDeadlinesPanel extends javax.swing.JPanel {
                 deadline.getDeadlineType() == null ? "" : deadline.getDeadlineType().getLabel(),
                 measureOf(deadline),
                 describe(deadline)});
+        }
+
+        // Die Erklärungsfrist des Drittschuldners (§ 840 Abs. 1 ZPO) hängt am Drittschuldner und
+        // nicht an der Maßnahme; sie wird hier mit aufgeführt, erledigt wird sie über den Eingang
+        // der Erklärung beim Drittschuldner. Die Zeilen folgen den Maßnahmefristen, damit die
+        // Auswahl ("Erledigt") weiter nur Maßnahmefristen trifft.
+        if (thirdPartyDebtors != null) {
+            for (EnforcementThirdPartyDebtor debtor : thirdPartyDebtors) {
+                if (debtor.getDeclarationDue() == null) {
+                    continue;
+                }
+                deadlineModel.addRow(new Object[]{
+                    dayFormat.format(debtor.getDeclarationDue()),
+                    "Drittschuldnererklärung " + debtor.getEffectiveDesignation(),
+                    measureOf(debtor.getMeasure()),
+                    describe(debtor)});
+            }
         }
 
         if (documents != null) {
@@ -821,7 +841,10 @@ public class ClaimLedgerDeadlinesPanel extends javax.swing.JPanel {
     }
 
     private String measureOf(EnforcementMeasureDeadline deadline) {
-        EnforcementMeasure measure = deadline.getMeasure();
+        return measureOf(deadline.getMeasure());
+    }
+
+    private String measureOf(EnforcementMeasure measure) {
         if (measure == null || measure.getMeasureType() == null) {
             return "";
         }
@@ -842,6 +865,19 @@ public class ClaimLedgerDeadlinesPanel extends javax.swing.JPanel {
                     ? "" : " - " + deadline.getClosedReason());
         }
         if (deadline.getDeadlineDate() != null && deadline.getDeadlineDate().before(new Date())) {
+            return "überfällig";
+        }
+        return "offen";
+    }
+
+    /**
+     * Where the declaration of a third-party debtor stands.
+     */
+    private String describe(EnforcementThirdPartyDebtor debtor) {
+        if (debtor.getDeclarationReceived() != null) {
+            return "erledigt - Erklärung eingegangen am " + dayFormat.format(debtor.getDeclarationReceived());
+        }
+        if (debtor.getDeclarationDue() != null && debtor.getDeclarationDue().before(new Date())) {
             return "überfällig";
         }
         return "offen";

@@ -902,7 +902,7 @@ public class ClaimLedgerEntryPanel extends com.jdimension.jlawyer.client.ui.them
         lblOpenAmount.setToolTipText("");
 
         cmdDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
-        cmdDelete.setToolTipText("Beleg löschen");
+        cmdDelete.setToolTipText("Forderungskonto löschen");
         cmdDelete.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdDeleteActionPerformed(evt);

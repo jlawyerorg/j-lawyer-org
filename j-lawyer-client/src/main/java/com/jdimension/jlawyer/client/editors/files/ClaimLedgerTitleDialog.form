@@ -33,10 +33,12 @@
                           <Component id="lblIssuingBody" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="lblFileNumber" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="lblIssueDate" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblFinalityDate" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="lblClauseDate" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="lblServiceDate" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="lblSubject" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="lblLeadTime" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblComponents" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
@@ -45,10 +47,16 @@
                           <Component id="txtFileNumber" alignment="0" min="-2" pref="300" max="-2" attributes="0"/>
                           <Component id="txtSubject" alignment="0" min="-2" pref="400" max="-2" attributes="0"/>
                           <Component id="spnLeadTime" alignment="0" min="-2" pref="100" max="-2" attributes="0"/>
+                          <Component id="scrComponents" alignment="0" min="-2" pref="400" max="-2" attributes="0"/>
                           <Group type="102" alignment="0" attributes="0">
                               <Component id="txtIssueDate" min="-2" pref="120" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="cmdIssueDate" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <Group type="102" alignment="0" attributes="0">
+                              <Component id="txtFinalityDate" min="-2" pref="120" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="cmdFinalityDate" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <Group type="102" alignment="0" attributes="0">
                               <Component id="txtClauseDate" min="-2" pref="120" max="-2" attributes="0"/>
@@ -101,6 +109,12 @@
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="lblFinalityDate" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="txtFinalityDate" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmdFinalityDate" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="lblClauseDate" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="txtClauseDate" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="cmdClauseDate" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -121,8 +135,13 @@
                   <Component id="lblLeadTime" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="spnLeadTime" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="lblComponents" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="scrComponents" alignment="0" min="-2" pref="110" max="-2" attributes="0"/>
+              </Group>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
-              <Component id="lblPrerequisites" min="-2" pref="34" max="-2" attributes="0"/>
+              <Component id="lblPrerequisites" min="-2" pref="90" max="-2" attributes="0"/>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="cmdSave" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -145,6 +164,9 @@
           <StringArray count="0"/>
         </Property>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmbTypeActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JLabel" name="lblIssuingBody">
       <Properties>
@@ -187,6 +209,30 @@
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdIssueDateActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblFinalityDate">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Rechtskraft am:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JTextField" name="txtFinalityDate">
+      <Properties>
+        <Property name="text" type="java.lang.String" value=""/>
+        <Property name="toolTipText" type="java.lang.String" value="Tag der Rechtskraft - ab hier l&#xe4;uft die 30-j&#xe4;hrige Verj&#xe4;hrung (&#xa7; 201 BGB). Leer lassen, wenn unbekannt; dann wird ab Erlass gerechnet."/>
+      </Properties>
+      <Events>
+        <EventHandler event="focusLost" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="txtFinalityDateFocusLost"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdFinalityDate">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons/schedule.png"/>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdFinalityDateActionPerformed"/>
       </Events>
     </Component>
     <Component class="javax.swing.JLabel" name="lblClauseDate">
@@ -246,6 +292,29 @@
     </Component>
     <Component class="javax.swing.JSpinner" name="spnLeadTime">
     </Component>
+    <Component class="javax.swing.JLabel" name="lblComponents">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Titulierte Positionen:"/>
+      </Properties>
+    </Component>
+    <Container class="javax.swing.JScrollPane" name="scrComponents">
+      <AuxValues>
+        <AuxValue name="autoScrollPane" type="java.lang.Boolean" value="true"/>
+      </AuxValues>
+
+      <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
+      <SubComponents>
+        <Component class="javax.swing.JList" name="lstComponents">
+          <Properties>
+            <Property name="toolTipText" type="java.lang.String" value="Positionen des Forderungskontos, die der Titel erfasst (ma&#xdf;geblich f&#xfc;r die Forderungsaufstellung, Anlagen 6 bis 8)"/>
+            <Property name="visibleRowCount" type="int" value="5"/>
+          </Properties>
+          <AuxValues>
+            <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;ClaimComponent&gt;"/>
+          </AuxValues>
+        </Component>
+      </SubComponents>
+    </Container>
     <Component class="javax.swing.JLabel" name="lblPrerequisites">
       <Properties>
         <Property name="text" type="java.lang.String" value=""/>

@@ -666,18 +666,24 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ClaimLedger;
 import com.jdimension.jlawyer.persistence.ClaimLedgerParty;
 import com.jdimension.jlawyer.persistence.ClaimPartyRole;
 import com.jdimension.jlawyer.persistence.DunningCase;
 import com.jdimension.jlawyer.persistence.DunningCaseEvent;
+import com.jdimension.jlawyer.persistence.DunningCaseStatus;
 import com.jdimension.jlawyer.persistence.DunningCourtRule;
 import com.jdimension.jlawyer.pojo.DunningCourtProposal;
+import com.jdimension.jlawyer.pojo.DunningFeePosition;
+import com.jdimension.jlawyer.pojo.DunningFeeProposal;
 import com.jdimension.jlawyer.pojo.DunningValidationIssue;
 import com.jdimension.jlawyer.pojo.DunningValidationResult;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Cursor;
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -731,6 +737,12 @@ public class ClaimLedgerCourtDunningPanel extends javax.swing.JPanel {
     /** The Kennziffer per entry of the selector, null for the first. */
     private final List<String> kennziffern = new ArrayList<>();
 
+    /** Amounts as they are shown and entered on this tab. */
+    private final DecimalFormat amountFormat = new DecimalFormat("#,##0.00");
+
+    /** Told when entries were booked into the claim ledger from this tab, may be null. */
+    private Runnable ledgerChangedCallback = null;
+
     /**
      * Creates the panel.
      */
@@ -743,8 +755,19 @@ public class ClaimLedgerCourtDunningPanel extends javax.swing.JPanel {
                 return false;
             }
         });
+        this.amountFormat.setParseBigDecimal(true);
         loadKennziffern();
         setFieldsEnabled(false);
+    }
+
+    /**
+     * Sets what is to happen after this tab has booked entries into the claim ledger, e.g. the fees
+     * of the dunning procedure - typically reloading the ledger's entries in the enclosing dialog.
+     *
+     * @param callback run on the event dispatch thread after a booking, or null
+     */
+    public void setLedgerChangedCallback(Runnable callback) {
+        this.ledgerChangedCallback = callback;
     }
 
     /**
@@ -840,6 +863,21 @@ public class ClaimLedgerCourtDunningPanel extends javax.swing.JPanel {
         this.cmdDetermineCourt.setEnabled(enabled);
         this.cmdRecordStatus.setEnabled(enabled);
         this.cmdExportApplication.setEnabled(enabled);
+        this.cmdExportVbApplication.setEnabled(enabled && mayApplyForVb(this.shownCase));
+        this.cmdProposeFees.setEnabled(enabled);
+    }
+
+    /**
+     * Whether the procedure has reached the point where a Vollstreckungsbescheid can be applied for:
+     * the Mahnbescheid is served and no objection is recorded, or a VB application went out before
+     * and is to be repeated. The server checks the periods and the remaining data.
+     */
+    private boolean mayApplyForVb(DunningCase dunningCase) {
+        if (dunningCase == null || dunningCase.getObjectionDate() != null) {
+            return false;
+        }
+        return dunningCase.getStatus() == DunningCaseStatus.MB_SERVED
+                || dunningCase.getStatus() == DunningCaseStatus.VB_APPLIED;
     }
 
     /**
@@ -1023,6 +1061,8 @@ public class ClaimLedgerCourtDunningPanel extends javax.swing.JPanel {
         tblHistory = new javax.swing.JTable();
         cmdRecordStatus = new javax.swing.JButton();
         cmdExportApplication = new javax.swing.JButton();
+        cmdExportVbApplication = new javax.swing.JButton();
+        cmdProposeFees = new javax.swing.JButton();
         cmdImportMessage = new javax.swing.JButton();
         cmdRefresh = new javax.swing.JButton();
 
@@ -1115,6 +1155,24 @@ public class ClaimLedgerCourtDunningPanel extends javax.swing.JPanel {
             }
         });
 
+        cmdExportVbApplication.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave-separate.png"))); // NOI18N
+        cmdExportVbApplication.setText("VB beantragen");
+        cmdExportVbApplication.setToolTipText("Erzeugt den Antrag auf Erlass des Vollstreckungsbescheids als EDA-Datei und legt ihn in der Akte ab.");
+        cmdExportVbApplication.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdExportVbApplicationActionPerformed(evt);
+            }
+        });
+
+        cmdProposeFees.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/money.png"))); // NOI18N
+        cmdProposeFees.setText("Gebühren vorschlagen...");
+        cmdProposeFees.setToolTipText("Berechnet Gerichts- und Anwaltsgebühren des Mahnverfahrens und bucht sie auf Wunsch als Verfahrenskosten in das Forderungskonto.");
+        cmdProposeFees.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdProposeFeesActionPerformed(evt);
+            }
+        });
+
         cmdImportMessage.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/fileimport.png"))); // NOI18N
         cmdImportMessage.setText("Gerichtsnachricht einlesen");
         cmdImportMessage.addActionListener(new java.awt.event.ActionListener() {
@@ -1176,6 +1234,10 @@ public class ClaimLedgerCourtDunningPanel extends javax.swing.JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdExportApplication)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdExportVbApplication)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdProposeFees)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdImportMessage)
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(cmdRefresh)))
@@ -1214,6 +1276,8 @@ public class ClaimLedgerCourtDunningPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdRecordStatus)
                     .addComponent(cmdExportApplication)
+                    .addComponent(cmdExportVbApplication)
+                    .addComponent(cmdProposeFees)
                     .addComponent(cmdImportMessage)
                     .addComponent(cmdRefresh))
                 .addContainerGap())
@@ -1635,6 +1699,286 @@ public class ClaimLedgerCourtDunningPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_cmdExportApplicationActionPerformed
 
+    private void cmdExportVbApplicationActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportVbApplicationActionPerformed
+        // the server reads the court's file number from the stored procedure, so what was typed here
+        // has to be stored first
+        if (!confirmPendingChanges(this)) {
+            return;
+        }
+        DunningCase dunningCase = selectedCase();
+        if (dunningCase == null) {
+            return;
+        }
+
+        javax.swing.JCheckBox chkNoPayments = new javax.swing.JCheckBox(
+                "Der Antragsgegner hat seit Zustellung des Mahnbescheids keine Zahlungen geleistet.");
+        javax.swing.JComboBox<String> cmbService = new javax.swing.JComboBox<>(new String[]{
+            "Zustellung durch das Gericht", "Zustellung durch den Antragsteller (Parteizustellung)"});
+        javax.swing.JTextField txtPostage = new javax.swing.JTextField(10);
+        javax.swing.JTextField txtOtherCosts = new javax.swing.JTextField(10);
+        javax.swing.JTextField txtOtherReason = new javax.swing.JTextField(25);
+        javax.swing.JCheckBox chkInterestOnCosts = new javax.swing.JCheckBox(
+                "Verzinsung der Verfahrenskosten beantragen (§ 104 ZPO)");
+
+        javax.swing.JPanel form = new javax.swing.JPanel(new java.awt.GridBagLayout());
+        java.awt.GridBagConstraints c = new java.awt.GridBagConstraints();
+        c.anchor = java.awt.GridBagConstraints.WEST;
+        c.insets = new java.awt.Insets(3, 3, 3, 3);
+        c.gridx = 0;
+        c.gridy = 0;
+        c.gridwidth = 2;
+        form.add(new javax.swing.JLabel("<html>Antrag auf Erlass des Vollstreckungsbescheids zu Geschäftsnummer <b>"
+                + nullSafe(dunningCase.getCourtFileNumber()) + "</b></html>"), c);
+        c.gridy++;
+        form.add(chkNoPayments, c);
+        c.gridwidth = 1;
+        addRow(form, c, "Zustellung:", cmbService);
+        addRow(form, c, "Porto/Telekommunikation nach Zustellung (EUR):", txtPostage);
+        addRow(form, c, "Sonstige Kosten nach Zustellung (EUR):", txtOtherCosts);
+        addRow(form, c, "Bezeichnung der sonstigen Kosten:", txtOtherReason);
+        c.gridx = 0;
+        c.gridy++;
+        c.gridwidth = 2;
+        form.add(chkInterestOnCosts, c);
+
+        BigDecimal postage;
+        BigDecimal otherCosts;
+        while (true) {
+            int answer = JOptionPane.showConfirmDialog(this, form, "Vollstreckungsbescheid beantragen",
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            if (answer != JOptionPane.OK_OPTION) {
+                return;
+            }
+            try {
+                postage = parseAmount(txtPostage.getText());
+                otherCosts = parseAmount(txtOtherCosts.getText());
+            } catch (ParseException ex) {
+                JOptionPane.showMessageDialog(this, "Bitte die Kosten als Betrag angeben, z.B. 12,50.",
+                        "Hinweis", JOptionPane.WARNING_MESSAGE);
+                continue;
+            }
+            if (!chkNoPayments.isSelected()) {
+                int goOn = JOptionPane.showConfirmDialog(this,
+                        "Sie haben nicht bestätigt, dass keine Zahlungen geleistet wurden.\n"
+                        + "Ein Antrag mit Angaben zu Zahlungen kann derzeit nicht elektronisch erzeugt werden.\n\n"
+                        + "Zurück zur Eingabe?",
+                        "Vollstreckungsbescheid", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                if (goOn == JOptionPane.YES_OPTION) {
+                    continue;
+                }
+                return;
+            }
+            break;
+        }
+
+        ArchiveFileDocumentsBean document;
+        try {
+            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            document = locator.lookupDunningServiceRemote().exportVollstreckungsbescheidApplication(
+                    dunningCase.getId(), false, cmbService.getSelectedIndex() == 1, postage, otherCosts,
+                    emptyToNull(txtOtherReason.getText()), chkInterestOnCosts.isSelected());
+        } catch (Exception ex) {
+            log.error("Unable to export the Vollstreckungsbescheid application of dunning case "
+                    + dunningCase.getId(), ex);
+            JOptionPane.showMessageDialog(this,
+                    "Der Antrag auf Vollstreckungsbescheid konnte nicht erzeugt werden:\n" + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        } finally {
+            setCursor(Cursor.getDefaultCursor());
+        }
+        JOptionPane.showMessageDialog(this,
+                "Der Antrag wurde erzeugt und in der Akte abgelegt:\n" + document.getName()
+                + "\n\nDie Datei kann jetzt über das beA an das Mahngericht übermittelt werden.",
+                "Vollstreckungsbescheid beantragt", JOptionPane.INFORMATION_MESSAGE);
+        loadCases();
+    }//GEN-LAST:event_cmdExportVbApplicationActionPerformed
+
+    private void cmdProposeFeesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdProposeFeesActionPerformed
+        DunningCase dunningCase = selectedCase();
+        if (dunningCase == null) {
+            return;
+        }
+
+        javax.swing.JTextField txtValue = new javax.swing.JTextField(12);
+        if (dunningCase.getAppliedPrincipal() != null) {
+            txtValue.setText(this.amountFormat.format(dunningCase.getAppliedPrincipal()));
+        }
+        javax.swing.JComboBox<String> cmbApplication = new javax.swing.JComboBox<>(new String[]{
+            "Antrag auf Mahnbescheid", "Antrag auf Vollstreckungsbescheid"});
+        boolean vbStage = dunningCase.getStatus() != null
+                && !dunningCase.getStatus().isBefore(DunningCaseStatus.MB_SERVED);
+        cmbApplication.setSelectedIndex(vbStage ? 1 : 0);
+        javax.swing.JCheckBox chkVat = new javax.swing.JCheckBox("Umsatzsteuer berechnen", true);
+        javax.swing.JTextField txtVatRate = new javax.swing.JTextField("19", 5);
+        javax.swing.JTextField txtBusinessFeeRate = new javax.swing.JTextField(5);
+        txtBusinessFeeRate.setToolTipText("Satz einer für dieselbe Angelegenheit bereits entstandenen Geschäftsgebühr, z.B. 1,3 - leer, wenn keine anzurechnen ist.");
+
+        javax.swing.JPanel form = new javax.swing.JPanel(new java.awt.GridBagLayout());
+        java.awt.GridBagConstraints c = new java.awt.GridBagConstraints();
+        c.anchor = java.awt.GridBagConstraints.WEST;
+        c.insets = new java.awt.Insets(3, 3, 3, 3);
+        c.gridy = -1;
+        addRow(form, c, "Gebühren für:", cmbApplication);
+        addRow(form, c, "Streitwert (EUR):", txtValue);
+        addRow(form, c, chkVat, txtVatRate);
+        addRow(form, c, "Satz anzurechnende Geschäftsgebühr:", txtBusinessFeeRate);
+
+        BigDecimal value;
+        BigDecimal vatRate;
+        BigDecimal businessFeeRate;
+        while (true) {
+            int answer = JOptionPane.showConfirmDialog(this, form, "Gebühren vorschlagen",
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            if (answer != JOptionPane.OK_OPTION) {
+                return;
+            }
+            try {
+                value = parseAmount(txtValue.getText());
+                vatRate = chkVat.isSelected() ? parseAmount(txtVatRate.getText()) : null;
+                businessFeeRate = parseAmount(txtBusinessFeeRate.getText());
+            } catch (ParseException ex) {
+                JOptionPane.showMessageDialog(this, "Bitte Streitwert und Sätze als Zahl angeben, z.B. 1.250,00 oder 1,3.",
+                        "Hinweis", JOptionPane.WARNING_MESSAGE);
+                continue;
+            }
+            if (value == null || value.signum() <= 0) {
+                JOptionPane.showMessageDialog(this, "Bitte einen Streitwert angeben.",
+                        "Hinweis", JOptionPane.WARNING_MESSAGE);
+                continue;
+            }
+            break;
+        }
+        boolean forEnforcementOrder = cmbApplication.getSelectedIndex() == 1;
+
+        DunningFeeProposal proposal;
+        JLawyerServiceLocator locator;
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            proposal = locator.lookupDunningServiceRemote().proposeFees(dunningCase.getId(), value,
+                    forEnforcementOrder, vatRate, businessFeeRate);
+        } catch (Exception ex) {
+            log.error("Unable to propose the fees of dunning case " + dunningCase.getId(), ex);
+            JOptionPane.showMessageDialog(this,
+                    "Die Gebühren konnten nicht berechnet werden:\n" + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (proposal.getLawyerPositions().isEmpty() && proposal.getCourtPositions().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Es ergeben sich keine Gebühren.",
+                    "Gebühren", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        int book = JOptionPane.showConfirmDialog(this, describeProposal(proposal, forEnforcementOrder),
+                "Gebührenvorschlag", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+        if (book != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        List<String> created;
+        try {
+            created = locator.lookupDunningServiceRemote().bookFees(dunningCase.getId(), proposal);
+        } catch (Exception ex) {
+            log.error("Unable to book the fees of dunning case " + dunningCase.getId(), ex);
+            JOptionPane.showMessageDialog(this,
+                    "Die Gebühren konnten nicht gebucht werden:\n" + ex.getMessage(),
+                    "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        JOptionPane.showMessageDialog(this,
+                (created == null ? 0 : created.size()) + " Position(en) als Verfahrenskosten in das "
+                + "Forderungskonto gebucht.",
+                "Gebühren gebucht", JOptionPane.INFORMATION_MESSAGE);
+        if (this.ledgerChangedCallback != null) {
+            this.ledgerChangedCallback.run();
+        }
+    }//GEN-LAST:event_cmdProposeFeesActionPerformed
+
+    /**
+     * Lays out a fee proposal as a table for the confirmation, with the question whether to book.
+     */
+    private String describeProposal(DunningFeeProposal proposal, boolean forEnforcementOrder) {
+        StringBuilder sb = new StringBuilder("<html><b>Gebühren ");
+        sb.append(forEnforcementOrder ? "Antrag auf Vollstreckungsbescheid" : "Antrag auf Mahnbescheid");
+        if (proposal.getClaimValue() != null) {
+            sb.append(" - Streitwert ").append(this.amountFormat.format(proposal.getClaimValue())).append(" EUR");
+        }
+        sb.append("</b><br><br><table cellspacing=\"0\" cellpadding=\"2\">");
+        appendPositions(sb, "Rechtsanwaltsvergütung", proposal.getLawyerPositions(), proposal.getLawyerTotal());
+        appendPositions(sb, "Gerichtskosten", proposal.getCourtPositions(), proposal.getCourtTotal());
+        sb.append("<tr><td colspan=\"2\"><b>Gesamt</b></td><td align=\"right\"><b>")
+                .append(this.amountFormat.format(proposal.getTotal())).append(" EUR</b></td></tr>");
+        sb.append("</table>");
+        if (!proposal.getNotes().isEmpty()) {
+            sb.append("<br>");
+            for (String note : proposal.getNotes()) {
+                sb.append("<i>").append(escape(note)).append("</i><br>");
+            }
+        }
+        sb.append("<br>Die Positionen als nicht verzinsliche Verfahrenskosten in das Forderungskonto buchen?</html>");
+        return sb.toString();
+    }
+
+    private void appendPositions(StringBuilder sb, String heading, List<DunningFeePosition> positions,
+            BigDecimal total) {
+        if (positions == null || positions.isEmpty()) {
+            return;
+        }
+        sb.append("<tr><td colspan=\"3\"><u>").append(heading).append("</u></td></tr>");
+        for (DunningFeePosition p : positions) {
+            sb.append("<tr><td>").append(escape(p.getLabel())).append("</td><td>")
+                    .append(escape(p.getLegalBasis())).append("</td><td align=\"right\">")
+                    .append(p.getAmount() == null ? "" : this.amountFormat.format(p.getAmount()))
+                    .append(" EUR</td></tr>");
+        }
+        sb.append("<tr><td colspan=\"2\">Summe</td><td align=\"right\">")
+                .append(this.amountFormat.format(total)).append(" EUR</td></tr>");
+    }
+
+    private static String escape(String s) {
+        if (s == null) {
+            return "";
+        }
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    }
+
+    /**
+     * Adds a labelled row to a form laid out with a {@link java.awt.GridBagLayout}.
+     */
+    private static void addRow(javax.swing.JPanel form, java.awt.GridBagConstraints c, Object label,
+            java.awt.Component field) {
+        c.gridy++;
+        c.gridwidth = 1;
+        c.gridx = 0;
+        form.add(label instanceof java.awt.Component ? (java.awt.Component) label
+                : new javax.swing.JLabel(String.valueOf(label)), c);
+        c.gridx = 1;
+        form.add(field, c);
+    }
+
+    /**
+     * @param text an amount or rate as entered, German notation
+     * @return the value, or null if nothing was entered
+     * @throws ParseException if the text is not a number
+     */
+    private BigDecimal parseAmount(String text) throws ParseException {
+        if (text == null || text.trim().isEmpty()) {
+            return null;
+        }
+        java.text.ParsePosition pos = new java.text.ParsePosition(0);
+        String trimmed = text.trim();
+        Number n = this.amountFormat.parse(trimmed, pos);
+        if (n == null || pos.getIndex() != trimmed.length()) {
+            throw new ParseException(trimmed, pos.getErrorIndex());
+        }
+        return (BigDecimal) n;
+    }
+
     private void cmdImportMessageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdImportMessageActionPerformed
         if (this.caseDto == null) {
             return;
@@ -1665,6 +2009,8 @@ public class ClaimLedgerCourtDunningPanel extends javax.swing.JPanel {
     private javax.swing.JButton cmdRemoveCase;
     private javax.swing.JButton cmdSave;
     private javax.swing.JButton cmdExportApplication;
+    private javax.swing.JButton cmdExportVbApplication;
+    private javax.swing.JButton cmdProposeFees;
     private javax.swing.JScrollPane jScrollPaneHistory;
     private javax.swing.JLabel lblCase;
     private javax.swing.JLabel lblCourt;

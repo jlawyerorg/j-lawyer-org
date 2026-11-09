@@ -665,6 +665,10 @@ package com.jdimension.jlawyer.services;
 import com.jdimension.jlawyer.persistence.DunningCase;
 import com.jdimension.jlawyer.persistence.DunningCaseStatus;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Date;
 
 /**
  * What may be exported, under which name, and what a repeated export means.
@@ -767,6 +771,122 @@ public class DunningExportPolicy {
         return (repeat
                 ? "Antrag erneut erzeugt und in der Akte abgelegt: "
                 : "EDA-Datei erzeugt und in der Akte abgelegt: ") + documentName;
+    }
+
+    /**
+     * Says why an application for a Vollstreckungsbescheid may not be exported for this procedure.
+     *
+     * The application answers a served Mahnbescheid: it needs the court's file number, may not be
+     * made before the objection period has run (§ 699 Abs. 1 S. 2 ZPO), is pointless after an
+     * objection, and comes too late once the Mahnbescheid has lapsed six months after service
+     * (§ 701 ZPO). A corrected application after a monition - while the procedure stands at
+     * "Vollstreckungsbescheid beantragt" - is a repeat and allowed.
+     *
+     * Public holidays are not known here; the objection period is only moved past weekends.
+     *
+     * @param dunningCase the procedure
+     * @param today the day of the application
+     * @return the reason in words, or null if it may be exported
+     */
+    public String vbRefusalReason(DunningCase dunningCase, LocalDate today) {
+
+        if (dunningCase == null) {
+            return "Die Mahnsache existiert nicht.";
+        }
+        DunningCaseStatus status = dunningCase.getStatus();
+        if (status == DunningCaseStatus.OBJECTION || dunningCase.getObjectionDate() != null) {
+            return "Gegen den Mahnbescheid ist Widerspruch eingelegt. Ein Vollstreckungsbescheid kann "
+                    + "nicht beantragt werden - das Verfahren wird nur nach Abgabe an das "
+                    + "Streitgericht fortgeführt.";
+        }
+        if (status != DunningCaseStatus.MB_SERVED && status != DunningCaseStatus.VB_APPLIED) {
+            return "Ein Vollstreckungsbescheid kann erst beantragt werden, wenn der Mahnbescheid "
+                    + "zugestellt ist. Der Vorgang steht im Stand \""
+                    + (status == null ? "unbekannt" : status.getLabel()) + "\".";
+        }
+        if (dunningCase.getMbServedDate() == null) {
+            return "Für den Mahnbescheid ist kein Zustelldatum erfasst. Bitte den Status "
+                    + "\"" + DunningCaseStatus.MB_SERVED.getLabel() + "\" mit Datum erfassen.";
+        }
+        if (!notEmpty(dunningCase.getCourtFileNumber())) {
+            return "Für den Vollstreckungsbescheid fehlt die Geschäftsnummer des Mahngerichts aus "
+                    + "dem Mahnbescheid (gerichtliches Aktenzeichen).";
+        }
+        if (!notEmpty(dunningCase.getKennziffer())) {
+            return "Für die Mahnsache ist keine Kennziffer hinterlegt.";
+        }
+
+        LocalDate day = today == null ? LocalDate.now() : today;
+        LocalDate served = toLocalDate(dunningCase.getMbServedDate());
+        LocalDate objectionEnd = new DunningDeadlineCalculator()
+                .shiftToWorkingDay(served.plusWeeks(DunningDeadlineCalculator.PERIOD_WEEKS));
+        if (!day.isAfter(objectionEnd)) {
+            return "Die Widerspruchsfrist aus dem Mahnbescheid läuft noch bis zum "
+                    + format(objectionEnd) + ". Der Vollstreckungsbescheid kann frühestens am "
+                    + "folgenden Tag beantragt werden (§ 699 Abs. 1 S. 2 ZPO).";
+        }
+        if (status == DunningCaseStatus.MB_SERVED && dunningCase.getVbAppliedDate() == null) {
+            LocalDate lapse = served.plusMonths(DunningDeadlineCalculator.LAPSE_MONTHS);
+            if (day.isAfter(lapse)) {
+                return "Der Mahnbescheid wurde am " + format(served) + " zugestellt und ist seit "
+                        + "dem " + format(lapse) + " wirkungslos (§ 701 ZPO). Ein "
+                        + "Vollstreckungsbescheid kann nicht mehr beantragt werden.";
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Whether this application for a Vollstreckungsbescheid repeats one that has already gone out.
+     *
+     * @param dunningCase the procedure as it stands before the export
+     * @return whether such an application was exported for it before
+     */
+    public boolean isVbRepeat(DunningCase dunningCase) {
+        return dunningCase != null
+                && (dunningCase.getStatus() == DunningCaseStatus.VB_APPLIED
+                || dunningCase.getVbAppliedDate() != null);
+    }
+
+    /**
+     * The name the exchange file of an application for a Vollstreckungsbescheid is filed under.
+     *
+     * @param dunningCase the procedure
+     * @param edaId the six-character EDA file name of this export
+     * @return the document name
+     * @see #documentName(DunningCase, String)
+     */
+    public String vbDocumentName(DunningCase dunningCase, String edaId) {
+        StringBuilder sb = new StringBuilder("Vollstreckungsbescheidsantrag");
+        if (dunningCase != null && notEmpty(dunningCase.getOwnReference())) {
+            sb.append("_").append(dunningCase.getOwnReference().trim());
+        }
+        if (notEmpty(edaId)) {
+            sb.append("_").append(edaId.trim());
+        }
+        return ServerFileUtils.sanitizeFileName(sb.toString()) + ".eda";
+    }
+
+    /**
+     * What the journal records about an export of an application for a Vollstreckungsbescheid.
+     *
+     * @param repeat whether this export repeats an earlier one
+     * @param documentName the document the file was filed under
+     * @return the comment for the journal entry
+     */
+    public String vbJournalComment(boolean repeat, String documentName) {
+        return (repeat
+                ? "Antrag auf Vollstreckungsbescheid erneut erzeugt und in der Akte abgelegt: "
+                : "Antrag auf Vollstreckungsbescheid erzeugt und in der Akte abgelegt: ") + documentName;
+    }
+
+    private static LocalDate toLocalDate(Date date) {
+        // not toInstant(): a java.sql.Date throws there by contract
+        return Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
+    }
+
+    private static String format(LocalDate day) {
+        return String.format("%02d.%02d.%04d", day.getDayOfMonth(), day.getMonthValue(), day.getYear());
     }
 
     private boolean notEmpty(String s) {

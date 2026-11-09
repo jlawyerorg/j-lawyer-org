@@ -35,12 +35,14 @@
                           <Component id="lblAllocationMode" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="lblSurplus" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="lblCreditorCount" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblParentLedger" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="cmbAllocationMode" alignment="0" min="-2" pref="320" max="-2" attributes="0"/>
                           <Component id="cmbSurplus" alignment="0" min="-2" pref="320" max="-2" attributes="0"/>
                           <Component id="spnCreditorCount" alignment="0" min="-2" pref="80" max="-2" attributes="0"/>
+                          <Component id="cmbParentLedger" alignment="0" min="-2" pref="320" max="-2" attributes="0"/>
                           <Component id="chkConsumerLoan" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
@@ -77,6 +79,11 @@
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="lblCreditorCount" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="spnCreditorCount" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="lblParentLedger" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmbParentLedger" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="chkConsumerLoan" min="-2" max="-2" attributes="0"/>
@@ -185,6 +192,22 @@
       </Properties>
     </Component>
     <Component class="javax.swing.JSpinner" name="spnCreditorCount">
+    </Component>
+    <Component class="javax.swing.JLabel" name="lblParentLedger">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Unterkonto von:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JComboBox" name="cmbParentLedger">
+      <Properties>
+        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+          <StringArray count="0"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="Ein Unterkonto wird in der Forderungsaufstellung des &#xfc;bergeordneten Kontos gesondert mit ausgewiesen (&quot;Unterkonten einbeziehen&quot;)."/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmbParentLedgerActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JCheckBox" name="chkConsumerLoan">
       <Properties>

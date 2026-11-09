@@ -92,6 +92,9 @@ public class PaymentSplitPreviewDialog extends javax.swing.JDialog {
 
         if (!proposal.isFollowsLegalOrder()) {
             summary.append("\n⚠ Hinweis: Die Verteilung weicht von der gesetzlichen Tilgungsreihenfolge (§ 366/367 BGB) ab.");
+            if (proposal.getLegalOrderWarning() != null && !proposal.getLegalOrderWarning().trim().isEmpty()) {
+                summary.append("\n").append(proposal.getLegalOrderWarning());
+            }
         } else {
             summary.append("\n✓ Die Verteilung folgt der gesetzlichen Tilgungsreihenfolge (§ 366/367 BGB).");
         }
