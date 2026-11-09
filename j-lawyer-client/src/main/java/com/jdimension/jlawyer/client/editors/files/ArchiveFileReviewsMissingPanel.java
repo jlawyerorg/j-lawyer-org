@@ -696,6 +696,7 @@ public class ArchiveFileReviewsMissingPanel extends javax.swing.JPanel implement
      */
     public ArchiveFileReviewsMissingPanel() {
         initComponents();
+        this.applyModernLook();
         if (UserSettings.getInstance().isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
             this.detailsEditorClass = EditArchiveFileDetailsPanel.class.getName();
         } else {
@@ -715,6 +716,18 @@ public class ArchiveFileReviewsMissingPanel extends javax.swing.JPanel implement
         
     }
     
+    /**
+     * Applies the editor design kit: glass header, white tabs, tables on light cards.
+     */
+    private void applyModernLook() {
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleTitle(this.lblPanelTitle, null);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleHeaderButtons(this.cmdExport, this.cmdRefresh);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleMainTabs(this.tabTables);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleTable(this.tblResultsAny, this.jScrollPane1);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleTable(this.tblResultsFollowup, this.jScrollPane2);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleTable(this.tblResultsRespite, this.jScrollPane3);
+    }
+
     @Override
     public void setBackgroundImage(Image image) {
         this.backgroundImage=image;
@@ -741,14 +754,17 @@ public class ArchiveFileReviewsMissingPanel extends javax.swing.JPanel implement
         mnuOpenArchiveFile = new javax.swing.JMenuItem();
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
-        jPanel1 = new javax.swing.JPanel();
+        jPanel1 = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         cmdExport = new javax.swing.JButton();
         cmdRefresh = new javax.swing.JButton();
         tabTables = new javax.swing.JTabbedPane();
+        cardAny = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblResultsAny = new javax.swing.JTable();
+        cardFollowup = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
         tblResultsFollowup = new javax.swing.JTable();
+        cardRespite = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
         tblResultsRespite = new javax.swing.JTable();
 
@@ -768,7 +784,6 @@ public class ArchiveFileReviewsMissingPanel extends javax.swing.JPanel implement
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
         lblPanelTitle.setText("Akten ohne offene Wiedervorlagen und Fristen");
 
-        jPanel1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
         jPanel1.setOpaque(false);
 
         cmdExport.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/calc.png"))); // NOI18N
@@ -836,7 +851,10 @@ public class ArchiveFileReviewsMissingPanel extends javax.swing.JPanel implement
         });
         jScrollPane1.setViewportView(tblResultsAny);
 
-        tabTables.addTab("ohne Wiedervorlage / Frist / Termin", jScrollPane1);
+        cardAny.setLayout(new java.awt.BorderLayout());
+        cardAny.add(jScrollPane1, java.awt.BorderLayout.CENTER);
+
+        tabTables.addTab("ohne Wiedervorlage / Frist / Termin", cardAny);
 
         tblResultsFollowup.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -860,7 +878,10 @@ public class ArchiveFileReviewsMissingPanel extends javax.swing.JPanel implement
         });
         jScrollPane2.setViewportView(tblResultsFollowup);
 
-        tabTables.addTab("ohne Wiedervorlage", jScrollPane2);
+        cardFollowup.setLayout(new java.awt.BorderLayout());
+        cardFollowup.add(jScrollPane2, java.awt.BorderLayout.CENTER);
+
+        tabTables.addTab("ohne Wiedervorlage", cardFollowup);
 
         tblResultsRespite.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -884,7 +905,10 @@ public class ArchiveFileReviewsMissingPanel extends javax.swing.JPanel implement
         });
         jScrollPane3.setViewportView(tblResultsRespite);
 
-        tabTables.addTab("ohne Frist", jScrollPane3);
+        cardRespite.setLayout(new java.awt.BorderLayout());
+        cardRespite.add(jScrollPane3, java.awt.BorderLayout.CENTER);
+
+        tabTables.addTab("ohne Frist", cardRespite);
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
@@ -906,11 +930,10 @@ public class ArchiveFileReviewsMissingPanel extends javax.swing.JPanel implement
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
                 .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
                     .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .add(jLabel18)
+                    .add(lblPanelTitle))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(tabTables, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 240, Short.MAX_VALUE)
                 .addContainerGap())
@@ -1057,7 +1080,7 @@ public class ArchiveFileReviewsMissingPanel extends javax.swing.JPanel implement
     private javax.swing.JButton cmdExport;
     private javax.swing.JButton cmdRefresh;
     private javax.swing.JLabel jLabel18;
-    private javax.swing.JPanel jPanel1;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
@@ -1068,6 +1091,9 @@ public class ArchiveFileReviewsMissingPanel extends javax.swing.JPanel implement
     private javax.swing.JTable tblResultsAny;
     private javax.swing.JTable tblResultsFollowup;
     private javax.swing.JTable tblResultsRespite;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardAny;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardFollowup;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardRespite;
     // End of variables declaration//GEN-END:variables
 
     @Override

@@ -1140,6 +1140,17 @@ public class BeaAccess {
         return this.identityCache.get(safeId);
     }
 
+    /**
+     * Returns the identity cached for a Safe-ID by {@link #getIdentity(String)},
+     * without calling the server.
+     *
+     * @param safeId the Safe-ID
+     * @return the cached identity, or null if none is currently cached for this Safe-ID
+     */
+    public BeaIdentity getCachedIdentity(String safeId) {
+        return this.identityCache.get(safeId);
+    }
+
     public BeaIdentity getIdentity(String safeId, String zipCode) throws Exception {
         this.checkValidBeaClient();
         if (!this.identityCache.containsKey(safeId + zipCode)) {

@@ -726,7 +726,7 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
     private long recordingStarted = -1;
     private AiCapability transcribeCapability = null;
     private AssistantConfig transcribeConfig = null;
-    private TargetDataLine targetDataLine;
+    private AudioUtils.MicrophoneLine targetDataLine;
     private ByteArrayOutputStream byteArrayOutputStream;
 
     private WebViewHtmlEditorPanel htmlNoteEditor = null;
@@ -740,6 +740,8 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
         this.initializing = true;
         this.aFile = aFile;
         initComponents();
+        // design kit: navy header like the glass headers of the editors
+        com.jdimension.jlawyer.client.ui.theme.DialogStyle.styleHeader(this.jPanel2);
 
         this.htmlNoteEditor = new WebViewHtmlEditorPanel();
         this.htmlContainerPanel.add(this.htmlNoteEditor);
@@ -1397,7 +1399,9 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
 
     private void cmdTranscribeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdTranscribeActionPerformed
         if (!isRecording) {
-            startRecording();
+            if (!startRecording()) {
+                return;
+            }
             ClientSettings.getInstance().setConfiguration(ClientSettings.CONF_SOUND_LASTRECORDINGDEVICE, (String) this.cmbDevices.getSelectedItem());
         } else {
             try {
@@ -1474,32 +1478,10 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
         }
     }
 
-    private void startRecording() {
+    private boolean startRecording() {
         try {
-            AudioFormat audioFormat = AudioUtils.getAudioFormat();
-
-            // Get selected mixer device name from dropdown
             String selectedDeviceName = (String) this.cmbDevices.getSelectedItem();
-
-            Mixer.Info[] mixerInfos = AudioSystem.getMixerInfo();
-            Mixer.Info selectedMixerInfo = null;
-            for (Mixer.Info mixerInfo : mixerInfos) {
-                if (mixerInfo.getName().equals(selectedDeviceName)) {
-                    selectedMixerInfo = mixerInfo;
-                    break;
-                }
-            }
-
-            if (selectedMixerInfo == null) {
-                log.error("Selected mixer device not found.");
-                return;
-            }
-
-            Mixer mixer = AudioSystem.getMixer(selectedMixerInfo);
-
-            DataLine.Info dataLineInfo = new DataLine.Info(TargetDataLine.class, audioFormat);
-            targetDataLine = (TargetDataLine) mixer.getLine(dataLineInfo);
-            targetDataLine.open(audioFormat);
+            targetDataLine = AudioUtils.openMicrophone(selectedDeviceName);
             targetDataLine.start();
 
             byteArrayOutputStream = new ByteArrayOutputStream();
@@ -1527,9 +1509,11 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
                     ThreadUtils.showErrorDialog(this, "Aufnahmefehler: " + e.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
                 }
             }).start();
+            return true;
         } catch (Exception ex) {
             log.error("Unable to start recording microphone audio stream", ex);
             JOptionPane.showMessageDialog(this, "Aufnahme konnte nicht gestartet werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return false;
         }
     }
 

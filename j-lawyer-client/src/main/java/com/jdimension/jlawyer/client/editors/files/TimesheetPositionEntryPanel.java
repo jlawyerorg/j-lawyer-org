@@ -688,7 +688,7 @@ import themes.colors.DefaultColorTheme;
  *
  * @author jens
  */
-public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
+public class TimesheetPositionEntryPanel extends com.jdimension.jlawyer.client.ui.theme.EntryRowPanel {
 
     private static final Logger log = Logger.getLogger(TimesheetPositionEntryPanel.class.getName());
 
@@ -708,6 +708,9 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
      */
     public TimesheetPositionEntryPanel(TimesheetDialog dlgParent, List<String> taxRates, List<String> sortedPrincipalIds) {
         initComponents();
+        // design kit: the billing state is the bar on the left edge of the entry
+        this.lblIndicator.setVisible(false);
+        styleRowButtons(this.cmdDescriptionSuggestions, this.cmdDuplicateEntry, this.cmdRemovePosition);
 
         this.dlgParent = dlgParent;
         
@@ -781,6 +784,7 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
             this.lblBilled.setText(pos.getInvoice().getInvoiceNumber());
             this.lblBilled.setToolTipText("abgerechnet mit Rechnung " + pos.getInvoice().getInvoiceNumber() + " - Rechnungsstatus ermöglicht das Bearbeiten der erfassten Zeit");
             this.lblIndicator.setBackground(DefaultColorTheme.COLOR_LOGO_BLUE);
+            this.setAccent(ACCENT_OPEN);
 
         } else if (pos.getInvoice() != null && !pos.isEditingAllowed()) {
             // assigned to an invoice, no longer editable
@@ -789,6 +793,7 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
             this.lblBilled.setText(pos.getInvoice().getInvoiceNumber());
             this.lblBilled.setToolTipText("abgerechnet mit Rechnung " + pos.getInvoice().getInvoiceNumber() + " - Rechnungsstatus verhindert das Bearbeiten der erfassten Zeit");
             this.lblIndicator.setBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
+            this.setAccent(ACCENT_DONE);
         } else {
             // not assigned to an invoice
             editingAllowed = true;
@@ -796,6 +801,7 @@ public class TimesheetPositionEntryPanel extends javax.swing.JPanel {
             this.lblBilled.setText("");
             this.lblBilled.setToolTipText(null);
             this.lblIndicator.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
+            this.setAccent(TEXT_MUTED);
         }
 
         this.cmbPrincipal.setEnabled(editingAllowed);

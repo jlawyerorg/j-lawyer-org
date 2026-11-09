@@ -8,6 +8,8 @@
  */
 package com.jdimension.jlawyer.client.desktop;
 
+import com.jdimension.jlawyer.client.ui.theme.SectionCardPanel;
+import com.jdimension.jlawyer.client.ui.theme.UiColors;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -48,6 +50,12 @@ public class DesktopGridLayoutDialog extends JDialog {
     private static final String PANEL_MESSAGES_TO_ME_LABEL = "Nachrichten an mich";
     private static final String PANEL_MESSAGES_TO_OTHERS_LABEL = "Nachrichten an andere";
     private static final String PANEL_INVOICES_LABEL = "Offene Rechnungen";
+
+    private static final Color PAGE_BACKGROUND = new Color(236, 241, 246);
+    private static final Color MUTED_TEXT = new Color(100, 116, 139);
+    private static final Color CELL_EMPTY = new Color(248, 250, 252);
+    private static final Color CELL_ASSIGNED = new Color(234, 243, 252);
+    private static final Color CELL_ASSIGNED_BORDER = new Color(14, 114, 181);
 
     private final DesktopLayoutManager layoutManager;
     private final Runnable onLayoutChanged;
@@ -104,60 +112,73 @@ public class DesktopGridLayoutDialog extends JDialog {
     }
 
     private void initComponents() {
-        setLayout(new BorderLayout(10, 10));
+        // design kit: light cards on a soft page background
+        JPanel page = new JPanel(new BorderLayout(0, 0));
+        page.setBackground(PAGE_BACKGROUND);
+        setContentPane(page);
 
-        // Main content panel
         JPanel contentPanel = new JPanel();
+        contentPanel.setOpaque(false);
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
-        contentPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 10, 15));
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(14, 14, 6, 14));
 
-        // Preset selection
-        JPanel presetPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        presetPanel.add(new JLabel("Vorlage:"));
+        // Preset selection and grid size side by side
+        JPanel topRow = new JPanel(new GridLayout(1, 2, 12, 0));
+        topRow.setOpaque(false);
+
+        SectionCardPanel presetCard = new SectionCardPanel();
+        presetCard.setTitle("Vorlage");
+        presetCard.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
         cmbPreset = new JComboBox<>();
         cmbPreset.setModel(new DefaultComboBoxModel<>(DesktopLayoutPreset.values()));
         cmbPreset.addActionListener(e -> applyPresetSelection());
-        presetPanel.add(cmbPreset);
-        contentPanel.add(presetPanel);
+        presetCard.add(cmbPreset);
+        topRow.add(presetCard);
 
-        contentPanel.add(Box.createVerticalStrut(10));
-
-        // Grid dimensions
-        JPanel gridPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        gridPanel.setBorder(BorderFactory.createTitledBorder("Grid-Größe"));
-        gridPanel.add(new JLabel("Zeilen:"));
+        SectionCardPanel gridCard = new SectionCardPanel();
+        gridCard.setTitle("Raster");
+        gridCard.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        gridCard.add(mutedLabel("Zeilen"));
+        gridCard.add(Box.createHorizontalStrut(8));
         spinRows = new JSpinner(new SpinnerNumberModel(2, 1, 3, 1));
         spinRows.addChangeListener(e -> onGridSizeChanged());
-        gridPanel.add(spinRows);
-        gridPanel.add(Box.createHorizontalStrut(20));
-        gridPanel.add(new JLabel("Spalten:"));
+        gridCard.add(spinRows);
+        gridCard.add(Box.createHorizontalStrut(20));
+        gridCard.add(mutedLabel("Spalten"));
+        gridCard.add(Box.createHorizontalStrut(8));
         spinCols = new JSpinner(new SpinnerNumberModel(2, 1, 3, 1));
         spinCols.addChangeListener(e -> onGridSizeChanged());
-        gridPanel.add(spinCols);
-        contentPanel.add(gridPanel);
+        gridCard.add(spinCols);
+        topRow.add(gridCard);
 
-        contentPanel.add(Box.createVerticalStrut(10));
+        topRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, topRow.getPreferredSize().height));
+        contentPanel.add(topRow);
+        contentPanel.add(Box.createVerticalStrut(12));
 
         // Grid cell assignment
-        JPanel assignmentContainer = new JPanel(new BorderLayout());
-        assignmentContainer.setBorder(BorderFactory.createTitledBorder("Panel-Zuweisung"));
+        SectionCardPanel assignmentCard = new SectionCardPanel();
+        assignmentCard.setTitle("Bereiche zuweisen");
+        assignmentCard.setLayout(new BorderLayout());
         pnlGridAssignment = new JPanel();
+        pnlGridAssignment.setOpaque(false);
         pnlGridAssignment.setPreferredSize(new Dimension(400, 150));
-        assignmentContainer.add(pnlGridAssignment, BorderLayout.CENTER);
-        contentPanel.add(assignmentContainer);
+        assignmentCard.add(pnlGridAssignment, BorderLayout.CENTER);
+        contentPanel.add(assignmentCard);
 
-        add(contentPanel, BorderLayout.CENTER);
+        page.add(contentPanel, BorderLayout.CENTER);
 
         // Button panel with BorderLayout: Reset on left, other buttons on right
         JPanel buttonPanel = new JPanel(new BorderLayout());
-        buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 15, 15, 15));
+        buttonPanel.setOpaque(false);
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(6, 14, 14, 14));
 
         JButton btnReset = new JButton("Zurücksetzen");
         btnReset.setIcon(new ImageIcon(getClass().getResource("/icons/reload.png")));
         btnReset.addActionListener(e -> resetToDefault());
         buttonPanel.add(btnReset, BorderLayout.WEST);
 
-        JPanel rightButtonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
+        JPanel rightButtonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        rightButtonPanel.setOpaque(false);
         JButton btnApply = new JButton("Anwenden");
         btnApply.setIcon(new ImageIcon(getClass().getResource("/icons/agt_update_misc.png")));
         btnApply.addActionListener(e -> applyChanges());
@@ -172,10 +193,55 @@ public class DesktopGridLayoutDialog extends JDialog {
         btnOk.setIcon(new ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
         btnOk.addActionListener(e -> confirmChanges());
         rightButtonPanel.add(btnOk);
+        // the primary action
+        getRootPane().setDefaultButton(btnOk);
+
+        for (JButton b : new JButton[]{btnReset, btnApply, btnCancel, btnOk}) {
+            b.putClientProperty(com.formdev.flatlaf.FlatClientProperties.STYLE, "arc: 10; margin: 4,12,4,12");
+        }
 
         buttonPanel.add(rightButtonPanel, BorderLayout.EAST);
 
-        add(buttonPanel, BorderLayout.SOUTH);
+        page.add(buttonPanel, BorderLayout.SOUTH);
+    }
+
+    private static JLabel mutedLabel(String text) {
+        JLabel l = new JLabel(text);
+        l.setForeground(MUTED_TEXT);
+        return l;
+    }
+
+    /**
+     * One cell of the grid: a light rounded tile, outlined in blue while a section is assigned.
+     */
+    private static class CellTile extends JPanel {
+
+        private boolean assigned = false;
+
+        CellTile() {
+            super(new BorderLayout(0, 4));
+            setOpaque(false);
+            setBorder(BorderFactory.createEmptyBorder(8, 10, 10, 10));
+        }
+
+        void setAssigned(boolean assigned) {
+            if (this.assigned != assigned) {
+                this.assigned = assigned;
+                repaint();
+            }
+        }
+
+        @Override
+        protected void paintComponent(java.awt.Graphics g) {
+            java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
+            g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(this.assigned ? CELL_ASSIGNED : CELL_EMPTY);
+            g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 16, 16);
+            g2.setColor(this.assigned ? CELL_ASSIGNED_BORDER : UiColors.SEPARATOR);
+            g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 16, 16);
+            g2.dispose();
+            super.paintComponent(g);
+        }
     }
 
     private void loadCurrentSettings() {
@@ -220,16 +286,19 @@ public class DesktopGridLayoutDialog extends JDialog {
         int rows = (Integer) spinRows.getValue();
         int cols = (Integer) spinCols.getValue();
 
-        pnlGridAssignment.setLayout(new GridLayout(rows, cols, 5, 5));
+        pnlGridAssignment.setLayout(new GridLayout(rows, cols, 10, 10));
 
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < cols; c++) {
-                JPanel cellPanel = new JPanel(new BorderLayout(2, 2));
-                cellPanel.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+                CellTile cellPanel = new CellTile();
 
-                JLabel posLabel = new JLabel("Zelle " + (r + 1) + "," + (c + 1), JLabel.CENTER);
-                posLabel.setFont(posLabel.getFont().deriveFont(9f));
-                cellPanel.add(posLabel, BorderLayout.NORTH);
+                JLabel posLabel = mutedLabel("Zeile " + (r + 1) + " · Spalte " + (c + 1));
+                posLabel.setFont(posLabel.getFont().deriveFont(posLabel.getFont().getSize2D() - 1f));
+                // label and selection stay at the top of the tile instead of stretching with it
+                JPanel cellContent = new JPanel(new BorderLayout(0, 4));
+                cellContent.setOpaque(false);
+                cellContent.add(posLabel, BorderLayout.NORTH);
+                cellPanel.add(cellContent, BorderLayout.NORTH);
 
                 JComboBox<String> cmbPanel = new JComboBox<>();
                 cmbPanel.addItem(EMPTY_CELL);
@@ -244,8 +313,9 @@ public class DesktopGridLayoutDialog extends JDialog {
                     if (!updatingComboBoxes) {
                         onCellAssignmentChanged(cmbPanel);
                     }
+                    updateCellTiles();
                 });
-                cellPanel.add(cmbPanel, BorderLayout.CENTER);
+                cellContent.add(cmbPanel, BorderLayout.CENTER);
 
                 cellComboBoxes.add(cmbPanel);
                 pnlGridAssignment.add(cellPanel);
@@ -254,6 +324,18 @@ public class DesktopGridLayoutDialog extends JDialog {
 
         pnlGridAssignment.revalidate();
         pnlGridAssignment.repaint();
+    }
+
+    /**
+     * Outlines the cells that have a section assigned.
+     */
+    private void updateCellTiles() {
+        for (JComboBox<String> combo : cellComboBoxes) {
+            CellTile tile = (CellTile) javax.swing.SwingUtilities.getAncestorOfClass(CellTile.class, combo);
+            if (tile != null) {
+                tile.setAssigned(combo.getSelectedItem() != null && !EMPTY_CELL.equals(combo.getSelectedItem()));
+            }
+        }
     }
 
     private void loadPanelAssignmentsFromConfig(DesktopGridConfiguration config) {
@@ -289,6 +371,7 @@ public class DesktopGridLayoutDialog extends JDialog {
         } finally {
             updatingComboBoxes = false;
         }
+        updateCellTiles();
     }
 
     private void onCellAssignmentChanged(JComboBox<String> changedCombo) {

@@ -662,14 +662,17 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.assistant;
 
-import com.formdev.flatlaf.ui.FlatLineBorder;
 import com.jdimension.jlawyer.ai.ToolDefinition;
+import com.jdimension.jlawyer.client.ui.theme.UiColors;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.Insets;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.geom.Ellipse2D;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -688,11 +691,17 @@ import javax.swing.JPanel;
  */
 public class ToolCallGroupPanel extends JPanel {
 
-    private final JPanel header;
+    // timeline that links the expanded calls of a group
+    private static final Color TIMELINE = new Color(203, 213, 225);
+    private static final Color TEXT_MUTED = new Color(100, 116, 139);
+
+    private final ToolCallCard header;
     private final JLabel lblIndicator;
     private final JLabel lblArrow;
     private final JLabel lblHeader;
     private final JPanel details;
+
+    private static final int TIMELINE_INDENT = 18;
 
     private final List<JPanel> rows = new ArrayList<>();
     private final List<String> summaries = new ArrayList<>();
@@ -705,28 +714,30 @@ public class ToolCallGroupPanel extends JPanel {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setOpaque(false);
         setAlignmentX(Component.LEFT_ALIGNMENT);
+        // tool calls belong to an answer - align them with the assistant bubbles
+        // space above, so the calls do not stick to the user's request
+        setBorder(BorderFactory.createEmptyBorder(8, AiChatMessageMarkdownPanel.ASSISTANT_BUBBLE_LEFT, 0, AiChatMessageMarkdownPanel.ASSISTANT_BUBBLE_RIGHT));
 
-        this.header = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 4)) {
+        this.header = new ToolCallCard(new FlowLayout(FlowLayout.LEFT, 6, 2)) {
             @Override
             public Dimension getMaximumSize() {
-                return new Dimension(Integer.MAX_VALUE, getPreferredSize().height + 8);
+                return new Dimension(Integer.MAX_VALUE, getPreferredSize().height);
             }
         };
-        this.header.setOpaque(true);
         this.header.setAlignmentX(Component.LEFT_ALIGNMENT);
         this.header.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
         this.lblArrow = new JLabel();
-        this.lblArrow.setForeground(Color.DARK_GRAY);
+        this.lblArrow.setForeground(TEXT_MUTED);
+        this.lblArrow.setFont(this.lblArrow.getFont().deriveFont(java.awt.Font.BOLD, this.lblArrow.getFont().getSize2D() + 2f));
         this.header.add(this.lblArrow);
 
-        this.lblIndicator = new JLabel("●");
-        this.lblIndicator.setFont(this.lblIndicator.getFont().deriveFont(10f));
+        this.lblIndicator = new JLabel();
         this.header.add(this.lblIndicator);
 
         this.lblHeader = new JLabel();
         this.lblHeader.setFont(this.lblHeader.getFont().deriveFont(this.lblHeader.getFont().getSize2D() - 1f));
-        this.lblHeader.setForeground(Color.DARK_GRAY);
+        this.lblHeader.setForeground(UiColors.TEXT_DARK);
         this.header.add(this.lblHeader);
 
         this.header.addMouseListener(new MouseAdapter() {
@@ -741,11 +752,17 @@ public class ToolCallGroupPanel extends JPanel {
             public Dimension getMaximumSize() {
                 return new Dimension(Integer.MAX_VALUE, getPreferredSize().height);
             }
+
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                paintTimeline(g);
+            }
         };
         this.details.setLayout(new BoxLayout(this.details, BoxLayout.Y_AXIS));
         this.details.setOpaque(false);
         this.details.setAlignmentX(Component.LEFT_ALIGNMENT);
-        this.details.setBorder(BorderFactory.createEmptyBorder(2, 16, 0, 0));
+        this.details.setBorder(BorderFactory.createEmptyBorder(4, TIMELINE_INDENT, 0, 0));
         this.details.setVisible(false);
 
         add(this.header);
@@ -885,10 +902,32 @@ public class ToolCallGroupPanel extends JPanel {
     }
 
     private void applyRiskColors() {
-        Color[] colors = AiChatTranscript.getRiskColors(this.maxRiskLevel);
-        this.header.setBackground(colors[0]);
-        this.header.setBorder(new FlatLineBorder(new Insets(4, 8, 4, 8), colors[1], 1, 8));
-        this.lblIndicator.setForeground(colors[2]);
+        Color indicator = AiChatTranscript.getRiskColors(this.maxRiskLevel)[2];
+        this.header.setAccent(indicator);
+        this.lblIndicator.setIcon(ToolCallCard.riskBadge(indicator));
+    }
+
+    /**
+     * Draws a thin vertical line left of the expanded calls with a dot at each call.
+     */
+    private void paintTimeline(Graphics g) {
+        if (this.rows.size() < 2 || this.details.getInsets().left < TIMELINE_INDENT) {
+            return;
+        }
+        int x = TIMELINE_INDENT / 2;
+        JPanel last = this.rows.get(this.rows.size() - 1);
+        int bottom = last.getY() + last.getHeight() / 2;
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setColor(TIMELINE);
+        // from the header down to the last call
+        g2.fillRect(x - 1, 0, 2, bottom);
+        for (JPanel row : this.rows) {
+            int y = row.getY() + row.getHeight() / 2;
+            g2.fillRect(x, y - 1, row.getX() - x, 2);
+            g2.fill(new Ellipse2D.Float(x - 3.5f, y - 3.5f, 7, 7));
+        }
+        g2.dispose();
     }
 
     private static String getRowText(JPanel row) {

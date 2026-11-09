@@ -663,10 +663,11 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.modulebar;
 
+import com.formdev.flatlaf.FlatClientProperties;
 import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.server.modules.ModuleMetadata;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -674,18 +675,160 @@ import java.awt.event.KeyEvent;
 import java.util.HashMap;
 
 /**
+ * The main menu at the left edge of the main window: a dark sidebar with one entry per module,
+ * grouped by module group. The entry of the active editor is highlighted, and the sidebar can be
+ * collapsed to an icon-only bar.
+ *
  * @author jens
  */
 public class ModuleBar extends javax.swing.JPanel {
 
+    private static final String CONF_COLLAPSED = "client.modulebar.collapsed";
+    private static final int WIDTH_EXPANDED = 196;
+    private static final int WIDTH_COLLAPSED = 56;
+
     private HashMap<KeyStroke, Action> hotKeyActions = new HashMap<KeyStroke, Action>();
+
+    private boolean collapsed = false;
+    private Icon settingsIcon = null;
+    private Icon settingsRolloverIcon = null;
 
     /**
      * Creates new form ModuleBar
      */
     public ModuleBar() {
         initComponents();
+
+        Icon original = this.cmdSettings.getIcon();
+        this.settingsIcon = new SidebarIcon(original, SidebarColors.TEXT, ModuleButton.ICON_SIZE);
+        this.settingsRolloverIcon = new SidebarIcon(original, SidebarColors.ACCENT, ModuleButton.ICON_SIZE);
+        this.cmdSettings.setIcon(this.settingsIcon);
+        this.cmdSettings.setRolloverIcon(this.settingsRolloverIcon);
         this.cmdSettings.setFont(this.cmdSettings.getFont().deriveFont(Font.BOLD));
+        this.cmdSettings.setIconTextGap(10);
+
+        this.lblBrand.setIcon(new BrandDotIcon());
+        this.lblBrand.setIconTextGap(8);
+
+        this.jScrollPane1.setOpaque(false);
+        this.jScrollPane1.getViewport().setOpaque(false);
+        this.jScrollPane1.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
+        this.jScrollPane1.getVerticalScrollBar().setOpaque(false);
+        this.jScrollPane1.getVerticalScrollBar().putClientProperty(FlatClientProperties.STYLE, "width: 6; track: #00000000; thumb: #ffffff40; hoverThumbColor: #ffffff66; pressedThumbColor: #ffffff80; thumbArc: 999");
+
+        boolean storedCollapsed = "true".equalsIgnoreCase(ClientSettings.getInstance().getConfiguration(CONF_COLLAPSED, "false"));
+        this.applyCollapsed(storedCollapsed);
+
+        EditorsRegistry.getInstance().addEditorChangeListener(this::editorChanged);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        Graphics2D g2 = (Graphics2D) g.create();
+        try {
+            g2.setPaint(new GradientPaint(0, 0, SidebarColors.BACKGROUND_TOP, 0, Math.max(1, this.getHeight()), SidebarColors.BACKGROUND_BOTTOM));
+            g2.fillRect(0, 0, this.getWidth(), this.getHeight());
+        } finally {
+            g2.dispose();
+        }
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+        Dimension d = super.getPreferredSize();
+        return new Dimension(this.collapsed ? WIDTH_COLLAPSED : WIDTH_EXPANDED, d.height);
+    }
+
+    @Override
+    public Dimension getMinimumSize() {
+        Dimension d = super.getMinimumSize();
+        return new Dimension(this.collapsed ? WIDTH_COLLAPSED : WIDTH_EXPANDED, d.height);
+    }
+
+    public boolean isCollapsed() {
+        return this.collapsed;
+    }
+
+    /**
+     * Collapses the sidebar to an icon-only bar or expands it again. The state is stored in the
+     * client settings.
+     *
+     * @param collapsed true for icon only
+     */
+    public void setCollapsed(boolean collapsed) {
+        this.applyCollapsed(collapsed);
+        ClientSettings.getInstance().setConfiguration(CONF_COLLAPSED, "" + collapsed);
+        Container parent = this.getParent();
+        this.revalidate();
+        if (parent != null) {
+            parent.revalidate();
+            parent.repaint();
+        }
+    }
+
+    private void applyCollapsed(boolean collapsed) {
+        this.collapsed = collapsed;
+        for (Component c : this.buttonPane.getComponents()) {
+            if (c instanceof ModuleButton) {
+                ((ModuleButton) c).setCollapsed(collapsed);
+            } else if (c instanceof ModuleGroupLabel) {
+                ((ModuleGroupLabel) c).setCollapsed(collapsed);
+            }
+        }
+        this.lblBrand.setVisible(!collapsed);
+        this.cmdCollapse.setText(collapsed ? "»" : "«");
+        this.cmdCollapse.setToolTipText(collapsed ? "Menü ausklappen" : "Menü einklappen");
+        this.cmdSettings.setText(collapsed ? "" : "Vorlagen");
+        this.cmdSettings.setToolTipText("Vorlagen und Einstellungen");
+        this.revalidate();
+        this.repaint();
+    }
+
+    /**
+     * Highlights the module whose editor is now shown. If the editor belongs to no module (e.g. a
+     * case opened from a search), the previously active module stays highlighted.
+     */
+    private void editorChanged(Component editor) {
+        if (editor == null) {
+            return;
+        }
+        String cls = editor.getClass().getName();
+        ModuleButton match = null;
+        for (Component c : this.buttonPane.getComponents()) {
+            if (c instanceof ModuleButton && cls.equals(((ModuleButton) c).getEditorClass())) {
+                match = (ModuleButton) c;
+                break;
+            }
+        }
+        if (match == null) {
+            return;
+        }
+        for (Component c : this.buttonPane.getComponents()) {
+            if (c instanceof ModuleButton) {
+                ((ModuleButton) c).setActive(c == match);
+            }
+        }
+    }
+
+    /**
+     * Opens the module with the given editor, exactly as a click on its sidebar entry would
+     * (resetting its counter if configured, highlighting it, asking to save unsaved data).
+     *
+     * @param editorClass the editor class of the module
+     * @return true if a module with this editor exists
+     */
+    public boolean openModule(String editorClass) {
+        if (editorClass == null) {
+            return false;
+        }
+        for (Component c : this.buttonPane.getComponents()) {
+            if (c instanceof ModuleButton && editorClass.equals(((ModuleButton) c).getEditorClass())) {
+                ((ModuleButton) c).actionPerformed();
+                return true;
+            }
+        }
+        return false;
     }
 
     public void actionPerformed(int moduleIndex) {
@@ -698,10 +841,9 @@ public class ModuleBar extends javax.swing.JPanel {
             JMenuItem mi = new JMenuItem("<html>" + m.getModuleName() + ":<br/>" + m.getEditorName() + "</html>");
             mi.setIcon(m.getDefaultIcon());
             mi.setRolloverIcon(m.getRolloverIcon());
-            mi.setFont(mi.getFont().deriveFont(mi.getFont().getSize()-2f));
+            mi.setFont(mi.getFont().deriveFont(mi.getFont().getSize() - 2f));
             mi.setForeground(Color.BLACK);
             mi.setSelectedIcon(m.getRolloverIcon());
-
             JPanel caller = this;
             mi.addActionListener((ActionEvent ae) -> {
                 if (m.getEditorClass() != null) {
@@ -711,13 +853,10 @@ public class ModuleBar extends javax.swing.JPanel {
                         if (editor instanceof PopulateOptionsEditor) {
                             ((PopulateOptionsEditor) editor).populateOptions();
                         }
-
                         EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
-
                     } catch (Exception ex) {
                         JOptionPane.showMessageDialog(caller, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.loadingeditor") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.ERROR_MESSAGE);
                     }
-
                 } else {
                     EditorsRegistry.getInstance().setMainEditorsPaneView(null);
                 }
@@ -728,11 +867,15 @@ public class ModuleBar extends javax.swing.JPanel {
                 ModuleButton mb = (ModuleButton) buttonPane.getComponent(buttonPane.getComponentCount() - 1);
                 String formerModuleName = mb.getModule().getModuleName();
                 if (!formerModuleName.equals(m.getModuleName())) {
-                    buttonPane.add(new ModuleGroupLabel(m.getModuleName()));
+                    ModuleGroupLabel gl = new ModuleGroupLabel(m.getModuleName());
+                    gl.setCollapsed(this.collapsed);
+                    buttonPane.add(gl);
                 }
             }
             ModuleButton b = new ModuleButton(m);
+            b.setCollapsed(this.collapsed);
             buttonPane.add(b);
+
             if (m.getHotKey() != null) {
                 this.hotKeyActions.put(m.getHotKey(), new AbstractAction(m.getEditorClass()) {
                     @Override
@@ -764,6 +907,36 @@ public class ModuleBar extends javax.swing.JPanel {
     }
 
     /**
+     * Small green dot in front of the word mark.
+     */
+    private static class BrandDotIcon implements Icon {
+
+        private static final int SIZE = 10;
+
+        @Override
+        public void paintIcon(Component c, Graphics g, int x, int y) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            try {
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(SidebarColors.ACCENT);
+                g2.fillOval(x, y, SIZE, SIZE);
+            } finally {
+                g2.dispose();
+            }
+        }
+
+        @Override
+        public int getIconWidth() {
+            return SIZE;
+        }
+
+        @Override
+        public int getIconHeight() {
+            return SIZE;
+        }
+    }
+
+    /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
      * regenerated by the Form Editor.
@@ -776,17 +949,18 @@ public class ModuleBar extends javax.swing.JPanel {
         cmdSettings = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         buttonPane = new javax.swing.JPanel();
+        lblBrand = new javax.swing.JLabel();
+        cmdCollapse = new javax.swing.JButton();
 
-        setOpaque(false);
-
+        cmdSettings.setForeground(new java.awt.Color(255, 255, 255));
         cmdSettings.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_settings_applications_black_36dp.png"))); // NOI18N
         cmdSettings.setText("Vorlagen");
         cmdSettings.setBorder(null);
         cmdSettings.setBorderPainted(false);
         cmdSettings.setContentAreaFilled(false);
         cmdSettings.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        cmdSettings.setFocusPainted(false);
         cmdSettings.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        cmdSettings.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_settings_applications_green_36dp.png"))); // NOI18N
         cmdSettings.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mousePressed(java.awt.event.MouseEvent evt) {
                 cmdSettingsMousePressed(evt);
@@ -794,26 +968,59 @@ public class ModuleBar extends javax.swing.JPanel {
         });
 
         jScrollPane1.setBorder(null);
+        jScrollPane1.setOpaque(false);
 
         buttonPane.setOpaque(false);
         buttonPane.setLayout(new javax.swing.BoxLayout(buttonPane, javax.swing.BoxLayout.PAGE_AXIS));
         jScrollPane1.setViewportView(buttonPane);
 
+        lblBrand.setFont(lblBrand.getFont().deriveFont(lblBrand.getFont().getStyle() | java.awt.Font.BOLD, lblBrand.getFont().getSize()+3));
+        lblBrand.setForeground(new java.awt.Color(255, 255, 255));
+        lblBrand.setText("j-lawyer.org");
+
+        cmdCollapse.setFont(cmdCollapse.getFont().deriveFont(cmdCollapse.getFont().getStyle() | java.awt.Font.BOLD, cmdCollapse.getFont().getSize()+4));
+        cmdCollapse.setForeground(new java.awt.Color(255, 255, 255));
+        cmdCollapse.setText("«");
+        cmdCollapse.setToolTipText("Menü einklappen");
+        cmdCollapse.setBorder(null);
+        cmdCollapse.setBorderPainted(false);
+        cmdCollapse.setContentAreaFilled(false);
+        cmdCollapse.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        cmdCollapse.setFocusPainted(false);
+        cmdCollapse.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCollapseActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 180, Short.MAX_VALUE)
-                        .addGroup(layout.createSequentialGroup()
-                                .addGap(8, 8, 8)
-                                .addComponent(cmdSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 0, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(16, 16, 16)
+                .addComponent(lblBrand, javax.swing.GroupLayout.DEFAULT_SIZE, 0, Short.MAX_VALUE)
+                .addGap(4, 4, 4)
+                .addComponent(cmdCollapse, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(12, 12, 12))
+            .addGroup(layout.createSequentialGroup()
+                .addGap(16, 16, 16)
+                .addComponent(cmdSettings, javax.swing.GroupLayout.DEFAULT_SIZE, 0, Short.MAX_VALUE)
+                .addGap(16, 16, 16))
         );
         layout.setVerticalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                                .addComponent(jScrollPane1)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cmdSettings))
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(12, 12, 12)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                    .addComponent(lblBrand)
+                    .addComponent(cmdCollapse, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(10, 10, 10)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 0, Short.MAX_VALUE)
+                .addGap(8, 8, 8)
+                .addComponent(cmdSettings)
+                .addGap(12, 12, 12))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -821,11 +1028,17 @@ public class ModuleBar extends javax.swing.JPanel {
         this.popSettings.show(this.cmdSettings, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdSettingsMousePressed
 
+    private void cmdCollapseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCollapseActionPerformed
+        this.setCollapsed(!this.collapsed);
+    }//GEN-LAST:event_cmdCollapseActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel buttonPane;
+    private javax.swing.JButton cmdCollapse;
     private javax.swing.JButton cmdSettings;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JLabel lblBrand;
     private javax.swing.JPopupMenu popSettings;
     // End of variables declaration//GEN-END:variables
 }

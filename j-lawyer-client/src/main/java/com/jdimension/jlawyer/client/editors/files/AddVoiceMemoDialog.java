@@ -679,9 +679,6 @@ import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.DataLine;
-import javax.sound.sampled.Mixer;
-import javax.sound.sampled.TargetDataLine;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
@@ -694,7 +691,7 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
 
     private static final Logger log = Logger.getLogger(AddVoiceMemoDialog.class.getName());
 
-    private TargetDataLine targetDataLine;
+    private AudioUtils.MicrophoneLine targetDataLine;
     private ByteArrayOutputStream byteArrayOutputStream;
     private boolean isRecording = false;
     private ArrayList<byte[]> memoParts = new ArrayList<>();
@@ -1199,7 +1196,9 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
 
     private void cmdRecordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRecordActionPerformed
         if (!isRecording) {
-            startRecording();
+            if (!startRecording()) {
+                return;
+            }
             ClientSettings.getInstance().setConfiguration(ClientSettings.CONF_SOUND_LASTRECORDINGDEVICE, (String) this.cmbDevices.getSelectedItem());
             this.cmdRecord.setText("Pause / Stop");
             cmdRecord.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/stop_circle_32dp_DE313B_FILL0_wght400_GRAD0_opsz40.png")));
@@ -1249,32 +1248,10 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
         return this.txtFileName.getText();
     }
 
-    private void startRecording() {
+    private boolean startRecording() {
         try {
-            AudioFormat audioFormat = AudioUtils.getAudioFormat();
-
-            // Get selected mixer device name from dropdown
             String selectedDeviceName = (String) this.cmbDevices.getSelectedItem();
-
-            Mixer.Info[] mixerInfos = AudioSystem.getMixerInfo();
-            Mixer.Info selectedMixerInfo = null;
-            for (Mixer.Info mixerInfo : mixerInfos) {
-                if (mixerInfo.getName().equals(selectedDeviceName)) {
-                    selectedMixerInfo = mixerInfo;
-                    break;
-                }
-            }
-
-            if (selectedMixerInfo == null) {
-                System.err.println("Selected mixer device not found.");
-                return;
-            }
-
-            Mixer mixer = AudioSystem.getMixer(selectedMixerInfo);
-
-            DataLine.Info dataLineInfo = new DataLine.Info(TargetDataLine.class, audioFormat);
-            targetDataLine = (TargetDataLine) mixer.getLine(dataLineInfo);
-            targetDataLine.open(audioFormat);
+            targetDataLine = AudioUtils.openMicrophone(selectedDeviceName);
             targetDataLine.start();
 
             byteArrayOutputStream = new ByteArrayOutputStream();
@@ -1295,9 +1272,11 @@ public class AddVoiceMemoDialog extends javax.swing.JDialog {
             }).start();
 
             updateControlsEnabled();
+            return true;
         } catch (Exception ex) {
             log.error("Unable to start recording microphone audio stream", ex);
             JOptionPane.showMessageDialog(this, "Aufnahme konnte nicht gestartet werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return false;
         }
     }
 

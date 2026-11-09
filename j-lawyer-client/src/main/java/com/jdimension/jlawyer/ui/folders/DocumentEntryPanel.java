@@ -1199,6 +1199,9 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
                 boolean newValue = !favorite;
                 remote.setDocumentFavorite(this.getDocument().getId(), newValue);
                 this.getDocument().setFavorite(newValue);
+                if (this.documentsContainer != null) {
+                    this.documentsContainer.documentChanged();
+                }
                 this.setFavorite(newValue);
                 this.caseContainer.updateFavoriteDocuments();
 
@@ -1405,7 +1408,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         this.updateMetadata();
     }
 
-    // second line: sender / recipient, received date, keywords, tags and - if a title is shown
+    // metadata line: sender / recipient, received date, tags, keywords and - if a title is shown
     // instead - the file name
     private void updateMetadata() {
         if (this.document == null) {
@@ -1423,9 +1426,6 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         if (this.document.getReceivedDate() != null) {
             parts.add("Eing. " + dfShortDate.format(this.document.getReceivedDate()));
         }
-        if (this.document.getTitle() != null && !this.document.getTitle().isBlank()) {
-            parts.add(escape(this.document.getName()));
-        }
         // tags first, then keywords
         StringBuilder chips = new StringBuilder();
         for (String t : this.tags) {
@@ -1436,6 +1436,9 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         }
         if (chips.length() > 0) {
             parts.add(chips.toString().trim());
+        }
+        if (this.document.getTitle() != null && !this.document.getTitle().isBlank()) {
+            parts.add(escape(this.document.getName()));
         }
         if (parts.isEmpty()) {
             this.lblMetadata.setText("");
@@ -1455,7 +1458,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
     }
 
     private void documentClicked(MouseEvent evt, boolean deselectOthers) {
-        if (evt.getClickCount() == 2 && !evt.isConsumed()) {
+        if (evt.getClickCount() == 2 && javax.swing.SwingUtilities.isLeftMouseButton(evt) && !evt.isConsumed()) {
             evt.consume();
             this.caseContainer.openSelectedDocument(this.document);
         } else if (evt.getClickCount() == 1 && !evt.isConsumed()) {
@@ -1625,6 +1628,9 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             locator.lookupArchiveFileServiceRemote().setDocumentHighlights(this.document.getId(), this.document.getHighlight1(), this.document.getHighlight2());
+            if (this.documentsContainer != null) {
+                this.documentsContainer.documentChanged();
+            }
         } catch (Exception ex) {
             log.error("unable to set document highlights", ex);
             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Hervorheben des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);

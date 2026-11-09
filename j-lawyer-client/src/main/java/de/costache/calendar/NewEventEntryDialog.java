@@ -701,6 +701,8 @@ public class NewEventEntryDialog extends javax.swing.JDialog implements NewEvent
         this.calendarPanel = calPanel;
         this.newEventPanel.setNewEventListener(this);
         this.newEventPanel.populateOptions();
+        // design kit: the dialog consists of this one panel - give it the basic look of dialogs
+        com.jdimension.jlawyer.client.ui.theme.DialogStyle.styleContent(this.newEventPanel);
     }
 
     public void setBeginDate(Date d) {

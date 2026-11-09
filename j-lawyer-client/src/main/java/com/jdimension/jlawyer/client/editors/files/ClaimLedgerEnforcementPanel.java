@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.DesktopDateEntry;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ClaimLedger;
@@ -1261,10 +1262,10 @@ public class ClaimLedgerEnforcementPanel extends javax.swing.JPanel {
         }
         Date outcomeDate;
         try {
-            outcomeDate = dayFormat.parse(entered.trim());
-        } catch (java.text.ParseException ex) {
+            outcomeDate = DesktopDateEntry.requiredDay(entered);
+        } catch (IllegalArgumentException ex) {
             JOptionPane.showMessageDialog(this,
-                    "Das Datum konnte nicht gelesen werden. Erwartet wird TT.MM.JJJJ.",
+                    ex.getMessage(),
                     "Eingabe", JOptionPane.WARNING_MESSAGE);
             return;
         }

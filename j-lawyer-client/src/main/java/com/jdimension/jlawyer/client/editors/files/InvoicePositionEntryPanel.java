@@ -684,7 +684,7 @@ import org.apache.log4j.Logger;
  *
  * @author jens
  */
-public class InvoicePositionEntryPanel extends javax.swing.JPanel {
+public class InvoicePositionEntryPanel extends com.jdimension.jlawyer.client.ui.theme.EntryRowPanel {
 
     private static final Logger log = Logger.getLogger(InvoicePositionEntryPanel.class.getName());
 
@@ -702,6 +702,7 @@ public class InvoicePositionEntryPanel extends javax.swing.JPanel {
      */
     public InvoicePositionEntryPanel(InvoiceDialog parent, List<String> taxRates) {
         initComponents();
+        styleRowButtons(this.cmdMovePosUp, this.cmdMovePosDown, this.cmdRemovePosition);
         this.parent=parent;
         
         NumberFormat nf = NumberFormat.getNumberInstance(Locale.GERMAN);

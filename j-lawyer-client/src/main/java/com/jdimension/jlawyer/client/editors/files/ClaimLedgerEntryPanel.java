@@ -686,7 +686,7 @@ import themes.colors.DefaultColorTheme;
  *
  * @author jens
  */
-public class ClaimLedgerEntryPanel extends javax.swing.JPanel {
+public class ClaimLedgerEntryPanel extends com.jdimension.jlawyer.client.ui.theme.EntryRowPanel {
 
     private final DecimalFormat currencyFormat = new DecimalFormat("#,##0.00");
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
@@ -707,6 +707,8 @@ public class ClaimLedgerEntryPanel extends javax.swing.JPanel {
     public ClaimLedgerEntryPanel(ArchiveFilePanel caseView) {
         initComponents();
         this.caseView = caseView;
+        styleRowButtons(this.cmdOpen, this.cmdDelete, this.cmdStatement);
+        this.setAccent(ACCENT_OPEN);
     }
 
     public void setEntry(ArchiveFileBean caseDto, ClaimLedger ledger) {
@@ -739,6 +741,7 @@ public class ClaimLedgerEntryPanel extends javax.swing.JPanel {
         this.lblStatus.setText("");
         this.lblStatus.setToolTipText(null);
         this.lblStatus.setForeground(null);
+        this.setAccent(ACCENT_OPEN);
 
         if (this.ledger == null || this.ledger.getId() == null) {
             return;
@@ -818,6 +821,7 @@ public class ClaimLedgerEntryPanel extends javax.swing.JPanel {
             this.lblStatus.setText(status.toString());
             if (alert) {
                 this.lblStatus.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+                this.setAccent(ACCENT_OVERDUE);
             }
 
             // the line may be cut off in a narrow case view, so the tooltip always holds all of it

@@ -712,51 +712,40 @@ public class InvoiceFacade extends AbstractFacade<Invoice> implements InvoiceFac
     }
     
     @Override
-    public List<InvoiceStatusSummary> findSummaryByStatus(int... status) {
+    public List<InvoiceStatusSummary> findSummaryByStatus(java.util.Collection<String> groupIds, int... status) {
         List<InvoiceStatusSummary> result = new java.util.ArrayList<>();
         java.util.Date today = truncateToDay(new java.util.Date());
         for (int s : status) {
             if (s == Invoice.STATUS_OPEN) {
-                // Split STATUS_OPEN into not-yet-due and overdue
-                Object[] notDueRow;
-                try {
-                    notDueRow = (Object[]) em.createQuery(
-                            "SELECT COUNT(a), COALESCE(SUM(a.totalGross), 0) FROM Invoice a WHERE a.status = :status AND a.invoiceType.turnOver = true AND (a.dueDate IS NULL OR a.dueDate >= :today)")
-                            .setParameter("status", s)
-                            .setParameter("today", today, javax.persistence.TemporalType.DATE)
-                            .getSingleResult();
-                } catch (Exception ex) {
-                    notDueRow = new Object[]{0L, java.math.BigDecimal.ZERO};
-                }
-                // Use STATUS_OPEN for not-yet-due
-                result.add(toSummary(Invoice.STATUS_OPEN, notDueRow));
-
-                Object[] overdueRow;
-                try {
-                    overdueRow = (Object[]) em.createQuery(
-                            "SELECT COUNT(a), COALESCE(SUM(a.totalGross), 0) FROM Invoice a WHERE a.status = :status AND a.invoiceType.turnOver = true AND a.dueDate IS NOT NULL AND a.dueDate < :today")
-                            .setParameter("status", s)
-                            .setParameter("today", today, javax.persistence.TemporalType.DATE)
-                            .getSingleResult();
-                } catch (Exception ex) {
-                    overdueRow = new Object[]{0L, java.math.BigDecimal.ZERO};
-                }
-                // Use -STATUS_OPEN as marker for overdue subset of STATUS_OPEN
-                result.add(toSummary(-Invoice.STATUS_OPEN, overdueRow));
+                // Split STATUS_OPEN into not-yet-due (STATUS_OPEN) and overdue (-STATUS_OPEN as marker)
+                result.add(toSummary(Invoice.STATUS_OPEN, summaryRow(groupIds, s, "AND (a.dueDate IS NULL OR a.dueDate >= :today)", today)));
+                result.add(toSummary(-Invoice.STATUS_OPEN, summaryRow(groupIds, s, "AND a.dueDate IS NOT NULL AND a.dueDate < :today", today)));
             } else {
-                Object[] row;
-                try {
-                    row = (Object[]) em.createQuery(
-                            "SELECT COUNT(a), COALESCE(SUM(a.totalGross), 0) FROM Invoice a WHERE a.status = :status AND a.invoiceType.turnOver = true")
-                            .setParameter("status", s)
-                            .getSingleResult();
-                } catch (Exception ex) {
-                    row = new Object[]{0L, java.math.BigDecimal.ZERO};
-                }
-                result.add(toSummary(s, row));
+                result.add(toSummary(s, summaryRow(groupIds, s, "", null)));
             }
         }
         return result;
+    }
+
+    private Object[] summaryRow(java.util.Collection<String> groupIds, int status, String dueCondition, java.util.Date today) {
+        try {
+            // case visibility as in SecurityUtils.getAllowedCasesForUser
+            String jpql = "SELECT COUNT(a), COALESCE(SUM(a.totalGross), 0) FROM Invoice a"
+                    + (groupIds != null ? " JOIN a.archiveFileKey c LEFT JOIN c.group og" : "")
+                    + " WHERE a.status = :status AND a.invoiceType.turnOver = true "
+                    + dueCondition
+                    + (groupIds != null ? " AND " + com.jdimension.jlawyer.server.utils.SecurityUtils.caseVisibilityJpql("c", "og") : "");
+            javax.persistence.Query q = em.createQuery(jpql).setParameter("status", status);
+            if (today != null) {
+                q.setParameter("today", today, javax.persistence.TemporalType.DATE);
+            }
+            if (groupIds != null) {
+                q.setParameter("groupIds", com.jdimension.jlawyer.server.utils.SecurityUtils.groupIdsParameter(groupIds));
+            }
+            return (Object[]) q.getSingleResult();
+        } catch (Exception ex) {
+            return new Object[]{0L, java.math.BigDecimal.ZERO};
+        }
     }
 
     private InvoiceStatusSummary toSummary(int status, Object[] row) {

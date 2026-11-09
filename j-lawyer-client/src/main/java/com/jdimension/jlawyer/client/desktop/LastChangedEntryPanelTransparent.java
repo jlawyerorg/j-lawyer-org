@@ -663,7 +663,6 @@
  */
 package com.jdimension.jlawyer.client.desktop;
 
-import com.formdev.flatlaf.FlatClientProperties;
 import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
@@ -683,7 +682,6 @@ import java.awt.Font;
 import java.awt.Image;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
-import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -694,8 +692,6 @@ public class LastChangedEntryPanelTransparent extends javax.swing.JPanel impleme
     private static final Logger log = Logger.getLogger(LastChangedEntryPanelTransparent.class.getName());
     private LastChangedEntry e = null;
     
-    private static final Color HIGHLIGHT_COLOR = new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 220).darker().darker();
-    private static final Color NORMAL_COLOR = new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 190).darker().darker();
 
     /**
      * Creates new form LastChangedEntryPanelTransparent
@@ -703,17 +699,15 @@ public class LastChangedEntryPanelTransparent extends javax.swing.JPanel impleme
     public LastChangedEntryPanelTransparent() {
         initComponents();
 
-        this.jPanel1.setBackground(NORMAL_COLOR);
-        this.jPanel1.putClientProperty(FlatClientProperties.COMPONENT_ROUND_RECT, true);
 
         this.lblLawyer.setOpaque(false);
         this.lblAssistant.setOpaque(false);
         this.lblDescription.setOpaque(false);
         this.lblTags.setOpaque(false);
-        this.lblTags.setForeground(DefaultColorTheme.COLOR_LIGHT_GREY);
+        this.lblTags.setForeground(com.jdimension.jlawyer.client.ui.theme.UiColors.TEXT_ON_GLASS_SECONDARY);
 
-        this.lblLawyer.setForeground(DefaultColorTheme.COLOR_LIGHT_GREY);
-        this.lblAssistant.setForeground(DefaultColorTheme.COLOR_LIGHT_GREY);
+        this.lblLawyer.setForeground(com.jdimension.jlawyer.client.ui.theme.UiColors.TEXT_ON_GLASS_SECONDARY);
+        this.lblAssistant.setForeground(com.jdimension.jlawyer.client.ui.theme.UiColors.TEXT_ON_GLASS_SECONDARY);
 
         ClientSettings settings = ClientSettings.getInstance();
         String fontSizeOffset = settings.getConfiguration(ClientSettings.CONF_UI_FONTSIZEOFFSET, "0");
@@ -813,7 +807,7 @@ public class LastChangedEntryPanelTransparent extends javax.swing.JPanel impleme
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jPanel1 = new javax.swing.JPanel();
+        jPanel1 = new com.jdimension.jlawyer.client.ui.theme.GlassRowPanel();
         jLabel1 = new javax.swing.JLabel();
         lblDescription = new javax.swing.JLabel();
         lblLawyer = new javax.swing.JLabel();
@@ -999,17 +993,12 @@ public class LastChangedEntryPanelTransparent extends javax.swing.JPanel impleme
     }//GEN-LAST:event_lblTagsMouseExited
 
     private void highlight(boolean highlight) {
-        Color c=NORMAL_COLOR;
-        if(highlight) {
-            c=HIGHLIGHT_COLOR;
-        }
-        this.jPanel1.setBackground(c);
-        this.repaint();
+        this.jPanel1.setHovered(highlight);
     }
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JPanel jPanel1;
+    private com.jdimension.jlawyer.client.ui.theme.GlassRowPanel jPanel1;
     private javax.swing.JLabel lblAssistant;
     private javax.swing.JLabel lblDescription;
     private javax.swing.JLabel lblDropIndicator;

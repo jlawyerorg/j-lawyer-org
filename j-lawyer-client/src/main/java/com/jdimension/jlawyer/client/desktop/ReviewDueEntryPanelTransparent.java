@@ -689,7 +689,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Window;
 import java.text.SimpleDateFormat;
@@ -699,6 +698,7 @@ import java.util.Date;
 import javax.swing.Icon;
 import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
+import com.jdimension.jlawyer.client.ui.theme.GlassRowPanel;
 import javax.swing.JTextField;
 import javax.swing.Timer;
 import org.apache.log4j.Logger;
@@ -720,14 +720,8 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel implement
     private String doneDescription = "";
     private String unDoneDescription = "";
     
-    private static final Color DEFAULT_HIGHLIGHT_COLOR = new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 220).darker().darker();
-    private static final Color DEFAULT_NORMAL_COLOR = new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 190).darker().darker();
-
-    private static final int NORMAL_ALPHA = 160;
-    private static final int HIGHLIGHT_ALPHA = 200;
-
-    private Color normalColor = DEFAULT_NORMAL_COLOR;
-    private Color highlightColor = DEFAULT_HIGHLIGHT_COLOR;
+    // highlighted while the mouse is over the entry
+    private boolean hovered = false;
 
     private static final int REFRESH_DELAY_MS = 3000;
     private static final int PROGRESS_UPDATE_INTERVAL_MS = 50;
@@ -743,13 +737,14 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel implement
         initComponents();
         initProgressBar();
 
-        this.jPanel1.setBackground(normalColor);
-        this.jPanel2.setBackground(DEFAULT_NORMAL_COLOR);
+        // both halves are transparent - the entry paints one glass row behind them
+        this.jPanel1.setOpaque(false);
+        this.jPanel2.setOpaque(false);
 
         this.setOpaque(false);
         this.lblResponsible.setOpaque(false);
         this.lblDescription.setOpaque(false);
-        this.lblResponsible.setForeground(DefaultColorTheme.COLOR_LIGHT_GREY);
+        this.lblResponsible.setForeground(com.jdimension.jlawyer.client.ui.theme.UiColors.TEXT_ON_GLASS_SECONDARY);
 
         ((javax.swing.GroupLayout) this.getLayout()).linkSize(javax.swing.SwingConstants.VERTICAL, this.jPanel1, this.jPanel2);
 
@@ -782,14 +777,9 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel implement
     @Override
      protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        Graphics2D graphics = (Graphics2D) g;
-       
-        if(this.e!=null && this.e.getCalendarSetupColor()!=Integer.MIN_VALUE) {
-            graphics.setColor(new Color(this.e.getCalendarSetupColor()));
-            // Draw vertical bar on left edge spanning full height
-            int barWidth = 4;
-            graphics.fillRect(0, 0, barWidth, getHeight());
-        }
+        // glass row with the colour of the calendar as a bar on the left edge
+        Color accent = (this.e != null && this.e.getCalendarSetupColor() != Integer.MIN_VALUE) ? new Color(this.e.getCalendarSetupColor()) : null;
+        GlassRowPanel.paintRow(g, 0, 0, getWidth(), getHeight(), this.hovered, false, accent);
 
      }
 
@@ -797,8 +787,8 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel implement
         progressBar = new JProgressBar(0, REFRESH_DELAY_MS);
         progressBar.setVisible(false);
         progressBar.setBorderPainted(false);
-        progressBar.setOpaque(true);
-        progressBar.setBackground(normalColor);
+        progressBar.setOpaque(false);
+        progressBar.setBackground(new Color(0, 0, 0, 0));
     }
 
     private void startRefreshCountdown(ArchiveFileReviewsBean updatedReview, Date oldBeginDate, Date oldEndDate) {
@@ -938,18 +928,8 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel implement
             this.lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/notifications_20dp_white.png")));
         }
 
-        // Set background color based on calendar setup color
-        if (this.e.getCalendarSetupColor() != Integer.MIN_VALUE) {
-            Color baseColor = new Color(this.e.getCalendarSetupColor());
-            this.normalColor = new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), NORMAL_ALPHA);
-            this.highlightColor = new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), HIGHLIGHT_ALPHA);
-        } else {
-            this.normalColor = DEFAULT_NORMAL_COLOR;
-            this.highlightColor = DEFAULT_HIGHLIGHT_COLOR;
-        }
-        this.jPanel1.setBackground(normalColor);
-
-        Color foreground = overdue ? ColorUtils.readableSignalColor(this.normalColor) : Color.WHITE;
+        // the calendar colour is shown as the bar on the left edge (see paintComponent)
+        Color foreground = overdue ? ColorUtils.readableSignalColor(GlassRowPanel.TYPICAL_BACKGROUND) : Color.WHITE;
         this.lblDescription.setForeground(foreground);
         if (UserSettings.getInstance().getCurrentUser().getPrincipalId().equals(e.getResponsible())) {
             this.lblResponsible.setFont(this.lblResponsible.getFont().deriveFont(Font.BOLD));
@@ -1309,14 +1289,7 @@ public class ReviewDueEntryPanelTransparent extends javax.swing.JPanel implement
     }//GEN-LAST:event_formMouseExited
 
     private void highlight(boolean highlight) {
-        Color c = normalColor;
-        Color cPanel2 = DEFAULT_NORMAL_COLOR;
-        if (highlight) {
-            c = highlightColor;
-            cPanel2 = DEFAULT_HIGHLIGHT_COLOR;
-        }
-        this.jPanel1.setBackground(c);
-        this.jPanel2.setBackground(cPanel2);
+        this.hovered = highlight;
         this.repaint();
     }
     

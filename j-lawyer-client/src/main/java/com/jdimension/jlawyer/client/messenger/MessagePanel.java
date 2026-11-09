@@ -702,10 +702,14 @@ public class MessagePanel extends javax.swing.JPanel implements CaseDropTarget {
 
     private static final Logger log = Logger.getLogger(MessagePanel.class.getName());
 
-    private ImageIcon caseIcon = new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"));
+    // white, so it is visible on the blue and the slate bubble alike
+    private Icon caseIcon = new com.jdimension.jlawyer.client.modulebar.SidebarIcon(
+            new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png")), Color.WHITE, 16);
     private InstantMessage im = null;
 
     protected boolean showCaseContext = true;
+    private boolean ownMessage = false;
+    private float alpha = 1f;
     protected Color contextForeground = Color.WHITE;
     protected int maxDocumentChars = Integer.MAX_VALUE;
 
@@ -714,6 +718,7 @@ public class MessagePanel extends javax.swing.JPanel implements CaseDropTarget {
      */
     public MessagePanel() {
         initComponents();
+        this.calloutPanelComponent1.setFooter(this.pnlContext);
 
         this.calloutPanelComponent1.setMessage(new InstantMessage());
     }
@@ -722,19 +727,9 @@ public class MessagePanel extends javax.swing.JPanel implements CaseDropTarget {
         initComponents();
 
         this.im = im;
-
-        this.lblUser.setForeground(Color.WHITE);
-        this.lblUser.putClientProperty("JComponent.roundRect", true);
-        this.lblUser.setFont(UIManager.getFont("h1.font"));
-
-        this.lblUser.setIcon(UserSettings.getInstance().getUserBigIcon(im.getSender()));
-        this.lblUser.setText("");
-        this.lblUser.setToolTipText("von: " + im.getSender());
-        if (ownMessage) {
-            this.lblUser.setBackground(DefaultColorTheme.COLOR_LOGO_BLUE);
-        } else {
-            this.lblUser.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
-        }
+        this.ownMessage = ownMessage;
+        // case and document are shown as chips inside the bubble
+        this.calloutPanelComponent1.setFooter(this.pnlContext);
 
         this.calloutPanelComponent1.setMessage(im);
         this.calloutPanelComponent1.setOwnMessage(ownMessage);
@@ -751,6 +746,54 @@ public class MessagePanel extends javax.swing.JPanel implements CaseDropTarget {
             this.lblCaseContext.setIcon(null);
         }
         this.displayDocumentContext();
+        this.updateContextChips();
+    }
+
+    /**
+     * The case and document chips are the footer of the bubble. Without any context the footer
+     * takes no space.
+     */
+    private void updateContextChips() {
+        boolean hasCase = this.lblCaseContext.getText() != null && !this.lblCaseContext.getText().isEmpty();
+        boolean hasDocument = this.lblDocumentContext.getText() != null && !this.lblDocumentContext.getText().isEmpty();
+        this.lblCaseContext.setVisible(hasCase);
+        this.lblDocumentContext.setVisible(hasDocument);
+        this.pnlContext.setVisible(hasCase || hasDocument);
+        // the bubble reserves space for the chips
+        this.calloutPanelComponent1.setFooter(this.pnlContext);
+    }
+
+    /**
+     * Lets the message fade in, e.g. when it has just arrived.
+     */
+    public void fadeIn() {
+        this.alpha = 0f;
+        javax.swing.Timer t = new javax.swing.Timer(25, null);
+        long start = System.currentTimeMillis();
+        t.addActionListener(e -> {
+            float progress = Math.min(1f, (System.currentTimeMillis() - start) / 280f);
+            this.alpha = progress;
+            this.repaint();
+            if (progress >= 1f) {
+                t.stop();
+            }
+        });
+        t.start();
+    }
+
+    @Override
+    public void paint(java.awt.Graphics g) {
+        if (this.alpha >= 1f) {
+            super.paint(g);
+            return;
+        }
+        java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
+        try {
+            g2.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, Math.max(0f, this.alpha)));
+            super.paint(g2);
+        } finally {
+            g2.dispose();
+        }
     }
 
     /**
@@ -818,9 +861,8 @@ public class MessagePanel extends javax.swing.JPanel implements CaseDropTarget {
     }
 
     public int getCalloutWidth() {
-        return this.getParent().getWidth() - this.lblUser.getWidth() - 30;
-        //return this.getParent().getWidth() - this.calloutPanelComponent1.getX() - this.lblUser.getWidth();
-        //return this.calloutPanelComponent1.getWidth();
+        // the bubble component spans the whole message, it places the bubble itself
+        return this.getParent().getWidth() - 2;
     }
 
     /**
@@ -832,7 +874,7 @@ public class MessagePanel extends javax.swing.JPanel implements CaseDropTarget {
      */
     public void presetSize(int parentWidth) {
         // see getCalloutWidth
-        int calloutWidth = parentWidth - this.lblUser.getPreferredSize().width - 30;
+        int calloutWidth = parentWidth - 2;
         // lay out at the width the message will get, to learn what that leaves for the callout
         this.setSize(calloutWidth, this.getPreferredSize().height);
         this.doLayout();
@@ -852,15 +894,15 @@ public class MessagePanel extends javax.swing.JPanel implements CaseDropTarget {
 
     @Override
     public Dimension getMaximumSize() {
-        Dimension calloutPreferred = this.calloutPanelComponent1.getPreferredSize(); //To change body of generated methods, choose Tools | Templates.
-        calloutPreferred.setSize(calloutPreferred.getWidth(), calloutPreferred.getHeight() + 8 + 18 + this.lblCaseContext.getPreferredSize().getHeight());
-        return calloutPreferred;
+        return this.getPreferredSize();
     }
 
     @Override
     public Dimension getPreferredSize() {
-        Dimension calloutPreferred = this.calloutPanelComponent1.getPreferredSize(); //To change body of generated methods, choose Tools | Templates.
-        calloutPreferred.setSize(calloutPreferred.getWidth(), calloutPreferred.getHeight() + 8 + 18 + this.lblCaseContext.getPreferredSize().getHeight());
+        Dimension calloutPreferred = this.calloutPanelComponent1.getPreferredSize();
+        // gaps of the layout: 2 between bubble and chips, 6 below
+        // the chips are inside the bubble - only the gap to the next message is added
+        calloutPreferred.setSize(calloutPreferred.getWidth(), calloutPreferred.getHeight() + 6);
         return calloutPreferred;
     }
 
@@ -874,27 +916,18 @@ public class MessagePanel extends javax.swing.JPanel implements CaseDropTarget {
     private void initComponents() {
 
         calloutPanelComponent1 = new com.jdimension.jlawyer.client.messenger.CalloutPanelComponent();
-        lblUser = new javax.swing.JLabel();
-        lblCaseContext = new javax.swing.JLabel();
-        lblDocumentContext = new javax.swing.JLabel();
+        pnlContext = new javax.swing.JPanel();
+        lblCaseContext = new com.jdimension.jlawyer.client.ui.theme.ChipLabel();
+        lblDocumentContext = new com.jdimension.jlawyer.client.ui.theme.ChipLabel();
 
         setOpaque(false);
 
-        javax.swing.GroupLayout calloutPanelComponent1Layout = new javax.swing.GroupLayout(calloutPanelComponent1);
-        calloutPanelComponent1.setLayout(calloutPanelComponent1Layout);
-        calloutPanelComponent1Layout.setHorizontalGroup(
-            calloutPanelComponent1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
-        calloutPanelComponent1Layout.setVerticalGroup(
-            calloutPanelComponent1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 63, Short.MAX_VALUE)
-        );
+        calloutPanelComponent1.setLayout(null);
 
-        lblUser.setText("jLabel1");
+        pnlContext.setOpaque(false);
+        pnlContext.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 6, 0));
 
-        lblCaseContext.setFont(lblCaseContext.getFont().deriveFont(lblCaseContext.getFont().getSize()-2f));
-        lblCaseContext.setForeground(new java.awt.Color(255, 255, 255));
+        lblCaseContext.setFont(lblCaseContext.getFont().deriveFont(lblCaseContext.getFont().getSize()-1f));
         lblCaseContext.setText("jLabel1");
         lblCaseContext.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         lblCaseContext.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -902,9 +935,9 @@ public class MessagePanel extends javax.swing.JPanel implements CaseDropTarget {
                 lblCaseContextMouseClicked(evt);
             }
         });
+        pnlContext.add(lblCaseContext);
 
-        lblDocumentContext.setFont(lblDocumentContext.getFont().deriveFont(lblDocumentContext.getFont().getSize()-2f));
-        lblDocumentContext.setForeground(new java.awt.Color(255, 255, 255));
+        lblDocumentContext.setFont(lblDocumentContext.getFont().deriveFont(lblDocumentContext.getFont().getSize()-1f));
         lblDocumentContext.setText("jLabel2");
         lblDocumentContext.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         lblDocumentContext.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -912,33 +945,21 @@ public class MessagePanel extends javax.swing.JPanel implements CaseDropTarget {
                 lblDocumentContextMouseClicked(evt);
             }
         });
+        pnlContext.add(lblDocumentContext);
+
+        calloutPanelComponent1.add(pnlContext);
+        pnlContext.setBounds(0, 0, pnlContext.getPreferredSize().width, pnlContext.getPreferredSize().height);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(calloutPanelComponent1, javax.swing.GroupLayout.DEFAULT_SIZE, 213, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(lblCaseContext)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(lblDocumentContext, javax.swing.GroupLayout.DEFAULT_SIZE, 159, Short.MAX_VALUE)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblUser))
+            .addComponent(calloutPanelComponent1, javax.swing.GroupLayout.DEFAULT_SIZE, 222, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(calloutPanelComponent1, javax.swing.GroupLayout.DEFAULT_SIZE, 63, Short.MAX_VALUE)
-                    .addComponent(lblUser, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblCaseContext)
-                    .addComponent(lblDocumentContext))
+                .addComponent(calloutPanelComponent1, javax.swing.GroupLayout.DEFAULT_SIZE, 63, Short.MAX_VALUE)
                 .addGap(6, 6, 6))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -1026,9 +1047,9 @@ public class MessagePanel extends javax.swing.JPanel implements CaseDropTarget {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private com.jdimension.jlawyer.client.messenger.CalloutPanelComponent calloutPanelComponent1;
-    private javax.swing.JLabel lblCaseContext;
-    private javax.swing.JLabel lblDocumentContext;
-    private javax.swing.JLabel lblUser;
+    private com.jdimension.jlawyer.client.ui.theme.ChipLabel lblCaseContext;
+    private com.jdimension.jlawyer.client.ui.theme.ChipLabel lblDocumentContext;
+    private javax.swing.JPanel pnlContext;
     // End of variables declaration//GEN-END:variables
 
     /**
@@ -1047,6 +1068,7 @@ public class MessagePanel extends javax.swing.JPanel implements CaseDropTarget {
             this.lblCaseContext.setText("");
             this.lblCaseContext.setIcon(null);
         }
+        this.updateContextChips();
     }
 
     /**
@@ -1061,8 +1083,8 @@ public class MessagePanel extends javax.swing.JPanel implements CaseDropTarget {
      */
     public void setContextForeground(Color contextForeground) {
         this.contextForeground = contextForeground;
-        this.lblCaseContext.setForeground(contextForeground);
-        this.lblDocumentContext.setForeground(contextForeground);
+        // the chips sit on the colored bubble, so they keep their light-on-dark look on any
+        // background - the color is only remembered for compatibility
     }
 
     /**
@@ -1073,10 +1095,21 @@ public class MessagePanel extends javax.swing.JPanel implements CaseDropTarget {
     }
 
     /**
+     * Sets the share of a wide list the bubble may take up at most, see
+     * CalloutPanelComponent.setBubbleWidthRatio.
+     *
+     * @param bubbleWidthRatio between 0 and 1, default 0.75
+     */
+    public void setBubbleWidthRatio(float bubbleWidthRatio) {
+        this.calloutPanelComponent1.setBubbleWidthRatio(bubbleWidthRatio);
+    }
+
+    /**
      * @param maxDocumentChars the maxDocumentChars to set
      */
     public void setMaxDocumentChars(int maxDocumentChars) {
         this.maxDocumentChars = maxDocumentChars;
         this.displayDocumentContext();
+        this.updateContextChips();
     }
 }

@@ -96,7 +96,7 @@
 
           <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
           <SubComponents>
-            <Container class="javax.swing.JPanel" name="pnlMessages">
+            <Container class="com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel" name="pnlMessages">
               <Properties>
                 <Property name="opaque" type="boolean" value="false"/>
               </Properties>

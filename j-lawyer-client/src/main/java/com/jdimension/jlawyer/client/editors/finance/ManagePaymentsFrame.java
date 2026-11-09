@@ -689,6 +689,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
+import com.jdimension.jlawyer.client.utils.IbanUtils;
 import org.iban4j.IbanUtil;
 
 /**
@@ -707,6 +708,8 @@ public class ManagePaymentsFrame extends javax.swing.JFrame {
      */
     public ManagePaymentsFrame() {
         initComponents();
+        // the entries have their own frame - the scroll pane around them does not need one
+        this.jScrollPane2.setBorder(javax.swing.BorderFactory.createEmptyBorder());
 
         BoxLayout boxLayout = new BoxLayout(this.pnlPayments, BoxLayout.Y_AXIS);
         this.pnlPayments.setLayout(boxLayout);
@@ -1069,7 +1072,7 @@ public class ManagePaymentsFrame extends javax.swing.JFrame {
         if (iban == null) {
             return null;
         }
-        return iban.replaceAll("\\s", "").toUpperCase();
+        return IbanUtils.normalize(iban);
     }
 
     /**

@@ -957,8 +957,57 @@ public interface SystemManagementRemote {
     void removeDocumentTagRule(DocumentTagRule rule) throws Exception;
     void setDocumentTagRuleConditions(String ruleId, List<DocumentTagRuleCondition> conditionList) throws Exception;
 
+    /**
+     * Records that a bank transaction has been processed, without any booking
+     * details. Equivalent to
+     * {@code addTransactionLog(hashInput, expiryDays, null, null)}.
+     *
+     * @param hashInput the string representation of the transaction; only its
+     * SHA-256 checksum is stored
+     * @param expiryDays number of days after which the log entry is removed
+     * @return the persisted log entry
+     * @throws Exception if the log entry cannot be created
+     */
     TransactionLog addTransactionLog(String hashInput, int expiryDays) throws Exception;
 
+    /**
+     * Records that a bank transaction has been processed, including the
+     * booking details, so that a later import of the same transaction can show
+     * what has been booked.
+     *
+     * @param hashInput the string representation of the transaction; only its
+     * SHA-256 checksum is stored
+     * @param expiryDays number of days after which the log entry is removed
+     * @param caseId id of the case the transaction was booked to, may be null
+     * @param details human readable, line separated description of the
+     * executed actions (case, invoice, payment, case account entry, tags), may
+     * be null
+     * @return the persisted log entry
+     * @throws Exception if the log entry cannot be created
+     */
+    TransactionLog addTransactionLog(String hashInput, int expiryDays, String caseId, String details) throws Exception;
+
+    /**
+     * Appends further booking details to an existing transaction log entry,
+     * e.g. when actions of a previously (partially) failed transaction are
+     * executed in a later run.
+     *
+     * @param logId id of the transaction log entry
+     * @param details human readable, line separated description of the
+     * additionally executed actions
+     * @return the updated log entry
+     * @throws Exception if the log entry does not exist or cannot be updated
+     */
+    TransactionLog appendTransactionLogDetails(String logId, String details) throws Exception;
+
+    /**
+     * Looks up the log entry of a previously processed bank transaction.
+     *
+     * @param hashInput the string representation of the transaction
+     * @return the log entry, or null if the transaction has not been processed
+     * yet (or its log entry has expired)
+     * @throws Exception if the lookup fails
+     */
     TransactionLog getTransactionLog(String hashInput) throws Exception;
     
 }

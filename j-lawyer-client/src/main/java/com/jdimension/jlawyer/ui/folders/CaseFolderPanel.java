@@ -756,6 +756,9 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
     // true: table view, false: list view with preview
     private boolean tableMode = false;
 
+    // changes of the documents, folders and tags made in this client, see getChangeCount()
+    private volatile int changeCount = 0;
+
     /**
      * Creates new form CaseFolderPanel
      *
@@ -807,6 +810,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
     }
 
     public void setCase(ArchiveFileBean afb) {
+        this.changeCount++;
         this.selectedCase = afb;
         this.nonMatchingdocuments.clear();
         this.matchingDocumentHits.clear();
@@ -851,6 +855,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
     }
 
     public void setRootFolder(CaseFolder rootFolder, ArrayList<String> unselectedFolderIds) {
+        this.changeCount++;
         this.foldersListPanel.setRootFolder(rootFolder, unselectedFolderIds);
         this.foldersListPanel.revalidate();
         this.foldersListPanel.repaint();
@@ -2150,6 +2155,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
      * @param tags active tags per document id, multi-value tags as "name: value"
      */
     public void setDocumentExtras(Map<String, Integer> messageCounts, Map<String, ? extends List<String>> tags) {
+        this.changeCount++;
         this.messageCounts = messageCounts == null ? new HashMap<>() : new HashMap<>(messageCounts);
         this.documentTags = new HashMap<>();
         if (tags != null) {
@@ -2172,6 +2178,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
      * @param tags active tags per document id, multi-value tags as "name: value"
      */
     public void setAllDocumentTags(Map<String, ? extends List<String>> tags) {
+        this.changeCount++;
         this.documentTags = new HashMap<>();
         if (tags != null) {
             for (Map.Entry<String, ? extends List<String>> e : tags.entrySet()) {
@@ -2212,12 +2219,86 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
     }
 
     /**
+     * Replaces the documents with the ones loaded again from the server. Keeps the selected
+     * documents, the sort order, the collapsed attachments and the scroll position.
+     *
+     * @param documents the documents of the case
+     * @param invoices the invoices linked to the documents, per document id
+     */
+    public void replaceDocuments(ArrayList<ArchiveFileDocumentsBean> documents, HashMap<String, Invoice> invoices) {
+        int scroll = this.jScrollPane2.getVerticalScrollBar().getValue();
+        this.documents = documents;
+        this.linkedInvoices = invoices;
+        this.sort();
+        javax.swing.SwingUtilities.invokeLater(() -> this.jScrollPane2.getVerticalScrollBar().setValue(scroll));
+    }
+
+    /**
+     * Replaces the folders with the ones loaded again from the server. Folders already shown
+     * keep their selection and their collapsed state, new folders follow the saved settings.
+     *
+     * @param rootFolder the root folder of the case
+     * @param folderSettings the saved settings of the folders
+     */
+    public void replaceRootFolder(CaseFolder rootFolder, Map<String, CaseFolderSettings> folderSettings) {
+        CaseFolder shownRoot = this.getRootFolder();
+        List<String> shownIds = shownRoot == null ? new ArrayList<>() : shownRoot.getAllFolderIds();
+        ArrayList<String> unselectedIds = unselectedFolderIdsAfterReload(shownIds, this.foldersListPanel.getUnselectedFolderIds(), folderSettings);
+        Set<String> collapsedIds = this.foldersListPanel.getCollapsedFolderIds();
+        this.setRootFolder(rootFolder, unselectedIds);
+        this.foldersListPanel.setCollapsedFolderIds(collapsedIds);
+    }
+
+    /**
+     * @param shownIds the ids of the folders shown so far
+     * @param unselectedShownIds the ids of the shown folders that are not selected
+     * @param savedSettings the saved settings of the folders loaded again
+     * @return the folders to show unselected after the folders have been loaded again
+     */
+    static ArrayList<String> unselectedFolderIdsAfterReload(List<String> shownIds, List<String> unselectedShownIds, Map<String, CaseFolderSettings> savedSettings) {
+        ArrayList<String> unselectedIds = new ArrayList<>(unselectedShownIds);
+        for (Map.Entry<String, CaseFolderSettings> e : savedSettings.entrySet()) {
+            if (!shownIds.contains(e.getKey()) && e.getValue().isHidden()) {
+                unselectedIds.add(e.getKey());
+            }
+        }
+        return unselectedIds;
+    }
+
+    /**
+     * @return a number that changes with every change of the documents, folders or document
+     * tags made in this client, e.g. to recognise that documents loaded meanwhile are outdated
+     */
+    public int getChangeCount() {
+        return this.changeCount;
+    }
+
+    /**
+     * Notes a change of a document made in this client that is not passed to updateDocument,
+     * see getChangeCount().
+     */
+    void documentChanged() {
+        this.changeCount++;
+    }
+
+    /**
+     * Ends an edit in the table view, keeping the entered value.
+     */
+    public void stopDocumentEditing() {
+        javax.swing.JTable table = this.documentsTable.getTable();
+        if (table.isEditing()) {
+            table.getCellEditor().stopCellEditing();
+        }
+    }
+
+    /**
      * Updates the active tags of one document.
      *
      * @param documentId the document
      * @param tags its active tags, multi-value tags as "name: value"
      */
     public void setDocumentTags(String documentId, List<String> tags) {
+        this.changeCount++;
         this.documentTags.put(documentId, tags == null ? new ArrayList<>() : new ArrayList<>(tags));
         for (Component c : this.pnlDocumentEntries.getComponents()) {
             if (c instanceof DocumentEntryPanel && ((DocumentEntryPanel) c).getDocument().getId().equals(documentId)) {
@@ -2319,7 +2400,32 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
         return this.documentTags.getOrDefault(documentId, new ArrayList<>());
     }
 
+    /**
+     * @param documents the documents of the case
+     * @param doc a document
+     * @return true if a document with the same id has been found and replaced by the given one
+     */
+    static boolean replaceDocument(List<ArchiveFileDocumentsBean> documents, ArchiveFileDocumentsBean doc) {
+        int index = documents.indexOf(doc);
+        if (index < 0) {
+            return false;
+        }
+        documents.set(index, doc);
+        return true;
+    }
+
     public void addDocument(ArchiveFileDocumentsBean newDoc, Invoice invoice) {
+        if (replaceDocument(this.documents, newDoc)) {
+            // already shown, e.g. the documents have been loaded again after it was saved - the
+            // given instance replaces the shown one, as the caller may keep changing it
+            this.changeCount++;
+            if (invoice != null) {
+                this.linkedInvoices.put(newDoc.getId(), invoice);
+            }
+            this.refreshKeepingScrollPosition();
+            return;
+        }
+        this.changeCount++;
         this.documents.add(newDoc);
         if (invoice != null) {
             this.linkedInvoices.put(newDoc.getId(), invoice);
@@ -2345,6 +2451,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
     }
 
     public void clearDocuments() {
+        this.changeCount++;
         this.documents.clear();
         this.linkedInvoices.clear();
         this.pnlDocumentEntries.removeAll();
@@ -2353,6 +2460,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
     }
 
     public void removeDocument(ArchiveFileDocumentsBean doc) {
+        this.changeCount++;
         this.documents.remove(doc);
         this.hideDocument(doc);
         this.foldersListPanel.renderEmptyFullState();
@@ -2376,6 +2484,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
     }
 
     public void updateDocument(ArchiveFileDocumentsBean doc) {
+        this.changeCount++;
         for (Component c : this.pnlDocumentEntries.getComponents()) {
             if (c instanceof DocumentEntryPanel) {
 
@@ -2479,6 +2588,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
     }
 
     void removeDocumentsInFolders(ArrayList<String> folderIds) {
+        this.changeCount++;
 
         for (Component c : this.pnlDocumentEntries.getComponents()) {
             if (c instanceof DocumentEntryPanel) {
@@ -2504,6 +2614,7 @@ public class CaseFolderPanel extends javax.swing.JPanel implements EventConsumer
     }
 
     void updateDocumentsInFolder(CaseFolder folder) {
+        this.changeCount++;
         for (Component c : this.pnlDocumentEntries.getComponents()) {
             if (c instanceof DocumentEntryPanel) {
                 CaseFolder docFolder = ((DocumentEntryPanel) c).getDocument().getFolder();

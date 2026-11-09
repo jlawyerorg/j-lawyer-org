@@ -682,10 +682,14 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Image;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
+import java.awt.Insets;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
+import java.awt.image.BufferedImage;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -742,6 +746,8 @@ public class LoginDialog extends javax.swing.JFrame {
     private String randomBackground = null;
     private List<String> availableBackgrounds = Collections.emptyList();
     private int currentBackgroundIndex = -1;
+    private boolean backgroundLoading = false;
+    private boolean userBlockShown = false;
 
     /**
      * Creates new form LoginDialog
@@ -771,15 +777,16 @@ public class LoginDialog extends javax.swing.JFrame {
         try {
             InputStream is = LoginDialog.class.getResourceAsStream("/fonts/exo2/exo2-bold.ttf");
             Font font = Font.createFont(Font.TRUETYPE_FONT, is);
-            this.lblCompany.setFont(font.deriveFont(Font.BOLD, 16));
-            this.lblProgress.setFont(font.deriveFont(Font.BOLD, 16));
-            this.lblUser.setFont(font.deriveFont(Font.BOLD, 20));
-            this.lblRole.setFont(font.deriveFont(Font.BOLD, 16));
-            this.lblFullClientVersion.setText(VersionUtils.getClientVersion());
-            this.lblFullClientVersion.setFont(font.deriveFont(Font.BOLD, 48));
-            this.lblFullClientVersion.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
+            this.lblCompany.setFont(font.deriveFont(Font.BOLD, 14));
+            this.lblProgress.setFont(font.deriveFont(Font.BOLD, 13));
+            this.lblUser.setFont(font.deriveFont(Font.BOLD, 18));
+            this.lblRole.setFont(font.deriveFont(Font.BOLD, 13));
+            this.lblFullClientVersion.setText("Version " + VersionUtils.getClientVersion());
+            this.lblFullClientVersion.setFont(font.deriveFont(Font.BOLD, 15));
+            this.lblFullClientVersion.setForeground(new Color(255, 255, 255, 190));
             this.lblFullClientVersion.setToolTipText(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/StartupSplashFrame").getString("label.version") + " " + VersionUtils.getFullClientVersion());
-            this.lblBackgroundLocation.setFont(font.deriveFont(Font.BOLD, 16));
+            this.lblBackgroundLocation.setFont(font.deriveFont(Font.BOLD, 13));
+            this.lblBrandCompact.setFont(font.deriveFont(Font.BOLD, 18));
 
         } catch (Throwable t) {
             log.error(t);
@@ -788,25 +795,8 @@ public class LoginDialog extends javax.swing.JFrame {
         this.availableBackgrounds = Collections.emptyList();
         this.currentBackgroundIndex = -1;
 
-        // Use default 16:9 aspect ratio for initial size - background loads asynchronously
-        int defaultWidth = 1920;
-        int defaultHeight = 1080;
-
-        // Get the screen size of the monitor where the frame will be placed
-        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        GraphicsDevice gd = ge.getDefaultScreenDevice(); // Default monitor
-        GraphicsConfiguration gc = gd.getDefaultConfiguration(); // Current screen config
-        Rectangle bounds = gc.getBounds(); // Get screen bounds
-
-        // Set frame size to 80% of the screen's width and height
-        int height = (int) (bounds.height * 0.8);
-        int width = (int) ((float) height * ((float) defaultWidth / (float) defaultHeight));
-        setSize(width, height);
-
-        // Center the frame within the screen bounds
-        int x = bounds.x + (bounds.width - width) / 2;
-        int y = bounds.y + (bounds.height - height) / 2;
-        setLocation(x, y);
+        this.applyInitialWindowSize();
+        this.initModernLook();
 
         // Load background image asynchronously
         loadBackgroundAsync();
@@ -821,16 +811,18 @@ public class LoginDialog extends javax.swing.JFrame {
             System.exit(-1);
         }
 
-        Color highlightColor = new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 170);
-        this.jPanel5.setBackground(highlightColor);
+        // the glass card provides the backdrop of the login form
+        this.jPanel5.setBackground(new Color(0, 0, 0, 0));
 
         this.setTitle(this.getTitle() + " | Version " + VersionUtils.getFullClientVersion());
 
-        this.jTabbedPane1.setForegroundAt(0, DefaultColorTheme.COLOR_LOGO_BLUE);
-        this.jTabbedPane1.setForegroundAt(1, DefaultColorTheme.COLOR_LOGO_BLUE);
-        this.jTabbedPane1.setForegroundAt(2, DefaultColorTheme.COLOR_LOGO_BLUE);
-        this.jTabbedPane1.setForegroundAt(3, DefaultColorTheme.COLOR_LOGO_BLUE);
-        this.jTabbedPane1.putClientProperty("JTabbedPane.tabType", "card");
+        for (int i = 0; i < this.jTabbedPane1.getTabCount(); i++) {
+            this.jTabbedPane1.setForegroundAt(i, Color.WHITE);
+        }
+        this.jTabbedPane1.putClientProperty("JTabbedPane.tabType", "underlined");
+        this.jTabbedPane1.putClientProperty(FlatClientProperties.STYLE, "tabsOpaque: false; showContentSeparator: false;"
+                + " selectedBackground: #ffffff14; selectedForeground: #ffffff; hoverColor: #ffffff1f; hoverForeground: #ffffff;"
+                + " underlineColor: #97bf0d; inactiveUnderlineColor: #97bf0d99; focusColor: #ffffff14; contentAreaColor: #00000000");
         // begin: required so the tabbed pane is transparent on macOS. reason unknown.
         this.jTabbedPane1.setOpaque(false);
         this.jTabbedPane1.putClientProperty("TabbedPane.contentOpaque", Boolean.FALSE);
@@ -844,7 +836,9 @@ public class LoginDialog extends javax.swing.JFrame {
 
             this.jPanel5.putClientProperty(FlatClientProperties.COMPONENT_ROUND_RECT, true);
 
-            this.txtUser.setFont(font.deriveFont(Font.BOLD, 28));
+            this.txtUser.setFont(this.txtUser.getFont().deriveFont(Font.BOLD, 16f));
+            this.txtUser.putClientProperty(FlatClientProperties.MINIMUM_HEIGHT, 40);
+            this.txtUser.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
             this.txtUser.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.txtUser.putClientProperty("JTextField.placeholderText", "Nutzername");
             this.txtUser.putClientProperty("JTextField.leadingIcon", new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/client/baseline_face_black_24dp.png")));
@@ -855,7 +849,8 @@ public class LoginDialog extends javax.swing.JFrame {
                 }
             });
 
-            this.pwPassword.setFont(font.deriveFont(Font.BOLD, 28));
+            this.pwPassword.setFont(this.pwPassword.getFont().deriveFont(Font.BOLD, 16f));
+            this.pwPassword.putClientProperty(FlatClientProperties.MINIMUM_HEIGHT, 40);
             this.pwPassword.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.pwPassword.putClientProperty("JTextField.leadingIcon", new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/client/baseline_password_black_24dp.png")));
             this.pwPassword.addFocusListener(new java.awt.event.FocusAdapter() {
@@ -865,27 +860,27 @@ public class LoginDialog extends javax.swing.JFrame {
                 }
             });
 
-            this.cmdLogin.setFont(font.deriveFont(Font.BOLD, 28));
-            this.cmdSaveProfile.setFont(font.deriveFont(Font.BOLD, 20));
+            this.cmdLogin.setFont(font.deriveFont(Font.BOLD, 18));
+            this.cmdSaveProfile.setFont(font.deriveFont(Font.BOLD, 14));
 
-            this.jTabbedPane1.setFont(font.deriveFont(Font.BOLD, 18));
+            this.jTabbedPane1.setFont(font.deriveFont(Font.BOLD, 14));
 
-            this.jLabel1.setFont(font.deriveFont(Font.BOLD, 16));
-            this.lblProfile.setFont(font.deriveFont(Font.BOLD, 16));
-            this.jLabel2.setFont(font.deriveFont(Font.BOLD, 16));
-            this.jLabel4.setFont(font.deriveFont(Font.BOLD, 16));
-            this.jLabel5.setFont(font.deriveFont(Font.BOLD, 16));
-            this.jLabel6.setFont(font.deriveFont(Font.BOLD, 16));
-            this.jLabel15.setFont(font.deriveFont(Font.BOLD, 16));
+            this.jLabel1.setFont(font.deriveFont(Font.BOLD, 14));
+            this.lblProfile.setFont(font.deriveFont(Font.BOLD, 14));
+            this.jLabel2.setFont(font.deriveFont(Font.BOLD, 14));
+            this.jLabel4.setFont(font.deriveFont(Font.BOLD, 14));
+            this.jLabel5.setFont(font.deriveFont(Font.BOLD, 14));
+            this.jLabel6.setFont(font.deriveFont(Font.BOLD, 14));
+            this.jLabel15.setFont(font.deriveFont(Font.BOLD, 14));
 
-            this.lblBoxOutput.setFont(font.deriveFont(Font.BOLD, 16));
+            this.lblBoxOutput.setFont(font.deriveFont(Font.BOLD, 14));
 
-            this.jLabel9.setFont(font.deriveFont(Font.BOLD, 14));
-            this.jLabel10.setFont(font.deriveFont(Font.BOLD, 14));
-            this.jLabel11.setFont(font.deriveFont(Font.BOLD, 14));
-            this.jLabel12.setFont(font.deriveFont(Font.BOLD, 14));
-            this.jLabel13.setFont(font.deriveFont(Font.BOLD, 14));
-            this.jLabel14.setFont(font.deriveFont(Font.BOLD, 14));
+            this.jLabel9.setFont(font.deriveFont(Font.BOLD, 13));
+            this.jLabel10.setFont(font.deriveFont(Font.BOLD, 13));
+            this.jLabel11.setFont(font.deriveFont(Font.BOLD, 13));
+            this.jLabel12.setFont(font.deriveFont(Font.BOLD, 13));
+            this.jLabel13.setFont(font.deriveFont(Font.BOLD, 13));
+            this.jLabel14.setFont(font.deriveFont(Font.BOLD, 13));
 
             this.cmbProfile.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.cmbCurrentConnection.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
@@ -900,7 +895,8 @@ public class LoginDialog extends javax.swing.JFrame {
             this.txtTargetPort.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
 
             this.cmbProfile.setFont(font.deriveFont(Font.BOLD, 12));
-            this.cmbCurrentConnection.setFont(font.deriveFont(Font.BOLD, 24));
+            this.cmbCurrentConnection.setFont(font.deriveFont(Font.BOLD, 15));
+            this.cmbCurrentConnection.putClientProperty(FlatClientProperties.MINIMUM_HEIGHT, 36);
             this.txtServer.setFont(font.deriveFont(Font.BOLD, 12));
             this.txtPort.setFont(font.deriveFont(Font.BOLD, 12));
             this.txtBoxPassword.setFont(font.deriveFont(Font.BOLD, 12));
@@ -915,6 +911,14 @@ public class LoginDialog extends javax.swing.JFrame {
             this.pwdSshPassword.putClientProperty("FlatLaf.style", "showRevealButton: false");
             this.txtTargetPort.setFont(font.deriveFont(Font.BOLD, 12));
 
+            // app pairing tab: same scale as the other tabs
+            this.jLabel3.setFont(font.deriveFont(Font.BOLD, 15));
+            this.jLabel21.setFont(font.deriveFont(Font.BOLD, 15));
+            this.jLabel22.setFont(font.deriveFont(Font.BOLD, 15));
+            this.jLabel18.setFont(font.deriveFont(Font.BOLD, 13));
+            this.jLabel20.setFont(font.deriveFont(Font.BOLD, 13));
+            this.jLabel23.setFont(font.deriveFont(Font.BOLD, 13));
+
             this.jLabel5.setFont(font.deriveFont(Font.BOLD, 12));
             this.jLabel7.setFont(font.deriveFont(Font.BOLD, 12));
             this.jLabel8.setFont(font.deriveFont(Font.BOLD, 12));
@@ -926,6 +930,11 @@ public class LoginDialog extends javax.swing.JFrame {
         }
 
         this.boxProgress.setVisible(false);
+
+        // the progress bar shows up once the application is loading; its space is kept so the
+        // login form does not move
+        ((org.jdesktop.layout.GroupLayout) this.jPanel5.getLayout()).setHonorsVisibility(this.progressPanel, Boolean.FALSE);
+        this.progressPanel.setVisible(false);
 
         ClientSettings settings = ClientSettings.getInstance();
         String lastConnectionName = settings.getConfiguration(ClientSettings.CONF_LASTCONNECTION, null);
@@ -1000,6 +1009,7 @@ public class LoginDialog extends javax.swing.JFrame {
             this.setFocusToPasswordField();
         }
         this.highlightSecuritySelection();
+        this.scaleFontsToWindow();
 
         // Add tab listener to update QR code when "App koppeln" tab is selected
         this.jTabbedPane1.addChangeListener(e -> {
@@ -1009,6 +1019,137 @@ public class LoginDialog extends javax.swing.JFrame {
             }
         });
 
+    }
+
+    /**
+     * Sizes the window to fit the usable area of the screen (without task bars), at most 1280x820,
+     * and centers it there.
+     */
+    private void applyInitialWindowSize() {
+        GraphicsConfiguration gc = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
+        Rectangle bounds = gc.getBounds();
+        Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(gc);
+        Rectangle usable = new Rectangle(bounds.x + insets.left, bounds.y + insets.top,
+                bounds.width - insets.left - insets.right, bounds.height - insets.top - insets.bottom);
+
+        int width = Math.max(320, Math.min(usable.width - 48, 1280));
+        int height = Math.max(320, Math.min(usable.height - 48, 820));
+        this.setMinimumSize(new Dimension(Math.min(720, usable.width), Math.min(520, usable.height)));
+        this.setSize(width, height);
+        this.setLocation(usable.x + (usable.width - width) / 2, usable.y + (usable.height - height) / 2);
+    }
+
+    /**
+     * Styling of the login window matching the dark sidebar look of the main window.
+     */
+    private void initModernLook() {
+        // brand column
+        this.lblLogo.setAlignmentX(CENTER_ALIGNMENT);
+        this.lblLogo.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        this.lblFullClientVersion.setAlignmentX(CENTER_ALIGNMENT);
+        this.lblFullClientVersion.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        this.lblFullClientVersion.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 0, 0, 0));
+        // labels in the box column may use its full width (the Exo2 glyphs are slightly wider than measured)
+        this.lblFullClientVersion.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+        this.jPanel11.setAlignmentX(CENTER_ALIGNMENT);
+        // the user block appears once the user is known (see setUserInfo / setCompanyName)
+        this.jPanel11.setVisible(false);
+        this.lblBrandCompact.setVisible(false);
+
+        // scrollable tab contents, transparent
+        for (javax.swing.JScrollPane sp : new javax.swing.JScrollPane[]{this.scrollLogin, this.scrollProfile, this.scrollBox, this.scrollApp}) {
+            sp.getViewport().setOpaque(false);
+            sp.setViewportBorder(null);
+            sp.getVerticalScrollBar().setUnitIncrement(16);
+            sp.getHorizontalScrollBar().setUnitIncrement(16);
+            for (javax.swing.JScrollBar sb : new javax.swing.JScrollBar[]{sp.getVerticalScrollBar(), sp.getHorizontalScrollBar()}) {
+                sb.setOpaque(false);
+                sb.putClientProperty(FlatClientProperties.STYLE, "width: 6; track: #00000000; thumb: #ffffff40; hoverThumbColor: #ffffff66; pressedThumbColor: #ffffff80; thumbArc: 999");
+            }
+        }
+
+        // login button: green pill with a white icon
+        javax.swing.Icon loginIcon = this.cmdLogin.getIcon();
+        if (loginIcon != null) {
+            this.cmdLogin.setIcon(new com.jdimension.jlawyer.client.modulebar.SidebarIcon(loginIcon, Color.WHITE, 22));
+        }
+        this.cmdLogin.setBorder(javax.swing.UIManager.getBorder("Button.border"));
+        this.cmdLogin.setBorderPainted(true);
+        this.cmdLogin.setContentAreaFilled(true);
+        // FlatLaf paints the rounded background itself; an opaque button would show white corners
+        this.cmdLogin.setOpaque(false);
+        this.cmdLogin.putClientProperty(FlatClientProperties.STYLE, "arc: 999; borderWidth: 0; focusWidth: 0; innerFocusWidth: 0; margin: 8,24,8,24;"
+                + " background: #97bf0d; foreground: #ffffff; hoverBackground: #a8d116; pressedBackground: #86aa0b;"
+                + " disabledBackground: #97bf0d66; disabledText: #ffffffaa");
+
+        // background switch: round glass button
+        javax.swing.Icon switchIcon = this.cmdNextBackground.getIcon();
+        if (switchIcon != null) {
+            this.cmdNextBackground.setIcon(new com.jdimension.jlawyer.client.modulebar.SidebarIcon(switchIcon, Color.WHITE, 22));
+        }
+        this.cmdNextBackground.setBorder(javax.swing.UIManager.getBorder("Button.border"));
+        this.cmdNextBackground.setContentAreaFilled(true);
+        this.cmdNextBackground.setOpaque(false);
+        this.cmdNextBackground.putClientProperty(FlatClientProperties.STYLE, "arc: 999; borderWidth: 0; focusWidth: 0; innerFocusWidth: 0; margin: 8,8,8,8;"
+                + " background: #00000066; hoverBackground: #000000a0; pressedBackground: #000000cc");
+
+        // long explanations in the app pairing tab wrap
+        for (javax.swing.JLabel l : new javax.swing.JLabel[]{this.jLabel18, this.jLabel20, this.jLabel23}) {
+            String t = l.getText();
+            if (t != null && !t.toLowerCase().startsWith("<html>")) {
+                l.setText("<html><div style='width:420px'>" + t + "</div></html>");
+            } else if (t != null && !t.contains("width:")) {
+                l.setText("<html><div style='width:420px'>" + t.substring(6).replaceFirst("(?i)</html>$", "") + "</div></html>");
+            }
+        }
+
+        // narrow windows: only the card, with a compact word mark
+        this.bgPanel.addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent e) {
+                boolean narrow = bgPanel.getWidth() < 860;
+                if (pnlBrand.isVisible() == narrow) {
+                    pnlBrand.setVisible(!narrow);
+                    lblBrandCompact.setVisible(narrow);
+                    bgPanel.revalidate();
+                }
+            }
+        });
+    }
+
+    /**
+     * Makes the texts of the login window a bit larger if the window is large enough: +2 pt from a
+     * height of 760 px, +1 pt from 680 px. Small displays keep the compact size.
+     */
+    private void scaleFontsToWindow() {
+        int h = this.getHeight();
+        float delta = h >= 760 ? 2f : (h >= 680 ? 1f : 0f);
+        if (delta <= 0f) {
+            return;
+        }
+        this.scaleFonts(this.cardLogin, delta);
+        this.scaleFonts(this.pnlBrand, delta);
+        this.scaleFonts(this.lblBackgroundLocation, delta);
+        this.cardLogin.revalidate();
+    }
+
+    private void scaleFonts(java.awt.Component c, float delta) {
+        if (c instanceof javax.swing.JLabel || c instanceof javax.swing.text.JTextComponent || c instanceof javax.swing.JComboBox
+                || c instanceof javax.swing.AbstractButton || c instanceof javax.swing.JTabbedPane) {
+            Font f = c.getFont();
+            if (f != null) {
+                c.setFont(f.deriveFont(f.getSize2D() + delta));
+            }
+        }
+        if (c instanceof javax.swing.JComboBox) {
+            // editor and renderer of a combo box follow its font
+            return;
+        }
+        if (c instanceof java.awt.Container) {
+            for (java.awt.Component child : ((java.awt.Container) c).getComponents()) {
+                this.scaleFonts(child, delta);
+            }
+        }
     }
 
     public final void setFocusToPasswordField() {
@@ -1035,7 +1176,7 @@ public class LoginDialog extends javax.swing.JFrame {
     }
 
     private void showNextBackgroundImage() {
-        if (this.availableBackgrounds == null || this.availableBackgrounds.isEmpty()) {
+        if (this.backgroundLoading || this.availableBackgrounds == null || this.availableBackgrounds.isEmpty()) {
             return;
         }
         if (this.currentBackgroundIndex < 0 || this.currentBackgroundIndex >= this.availableBackgrounds.size()) {
@@ -1046,33 +1187,96 @@ public class LoginDialog extends javax.swing.JFrame {
         applyBackgroundImage(this.randomBackground);
     }
 
-    private Dimension applyBackgroundImage(String backgroundFile) {
+    /**
+     * Shows another background image. The image is loaded and scaled down in the background, so the
+     * dialog does not freeze while large photos are decoded; clicks during loading are ignored.
+     */
+    private void applyBackgroundImage(String backgroundFile) {
+        if (this.backgroundLoading) {
+            return;
+        }
+        this.backgroundLoading = true;
         this.applyBackgroundLocation(backgroundFile);
-
-        ImageIcon image = null;
-        if (backgroundFile != null) {
-            URL resource = getClass().getResource("/themes/default/backgroundsrandom/" + backgroundFile);
-            if (resource != null) {
-                image = new ImageIcon(resource);
-            } else {
-                log.warn("Background image not found: " + backgroundFile + " - falling back to default");
+        final Dimension target = this.backgroundTargetSize();
+        SwingWorker<Image, Void> worker = new SwingWorker<Image, Void>() {
+            @Override
+            protected Image doInBackground() throws Exception {
+                Image img = null;
+                if (backgroundFile != null) {
+                    URL resource = getClass().getResource("/themes/default/backgroundsrandom/" + backgroundFile);
+                    if (resource != null) {
+                        img = scaledBackground(new ImageIcon(resource), target);
+                    } else {
+                        log.warn("Background image not found: " + backgroundFile + " - falling back to default");
+                    }
+                }
+                if (img == null) {
+                    URL fallback = getClass().getResource("/images/login-background-dark.jpg");
+                    if (fallback != null) {
+                        img = scaledBackground(new ImageIcon(fallback), target);
+                    }
+                }
+                return img;
             }
-        }
 
-        if (image == null || image.getIconWidth() <= 0 || image.getIconHeight() <= 0) {
-            URL fallback = getClass().getResource("/images/login-background-dark.jpg");
-            if (fallback != null) {
-                image = new ImageIcon(fallback);
-            } else {
-                return new Dimension(800, 600);
+            @Override
+            protected void done() {
+                try {
+                    Image img = get();
+                    if (img != null) {
+                        bgPanel.fadeToImage(img);
+                    }
+                } catch (Exception ex) {
+                    log.error("Error loading background image " + backgroundFile, ex);
+                } finally {
+                    backgroundLoading = false;
+                }
             }
-        }
-
-        // Use fade transition for smooth background switching
-        this.bgPanel.fadeToImage(image.getImage());
-        return new Dimension(image.getIconWidth(), image.getIconHeight());
+        };
+        worker.execute();
     }
-    
+
+    /**
+     * @return the size background images are scaled to: twice the window size, at least full HD
+     */
+    private Dimension backgroundTargetSize() {
+        int w = Math.max(1920, this.getWidth() * 2);
+        int h = Math.max(1080, this.getHeight() * 2);
+        return new Dimension(w, h);
+    }
+
+    /**
+     * Scales a (large) photo down so that it still covers the target size. Images that are smaller
+     * already are returned as they are.
+     *
+     * @param icon the loaded photo
+     * @param target the size the photo must cover
+     * @return the scaled image, or null if the photo could not be loaded
+     */
+    private static Image scaledBackground(ImageIcon icon, Dimension target) {
+        int iw = icon.getIconWidth();
+        int ih = icon.getIconHeight();
+        if (iw <= 0 || ih <= 0) {
+            return null;
+        }
+        double scale = Math.max((double) target.width / iw, (double) target.height / ih);
+        if (scale >= 1.0) {
+            return icon.getImage();
+        }
+        int w = Math.max(1, (int) Math.round(iw * scale));
+        int h = Math.max(1, (int) Math.round(ih * scale));
+        // area averaging gives a clean result for strong downscaling (no stripes or jaggies)
+        ImageIcon scaled = new ImageIcon(icon.getImage().getScaledInstance(w, h, Image.SCALE_AREA_AVERAGING));
+        BufferedImage out = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+        java.awt.Graphics2D g = out.createGraphics();
+        try {
+            g.drawImage(scaled.getImage(), 0, 0, null);
+        } finally {
+            g.dispose();
+        }
+        return out;
+    }
+
     private void applyBackgroundLocation(String backgroundFile) {
         String path = "/themes/default/backgroundsrandom/" + backgroundFile + ".properties";
 
@@ -1104,6 +1308,7 @@ public class LoginDialog extends javax.swing.JFrame {
      * background image fades in once loaded.
      */
     private void loadBackgroundAsync() {
+        final Dimension targetSize = this.backgroundTargetSize();
         SwingWorker<ImageIcon, Void> worker = new SwingWorker<ImageIcon, Void>() {
             private List<String> loadedBackgrounds = new ArrayList<>();
             private String selectedBackground = null;
@@ -1139,7 +1344,8 @@ public class LoginDialog extends javax.swing.JFrame {
                         // Load the actual image
                         URL resource = getClass().getResource("/themes/default/backgroundsrandom/" + selectedBackground);
                         if (resource != null) {
-                            return new ImageIcon(resource);
+                            Image scaled = scaledBackground(new ImageIcon(resource), targetSize);
+                            return scaled == null ? null : new ImageIcon(scaled);
                         }
                     }
                 } finally {
@@ -1201,7 +1407,20 @@ public class LoginDialog extends javax.swing.JFrame {
         jButton1 = new javax.swing.JButton();
         btnGrpSecurity = new javax.swing.ButtonGroup();
         bgPanel = new com.jdimension.jlawyer.client.StyledPanel();
+        pnlBrand = new com.jdimension.jlawyer.client.FadingPanel();
+        lblLogo = new javax.swing.JLabel();
+        lblFullClientVersion = new javax.swing.JLabel();
+        jPanel11 = new javax.swing.JPanel();
+        jPanel12 = new javax.swing.JPanel();
+        lblDefaultUserIcon = new javax.swing.JLabel();
+        jPanel10 = new javax.swing.JPanel();
+        lblUser = new javax.swing.JLabel();
+        lblCompany = new javax.swing.JLabel();
+        lblRole = new javax.swing.JLabel();
+        cardLogin = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
+        lblBrandCompact = new javax.swing.JLabel();
         jTabbedPane1 = new javax.swing.JTabbedPane();
+        scrollLogin = new javax.swing.JScrollPane();
         jPanel1 = new javax.swing.JPanel();
         jPanel7 = new javax.swing.JPanel();
         jPanel5 = new javax.swing.JPanel() {
@@ -1229,13 +1448,7 @@ public class LoginDialog extends javax.swing.JFrame {
             }
         };
         lblProgress = new javax.swing.JLabel();
-        jPanel11 = new javax.swing.JPanel();
-        jPanel12 = new javax.swing.JPanel();
-        lblDefaultUserIcon = new javax.swing.JLabel();
-        jPanel10 = new javax.swing.JPanel();
-        lblUser = new javax.swing.JLabel();
-        lblCompany = new javax.swing.JLabel();
-        lblRole = new javax.swing.JLabel();
+        scrollProfile = new javax.swing.JScrollPane();
         jPanel2 = new javax.swing.JPanel();
         jPanel6 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
@@ -1273,6 +1486,7 @@ public class LoginDialog extends javax.swing.JFrame {
         cmdDeleteProfile = new javax.swing.JButton();
         cmdAddProfile = new javax.swing.JButton();
         cmdImportProfile = new javax.swing.JButton();
+        scrollBox = new javax.swing.JScrollPane();
         jPanel3 = new javax.swing.JPanel();
         jPanel8 = new javax.swing.JPanel();
         jLabel6 = new javax.swing.JLabel();
@@ -1294,6 +1508,7 @@ public class LoginDialog extends javax.swing.JFrame {
         jLabel13 = new javax.swing.JLabel();
         jLabel14 = new javax.swing.JLabel();
         jLabel15 = new javax.swing.JLabel();
+        scrollApp = new javax.swing.JScrollPane();
         jPanel9 = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
         jLabel18 = new javax.swing.JLabel();
@@ -1302,11 +1517,9 @@ public class LoginDialog extends javax.swing.JFrame {
         jLabel22 = new javax.swing.JLabel();
         jLabel23 = new javax.swing.JLabel();
         lblProfileQrCode = new javax.swing.JLabel();
-        lblLogo = new javax.swing.JLabel();
         lblAutoUpdate = new javax.swing.JLabel();
         cmdNextBackground = new javax.swing.JButton();
-        lblFullClientVersion = new javax.swing.JLabel();
-        lblBackgroundLocation = new javax.swing.JLabel();
+        lblBackgroundLocation = new com.jdimension.jlawyer.client.statusbar.StatusChip();
 
         jButton1.setText("jButton1");
 
@@ -1314,7 +1527,80 @@ public class LoginDialog extends javax.swing.JFrame {
         setTitle("j-lawyer.org Login");
         setIconImage(new ImageIcon(getClass().getResource("/icons/windowicon.png")).getImage());
 
-        jTabbedPane1.setTabPlacement(javax.swing.JTabbedPane.LEFT);
+        pnlBrand.setOpaque(false);
+        pnlBrand.setLayout(new javax.swing.BoxLayout(pnlBrand, javax.swing.BoxLayout.PAGE_AXIS));
+
+        lblLogo.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        lblLogo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/j-lawyer-logo-login.png"))); // NOI18N
+        pnlBrand.add(lblLogo);
+
+        lblFullClientVersion.setFont(lblFullClientVersion.getFont().deriveFont(lblFullClientVersion.getFont().getStyle() | java.awt.Font.BOLD, lblFullClientVersion.getFont().getSize()+2));
+        lblFullClientVersion.setForeground(new java.awt.Color(220, 220, 220));
+        lblFullClientVersion.setText("1.0");
+        pnlBrand.add(lblFullClientVersion);
+
+        jPanel11.setOpaque(false);
+        jPanel11.setLayout(new java.awt.GridBagLayout());
+
+        jPanel12.setOpaque(false);
+
+        lblDefaultUserIcon.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblDefaultUserIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/client/person_outline_96dp_FFFFFF.png"))); // NOI18N
+
+        jPanel10.setOpaque(false);
+        jPanel10.setLayout(new java.awt.GridLayout(3, 1));
+
+        lblUser.setFont(lblUser.getFont().deriveFont(lblUser.getFont().getStyle() | java.awt.Font.BOLD, lblUser.getFont().getSize()+6));
+        lblUser.setForeground(new java.awt.Color(255, 255, 255));
+        lblUser.setText("jLabel20");
+        jPanel10.add(lblUser);
+
+        lblCompany.setFont(lblCompany.getFont().deriveFont(lblCompany.getFont().getStyle() | java.awt.Font.BOLD, lblCompany.getFont().getSize()+6));
+        lblCompany.setForeground(new java.awt.Color(255, 255, 255));
+        lblCompany.setText("jLabel20");
+        jPanel10.add(lblCompany);
+
+        lblRole.setFont(lblRole.getFont().deriveFont(lblRole.getFont().getStyle() | java.awt.Font.BOLD, lblRole.getFont().getSize()+6));
+        lblRole.setForeground(new java.awt.Color(255, 255, 255));
+        lblRole.setText("jLabel20");
+        jPanel10.add(lblRole);
+
+        org.jdesktop.layout.GroupLayout jPanel12Layout = new org.jdesktop.layout.GroupLayout(jPanel12);
+        jPanel12.setLayout(jPanel12Layout);
+        jPanel12Layout.setHorizontalGroup(
+            jPanel12Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel12Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(lblDefaultUserIcon)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel10, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        jPanel12Layout.setVerticalGroup(
+            jPanel12Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel12Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel12Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                    .add(lblDefaultUserIcon, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jPanel10, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+
+        jPanel11.add(jPanel12, new java.awt.GridBagConstraints());
+
+        pnlBrand.add(jPanel11);
+
+        cardLogin.setBorder(javax.swing.BorderFactory.createEmptyBorder(14, 16, 14, 16));
+        cardLogin.setLayout(new java.awt.BorderLayout(0, 6));
+
+        lblBrandCompact.setFont(lblBrandCompact.getFont().deriveFont(lblBrandCompact.getFont().getStyle() | java.awt.Font.BOLD, lblBrandCompact.getFont().getSize()+4));
+        lblBrandCompact.setForeground(new java.awt.Color(255, 255, 255));
+        lblBrandCompact.setText("j-lawyer.org");
+        lblBrandCompact.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 4, 10, 0));
+        cardLogin.add(lblBrandCompact, java.awt.BorderLayout.NORTH);
+
+        scrollLogin.setBorder(null);
+        scrollLogin.setOpaque(false);
 
         jPanel1.setOpaque(false);
 
@@ -1326,6 +1612,11 @@ public class LoginDialog extends javax.swing.JFrame {
 
         txtUser.setColumns(20);
         txtUser.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+        txtUser.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                txtUserKeyPressed(evt);
+            }
+        });
 
         pwPassword.setHorizontalAlignment(javax.swing.JTextField.CENTER);
         pwPassword.addKeyListener(new java.awt.event.KeyAdapter() {
@@ -1392,7 +1683,7 @@ public class LoginDialog extends javax.swing.JFrame {
         jPanel5Layout.setHorizontalGroup(
             jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel5Layout.createSequentialGroup()
-                .add(24, 24, 24)
+                .add(24, 24, Short.MAX_VALUE)
                 .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
                     .add(pwPassword)
                     .add(cmdLogin, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -1405,7 +1696,7 @@ public class LoginDialog extends javax.swing.JFrame {
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel5Layout.createSequentialGroup()
-                .add(36, 36, 36)
+                .add(12, 12, 12)
                 .add(cmbCurrentConnection, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .add(18, 18, 18)
                 .add(txtUser, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
@@ -1423,58 +1714,11 @@ public class LoginDialog extends javax.swing.JFrame {
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(12, 12, 12, 12);
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTH;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(4, 4, 4, 4);
         jPanel7.add(jPanel5, gridBagConstraints);
-
-        jPanel11.setOpaque(false);
-        jPanel11.setLayout(new java.awt.GridBagLayout());
-
-        jPanel12.setOpaque(false);
-
-        lblDefaultUserIcon.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblDefaultUserIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/client/person_outline_96dp_FFFFFF.png"))); // NOI18N
-
-        jPanel10.setOpaque(false);
-        jPanel10.setLayout(new java.awt.GridLayout(3, 1));
-
-        lblUser.setFont(lblUser.getFont().deriveFont(lblUser.getFont().getStyle() | java.awt.Font.BOLD, lblUser.getFont().getSize()+6));
-        lblUser.setForeground(new java.awt.Color(255, 255, 255));
-        lblUser.setText("jLabel20");
-        jPanel10.add(lblUser);
-
-        lblCompany.setFont(lblCompany.getFont().deriveFont(lblCompany.getFont().getStyle() | java.awt.Font.BOLD, lblCompany.getFont().getSize()+6));
-        lblCompany.setForeground(new java.awt.Color(255, 255, 255));
-        lblCompany.setText("jLabel20");
-        jPanel10.add(lblCompany);
-
-        lblRole.setFont(lblRole.getFont().deriveFont(lblRole.getFont().getStyle() | java.awt.Font.BOLD, lblRole.getFont().getSize()+6));
-        lblRole.setForeground(new java.awt.Color(255, 255, 255));
-        lblRole.setText("jLabel20");
-        jPanel10.add(lblRole);
-
-        org.jdesktop.layout.GroupLayout jPanel12Layout = new org.jdesktop.layout.GroupLayout(jPanel12);
-        jPanel12.setLayout(jPanel12Layout);
-        jPanel12Layout.setHorizontalGroup(
-            jPanel12Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel12Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(lblDefaultUserIcon)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel10, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        jPanel12Layout.setVerticalGroup(
-            jPanel12Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel12Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jPanel12Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                    .add(lblDefaultUserIcon, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(jPanel10, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
-        );
-
-        jPanel11.add(jPanel12, new java.awt.GridBagConstraints());
 
         org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -1482,22 +1726,23 @@ public class LoginDialog extends javax.swing.JFrame {
             jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel7, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 803, Short.MAX_VALUE)
-                    .add(jPanel11, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .add(jPanel7, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jPanel11, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .add(jPanel7, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        jTabbedPane1.addTab("Login", jPanel1);
+        scrollLogin.setViewportView(jPanel1);
+
+        jTabbedPane1.addTab("Login", scrollLogin);
+
+        scrollProfile.setBorder(null);
+        scrollProfile.setOpaque(false);
 
         jPanel2.setOpaque(false);
 
@@ -1705,7 +1950,7 @@ public class LoginDialog extends javax.swing.JFrame {
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdDeleteProfile))
                     .add(jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(158, Short.MAX_VALUE))
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel6Layout.setVerticalGroup(
             jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1736,7 +1981,7 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(jPanel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(cmdSaveProfile)
-                .addContainerGap(124, Short.MAX_VALUE))
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
@@ -1755,7 +2000,12 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(jPanel6, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        jTabbedPane1.addTab("Profile", jPanel2);
+        scrollProfile.setViewportView(jPanel2);
+
+        jTabbedPane1.addTab("Profile", scrollProfile);
+
+        scrollBox.setBorder(null);
+        scrollBox.setOpaque(false);
 
         jPanel3.setOpaque(false);
 
@@ -1954,7 +2204,12 @@ public class LoginDialog extends javax.swing.JFrame {
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        jTabbedPane1.addTab("j-lawyer.BOX ", new javax.swing.ImageIcon(getClass().getResource("/icons/greyled.png")), jPanel3); // NOI18N
+        scrollBox.setViewportView(jPanel3);
+
+        jTabbedPane1.addTab("j-lawyer.BOX ", new javax.swing.ImageIcon(getClass().getResource("/icons/greyled.png")), scrollBox); // NOI18N
+
+        scrollApp.setBorder(null);
+        scrollApp.setOpaque(false);
 
         jPanel9.setOpaque(false);
 
@@ -2002,7 +2257,7 @@ public class LoginDialog extends javax.swing.JFrame {
             .add(jPanel9Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 803, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(jLabel3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, jLabel20, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(jLabel21, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -2028,28 +2283,25 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(jLabel23)
                 .add(18, 18, 18)
                 .add(lblProfileQrCode)
-                .addContainerGap(252, Short.MAX_VALUE))
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        jTabbedPane1.addTab("App koppeln", jPanel9);
+        scrollApp.setViewportView(jPanel9);
 
-        lblLogo.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        lblLogo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/j-lawyer-logo-125px.png"))); // NOI18N
+        jTabbedPane1.addTab("App koppeln", scrollApp);
+
+        cardLogin.add(jTabbedPane1, java.awt.BorderLayout.CENTER);
 
         lblAutoUpdate.setFont(lblAutoUpdate.getFont().deriveFont(lblAutoUpdate.getFont().getStyle() | java.awt.Font.BOLD));
         lblAutoUpdate.setForeground(new java.awt.Color(255, 255, 255));
         lblAutoUpdate.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblAutoUpdate.setText("jLabel18");
+        lblAutoUpdate.setText(" ");
+        cardLogin.add(lblAutoUpdate, java.awt.BorderLayout.SOUTH);
 
         cmdNextBackground.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/cameraswitch_32dp_FFFFFF.png"))); // NOI18N
         cmdNextBackground.setBorder(null);
-        cmdNextBackground.setContentAreaFilled(false);
         cmdNextBackground.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         cmdNextBackground.setFocusable(false);
-
-        lblFullClientVersion.setFont(lblFullClientVersion.getFont().deriveFont(lblFullClientVersion.getFont().getStyle() | java.awt.Font.BOLD, lblFullClientVersion.getFont().getSize()+36));
-        lblFullClientVersion.setForeground(new java.awt.Color(14, 113, 180));
-        lblFullClientVersion.setText("1.0");
 
         lblBackgroundLocation.setFont(lblBackgroundLocation.getFont().deriveFont(lblBackgroundLocation.getFont().getStyle() | java.awt.Font.BOLD));
         lblBackgroundLocation.setForeground(new java.awt.Color(255, 255, 255));
@@ -2059,40 +2311,31 @@ public class LoginDialog extends javax.swing.JFrame {
         org.jdesktop.layout.GroupLayout bgPanelLayout = new org.jdesktop.layout.GroupLayout(bgPanel);
         bgPanel.setLayout(bgPanelLayout);
         bgPanelLayout.setHorizontalGroup(
-            bgPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            bgPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
             .add(bgPanelLayout.createSequentialGroup()
-                .add(8, 8, 8)
-                .add(jTabbedPane1)
-                .addContainerGap())
+                .add(16, 48, 48)
+                .add(pnlBrand, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(32, 32, 32)
+                .add(cardLogin, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(16, 48, 48))
             .add(bgPanelLayout.createSequentialGroup()
-                .add(36, 36, 36)
-                .add(lblFullClientVersion)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .add(lblLogo)
-                .add(36, 36, 36))
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, lblAutoUpdate, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, bgPanelLayout.createSequentialGroup()
                 .add(24, 24, 24)
-                .add(lblBackgroundLocation)
+                .add(lblBackgroundLocation, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .add(cmdNextBackground)
+                .add(cmdNextBackground, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .add(24, 24, 24))
         );
         bgPanelLayout.setVerticalGroup(
             bgPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(bgPanelLayout.createSequentialGroup()
-                .add(18, 18, 18)
-                .add(bgPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(lblLogo)
-                    .add(lblFullClientVersion))
-                .add(24, 24, 24)
-                .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(lblAutoUpdate)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .add(bgPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, cmdNextBackground, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, lblBackgroundLocation, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .add(16, 32, Short.MAX_VALUE)
+                .add(bgPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+                    .add(pnlBrand, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(cardLogin, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .add(12, 24, Short.MAX_VALUE)
+                .add(bgPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+                    .add(lblBackgroundLocation, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(cmdNextBackground, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .add(18, 18, 18))
         );
 
@@ -2131,7 +2374,7 @@ public class LoginDialog extends javax.swing.JFrame {
 
     private void cmdBoxShutdownActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdBoxShutdownActionPerformed
         BoxAccess box = new BoxAccess(this.txtBoxPassword.getText());
-        box.boxReboot(lblBoxOutput, boxProgress, this.txtServer.getText());
+        box.boxShutdown(lblBoxOutput, boxProgress, this.txtServer.getText());
     }//GEN-LAST:event_cmdBoxShutdownActionPerformed
 
     private void cmdScanNetworkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdScanNetworkActionPerformed
@@ -2442,6 +2685,21 @@ public class LoginDialog extends javax.swing.JFrame {
 
     public void setCompanyName(String s) {
         this.lblCompany.setText(s);
+        this.showUserBlock();
+    }
+
+    private void showUserBlock() {
+        SwingUtilities.invokeLater(() -> {
+            if (!this.userBlockShown) {
+                this.userBlockShown = true;
+                // while the application is loading, the user replaces logo and version
+                this.pnlBrand.crossFade(() -> {
+                    this.lblLogo.setVisible(false);
+                    this.lblFullClientVersion.setVisible(false);
+                    this.jPanel11.setVisible(true);
+                }, 250, 450);
+            }
+        });
     }
 
     public void setUserInfo(ImageIcon icon, AppUserBean principal) {
@@ -2451,6 +2709,7 @@ public class LoginDialog extends javax.swing.JFrame {
         }
         this.lblUser.setText(name);
         this.lblUser.setIcon(icon);
+        this.showUserBlock();
         this.lblDefaultUserIcon.setIcon(null);
         this.lblRole.setText(StringUtils.nonEmpty(principal.getRole()).replace(System.lineSeparator(), " | "));
     }
@@ -2464,6 +2723,9 @@ public class LoginDialog extends javax.swing.JFrame {
     }
 
     public void setProgress(boolean indeterminate, int max, int value, String s) {
+        if (!this.progressPanel.isVisible()) {
+            SwingUtilities.invokeLater(() -> this.progressPanel.setVisible(true));
+        }
         if (this.progress.isIndeterminate() != indeterminate) {
             this.progress.setIndeterminate(indeterminate);
         }
@@ -2508,12 +2770,39 @@ public class LoginDialog extends javax.swing.JFrame {
             profile.setUser(this.txtUser.getText());
             try {
                 this.connections.saveProfile(profile);
+                this.showSavedFeedback();
             } catch (Exception ex) {
                 log.error("Unable to save profile", ex);
                 JOptionPane.showMessageDialog(this, "Profil konnte nicht gespeichert werden", "Profil speichern", JOptionPane.ERROR_MESSAGE);
             }
         }
     }//GEN-LAST:event_cmdSaveProfileActionPerformed
+
+    private javax.swing.Timer savedFeedbackTimer = null;
+    private String saveButtonText = null;
+    private Color saveButtonForeground = null;
+
+    /**
+     * Confirms a saved profile on the button itself: it reads "Gespeichert" in green for two
+     * seconds and then returns to its normal state.
+     */
+    private void showSavedFeedback() {
+        if (this.saveButtonText == null) {
+            this.saveButtonText = this.cmdSaveProfile.getText();
+            this.saveButtonForeground = this.cmdSaveProfile.getForeground();
+        }
+        this.cmdSaveProfile.setText("Gespeichert");
+        this.cmdSaveProfile.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
+        if (this.savedFeedbackTimer != null) {
+            this.savedFeedbackTimer.stop();
+        }
+        this.savedFeedbackTimer = new javax.swing.Timer(2000, e -> {
+            this.cmdSaveProfile.setText(this.saveButtonText);
+            this.cmdSaveProfile.setForeground(this.saveButtonForeground);
+        });
+        this.savedFeedbackTimer.setRepeats(false);
+        this.savedFeedbackTimer.start();
+    }
 
     private void cmdDeleteProfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeleteProfileActionPerformed
         String selected = this.cmbProfile.getSelectedItem().toString();
@@ -2579,6 +2868,12 @@ public class LoginDialog extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_pwPasswordKeyPressed
 
+    private void txtUserKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtUserKeyPressed
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
+            this.loginPerformed(true);
+        }
+    }//GEN-LAST:event_txtUserKeyPressed
+
     private void highlightSecuritySelection() {
         this.rdSecNone.setBackground(new Color(100, 100, 100, 0));
         this.rdSecSsl.setBackground(new Color(100, 100, 100, 0));
@@ -2629,7 +2924,7 @@ public class LoginDialog extends javax.swing.JFrame {
             log.info("Generating QR code for profile: " + selectedProfileName);
 
             // Generate QR code
-            int pixels = 300;
+            int pixels = 220;
             Map<EncodeHintType, Object> hints = new HashMap<>();
             hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
             hints.put(EncodeHintType.MARGIN, 1);
@@ -2684,6 +2979,7 @@ public class LoginDialog extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private com.jdimension.jlawyer.client.StyledPanel bgPanel;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel cardLogin;
     private javax.swing.JProgressBar boxProgress;
     private javax.swing.ButtonGroup btnGrpSecurity;
     private javax.swing.JComboBox<String> cmbCurrentConnection;
@@ -2739,7 +3035,8 @@ public class LoginDialog extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel9;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JLabel lblAutoUpdate;
-    private javax.swing.JLabel lblBackgroundLocation;
+    private com.jdimension.jlawyer.client.statusbar.StatusChip lblBackgroundLocation;
+    private javax.swing.JLabel lblBrandCompact;
     private javax.swing.JLabel lblBoxOutput;
     private javax.swing.JLabel lblCompany;
     private javax.swing.JLabel lblDefaultUserIcon;
@@ -2751,12 +3048,17 @@ public class LoginDialog extends javax.swing.JFrame {
     private javax.swing.JLabel lblRole;
     private javax.swing.JLabel lblUser;
     private javax.swing.JProgressBar progress;
+    private com.jdimension.jlawyer.client.FadingPanel pnlBrand;
     private javax.swing.JPanel progressPanel;
     private javax.swing.JPasswordField pwPassword;
     private javax.swing.JPasswordField pwdSshPassword;
     private javax.swing.JRadioButton rdSecNone;
     private javax.swing.JRadioButton rdSecSsl;
     private javax.swing.JRadioButton rdSecTunnel;
+    private javax.swing.JScrollPane scrollApp;
+    private javax.swing.JScrollPane scrollBox;
+    private javax.swing.JScrollPane scrollLogin;
+    private javax.swing.JScrollPane scrollProfile;
     private javax.swing.JPasswordField txtBoxPassword;
     private javax.swing.JTextField txtCurrentHost;
     private javax.swing.JTextField txtPort;

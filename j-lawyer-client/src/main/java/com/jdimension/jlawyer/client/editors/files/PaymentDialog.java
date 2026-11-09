@@ -696,8 +696,8 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.text.AbstractDocument;
 import org.apache.log4j.Logger;
+import com.jdimension.jlawyer.client.utils.IbanUtils;
 import org.iban4j.IbanUtil;
-import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -745,7 +745,8 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
         ((AbstractDocument) this.taDescription.getDocument()).setDocumentFilter(new DocumentSizeFilter(MAXLEN_DESCRIPTION));
         ((AbstractDocument) this.txtReason.getDocument()).setDocumentFilter(new DocumentSizeFilter(MAXLEN_REASON));
 
-        this.lblHeader.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
+        // design kit: navy header like the glass headers of the editors
+        com.jdimension.jlawyer.client.ui.theme.DialogStyle.styleHeader(this.lblHeader);
 
         DefaultComboBoxModel<String> dmCurrencies = new DefaultComboBoxModel<>();
         try {
@@ -796,7 +797,7 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
                 if (iban == null || iban.trim().isEmpty()) {
                     lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
                     lblRecipient.setToolTipText("Keine IBAN hinterlegt");
-                } else if (!IbanUtil.isValid(iban.replaceAll("\\s", "").toUpperCase())) {
+                } else if (!IbanUtil.isValid(IbanUtils.normalize(iban))) {
                     lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
                     lblRecipient.setToolTipText("Ungültige IBAN: " + iban);
                 } else {
@@ -888,7 +889,7 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
                 if (iban == null || iban.trim().isEmpty()) {
                     this.lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
                     this.lblRecipient.setToolTipText("Keine IBAN hinterlegt");
-                } else if (!IbanUtil.isValid(iban.replaceAll("\\s", "").toUpperCase())) {
+                } else if (!IbanUtil.isValid(IbanUtils.normalize(iban))) {
                     this.lblRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/warning.png")));
                     this.lblRecipient.setToolTipText("Ungültige IBAN: " + iban);
                 } else {

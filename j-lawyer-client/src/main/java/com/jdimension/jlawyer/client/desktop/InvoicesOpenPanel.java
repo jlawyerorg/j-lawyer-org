@@ -11,7 +11,6 @@ package com.jdimension.jlawyer.client.desktop;
 import com.jdimension.jlawyer.client.modulebar.BadgeIcon;
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -28,6 +27,11 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import org.jlawyer.themes.ServerColorTheme;
+import com.jdimension.jlawyer.client.ui.theme.GlassCardPanel;
+import com.jdimension.jlawyer.client.ui.theme.EditorStyle;
+import com.jdimension.jlawyer.client.ui.theme.GlassRowPanel;
+import com.jdimension.jlawyer.client.ui.theme.UiColors;
+import com.jdimension.jlawyer.client.ui.theme.UiFonts;
 
 /**
  * Desktop panel displaying open invoice statistics as badge cards.
@@ -36,13 +40,7 @@ import org.jlawyer.themes.ServerColorTheme;
  *
  * @author jens
  */
-public class InvoicesOpenPanel extends JPanel {
-
-    private static final Color CARD_BACKGROUND = new Color(
-            ServerColorTheme.COLOR_DARK_GREY.getRed(),
-            ServerColorTheme.COLOR_DARK_GREY.getGreen(),
-            ServerColorTheme.COLOR_DARK_GREY.getBlue(),
-            190).darker().darker();
+public class InvoicesOpenPanel extends GlassCardPanel {
 
     private final JLabel lblNotDueBadge;
     private final JLabel lblNotDueAmount;
@@ -50,16 +48,16 @@ public class InvoicesOpenPanel extends JPanel {
     private final JLabel lblOverdueAmount;
     private final JLabel lblLoading;
     private final JPanel pnlCards;
-    private final JPanel cardNotDue;
-    private final JPanel cardOverdue;
+    private final GlassRowPanel cardNotDue;
+    private final GlassRowPanel cardOverdue;
     private final JButton cmdRefresh;
 
     private final NumberFormat currencyFormat;
 
     public InvoicesOpenPanel() {
-        super(new BorderLayout(0, 8));
-        setOpaque(false);
-        setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+        super();
+        setLayout(new BorderLayout(0, 10));
+        setBorder(BorderFactory.createEmptyBorder(10, 12, 12, 12));
 
         currencyFormat = NumberFormat.getCurrencyInstance(Locale.GERMANY);
 
@@ -70,15 +68,12 @@ public class InvoicesOpenPanel extends JPanel {
         cmdRefresh = new JButton();
         cmdRefresh.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_refresh_white_36dp.png")));
         cmdRefresh.setToolTipText("Aktualisieren");
-        cmdRefresh.setBorder(null);
-        cmdRefresh.setContentAreaFilled(false);
-        cmdRefresh.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        EditorStyle.styleCardHeaderButtons(cmdRefresh);
         pnlHeader.add(cmdRefresh);
         pnlHeader.add(Box.createHorizontalStrut(6));
 
         JLabel lblTitle = new JLabel("Offene Rechnungen");
-        lblTitle.setFont(lblTitle.getFont().deriveFont(lblTitle.getFont().getStyle() | Font.BOLD, lblTitle.getFont().getSize() + 2));
-        lblTitle.setForeground(Color.WHITE);
+        EditorStyle.styleCardTitle(lblTitle);
         pnlHeader.add(lblTitle);
 
         add(pnlHeader, BorderLayout.NORTH);
@@ -97,7 +92,7 @@ public class InvoicesOpenPanel extends JPanel {
         Font badgeFont = lblLoading.getFont().deriveFont(Font.BOLD, 13f);
 
         // Card: Not yet due
-        cardNotDue = createCard();
+        cardNotDue = createCard(ServerColorTheme.COLOR_LOGO_GREEN);
         lblNotDueBadge = new JLabel("0");
         lblNotDueBadge.setIcon(new BadgeIcon("0", ServerColorTheme.COLOR_LOGO_GREEN, badgeFont));
         lblNotDueBadge.setText("Noch nicht fällig");
@@ -106,8 +101,8 @@ public class InvoicesOpenPanel extends JPanel {
         lblNotDueBadge.setIconTextGap(10);
 
         lblNotDueAmount = new JLabel(currencyFormat.format(0));
-        lblNotDueAmount.setForeground(new Color(200, 200, 200));
-        lblNotDueAmount.setFont(lblNotDueAmount.getFont().deriveFont(Font.PLAIN, lblNotDueAmount.getFont().getSize() + 1f));
+        lblNotDueAmount.setForeground(UiColors.TEXT_ON_GLASS);
+        lblNotDueAmount.setFont(UiFonts.exo2Bold(18f));
 
         cardNotDue.add(lblNotDueBadge, createGbc(0));
         cardNotDue.add(Box.createRigidArea(new Dimension(0, 4)), createGbc(1));
@@ -115,7 +110,7 @@ public class InvoicesOpenPanel extends JPanel {
         cardNotDue.setVisible(false);
 
         // Card: Overdue
-        cardOverdue = createCard();
+        cardOverdue = createCard(ServerColorTheme.COLOR_LOGO_RED);
         lblOverdueBadge = new JLabel("0");
         lblOverdueBadge.setIcon(new BadgeIcon("0", ServerColorTheme.COLOR_LOGO_RED, badgeFont));
         lblOverdueBadge.setText("Fällig / Überfällig");
@@ -124,8 +119,8 @@ public class InvoicesOpenPanel extends JPanel {
         lblOverdueBadge.setIconTextGap(10);
 
         lblOverdueAmount = new JLabel(currencyFormat.format(0));
-        lblOverdueAmount.setForeground(new Color(200, 200, 200));
-        lblOverdueAmount.setFont(lblOverdueAmount.getFont().deriveFont(Font.PLAIN, lblOverdueAmount.getFont().getSize() + 1f));
+        lblOverdueAmount.setForeground(UiColors.TEXT_ON_GLASS);
+        lblOverdueAmount.setFont(UiFonts.exo2Bold(18f));
 
         cardOverdue.add(lblOverdueBadge, createGbc(0));
         cardOverdue.add(Box.createRigidArea(new Dimension(0, 4)), createGbc(1));
@@ -139,21 +134,16 @@ public class InvoicesOpenPanel extends JPanel {
         add(pnlCards, BorderLayout.CENTER);
     }
 
-    private JPanel createCard() {
-        JPanel card = new JPanel(new GridBagLayout()) {
-            @Override
-            protected void paintComponent(java.awt.Graphics g) {
-                java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
-                g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(CARD_BACKGROUND);
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 16, 16);
-                g2.dispose();
-                super.paintComponent(g);
-            }
-        };
-        card.setOpaque(false);
-        card.setBorder(BorderFactory.createEmptyBorder(12, 16, 12, 16));
-        Dimension maxSize = new Dimension(Integer.MAX_VALUE, 80);
+    /**
+     * @param accent colour of the bar on the left edge - green for invoices not yet due, red for
+     * overdue ones
+     */
+    private GlassRowPanel createCard(Color accent) {
+        GlassRowPanel card = new GlassRowPanel();
+        card.setLayout(new GridBagLayout());
+        card.setAccent(accent);
+        card.setBorder(BorderFactory.createEmptyBorder(12, 18, 12, 16));
+        Dimension maxSize = new Dimension(Integer.MAX_VALUE, 90);
         card.setMaximumSize(maxSize);
         return card;
     }

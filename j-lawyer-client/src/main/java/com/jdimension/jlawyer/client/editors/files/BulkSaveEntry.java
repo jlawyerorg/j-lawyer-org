@@ -748,6 +748,23 @@ public class BulkSaveEntry extends javax.swing.JPanel {
     /**
      * Creates new form BulkSaveEntry
      */
+    // notified whenever something shown in the compact list row of the save dialog changes
+    private final List<Runnable> changeListeners = new ArrayList<>();
+
+    /**
+     * @param l called on the event dispatch thread when name, folder, tags, the save state or the
+     * status of this entry change
+     */
+    public void addChangeListener(Runnable l) {
+        this.changeListeners.add(l);
+    }
+
+    private void fireChanged() {
+        for (Runnable l : this.changeListeners) {
+            l.run();
+        }
+    }
+
     public BulkSaveEntry() {
         initComponents();
 
@@ -960,6 +977,7 @@ public class BulkSaveEntry extends javax.swing.JPanel {
         // re-trigger check for duplicates, e.g. a conflicting file was selected / unselected
         if(this.saveDialog!=null)
             this.saveDialog.checkForDuplicateFileNames();
+        this.fireChanged();
         
     }//GEN-LAST:event_togSaveItemStateChanged
 
@@ -991,6 +1009,7 @@ public class BulkSaveEntry extends javax.swing.JPanel {
             this.saveDialog.checkForDuplicateFileNames();
         else
             this.updateFilenameOutline();
+        this.fireChanged();
     }
 
     private void updateFilenameOutline() {
@@ -1033,6 +1052,15 @@ public class BulkSaveEntry extends javax.swing.JPanel {
 
     private void lblFileNameOrgMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFileNameOrgMouseClicked
         if (this.isSelected()) {
+            this.openPreview();
+        }
+    }//GEN-LAST:event_lblFileNameOrgMouseClicked
+
+    /**
+     * Opens the original file read-only, e.g. to check its content before saving it.
+     */
+    public void openPreview() {
+        {
             try {
                 
                 if(this.documentBytes==null && this.saveDialog!=null && this.saveDialog.getEntryProcessor()!=null && this.saveDialog.getEntryProcessor().isBytesProvider()) {
@@ -1049,10 +1077,11 @@ public class BulkSaveEntry extends javax.swing.JPanel {
 
             }
         }
-    }//GEN-LAST:event_lblFileNameOrgMouseClicked
+    }
 
     private void togFavoriteItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_togFavoriteItemStateChanged
         this.favorite=this.togFavorite.isSelected();
+        this.fireChanged();
     }//GEN-LAST:event_togFavoriteItemStateChanged
 
     private void cmdNameTemplateMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdNameTemplateMouseReleased
@@ -1061,6 +1090,7 @@ public class BulkSaveEntry extends javax.swing.JPanel {
 
     public void setDownloadProgress() {
         this.lblDownloaded.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_hourglass_top_black_48dp.png")));
+        this.fireChanged();
     }
     
     public void setDownloadSuccess(boolean success, String tooltip) {
@@ -1069,6 +1099,7 @@ public class BulkSaveEntry extends javax.swing.JPanel {
             this.lblDownloaded.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
         else
             this.lblDownloaded.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/lassists.png")));
+        this.fireChanged();
     }
     
     private final java.util.Set<String> docMvTagNames = new java.util.HashSet<>();
@@ -1111,6 +1142,7 @@ public class BulkSaveEntry extends javax.swing.JPanel {
             this.cmdDocTags.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_white_36dp.png")));
         }
         this.lblSelectedTags.setText(ComponentUtils.getSelectedPopupMenuItemsAsString(this.popDocTags));
+        this.fireChanged();
     }
     
     private void buildPopup(JButton button, JPopupMenu popup, List<String> tagsInUse, JLabel allValues) {
@@ -1132,6 +1164,7 @@ public class BulkSaveEntry extends javax.swing.JPanel {
         for (MenuElement me : popup.getSubElements()) {
             ((JCheckBoxMenuItem) me.getComponent()).addItemListener((ItemEvent arg0) -> {
                 allValues.setText(ComponentUtils.getSelectedPopupMenuItemsAsString(popup));
+                this.fireChanged();
             });
             ((JCheckBoxMenuItem) me.getComponent()).addActionListener((ActionEvent e) -> {
                 BulkSaveDialog.deselectListTagSiblings(popup, e.getSource(), this.docMvTagNames);
@@ -1429,8 +1462,57 @@ public class BulkSaveEntry extends javax.swing.JPanel {
     }
     
     public void setDocumentFilenameNewOutline(String flatLafOutline) {
+        boolean changed = this.hasDuplicateConflict != (flatLafOutline != null);
         this.hasDuplicateConflict=(flatLafOutline!=null);
         this.updateFilenameOutline();
+        if (changed) {
+            this.fireChanged();
+        }
+    }
+
+    /**
+     * @return true if the new file name is already used in the case or by another entry
+     */
+    public boolean hasNameConflict() {
+        return this.hasDuplicateConflict;
+    }
+
+    /**
+     * @return the target folder as shown to the user, e.g. "Dokumente &gt; Eingang"
+     */
+    public String getFolderText() {
+        return this.lblFolder.getText();
+    }
+
+    /**
+     * @return the selected document tags as comma separated text
+     */
+    public String getTagsText() {
+        return this.lblSelectedTags.getText();
+    }
+
+    /**
+     * @return the icon of the save status (pending, saving, saved, failed)
+     */
+    public javax.swing.Icon getStatusIcon() {
+        return this.lblDownloaded.getIcon();
+    }
+
+    /**
+     * @return the tooltip of the save status, e.g. an error message
+     */
+    public String getStatusToolTip() {
+        return this.lblDownloaded.getToolTipText();
+    }
+
+    /**
+     * Shown in the detail area of the save dialog instead of as a block in a list: without the
+     * separator line below.
+     *
+     * @param detail true if the entry is shown as detail
+     */
+    public void setShownAsDetail(boolean detail) {
+        this.sepBottom.setVisible(!detail);
     }
 
     /**
@@ -1461,6 +1543,7 @@ public class BulkSaveEntry extends javax.swing.JPanel {
                     this.lblFolder.setText(m.getText());
             }
         }
+        this.fireChanged();
     }
     
     /**
@@ -1504,6 +1587,7 @@ public class BulkSaveEntry extends javax.swing.JPanel {
 
             this.caseFolder=folder;
             this.lblFolder.setText(fItemName);
+            this.fireChanged();
 
         });
 

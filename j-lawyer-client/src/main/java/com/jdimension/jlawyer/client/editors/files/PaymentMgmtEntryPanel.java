@@ -693,7 +693,7 @@ import themes.colors.DefaultColorTheme;
  *
  * @author jens
  */
-public class PaymentMgmtEntryPanel extends javax.swing.JPanel {
+public class PaymentMgmtEntryPanel extends com.jdimension.jlawyer.client.ui.theme.EntryRowPanel {
 
     private static final Logger log = Logger.getLogger(PaymentMgmtEntryPanel.class.getName());
     private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
@@ -711,6 +711,7 @@ public class PaymentMgmtEntryPanel extends javax.swing.JPanel {
      */
     public PaymentMgmtEntryPanel() {
         initComponents();
+        styleRowButtons(this.cmdOpen, this.cmdApprove, this.cmdMarkAsPayed, this.cmdCancel);
     }
     
     public void setError(String error) {
@@ -776,9 +777,11 @@ public class PaymentMgmtEntryPanel extends javax.swing.JPanel {
         }
 
         if (payment.getContact() != null) {
-            this.lblRecipient.setText("an: " + payment.getContact().toDisplayName());
+            this.lblRecipient.setText("an: " + PaymentEntryPanel.recipientText(payment.getContact(), addresses));
+            this.lblRecipient.setToolTipText(this.lblRecipient.getText());
         } else {
             this.lblRecipient.setText(" ");
+            this.lblRecipient.setToolTipText(null);
         }
         
         if(!StringUtils.isEmpty(payment.getSender())) {

@@ -679,6 +679,7 @@ import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
@@ -688,7 +689,7 @@ import themes.colors.DefaultColorTheme;
  *
  * @author jens
  */
-public class PaymentEntryPanel extends javax.swing.JPanel {
+public class PaymentEntryPanel extends com.jdimension.jlawyer.client.ui.theme.EntryRowPanel {
 
     private static final Logger log = Logger.getLogger(PaymentEntryPanel.class.getName());
     private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
@@ -709,6 +710,36 @@ public class PaymentEntryPanel extends javax.swing.JPanel {
     public PaymentEntryPanel(ArchiveFilePanel caseView) {
         initComponents();
         this.caseView = caseView;
+        styleRowButtons(this.cmdOpen, this.cmdDelete, this.cmdDuplicate, this.cmdMarkAsPayed);
+        styleMuted(this.jLabel1, this.jLabel2, this.lblPaymentType, this.lblRecipient);
+    }
+
+    /**
+     * Builds the recipient text of a payment: the display name of the contact,
+     * followed by its role(s) in the case. A contact involved in several roles
+     * lists all distinct roles in the order of the parties list; a contact that
+     * is not (or no longer) a party of the case is shown by name only.
+     *
+     * @param contact the recipient of the payment
+     * @param parties the parties of the case, may be null
+     * @return name and roles, e.g. "Max Mustermann (Mandant, Zeuge)"
+     */
+    static String recipientText(AddressBean contact, List<ArchiveFileAddressesBean> parties) {
+        String name = contact.toDisplayName();
+        if (parties == null || contact.getId() == null) {
+            return name;
+        }
+        LinkedHashSet<String> roles = new LinkedHashSet<>();
+        for (ArchiveFileAddressesBean party : parties) {
+            if (party.getAddressKey() != null && contact.getId().equals(party.getAddressKey().getId())
+                    && party.getReferenceType() != null && !StringUtils.isEmpty(party.getReferenceType().getName())) {
+                roles.add(party.getReferenceType().getName());
+            }
+        }
+        if (roles.isEmpty()) {
+            return name;
+        }
+        return name + " (" + String.join(", ", roles) + ")";
     }
 
     public void setEntry(ArchiveFileBean caseDto, Payment payment, List<ArchiveFileAddressesBean> addresses) {
@@ -717,13 +748,17 @@ public class PaymentEntryPanel extends javax.swing.JPanel {
         this.addresses = addresses;
         this.lblPaymentNumber.setText(payment.getPaymentNumber());
         this.lblTargetDate.setText(df.format(payment.getTargetDate()));
+        // the bar on the left shows the state: done, overdue or open
         if (payment.getStatus() == Payment.STATUS_CANCELLED || payment.getStatus() == Payment.STATUS_EXECUTED) {
             this.lblTargetDate.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
+            this.setAccent(ACCENT_DONE);
         } else {
             if (payment.getTargetDate().getTime() < new Date().getTime()) {
                 this.lblTargetDate.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+                this.setAccent(ACCENT_OVERDUE);
             } else {
-                this.lblTargetDate.setForeground(Color.black);
+                this.lblTargetDate.setForeground(com.jdimension.jlawyer.client.ui.theme.UiColors.TEXT_DARK);
+                this.setAccent(ACCENT_OPEN);
             }
         }
         this.lblName.setText(payment.getName());
@@ -746,9 +781,11 @@ public class PaymentEntryPanel extends javax.swing.JPanel {
         }
 
         if (payment.getContact() != null) {
-            this.lblRecipient.setText("an: " + payment.getContact().toDisplayName());
+            this.lblRecipient.setText("an: " + PaymentEntryPanel.recipientText(payment.getContact(), addresses));
+            this.lblRecipient.setToolTipText(this.lblRecipient.getText());
         } else {
             this.lblRecipient.setText(" ");
+            this.lblRecipient.setToolTipText(null);
         }
         
         if(!StringUtils.isEmpty(payment.getSender())) {

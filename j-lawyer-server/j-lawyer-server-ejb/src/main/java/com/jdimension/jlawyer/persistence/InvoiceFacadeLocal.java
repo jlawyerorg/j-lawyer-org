@@ -698,6 +698,12 @@ public interface InvoiceFacadeLocal {
 
     List<Invoice> searchByNumberOrName(String term, int maxResults);
 
-    List<InvoiceStatusSummary> findSummaryByStatus(int... status);
+    /**
+     * @param groupIds only invoices of cases visible to members of these groups are counted
+     * (same rules as SecurityUtils.getAllowedCasesForUser), null for all invoices
+     * @param status the statuses to summarize
+     * @return number and gross total of invoices per status
+     */
+    List<InvoiceStatusSummary> findSummaryByStatus(java.util.Collection<String> groupIds, int... status);
 
 }

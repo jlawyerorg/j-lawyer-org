@@ -756,6 +756,8 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
     private ArrayList<String> existingFileNames = new ArrayList<>();
 
     protected boolean failedOrCancelled = true;
+    // true while the documents are saved in the background - a second click would save them twice
+    private boolean saving = false;
     
     // caching for data that is required to build the file name if it contains place holders
     private List<PartyTypeBean> allPartyTypes=null;
@@ -766,6 +768,28 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
     private List<PartiesTriplet> parties=new ArrayList<>();
     
     private List<ArchiveFileReviewsBean> addedEvents=new ArrayList<>();
+
+    // edit area for several selected files - changes apply to all of them right away
+    private final javax.swing.JButton cmdCommonFolder = new javax.swing.JButton();
+    private final javax.swing.JLabel lblCommonFolder = new javax.swing.JLabel();
+    private final javax.swing.JButton cmdCommonTags = new javax.swing.JButton();
+    private final javax.swing.JLabel lblCommonTags = new javax.swing.JLabel();
+    private final javax.swing.JButton cmdCommonNameTemplate = new javax.swing.JButton();
+    private final javax.swing.JLabel lblCommonNameTemplate = new javax.swing.JLabel();
+    private final javax.swing.JCheckBox chkCommonFavorite = new javax.swing.JCheckBox("Favorit");
+
+    // left: one compact line per file; right: the full details of every file that is saved
+    private final java.util.Map<BulkSaveEntry, BulkSaveEntryRow> rows = new java.util.HashMap<>();
+    private final java.util.Map<BulkSaveEntry, com.jdimension.jlawyer.client.ui.theme.EntryRowPanel> detailCards = new java.util.HashMap<>();
+    private final java.util.List<BulkSaveEntry> shownDetails = new ArrayList<>();
+    private final com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel pnlDetailList = new com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel();
+    private javax.swing.JScrollPane spDetails = null;
+    private final javax.swing.JLabel lblBulkCaption = new javax.swing.JLabel();
+    private boolean bulkUpdate = false;
+
+    // what happens with the source after saving, e.g. "Mail wird gelöscht"
+    private String postSaveHint = null;
+    private final List<BulkSaveEntry> conflictEntries = new ArrayList<>();
     
 
     /**
@@ -780,11 +804,14 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
         this.sourceType = type;
 
         initComponents();
+        this.initEditArea();
         this.pnlMetadataAll.setDialog(this);
 
         this.lblByFileTypes.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
-        this.lblCalendarEntries.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
-        this.lblCalendarEntries.setText("");
+        this.lblCalendarEntries.setForeground(com.jdimension.jlawyer.client.ui.theme.EntryRowPanel.TEXT_MUTED);
+        this.lblCalendarEntries.setText("Noch keine Einträge.");
+        // entries are stored right away, independent of saving the files
+        this.cmdAddCalendarEntry.setToolTipText("Kalendereintrag zur Akte anlegen - er wird sofort gespeichert, auch wenn die Dateien danach nicht gespeichert werden");
 
         pnlEntries.setLayout(new javax.swing.BoxLayout(pnlEntries, javax.swing.BoxLayout.Y_AXIS));
 
@@ -796,10 +823,25 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
 
         this.cmdCommonTags.setEnabled(false);
         this.cmdCommonFolder.setEnabled(false);
-        this.cmdTagAll.setEnabled(false);
-        this.cmdFolderAll.setEnabled(false);
 
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
+
+        this.applyModernLook();
+        this.refreshDetails();
+
+        // list and details share the width - the user's own split is kept
+        String savedDivider = ClientSettings.getInstance().getConfiguration("split." + this.getClass().getName() + ".splitMain", "");
+        if (savedDivider == null || savedDivider.isEmpty()) {
+            this.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowOpened(java.awt.event.WindowEvent e) {
+                    splitMain.setDividerLocation(0.5d);
+                }
+            });
+        } else {
+            ComponentUtils.restoreSplitPane(this.splitMain, this.getClass(), "splitMain");
+        }
+        ComponentUtils.persistSplitPane(this.splitMain, this.getClass(), "splitMain");
 
     }
 
@@ -854,6 +896,7 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
                     this.lblCommonNameTemplate.setText(t.getDisplayName());
                     nameTemplate=t;
                     UserSettings.getInstance().setSetting(UserSettings.CONF_BULKSAVE_LASTNAMETEMPLATE_PREFIX + this.sourceType, t.getDisplayName());
+                    this.cmdNameTemplateAllActionPerformed(null);
                 });
                 popNameTemplates.add(mi);
 
@@ -932,6 +975,10 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
                     button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_white_36dp.png")));
                 }
                 UserSettings.getInstance().setSettingArray(userSettingsKey, al.toArray(new String[al.size()]));
+                if (popup == this.popCommonDocumentTags) {
+                    // document tags in the edit area apply to all selected files right away
+                    this.cmdTagAllActionPerformed(null);
+                }
                 // Re-show popup at the same anchor position to keep it open without shifting
                 Object ax = popup.getClientProperty("jlawyer.anchorX");
                 Object ay = popup.getClientProperty("jlawyer.anchorY");
@@ -1014,32 +1061,35 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
         popCommonDocumentTags = new javax.swing.JPopupMenu();
         popCommonFolder = new javax.swing.JPopupMenu();
         popNameTemplates = new javax.swing.JPopupMenu();
-        lblTotalSize = new javax.swing.JLabel();
-        lblFileCount = new javax.swing.JLabel();
-        lblCommonTags = new javax.swing.JLabel();
-        cmdTagAll = new javax.swing.JButton();
-        lblCommonFolder = new javax.swing.JLabel();
-        cmdFolderAll = new javax.swing.JButton();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        pnlEntries = new javax.swing.JPanel();
+        pnlMetadataAll = new com.jdimension.jlawyer.client.editors.files.BulkSaveMetadataAllPanel();
+        pnlHeader = new javax.swing.JPanel();
         lblCase = new javax.swing.JLabel();
+        pnlCaseTags = new javax.swing.JPanel();
+        lblCaseTagsCaption = new javax.swing.JLabel();
         lblCaseTags = new javax.swing.JLabel();
         cmdCaseTags = new javax.swing.JButton();
-        cmdCommonTags = new javax.swing.JButton();
-        cmdCommonFolder = new javax.swing.JButton();
-        jSeparator1 = new javax.swing.JSeparator();
-        jScrollPane2 = new javax.swing.JScrollPane();
+        splitMain = new javax.swing.JSplitPane();
+        pnlLeft = new javax.swing.JPanel();
+        cardCalendar = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
+        cmdAddCalendarEntry = new javax.swing.JButton();
+        pnlCalendarEntries = new javax.swing.JPanel();
+        lblCalendarEntries = new javax.swing.JLabel();
+        cardFiles = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
+        pnlFilter = new javax.swing.JPanel();
+        lblByFileTypes = new javax.swing.JLabel();
         extensionsPanel = new javax.swing.JPanel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        pnlEntries = new com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel();
+        cardDetails = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
+        pnlDetails = new javax.swing.JPanel();
+        pnlFooter = new javax.swing.JPanel();
+        pnlStatus = new javax.swing.JPanel();
+        lblFileCount = new javax.swing.JLabel();
+        lblTotalSize = new javax.swing.JLabel();
+        lblHints = new javax.swing.JLabel();
+        pnlButtons = new javax.swing.JPanel();
         cmdSave = new javax.swing.JButton();
         cmdCancel = new javax.swing.JButton();
-        jSeparator2 = new javax.swing.JSeparator();
-        lblByFileTypes = new javax.swing.JLabel();
-        cmdCommonNameTemplate = new javax.swing.JButton();
-        lblCommonNameTemplate = new javax.swing.JLabel();
-        cmdNameTemplateAll = new javax.swing.JButton();
-        cmdAddCalendarEntry = new javax.swing.JButton();
-        lblCalendarEntries = new javax.swing.JLabel();
-        pnlMetadataAll = new com.jdimension.jlawyer.client.editors.files.BulkSaveMetadataAllPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Dateien zur Akte speichern");
@@ -1049,33 +1099,79 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
             }
         });
 
-        lblTotalSize.setFont(lblTotalSize.getFont().deriveFont(lblTotalSize.getFont().getStyle() | java.awt.Font.BOLD, lblTotalSize.getFont().getSize()-2));
-        lblTotalSize.setText("13,5MB");
+        pnlHeader.setLayout(new java.awt.BorderLayout(12, 0));
 
-        lblFileCount.setFont(lblFileCount.getFont().deriveFont(lblFileCount.getFont().getStyle() | java.awt.Font.BOLD, lblFileCount.getFont().getSize()-2));
-        lblFileCount.setText("11/13 Dateien");
+        lblCase.setFont(lblCase.getFont().deriveFont(lblCase.getFont().getStyle() | java.awt.Font.BOLD, lblCase.getFont().getSize()+2));
+        lblCase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/sharp_folder_blue_36dp.png"))); // NOI18N
+        lblCase.setText("00123/22 eine Aktenbezeichnung");
+        pnlHeader.add(lblCase, java.awt.BorderLayout.WEST);
 
-        lblCommonTags.setFont(lblCommonTags.getFont());
-        lblCommonTags.setText("Tag 1, Tag 3, Tag 7");
+        pnlCaseTags.setOpaque(false);
+        pnlCaseTags.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 6, 0));
 
-        cmdTagAll.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_keyboard_double_arrow_down_black_48dp.png"))); // NOI18N
-        cmdTagAll.setToolTipText("für alle zum Speichern markierten Dateien übernehmen");
-        cmdTagAll.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdTagAllActionPerformed(evt);
+        lblCaseTagsCaption.setText("Aktenetiketten:");
+        pnlCaseTags.add(lblCaseTagsCaption);
+
+        lblCaseTags.setFont(lblCaseTags.getFont());
+        lblCaseTags.setText("aktentag");
+        pnlCaseTags.add(lblCaseTags);
+
+        cmdCaseTags.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_green_36dp.png"))); // NOI18N
+        cmdCaseTags.setToolTipText("Aktenetikett auswählen");
+        cmdCaseTags.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                cmdCaseTagsMousePressed(evt);
             }
         });
+        pnlCaseTags.add(cmdCaseTags);
 
-        lblCommonFolder.setFont(lblCommonFolder.getFont());
-        lblCommonFolder.setText("Dokumente > Unterordner");
+        pnlHeader.add(pnlCaseTags, java.awt.BorderLayout.CENTER);
 
-        cmdFolderAll.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_keyboard_double_arrow_down_black_48dp.png"))); // NOI18N
-        cmdFolderAll.setToolTipText("für alle zum Speichern markierten Dateien übernehmen");
-        cmdFolderAll.addActionListener(new java.awt.event.ActionListener() {
+        getContentPane().add(pnlHeader, java.awt.BorderLayout.NORTH);
+
+        splitMain.setResizeWeight(0.55);
+
+        pnlLeft.setOpaque(false);
+        pnlLeft.setLayout(new java.awt.BorderLayout(0, 8));
+
+        cardCalendar.setTitle("Kalender");
+        cardCalendar.setLayout(new java.awt.BorderLayout(0, 6));
+
+        cmdAddCalendarEntry.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/clicknrungrey.png"))); // NOI18N
+        cmdAddCalendarEntry.setText("Wiedervorlage / Frist / Termin hinzufügen");
+        cmdAddCalendarEntry.setToolTipText("Kalendereintrag zur Akte anlegen");
+        cmdAddCalendarEntry.setEnabled(false);
+        cmdAddCalendarEntry.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdFolderAllActionPerformed(evt);
+                cmdAddCalendarEntryActionPerformed(evt);
             }
         });
+        cardCalendar.add(cmdAddCalendarEntry, java.awt.BorderLayout.NORTH);
+
+        pnlCalendarEntries.setOpaque(false);
+        pnlCalendarEntries.setLayout(new javax.swing.BoxLayout(pnlCalendarEntries, javax.swing.BoxLayout.Y_AXIS));
+        cardCalendar.add(pnlCalendarEntries, java.awt.BorderLayout.CENTER);
+
+        lblCalendarEntries.setText("Noch keine Einträge.");
+        cardCalendar.add(lblCalendarEntries, java.awt.BorderLayout.SOUTH);
+
+        pnlLeft.add(cardCalendar, java.awt.BorderLayout.NORTH);
+
+        cardFiles.setTitle("Dateien");
+        cardFiles.setLayout(new java.awt.BorderLayout(0, 6));
+
+        pnlFilter.setOpaque(false);
+        pnlFilter.setLayout(new java.awt.BorderLayout(8, 0));
+
+        lblByFileTypes.setFont(lblByFileTypes.getFont().deriveFont(lblByFileTypes.getFont().getStyle() | java.awt.Font.BOLD, lblByFileTypes.getFont().getSize()-2));
+        lblByFileTypes.setText("Speichern nach Dateityp:");
+        pnlFilter.add(lblByFileTypes, java.awt.BorderLayout.NORTH);
+
+        extensionsPanel.setOpaque(false);
+        extensionsPanel.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 4, 2));
+        pnlFilter.add(extensionsPanel, java.awt.BorderLayout.CENTER);
+
+        cardFiles.add(pnlFilter, java.awt.BorderLayout.NORTH);
 
         javax.swing.GroupLayout pnlEntriesLayout = new javax.swing.GroupLayout(pnlEntries);
         pnlEntries.setLayout(pnlEntriesLayout);
@@ -1090,51 +1186,43 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
 
         jScrollPane1.setViewportView(pnlEntries);
 
-        lblCase.setFont(lblCase.getFont().deriveFont(lblCase.getFont().getStyle() | java.awt.Font.BOLD, lblCase.getFont().getSize()+2));
-        lblCase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/sharp_folder_blue_36dp.png"))); // NOI18N
-        lblCase.setText("00123/22 eine Aktenbezeichnung");
+        cardFiles.add(jScrollPane1, java.awt.BorderLayout.CENTER);
 
-        lblCaseTags.setFont(lblCaseTags.getFont());
-        lblCaseTags.setText("aktentag");
+        pnlLeft.add(cardFiles, java.awt.BorderLayout.CENTER);
 
-        cmdCaseTags.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_green_36dp.png"))); // NOI18N
-        cmdCaseTags.setToolTipText("Aktenetikett auswählen");
-        cmdCaseTags.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                cmdCaseTagsMousePressed(evt);
-            }
-        });
+        splitMain.setLeftComponent(pnlLeft);
 
-        cmdCommonTags.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_green_36dp.png"))); // NOI18N
-        cmdCommonTags.setToolTipText("Dokumentetikett auswählen");
-        cmdCommonTags.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                cmdCommonTagsMousePressed(evt);
-            }
-        });
+        cardDetails.setTitle("Details");
+        cardDetails.setLayout(new java.awt.BorderLayout());
 
-        cmdCommonFolder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_account_tree_black_48dp.png"))); // NOI18N
-        cmdCommonFolder.setToolTipText("Ordner auswählen");
-        cmdCommonFolder.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                cmdCommonFolderMousePressed(evt);
-            }
-        });
+        pnlDetails.setOpaque(false);
+        pnlDetails.setLayout(new java.awt.BorderLayout());
+        cardDetails.add(pnlDetails, java.awt.BorderLayout.CENTER);
 
-        jScrollPane2.setBorder(null);
+        splitMain.setRightComponent(cardDetails);
 
-        javax.swing.GroupLayout extensionsPanelLayout = new javax.swing.GroupLayout(extensionsPanel);
-        extensionsPanel.setLayout(extensionsPanelLayout);
-        extensionsPanelLayout.setHorizontalGroup(
-            extensionsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
-        extensionsPanelLayout.setVerticalGroup(
-            extensionsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
+        getContentPane().add(splitMain, java.awt.BorderLayout.CENTER);
 
-        jScrollPane2.setViewportView(extensionsPanel);
+        pnlFooter.setLayout(new java.awt.BorderLayout(12, 0));
+
+        pnlStatus.setOpaque(false);
+        pnlStatus.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 12, 6));
+
+        lblFileCount.setFont(lblFileCount.getFont().deriveFont(lblFileCount.getFont().getStyle() | java.awt.Font.BOLD, lblFileCount.getFont().getSize()-2));
+        lblFileCount.setText("11/13 Dateien");
+        pnlStatus.add(lblFileCount);
+
+        lblTotalSize.setFont(lblTotalSize.getFont().deriveFont(lblTotalSize.getFont().getStyle() | java.awt.Font.BOLD, lblTotalSize.getFont().getSize()-2));
+        lblTotalSize.setText("13,5MB");
+        pnlStatus.add(lblTotalSize);
+
+        lblHints.setText(" ");
+        pnlStatus.add(lblHints);
+
+        pnlFooter.add(pnlStatus, java.awt.BorderLayout.CENTER);
+
+        pnlButtons.setOpaque(false);
+        pnlButtons.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 8, 4));
 
         cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
         cmdSave.setText("Speichern");
@@ -1143,6 +1231,7 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
                 cmdSaveActionPerformed(evt);
             }
         });
+        pnlButtons.add(cmdSave);
 
         cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
         cmdCancel.setText("Abbrechen");
@@ -1151,151 +1240,20 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
                 cmdCancelActionPerformed(evt);
             }
         });
+        pnlButtons.add(cmdCancel);
 
-        lblByFileTypes.setFont(lblByFileTypes.getFont().deriveFont(lblByFileTypes.getFont().getStyle() | java.awt.Font.BOLD, lblByFileTypes.getFont().getSize()-2));
-        lblByFileTypes.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblByFileTypes.setText("Auswahl nach Dateitypen:");
+        pnlFooter.add(pnlButtons, java.awt.BorderLayout.EAST);
 
-        cmdCommonNameTemplate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png"))); // NOI18N
-        cmdCommonNameTemplate.setToolTipText("Dateinamenschema");
-        cmdCommonNameTemplate.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                cmdCommonNameTemplateMousePressed(evt);
-            }
-        });
-
-        lblCommonNameTemplate.setText("Dateinamens-Template");
-
-        cmdNameTemplateAll.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_keyboard_double_arrow_down_black_48dp.png"))); // NOI18N
-        cmdNameTemplateAll.setToolTipText("für alle zum Speichern markierten Dateien übernehmen");
-        cmdNameTemplateAll.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdNameTemplateAllActionPerformed(evt);
-            }
-        });
-
-        cmdAddCalendarEntry.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/clicknrungrey.png"))); // NOI18N
-        cmdAddCalendarEntry.setToolTipText("Kalendereintrag hinzufügen");
-        cmdAddCalendarEntry.setEnabled(false);
-        cmdAddCalendarEntry.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdAddCalendarEntryActionPerformed(evt);
-            }
-        });
-
-        lblCalendarEntries.setFont(lblCalendarEntries.getFont().deriveFont(lblCalendarEntries.getFont().getStyle() | java.awt.Font.BOLD));
-        lblCalendarEntries.setText("1");
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jSeparator1)
-                    .addComponent(jScrollPane1)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(32, 32, 32)
-                        .addComponent(cmdCaseTags)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblCaseTags, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(cmdCommonTags)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblCommonTags, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdTagAll))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(cmdCommonFolder)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblCommonFolder, javax.swing.GroupLayout.PREFERRED_SIZE, 644, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(cmdFolderAll))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(cmdCommonNameTemplate)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblCommonNameTemplate, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdNameTemplateAll))
-                    .addComponent(pnlMetadataAll, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(lblByFileTypes, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jScrollPane2)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(lblCase, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdAddCalendarEntry)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblCalendarEntries))
-                    .addComponent(jSeparator2)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(lblFileCount)
-                                .addGap(18, 18, 18)
-                                .addComponent(lblTotalSize, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(cmdSave)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cmdCancel)))))
-                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(lblCase)
-                        .addComponent(cmdAddCalendarEntry, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(lblCalendarEntries, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(cmdCaseTags, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(lblCaseTags, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(cmdCommonTags)
-                    .addComponent(lblCommonTags, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(cmdTagAll))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(cmdCommonFolder)
-                    .addComponent(lblCommonFolder, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(cmdFolderAll))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(cmdCommonNameTemplate, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(cmdNameTemplateAll)
-                    .addComponent(lblCommonNameTemplate, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(pnlMetadataAll, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblByFileTypes)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 2, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cmdCancel)
-                    .addComponent(cmdSave))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 268, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblTotalSize)
-                    .addComponent(lblFileCount))
-                .addContainerGap())
-        );
+        getContentPane().add(pnlFooter, java.awt.BorderLayout.SOUTH);
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
+
+        if (this.saving) {
+            return;
+        }
 
         for (BulkSaveEntry e : this.entryList) {
             if (e.isSelected()) {
@@ -1314,6 +1272,9 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
         } catch (Exception ex) {
             log.error("Unable to unarchive case " + selectedCase.getFileNumber(), ex);
         }
+
+        this.saving = true;
+        this.cmdSave.setEnabled(false);
 
         Thread worker = new Thread(() -> {
             try {
@@ -1443,19 +1404,28 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
             } catch (Exception ex) {
                 log.error("Unable to save document", ex);
                 ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern der E-Mail / Anlagen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+            } finally {
+                // documents that failed can be saved again
+                SwingUtilities.invokeLater(() -> {
+                    this.saving = false;
+                    this.checkForDuplicateFileNames();
+                });
             }
         });
         worker.start();
 
     }//GEN-LAST:event_cmdSaveActionPerformed
 
-    private void cmdFolderAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdFolderAllActionPerformed
-        for (BulkSaveEntry e : this.entryList) {
-            if (e.isSelected()) {
+    private void cmdFolderAllActionPerformed(java.awt.event.ActionEvent evt) {
+        this.bulkUpdate = true;
+        try {
+            for (BulkSaveEntry e : this.getEntriesForBulkEdit()) {
                 e.setSelectedCaseFolder(this.caseFolder);
             }
+        } finally {
+            this.bulkUpdate = false;
         }
-    }//GEN-LAST:event_cmdFolderAllActionPerformed
+    }
 
     private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
         this.failedOrCancelled = true;
@@ -1473,36 +1443,42 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
         this.popCaseTags.show(this.cmdCaseTags, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdCaseTagsMousePressed
 
-    private void cmdCommonTagsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdCommonTagsMousePressed
+    private void cmdCommonTagsMousePressed(java.awt.event.MouseEvent evt) {
         this.popCommonDocumentTags.putClientProperty("jlawyer.anchorX", evt.getX());
         this.popCommonDocumentTags.putClientProperty("jlawyer.anchorY", evt.getY());
         this.popCommonDocumentTags.show(this.cmdCommonTags, evt.getX(), evt.getY());
-    }//GEN-LAST:event_cmdCommonTagsMousePressed
+    }
 
-    private void cmdTagAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdTagAllActionPerformed
+    private void cmdTagAllActionPerformed(java.awt.event.ActionEvent evt) {
         List<String> docTags = ComponentUtils.getSelectedPopupMenuItems(this.popCommonDocumentTags);
-        for (BulkSaveEntry e : this.entryList) {
-            if (e.isSelected()) {
+        this.bulkUpdate = true;
+        try {
+            for (BulkSaveEntry e : this.getEntriesForBulkEdit()) {
                 e.selectDocumentTags(docTags);
             }
+        } finally {
+            this.bulkUpdate = false;
         }
-    }//GEN-LAST:event_cmdTagAllActionPerformed
+    }
 
-    private void cmdCommonFolderMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdCommonFolderMousePressed
+    private void cmdCommonFolderMousePressed(java.awt.event.MouseEvent evt) {
         this.popCommonFolder.show(this.cmdCommonFolder, evt.getX(), evt.getY());
-    }//GEN-LAST:event_cmdCommonFolderMousePressed
+    }
 
-    private void cmdCommonNameTemplateMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdCommonNameTemplateMousePressed
-        this.popNameTemplates.show(this.cmdCommonFolder, evt.getX(), evt.getY());
-    }//GEN-LAST:event_cmdCommonNameTemplateMousePressed
+    private void cmdCommonNameTemplateMousePressed(java.awt.event.MouseEvent evt) {
+        this.popNameTemplates.show(this.cmdCommonNameTemplate, evt.getX(), evt.getY());
+    }
 
-    private void cmdNameTemplateAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNameTemplateAllActionPerformed
-        for (BulkSaveEntry e : this.entryList) {
-            if (e.isSelected()) {
+    private void cmdNameTemplateAllActionPerformed(java.awt.event.ActionEvent evt) {
+        this.bulkUpdate = true;
+        try {
+            for (BulkSaveEntry e : this.getEntriesForBulkEdit()) {
                 e.setNameTemplate(this.nameTemplate);
             }
+        } finally {
+            this.bulkUpdate = false;
         }
-    }//GEN-LAST:event_cmdNameTemplateAllActionPerformed
+    }
 
     private void cmdAddCalendarEntryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddCalendarEntryActionPerformed
         NewEventEntryDialog newEventDlg = new NewEventEntryDialog(this, EditorsRegistry.getInstance().getMainWindow(), Dialog.ModalityType.APPLICATION_MODAL, this.selectedCase, false);
@@ -1564,7 +1540,9 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
         
         e.setPlaceHoldersCache(this.allPartyTypes, this.formPlaceHolders, this.formPlaceHolderValues, this.caseLawyer, this.caseAssistant, this.parties);
         this.entryList.add(e);
-        this.pnlEntries.add(e);
+        BulkSaveEntryRow row = new BulkSaveEntryRow(e, this);
+        this.rows.put(e, row);
+        this.pnlEntries.add(row);
         e.setDocumentTags(ComponentUtils.getPopupMenuItems(this.popCommonDocumentTags), this.docMvTagDefs, com.jdimension.jlawyer.server.constants.OptionConstants.OPTIONGROUP_DOCUMENTTAGS_MV_PREFIX);
         e.selectDocumentTags(ComponentUtils.getSelectedPopupMenuItems(this.popCommonDocumentTags));
         e.setCaseFolder(this.rootFolder, caseFolder);
@@ -1587,8 +1565,8 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
 
         this.cmdCommonTags.setEnabled(!this.entryList.isEmpty());
         this.cmdCommonFolder.setEnabled(!this.entryList.isEmpty());
-        this.cmdTagAll.setEnabled(!this.entryList.isEmpty());
-        this.cmdFolderAll.setEnabled(!this.entryList.isEmpty());
+
+        this.refreshDetails();
     }
 
     public void updateTotals() {
@@ -1671,37 +1649,298 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardCalendar;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardDetails;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardFiles;
     private javax.swing.JButton cmdAddCalendarEntry;
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdCaseTags;
-    private javax.swing.JButton cmdCommonFolder;
-    private javax.swing.JButton cmdCommonNameTemplate;
-    private javax.swing.JButton cmdCommonTags;
-    private javax.swing.JButton cmdFolderAll;
-    private javax.swing.JButton cmdNameTemplateAll;
     private javax.swing.JButton cmdSave;
-    private javax.swing.JButton cmdTagAll;
     private javax.swing.JPanel extensionsPanel;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JSeparator jSeparator1;
-    private javax.swing.JSeparator jSeparator2;
     private javax.swing.JLabel lblByFileTypes;
     private javax.swing.JLabel lblCalendarEntries;
     private javax.swing.JLabel lblCase;
     private javax.swing.JLabel lblCaseTags;
-    private javax.swing.JLabel lblCommonFolder;
-    private javax.swing.JLabel lblCommonNameTemplate;
-    private javax.swing.JLabel lblCommonTags;
+    private javax.swing.JLabel lblCaseTagsCaption;
     private javax.swing.JLabel lblFileCount;
+    private javax.swing.JLabel lblHints;
     private javax.swing.JLabel lblTotalSize;
-    private javax.swing.JPanel pnlEntries;
+    private javax.swing.JPanel pnlButtons;
+    private javax.swing.JPanel pnlCalendarEntries;
+    private javax.swing.JPanel pnlCaseTags;
+    private javax.swing.JPanel pnlDetails;
+    private com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel pnlEntries;
+    private javax.swing.JPanel pnlFilter;
+    private javax.swing.JPanel pnlFooter;
+    private javax.swing.JPanel pnlLeft;
+    private javax.swing.JPanel pnlHeader;
     private com.jdimension.jlawyer.client.editors.files.BulkSaveMetadataAllPanel pnlMetadataAll;
+    private javax.swing.JPanel pnlStatus;
     private javax.swing.JPopupMenu popCaseTags;
     private javax.swing.JPopupMenu popCommonDocumentTags;
     private javax.swing.JPopupMenu popCommonFolder;
     private javax.swing.JPopupMenu popNameTemplates;
+    private javax.swing.JSplitPane splitMain;
     // End of variables declaration//GEN-END:variables
+
+
+    /**
+     * Design kit: navy header with the case, cards for the list and the details, the save action
+     * as primary button.
+     */
+    private void applyModernLook() {
+        com.jdimension.jlawyer.client.ui.theme.DialogStyle.styleHeader(this.pnlHeader);
+        this.pnlHeader.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 14, 10, 14));
+        this.lblCase.setForeground(java.awt.Color.WHITE);
+        this.lblCase.setIcon(new com.jdimension.jlawyer.client.modulebar.SidebarIcon(this.lblCase.getIcon(), java.awt.Color.WHITE, 24));
+        this.lblCaseTagsCaption.setForeground(com.jdimension.jlawyer.client.ui.theme.UiColors.TEXT_ON_GLASS_SECONDARY);
+        this.lblCaseTags.setForeground(java.awt.Color.WHITE);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleCardHeaderButtons(this.cmdCaseTags);
+
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleSplitPane(this.splitMain);
+        this.splitMain.setBorder(javax.swing.BorderFactory.createEmptyBorder());
+        this.jScrollPane1.setBorder(javax.swing.BorderFactory.createEmptyBorder());
+        this.jScrollPane1.setOpaque(false);
+        this.jScrollPane1.getViewport().setOpaque(false);
+        this.pnlEntries.setOpaque(false);
+        this.lblByFileTypes.setForeground(com.jdimension.jlawyer.client.ui.theme.EntryRowPanel.TEXT_MUTED);
+
+        this.pnlFooter.setOpaque(false);
+        this.pnlFooter.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 10, 8, 10));
+        this.lblFileCount.setForeground(com.jdimension.jlawyer.client.ui.theme.UiColors.TEXT_DARK);
+        this.lblTotalSize.setForeground(com.jdimension.jlawyer.client.ui.theme.EntryRowPanel.TEXT_MUTED);
+        this.lblHints.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+        this.lblHints.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                // show the first file with a duplicate name, to correct it
+                if (!conflictEntries.isEmpty()) {
+                    scrollToEntry(conflictEntries.get(0));
+                }
+            }
+        });
+        com.jdimension.jlawyer.client.ui.theme.DialogStyle.stylePrimary(this.cmdSave, null);
+        // page background of dialogs - also when a caller does not center the dialog via FrameUtils
+        com.jdimension.jlawyer.client.ui.theme.DialogStyle.apply(this);
+
+    }
+
+    /**
+     * Sets up the controls for editing several files at once.
+     */
+    private void initEditArea() {
+        this.cmdCommonFolder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_account_tree_black_48dp.png")));
+        this.cmdCommonFolder.setText("Ordner");
+        this.cmdCommonFolder.setToolTipText("Ordner für alle Dateien auswählen");
+        this.cmdCommonFolder.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                cmdCommonFolderMousePressed(evt);
+            }
+        });
+        this.cmdCommonTags.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_green_36dp.png")));
+        this.cmdCommonTags.setText("Etiketten");
+        this.cmdCommonTags.setToolTipText("Dokumentetiketten für alle Dateien auswählen");
+        this.cmdCommonTags.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                cmdCommonTagsMousePressed(evt);
+            }
+        });
+        this.cmdCommonNameTemplate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png")));
+        this.cmdCommonNameTemplate.setText("Namensschema");
+        this.cmdCommonNameTemplate.setToolTipText("Dateinamenschema für alle Dateien auswählen");
+        this.cmdCommonNameTemplate.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                cmdCommonNameTemplateMousePressed(evt);
+            }
+        });
+        this.chkCommonFavorite.setOpaque(false);
+        this.chkCommonFavorite.addActionListener(e -> {
+            this.bulkUpdate = true;
+            try {
+                for (BulkSaveEntry be : this.getEntriesForBulkEdit()) {
+                    be.setFavorite(this.chkCommonFavorite.isSelected());
+                }
+            } finally {
+                this.bulkUpdate = false;
+            }
+        });
+        com.jdimension.jlawyer.client.ui.theme.EntryRowPanel.styleRowButtons(this.cmdCommonFolder, this.cmdCommonTags, this.cmdCommonNameTemplate);
+    }
+
+    /**
+     * A click on a line in the list switches saving of the file on or off - the details on the
+     * right show the files that are saved.
+     *
+     * @param e the file that was clicked
+     */
+    void rowClicked(BulkSaveEntry e) {
+        if (!this.saving) {
+            e.setSelected(!e.isSelected());
+        }
+    }
+
+    /**
+     * Called by a list line when its file changed.
+     *
+     * @param e the file
+     */
+    void entryChanged(BulkSaveEntry e) {
+        com.jdimension.jlawyer.client.ui.theme.EntryRowPanel card = this.detailCards.get(e);
+        if (card != null) {
+            card.setAccent(e.isSelected() && e.hasNameConflict() ? com.jdimension.jlawyer.client.ui.theme.EntryRowPanel.ACCENT_OVERDUE : null);
+        }
+        // a file was switched on or off for saving - the details show exactly the saved files
+        if (e.isSelected() != this.shownDetails.contains(e)) {
+            this.refreshDetails();
+        }
+    }
+
+    /**
+     * @return the files that are going to be saved - bulk edits apply to them
+     */
+    List<BulkSaveEntry> getEntriesForBulkEdit() {
+        return this.getSelectedEntries();
+    }
+
+    /**
+     * Right side: the actions for all files on top, below the full details of every file that is
+     * saved.
+     */
+    private void refreshDetails() {
+        if (this.pnlDetails == null) {
+            return;
+        }
+        if (this.spDetails == null) {
+            this.pnlDetailList.setLayout(new javax.swing.BoxLayout(this.pnlDetailList, javax.swing.BoxLayout.Y_AXIS));
+            this.pnlDetailList.setOpaque(false);
+            this.spDetails = new javax.swing.JScrollPane(this.pnlDetailList);
+            this.spDetails.setBorder(javax.swing.BorderFactory.createEmptyBorder());
+            this.spDetails.setOpaque(false);
+            this.spDetails.getViewport().setOpaque(false);
+            this.spDetails.getVerticalScrollBar().setUnitIncrement(16);
+            this.pnlDetails.removeAll();
+            this.pnlDetails.add(this.buildBulkBar(), java.awt.BorderLayout.NORTH);
+            this.pnlDetails.add(this.spDetails, java.awt.BorderLayout.CENTER);
+        }
+
+        this.shownDetails.clear();
+        this.pnlDetailList.removeAll();
+        for (BulkSaveEntry e : this.entryList) {
+            if (!e.isSelected()) {
+                continue;
+            }
+            this.shownDetails.add(e);
+            com.jdimension.jlawyer.client.ui.theme.EntryRowPanel card = this.detailCards.get(e);
+            if (card == null) {
+                card = new com.jdimension.jlawyer.client.ui.theme.EntryRowPanel() {
+                    @Override
+                    public java.awt.Dimension getMaximumSize() {
+                        return new java.awt.Dimension(Integer.MAX_VALUE, this.getPreferredSize().height);
+                    }
+                };
+                card.setLayout(new java.awt.BorderLayout());
+                e.setShownAsDetail(true);
+                com.jdimension.jlawyer.client.ui.theme.DialogStyle.styleContent(e);
+                card.add(e, java.awt.BorderLayout.CENTER);
+                this.detailCards.put(e, card);
+            }
+            card.setAccent(e.hasNameConflict() ? com.jdimension.jlawyer.client.ui.theme.EntryRowPanel.ACCENT_OVERDUE : null);
+            this.pnlDetailList.add(card);
+        }
+        if (this.shownDetails.isEmpty()) {
+            javax.swing.JLabel hint = new javax.swing.JLabel("Keine Datei zum Speichern ausgewählt - links Dateien anklicken.");
+            hint.setForeground(com.jdimension.jlawyer.client.ui.theme.EntryRowPanel.TEXT_MUTED);
+            hint.setBorder(javax.swing.BorderFactory.createEmptyBorder(8, 4, 0, 0));
+            this.pnlDetailList.add(hint);
+        }
+
+        int n = this.shownDetails.size();
+        this.cardDetails.setTitle(n == 1 ? "1 Datei wird gespeichert" : n + " Dateien werden gespeichert");
+        this.lblBulkCaption.setText(n == 1 ? "Für die Datei:" : "Für alle " + n + " Dateien:");
+        boolean any = n > 0;
+        this.cmdCommonFolder.setEnabled(any);
+        this.cmdCommonTags.setEnabled(any);
+        this.cmdCommonNameTemplate.setEnabled(any);
+        this.chkCommonFavorite.setEnabled(any);
+        boolean allFavorite = any;
+        for (BulkSaveEntry e : this.shownDetails) {
+            allFavorite = allFavorite && e.isFavorite();
+        }
+        this.chkCommonFavorite.setSelected(allFavorite);
+
+        this.pnlDetailList.revalidate();
+        this.pnlDetailList.repaint();
+    }
+
+    /**
+     * The actions above the details: they apply to all files that are saved, right away. Single
+     * files can be adjusted below afterwards.
+     */
+    private javax.swing.JPanel buildBulkBar() {
+        javax.swing.JPanel bar = new javax.swing.JPanel(new WrapLayout(java.awt.FlowLayout.LEFT, 6, 2));
+        bar.setOpaque(false);
+        bar.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                javax.swing.BorderFactory.createMatteBorder(0, 0, 1, 0, com.jdimension.jlawyer.client.ui.theme.UiColors.SEPARATOR),
+                javax.swing.BorderFactory.createEmptyBorder(0, 0, 6, 0)));
+        this.lblBulkCaption.setFont(this.lblBulkCaption.getFont().deriveFont(java.awt.Font.BOLD));
+        this.lblBulkCaption.setForeground(com.jdimension.jlawyer.client.ui.theme.UiColors.TEXT_DARK);
+        bar.add(this.lblBulkCaption);
+        bar.add(this.cmdCommonFolder);
+        bar.add(this.cmdCommonTags);
+        bar.add(this.cmdCommonNameTemplate);
+        bar.add(this.chkCommonFavorite);
+        this.pnlMetadataAll.setOpaque(false);
+        bar.add(this.pnlMetadataAll);
+        return bar;
+    }
+
+    /**
+     * Scrolls the details to a file, e.g. one with a duplicate name.
+     */
+    private void scrollToEntry(BulkSaveEntry e) {
+        com.jdimension.jlawyer.client.ui.theme.EntryRowPanel card = this.detailCards.get(e);
+        if (card != null && card.getParent() == this.pnlDetailList) {
+            this.pnlDetailList.scrollRectToVisible(card.getBounds());
+        }
+    }
+
+    /**
+     * @param hint what happens with the source after saving, e.g. "Mail wird gelöscht" - shown in
+     * the footer; null for nothing
+     */
+    public void setPostSaveHint(String hint) {
+        this.postSaveHint = hint;
+        this.updateHints();
+    }
+
+    /**
+     * Shows in the footer why saving is not possible (duplicate names) and what happens with the
+     * source afterwards.
+     */
+    private void updateHints() {
+        if (this.lblHints == null) {
+            return;
+        }
+        StringBuilder sb = new StringBuilder("<html>");
+        if (!this.conflictEntries.isEmpty()) {
+            int n = this.conflictEntries.size();
+            sb.append("<span style='color:#de313b'><b>&#9888; ").append(n).append(n == 1 ? " doppelter Dateiname" : " doppelte Dateinamen")
+                    .append("</b> &ndash; anklicken zum Anzeigen</span>");
+        }
+        if (this.postSaveHint != null && !this.postSaveHint.isEmpty()) {
+            if (!this.conflictEntries.isEmpty()) {
+                sb.append("&nbsp;&nbsp;&middot;&nbsp;&nbsp;");
+            }
+            sb.append("<span style='color:#64748b'>danach: ").append(this.postSaveHint).append("</span>");
+        }
+        sb.append("</html>");
+        this.lblHints.setText(sb.toString());
+        this.lblHints.setToolTipText(this.conflictEntries.isEmpty() ? null : "Speichern ist erst möglich, wenn alle Dateinamen eindeutig sind");
+    }
 
     /**
      * @return the selectedCase
@@ -1824,16 +2063,21 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
         // there may be conflicts, but the user decided not to save them
         boolean activeConflicts = !conflictNames.isEmpty();
 
+        this.conflictEntries.clear();
         for (BulkSaveEntry e : this.entryList) {
             String newName = e.getDocumentFilenameNew().toLowerCase();
             if (conflictNames.contains(newName)) {
                 e.setDocumentFilenameNewOutline(FlatClientProperties.OUTLINE_ERROR);
+                if (e.isSelected()) {
+                    this.conflictEntries.add(e);
+                }
             } else {
                 e.setDocumentFilenameNewOutline(null);
             }
         }
 
-        this.cmdSave.setEnabled(!activeConflicts);
+        this.cmdSave.setEnabled(!activeConflicts && !this.saving);
+        this.updateHints();
 
     }
 
@@ -1885,7 +2129,7 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
         menu.addActionListener((ActionEvent ae) -> {
             this.caseFolder = folder;
             this.lblCommonFolder.setText(fItemName);
-
+            this.cmdFolderAllActionPerformed(null);
         });
 
         items.add(menu);
@@ -1921,11 +2165,25 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
     @Override
     public void entryAdded(ArchiveFileReviewsBean entry) {
         this.addedEvents.add(entry);
-        this.lblCalendarEntries.setText(""+this.addedEvents.size());
-        StringBuilder sb=new StringBuilder();
-        for(ArchiveFileReviewsBean rev: this.addedEvents) {
-            sb.append(rev.toString()).append(" ").append(StringUtils.nonEmpty(rev.getSummary())).append(System.lineSeparator());
+        // the entries created so far, one line each - they are already stored in the calendar
+        javax.swing.JLabel line = new javax.swing.JLabel();
+        String icon;
+        if (entry.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_RESPITE) {
+            icon = "/icons16/material/notifications_important_20dp_white.png";
+        } else if (entry.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
+            icon = "/icons16/material/notifications_calendar_20dp_white.png";
+        } else {
+            icon = "/icons16/material/notifications_20dp_white.png";
         }
-        this.lblCalendarEntries.setToolTipText(sb.toString());
+        line.setIcon(new com.jdimension.jlawyer.client.modulebar.SidebarIcon(new javax.swing.ImageIcon(getClass().getResource(icon)), new java.awt.Color(14, 114, 181), 18));
+        line.setText("<html><b>" + StringUtils.nonEmpty(entry.getEventTypeName()) + "</b> " + entry.toString()
+                + (StringUtils.isEmpty(entry.getSummary()) ? "" : " &middot; " + entry.getSummary()) + "</html>");
+        line.setToolTipText(StringUtils.nonEmpty(entry.getDescription()));
+        line.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 0, 2, 0));
+        line.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
+        this.pnlCalendarEntries.add(line);
+        this.lblCalendarEntries.setVisible(false);
+        this.pnlCalendarEntries.revalidate();
+        this.pnlCalendarEntries.repaint();
     }
 }

@@ -682,6 +682,7 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GradientPaint;
 import java.awt.BasicStroke;
 import java.awt.RenderingHints;
 import java.awt.geom.RoundRectangle2D;
@@ -698,6 +699,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
+import com.jdimension.jlawyer.client.modulebar.SidebarIcon;
+import com.jdimension.jlawyer.client.ui.theme.UiColors;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
@@ -759,12 +765,38 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
     private static final int PADDING_BOTTOM = 8;
     private static final int AVATAR_SIZE = 32;
     private static final int AVATAR_GAP = 8;
-    private static final int MENTION_BAR_WIDTH = 4;
     private static final int READ_RECEIPT_WIDTH = 28;  // Width reserved for checkmarks
 
-    // Modern colors
-    private static final Color COLOR_BUBBLE_OTHER = new Color(58, 58, 60);
-    private static final Color COLOR_TIMESTAMP = new Color(255, 255, 255, 140);
+    private static final int SHADOW = 4;
+    private static final int HEADER_GAP = 2;
+    private static final int ACTION_ICON = 16;
+    private static final int ACTION_GAP = 8;
+
+    // bubble colors: gradients that work on the dark background as well as on light cards
+    private static final Color OWN_TOP = new Color(14, 114, 181);
+    private static final Color OWN_BOTTOM = new Color(10, 84, 140);
+    private static final Color OTHER_TOP = new Color(51, 65, 85);
+    private static final Color OTHER_BOTTOM = new Color(30, 41, 59);
+    private static final Color HOVER_OVERLAY = new Color(255, 255, 255, 14);
+    private static final Color COLOR_TIME = new Color(255, 255, 255, 150);
+    private static final Color PILL_MENTION = new Color(255, 255, 255, 46);
+    private static final Color QUOTE_BAR = new Color(255, 255, 255, 110);
+    private static final Color ACTIONS_PILL = new Color(0, 0, 0, 70);
+    private static final Color CHIP_DONE = UiColors.ACCENT;
+    private static final Color CHIP_SOME_OPEN = new Color(245, 158, 11);
+    private static final Color CHIP_ALL_OPEN = new Color(220, 38, 38);
+    private static final Pattern HASHTAG = Pattern.compile("#[\\p{L}\\p{N}_/.\\-]*[\\p{L}\\p{N}_]");
+
+    private static final Map<String, BufferedImage> AVATAR_CACHE = new ConcurrentHashMap<>();
+    private static final Map<String, javax.swing.Icon> ACTION_ICONS = new ConcurrentHashMap<>();
+
+    private boolean hover = false;
+    // share of a wide list a bubble may take up at most, see setBubbleWidthRatio
+    private float bubbleWidthRatio = 0.75f;
+    // optional row of chips (case, document) shown as footer inside the bubble
+    private javax.swing.JComponent footer = null;
+    private static final int FOOTER_GAP = 7;
+    private static final Color FOOTER_LINE = new Color(255, 255, 255, 40);
 
     // Avatar color palette
     private static final Color[] AVATAR_COLORS = {
@@ -875,6 +907,26 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
             
         });
         
+        // the actions are only shown while the mouse is over the message
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                hover = true;
+                repaint();
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                // moving onto a chip of the footer is still "over the message"
+                if (contains(e.getPoint())) {
+                    return;
+                }
+                hover = false;
+                setCursor(Cursor.getDefaultCursor());
+                repaint();
+            }
+        });
+
         addMouseMotionListener(new MouseAdapter() {
             @Override
             public void mouseMoved(MouseEvent e) {
@@ -924,6 +976,9 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
 
     public void updateTooltip() {
         StringBuilder sb = new StringBuilder();
+        if (this.message != null && this.message.getSender() != null) {
+            sb.append("von: ").append(this.message.getSender()).append(System.lineSeparator());
+        }
         if (this.message != null && this.message.getSent() != null) {
             sb.append("gesendet: ").append(dfSent.format(this.message.getSent())).append(" (").append(DateUtils.getHumanReadableTimeInPast(this.message.getSent())).append(")");
         }
@@ -946,39 +1001,59 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
 
     private void paintShadow(Graphics2D g2d, int x, int y, int w, int h) {
         for (int i = 3; i > 0; i--) {
-            g2d.setColor(new Color(0, 0, 0, 8 * (4 - i)));
+            g2d.setColor(new Color(0, 0, 0, 10 * (4 - i)));
             g2d.fill(new RoundRectangle2D.Float(x + 1, y + i, w, h, BUBBLE_RADIUS, BUBBLE_RADIUS));
         }
     }
 
     private void paintAvatar(Graphics2D g2d, int x, int y, String sender) {
-        Color avatarColor = getAvatarColor(sender);
-        g2d.setColor(avatarColor);
-        g2d.fillOval(x, y, AVATAR_SIZE, AVATAR_SIZE);
+        BufferedImage avatar = AVATAR_CACHE.computeIfAbsent(sender, this::createAvatar);
+        g2d.drawImage(avatar, x, y, AVATAR_SIZE, AVATAR_SIZE, null);
+    }
 
-        String initials = getInitials(sender);
-        g2d.setColor(Color.WHITE);
-        g2d.setFont(defaultFontBold.deriveFont(13f));
-        FontMetrics fm = g2d.getFontMetrics();
-        int textX = x + (AVATAR_SIZE - fm.stringWidth(initials)) / 2;
-        int textY = y + (AVATAR_SIZE + fm.getAscent() - fm.getDescent()) / 2;
-        g2d.drawString(initials, textX, textY);
-
-        // Draw user icon badge (bottom-right of avatar)
+    /**
+     * Avatar of a user, drawn at twice the size for sharp scaling: the avatar chosen in the user
+     * settings in a light circle, or the initials in a colored circle for users without one.
+     */
+    private BufferedImage createAvatar(String sender) {
+        int s = AVATAR_SIZE * 2;
+        BufferedImage img = new BufferedImage(s, s, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
         try {
-            ImageIcon userIcon = UserSettings.getInstance().getUserSmallIcon(sender);
-            if (userIcon != null && userIcon.getIconWidth() > 0) {
-                int badgeSize = 16;
-                int badgeX = x + AVATAR_SIZE - badgeSize + 2;
-                int badgeY = y + AVATAR_SIZE - badgeSize + 2;
-
-                // Draw the icon scaled to badge size using ImageIcon for proper loading
-                Image scaledIcon = userIcon.getImage().getScaledInstance(badgeSize, badgeSize, Image.SCALE_SMOOTH);
-                new ImageIcon(scaledIcon).paintIcon(this, g2d, badgeX, badgeY);
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+            ImageIcon userIcon = null;
+            try {
+                userIcon = UserSettings.getInstance().getUserBigIcon(sender);
+            } catch (Exception ex) {
+                log.warn("Could not load avatar for " + sender, ex);
             }
-        } catch (Exception ex) {
-            log.error("Error painting user icon badge", ex);
+            boolean ownAvatar = userIcon != null && userIcon.getIconWidth() > 0
+                    && (userIcon.getDescription() == null || !userIcon.getDescription().endsWith("identity.png"));
+            if (ownAvatar) {
+                g.setColor(new Color(241, 245, 249));
+                g.fillOval(0, 0, s, s);
+                int inner = (int) (s * 0.78);
+                g.drawImage(userIcon.getImage(), (s - inner) / 2, (s - inner) / 2, inner, inner, null);
+            } else {
+                Color c = getAvatarColor(sender);
+                g.setPaint(new GradientPaint(0, 0, c.brighter(), 0, s, c));
+                g.fillOval(0, 0, s, s);
+                String initials = getInitials(sender);
+                g.setColor(Color.WHITE);
+                g.setFont(defaultFontBold.deriveFont(26f));
+                FontMetrics fm = g.getFontMetrics();
+                g.drawString(initials, (s - fm.stringWidth(initials)) / 2, (s + fm.getAscent() - fm.getDescent()) / 2);
+            }
+            // fine ring, so the avatar stands out on any background
+            g.setColor(new Color(255, 255, 255, 110));
+            g.setStroke(new BasicStroke(2f));
+            g.drawOval(1, 1, s - 3, s - 3);
+        } finally {
+            g.dispose();
         }
+        return img;
     }
 
     private String getInitials(String name) {
@@ -1073,227 +1148,292 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
         repaint();
     }
 
+    /**
+     * Geometry of the bubble for a given width - shared by painting and size calculation, so the
+     * measured height always matches the painted one.
+     */
+    private static final class Geometry {
+
+        int bubbleX;
+        int bubbleY;
+        int bubbleW;
+        int bubbleH;
+        int totalH;
+        int headerH;
+        int textX;
+        int firstBaseline;
+        int lineH;
+        int receiptW;
+        int footerY;
+        int footerH;
+        List<String> lines = new ArrayList<>();
+    }
+
+    private Geometry layoutFor(Graphics2D g2d, int width) {
+        Geometry geo = new Geometry();
+        FontMetrics fm = g2d.getFontMetrics(defaultFont);
+        geo.lineH = fm.getHeight();
+
+        int avatarSpace = this.isOwnMessage() ? 0 : AVATAR_SIZE + AVATAR_GAP;
+        int avail = Math.max(140, width - 2 * BUBBLE_MARGIN - avatarSpace);
+        // chat look: bubbles take up to a share (default three quarters) of a wide list, the full width of a narrow one
+        int maxBubble = avail < 480 ? avail : Math.max(480, (int) (avail * this.bubbleWidthRatio));
+        geo.receiptW = (this.read != READ_NOTAPPLICABLE) ? READ_RECEIPT_WIDTH + 6 : 0;
+        int textMax = Math.max(40, maxBubble - 2 * PADDING_H - geo.receiptW);
+
+        String content = (this.message == null || this.message.getContent() == null) ? "" : this.message.getContent();
+        int widest = 0;
+        for (String line : content.split("\n")) {
+            String[] words = line.split(" ");
+            StringBuilder current = new StringBuilder(words.length > 0 ? words[0] : "");
+            for (int i = 1; i < words.length; i++) {
+                String test = current + " " + words[i];
+                if (drawLine(g2d, test, 0, 0, false) <= textMax) {
+                    current.append(" ").append(words[i]);
+                } else {
+                    geo.lines.add(current.toString());
+                    widest = Math.max(widest, drawLine(g2d, current.toString(), 0, 0, false));
+                    current = new StringBuilder(words[i]);
+                }
+            }
+            geo.lines.add(current.toString());
+            widest = Math.max(widest, drawLine(g2d, current.toString(), 0, 0, false));
+        }
+
+        int headerW = headerContentWidth(g2d) + actionsWidth() + 12;
+        int inner = Math.max(widest + geo.receiptW, headerW);
+        boolean hasFooter = this.footer != null && this.footer.isVisible();
+        if (hasFooter) {
+            geo.footerH = this.footer.getPreferredSize().height;
+            inner = Math.max(inner, this.footer.getPreferredSize().width - 8);
+        }
+        geo.bubbleW = Math.min(maxBubble, Math.max(inner + 2 * PADDING_H, Math.min(maxBubble, 180)));
+
+        FontMetrics hm = g2d.getFontMetrics(defaultFontBold);
+        geo.headerH = Math.max(hm.getHeight(), ACTION_ICON + 8);
+        geo.bubbleY = 2;
+        geo.firstBaseline = geo.bubbleY + PADDING_TOP + geo.headerH + HEADER_GAP + fm.getAscent();
+        geo.bubbleH = PADDING_TOP + geo.headerH + HEADER_GAP + geo.lines.size() * geo.lineH + PADDING_BOTTOM;
+        if (hasFooter) {
+            // below the text, separated by a thin line
+            geo.footerY = geo.bubbleY + geo.bubbleH - PADDING_BOTTOM + FOOTER_GAP;
+            geo.bubbleH += FOOTER_GAP + geo.footerH + 2;
+        }
+        geo.totalH = geo.bubbleY + geo.bubbleH + SHADOW;
+        geo.bubbleX = this.isOwnMessage() ? width - BUBBLE_MARGIN - geo.bubbleW : BUBBLE_MARGIN + avatarSpace;
+        geo.textX = geo.bubbleX + PADDING_H + geo.receiptW;
+        return geo;
+    }
+
+    private String senderName() {
+        return (this.message != null && this.message.getSender() != null) ? this.message.getSender() : "?";
+    }
+
+    private Font timeFont() {
+        return defaultFont.deriveFont(defaultFont.getSize2D() - 1f);
+    }
+
+    private Font chipFont() {
+        return defaultFontBold.deriveFont(defaultFont.getSize2D() - 2f);
+    }
+
+    /**
+     * @return text and colors of the mention status chip, or null if the message mentions no one
+     */
+    private Object[] statusChip() {
+        if (this.message == null || !this.message.hasMentions()) {
+            return null;
+        }
+        int open = this.message.getOpenMentionsCount();
+        if (open == 0) {
+            return new Object[]{"bestätigt", CHIP_DONE, UiColors.TEXT_DARK};
+        }
+        boolean allOpen = open == this.message.getMentions().size();
+        return new Object[]{open + " offen", allOpen ? CHIP_ALL_OPEN : CHIP_SOME_OPEN, allOpen ? Color.WHITE : UiColors.TEXT_DARK};
+    }
+
+    private int headerContentWidth(Graphics2D g2d) {
+        int w = g2d.getFontMetrics(defaultFontBold).stringWidth(senderName());
+        Date sent = (this.message == null || this.message.getSent() == null) ? new Date() : this.message.getSent();
+        w += 8 + g2d.getFontMetrics(timeFont()).stringWidth(getFormattedTimestamp(sent));
+        Object[] chip = statusChip();
+        if (chip != null) {
+            w += 8 + g2d.getFontMetrics(chipFont()).stringWidth((String) chip[0]) + 14;
+        }
+        return w;
+    }
+
+    private boolean showMarkRead() {
+        return this.ownMessage || UserUtils.isCurrentUserAdmin();
+    }
+
+    private int actionsWidth() {
+        int count = showMarkRead() ? 4 : 3;
+        return count * ACTION_ICON + (count - 1) * ACTION_GAP + 14;
+    }
+
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        Graphics2D g2d = (Graphics2D) g;
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
-
         if (!(getParent() instanceof MessagePanel))
             return;
 
-        int parentWidth = ((MessagePanel) getParent()).getCalloutWidth();
-        int width = getWidth() > 0 ? getWidth() : parentWidth;
+        Graphics2D g2d = (Graphics2D) g.create();
+        try {
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
 
-        g2d.setFont(defaultFont);
-        FontMetrics metrics = g2d.getFontMetrics();
+            int parentWidth = ((MessagePanel) getParent()).getCalloutWidth();
+            int width = getWidth() > 0 ? getWidth() : parentWidth;
+            Geometry geo = layoutFor(g2d, width);
 
-        // Calculate bubble dimensions based on alignment
-        int bubbleX;
-        int bubbleWidth;
-        int avatarX = BUBBLE_MARGIN;
-        int avatarY = PADDING_TOP;
+            if (!this.isOwnMessage()) {
+                paintAvatar(g2d, BUBBLE_MARGIN, geo.bubbleY, senderName());
+            }
 
-        if (this.isOwnMessage()) {
-            // Own message: starts at left margin, extends to right with some margin
-            bubbleX = BUBBLE_MARGIN;
-            bubbleWidth = width - (2 * BUBBLE_MARGIN);
-        } else {
-            // Other message: left-aligned with avatar space
-            int avatarSpace = AVATAR_SIZE + AVATAR_GAP;
-            bubbleX = BUBBLE_MARGIN + avatarSpace;
-            bubbleWidth = width - (2 * BUBBLE_MARGIN) - avatarSpace;
-        }
+            // bubble: soft shadow, vertical gradient, light on hover, fine light top edge
+            paintShadow(g2d, geo.bubbleX, geo.bubbleY, geo.bubbleW, geo.bubbleH);
+            RoundRectangle2D.Float shape = new RoundRectangle2D.Float(geo.bubbleX, geo.bubbleY, geo.bubbleW, geo.bubbleH, BUBBLE_RADIUS, BUBBLE_RADIUS);
+            g2d.setPaint(new GradientPaint(0, geo.bubbleY, this.isOwnMessage() ? OWN_TOP : OTHER_TOP,
+                    0, geo.bubbleY + geo.bubbleH, this.isOwnMessage() ? OWN_BOTTOM : OTHER_BOTTOM));
+            g2d.fill(shape);
+            if (this.hover) {
+                g2d.setColor(HOVER_OVERLAY);
+                g2d.fill(shape);
+            }
+            g2d.setPaint(new GradientPaint(0, geo.bubbleY, new Color(255, 255, 255, 70), 0, geo.bubbleY + 22, new Color(255, 255, 255, 0)));
+            g2d.setStroke(new BasicStroke(1f));
+            g2d.draw(new RoundRectangle2D.Float(geo.bubbleX + 0.5f, geo.bubbleY + 0.5f, geo.bubbleW - 1, geo.bubbleH - 1, BUBBLE_RADIUS, BUBBLE_RADIUS));
 
-        // Calculate left offset: status bar + checkmarks (if applicable)
-        int hasMentionBar = (this.message != null && this.message.hasMentions()) ? MENTION_BAR_WIDTH + 6 : 0;
-        int hasReadReceipt = (this.read != READ_NOTAPPLICABLE) ? READ_RECEIPT_WIDTH + 4 : 0;
-        int leftContentOffset = hasMentionBar + hasReadReceipt;
+            paintHeader(g2d, geo);
 
-        // Calculate text area within bubble
-        int textStartX = bubbleX + PADDING_H + leftContentOffset;
-        int textAreaWidth = textAreaWidthFor(width);
-        int yOffset = PADDING_TOP + metrics.getHeight();
-        int lineSpacing = metrics.getHeight();
-
-        // Calculate content height first for bubble sizing
-        String content = (this.message == null || this.message.getContent() == null) ? "" : this.message.getContent();
-        String[] lines = content.split("\n");
-        int bubbleHeight = bubbleHeightFor(metrics, lines, textAreaWidth);
-        int totalHeight = bubbleHeight + PADDING_TOP;
-
-        // Draw avatar for other messages
-        if (!this.isOwnMessage()) {
-            String sender = (this.message != null && this.message.getSender() != null) ? this.message.getSender() : "?";
-            paintAvatar(g2d, avatarX, avatarY, sender);
-        }
-
-        // Draw shadow
-        paintShadow(g2d, bubbleX, PADDING_TOP / 2, bubbleWidth, bubbleHeight);
-
-        // Draw bubble background
-        g2d.setColor(this.isOwnMessage() ? DefaultColorTheme.COLOR_LOGO_BLUE : COLOR_BUBBLE_OTHER);
-        g2d.fill(new RoundRectangle2D.Float(bubbleX, PADDING_TOP / 2, bubbleWidth, bubbleHeight, BUBBLE_RADIUS, BUBBLE_RADIUS));
-
-        // Draw mention indicator bar inside bubble (left edge)
-        if (this.message != null && this.message.hasMentions()) {
-            if (this.message.hasOpenMentions()) {
-                if (this.message.getMentions().size() == this.message.getOpenMentionsCount())
-                    g2d.setColor(DefaultColorTheme.COLOR_LOGO_RED);
-                else
-                    g2d.setColor(Color.ORANGE);
+            // clickable check marks to confirm a mention of the current user
+            if (this.read != READ_NOTAPPLICABLE) {
+                int bodyTop = geo.bubbleY + PADDING_TOP + geo.headerH + HEADER_GAP;
+                int checkX = geo.bubbleX + PADDING_H;
+                int checkY = bodyTop + (geo.lines.size() * geo.lineH) / 2 - 8;
+                paintReadReceipt(g2d, checkX, checkY, this.read);
+                indicatorX = checkX;
+                indicatorY = checkY;
+                indicatorSize = READ_RECEIPT_WIDTH;
             } else {
-                g2d.setColor(DefaultColorTheme.COLOR_LOGO_GREEN);
+                indicatorX = -1000;
             }
-            g2d.fill(new RoundRectangle2D.Float(bubbleX + 4, PADDING_TOP / 2 + 6, MENTION_BAR_WIDTH, bubbleHeight - 12, 2, 2));
-        }
 
-        // Draw read receipt checkmarks right next to status bar
-        if (this.read != READ_NOTAPPLICABLE) {
-            int checkX = bubbleX + PADDING_H + hasMentionBar;
-            int checkY = PADDING_TOP / 2 + (bubbleHeight / 2) - 8;  // Vertically centered
-            paintReadReceipt(g2d, checkX, checkY, this.read);
-            // Update indicator position for click detection
-            indicatorX = checkX;
-            indicatorY = checkY;
-            indicatorSize = READ_RECEIPT_WIDTH;
-        }
-
-        // Draw message text
-        g2d.setFont(defaultFont);
-        g2d.setColor(Color.WHITE);
-        int textX = textStartX;
-        yOffset = PADDING_TOP / 2 + PADDING_TOP + metrics.getAscent();
-
-        for (String line : lines) {
-            String[] words = line.split(" ");
-            String initial = (words.length > 0) ? words[0] : "";
-            StringBuilder currentLine = new StringBuilder(initial);
-
-            for (int i = 1; i < words.length; i++) {
-                String testLine = currentLine.toString() + " " + words[i];
-                if (metrics.stringWidth(testLine) <= textAreaWidth) {
-                    currentLine.append(" ").append(words[i]);
-                } else {
-                    this.drawWithHighlights(currentLine.toString(), g2d, textX, yOffset, defaultFont, defaultFontBold, Color.WHITE, DefaultColorTheme.COLOR_LIGHT_GREY);
-                    currentLine = new StringBuilder(words[i]);
-                    yOffset += lineSpacing;
+            // message text
+            FontMetrics fm = g2d.getFontMetrics(defaultFont);
+            int y = geo.firstBaseline;
+            for (String line : geo.lines) {
+                if (isQuote(line)) {
+                    g2d.setColor(QUOTE_BAR);
+                    g2d.fillRoundRect(geo.textX - 8, y - fm.getAscent() + 1, 3, geo.lineH - 1, 3, 3);
                 }
+                drawLine(g2d, line, geo.textX, y, true);
+                y += geo.lineH;
             }
 
-            this.drawWithHighlights(currentLine.toString(), g2d, textX, yOffset, defaultFont, defaultFontBold, Color.WHITE, DefaultColorTheme.COLOR_LIGHT_GREY);
-            yOffset += lineSpacing;
+            if (geo.footerH > 0) {
+                g2d.setColor(FOOTER_LINE);
+                g2d.fillRect(geo.bubbleX + PADDING_H, geo.footerY - FOOTER_GAP / 2 - 1, geo.bubbleW - 2 * PADDING_H, 1);
+                placeFooter(geo);
+            }
+
+            if (this.hover) {
+                paintActions(g2d, geo);
+            } else {
+                this.replyX = -1000;
+                this.copyX = -1000;
+                this.markReadX = -1000;
+                this.deleteX = -1000;
+            }
+
+            // Only update preferredSize when it actually changes, otherwise the
+            // setPreferredSize call from inside paintComponent triggers a
+            // revalidate -> layout -> paint loop that can flicker (the loop is
+            // self-amplifying when a vertical scrollbar appears/disappears and
+            // changes the available width, which changes the wrapped text height).
+            if (parentWidth != lastPreferredWidth || geo.totalH != lastPreferredHeight) {
+                lastPreferredWidth = parentWidth;
+                lastPreferredHeight = geo.totalH;
+                this.setPreferredSize(new Dimension(parentWidth, geo.totalH));
+            }
+        } finally {
+            g2d.dispose();
         }
+    }
 
-        // Draw timestamp (bottom-right inside bubble)
-        g2d.setFont(miniFont);
-        FontMetrics miniFm = g2d.getFontMetrics();
+    private void paintHeader(Graphics2D g2d, Geometry geo) {
+        int x = geo.bubbleX + PADDING_H;
+        int centerY = geo.bubbleY + PADDING_TOP + geo.headerH / 2;
+
+        g2d.setFont(defaultFontBold);
+        FontMetrics bm = g2d.getFontMetrics();
+        int baseline = centerY + (bm.getAscent() - bm.getDescent()) / 2;
+        g2d.setColor(Color.WHITE);
+        g2d.drawString(senderName(), x, baseline);
+        x += bm.stringWidth(senderName()) + 8;
+
         Date sent = (this.message == null || this.message.getSent() == null) ? new Date() : this.message.getSent();
-        String timestamp = getFormattedTimestamp(sent);
-        int timestampWidth = miniFm.stringWidth(timestamp);
-        int timestampX = bubbleX + bubbleWidth - PADDING_H - timestampWidth;
-        int timestampY = PADDING_TOP / 2 + bubbleHeight - PADDING_BOTTOM;
+        String time = getFormattedTimestamp(sent);
+        g2d.setFont(timeFont());
+        g2d.setColor(COLOR_TIME);
+        g2d.drawString(time, x, baseline);
+        x += g2d.getFontMetrics().stringWidth(time) + 8;
 
-        g2d.setColor(COLOR_TIMESTAMP);
-        g2d.drawString(timestamp, timestampX, timestampY);
+        Object[] chip = statusChip();
+        if (chip != null) {
+            g2d.setFont(chipFont());
+            FontMetrics cm = g2d.getFontMetrics();
+            String text = (String) chip[0];
+            int chipW = cm.stringWidth(text) + 14;
+            int chipH = cm.getHeight() + 2;
+            g2d.setColor((Color) chip[1]);
+            g2d.fillRoundRect(x, centerY - chipH / 2, chipW, chipH, chipH, chipH);
+            g2d.setColor((Color) chip[2]);
+            g2d.drawString(text, x + 7, centerY - chipH / 2 + 1 + cm.getAscent());
+        }
+    }
 
-        // Place icons inside bubble, top-right
-        int rightPadding = PADDING_H;
-        int iconSize = 18;
-        int gap = 6;
-        int iconY = PADDING_TOP / 2 + 8;
-        boolean showMarkRead = (this.ownMessage || UserUtils.isCurrentUserAdmin());
-        int x = bubbleX + bubbleWidth - rightPadding - iconSize;
+    /**
+     * Reply, confirm, copy and delete - only while the mouse is over the message, in a small
+     * glass pill at the top right of the bubble.
+     */
+    private void paintActions(Graphics2D g2d, Geometry geo) {
+        boolean markRead = showMarkRead();
+        int pillW = actionsWidth();
+        int pillH = ACTION_ICON + 8;
+        int pillX = geo.bubbleX + geo.bubbleW - 8 - pillW;
+        int pillY = geo.bubbleY + PADDING_TOP + (geo.headerH - pillH) / 2;
+        g2d.setColor(ACTIONS_PILL);
+        g2d.fillRoundRect(pillX, pillY, pillW, pillH, pillH, pillH);
 
-        // delete icon
-        this.deleteX = x;
-        this.deleteY = iconY;
-        ICON_DELETE.paintIcon(this, g2d, this.deleteX, this.deleteY);
-        x -= (iconSize + gap);
-
-        // copy icon
-        this.copyX = x;
-        this.copyY = iconY;
-        ICON_COPY.paintIcon(this, g2d, this.copyX, this.copyY);
-        x -= (iconSize + gap);
-
-        // mark read icon (optional)
-        if (showMarkRead) {
+        int x = pillX + 7;
+        int iconY = pillY + 4;
+        this.replyX = x;
+        this.replyY = iconY;
+        actionIcon(ICON_REPLY_ORIG).paintIcon(this, g2d, x, iconY);
+        x += ACTION_ICON + ACTION_GAP;
+        if (markRead) {
             this.markReadX = x;
             this.markReadY = iconY;
-            ICON_MARKREAD.paintIcon(this, g2d, this.markReadX, this.markReadY);
-            x -= (iconSize + gap);
+            actionIcon(ICON_MARKREAD).paintIcon(this, g2d, x, iconY);
+            x += ACTION_ICON + ACTION_GAP;
         } else {
-            this.markReadX = -1;
+            this.markReadX = -1000;
         }
-
-        // reply icon
-        this.replyX = Math.max(bubbleX + 8, x);
-        this.replyY = iconY;
-        try {
-            if (ICON_REPLY_ORIG != null && ICON_REPLY_ORIG.getIconWidth() > 0 && ICON_REPLY_ORIG.getIconHeight() > 0) {
-                Image scaled = ICON_REPLY_ORIG.getImage().getScaledInstance(iconSize, iconSize, Image.SCALE_SMOOTH);
-                new ImageIcon(scaled).paintIcon(this, g2d, this.replyX, this.replyY);
-            } else {
-                g2d.setColor(Color.WHITE);
-                g2d.setStroke(new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-                int centerY = this.replyY + 9;
-                int startX = this.replyX + 16;
-                int bendX = startX - 10;
-                g2d.drawLine(startX, centerY, bendX, centerY);
-                g2d.drawLine(bendX, centerY, bendX, centerY + 6);
-                int[] xs = new int[] { bendX, bendX - 5, bendX + 2 };
-                int[] ys = new int[] { centerY, centerY + 5, centerY + 5 };
-                g2d.fillPolygon(xs, ys, 3);
-            }
-        } catch (Throwable t) {
-            log.error("Error painting reply icon", t);
-        }
-
-        // Only update preferredSize when it actually changes, otherwise the
-        // setPreferredSize call from inside paintComponent triggers a
-        // revalidate -> layout -> paint loop that can flicker (the loop is
-        // self-amplifying when a vertical scrollbar appears/disappears and
-        // changes the available width, which changes the wrapped text height).
-        if (parentWidth != lastPreferredWidth || totalHeight != lastPreferredHeight) {
-            lastPreferredWidth = parentWidth;
-            lastPreferredHeight = totalHeight;
-            this.setPreferredSize(new Dimension(parentWidth, totalHeight));
-        }
+        this.copyX = x;
+        this.copyY = iconY;
+        actionIcon(ICON_COPY).paintIcon(this, g2d, x, iconY);
+        x += ACTION_ICON + ACTION_GAP;
+        this.deleteX = x;
+        this.deleteY = iconY;
+        actionIcon(ICON_DELETE).paintIcon(this, g2d, x, iconY);
     }
 
-    private int textAreaWidthFor(int width) {
-        int bubbleWidth = width - (2 * BUBBLE_MARGIN);
-        if (!this.isOwnMessage()) {
-            bubbleWidth -= AVATAR_SIZE + AVATAR_GAP;
-        }
-        int hasMentionBar = (this.message != null && this.message.hasMentions()) ? MENTION_BAR_WIDTH + 6 : 0;
-        int hasReadReceipt = (this.read != READ_NOTAPPLICABLE) ? READ_RECEIPT_WIDTH + 4 : 0;
-        return bubbleWidth - (2 * PADDING_H) - hasMentionBar - hasReadReceipt - 80; // 80 for icons
-    }
-
-    private int bubbleHeightFor(FontMetrics metrics, String[] lines, int textAreaWidth) {
-        int lineSpacing = metrics.getHeight();
-        int contentHeight = 0;
-        for (String line : lines) {
-            String[] words = line.split(" ");
-            String initial = (words.length > 0) ? words[0] : "";
-            StringBuilder currentLine = new StringBuilder(initial);
-
-            for (int i = 1; i < words.length; i++) {
-                String testLine = currentLine.toString() + " " + words[i];
-                if (metrics.stringWidth(testLine) <= textAreaWidth) {
-                    currentLine.append(" ").append(words[i]);
-                } else {
-                    contentHeight += lineSpacing;
-                    currentLine = new StringBuilder(words[i]);
-                }
-            }
-            contentHeight += lineSpacing;
-        }
-        return PADDING_TOP + contentHeight + PADDING_BOTTOM + lineSpacing; // extra for timestamp
+    private static javax.swing.Icon actionIcon(ImageIcon source) {
+        return ACTION_ICONS.computeIfAbsent(source.getDescription() != null ? source.getDescription() : String.valueOf(System.identityHashCode(source)),
+                k -> new SidebarIcon(source, new Color(255, 255, 255, 235), ACTION_ICON));
     }
 
     /**
@@ -1310,12 +1450,10 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
         try {
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
-            g2d.setFont(defaultFont);
-            String content = (this.message == null || this.message.getContent() == null) ? "" : this.message.getContent();
-            int totalHeight = bubbleHeightFor(g2d.getFontMetrics(), content.split("\n"), textAreaWidthFor(width)) + PADDING_TOP;
+            Geometry geo = layoutFor(g2d, width);
             lastPreferredWidth = parentWidth;
-            lastPreferredHeight = totalHeight;
-            this.setPreferredSize(new Dimension(parentWidth, totalHeight));
+            lastPreferredHeight = geo.totalH;
+            this.setPreferredSize(new Dimension(parentWidth, geo.totalH));
         } finally {
             g2d.dispose();
         }
@@ -1393,57 +1531,189 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
         }
     }
 
-    private void drawWithHighlights(String line, Graphics2D g2d, int x, int y, Font defaultFont, Font defaultFontBold, Color defaultColor, Color replyColor) {
+    private static boolean isQuote(String line) {
+        return line.startsWith("> ") || line.startsWith("-----");
+    }
 
-        boolean isReply=line.startsWith("> ") || line.startsWith("-----");
-        if(isReply)
-            g2d.setColor(replyColor);
-        else
-            g2d.setColor(defaultColor);
-        
-        // find the first occurence of a principal
-        boolean magicTextIsMe = false;
-        String magicText = null;
-        int magicIndex = Integer.MAX_VALUE;
-        if (this.getPrincipals() != null) {
-            for (AppUserBean u : this.getPrincipals()) {
-                int pIndex = line.indexOf("@" + u.getPrincipalId());
-                if (pIndex > -1 && pIndex < magicIndex) {
-                    magicText = "@" + u.getPrincipalId();
-                    magicIndex = pIndex;
-                    if (u.getPrincipalId().equals(this.ownPrincipal)) {
-                        magicTextIsMe = true;
+    /**
+     * Draws (or only measures) one line of message text: @mentions as pills (a mention of the
+     * current user in the accent color), #hashtags in the accent color, quoted lines dimmed.
+     *
+     * @return the width of the line
+     */
+    private int drawLine(Graphics2D g2d, String line, int x, int y, boolean paint) {
+        Color base = isQuote(line) ? DefaultColorTheme.COLOR_LIGHT_GREY : Color.WHITE;
+        FontMetrics plain = g2d.getFontMetrics(defaultFont);
+        FontMetrics bold = g2d.getFontMetrics(defaultFontBold);
+        int cx = x;
+        String rest = line;
+        while (!rest.isEmpty()) {
+            // next mention of a known user
+            int mentionIndex = Integer.MAX_VALUE;
+            String mention = null;
+            boolean mentionIsMe = false;
+            if (this.getPrincipals() != null) {
+                for (AppUserBean u : this.getPrincipals()) {
+                    String token = "@" + u.getPrincipalId();
+                    int idx = rest.indexOf(token);
+                    if (idx > -1 && (idx < mentionIndex || (idx == mentionIndex && token.length() > mention.length()))) {
+                        mentionIndex = idx;
+                        mention = token;
+                        mentionIsMe = u.getPrincipalId().equals(this.ownPrincipal);
                     }
                 }
             }
-        }
+            // next hashtag
+            java.util.regex.Matcher hm = HASHTAG.matcher(rest);
+            int hashIndex = Integer.MAX_VALUE;
+            String hashtag = null;
+            while (hm.find()) {
+                // only at a word start, not e.g. in "C#"
+                if (hm.start() == 0 || Character.isWhitespace(rest.charAt(hm.start() - 1)) || rest.charAt(hm.start() - 1) == '(') {
+                    hashIndex = hm.start();
+                    hashtag = hm.group();
+                    break;
+                }
+            }
 
-        if (magicText != null) {
-            String prefix = line.substring(0, magicIndex);
-            g2d.setFont(defaultFont);
-            FontMetrics defaultMetrics = g2d.getFontMetrics();
-            g2d.drawString(prefix, x, y);
-            int prefixLength = defaultMetrics.stringWidth(prefix);
-            g2d.setFont(defaultFontBold);
-            FontMetrics boldMetrics = g2d.getFontMetrics();
-            if (magicTextIsMe) {
-                g2d.setColor(DefaultColorTheme.COLOR_LOGO_GREEN);
+            if (mention == null && hashtag == null) {
+                if (paint) {
+                    g2d.setFont(defaultFont);
+                    g2d.setColor(base);
+                    g2d.drawString(rest, cx, y);
+                }
+                cx += plain.stringWidth(rest);
+                break;
             }
-            g2d.drawString(magicText, x + prefixLength, y);
-            int magicTextLength = boldMetrics.stringWidth(magicText);
-            String suffix = line.substring(magicIndex + magicText.length(), line.length());
-            if (suffix.length() == 0) {
-                return;
+
+            boolean mentionFirst = mention != null && mentionIndex <= hashIndex;
+            int idx = mentionFirst ? mentionIndex : hashIndex;
+            String token = mentionFirst ? mention : hashtag;
+            String prefix = rest.substring(0, idx);
+            if (paint && !prefix.isEmpty()) {
+                g2d.setFont(defaultFont);
+                g2d.setColor(base);
+                g2d.drawString(prefix, cx, y);
             }
-            if(isReply) {
-                drawWithHighlights(suffix, g2d, x + prefixLength + magicTextLength, y, defaultFont, defaultFontBold, replyColor, replyColor);
+            cx += plain.stringWidth(prefix);
+
+            int tokenW = bold.stringWidth(token);
+            if (mentionFirst) {
+                if (paint) {
+                    g2d.setColor(mentionIsMe ? UiColors.ACCENT : PILL_MENTION);
+                    int pillH = bold.getAscent() + bold.getDescent() + 2;
+                    g2d.fillRoundRect(cx, y - bold.getAscent() - 1, tokenW + 8, pillH, pillH, pillH);
+                    g2d.setFont(defaultFontBold);
+                    g2d.setColor(mentionIsMe ? UiColors.TEXT_DARK : Color.WHITE);
+                    g2d.drawString(token, cx + 4, y);
+                }
+                cx += tokenW + 9;
             } else {
-                drawWithHighlights(suffix, g2d, x + prefixLength + magicTextLength, y, defaultFont, defaultFontBold, defaultColor, replyColor);
+                if (paint) {
+                    g2d.setFont(defaultFontBold);
+                    g2d.setColor(UiColors.ACCENT);
+                    g2d.drawString(token, cx, y);
+                }
+                cx += tokenW;
             }
-            
-        } else {
-            g2d.setFont(defaultFont);
-            g2d.drawString(line, x, y);
+            rest = rest.substring(idx + token.length());
+        }
+        return cx - x;
+    }
+
+    /**
+     * Sets the share of a wide list a bubble may take up at most. Narrow lists always use their
+     * full width.
+     *
+     * @param bubbleWidthRatio between 0 and 1, default 0.75
+     */
+    public void setBubbleWidthRatio(float bubbleWidthRatio) {
+        this.bubbleWidthRatio = Math.max(0.1f, Math.min(1f, bubbleWidthRatio));
+        this.lastPreferredWidth = -1;
+        this.revalidate();
+        this.repaint();
+    }
+
+    /**
+     * Shows a row of chips (case, document) as footer inside the bubble, so it clearly belongs
+     * to this message. The component is added as a child and placed by the bubble.
+     *
+     * @param footer the footer, may be null
+     */
+    public void setFooter(javax.swing.JComponent footer) {
+        if (footer != null && footer == this.footer) {
+            // same footer, its content or visibility changed - just measure again
+            this.lastPreferredHeight = -1;
+            this.revalidate();
+            this.repaint();
+            return;
+        }
+        if (this.footer != null) {
+            this.remove(this.footer);
+        }
+        this.footer = footer;
+        if (footer != null) {
+            this.setLayout(null);
+            this.add(footer);
+            // keep the hover state while the mouse is over a chip
+            MouseAdapter hoverKeeper = new MouseAdapter() {
+                @Override
+                public void mouseEntered(MouseEvent e) {
+                    if (!hover) {
+                        hover = true;
+                        repaint();
+                    }
+                }
+
+                @Override
+                public void mouseExited(MouseEvent e) {
+                    java.awt.Point p = javax.swing.SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), CalloutPanelComponent.this);
+                    if (!contains(p)) {
+                        hover = false;
+                        repaint();
+                    }
+                }
+            };
+            footer.addMouseListener(hoverKeeper);
+            for (java.awt.Component c : footer.getComponents()) {
+                c.addMouseListener(hoverKeeper);
+            }
+        }
+        this.lastPreferredHeight = -1;
+        this.revalidate();
+    }
+
+    private void placeFooter(Geometry geo) {
+        if (this.footer == null || !this.footer.isVisible()) {
+            return;
+        }
+        // chips have their own padding - align their text with the message text
+        java.awt.Rectangle r = new java.awt.Rectangle(geo.bubbleX + PADDING_H - 6, geo.footerY, geo.bubbleW - 2 * PADDING_H + 12, geo.footerH);
+        if (!r.equals(this.footer.getBounds())) {
+            this.footer.setBounds(r);
+            this.footer.validate();
+        }
+    }
+
+    @Override
+    public void doLayout() {
+        if (this.footer == null) {
+            super.doLayout();
+            return;
+        }
+        if (getWidth() <= 0) {
+            return;
+        }
+        Graphics2D g2d = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB).createGraphics();
+        try {
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
+            Geometry geo = layoutFor(g2d, getWidth());
+            if (geo.footerH > 0) {
+                placeFooter(geo);
+            }
+        } finally {
+            g2d.dispose();
         }
     }
 

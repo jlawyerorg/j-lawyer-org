@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.voip;
 import com.jdimension.jlawyer.client.editors.documents.viewer.PdfImagePanel;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.client.utils.pdf.PdfA4Normalizer;
 import com.jdimension.jlawyer.client.wizard.*;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -676,6 +677,8 @@ import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.jlawyer.themes.ServerColorTheme;
 
 /**
  *
@@ -787,6 +790,8 @@ public class EpostPdfMergeStep extends javax.swing.JPanel implements WizardStepI
 
         List<File> pdfFiles = (List<File>) data.get("epost.letter.sortedpdffiles");
 
+        this.lblProgress.setFont(this.lblProgress.getFont().deriveFont(java.awt.Font.PLAIN));
+        this.lblProgress.setForeground(javax.swing.UIManager.getColor("Label.foreground"));
         this.lblProgress.setText("Dokumente werden zusammengeführt...");
         this.pnlPreview.removeAll();
 
@@ -794,9 +799,17 @@ public class EpostPdfMergeStep extends javax.swing.JPanel implements WizardStepI
             this.wizard.enableButtons(false, false, true, false);
         
         new Thread(() -> {
+            String hint = "";
+            boolean highlightHint = false;
             try {
                 String tempFile = FileUtils.createTempFile("epost-" + System.currentTimeMillis() + ".pdf", new byte[0]);
                 mergePDFs(pdfFiles, tempFile);
+                // E-POST only accepts DIN A4 portrait pages (#3251)
+                int normalized = normalizeToA4(tempFile);
+                if (normalized > 0) {
+                    hint = normalized + " Seite(n) wurden für den E-POST-Versand auf DIN A4 angepasst.";
+                    highlightHint = true;
+                }
                 FileUtils.cleanupTempFile(tempFile);
                 ThreadUtils.updateLabel(this.lblProgress, "Lade Vorschau...");
 
@@ -826,10 +839,20 @@ public class EpostPdfMergeStep extends javax.swing.JPanel implements WizardStepI
 
             } catch (Exception e) {
                 log.error("Could not merge documents", e);
-                ThreadUtils.updateLabel(this.lblProgress, "Fehler: " + e.getMessage());
+                hint = "Fehler: " + e.getMessage();
+                highlightHint = false;
             }
 
-            ThreadUtils.updateLabel(this.lblProgress, "");
+            final String finalHint = hint;
+            final boolean finalHighlight = highlightHint;
+            SwingUtilities.invokeLater(() -> {
+                // the A4 hint is shown bold in j-lawyer green
+                if (finalHighlight) {
+                    this.lblProgress.setFont(this.lblProgress.getFont().deriveFont(java.awt.Font.BOLD));
+                    this.lblProgress.setForeground(ServerColorTheme.COLOR_LOGO_GREEN);
+                }
+                this.lblProgress.setText(finalHint);
+            });
             
             try {
                 SwingUtilities.invokeLater(() -> {
@@ -847,6 +870,26 @@ public class EpostPdfMergeStep extends javax.swing.JPanel implements WizardStepI
     @Override
     public void setData(WizardDataContainer data) {
         this.data = data;
+    }
+
+    /**
+     * Normalizes all pages of the given PDF file to DIN A4 portrait and saves
+     * the file if pages have been changed.
+     *
+     * @param pdfFile the merged letter
+     * @return number of changed pages
+     * @throws IOException if the file cannot be read or written
+     */
+    private int normalizeToA4(String pdfFile) throws IOException {
+        File f = new File(pdfFile);
+        try (PDDocument doc = PDDocument.load(f, MemoryUsageSetting.setupMainMemoryOnly())) {
+            int normalized = PdfA4Normalizer.normalizeToA4Portrait(doc);
+            if (normalized > 0) {
+                log.info(normalized + " page(s) of E-POST letter normalized to DIN A4");
+                doc.save(f);
+            }
+            return normalized;
+        }
     }
 
     private void mergePDFs(List<File> pdfFiles, String outputFile) throws IOException {

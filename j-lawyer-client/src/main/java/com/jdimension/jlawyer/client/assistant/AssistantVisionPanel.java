@@ -80,11 +80,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.DataLine;
-import javax.sound.sampled.Mixer;
-import javax.sound.sampled.TargetDataLine;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
@@ -112,7 +107,7 @@ public class AssistantVisionPanel extends JDialog {
     private boolean isRecording = false;
     private AiCapability transcribeCapability = null;
     private AssistantConfig transcribeConfig = null;
-    private TargetDataLine targetDataLine;
+    private AudioUtils.MicrophoneLine targetDataLine;
     private ByteArrayOutputStream byteArrayOutputStream;
     private Color cmdTranscribeOriginalBackground = null;
 
@@ -135,12 +130,6 @@ public class AssistantVisionPanel extends JDialog {
     private List<InputData> inputs = new ArrayList<>();
 
     private String initialPrompt = "";
-
-    // Gray-tone bubble colors (consistent with AssistantChatPanel)
-    private static final Color USER_BUBBLE_BG = new Color(232, 232, 232);
-    private static final Color ASSISTANT_BUBBLE_BG = new Color(245, 245, 245);
-    private static final Color USER_ICON_BG = new Color(150, 150, 150);
-    private static final Color BUBBLE_BORDER_COLOR = new Color(215, 215, 215);
 
     // UI components
     private JPanel pnlTitle;
@@ -927,27 +916,7 @@ public class AssistantVisionPanel extends JDialog {
     }
 
     private void styleMessageBubble(AiChatMessageMarkdownPanel panel, boolean isUser) {
-        Color bg = isUser ? USER_BUBBLE_BG : ASSISTANT_BUBBLE_BG;
-        Color iconBg = isUser ? USER_ICON_BG : DefaultColorTheme.COLOR_DARK_GREY;
-
-        panel.setOpaque(true);
-        panel.setBackground(bg);
-        panel.setBorder(new FlatLineBorder(new Insets(8, 8, 8, 8), BUBBLE_BORDER_COLOR, 1, 12));
-
-        applyBubbleColors(panel, bg, iconBg);
-    }
-
-    private void applyBubbleColors(java.awt.Container container, Color bg, Color iconBg) {
-        for (Component c : container.getComponents()) {
-            if (c instanceof JLabel && ((JLabel) c).getIcon() != null) {
-                c.setBackground(iconBg);
-            } else {
-                c.setBackground(bg);
-            }
-            if (c instanceof java.awt.Container) {
-                applyBubbleColors((java.awt.Container) c, bg, iconBg);
-            }
-        }
+        AiChatTranscript.styleMessageBubble(panel, isUser);
     }
 
     private AiChatMessageMarkdownPanel findLastMessagePanel() {
@@ -982,7 +951,9 @@ public class AssistantVisionPanel extends JDialog {
 
     private void cmdTranscribeActionPerformed(java.awt.event.ActionEvent evt) {
         if (!isRecording) {
-            startRecording();
+            if (!startRecording()) {
+                return;
+            }
             ClientSettings.getInstance().setConfiguration(ClientSettings.CONF_SOUND_LASTRECORDINGDEVICE, (String) this.cmbDevices.getSelectedItem());
         } else {
             try {
@@ -1005,31 +976,10 @@ public class AssistantVisionPanel extends JDialog {
         return inputs;
     }
 
-    private void startRecording() {
+    private boolean startRecording() {
         try {
-            AudioFormat audioFormat = AudioUtils.getAudioFormat();
-
             String selectedDeviceName = (String) this.cmbDevices.getSelectedItem();
-
-            Mixer.Info[] mixerInfos = AudioSystem.getMixerInfo();
-            Mixer.Info selectedMixerInfo = null;
-            for (Mixer.Info mixerInfo : mixerInfos) {
-                if (mixerInfo.getName().equals(selectedDeviceName)) {
-                    selectedMixerInfo = mixerInfo;
-                    break;
-                }
-            }
-
-            if (selectedMixerInfo == null) {
-                log.error("Selected mixer device not found.");
-                return;
-            }
-
-            Mixer mixer = AudioSystem.getMixer(selectedMixerInfo);
-
-            DataLine.Info dataLineInfo = new DataLine.Info(TargetDataLine.class, audioFormat);
-            targetDataLine = (TargetDataLine) mixer.getLine(dataLineInfo);
-            targetDataLine.open(audioFormat);
+            targetDataLine = AudioUtils.openMicrophone(selectedDeviceName);
             targetDataLine.start();
 
             byteArrayOutputStream = new ByteArrayOutputStream();
@@ -1050,9 +1000,11 @@ public class AssistantVisionPanel extends JDialog {
                     ThreadUtils.showErrorDialog(this, "Aufnahmefehler: " + e.getMessage(), DesktopUtils.POPUP_TITLE_ERROR);
                 }
             }).start();
+            return true;
         } catch (Exception ex) {
             log.error("Unable to start recording microphone audio stream", ex);
             ThreadUtils.showErrorDialog(this, "Aufnahme konnte nicht gestartet werden: " + ex.getMessage(), DesktopUtils.POPUP_TITLE_ERROR);
+            return false;
         }
     }
 

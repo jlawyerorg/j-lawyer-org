@@ -782,13 +782,17 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
         initComponents();
         this.enableTimesheetButton(false);
         ComponentUtils.restoreDialogSize(this);
-        ComponentUtils.decorateSplitPane(splitMain);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleSplitPane(splitMain);
+        // the entries have their own frame - the scroll pane around them does not need one
+        // (an empty border: a null border is replaced by the default on a UI update)
+        this.jScrollPane2.setBorder(javax.swing.BorderFactory.createEmptyBorder());
         ComponentUtils.restoreSplitPane(splitMain, InvoiceDialog.class, "splitMain");
         ComponentUtils.persistSplitPane(splitMain, InvoiceDialog.class, "splitMain");
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
         this.jScrollPane2.getVerticalScrollBar().setUnitIncrement(16);
 
-        this.lblHeader.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
+        // design kit: navy header like the glass headers of the editors
+        com.jdimension.jlawyer.client.ui.theme.DialogStyle.styleHeader(this.lblHeader);
 
         this.textSearchPositionTemplate.putClientProperty("JTextField.showClearButton", true);
         this.textSearchPositionTemplate.putClientProperty("JTextField.placeholderText", "Suche: Belegposition / Vorlage");
@@ -3139,7 +3143,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
     }//GEN-LAST:event_lblInvoiceDocumentMouseExited
 
     private void lblInvoiceDocumentMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblInvoiceDocumentMouseClicked
-        if (this.cmdViewDocument.isEnabled()) {
+        if (this.cmdViewDocument.isEnabled() && javax.swing.SwingUtilities.isLeftMouseButton(evt)) {
             this.cmdViewDocumentActionPerformed(null);
         }
     }//GEN-LAST:event_lblInvoiceDocumentMouseClicked

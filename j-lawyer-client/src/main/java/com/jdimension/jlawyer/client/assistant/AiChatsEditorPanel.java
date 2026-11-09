@@ -681,7 +681,18 @@ public class AiChatsEditorPanel extends javax.swing.JPanel implements ThemeableE
      */
     public AiChatsEditorPanel() {
         initComponents();
+        this.applyModernLook();
         this.chatHistory.setOwnChatsContext();
+    }
+
+    /**
+     * Applies the editor design kit: glass tool bars, the chats on a light card.
+     */
+    private void applyModernLook() {
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleTitle(this.lblPanelTitle, null);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleHeaderButtons(this.cmdRefresh);
+        // the AI logo keeps its colors
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleHeaderButtonsKeepIcons(this.cmdNewChat);
     }
 
     @Override
@@ -722,11 +733,16 @@ public class AiChatsEditorPanel extends javax.swing.JPanel implements ThemeableE
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        pnlToolbar = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         cmdRefresh = new javax.swing.JButton();
         lblIcon = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
+        cardChats = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         chatHistory = new com.jdimension.jlawyer.client.assistant.AiChatHistoryPanel();
+        pnlHeaderRight = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         cmdNewChat = new javax.swing.JButton();
+
+        pnlToolbar.setOpaque(false);
 
         cmdRefresh.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_refresh_blue_36dp.png"))); // NOI18N
         cmdRefresh.setToolTipText("Aktualisieren");
@@ -736,13 +752,35 @@ public class AiChatsEditorPanel extends javax.swing.JPanel implements ThemeableE
             }
         });
 
+        javax.swing.GroupLayout pnlToolbarLayout = new javax.swing.GroupLayout(pnlToolbar);
+        pnlToolbar.setLayout(pnlToolbarLayout);
+        pnlToolbarLayout.setHorizontalGroup(
+            pnlToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnlToolbarLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(cmdRefresh, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+        pnlToolbarLayout.setVerticalGroup(
+            pnlToolbarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnlToolbarLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(cmdRefresh, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+
         lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/j-lawyer-ai.png"))); // NOI18N
 
         lblPanelTitle.setFont(lblPanelTitle.getFont().deriveFont(lblPanelTitle.getFont().getStyle() | java.awt.Font.BOLD, lblPanelTitle.getFont().getSize()+12));
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
         lblPanelTitle.setText("AI-Chats");
 
+        cardChats.setLayout(new java.awt.BorderLayout());
+
         chatHistory.setOpaque(false);
+        cardChats.add(chatHistory, java.awt.BorderLayout.CENTER);
+
+        pnlHeaderRight.setOpaque(false);
 
         cmdNewChat.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/j-lawyer-ai.png"))); // NOI18N
         cmdNewChat.setToolTipText("neuen Chat beginnen");
@@ -752,6 +790,23 @@ public class AiChatsEditorPanel extends javax.swing.JPanel implements ThemeableE
             }
         });
 
+        javax.swing.GroupLayout pnlHeaderRightLayout = new javax.swing.GroupLayout(pnlHeaderRight);
+        pnlHeaderRight.setLayout(pnlHeaderRightLayout);
+        pnlHeaderRightLayout.setHorizontalGroup(
+            pnlHeaderRightLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnlHeaderRightLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(cmdNewChat, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+        pnlHeaderRightLayout.setVerticalGroup(
+            pnlHeaderRightLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnlHeaderRightLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(cmdNewChat, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -760,27 +815,27 @@ public class AiChatsEditorPanel extends javax.swing.JPanel implements ThemeableE
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(cmdRefresh)
+                        .addComponent(pnlToolbar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
-                        .addComponent(lblIcon)
+                        .addComponent(lblIcon, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblPanelTitle)
+                        .addComponent(lblPanelTitle, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(cmdNewChat))
-                    .addComponent(chatHistory, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(pnlHeaderRight, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(cardChats, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                    .addComponent(lblIcon, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(lblPanelTitle, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(cmdNewChat, javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(cmdRefresh, javax.swing.GroupLayout.Alignment.LEADING))
-                .addGap(8, 8, 8)
-                .addComponent(chatHistory, javax.swing.GroupLayout.DEFAULT_SIZE, 500, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                    .addComponent(pnlToolbar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblIcon, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblPanelTitle, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(pnlHeaderRight, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cardChats, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -795,10 +850,13 @@ public class AiChatsEditorPanel extends javax.swing.JPanel implements ThemeableE
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardChats;
     private com.jdimension.jlawyer.client.assistant.AiChatHistoryPanel chatHistory;
     private javax.swing.JButton cmdNewChat;
     private javax.swing.JButton cmdRefresh;
     private javax.swing.JLabel lblIcon;
     private javax.swing.JLabel lblPanelTitle;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlHeaderRight;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlToolbar;
     // End of variables declaration//GEN-END:variables
 }

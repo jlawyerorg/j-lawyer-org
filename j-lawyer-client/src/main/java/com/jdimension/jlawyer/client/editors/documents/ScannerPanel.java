@@ -700,6 +700,7 @@ import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.client.utils.SystemUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.dropscan.DropscanMailing;
 import com.jdimension.jlawyer.dropscan.DropscanScanbox;
@@ -718,7 +719,6 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
-import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -840,8 +840,9 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         initComponents();
 
-        ComponentUtils.decorateSplitPane(this.splitTop);
-        ComponentUtils.decorateSplitPane(this.splitContainer);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleCardSplitPane(this.splitTop);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleCardSplitPane(this.splitContainer);
+        this.applyModernLook();
 
         ClientSettings settings = ClientSettings.getInstance();
         String temp = settings.getConfiguration(ClientSettings.CONF_SCANS_DELETEENABLED, "false");
@@ -943,6 +944,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         ComponentUtils.persistSplitPane(this.splitContainer, this.getClass(), "splitContainer");
 
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
+        com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.styleContainer(this.jScrollPane1, this.pnlActions, this.pnlActionsChild);
 
         this.initDropscanPanel();
 
@@ -1014,7 +1016,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         // Content area: split pane with table+envelope on left, actions on right
         javax.swing.JSplitPane splitDropscan = new javax.swing.JSplitPane(javax.swing.JSplitPane.HORIZONTAL_SPLIT);
         splitDropscan.setResizeWeight(0.8);
-        ComponentUtils.decorateSplitPane(splitDropscan);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleCardSplitPane(splitDropscan);
 
         // Left panel: table + envelope
         javax.swing.JPanel pnlDropscanLeft = new javax.swing.JPanel(new java.awt.BorderLayout());
@@ -1049,7 +1051,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         splitLeftContent.setTopComponent(scrollTable);
         splitLeftContent.setBottomComponent(pnlDropscanEnvelope);
         splitLeftContent.setDividerLocation(200);
-        ComponentUtils.decorateSplitPane(splitLeftContent);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleCardSplitPane(splitLeftContent);
 
         pnlDropscanLeft.add(splitLeftContent, java.awt.BorderLayout.CENTER);
 
@@ -1068,11 +1070,17 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         splitDropscan.setLeftComponent(pnlDropscanLeft);
 
         // Right panel: case suggestions (analog to pnlActions)
-        pnlDropscanActions = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEADING));
+        pnlDropscanActions = new com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel();
+        pnlDropscanActions.setLayout(new java.awt.BorderLayout());
         pnlDropscanActionsChild = new javax.swing.JPanel();
-        pnlDropscanActions.add(pnlDropscanActionsChild);
+        pnlDropscanActions.add(pnlDropscanActionsChild, java.awt.BorderLayout.NORTH);
         javax.swing.JScrollPane scrollActions = new javax.swing.JScrollPane(pnlDropscanActions);
-        splitDropscan.setRightComponent(scrollActions);
+        com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.styleContainer(scrollActions, pnlDropscanActions, pnlDropscanActionsChild);
+        com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardDropscanSuggestions = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
+        cardDropscanSuggestions.setTitle("Vorschläge");
+        cardDropscanSuggestions.setLayout(new java.awt.BorderLayout());
+        cardDropscanSuggestions.add(scrollActions, java.awt.BorderLayout.CENTER);
+        splitDropscan.setRightComponent(cardDropscanSuggestions);
 
         // No-token label (overlay, shown when no token configured)
         lblDropscanNoToken = new javax.swing.JLabel("Dropscan API-Token muss in der Benutzerverwaltung konfiguriert werden.");
@@ -1081,6 +1089,9 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         // Main content: use card-like approach
         pnlDropscan.add(splitDropscan, java.awt.BorderLayout.CENTER);
+
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleTable(tblDropscanMailings, scrollTable);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.transparentInsideCards(this);
 
         pnlDropscan.revalidate();
         pnlDropscan.repaint();
@@ -1238,12 +1249,9 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             loadDropscanCaseSuggestions(mailing);
         } else {
             javax.swing.SwingUtilities.invokeLater(() -> {
-                pnlDropscanActionsChild.removeAll();
-                javax.swing.JLabel lblNotScanned = new javax.swing.JLabel("  Sendung muss zuerst gescannt werden.");
-                pnlDropscanActionsChild.setLayout(new java.awt.GridLayout(1, 1));
-                pnlDropscanActionsChild.add(lblNotScanned);
-                pnlDropscanActionsChild.revalidate();
-                pnlDropscanActionsChild.repaint();
+                com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.begin(pnlDropscanActionsChild);
+                com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.hint(pnlDropscanActionsChild, "Die Sendung muss zuerst gescannt werden, dann erscheinen hier Vorschläge.");
+                com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.end(pnlDropscanActionsChild);
             });
         }
     }
@@ -1326,7 +1334,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                     }
 
                     if (!textMatchedCases.isEmpty()) {
-                        addDropscanCaseSuggestionsToUI(textMatchedCases, actionPanelEntries, mailing);
+                        addDropscanCaseSuggestionsToUI(textMatchedCases, actionPanelEntries, mailing, "Aktenzeichen im Brief");
                         return;
                     }
                 }
@@ -1338,7 +1346,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                 List<ArchiveFileBean> combined = new ArrayList<>();
                 combined.addAll(myCases);
                 combined.addAll(othersCases);
-                addDropscanCaseSuggestionsToUI(combined, actionPanelEntries, mailing);
+                addDropscanCaseSuggestionsToUI(combined, actionPanelEntries, mailing, "Zuletzt geänderte Akten");
 
             } catch (Exception ex) {
                 log.error("Failed to load case suggestions for Dropscan mailing", ex);
@@ -1346,30 +1354,23 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         }).start();
     }
 
-    private void addDropscanCaseSuggestionsToUI(List<ArchiveFileBean> cases, ArrayList<Component> actionPanelEntries, DropscanMailing mailing) {
+    private void addDropscanCaseSuggestionsToUI(List<ArchiveFileBean> cases, ArrayList<Component> actionPanelEntries, DropscanMailing mailing, String heading) {
         int i = 0;
         ArrayList<String> caseCandidates = new ArrayList<>();
+        if (!cases.isEmpty()) {
+            actionPanelEntries.add(com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.heading(heading));
+        }
         for (ArchiveFileBean af : cases) {
             if (!caseCandidates.contains(af.getFileNumber())) {
                 caseCandidates.add(af.getFileNumber());
                 SaveScanToCasePanel ep = getDropscanSaveToCasePanel(af, mailing);
-                if (i % 2 == 0) {
-                    ep.setBackground(ep.getBackground().darker());
-                }
-                ep.setBackground(ep.getBackground().brighter());
                 actionPanelEntries.add(ep);
                 i++;
             }
         }
 
         javax.swing.SwingUtilities.invokeLater(() -> {
-            pnlDropscanActionsChild.setLayout(new java.awt.GridLayout(Math.max(actionPanelEntries.size(), 1), 1));
-            pnlDropscanActionsChild.removeAll();
-            for (Component o : actionPanelEntries) {
-                pnlDropscanActionsChild.add(o);
-            }
-            pnlDropscanActionsChild.revalidate();
-            pnlDropscanActionsChild.repaint();
+            com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.show(pnlDropscanActionsChild, actionPanelEntries);
         });
     }
 
@@ -1469,6 +1470,10 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                 bulkSaveDlg.addEntry(bulkEntry);
             }
 
+            // shown in the dialog, so the user knows what happens with the letter after saving
+            if (chkDropscanDestroyAfterImport.isSelected()) {
+                bulkSaveDlg.setPostSaveHint("Brief wird bei Dropscan vernichtet");
+            }
             bulkSaveDlg.setVisible(true);
 
             if (!bulkSaveDlg.isFailedOrCancelled()) {
@@ -1600,6 +1605,16 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
     }
 
+    /**
+     * Applies the editor design kit: white tabs, the content of each tab on a light card.
+     */
+    private void applyModernLook() {
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleTitle(this.lblPanelTitle, null);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleMainTabs(this.jTabbedPane1);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleTable(this.tblDirContent, this.jScrollPane2);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.transparentInsideCards(this);
+    }
+
     @Override
     public void setBackgroundImage(Image image) {
         this.backgroundImage = image;
@@ -1633,7 +1648,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
         jTabbedPane1 = new javax.swing.JTabbedPane();
-        jPanel1 = new javax.swing.JPanel();
+        jPanel1 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         cmdRefresh = new javax.swing.JButton();
         cmdLocalUploadDir = new javax.swing.JButton();
         lblLocalDir = new javax.swing.JLabel();
@@ -1643,12 +1658,13 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         splitTop = new javax.swing.JSplitPane();
         jScrollPane2 = new javax.swing.JScrollPane();
         tblDirContent = new javax.swing.JTable();
+        cardSuggestions = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        pnlActions = new javax.swing.JPanel();
+        pnlActions = new com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel();
         pnlActionsChild = new javax.swing.JPanel();
         jScrollPane4 = new javax.swing.JScrollPane();
         pnlPreview = new javax.swing.JPanel();
-        pnlDropscan = new javax.swing.JPanel();
+        pnlDropscan = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
 
         mnuSplitPdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_splitscreen_black_48dp.png"))); // NOI18N
         mnuSplitPdf.setText("PDF splitten");
@@ -1775,7 +1791,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         jScrollPane1.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
-        pnlActions.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEADING));
+        pnlActions.setLayout(new java.awt.BorderLayout());
 
         org.jdesktop.layout.GroupLayout pnlActionsChildLayout = new org.jdesktop.layout.GroupLayout(pnlActionsChild);
         pnlActionsChild.setLayout(pnlActionsChildLayout);
@@ -1788,11 +1804,15 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             .add(0, 0, Short.MAX_VALUE)
         );
 
-        pnlActions.add(pnlActionsChild);
+        pnlActions.add(pnlActionsChild, java.awt.BorderLayout.NORTH);
 
         jScrollPane1.setViewportView(pnlActions);
 
-        splitTop.setRightComponent(jScrollPane1);
+        cardSuggestions.setTitle("Vorschläge");
+        cardSuggestions.setLayout(new java.awt.BorderLayout());
+        cardSuggestions.add(jScrollPane1, java.awt.BorderLayout.CENTER);
+
+        splitTop.setRightComponent(cardSuggestions);
 
         splitContainer.setLeftComponent(splitTop);
 
@@ -1873,21 +1893,21 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(layout.createSequentialGroup()
-                        .add(jLabel18)
+                        .add(jLabel18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .add(jTabbedPane1))
+                    .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
                 .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jLabel18)
-                    .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+                    .add(jLabel18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 410, Short.MAX_VALUE)
+                .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -1915,18 +1935,19 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             log.info("creating EditScanPanel");
             EditScanPanel dsp = new EditScanPanel(this.getClass().getName());
             dsp.setDetails(fileNames, this);
+            actionPanelEntries.add(com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.heading("Scan"));
             actionPanelEntries.add(dsp);
 
             // the case creation wizard works on a single document only
             if (fileNames.size() == 1) {
                 log.info("creating CreateNewCaseFromScanPanel");
+                actionPanelEntries.add(com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.heading("Neu"));
                 actionPanelEntries.add(new CreateNewCaseFromScanPanel(this));
             }
 
             log.info("creating SaveScanToCasePanel");
             // empty case reference - will trigger a search
             SaveScanToCasePanel sp = new SaveScanToCasePanel(this.getClass().getName());
-            sp.setBackground(sp.getBackground().brighter());
             CaseForContactEntry cce = new CaseForContactEntry();
             cce.setFileNumber(null);
             cce.setId(null);
@@ -1935,6 +1956,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             cce.setReason(StringUtils.nonEmpty(null));
             cce.setArchived(false);
             sp.setEntry(cce, this);
+            actionPanelEntries.add(com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.heading("Zuordnen"));
             actionPanelEntries.add(sp);
 
             // Performance optimization: load case suggestions asynchronously
@@ -2011,9 +2033,10 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
     }
 
     private void tblDirContentMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblDirContentMouseClicked
+        // on macOS, Control+click opens the context menu - a double click with it must not open the file
         if (evt.getClickCount() == 1 && evt.getButton() == MouseEvent.BUTTON1) {
             this.selectDirContent();
-        } else if (evt.getClickCount() == 2) {
+        } else if (evt.getClickCount() == 2 && evt.getButton() == MouseEvent.BUTTON1 && !(SystemUtils.isMacOs() && evt.isControlDown())) {
 
             int selRow = this.tblDirContent.getSelectedRow();
             if (selRow > -1) {
@@ -2383,15 +2406,14 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             log.debug("building suggestion list from " + myNewList.size() + " own cases and " + othersNewList.size() + " other cases");
         }
 
+        if (!myNewList.isEmpty() || !othersNewList.isEmpty()) {
+            actionPanelEntries.add(com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.heading("Zuletzt geänderte Akten"));
+        }
         for (ArchiveFileBean af : myNewList) {
             if (!caseCandidates.contains(af.getFileNumber())) {
                 caseCandidates.add(af.getFileNumber());
 
                 SaveScanToCasePanel ep = this.getSaveToCasePanel(af);
-                if (i % 2 == 0) {
-                    ep.setBackground(ep.getBackground().darker());
-                }
-                ep.setBackground(ep.getBackground().brighter());
                 actionPanelEntries.add(ep);
                 i++;
             }
@@ -2402,23 +2424,13 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                 caseCandidates.add(af.getFileNumber());
 
                 SaveScanToCasePanel ep = this.getSaveToCasePanel(af);
-                if (i % 2 == 0) {
-                    ep.setBackground(ep.getBackground().darker());
-                }
-                ep.setBackground(ep.getBackground().brighter());
                 actionPanelEntries.add(ep);
                 i++;
             }
         }
 
         // Update UI layout
-        this.pnlActionsChild.setLayout(new GridLayout(actionPanelEntries.size(), 1));
-        this.pnlActionsChild.removeAll();
-        for (Component o : actionPanelEntries) {
-            this.pnlActionsChild.add(o);
-        }
-        this.pnlActionsChild.revalidate();
-        this.pnlActionsChild.repaint();
+        com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.show(this.pnlActionsChild, actionPanelEntries);
     }
 
     /**
@@ -2428,24 +2440,17 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                                        ArrayList<Component> actionPanelEntries, int initialIndex) {
         int i = initialIndex;
 
+        if (!matchedCases.isEmpty()) {
+            actionPanelEntries.add(com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.heading("Aktenzeichen im Scan"));
+        }
         for (ArchiveFileBean af : matchedCases) {
             SaveScanToCasePanel ep = this.getSaveToCasePanel(af);
-            if (i % 2 == 0) {
-                ep.setBackground(ep.getBackground().darker());
-            }
-            ep.setBackground(ep.getBackground().brighter());
             actionPanelEntries.add(ep);
             i++;
         }
 
         // Update UI layout
-        this.pnlActionsChild.setLayout(new GridLayout(actionPanelEntries.size(), 1));
-        this.pnlActionsChild.removeAll();
-        for (Component o : actionPanelEntries) {
-            this.pnlActionsChild.add(o);
-        }
-        this.pnlActionsChild.revalidate();
-        this.pnlActionsChild.repaint();
+        com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.show(this.pnlActionsChild, actionPanelEntries);
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -2453,7 +2458,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JButton cmdLocalUploadDir;
     private javax.swing.JButton cmdRefresh;
     private javax.swing.JLabel jLabel18;
-    private javax.swing.JPanel jPanel1;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
@@ -2467,15 +2472,16 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JMenuItem mnuSaveToCase;
     private javax.swing.JMenuItem mnuSelectLocalFolder;
     private javax.swing.JMenuItem mnuSplitPdf;
-    private javax.swing.JPanel pnlActions;
+    private com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel pnlActions;
     private javax.swing.JPanel pnlActionsChild;
-    private javax.swing.JPanel pnlDropscan;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel pnlDropscan;
     private javax.swing.JPanel pnlPreview;
     private javax.swing.JPopupMenu popActions;
     private javax.swing.JPopupMenu popConfiguration;
     private javax.swing.JSplitPane splitContainer;
     private javax.swing.JSplitPane splitTop;
     private javax.swing.JTable tblDirContent;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardSuggestions;
     // End of variables declaration//GEN-END:variables
 
     @Override
@@ -2555,6 +2561,10 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                 }
             }
 
+            // shown in the dialog, so the user knows what happens with the scans after saving
+            if (this.chkDeleteAfterAction.isSelected()) {
+                bulkSaveDlg.setPostSaveHint("Scans werden aus dem Scaneingang gelöscht");
+            }
             FrameUtils.centerDialog(bulkSaveDlg, EditorsRegistry.getInstance().getMainWindow());
             bulkSaveDlg.setVisible(true);
 

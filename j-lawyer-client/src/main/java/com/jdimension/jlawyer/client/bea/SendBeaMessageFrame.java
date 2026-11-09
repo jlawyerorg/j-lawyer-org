@@ -817,7 +817,16 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
 
         this.quickDateSelectionPanel.setTarget(this.txtReviewDateField);
 
-        ComponentUtils.decorateSplitPane(jSplitPane1);
+        // design kit: page background and cards (see DialogStyle), a transparent gap between the
+        // message and its options, the send action as primary button
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleSplitPane(jSplitPane1);
+        this.jToolBar1.setOpaque(false);
+        this.jToolBar1.setBorder(javax.swing.BorderFactory.createEmptyBorder());
+        com.jdimension.jlawyer.client.ui.theme.DialogStyle.stylePrimary(this.cmdSend, "Senden");
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.transparentInsideCards(this.getContentPane());
+        this.quickDateSelectionPanel.setOpaque(false);
+        this.pnlParties.setOpaque(false);
+        com.jdimension.jlawyer.client.ui.theme.DialogStyle.apply(this);
 
         this.pnlParties.initialize(new ArrayList<>());
         this.pnlParties.setListener(this);
@@ -1095,9 +1104,16 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
                 sb.append("Ihr AZ ").append(this.cmbAzRecipient.getSelectedItem().toString()).append("_");
             }
 
+            // keep an unchanged file name as a whole - it may contain underscores itself (e.g. 2024-10-31_Schriftsatz.pdf)
+            String currentAlias = this.tblAttachments.getValueAt(i, COLUMN_ALIAS).toString();
+            String fileName = this.tblAttachments.getValueAt(i, COLUMN_FILENAME).toString();
+            boolean fileNameUnchanged = currentAlias.equals(fileName) || currentAlias.endsWith("_" + fileName);
+
             // assume user has already changed the alias
             int lastUnderScore = this.tblAttachments.getValueAt(i, COLUMN_ALIAS).toString().lastIndexOf("_");
-            if (lastUnderScore > 0) {
+            if (fileNameUnchanged) {
+                sb.append(fileName);
+            } else if (lastUnderScore > 0) {
                 String lastPart = this.tblAttachments.getValueAt(i, COLUMN_ALIAS).toString().substring(lastUnderScore + 1);
                 sb.append(lastPart);
             } else {
@@ -1314,9 +1330,37 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
         }
     }
     
+    // client properties of the party menu items: the party's Safe-ID and the identity object the item added to the list
+    private static final String PARTY_SAFEID = "beaSafeId";
+    private static final String PARTY_IDENTITY = "beaIdentity";
+
+    // beA identities do not implement equals - a recipient belongs to a party if it has the party's Safe-ID,
+    // or if it is one of the party's identity objects (added by its menu item, or cached), which may carry no Safe-ID
+    private static boolean isPartyRecipient(Object o, String safeId, BeaIdentity... partyIdentities) {
+        if (!(o instanceof BeaIdentity)) {
+            return false;
+        }
+        for (BeaIdentity partyIdentity : partyIdentities) {
+            if (o == partyIdentity) {
+                return true;
+            }
+        }
+        return safeId != null && safeId.equals(((BeaIdentity) o).getSafeId());
+    }
+
+    private static boolean containsParty(DefaultListModel model, String safeId, BeaIdentity... partyIdentities) {
+        for (int i = 0; i < model.size(); i++) {
+            if (isPartyRecipient(model.get(i), safeId, partyIdentities)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void addRecipientCandidate(AddressBean ab, PartyTypeBean ptb, String fileNumber) {
         if (ab.getBeaSafeId() != null && !("".equals(ab.getBeaSafeId()))) {
             JCheckBoxMenuItem mi = new JCheckBoxMenuItem();
+            mi.putClientProperty(PARTY_SAFEID, ab.getBeaSafeId());
             mi.setState(false);
             mi.setText(ab.toDisplayName() + " (" + ptb.getName() + ")");
             mi.setBackground(new Color(ptb.getColor()));
@@ -1373,6 +1417,7 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        cardHeader = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         popRecipients = new javax.swing.JPopupMenu();
         mnuSearchRecipient = new javax.swing.JMenuItem();
         mnuSearchRecipientInBea = new javax.swing.JMenuItem();
@@ -1392,7 +1437,7 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
         jScrollPane3 = new javax.swing.JScrollPane();
         lstTo = new javax.swing.JList();
         jSplitPane1 = new javax.swing.JSplitPane();
-        jPanel5 = new javax.swing.JPanel();
+        jPanel5 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         cmbAzRecipient = new javax.swing.JComboBox<>();
         cmdAttachmentUp = new javax.swing.JButton();
         lblAttachmentSize = new javax.swing.JLabel();
@@ -1432,7 +1477,7 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
         jPanel3 = new javax.swing.JPanel();
         chkSaveAsDocument = new javax.swing.JCheckBox();
         cmbDocumentTag = new javax.swing.JComboBox<>();
-        jPanel4 = new javax.swing.JPanel();
+        jPanel4 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         cmbReviewReason = new javax.swing.JComboBox();
         jLabel12 = new javax.swing.JLabel();
         jLabel10 = new javax.swing.JLabel();
@@ -1445,13 +1490,13 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
         quickDateSelectionPanel = new com.jdimension.jlawyer.client.components.QuickDateSelectionPanel();
         calendarSelectionButton1 = new com.jdimension.jlawyer.client.calendar.CalendarSelectionButton();
         chkDocumentTagging = new javax.swing.JCheckBox();
-        jPanel2 = new javax.swing.JPanel();
+        jPanel2 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         cmbMessageType = new javax.swing.JComboBox<>();
         jLabel5 = new javax.swing.JLabel();
         cmbPriorities = new javax.swing.JComboBox<>();
         jLabel6 = new javax.swing.JLabel();
         chkEeb = new javax.swing.JCheckBox();
-        jPanel1 = new javax.swing.JPanel();
+        jPanel1 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jLabel4 = new javax.swing.JLabel();
         cmbTemplates = new javax.swing.JComboBox();
         pnlParties = new com.jdimension.jlawyer.client.editors.files.PartiesPanel();
@@ -1676,29 +1721,22 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
         });
 
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
+        jPanel5.setTitle("Nachricht");
+
         jPanel5.setLayout(jPanel5Layout);
         jPanel5Layout.setHorizontalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel5Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(jPanel5Layout.createSequentialGroup()
-                        .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel9)
-                            .addComponent(jLabel8))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(cmbAzRecipient, 0, 1, Short.MAX_VALUE)
-                            .addComponent(txtAzSender)))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel5Layout.createSequentialGroup()
                         .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(contentPanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addGroup(jPanel5Layout.createSequentialGroup()
                                 .addGap(0, 0, Short.MAX_VALUE)
                                 .addComponent(lblAttachmentSize))
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(cmdAttachmentDown)
@@ -1709,17 +1747,8 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel5Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(jPanel5Layout.createSequentialGroup()
-                        .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel8)
-                            .addComponent(txtAzSender, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel9)
-                            .addComponent(cmbAzRecipient, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addGap(18, 18, 18)
+                .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(contentPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1746,7 +1775,7 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
             }
         });
 
-        jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder("Wiedervorlage / Frist"));
+        jPanel4.setTitle("Wiedervorlage / Frist");
 
         cmbReviewReason.setEditable(true);
         cmbReviewReason.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
@@ -1870,7 +1899,7 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
             }
         });
 
-        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Optionen"));
+        jPanel2.setTitle("Optionen");
 
         cmbMessageType.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Allgemeine Nachricht", "Mahnantrag", "Testnachricht" }));
 
@@ -1906,7 +1935,15 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
                             .addComponent(cmbMessageType, javax.swing.GroupLayout.Alignment.LEADING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(cmbPriorities, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel5)))
+                        .addComponent(jLabel5))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addComponent(chkSaveAsDocument)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addComponent(chkDocumentTagging)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmbDocumentTag, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
@@ -1921,10 +1958,16 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
                 .addComponent(cmbMessageType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(chkEeb)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(chkSaveAsDocument)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(chkDocumentTagging)
+                    .addComponent(cmbDocumentTag, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(12, Short.MAX_VALUE))
         );
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Vorlagedaten"));
+        jPanel1.setTitle("Vorlagedaten");
 
         jLabel4.setText("Vorlage:");
 
@@ -1970,28 +2013,14 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
                 .addContainerGap()
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addComponent(chkSaveAsDocument)
-                        .addGap(69, 69, 69))
                     .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addComponent(chkDocumentTagging)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmbDocumentTag, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                    .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(chkSaveAsDocument)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(chkDocumentTagging)
-                    .addComponent(cmbDocumentTag, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -2002,6 +2031,66 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
 
         jSplitPane1.setRightComponent(jPanel3);
 
+        cardHeader.setTitle("Absender & Empfänger");
+
+        javax.swing.GroupLayout cardHeaderLayout = new javax.swing.GroupLayout(cardHeader);
+        cardHeader.setLayout(cardHeaderLayout);
+        cardHeaderLayout.setHorizontalGroup(
+            cardHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(cardHeaderLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(cardHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel1)
+                    .addComponent(jLabel2)
+                    .addComponent(jLabel3)
+                    .addComponent(jLabel8))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(cardHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(cardHeaderLayout.createSequentialGroup()
+                        .addComponent(cmbFrom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblFrom)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(cardHeaderLayout.createSequentialGroup()
+                        .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdRecipients))
+                    .addComponent(txtSubject)
+                    .addGroup(cardHeaderLayout.createSequentialGroup()
+                        .addComponent(txtAzSender, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jLabel9)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmbAzRecipient, javax.swing.GroupLayout.PREFERRED_SIZE, 190, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
+        );
+        cardHeaderLayout.setVerticalGroup(
+            cardHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(cardHeaderLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(cardHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel1)
+                    .addComponent(cmbFrom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblFrom))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(cardHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel2)
+                    .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cmdRecipients))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(cardHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel3)
+                    .addComponent(txtSubject, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(cardHeaderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel8)
+                    .addComponent(txtAzSender, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel9)
+                    .addComponent(cmbAzRecipient, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
+        );
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -2009,22 +2098,7 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel2)
-                            .addComponent(jLabel1)
-                            .addComponent(jLabel3))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(cmbFrom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(lblFrom)
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addComponent(txtSubject, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jScrollPane3, javax.swing.GroupLayout.Alignment.TRAILING))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdRecipients))
+                    .addComponent(cardHeader, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jSplitPane1))
                 .addContainerGap())
         );
@@ -2032,19 +2106,7 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cmbFrom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel1)
-                    .addComponent(lblFrom))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(cmdRecipients)
-                    .addComponent(jLabel2)
-                    .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txtSubject, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel3))
+                .addComponent(cardHeader, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSplitPane1))
         );
@@ -2095,6 +2157,26 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
     }//GEN-LAST:event_mnuRemoveRecipientActionPerformed
 
     private void cmdRecipientsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRecipientsActionPerformed
+        // recipients can also be removed from the list or added via the search - the check marks follow the list
+        DefaultListModel model = (DefaultListModel) this.lstTo.getModel();
+        for (java.awt.Component c : this.popRecipients.getComponents()) {
+            if (c instanceof JCheckBoxMenuItem) {
+                JCheckBoxMenuItem mi = (JCheckBoxMenuItem) c;
+                Object safeId = mi.getClientProperty(PARTY_SAFEID);
+                if (safeId != null) {
+                    // cache only: no server call when opening the menu, and no new BeaAccess after a logout
+                    BeaIdentity cached = null;
+                    if (BeaAccess.hasInstance()) {
+                        try {
+                            cached = BeaAccess.getInstance().getCachedIdentity(safeId.toString());
+                        } catch (Exception ex) {
+                            log.warn("Unable to access beA", ex);
+                        }
+                    }
+                    mi.setState(containsParty(model, safeId.toString(), (BeaIdentity) mi.getClientProperty(PARTY_IDENTITY), cached));
+                }
+            }
+        }
         this.popRecipients.show(this.cmdRecipients, 0, 0);
     }//GEN-LAST:event_cmdRecipientsActionPerformed
 
@@ -2859,11 +2941,11 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel2;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel1;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel2;
     private javax.swing.JPanel jPanel3;
-    private javax.swing.JPanel jPanel4;
-    private javax.swing.JPanel jPanel5;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel4;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel5;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JPopupMenu.Separator jSeparator1;
@@ -2890,6 +2972,7 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
     private javax.swing.JTextField txtAzSender;
     private javax.swing.JTextField txtReviewDateField;
     private javax.swing.JTextField txtSubject;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardHeader;
     // End of variables declaration//GEN-END:variables
 
     class RecipientsActionListener implements java.awt.event.ActionListener {
@@ -2913,20 +2996,32 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
             DefaultListModel model = (DefaultListModel) this.to.getModel();
 
             try {
-                BeaAccess bea = BeaAccess.getInstance();
                 JCheckBoxMenuItem mi = (JCheckBoxMenuItem) e.getSource();
-                BeaIdentity i = bea.getIdentity(safeId);
+                BeaIdentity i = BeaAccess.getInstance().getIdentity(this.safeId);
+                // the object this item added before - after a beA logout the cache returns a new one
+                BeaIdentity added = (BeaIdentity) mi.getClientProperty(PARTY_IDENTITY);
                 if (mi.getState()) {
 
-                    if (!model.contains(i)) {
+                    if (i == null) {
+                        log.warn("No beA identity found for Safe-ID " + this.safeId);
+                        mi.setState(false);
+                        return;
+                    }
+                    if (!containsParty(model, this.safeId, added, i)) {
                         model.addElement(i);
+                        mi.putClientProperty(PARTY_IDENTITY, i);
                     }
                     if(this.toFileNumber!=null && this.toFileNumber.getEditor().getItem().toString().trim().isEmpty())
                         this.toFileNumber.setSelectedItem(StringUtils.nonEmpty(this.fileNumber));
 
-                } else if (model.contains(i)) {
-                    model.removeElement(i);
-                    
+                } else if (containsParty(model, this.safeId, added, i)) {
+                    for (int idx = model.size() - 1; idx >= 0; idx--) {
+                        if (isPartyRecipient(model.get(idx), this.safeId, added, i)) {
+                            model.remove(idx);
+                        }
+                    }
+                    mi.putClientProperty(PARTY_IDENTITY, null);
+
                     if(this.toFileNumber!=null && this.toFileNumber.getEditor().getItem().toString().equals(this.fileNumber))
                         this.toFileNumber.setSelectedItem("");
                 }

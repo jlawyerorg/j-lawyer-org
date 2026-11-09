@@ -672,7 +672,7 @@ import com.jdimension.jlawyer.persistence.Timesheet;
  *
  * @author jens
  */
-public class TimesheetDialogEntryPanel extends javax.swing.JPanel {
+public class TimesheetDialogEntryPanel extends com.jdimension.jlawyer.client.ui.theme.EntryRowPanel {
 
     private TimesheetLogDialog parent=null;
     private Timesheet entry=null;
@@ -683,6 +683,7 @@ public class TimesheetDialogEntryPanel extends javax.swing.JPanel {
      */
     public TimesheetDialogEntryPanel(TimesheetLogDialog parent) {
         initComponents();
+        styleRowButtons(this.cmdAddLog);
         this.parent=parent;
     }
     

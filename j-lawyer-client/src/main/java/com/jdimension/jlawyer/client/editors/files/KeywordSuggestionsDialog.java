@@ -663,32 +663,62 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.formdev.flatlaf.FlatClientProperties;
+import com.jdimension.jlawyer.client.ui.theme.DialogStyle;
+import com.jdimension.jlawyer.client.ui.theme.EntryRowPanel;
+import com.jdimension.jlawyer.client.ui.theme.SectionCardPanel;
+import com.jdimension.jlawyer.client.ui.theme.UiColors;
+import com.jdimension.jlawyer.client.ui.theme.UiFonts;
+import com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel;
 import com.jdimension.jlawyer.documents.DocumentKeywords;
+import com.jdimension.jlawyer.ui.tagging.WrapLayout;
+import java.awt.BasicStroke;
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.Window;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JToggleButton;
 
 /**
- * Lets the user pick which of the keywords suggested by an assistant to take over. Keywords the
- * document already has are shown, but disabled.
+ * Lets the user pick which of the keywords suggested by an assistant to take over. The suggestions
+ * are shown as chips that are switched on and off by a click; keywords the document already has
+ * are shown, but disabled.
  *
  * @author jens
  */
 public class KeywordSuggestionsDialog extends JDialog {
 
-    private final Map<String, JCheckBox> boxes = new LinkedHashMap<>();
+    private static final String CHIP_STYLE = "arc: 999; margin: 3,10,3,12; borderWidth: 1; focusWidth: 0; innerFocusWidth: 0;"
+            + " background: #ffffff; foreground: #1e293b; borderColor: #cbd5e1; hoverBackground: #f1f5f9;"
+            + " selectedBackground: #e0eefa; selectedForeground: #0b5f97; pressedBackground: #cfe3f5;"
+            + " disabledSelectedBackground: #eef2f6; disabledText: #94a3b8; disabledBorderColor: #e2e8f0";
+    private static final String CHIP_STYLE_SELECTED = "; borderColor: #0e72b5; hoverBorderColor: #0b5f97";
+    private static final Color CHECK = new Color(14, 114, 181);
+    private static final Color CHECK_DISABLED = new Color(148, 163, 184);
+
+    private final Map<String, JToggleButton> chips = new LinkedHashMap<>();
+    private final JLabel lblCount = new JLabel();
+    private final JButton cmdOk = new JButton("Übernehmen");
     private boolean accepted = false;
 
     /**
@@ -699,74 +729,231 @@ public class KeywordSuggestionsDialog extends JDialog {
      */
     public KeywordSuggestionsDialog(Window owner, String caption, List<String> suggestions, String existingKeywords) {
         super(owner, "Vorgeschlagene Schlagworte", ModalityType.APPLICATION_MODAL);
+        // styled here, the general dialog look is not needed
+        this.getRootPane().putClientProperty(DialogStyle.SKIP, Boolean.TRUE);
 
-        JPanel list = new JPanel();
-        list.setLayout(new BoxLayout(list, BoxLayout.Y_AXIS));
-        list.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
-        if (suggestions.isEmpty()) {
-            list.add(new JLabel("Der Assistent hat keine Schlagworte vorgeschlagen."));
+        // header: navy like the other dialogs of the kit
+        JPanel header = new JPanel(new BorderLayout(10, 0));
+        DialogStyle.styleHeader(header);
+        header.setBorder(BorderFactory.createEmptyBorder(12, 16, 12, 16));
+        JLabel lblIcon = new JLabel(new ImageIcon(getClass().getResource("/icons16/material/j-lawyer-ai-white.png")));
+        lblIcon.setVerticalAlignment(JLabel.TOP);
+        header.add(lblIcon, BorderLayout.WEST);
+        JPanel titles = new JPanel();
+        titles.setOpaque(false);
+        titles.setLayout(new BoxLayout(titles, BoxLayout.Y_AXIS));
+        JLabel lblTitle = new JLabel("Vorgeschlagene Schlagworte");
+        lblTitle.setFont(UiFonts.exo2Bold(17f));
+        lblTitle.setForeground(UiColors.TEXT_ON_GLASS);
+        titles.add(lblTitle);
+        if (caption != null && !caption.trim().isEmpty()) {
+            JLabel lblCaption = new JLabel(caption);
+            lblCaption.setForeground(UiColors.TEXT_ON_GLASS_SECONDARY);
+            lblCaption.setToolTipText(caption);
+            lblCaption.setBorder(BorderFactory.createEmptyBorder(2, 0, 0, 0));
+            titles.add(lblCaption);
         }
+        header.add(titles, BorderLayout.CENTER);
+
+        // the suggestions as chips in a card
+        JPanel chipPanel = new WidthTrackingPanel();
+        chipPanel.setOpaque(false);
+        chipPanel.setLayout(new WrapLayout(FlowLayout.LEFT, 6, 6));
+        boolean anyExisting = false;
         for (String s : suggestions) {
-            JCheckBox cb = new JCheckBox(s);
+            JToggleButton chip = new JToggleButton(s);
+            chip.setFocusable(false);
             if (DocumentKeywords.contains(existingKeywords, s)) {
-                cb.setSelected(true);
-                cb.setEnabled(false);
-                cb.setToolTipText("bereits vorhanden");
+                chip.setSelected(true);
+                chip.setEnabled(false);
+                chip.setToolTipText("bereits vorhanden");
+                anyExisting = true;
             } else {
-                cb.setSelected(true);
+                chip.setSelected(true);
+                chip.setToolTipText("klicken, um das Schlagwort zu übernehmen oder auszulassen");
             }
-            this.boxes.put(s, cb);
-            list.add(cb);
+            chip.setIcon(checkIcon(false));
+            chip.setSelectedIcon(checkIcon(true));
+            chip.setDisabledSelectedIcon(checkIcon(true));
+            chip.setIconTextGap(5);
+            chip.addItemListener(e -> this.chipChanged(chip));
+            this.chipChanged(chip);
+            this.chips.put(s, chip);
+            chipPanel.add(chip);
         }
 
-        JButton cmdOk = new JButton("Übernehmen");
-        cmdOk.addActionListener(e -> {
+        JScrollPane scroll = new JScrollPane(chipPanel);
+        scroll.setBorder(null);
+        scroll.setOpaque(false);
+        scroll.getViewport().setOpaque(false);
+        // same scroll speed as the other lists of the client - the default of 1 pixel is far too slow
+        scroll.getVerticalScrollBar().setUnitIncrement(16);
+
+        // count and select all / none above the chips - same icons as above the document list
+        JButton cmdSelectAll = new JButton();
+        cmdSelectAll.setIcon(new ImageIcon(getClass().getResource("/icons16/baseline_select_all_black_48dp.png")));
+        cmdSelectAll.setToolTipText("alle auswählen");
+        cmdSelectAll.addActionListener(e -> this.selectAll(true));
+        JButton cmdSelectNone = new JButton();
+        cmdSelectNone.setIcon(new ImageIcon(getClass().getResource("/icons16/baseline_select_none_black_48dp.png")));
+        cmdSelectNone.setToolTipText("Auswahl aufheben");
+        cmdSelectNone.addActionListener(e -> this.selectAll(false));
+        EntryRowPanel.styleRowButtons(cmdSelectAll, cmdSelectNone);
+        cmdSelectAll.setEnabled(!suggestions.isEmpty());
+        cmdSelectNone.setEnabled(!suggestions.isEmpty());
+        EntryRowPanel.styleMuted(this.lblCount);
+        JPanel tools = new JPanel(new BorderLayout());
+        tools.setOpaque(false);
+        tools.add(this.lblCount, BorderLayout.CENTER);
+        JPanel toolButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 2, 0));
+        toolButtons.setOpaque(false);
+        toolButtons.add(cmdSelectAll);
+        toolButtons.add(cmdSelectNone);
+        tools.add(toolButtons, BorderLayout.EAST);
+
+        SectionCardPanel card = new SectionCardPanel();
+        card.setTitle("Vorschläge des Assistenten");
+        card.setLayout(new BorderLayout(0, 4));
+        if (suggestions.isEmpty()) {
+            JLabel lblEmpty = new JLabel("Der Assistent hat keine Schlagworte vorgeschlagen.");
+            EntryRowPanel.styleMuted(lblEmpty);
+            lblEmpty.setBorder(BorderFactory.createEmptyBorder(8, 4, 8, 4));
+            card.add(lblEmpty, BorderLayout.CENTER);
+        } else {
+            card.add(tools, BorderLayout.NORTH);
+            card.add(scroll, BorderLayout.CENTER);
+            if (anyExisting) {
+                JLabel lblHint = new JLabel("Ausgegraute Schlagworte hat das Dokument bereits.");
+                EntryRowPanel.styleMuted(lblHint);
+                lblHint.setFont(lblHint.getFont().deriveFont(lblHint.getFont().getSize2D() - 1f));
+                card.add(lblHint, BorderLayout.SOUTH);
+            }
+        }
+
+        JPanel page = new JPanel(new BorderLayout());
+        page.setBackground(DialogStyle.PAGE_BACKGROUND);
+        page.setBorder(BorderFactory.createEmptyBorder(6, 6, 0, 6));
+        page.add(card, BorderLayout.CENTER);
+
+        // footer: confirm as primary button
+        DialogStyle.stylePrimary(this.cmdOk, null);
+        this.cmdOk.addActionListener(e -> {
             this.accepted = true;
             this.setVisible(false);
         });
         JButton cmdCancel = new JButton("Abbrechen");
+        cmdCancel.putClientProperty(FlatClientProperties.STYLE, "arc: 10; margin: 4,12,4,12");
         cmdCancel.addActionListener(e -> this.setVisible(false));
-        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        buttons.add(cmdOk);
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 10));
+        buttons.setBackground(DialogStyle.PAGE_BACKGROUND);
+        buttons.setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 8));
         buttons.add(cmdCancel);
-
-        // select all / none - same icons as above the document list
-        JButton cmdSelectAll = new JButton();
-        cmdSelectAll.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_select_all_black_48dp.png")));
-        cmdSelectAll.setToolTipText("alle auswählen");
-        cmdSelectAll.addActionListener(e -> this.selectAll(true));
-        JButton cmdSelectNone = new JButton();
-        cmdSelectNone.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_select_none_black_48dp.png")));
-        cmdSelectNone.setToolTipText("Auswahl aufheben");
-        cmdSelectNone.addActionListener(e -> this.selectAll(false));
-        cmdSelectAll.setEnabled(!suggestions.isEmpty());
-        cmdSelectNone.setEnabled(!suggestions.isEmpty());
-        JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 4));
-        top.add(cmdSelectAll);
-        top.add(cmdSelectNone);
-        if (caption != null) {
-            JLabel lblCaption = new JLabel(caption);
-            lblCaption.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
-            top.add(lblCaption);
-        }
+        buttons.add(this.cmdOk);
 
         this.getContentPane().setLayout(new BorderLayout());
-        this.getContentPane().add(top, BorderLayout.NORTH);
-        this.getContentPane().add(new JScrollPane(list), BorderLayout.CENTER);
+        this.getContentPane().setBackground(DialogStyle.PAGE_BACKGROUND);
+        this.getContentPane().add(header, BorderLayout.NORTH);
+        this.getContentPane().add(page, BorderLayout.CENTER);
         this.getContentPane().add(buttons, BorderLayout.SOUTH);
-        this.getRootPane().setDefaultButton(cmdOk);
+        this.getRootPane().setDefaultButton(this.cmdOk);
+        this.updateCount();
+
+        // a fixed width - the chips wrap, the height follows their rows: lay out at that width first,
+        // the wrapped height of the chips is only known then
+        int width = 520;
+        int height = 600;
+        // pack makes the dialog displayable - only then it is laid out
         this.pack();
-        this.setSize(Math.max(360, this.getWidth()), Math.min(480, Math.max(200, this.getHeight())));
+        this.setSize(width, height);
+        this.validate();
+        if (!suggestions.isEmpty()) {
+            // the bottom of the lowest chip - the preferred height of the wrap layout has some extra room
+            int chipsHeight = 0;
+            for (Component c : chipPanel.getComponents()) {
+                chipsHeight = Math.max(chipsHeight, c.getY() + c.getHeight());
+            }
+            height += chipsHeight + 6 - scroll.getViewport().getHeight();
+        } else {
+            height = this.getPreferredSize().height;
+        }
+        this.setSize(width, Math.max(240, Math.min(560, height)));
         this.setLocationRelativeTo(owner);
+    }
+
+    private void chipChanged(JToggleButton chip) {
+        boolean sel = chip.isSelected();
+        chip.putClientProperty(FlatClientProperties.STYLE, CHIP_STYLE + (sel && chip.isEnabled() ? CHIP_STYLE_SELECTED : ""));
+        Font f = chip.getFont();
+        chip.setFont(f.deriveFont(sel && chip.isEnabled() ? Font.BOLD : Font.PLAIN));
+        this.updateCount();
+    }
+
+    private void updateCount() {
+        int available = 0;
+        int selected = 0;
+        for (JToggleButton chip : this.chips.values()) {
+            if (chip.isEnabled()) {
+                available++;
+                if (chip.isSelected()) {
+                    selected++;
+                }
+            }
+        }
+        if (this.chips.isEmpty()) {
+            this.lblCount.setText("");
+        } else if (available == 0) {
+            this.lblCount.setText("Alle Vorschläge sind bereits vorhanden.");
+        } else {
+            this.lblCount.setText(selected + " von " + available + " neuen Schlagworten ausgewählt");
+        }
+        this.cmdOk.setEnabled(selected > 0);
+        this.cmdOk.setText(selected > 0 ? "Übernehmen (" + selected + ")" : "Übernehmen");
     }
 
     // keywords the document already has stay selected and disabled
     private void selectAll(boolean select) {
-        for (JCheckBox cb : this.boxes.values()) {
-            if (cb.isEnabled()) {
-                cb.setSelected(select);
+        for (AbstractButton chip : this.chips.values()) {
+            if (chip.isEnabled()) {
+                chip.setSelected(select);
             }
         }
+    }
+
+    /**
+     * @param checked true for a selected chip
+     * @return a small check mark, or an empty circle for a chip that is not selected
+     */
+    private static Icon checkIcon(boolean checked) {
+        return new Icon() {
+            @Override
+            public void paintIcon(Component c, Graphics g, int x, int y) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                boolean enabled = c == null || c.isEnabled();
+                if (checked) {
+                    g2.setColor(enabled ? CHECK : CHECK_DISABLED);
+                    g2.fillOval(x, y, 14, 14);
+                    g2.setColor(Color.WHITE);
+                    g2.setStroke(new BasicStroke(1.8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                    g2.drawPolyline(new int[]{x + 4, x + 6, x + 10}, new int[]{y + 7, y + 10, y + 4}, 3);
+                } else {
+                    g2.setColor(UiColors.SEPARATOR.darker());
+                    g2.setStroke(new BasicStroke(1.4f));
+                    g2.drawOval(x + 1, y + 1, 12, 12);
+                }
+                g2.dispose();
+            }
+
+            @Override
+            public int getIconWidth() {
+                return 14;
+            }
+
+            @Override
+            public int getIconHeight() {
+                return 14;
+            }
+        };
     }
 
     /**
@@ -777,7 +964,7 @@ public class KeywordSuggestionsDialog extends JDialog {
         if (!this.accepted) {
             return result;
         }
-        for (Map.Entry<String, JCheckBox> e : this.boxes.entrySet()) {
+        for (Map.Entry<String, JToggleButton> e : this.chips.entrySet()) {
             if (e.getValue().isEnabled() && e.getValue().isSelected()) {
                 result.add(e.getKey());
             }

@@ -1505,7 +1505,6 @@ public class LibreOfficeAccess {
                     //String[] trailingCharsRegex = new String[]{"\\.", ",", ";", ":", "!", "\\?", "'", "\"", " ", "\\n"};
                     //String[] trailingChars = new String[]{".", ",", ";", ":", "!", "?", "'", "\"", " ", "\n"};
                     String[] trailingCharsRegex = new String[]{"\\.", ",", ";", ":", "!", "\\?", "'", "\"", " ", "/", "\\)", "\\]", "-"};
-                    String[] trailingChars = new String[]{".", ",", ";", ":", "!", "?", "'", "\"", " ", "/", ")", "]", "-"};
 
                     String value = (String) values.get(key);
                     if (PlaceHolders.INGO_TEXT.equals(key) && isMultiParagraphText(value)) {
@@ -1529,10 +1528,8 @@ public class LibreOfficeAccess {
 
                     for (int i = 0; i < trailingCharsRegex.length; i++) {
                         String trailCharRegex = trailingCharsRegex[i];
-                        String trailChar = trailingChars[i];
-                        String regExKey = PLACEHOLDER_REGEX_OPEN + key.substring(2, key.length() - 2) + PLACEHOLDER_REGEX_CLOSE + trailCharRegex;
-
-                        String trailValue = value + trailChar;
+                        // select the placeholder only - the following character keeps its formatting
+                        String regExKey = PLACEHOLDER_REGEX_OPEN + key.substring(2, key.length() - 2) + PLACEHOLDER_REGEX_CLOSE + "(?=" + trailCharRegex + ")";
 
                         TextNavigation search = new TextNavigation(regExKey, outputOdt);
 
@@ -1540,10 +1537,10 @@ public class LibreOfficeAccess {
 
                             try {
                                 TextSelection item = (TextSelection) search.nextSelection();
-                                item.replaceWith(trailValue);
+                                item.replaceWith(value);
 
                             } catch (Throwable t) {
-                                log.error("Error replacing " + regExKey + " with " + trailValue + " in " + fileInFileSystem, t);
+                                log.error("Error replacing " + regExKey + " with " + value + " in " + fileInFileSystem, t);
                             }
                         }
                     }
@@ -1558,6 +1555,11 @@ public class LibreOfficeAccess {
                         try {
                             TextSelection item = (TextSelection) eolSearch.nextSelection();
                             item.replaceWith(eolValue);
+                            // as in the replacement below: remove lines that are empty after replacing placeholders with empty string
+                            if (eolValue.isEmpty() && isEmptyParagraph(item.getElement())) {
+                                removalParents.add(item.getElement().getParentNode());
+                                removalChildren.add(item.getElement());
+                            }
                         } catch (Throwable t) {
                             log.error("Error replacing " + regExKeyEol + " with " + eolValue + " in " + fileInFileSystem, t);
                         }
@@ -2098,16 +2100,14 @@ public class LibreOfficeAccess {
 
                 // if the placeholder is followed by one of these characters, do not append a space
                 String[] trailingCharsRegex = new String[]{"\\.", ",", ";", ":", "!", "\\?", "'", "\"", " ", "/", "\\)", "\\]", "-"};
-                String[] trailingChars = new String[]{".", ",", ";", ":", "!", "?", "'", "\"", " ", "/", ")", "]", "-"};
                 for (int i = 0; i < trailingCharsRegex.length; i++) {
                     String trailCharRegex = trailingCharsRegex[i];
-                    String trailChar = trailingChars[i];
-                    String regExKey = PLACEHOLDER_REGEX_OPEN + key.substring(2, key.length() - 2) + PLACEHOLDER_REGEX_CLOSE + trailCharRegex;
+                    // select the placeholder only - the following character keeps its formatting
+                    String regExKey = PLACEHOLDER_REGEX_OPEN + key.substring(2, key.length() - 2) + PLACEHOLDER_REGEX_CLOSE + "(?=" + trailCharRegex + ")";
                     String value = (String) values.get(key);
                     if (value == null) {
                         value = "";
                     }
-                    value = value + trailChar;
 
                     TextNavigation search = new TextNavigation(regExKey, outputOds);
 
@@ -2172,6 +2172,36 @@ public class LibreOfficeAccess {
             PdfFormsAccess.setPlaceHolders(caseId, fileInFileSystem, fileName, values, formsPrefixes);
         }
 
+    }
+
+    // inline elements an empty paragraph may still hold when it is removed - no bookmarks, the
+    // other end of a bookmark may be in another paragraph
+    private static final Set<String> INLINE_TEXT_ELEMENTS = Set.of("text:span", "text:a", "text:s", "text:tab", "text:line-break", "text:soft-page-break");
+
+    private static boolean isEmptyParagraph(OdfElement paragraph) {
+        // no text left, and never remove paragraphs with images, frames, fields or other non-text content
+        return paragraph.getTextContent().trim().isEmpty() && containsInlineTextElementsOnly(paragraph);
+    }
+
+    private static boolean containsInlineTextElementsOnly(Node node) {
+        NodeList childNodes = node.getChildNodes();
+        for (int i = 0; i < childNodes.getLength(); i++) {
+            Node child = childNodes.item(i);
+            if (child.getNodeType() == Node.ELEMENT_NODE
+                    && (!INLINE_TEXT_ELEMENTS.contains(child.getNodeName()) || isNamedHyperlink(child) || !containsInlineTextElementsOnly(child))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean isNamedHyperlink(Node node) {
+        // a hyperlink with a name is a target other hyperlinks may point to
+        if (!"text:a".equals(node.getNodeName())) {
+            return false;
+        }
+        Node name = node.getAttributes().getNamedItemNS("urn:oasis:names:tc:opendocument:xmlns:office:1.0", "name");
+        return name != null && !name.getNodeValue().isEmpty();
     }
 
     private static boolean replaceIngoTextWithParagraphs(TextSelection item, String value) {

@@ -721,6 +721,8 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
 
     private boolean initializing = true;
     private boolean statusBarNotified = false;
+    // true while messages are added that arrived just now (they fade in)
+    private boolean liveMessages = false;
 
     private ArrayList<InstantMessage> currentMessageList = new ArrayList<>();
     private ArrayList<String> deletedMessageIds = new ArrayList<>();
@@ -736,6 +738,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         this.initializing = true;
 
         initComponents();
+        this.applyModernLook();
         
         this.tabsPane.putClientProperty("JTabbedPane.maximumTabWidth", 200);
 
@@ -841,6 +844,29 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         return hashtags;
     }
 
+    /**
+     * Applies the editor design kit. The messages are made for the dark background, so hashtags
+     * and the conversation are shown on glass cards instead of light ones.
+     */
+    private void applyModernLook() {
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleTitle(this.lblPanelTitle, null);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleHeaderButtons(this.cmdRefresh);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleMainTabs(this.tabsPane);
+        // icon labels in the header: same size and color as the header buttons
+        for (javax.swing.JLabel l : new javax.swing.JLabel[]{this.lblOtherUsersMessages, this.lblPopoutMessenger}) {
+            if (l.getIcon() != null) {
+                l.setIcon(new com.jdimension.jlawyer.client.modulebar.SidebarIcon(l.getIcon(), com.jdimension.jlawyer.client.ui.theme.UiColors.TEXT_ON_GLASS, 22));
+            }
+            l.setText("");
+        }
+        // column caption "Hashtags", the small cross next to it resets the filter
+        this.lblClearHashtagSelection.setIcon(new com.jdimension.jlawyer.client.modulebar.SidebarIcon(this.lblClearHashtagSelection.getIcon(),
+                com.jdimension.jlawyer.client.ui.theme.UiColors.TEXT_ON_GLASS_SECONDARY, 14));
+        this.lblClearHashtagSelection.setFont(this.lblClearHashtagSelection.getFont().deriveFont(java.awt.Font.BOLD, 14f));
+        this.lblClearHashtagSelection.setIconTextGap(8);
+        this.lblClearHashtagSelection.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 6, 2, 0));
+    }
+
     @Override
     public void setBackgroundImage(Image image) {
         this.backgroundImage = image;
@@ -863,6 +889,10 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        pnlConversation = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
+        pnlHashtags = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
+        pnlHeaderRight = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
+        pnlToolbar = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
         cmbDownloadInstantMessages = new javax.swing.JComboBox<>();
@@ -871,11 +901,11 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
         lstHashtags = new javax.swing.JList<>();
         tabsPane = new javax.swing.JTabbedPane();
         jScrollPane3 = new javax.swing.JScrollPane();
-        pnlMessages = new javax.swing.JPanel();
+        pnlMessages = new com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
-        pnlMessagesToMe = new javax.swing.JPanel();
+        pnlMessagesToMe = new com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel();
         jScrollPane4 = new javax.swing.JScrollPane();
-        pnlMessagesToOthers = new javax.swing.JPanel();
+        pnlMessagesToOthers = new com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel();
         messageSendPanel1 = new com.jdimension.jlawyer.client.messenger.MessageSendPanel();
         lblClearHashtagSelection = new javax.swing.JLabel();
         lblPopoutMessenger = new javax.swing.JLabel();
@@ -985,10 +1015,13 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
 
         tabsPane.addTab("an andere", jScrollPane4);
 
-        lblClearHashtagSelection.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblClearHashtagSelection.setForeground(new java.awt.Color(255, 255, 255));
+        lblClearHashtagSelection.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         lblClearHashtagSelection.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        lblClearHashtagSelection.setText("Hashtags");
         lblClearHashtagSelection.setToolTipText("Hashtag-Filter zurücksetzen");
         lblClearHashtagSelection.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        lblClearHashtagSelection.setHorizontalTextPosition(javax.swing.SwingConstants.LEADING);
         lblClearHashtagSelection.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lblClearHashtagSelectionMouseClicked(evt);
@@ -1015,6 +1048,98 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
             }
         });
 
+        pnlToolbar.setOpaque(false);
+
+        org.jdesktop.layout.GroupLayout pnlToolbarLayout = new org.jdesktop.layout.GroupLayout(pnlToolbar);
+        pnlToolbar.setLayout(pnlToolbarLayout);
+        pnlToolbarLayout.setHorizontalGroup(
+            pnlToolbarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlToolbarLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(cmdRefresh, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+        pnlToolbarLayout.setVerticalGroup(
+            pnlToolbarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlToolbarLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(pnlToolbarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+                    .add(cmdRefresh, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
+        );
+
+        pnlHeaderRight.setOpaque(false);
+
+        org.jdesktop.layout.GroupLayout pnlHeaderRightLayout = new org.jdesktop.layout.GroupLayout(pnlHeaderRight);
+        pnlHeaderRight.setLayout(pnlHeaderRightLayout);
+        pnlHeaderRightLayout.setHorizontalGroup(
+            pnlHeaderRightLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlHeaderRightLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(lblOtherUsersMessages, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(lblPopoutMessenger, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(cmbDownloadInstantMessages, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+        pnlHeaderRightLayout.setVerticalGroup(
+            pnlHeaderRightLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlHeaderRightLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(pnlHeaderRightLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+                    .add(lblOtherUsersMessages, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(lblPopoutMessenger, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(cmbDownloadInstantMessages, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
+        );
+
+        pnlHashtags.setOpaque(false);
+
+        org.jdesktop.layout.GroupLayout pnlHashtagsLayout = new org.jdesktop.layout.GroupLayout(pnlHashtags);
+        pnlHashtags.setLayout(pnlHashtagsLayout);
+        pnlHashtagsLayout.setHorizontalGroup(
+            pnlHashtagsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlHashtagsLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(pnlHashtagsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(lblClearHashtagSelection, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        pnlHashtagsLayout.setVerticalGroup(
+            pnlHashtagsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlHashtagsLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(lblClearHashtagSelection, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        pnlConversation.setOpaque(false);
+
+        org.jdesktop.layout.GroupLayout pnlConversationLayout = new org.jdesktop.layout.GroupLayout(pnlConversation);
+        pnlConversation.setLayout(pnlConversationLayout);
+        pnlConversationLayout.setHorizontalGroup(
+            pnlConversationLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlConversationLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(pnlConversationLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(tabsPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(messageSendPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        pnlConversationLayout.setVerticalGroup(
+            pnlConversationLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlConversationLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(tabsPane, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(messageSendPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -1023,50 +1148,32 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(layout.createSequentialGroup()
-                        .add(cmdRefresh)
+                        .add(pnlToolbar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(18, 18, 18)
+                        .add(jLabel18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jLabel18)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblPanelTitle)
+                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(lblOtherUsersMessages)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblPopoutMessenger)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmbDownloadInstantMessages, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .add(pnlHeaderRight, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .add(layout.createSequentialGroup()
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                            .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 192, Short.MAX_VALUE)
-                            .add(lblClearHashtagSelection, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .add(pnlHashtags, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 200, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(tabsPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 875, Short.MAX_VALUE)
-                            .add(messageSendPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                        .add(pnlConversation, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
                 .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(cmbDownloadInstantMessages, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 46, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(cmdRefresh)
-                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                            .add(lblPopoutMessenger, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(lblOtherUsersMessages))
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 42, Short.MAX_VALUE)))
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+                    .add(pnlToolbar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(pnlHeaderRight, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(layout.createSequentialGroup()
-                        .add(lblClearHashtagSelection)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 520, Short.MAX_VALUE))
-                    .add(layout.createSequentialGroup()
-                        .add(tabsPane, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(messageSendPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                    .add(pnlHashtags, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                    .add(pnlConversation, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -1292,16 +1399,19 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
     private javax.swing.JLabel lblPopoutMessenger;
     private javax.swing.JList<String> lstHashtags;
     private com.jdimension.jlawyer.client.messenger.MessageSendPanel messageSendPanel1;
-    private javax.swing.JPanel pnlMessages;
-    private javax.swing.JPanel pnlMessagesToMe;
-    private javax.swing.JPanel pnlMessagesToOthers;
+    private com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel pnlMessages;
+    private com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel pnlMessagesToMe;
+    private com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel pnlMessagesToOthers;
     private javax.swing.JTabbedPane tabsPane;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlToolbar;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlHeaderRight;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlHashtags;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlConversation;
     // End of variables declaration//GEN-END:variables
 
     private void addMessageToView(InstantMessage msg) {
         MessagePanel mp1 = new MessagePanel(UserSettings.getInstance().getLoginEnabledUsers(), UserSettings.getInstance().getCurrentUser().getPrincipalId(), UserSettings.getInstance().getCurrentUser().getPrincipalId().equalsIgnoreCase(msg.getSender()), msg);
-        mp1.setAlignmentX(JPanel.LEFT_ALIGNMENT);
-        pnlMessages.add(mp1);
+        this.appendMessage(pnlMessages, mp1);
         pnlMessages.repaint();
         this.jScrollPane3.doLayout();
         mp1.revalidate();
@@ -1352,7 +1462,8 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
             targetScroll = new JScrollPane();
             targetScroll.getVerticalScrollBar().setUnitIncrement(SCROLLPANE_VERTICAL_INCREMENT);
 
-            targetPanel = new JPanel();
+            // follows the width of the tab, see WidthTrackingPanel
+            targetPanel = new com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel();
             BoxLayout layout = new javax.swing.BoxLayout(targetPanel, javax.swing.BoxLayout.Y_AXIS);
             targetPanel.setLayout(layout);
             targetPanel.setOpaque(false);
@@ -1443,10 +1554,47 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
 
     }
 
+    /**
+     * Appends a message to a message list. A day separator is put in front of the first message
+     * of each day; messages arriving live fade in.
+     */
+    private void appendMessage(JPanel messagesPanel, MessagePanel mp) {
+        MessagePanel last = null;
+        for (int i = messagesPanel.getComponentCount() - 1; i >= 0; i--) {
+            if (messagesPanel.getComponent(i) instanceof MessagePanel) {
+                last = (MessagePanel) messagesPanel.getComponent(i);
+                break;
+            }
+        }
+        java.util.Date sent = mp.getMessage() != null ? mp.getMessage().getSent() : null;
+        java.util.Date lastSent = (last != null && last.getMessage() != null) ? last.getMessage().getSent() : null;
+        if (sent != null && (lastSent == null || !DaySeparator.isSameDay(sent, lastSent))) {
+            messagesPanel.add(new DaySeparator(sent));
+        }
+        mp.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+        messagesPanel.add(mp);
+        if (this.liveMessages) {
+            mp.fadeIn();
+        }
+    }
+
+    /**
+     * Removes day separators that no longer have any messages below them.
+     */
+    private static void removeOrphanedSeparators(JPanel messagesPanel) {
+        for (int i = messagesPanel.getComponentCount() - 1; i >= 0; i--) {
+            if (messagesPanel.getComponent(i) instanceof DaySeparator) {
+                boolean last = i == messagesPanel.getComponentCount() - 1;
+                if (last || messagesPanel.getComponent(i + 1) instanceof DaySeparator) {
+                    messagesPanel.remove(i);
+                }
+            }
+        }
+    }
+
     private void addMessageToContainers(InstantMessage msg, JPanel targetPanel, JScrollPane targetScroll) {
         MessagePanel mp1 = new MessagePanel(UserSettings.getInstance().getLoginEnabledUsers(), UserSettings.getInstance().getCurrentUser().getPrincipalId(), UserSettings.getInstance().getCurrentUser().getPrincipalId().equalsIgnoreCase(msg.getSender()), msg);
-        mp1.setAlignmentX(JPanel.LEFT_ALIGNMENT);
-        targetPanel.add(mp1);
+        this.appendMessage(targetPanel, mp1);
         targetPanel.repaint();
         targetScroll.doLayout();
         mp1.revalidate();
@@ -1501,9 +1649,15 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
 
             SwingUtilities.invokeLater(() -> {
                 if (((NewInstantMessagesEvent) e).getNewMessages() != null) {
-                    for (InstantMessage msg : ((NewInstantMessagesEvent) e).getNewMessages()) {
-                        this.currentMessageList.add(msg);
-                        this.addMessageToView(msg);
+                    // messages that just arrived fade in
+                    this.liveMessages = true;
+                    try {
+                        for (InstantMessage msg : ((NewInstantMessagesEvent) e).getNewMessages()) {
+                            this.currentMessageList.add(msg);
+                            this.addMessageToView(msg);
+                        }
+                    } finally {
+                        this.liveMessages = false;
                     }
                     this.updateHashtagsBar(((NewInstantMessagesEvent) e).getNewMessages());
                 }
@@ -1543,6 +1697,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
             }
         }
         if(removed) {
+            removeOrphanedSeparators(messagesPanel);
             messagesPanel.revalidate();
             messagesPanel.doLayout();
         }
@@ -1609,6 +1764,7 @@ public class MessagingCenterPanel extends javax.swing.JPanel implements Themeabl
             }
         }
         if (removed) {
+            removeOrphanedSeparators(this.pnlMessagesToMe);
             this.pnlMessagesToMe.revalidate();
             this.pnlMessagesToMe.repaint();
             this.jScrollPane2.revalidate();

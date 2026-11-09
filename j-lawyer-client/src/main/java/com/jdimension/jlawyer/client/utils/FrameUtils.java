@@ -681,6 +681,11 @@ import javax.swing.JFrame;
 public class FrameUtils {
 
     public static void centerFrame(JFrame frame, JFrame parent) {
+        // basic look of the design kit for working windows (e-mail, notes, ...) - never for the
+        // main window
+        if (frame != null && frame != com.jdimension.jlawyer.client.editors.EditorsRegistry.getInstance().getMainWindow()) {
+            com.jdimension.jlawyer.client.ui.theme.DialogStyle.apply(frame);
+        }
         centerWindowOnParent(frame, parent);
     }
 
@@ -767,6 +772,7 @@ public class FrameUtils {
     }
 
     public static void centerDialogOnParentMonitor(JDialog dialog, Point parentLocation) {
+        com.jdimension.jlawyer.client.ui.theme.DialogStyle.apply(dialog);
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsDevice[] screens = ge.getScreenDevices();
 
@@ -787,6 +793,8 @@ public class FrameUtils {
     }
 
     public static void centerDialog(JDialog dlg, Window parent) {
+        // basic look of the design kit - before positioning, it may grow the dialog
+        com.jdimension.jlawyer.client.ui.theme.DialogStyle.apply(dlg);
         centerWindowOnParent(dlg, parent);
     }
 
@@ -798,6 +806,7 @@ public class FrameUtils {
      * its position had to be captured earlier.
      */
     public static void centerDialogAt(JDialog dlg, Point screenPoint) {
+        com.jdimension.jlawyer.client.ui.theme.DialogStyle.apply(dlg);
         Dimension size = dlg.getSize();
         int x = screenPoint.x - size.width / 2;
         int y = screenPoint.y - size.height / 2;

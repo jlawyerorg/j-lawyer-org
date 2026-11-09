@@ -932,6 +932,15 @@ public interface ArchiveFileServiceLocal {
     List<CaseAccountEntry> getAccountEntries(String caseId) throws Exception;
     List<CaseAccountEntry> getAccountEntriesUnrestricted(String caseId) throws Exception;
 
+    /**
+     * @param entryId ID of an account entry
+     * @return the entry, or null if it does not exist
+     * @throws Exception if the caller may not access the case of the entry
+     */
+    CaseAccountEntry getAccountEntry(String entryId) throws Exception;
+    CaseAccountEntry updateAccountEntry(String caseId, CaseAccountEntry accountEntry) throws Exception;
+    void removeAccountEntry(String entryId) throws Exception;
+
     // Timesheets
     List<Timesheet> getTimesheets(String caseId) throws Exception;
     List<Timesheet> getOpenTimesheets(String caseId) throws Exception;

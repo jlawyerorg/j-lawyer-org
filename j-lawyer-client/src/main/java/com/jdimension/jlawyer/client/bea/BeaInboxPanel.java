@@ -700,7 +700,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Desktop;
 import java.awt.Graphics;
-import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
@@ -805,9 +804,10 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             log.error(ex);
         }
 
-        ComponentUtils.decorateSplitPane(jSplitPane1);
-        ComponentUtils.decorateSplitPane(this.mainSplitter);
-        ComponentUtils.decorateSplitPane(this.splitterFolderDetails);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleCardSplitPane(jSplitPane1);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleCardSplitPane(this.mainSplitter);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleCardSplitPane(this.splitterFolderDetails);
+        this.applyModernLook();
 
         ClientSettings cs = ClientSettings.getInstance();
         String temp = cs.getConfiguration(ClientSettings.CONF_BEA_MOVETOIMPORTEDENABLED, "false");
@@ -1027,6 +1027,23 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
     }
 
+    /**
+     * Applies the editor design kit: glass tool bar and options bar, folders, messages and the
+     * message content on one light card.
+     */
+    private void applyModernLook() {
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleTitle(this.lblPanelTitle, null);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleHeaderButtons(this.cmdRefresh, this.cmdLogout, this.cmdNew,
+                this.cmdReply, this.cmdReplyAll, this.cmdForward, this.cmdDelete);
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleTable(this.tblMails, this.jScrollPane3);
+        this.scrollTree.setBorder(javax.swing.BorderFactory.createLineBorder(com.jdimension.jlawyer.client.ui.theme.UiColors.SEPARATOR));
+        this.scrollTree.getViewport().setBackground(java.awt.Color.WHITE);
+        this.treeFolders.setBackground(java.awt.Color.WHITE);
+        com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.styleContainer(this.jScrollPane4, this.pnlActions, this.pnlActionsChild);
+        this.jPanel2.setOpaque(false);
+        this.chkMoveToImported.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+    }
+
     @Override
     public void setBackgroundImage(Image image) {
         this.backgroundImage = image;
@@ -1049,6 +1066,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        pnlOptionsBar = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
+        pnlToolbar = new com.jdimension.jlawyer.client.ui.theme.GlassCardPanel();
         popFolders = new javax.swing.JPopupMenu();
         mnuNewFolder = new javax.swing.JMenuItem();
         mnuRemoveFolder = new javax.swing.JMenuItem();
@@ -1074,6 +1093,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         cmdForward = new javax.swing.JButton();
         jSeparator4 = new javax.swing.JToolBar.Separator();
         cmdDelete = new javax.swing.JButton();
+        cardMail = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         mainSplitter = new javax.swing.JSplitPane();
         scrollTree = new javax.swing.JScrollPane();
         treeFolders = new javax.swing.JTree();
@@ -1082,8 +1102,9 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         tblMails = new javax.swing.JTable();
         jPanel2 = new javax.swing.JPanel();
         jSplitPane1 = new javax.swing.JSplitPane();
+        cardSuggestions = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jScrollPane4 = new javax.swing.JScrollPane();
-        pnlActions = new javax.swing.JPanel();
+        pnlActions = new com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel();
         pnlActionsChild = new javax.swing.JPanel();
         beaMessageContentUI = new com.jdimension.jlawyer.client.bea.BeaMessageContentUI();
         cmdRefresh = new javax.swing.JButton();
@@ -1313,7 +1334,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
         splitterFolderDetails.setLeftComponent(jScrollPane3);
 
-        pnlActions.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEADING));
+        pnlActions.setLayout(new java.awt.BorderLayout());
 
         org.jdesktop.layout.GroupLayout pnlActionsChildLayout = new org.jdesktop.layout.GroupLayout(pnlActionsChild);
         pnlActionsChild.setLayout(pnlActionsChildLayout);
@@ -1326,11 +1347,15 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             .add(0, 321, Short.MAX_VALUE)
         );
 
-        pnlActions.add(pnlActionsChild);
+        pnlActions.add(pnlActionsChild, java.awt.BorderLayout.NORTH);
 
         jScrollPane4.setViewportView(pnlActions);
 
-        jSplitPane1.setRightComponent(jScrollPane4);
+        cardSuggestions.setTitle("Vorschläge");
+        cardSuggestions.setLayout(new java.awt.BorderLayout());
+        cardSuggestions.add(jScrollPane4, java.awt.BorderLayout.CENTER);
+
+        jSplitPane1.setRightComponent(cardSuggestions);
         jSplitPane1.setLeftComponent(beaMessageContentUI);
 
         org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
@@ -1349,6 +1374,9 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         splitterFolderDetails.setRightComponent(jPanel2);
 
         mainSplitter.setRightComponent(splitterFolderDetails);
+
+        cardMail.setLayout(new java.awt.BorderLayout());
+        cardMail.add(mainSplitter, java.awt.BorderLayout.CENTER);
 
         cmdRefresh.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_refresh_blue_36dp.png"))); // NOI18N
         cmdRefresh.setToolTipText("Aktualisieren");
@@ -1394,50 +1422,87 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             }
         });
 
+        pnlToolbar.setOpaque(false);
+
+        org.jdesktop.layout.GroupLayout pnlToolbarLayout = new org.jdesktop.layout.GroupLayout(pnlToolbar);
+        pnlToolbar.setLayout(pnlToolbarLayout);
+        pnlToolbarLayout.setHorizontalGroup(
+            pnlToolbarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlToolbarLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(cmdRefresh, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(cmdLogout, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jToolBar1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+        pnlToolbarLayout.setVerticalGroup(
+            pnlToolbarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlToolbarLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(pnlToolbarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+                    .add(cmdRefresh, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(cmdLogout, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jToolBar1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
+        );
+
+        pnlOptionsBar.setOpaque(false);
+
+        org.jdesktop.layout.GroupLayout pnlOptionsBarLayout = new org.jdesktop.layout.GroupLayout(pnlOptionsBar);
+        pnlOptionsBar.setLayout(pnlOptionsBarLayout);
+        pnlOptionsBarLayout.setHorizontalGroup(
+            pnlOptionsBarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlOptionsBarLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(chkMoveToImported, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(lblTempFilesWarning, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(cmbDownloadMails, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+        pnlOptionsBarLayout.setVerticalGroup(
+            pnlOptionsBarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlOptionsBarLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(pnlOptionsBarLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+                    .add(chkMoveToImported, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(lblTempFilesWarning, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(cmbDownloadMails, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
+        );
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+            .add(layout.createSequentialGroup()
                 .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(layout.createSequentialGroup()
-                        .add(chkMoveToImported)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(lblTempFilesWarning))
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, mainSplitter)
-                    .add(layout.createSequentialGroup()
-                        .add(cmdRefresh)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdLogout)
+                        .add(pnlToolbar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(18, 18, 18)
-                        .add(jToolBar1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                        .add(jLabel18)
+                        .add(jLabel18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblPanelTitle)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(cmbDownloadMails, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(pnlOptionsBar, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(cardMail, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
                 .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                        .add(jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(jToolBar1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(org.jdesktop.layout.GroupLayout.TRAILING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(cmbDownloadMails))
-                    .add(cmdRefresh)
-                    .add(cmdLogout))
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+                    .add(pnlToolbar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(chkMoveToImported)
-                    .add(lblTempFilesWarning))
+                .add(pnlOptionsBar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(mainSplitter, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 411, Short.MAX_VALUE)
+                .add(cardMail, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -2619,21 +2684,22 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 pnlActionsChild.removeAll();
 
                 ArrayList<Component> actionPanelEntries = new ArrayList<>();
+                // contacts are shown at the end of the column
+                ArrayList<Component> contactEntries = new ArrayList<>();
 
                 String sender = msg.getSenderSafeId();
                 if (sender != null && sender.length() > 0) {
 
                     if (hits.length == 0) {
                         CreateNewAddressPanel nap = new CreateNewAddressPanel(BeaInboxPanel.this.getClass().getName());
-                        nap.setBackground(new Color(153, 204, 255));
                         nap.setBeaSafeId(sender);
                         nap.setSenderName(msg.getSenderName());
+                        actionPanelEntries.add(com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.heading("Neu"));
                         actionPanelEntries.add(nap);
                     }
 
                     // empty case reference - will trigger a search
                     SaveToCasePanel sp = new SaveToCasePanel(BeaInboxPanel.this.getClass().getName());
-                    sp.setBackground(sp.getBackground().brighter());
                     CaseForContactEntry cce = new CaseForContactEntry();
                     cce.setFileNumber(null);
                     cce.setId(null);
@@ -2642,16 +2708,19 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     cce.setReason(StringUtils.nonEmpty(null));
                     cce.setArchived(false);
                     sp.setEntry(cce, BeaInboxPanel.this);
+                    actionPanelEntries.add(com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.heading("Zuordnen"));
                     actionPanelEntries.add(sp);
 
                     if (!phoneNumbers.isEmpty()) {
                         ExtractedPhoneNumbersPanel pnp = new ExtractedPhoneNumbersPanel();
                         pnp.setPhoneNumbers(phoneNumbers);
-                        actionPanelEntries.add(pnp);
+                        contactEntries.add(pnp);
                     }
 
                     // eEB responses are offered in the header of the message view itself, see BeaMessageContentUI
 
+                    // cases found by the references of the message, under their own heading
+                    int referenceStart = actionPanelEntries.size();
                     // add reference-based cases (first pass: referenceJustice)
                     addCasePanelsFromData(refCasesJustice, actionPanelEntries);
                     if (refCasesJustice.isEmpty() && refFileNumberCasesJustice != null) {
@@ -2665,7 +2734,12 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                         }
                     }
 
+                    if (actionPanelEntries.size() > referenceStart) {
+                        actionPanelEntries.add(referenceStart, com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.heading("Aktenzeichen im Bezug"));
+                    }
+
                     if (!foundByReferenceJustice && !foundByReferenceNumber) {
+                        int senderStart = actionPanelEntries.size();
                         // display all cases where sender is involved
                         for (AddressBean h : hits) {
                             ArrayList cases = casesByAddress.get(h.getId());
@@ -2677,10 +2751,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                                 ArchiveFileAddressesBean afab = (ArchiveFileAddressesBean) c;
                                 ArchiveFileBean aFile = afab.getArchiveFileKey();
                                 SaveToCasePanel ep = new SaveToCasePanel(BeaInboxPanel.this.getClass().getName());
-                                if (i % 2 == 0) {
-                                    ep.setBackground(ep.getBackground().darker());
-                                }
-                                ep.setBackground(ep.getBackground().brighter());
                                 CaseForContactEntry lce = new CaseForContactEntry();
                                 lce.setFileNumber(aFile.getFileNumber());
                                 lce.setId(aFile.getId());
@@ -2697,21 +2767,24 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                                 }
                             }
                         }
+                        if (actionPanelEntries.size() > senderStart) {
+                            actionPanelEntries.add(senderStart, com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.heading("Akten des Absenders"));
+                        }
                     }
 
                     // allow navigating to senders address
                     for (AddressBean h : hits) {
                         NavigateToAddressPanel ap = new NavigateToAddressPanel(BeaInboxPanel.this.getClass().getName());
                         ap.setAddress(h);
-                        ap.setBackground(new Color(153, 204, 255));
-                        actionPanelEntries.add(ap);
+                        contactEntries.add(ap);
                     }
                 }
 
-                pnlActionsChild.setLayout(new GridLayout(actionPanelEntries.size(), 1));
-                for (Component o : actionPanelEntries) {
-                    pnlActionsChild.add(o);
+                if (!contactEntries.isEmpty()) {
+                    actionPanelEntries.add(com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.heading("Kontakte"));
+                    actionPanelEntries.addAll(contactEntries);
                 }
+                com.jdimension.jlawyer.client.mail.sidebar.SuggestionList.show(pnlActionsChild, actionPanelEntries);
 
                 jSplitPane1.setDividerLocation(splitLocationBefore);
 
@@ -2730,7 +2803,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         }
         for (ArchiveFileAddressesBean aab : cases) {
             SaveToCasePanel ep = new SaveToCasePanel(this.getClass().getName());
-            ep.setBackground(ep.getBackground().brighter());
             CaseForContactEntry lce = new CaseForContactEntry();
             lce.setFileNumber(aab.getArchiveFileKey().getFileNumber());
             lce.setId(aab.getArchiveFileKey().getId());
@@ -2749,7 +2821,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     private void addFileNumberPanels(ArchiveFileBean[] fileNumberCases, ArrayList<Component> actionPanelEntries) {
         for (ArchiveFileBean afb : fileNumberCases) {
             SaveToCasePanel ep = new SaveToCasePanel(this.getClass().getName());
-            ep.setBackground(ep.getBackground().brighter());
             CaseForContactEntry lce = new CaseForContactEntry();
             lce.setFileNumber(afb.getFileNumber());
             lce.setId(afb.getId());
@@ -3211,6 +3282,10 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
                 }
 
+                // shown in the dialog, so the user knows what happens with the message after saving
+                if ("true".equalsIgnoreCase(ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_BEA_MOVETOIMPORTEDENABLED, "false"))) {
+                    bulkSaveDlg.setPostSaveHint("beA-Nachricht wird in den Ordner \"importiert\" verschoben");
+                }
                 FrameUtils.centerDialog(bulkSaveDlg, EditorsRegistry.getInstance().getMainWindow());
                 bulkSaveDlg.setVisible(true);
 
@@ -3503,7 +3578,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     private javax.swing.JMenuItem mnuSearchSave;
     private javax.swing.JMenuItem mnuSearchSaveNoAttachments;
     private javax.swing.JMenuItem mnuSearchSaveOnlyAttachments;
-    private javax.swing.JPanel pnlActions;
+    private com.jdimension.jlawyer.client.ui.theme.WidthTrackingPanel pnlActions;
     private javax.swing.JPanel pnlActionsChild;
     private javax.swing.JPopupMenu popEmailList;
     private javax.swing.JPopupMenu popFolders;
@@ -3511,5 +3586,9 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     private javax.swing.JSplitPane splitterFolderDetails;
     private javax.swing.JTable tblMails;
     private javax.swing.JTree treeFolders;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardMail;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlToolbar;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlOptionsBar;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardSuggestions;
     // End of variables declaration//GEN-END:variables
 }

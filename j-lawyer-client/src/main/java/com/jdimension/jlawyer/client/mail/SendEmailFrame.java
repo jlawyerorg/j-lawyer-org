@@ -754,11 +754,6 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.DataLine;
-import javax.sound.sampled.Mixer;
-import javax.sound.sampled.TargetDataLine;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -819,7 +814,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
     private String cloudLink = null;
 
     // transcription
-    private TargetDataLine targetDataLine;
+    private AudioUtils.MicrophoneLine targetDataLine;
     private ByteArrayOutputStream byteArrayOutputStream;
 
     private boolean ignoreTemplateSelectionEvent = false;
@@ -896,7 +891,16 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
 
         this.quickDateSelectionPanel.setTarget(this.txtReviewDateField);
 
-        ComponentUtils.decorateSplitPane(jSplitPane1);
+        // design kit: page background and cards (see DialogStyle), a transparent gap between the
+        // message and its options, the send action as primary button
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.styleSplitPane(jSplitPane1);
+        this.jToolBar1.setOpaque(false);
+        this.jToolBar1.setBorder(javax.swing.BorderFactory.createEmptyBorder());
+        com.jdimension.jlawyer.client.ui.theme.DialogStyle.stylePrimary(this.cmdSend, "Senden");
+        com.jdimension.jlawyer.client.ui.theme.EditorStyle.transparentInsideCards(this.getContentPane());
+        this.quickDateSelectionPanel.setOpaque(false);
+        this.pnlParties.setOpaque(false);
+        com.jdimension.jlawyer.client.ui.theme.DialogStyle.apply(this);
 
         this.pnlParties.initialize(new ArrayList<>());
         this.pnlParties.setListener(this);
@@ -1860,32 +1864,10 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         return null; // Thunderbird wurde nicht gefunden
     }
 
-    private void startRecording() {
+    private boolean startRecording() {
         try {
-            AudioFormat audioFormat = AudioUtils.getAudioFormat();
-
-            // Get selected mixer device name from dropdown
             String selectedDeviceName = (String) this.cmbDevices.getSelectedItem();
-
-            Mixer.Info[] mixerInfos = AudioSystem.getMixerInfo();
-            Mixer.Info selectedMixerInfo = null;
-            for (Mixer.Info mixerInfo : mixerInfos) {
-                if (mixerInfo.getName().equals(selectedDeviceName)) {
-                    selectedMixerInfo = mixerInfo;
-                    break;
-                }
-            }
-
-            if (selectedMixerInfo == null) {
-                log.error("Selected mixer device not found.");
-                return;
-            }
-
-            Mixer mixer = AudioSystem.getMixer(selectedMixerInfo);
-
-            DataLine.Info dataLineInfo = new DataLine.Info(TargetDataLine.class, audioFormat);
-            targetDataLine = (TargetDataLine) mixer.getLine(dataLineInfo);
-            targetDataLine.open(audioFormat);
+            targetDataLine = AudioUtils.openMicrophone(selectedDeviceName);
             targetDataLine.start();
 
             byteArrayOutputStream = new ByteArrayOutputStream();
@@ -1913,9 +1895,11 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                     ThreadUtils.showErrorDialog(this, "Aufnahmefehler: " + e.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
                 }
             }).start();
+            return true;
         } catch (Exception ex) {
             log.error("Unable to start recording microphone audio stream", ex);
             JOptionPane.showMessageDialog(this, "Aufnahme konnte nicht gestartet werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            return false;
         }
     }
 
@@ -2107,7 +2091,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         mnuRemoveAttachment = new javax.swing.JMenuItem();
         popAssistant = new javax.swing.JPopupMenu();
         jSplitPane1 = new javax.swing.JSplitPane();
-        jPanel3 = new javax.swing.JPanel();
+        jPanel3 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jLabel2 = new javax.swing.JLabel();
         cmdRecipientsCc = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
@@ -2139,7 +2123,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         cmbDevices = new javax.swing.JComboBox<>();
         cmbPriority = new javax.swing.JComboBox<>();
         jPanel6 = new javax.swing.JPanel();
-        jPanel2 = new javax.swing.JPanel();
+        jPanel2 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         text = new javax.swing.JRadioButton();
         html = new javax.swing.JRadioButton();
         chkReadReceipt = new javax.swing.JCheckBox();
@@ -2149,7 +2133,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         chkDocumentTagging = new javax.swing.JCheckBox();
         cmbDocumentTag = new javax.swing.JComboBox<>();
         chkDeliveryReceipt = new javax.swing.JCheckBox();
-        jPanel4 = new javax.swing.JPanel();
+        jPanel4 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         cmbReviewReason = new javax.swing.JComboBox();
         jLabel12 = new javax.swing.JLabel();
         jLabel10 = new javax.swing.JLabel();
@@ -2161,7 +2145,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         radioReviewTypeNone = new javax.swing.JRadioButton();
         quickDateSelectionPanel = new com.jdimension.jlawyer.client.components.QuickDateSelectionPanel();
         calendarSelectionButton1 = new com.jdimension.jlawyer.client.calendar.CalendarSelectionButton();
-        jPanel1 = new javax.swing.JPanel();
+        jPanel1 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jLabel4 = new javax.swing.JLabel();
         cmbTemplates = new javax.swing.JComboBox();
         pnlParties = new com.jdimension.jlawyer.client.editors.files.PartiesPanel();
@@ -2401,6 +2385,8 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         cmbPriority.setToolTipText("Sendungspriorität");
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
+        jPanel3.setTitle("Nachricht");
+
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -2489,7 +2475,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
 
         jSplitPane1.setLeftComponent(jPanel3);
 
-        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Optionen"));
+        jPanel2.setTitle("Optionen");
 
         buttonGroupTextHtml.add(text);
         text.setSelected(true);
@@ -2594,7 +2580,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                 .addContainerGap())
         );
 
-        jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder("Wiedervorlage / Frist"));
+        jPanel4.setTitle("Wiedervorlage / Frist");
 
         cmbReviewReason.setEditable(true);
         cmbReviewReason.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
@@ -2712,7 +2698,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                 .addComponent(quickDateSelectionPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Vorlagedaten"));
+        jPanel1.setTitle("Vorlagedaten");
 
         jLabel4.setText("Vorlage:");
 
@@ -2865,7 +2851,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
     }//GEN-LAST:event_lstAttachmentsMousePressed
 
     private void lstAttachmentsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstAttachmentsMouseClicked
-        if (evt.getClickCount() == 2) {
+        if (evt.getClickCount() == 2 && evt.getButton() == MouseEvent.BUTTON1) {
             int idx = lstAttachments.getSelectedIndex();
             if (idx >= 0) {
                 if (this.attachments.size() > idx) {
@@ -3332,7 +3318,9 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
 
     private void cmdTranscribeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdTranscribeActionPerformed
         if (!isRecording) {
-            startRecording();
+            if (!startRecording()) {
+                return;
+            }
             ClientSettings.getInstance().setConfiguration(ClientSettings.CONF_SOUND_LASTRECORDINGDEVICE, (String) this.cmbDevices.getSelectedItem());
         } else {
             stopRecording();
@@ -3630,7 +3618,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                 
                 if (tpl.isText()) {
                     if (ms != null) {
-                        String t = TemplatesUtil.replacePlaceHolders(tpl.getBody(), htValues);
+                        String t = TemplatesUtil.replacePlaceHoldersInText(tpl.getBody(), htValues);
                         int cursorIndex = t.indexOf(EmailTemplate.PLACEHOLDER_CURSOR);
                         if (cursorIndex > -1) {
                             t = t.replace(EmailTemplate.PLACEHOLDER_CURSOR, "");
@@ -3841,10 +3829,10 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel2;
-    private javax.swing.JPanel jPanel3;
-    private javax.swing.JPanel jPanel4;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel1;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel2;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel3;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel jPanel4;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanel6;
     private javax.swing.JScrollPane jScrollPane2;
@@ -3911,13 +3899,9 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                 }
 
             } else {
-                int index = currentTo.indexOf(this.email);
-                if (index > -1) {
-                    currentTo = currentTo.substring(0, index - 1) + currentTo.substring(index + this.email.length(), currentTo.length());
-                    if (currentTo.endsWith(",")) {
-                        // cut off comma
-                        currentTo = currentTo.substring(0, currentTo.length() - 1);
-                    }
+                String remaining = EmailUtils.removeRecipient(currentTo, this.email);
+                if (!remaining.equals(currentTo)) {
+                    currentTo = remaining;
                     this.to.setText(currentTo);
                 }
             }

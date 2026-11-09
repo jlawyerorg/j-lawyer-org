@@ -2087,7 +2087,8 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
     }//GEN-LAST:event_lstAttachmentsMouseReleased
 
     private void lstAttachmentsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstAttachmentsMouseClicked
-        if (evt.getClickCount() == 2 && this.lstAttachments.getSelectedValue() != null) {
+        // on macOS, Control+click opens the context menu - it must not open the attachment
+        if (evt.getClickCount() == 2 && evt.getButton() == MouseEvent.BUTTON1 && !(SystemUtils.isMacOs() && evt.isControlDown()) && this.lstAttachments.getSelectedValue() != null) {
             try {
                 byte[] data = null;
                 if (this.emlMsgContainer != null && this.emlMsgContainer.isServerBased()) {
@@ -2684,8 +2685,13 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
         SendEmailFrame dlg = null;
         if (this.emlMsgContainer != null) {
-            Message m = emlMsgContainer.getMessage();
-            dlg = EmailUtils.reply(m, prependText, this.getBody(), this.getContentType());
+            if (this.emlMsgContainer.isServerBased()) {
+                // server based mailboxes (e.g. the inbox) carry a DTO - getMessage() is null there
+                dlg = EmailUtils.reply(this.emlMsgContainer.getMessageDTO(), this.emlMsgContainer.getMailboxId(), prependText, this.getBody(), this.getContentType());
+            } else {
+                Message m = emlMsgContainer.getMessage();
+                dlg = EmailUtils.reply(m, prependText, this.getBody(), this.getContentType());
+            }
         } else {
             dlg = EmailUtils.reply(this.outlookMsgContainer, prependText, this.getBody(), this.getContentType());
         }

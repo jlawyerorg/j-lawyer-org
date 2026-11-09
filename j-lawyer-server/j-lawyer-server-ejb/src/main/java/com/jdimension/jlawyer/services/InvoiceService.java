@@ -1131,7 +1131,16 @@ public class InvoiceService implements InvoiceServiceRemote, InvoiceServiceLocal
     @Override
     @RolesAllowed({"loginRole"})
     public List<InvoiceStatusSummary> getInvoicesSummaryByStatus(int... status) throws Exception {
-        return this.invoices.findSummaryByStatus(status);
+        // only count invoices of cases the caller is allowed to see - filtered by the caller's groups
+        String principalId = context.getCallerPrincipal().getName();
+        List<String> groupIds;
+        try {
+            groupIds = SecurityUtils.getGroupIdsForUser(principalId, this.securityFacade);
+        } catch (Exception ex) {
+            log.error("Unable to determine groups for user " + principalId, ex);
+            throw new Exception("Gruppen für Nutzer '" + principalId + "' konnten nicht ermittelt werden.", ex);
+        }
+        return this.invoices.findSummaryByStatus(groupIds, status);
     }
 
     private void publishOutgoingMailRequest(OutgoingMailRequest req) {

@@ -663,7 +663,6 @@
  */
 package com.jdimension.jlawyer.client.editors.documents;
 
-import themes.colors.DefaultColorTheme;
 
 /**
  * Sidebar entry offering to create a new case from the currently selected scan. It mirrors
@@ -671,7 +670,7 @@ import themes.colors.DefaultColorTheme;
  * (com.jdimension.jlawyer.client.mail.sidebar.CreateNewCasePanel) so that both inboxes
  * behave the same way.
  */
-public class CreateNewCaseFromScanPanel extends javax.swing.JPanel {
+public class CreateNewCaseFromScanPanel extends com.jdimension.jlawyer.client.ui.theme.EntryRowPanel {
 
     private final ScannerPanel panelParent;
 
@@ -684,7 +683,10 @@ public class CreateNewCaseFromScanPanel extends javax.swing.JPanel {
         initComponents();
         this.panelParent = parent;
 
-        setBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
+        // design kit: a light entry with a green bar, the action as primary button
+        this.setAccent(ACCENT_DONE);
+        this.lblNewCase.setForeground(com.jdimension.jlawyer.client.ui.theme.UiColors.TEXT_DARK);
+        com.jdimension.jlawyer.client.ui.theme.DialogStyle.stylePrimary(this.cmdNewCase, "Anlegen");
     }
 
     /**

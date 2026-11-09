@@ -750,7 +750,8 @@ public class ClaimLedgerDialog extends javax.swing.JDialog implements EventConsu
         ComponentUtils.restoreDialogSize(this);
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
 
-        this.lblHeader.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
+        // design kit: navy header like the glass headers of the editors
+        com.jdimension.jlawyer.client.ui.theme.DialogStyle.styleHeader(this.lblHeader);
 
         this.dateTo = new Date();
         this.txtDateTo.setText(df.format(this.dateTo));
