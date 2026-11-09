@@ -935,7 +935,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                 }
 
                 eebOwnSafeId = ownSafeId;
-                lblEebInfo.setText("Es wurde ein elektronisches Empfangsbekenntnis angefordert.");
+                lblEebInfo.setText("Es wurde ein eEb angefordert.");
                 lblEebInfo.setToolTipText(null);
                 cmdEebConfirm.setEnabled(true);
                 cmdEebReject.setEnabled(true);
@@ -1328,7 +1328,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
         lblEebInfo.setForeground(new java.awt.Color(0, 0, 0));
         lblEebInfo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/lassists.png"))); // NOI18N
-        lblEebInfo.setText("Es wurde ein elektronisches Empfangsbekenntnis angefordert.");
+        lblEebInfo.setText("Es wurde ein eEb angefordert.");
 
         cmdEebConfirm.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
         cmdEebConfirm.setText("eEB abgeben");
