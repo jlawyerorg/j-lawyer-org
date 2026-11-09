@@ -612,12 +612,45 @@ public class ToolRegistry {
 
         // Web tools (read-only, RISK_LOW)
         TOOLS.add(new ToolDefinition("web_search",
-                "Führt eine Websuche durch und gibt eine Liste von Ergebnissen zurück (Titel, URL, Textausschnitt). Nützlich für aktuelle Informationen, Rechtsprechung, oder Fakten die nicht in den Akten enthalten sind.",
+                "Führt eine Websuche durch und gibt eine Liste von Ergebnissen zurück (Titel, URL, Textausschnitt). Nützlich für aktuelle Informationen oder Fakten, die nicht in den Akten enthalten sind. Für Gesetzestexte und Rechtsprechung zuerst get_law_norm, search_case_law und search_legislation verwenden; weitere Instanzrechtsprechung findet sich z. B. mit dem Zusatz site:openjur.de.",
                 Arrays.asList(new ToolParameter("query", "string", "Suchbegriff für die Websuche", true))));
 
         TOOLS.add(new ToolDefinition("fetch_url",
                 "Lädt den Textinhalt einer Webseite herunter. Gibt den extrahierten Text ohne HTML-Tags zurück. Nützlich um Details einer Webseite zu lesen, die z.B. aus einer Websuche stammt.",
                 Arrays.asList(new ToolParameter("url", "string", "Die URL der Webseite", true))));
+
+        // Legal research tools (read-only, RISK_LOW) - public legal information sources
+        TOOLS.add(new ToolDefinition("get_law_norm",
+                "Liefert den aktuellen amtlichen Wortlaut einer Vorschrift des Bundesrechts von gesetze-im-internet.de, mit Überschrift, Fußnoten und Quell-URL. Schnellster Weg, wenn die Norm bekannt ist (keine Suche nötig). Nicht für Landesrecht oder EU-Recht.",
+                Arrays.asList(
+                        new ToolParameter("citation", "string", "Normangabe, z. B. \"§ 573c BGB\", \"Art. 3 GG\", \"§ 5 SGB V\" oder \"Art. 229 § 6 EGBGB\"", false),
+                        new ToolParameter("law", "string", "Alternativ zu citation: Gesetzesabkürzung (z. B. BGB) oder Kennung auf gesetze-im-internet.de (z. B. ao_1977)", false),
+                        new ToolParameter("section", "string", "Alternativ zu citation: Paragraph bzw. Artikel (z. B. 573c oder Art. 3)", false))));
+
+        TOOLS.add(new ToolDefinition("search_case_law",
+                "Sucht Gerichtsentscheidungen in öffentlichen Quellen: Bundesgerichte über das Rechtsinformationsportal des Bundes (rechtsinformationen.bund.de) sowie Entscheidungen aller Instanzen über Open Legal Data. Liefert je Treffer Zitierangabe, Gericht, Datum, Aktenzeichen (soweit verfügbar), Fundstellen-Ausschnitte, source, id und URL. Den Text liest man danach gezielt mit get_court_decision. Mit einem Aktenzeichen oder einer ECLI als query wird gezielt danach gesucht. Keine Mandantennamen oder personenbezogenen Daten in die Suche übernehmen. Zitiere nur Entscheidungen, die ein Tool tatsächlich geliefert hat.",
+                Arrays.asList(
+                        new ToolParameter("query", "string", "Suchbegriffe (z. B. \"Mietminderung Schimmel\"), Aktenzeichen (z. B. \"VIII ZR 198/15\") oder ECLI", true),
+                        new ToolParameter("court", "string", "Gerichtskürzel als Filter, z. B. BGH, BAG, BVerfG, BSG, BFH, BVerwG (optional)", false),
+                        new ToolParameter("fromDate", "string", "Entscheidungsdatum ab, yyyy-MM-dd (optional)", false),
+                        new ToolParameter("toDate", "string", "Entscheidungsdatum bis, yyyy-MM-dd (optional)", false),
+                        new ToolParameter("source", "string", "all (Standard), federal (nur Bundesgerichte) oder oldp (nur Open Legal Data, inkl. AG/LG/OLG)", false),
+                        new ToolParameter("page", "integer", "Seitennummer (1-basiert, Standard: 1, 10 Treffer je Quelle)", false))));
+
+        TOOLS.add(new ToolDefinition("get_court_decision",
+                "Lädt eine Gerichtsentscheidung aus search_case_law (source + id) oder direkt per Aktenzeichen. Ohne section kommt eine Übersicht: Titel, Normen, Vorinstanzen, Leitsatz und Tenor sowie die verfügbaren Abschnitte. Mit section wird der Abschnitt mit Randnummern geliefert (max. 12000 Zeichen je Aufruf, mit nextOffset weiterblättern).",
+                Arrays.asList(
+                        new ToolParameter("source", "string", "neuris oder oldp (aus search_case_law)", false),
+                        new ToolParameter("id", "string", "ID der Entscheidung (aus search_case_law)", false),
+                        new ToolParameter("fileNumber", "string", "Alternativ: Aktenzeichen, z. B. \"VIII ZR 198/15\"", false),
+                        new ToolParameter("section", "string", "Abschnitt: leitsatz, tenor, tatbestand, gruende oder all (optional)", false),
+                        new ToolParameter("offset", "integer", "Zeichenposition zum Weiterlesen (nextOffset des vorherigen Aufrufs, optional)", false))));
+
+        TOOLS.add(new ToolDefinition("search_legislation",
+                "Sucht Bundesgesetze und -verordnungen im Rechtsinformationsportal des Bundes nach Stichworten. Liefert Name, Abkürzung, Inkraft-Status, Fundstelle und die Vorschriften, in denen die Suchbegriffe vorkommen. Nützlich, um die einschlägige Norm oder die richtige Gesetzesabkürzung für get_law_norm zu finden.",
+                Arrays.asList(
+                        new ToolParameter("query", "string", "Suchbegriffe, z. B. \"Entziehung Wohnungseigentum\"", true),
+                        new ToolParameter("page", "integer", "Seitennummer (1-basiert, Standard: 1)", false))));
 
         TOOLS.add(new ToolDefinition("search_instant_messages",
                 "Sucht Sofortnachrichten/Verfügungen. Mindestens caseId, documentId oder fromDate muss angegeben werden. Nachrichten mit Dokumentbezug enthalten documentId und documentName. Ergebnisse auf 100 begrenzt.",
@@ -852,6 +885,14 @@ public class ToolRegistry {
                     return executeWebSearch(args);
                 case "fetch_url":
                     return executeFetchUrl(args);
+                case "get_law_norm":
+                    return LegalResearchToolSupport.executeGetLawNorm(args);
+                case "search_case_law":
+                    return LegalResearchToolSupport.executeSearchCaseLaw(args);
+                case "get_court_decision":
+                    return LegalResearchToolSupport.executeGetCourtDecision(args);
+                case "search_legislation":
+                    return LegalResearchToolSupport.executeSearchLegislation(args);
                 case "search_instant_messages":
                     return executeSearchInstantMessages(args);
                 case "list_form_types":
@@ -1090,6 +1131,15 @@ public class ToolRegistry {
                     return "Websuche: '" + args.getOrDefault("query", "") + "'";
                 case "fetch_url":
                     return "Webseite laden: " + args.getOrDefault("url", "");
+                case "get_law_norm":
+                    return "Normtext laden: " + (args.containsKey("citation") ? args.get("citation") : args.getOrDefault("section", "") + " " + args.getOrDefault("law", ""));
+                case "search_case_law":
+                    return "Rechtsprechung suchen: '" + args.getOrDefault("query", "") + "'" + (args.containsKey("court") ? " (" + args.get("court") + ")" : "");
+                case "get_court_decision":
+                    return "Entscheidung laden: " + (args.containsKey("fileNumber") ? args.get("fileNumber") : args.getOrDefault("id", ""))
+                            + (args.containsKey("section") ? " (" + args.get("section") + ")" : "");
+                case "search_legislation":
+                    return "Gesetze suchen: '" + args.getOrDefault("query", "") + "'";
                 case "search_instant_messages":
                     return "Sofortnachrichten suchen" + (args.containsKey("caseId") ? " (Akte: " + args.get("caseId") + ")" : "") + (args.containsKey("sender") ? " (Absender: " + args.get("sender") + ")" : "");
                 case "list_form_types":
