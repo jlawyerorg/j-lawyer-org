@@ -13,7 +13,11 @@ export interface ProfileGroup {
 
 /** The editable per-user settings (RestfulProfileSettingsV8), shared with the desktop client. */
 export interface ProfileSettings {
-  notifyCalendarEntry: boolean;
+  /** @deprecated read-only legacy flag (true if any type-specific flag is set); ignored by the server on update. */
+  notifyCalendarEntry?: boolean;
+  notifyCalendarEntryFollowUp: boolean;
+  notifyCalendarEntryRespite: boolean;
+  notifyCalendarEntryEvent: boolean;
   notifyCalendarEntryAuthored: boolean;
   notifyCalendarEntryReminder: boolean;
   notifyInstantMessageMention: boolean;

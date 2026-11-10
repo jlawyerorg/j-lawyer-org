@@ -676,7 +676,9 @@
     "notify": {
       "imMention": "ich in einer Sofortnachricht erwähnt wurde",
       "imMentionDone": "eine von mir gesendete Sofortnachricht als erledigt markiert wurde",
-      "calendarEntry": "ein Kalendereintrag für mich erstellt oder geändert wurde",
+      "calendarEntryFollowUp": "eine Wiedervorlage für mich erstellt oder geändert wurde",
+      "calendarEntryRespite": "eine Frist für mich erstellt oder geändert wurde",
+      "calendarEntryEvent": "ein Termin für mich erstellt oder geändert wurde",
       "calendarEntryAuthored": "ein von mir erstellter Kalendereintrag durch andere verändert / erledigt wurde",
       "calendarEntryReminder": "einer meiner Termine in Kürze beginnt",
       "invoiceDue": "eine Rechnung in einer meiner Akten fällig ist",

@@ -225,7 +225,9 @@
                           <Component id="lblEmail" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="jLabel4" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="chkEventInstantMessage" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="chkEventCalendarEntry" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="chkEventCalendarEntryFollowUp" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="chkEventCalendarEntryRespite" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="chkEventCalendarEntryEvent" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="chkEventCalendarEntryReminder" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="chkEventInvoiceDue" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="jLabel5" alignment="0" min="-2" max="-2" attributes="0"/>
@@ -250,7 +252,11 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="chkEventInstantMessageDone" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="chkEventCalendarEntry" min="-2" max="-2" attributes="0"/>
+                      <Component id="chkEventCalendarEntryFollowUp" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="chkEventCalendarEntryRespite" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="chkEventCalendarEntryEvent" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="chkEventCalendarEdited" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
@@ -284,9 +290,19 @@
                 <Property name="text" type="java.lang.String" value="ich in einer Sofortnachricht erw&#xe4;hnt wurde"/>
               </Properties>
             </Component>
-            <Component class="javax.swing.JCheckBox" name="chkEventCalendarEntry">
+            <Component class="javax.swing.JCheckBox" name="chkEventCalendarEntryFollowUp">
               <Properties>
-                <Property name="text" type="java.lang.String" value="ein Kalendereintrag f&#xfc;r mich erstellt oder ge&#xe4;ndert wurde"/>
+                <Property name="text" type="java.lang.String" value="eine Wiedervorlage f&#xfc;r mich erstellt oder ge&#xe4;ndert wurde"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="chkEventCalendarEntryRespite">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="eine Frist f&#xfc;r mich erstellt oder ge&#xe4;ndert wurde"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="chkEventCalendarEntryEvent">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="ein Termin f&#xfc;r mich erstellt oder ge&#xe4;ndert wurde"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JCheckBox" name="chkEventCalendarEntryReminder">

@@ -30,7 +30,18 @@ import java.util.List;
 public class RestfulProfileSettingsV8 {
 
     // Benachrichtigungen (notifications)
+    /**
+     * Legacy, type-independent flag. Read-only: true if any of the type-specific calendar entry
+     * notifications is enabled; ignored on update - use the type-specific flags instead.
+     */
+    @Deprecated
     private boolean notifyCalendarEntry = true;
+    /** Notify when a follow-up (Wiedervorlage) is created or changed for the user. */
+    private boolean notifyCalendarEntryFollowUp = true;
+    /** Notify when a deadline (Frist) is created or changed for the user. */
+    private boolean notifyCalendarEntryRespite = true;
+    /** Notify when an appointment (Termin) is created or changed for the user. */
+    private boolean notifyCalendarEntryEvent = true;
     private boolean notifyCalendarEntryAuthored = false;
     private boolean notifyCalendarEntryReminder = true;
     private boolean notifyInstantMessageMention = true;
@@ -51,12 +62,45 @@ public class RestfulProfileSettingsV8 {
     public RestfulProfileSettingsV8() {
     }
 
+    /**
+     * @deprecated use the type-specific flags {@link #isNotifyCalendarEntryFollowUp()},
+     * {@link #isNotifyCalendarEntryRespite()} and {@link #isNotifyCalendarEntryEvent()}
+     */
+    @Deprecated
     public boolean isNotifyCalendarEntry() {
         return notifyCalendarEntry;
     }
 
+    /**
+     * @deprecated ignored on update, use the type-specific flags
+     */
+    @Deprecated
     public void setNotifyCalendarEntry(boolean notifyCalendarEntry) {
         this.notifyCalendarEntry = notifyCalendarEntry;
+    }
+
+    public boolean isNotifyCalendarEntryFollowUp() {
+        return notifyCalendarEntryFollowUp;
+    }
+
+    public void setNotifyCalendarEntryFollowUp(boolean notifyCalendarEntryFollowUp) {
+        this.notifyCalendarEntryFollowUp = notifyCalendarEntryFollowUp;
+    }
+
+    public boolean isNotifyCalendarEntryRespite() {
+        return notifyCalendarEntryRespite;
+    }
+
+    public void setNotifyCalendarEntryRespite(boolean notifyCalendarEntryRespite) {
+        this.notifyCalendarEntryRespite = notifyCalendarEntryRespite;
+    }
+
+    public boolean isNotifyCalendarEntryEvent() {
+        return notifyCalendarEntryEvent;
+    }
+
+    public void setNotifyCalendarEntryEvent(boolean notifyCalendarEntryEvent) {
+        this.notifyCalendarEntryEvent = notifyCalendarEntryEvent;
     }
 
     public boolean isNotifyCalendarEntryAuthored() {

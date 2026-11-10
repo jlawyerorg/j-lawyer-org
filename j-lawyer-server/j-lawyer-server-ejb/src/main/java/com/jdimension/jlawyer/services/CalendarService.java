@@ -910,7 +910,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
             if (!(review.getAssignee().equals(context.getCallerPrincipal().getName()))) {
                 AppUserBean assignee = this.userBeanFacade.find(review.getAssignee());
                 if (assignee != null) {
-                    boolean notificationEnabled = assignee.getSettingAsBoolean(UserSettingsKeys.NOTIFICATION_EVENT_CALENDARENTRY, true);
+                    boolean notificationEnabled = this.isAssigneeNotificationEnabled(assignee, review.getEventType());
                     if (notificationEnabled && assignee.getEmail() != null) {
                         OutgoingMailRequest omr = new OutgoingMailRequest();
                         omr.setTo(assignee.getEmail());
@@ -1389,13 +1389,31 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         return this.archiveFileReviewsFacade.find(review.getId());
     }
 
+    /**
+     * Determines whether the assignee wants to be notified about a new / changed calendar entry of the given type.
+     * Falls back to the legacy, type-independent setting if the type-specific setting has never been saved.
+     */
+    private boolean isAssigneeNotificationEnabled(AppUserBean assignee, int eventType) {
+        boolean legacy = assignee.getSettingAsBoolean(UserSettingsKeys.NOTIFICATION_EVENT_CALENDARENTRY, true);
+        switch (eventType) {
+            case EventTypes.EVENTTYPE_FOLLOWUP:
+                return assignee.getSettingAsBoolean(UserSettingsKeys.NOTIFICATION_EVENT_CALENDARENTRY_FOLLOWUP, legacy);
+            case EventTypes.EVENTTYPE_RESPITE:
+                return assignee.getSettingAsBoolean(UserSettingsKeys.NOTIFICATION_EVENT_CALENDARENTRY_RESPITE, legacy);
+            case EventTypes.EVENTTYPE_EVENT:
+                return assignee.getSettingAsBoolean(UserSettingsKeys.NOTIFICATION_EVENT_CALENDARENTRY_EVENT, legacy);
+            default:
+                return legacy;
+        }
+    }
+
     private void publishUpdatedEventMail(ArchiveFileReviewsBean review, ArchiveFileBean aFile) {
         if (!ServerStringUtils.isEmpty(review.getAssignee())) {
             // only send notifications if ANOTHER person entered the review
             if (!(review.getAssignee().equals(context.getCallerPrincipal().getName()))) {
                 AppUserBean assignee = this.userBeanFacade.find(review.getAssignee());
                 if (assignee != null) {
-                    boolean notificationEnabled = assignee.getSettingAsBoolean(UserSettingsKeys.NOTIFICATION_EVENT_CALENDARENTRY, true);
+                    boolean notificationEnabled = this.isAssigneeNotificationEnabled(assignee, review.getEventType());
                     if (notificationEnabled && assignee.getEmail() != null) {
                         OutgoingMailRequest omr = new OutgoingMailRequest();
                         omr.setTo(assignee.getEmail());

@@ -392,7 +392,12 @@ public class ProfileEndpointV8 implements ProfileEndpointLocalV8 {
     /** Maps the stored settings blob to the DTO, using the same keys and defaults as the desktop. */
     private RestfulProfileSettingsV8 toSettings(Properties props) {
         RestfulProfileSettingsV8 s = new RestfulProfileSettingsV8();
-        s.setNotifyCalendarEntry(readBool(props, UserSettingsKeys.NOTIFICATION_EVENT_CALENDARENTRY, true));
+        // type-specific calendar entry notifications default to the legacy, type-independent setting
+        boolean calendarEntryLegacy = readBool(props, UserSettingsKeys.NOTIFICATION_EVENT_CALENDARENTRY, true);
+        s.setNotifyCalendarEntryFollowUp(readBool(props, UserSettingsKeys.NOTIFICATION_EVENT_CALENDARENTRY_FOLLOWUP, calendarEntryLegacy));
+        s.setNotifyCalendarEntryRespite(readBool(props, UserSettingsKeys.NOTIFICATION_EVENT_CALENDARENTRY_RESPITE, calendarEntryLegacy));
+        s.setNotifyCalendarEntryEvent(readBool(props, UserSettingsKeys.NOTIFICATION_EVENT_CALENDARENTRY_EVENT, calendarEntryLegacy));
+        s.setNotifyCalendarEntry(s.isNotifyCalendarEntryFollowUp() || s.isNotifyCalendarEntryRespite() || s.isNotifyCalendarEntryEvent());
         s.setNotifyCalendarEntryAuthored(readBool(props, UserSettingsKeys.NOTIFICATION_EVENT_CALENDARENTRY_AUTHORED, false));
         s.setNotifyCalendarEntryReminder(readBool(props, UserSettingsKeys.NOTIFICATION_EVENT_CALENDARENTRY_REMINDER, true));
         s.setNotifyInstantMessageMention(readBool(props, UserSettingsKeys.NOTIFICATION_EVENT_INSTANTMESSAGEMENTION, true));
@@ -408,7 +413,10 @@ public class ProfileEndpointV8 implements ProfileEndpointLocalV8 {
 
     /** Writes the DTO onto the settings blob, matching the desktop's storage format. */
     private void applySettings(Properties props, RestfulProfileSettingsV8 s) {
-        props.setProperty(UserSettingsKeys.NOTIFICATION_EVENT_CALENDARENTRY, Boolean.toString(s.isNotifyCalendarEntry()));
+        // the legacy notifyCalendarEntry flag is ignored, only the type-specific settings are written
+        props.setProperty(UserSettingsKeys.NOTIFICATION_EVENT_CALENDARENTRY_FOLLOWUP, Boolean.toString(s.isNotifyCalendarEntryFollowUp()));
+        props.setProperty(UserSettingsKeys.NOTIFICATION_EVENT_CALENDARENTRY_RESPITE, Boolean.toString(s.isNotifyCalendarEntryRespite()));
+        props.setProperty(UserSettingsKeys.NOTIFICATION_EVENT_CALENDARENTRY_EVENT, Boolean.toString(s.isNotifyCalendarEntryEvent()));
         props.setProperty(UserSettingsKeys.NOTIFICATION_EVENT_CALENDARENTRY_AUTHORED, Boolean.toString(s.isNotifyCalendarEntryAuthored()));
         props.setProperty(UserSettingsKeys.NOTIFICATION_EVENT_CALENDARENTRY_REMINDER, Boolean.toString(s.isNotifyCalendarEntryReminder()));
         props.setProperty(UserSettingsKeys.NOTIFICATION_EVENT_INSTANTMESSAGEMENTION, Boolean.toString(s.isNotifyInstantMessageMention()));

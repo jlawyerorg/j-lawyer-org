@@ -895,7 +895,11 @@ public class UserProfileDialog extends javax.swing.JDialog {
         }
         
         UserSettings uset=UserSettings.getInstance();
-        this.chkEventCalendarEntry.setSelected(uset.getSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_CALENDARENTRY, true));
+        // type-specific settings default to the legacy, type-independent setting
+        boolean calendarEntryLegacy = uset.getSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_CALENDARENTRY, true);
+        this.chkEventCalendarEntryFollowUp.setSelected(uset.getSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_CALENDARENTRY_FOLLOWUP, calendarEntryLegacy));
+        this.chkEventCalendarEntryRespite.setSelected(uset.getSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_CALENDARENTRY_RESPITE, calendarEntryLegacy));
+        this.chkEventCalendarEntryEvent.setSelected(uset.getSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_CALENDARENTRY_EVENT, calendarEntryLegacy));
         this.chkEventCalendarEdited.setSelected(uset.getSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_CALENDARENTRY_AUTHORED, false));
         this.chkEventCalendarEntryReminder.setSelected(uset.getSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_CALENDARENTRY_REMINDER, true));
         this.chkEventInstantMessage.setSelected(uset.getSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_INSTANTMESSAGEMENTION, true));
@@ -1072,7 +1076,9 @@ public class UserProfileDialog extends javax.swing.JDialog {
         lblEmail = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
         chkEventInstantMessage = new javax.swing.JCheckBox();
-        chkEventCalendarEntry = new javax.swing.JCheckBox();
+        chkEventCalendarEntryFollowUp = new javax.swing.JCheckBox();
+        chkEventCalendarEntryRespite = new javax.swing.JCheckBox();
+        chkEventCalendarEntryEvent = new javax.swing.JCheckBox();
         chkEventCalendarEntryReminder = new javax.swing.JCheckBox();
         chkEventInvoiceDue = new javax.swing.JCheckBox();
         jLabel5 = new javax.swing.JLabel();
@@ -1191,7 +1197,11 @@ public class UserProfileDialog extends javax.swing.JDialog {
 
         chkEventInstantMessage.setText("ich in einer Sofortnachricht erwähnt wurde");
 
-        chkEventCalendarEntry.setText("ein Kalendereintrag für mich erstellt oder geändert wurde");
+        chkEventCalendarEntryFollowUp.setText("eine Wiedervorlage für mich erstellt oder geändert wurde");
+
+        chkEventCalendarEntryRespite.setText("eine Frist für mich erstellt oder geändert wurde");
+
+        chkEventCalendarEntryEvent.setText("ein Termin für mich erstellt oder geändert wurde");
 
         chkEventCalendarEntryReminder.setText("einer meiner Termine in Kürze beginnt");
         chkEventCalendarEntryReminder.setEnabled(false);
@@ -1220,7 +1230,9 @@ public class UserProfileDialog extends javax.swing.JDialog {
                     .addComponent(lblEmail)
                     .addComponent(jLabel4)
                     .addComponent(chkEventInstantMessage)
-                    .addComponent(chkEventCalendarEntry)
+                    .addComponent(chkEventCalendarEntryFollowUp)
+                    .addComponent(chkEventCalendarEntryRespite)
+                    .addComponent(chkEventCalendarEntryEvent)
                     .addComponent(chkEventCalendarEntryReminder)
                     .addComponent(chkEventInvoiceDue)
                     .addComponent(jLabel5)
@@ -1242,7 +1254,11 @@ public class UserProfileDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(chkEventInstantMessageDone)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(chkEventCalendarEntry)
+                .addComponent(chkEventCalendarEntryFollowUp)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(chkEventCalendarEntryRespite)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(chkEventCalendarEntryEvent)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(chkEventCalendarEdited)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1470,7 +1486,9 @@ public class UserProfileDialog extends javax.swing.JDialog {
         String avatar = this.names[this.cmbAvatar.getSelectedIndex()].toString();
         settings.setSetting(UserSettings.USER_AVATAR, avatar);
         
-        settings.setSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_CALENDARENTRY, this.chkEventCalendarEntry.isSelected());
+        settings.setSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_CALENDARENTRY_FOLLOWUP, this.chkEventCalendarEntryFollowUp.isSelected());
+        settings.setSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_CALENDARENTRY_RESPITE, this.chkEventCalendarEntryRespite.isSelected());
+        settings.setSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_CALENDARENTRY_EVENT, this.chkEventCalendarEntryEvent.isSelected());
         settings.setSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_CALENDARENTRY_AUTHORED, this.chkEventCalendarEdited.isSelected());
         settings.setSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_CALENDARENTRY_REMINDER, this.chkEventCalendarEntryReminder.isSelected());
         settings.setSettingAsBoolean(UserSettings.NOTIFICATION_EVENT_INSTANTMESSAGEMENTION, this.chkEventInstantMessage.isSelected());
@@ -1625,8 +1643,10 @@ public class UserProfileDialog extends javax.swing.JDialog {
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox chkEventCalendarEdited;
-    private javax.swing.JCheckBox chkEventCalendarEntry;
+    private javax.swing.JCheckBox chkEventCalendarEntryEvent;
+    private javax.swing.JCheckBox chkEventCalendarEntryFollowUp;
     private javax.swing.JCheckBox chkEventCalendarEntryReminder;
+    private javax.swing.JCheckBox chkEventCalendarEntryRespite;
     private javax.swing.JCheckBox chkEventInstantMessage;
     private javax.swing.JCheckBox chkEventInstantMessageDone;
     private javax.swing.JCheckBox chkEventInvoiceDue;

@@ -676,7 +676,9 @@
     "notify": {
       "imMention": "I was mentioned in an instant message",
       "imMentionDone": "an instant message I sent was marked as done",
-      "calendarEntry": "a calendar entry was created or changed for me",
+      "calendarEntryFollowUp": "a follow-up was created or changed for me",
+      "calendarEntryRespite": "a deadline was created or changed for me",
+      "calendarEntryEvent": "an appointment was created or changed for me",
       "calendarEntryAuthored": "a calendar entry I created was changed / completed by others",
       "calendarEntryReminder": "one of my appointments is about to start",
       "invoiceDue": "an invoice in one of my cases is due",

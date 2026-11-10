@@ -10,11 +10,13 @@ type ProfileTab = 'profile' | 'notifications' | 'security' | 'newCases';
 /** A notification toggle: its settings key plus whether the feature is live yet (disabled if not). */
 interface NotifyToggle { key: keyof ProfileSettings; labelKey: string; enabled: boolean; }
 
-/** The 8 notification toggles, in the desktop dialog's order. Three are not live yet (disabled there too). */
+/** The 10 notification toggles, in the desktop dialog's order. Three are not live yet (disabled there too). */
 const NOTIFY_TOGGLES: NotifyToggle[] = [
   { key: 'notifyInstantMessageMention', labelKey: 'profile.notify.imMention', enabled: true },
   { key: 'notifyInstantMessageMentionDone', labelKey: 'profile.notify.imMentionDone', enabled: true },
-  { key: 'notifyCalendarEntry', labelKey: 'profile.notify.calendarEntry', enabled: true },
+  { key: 'notifyCalendarEntryFollowUp', labelKey: 'profile.notify.calendarEntryFollowUp', enabled: true },
+  { key: 'notifyCalendarEntryRespite', labelKey: 'profile.notify.calendarEntryRespite', enabled: true },
+  { key: 'notifyCalendarEntryEvent', labelKey: 'profile.notify.calendarEntryEvent', enabled: true },
   { key: 'notifyCalendarEntryAuthored', labelKey: 'profile.notify.calendarEntryAuthored', enabled: true },
   { key: 'notifyCalendarEntryReminder', labelKey: 'profile.notify.calendarEntryReminder', enabled: false },
   { key: 'notifyInvoiceDue', labelKey: 'profile.notify.invoiceDue', enabled: true },
