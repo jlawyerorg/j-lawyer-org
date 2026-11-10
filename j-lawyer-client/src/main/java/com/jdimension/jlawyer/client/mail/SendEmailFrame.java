@@ -868,7 +868,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         });
 
         this.txtTemplateSearch.putClientProperty("JTextField.showClearButton", true);
-        this.txtTemplateSearch.putClientProperty("JTextField.placeholderText", "Suche: ...");
+        this.txtTemplateSearch.putClientProperty("JTextField.placeholderText", "Suche...");
 
         AssistantAccess ingo = AssistantAccess.getInstance();
         try {
@@ -2708,12 +2708,10 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
             }
         });
 
-        txtTemplateSearch.setForeground(new java.awt.Color(102, 102, 102));
-        txtTemplateSearch.setText("Suche...");
         txtTemplateSearch.setToolTipText("Vorlagen suchen");
         txtTemplateSearch.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                txtTemplateSearchMouseClicked(evt);
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                txtTemplateSearchMousePressed(evt);
             }
         });
         txtTemplateSearch.addKeyListener(new java.awt.event.KeyAdapter() {
@@ -3719,19 +3717,15 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
         }
     }//GEN-LAST:event_cmbTemplatesActionPerformed
 
-    private void txtTemplateSearchMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_txtTemplateSearchMouseClicked
+    private void txtTemplateSearchMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_txtTemplateSearchMousePressed
         // ComboBox-Auswahl temporär zurücksetzen, um Suche zu ermöglichen
         ignoreTemplateSelectionEvent = true;
         cmbTemplates.setSelectedItem("");
         ignoreTemplateSelectionEvent = false;
 
-        // Focus und Textauswahl im Suchfeld
+        // der Hinweistext "Suche..." ist ein FlatLaf-Placeholder und muss nicht entfernt werden
         txtTemplateSearch.requestFocusInWindow();
-        if ("Suche...".equals(txtTemplateSearch.getText())) {
-            txtTemplateSearch.setText("");
-            txtTemplateSearch.setForeground(Color.BLACK);
-        }
-    }//GEN-LAST:event_txtTemplateSearchMouseClicked
+    }//GEN-LAST:event_txtTemplateSearchMousePressed
 
     private void txtTemplateSearchKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtTemplateSearchKeyPressed
         if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
