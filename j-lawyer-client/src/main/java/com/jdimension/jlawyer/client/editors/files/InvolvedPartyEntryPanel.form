@@ -8,28 +8,6 @@
         <Property name="useNullLayout" type="boolean" value="true"/>
       </Layout>
       <SubComponents>
-        <MenuItem class="javax.swing.JMenuItem" name="mnuSendEmail">
-          <Properties>
-            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/icons/mail_send_2.png"/>
-            </Property>
-            <Property name="text" type="java.lang.String" value="E-Mail verfassen"/>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuSendEmailActionPerformed"/>
-          </Events>
-        </MenuItem>
-        <MenuItem class="javax.swing.JMenuItem" name="mnuSendBea">
-          <Properties>
-            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/icons16/bea16.png"/>
-            </Property>
-            <Property name="text" type="java.lang.String" value="Nachricht verfassen"/>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuSendBeaActionPerformed"/>
-          </Events>
-        </MenuItem>
         <MenuItem class="javax.swing.JMenuItem" name="mnuShowBeaIdentity">
           <Properties>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
@@ -217,6 +195,10 @@
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="cmdToAddress" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
+                      <Component id="cmdSendBea" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="cmdSendEmail" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Component id="cmdActions" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="lblAddress" min="-2" max="-2" attributes="0"/>
@@ -242,6 +224,8 @@
               <Group type="103" groupAlignment="0" max="-2" attributes="0">
                   <Component id="cmbRefType" alignment="0" max="32767" attributes="0"/>
                   <Component id="cmdToAddress" alignment="1" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmdSendBea" alignment="1" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmdSendEmail" alignment="1" min="-2" max="-2" attributes="0"/>
                   <Component id="cmdActions" alignment="1" min="-2" pref="32" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
                       <Component id="lblAddress" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -317,6 +301,8 @@
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/icons16/14_layer_lowerlayer.png"/>
         </Property>
+        <Property name="text" type="java.lang.String" value="Aktionen"/>
+        <Property name="toolTipText" type="java.lang.String" value="Kommunikation, Karte und weitere Aktionen zu diesem Beteiligten"/>
       </Properties>
       <Events>
         <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="cmdActionsMousePressed"/>
@@ -330,9 +316,35 @@
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/icons/vcard.png"/>
         </Property>
+        <Property name="text" type="java.lang.String" value="Kontakt"/>
+        <Property name="toolTipText" type="java.lang.String" value="Kontakt in der Adressansicht &#xf6;ffnen"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdToAddressActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdSendBea">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons16/bea16.png"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="beA"/>
+        <Property name="toolTipText" type="java.lang.String" value="beA-Nachricht an diesen Beteiligten verfassen"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdSendBeaActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdSendEmail">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons/mail_send_2.png"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="E-Mail"/>
+        <Property name="toolTipText" type="java.lang.String" value="E-Mail an diesen Beteiligten verfassen"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdSendEmailActionPerformed"/>
       </Events>
     </Component>
     <Component class="javax.swing.JLabel" name="lblType">

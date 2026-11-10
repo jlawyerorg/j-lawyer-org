@@ -745,11 +745,11 @@ public class InvolvedPartyEntryPanel extends com.jdimension.jlawyer.client.ui.th
         this.casePanel = casePanel;
         this.caseDto = caseDto;
 
-        this.mnuSendBea.setEnabled(beaEnabled);
+        this.cmdSendBea.setEnabled(beaEnabled);
 
         // design kit: the colour of the party type is the bar on the left edge of the entry
         this.lblType.setVisible(false);
-        styleRowButtons(this.cmdActions, this.cmdToAddress);
+        styleRowButtons(this.cmdToAddress, this.cmdSendBea, this.cmdSendEmail, this.cmdActions);
         styleMuted(this.jLabel2, this.jLabel3, this.lblCustom1, this.lblCustom2, this.lblCustom3);
         styleTaskPane(this.detailsContentTaskPane);
         styleTaskPane(this.jXTaskPane1);
@@ -944,8 +944,6 @@ public class InvolvedPartyEntryPanel extends com.jdimension.jlawyer.client.ui.th
     private void initComponents() {
 
         partiesPopup = new javax.swing.JPopupMenu();
-        mnuSendEmail = new javax.swing.JMenuItem();
-        mnuSendBea = new javax.swing.JMenuItem();
         mnuShowBeaIdentity = new javax.swing.JMenuItem();
         mnuSendSms = new javax.swing.JMenuItem();
         mnuCallMobile = new javax.swing.JMenuItem();
@@ -966,6 +964,8 @@ public class InvolvedPartyEntryPanel extends com.jdimension.jlawyer.client.ui.th
         txtReference = new javax.swing.JTextField();
         cmdActions = new javax.swing.JButton();
         cmdToAddress = new javax.swing.JButton();
+        cmdSendBea = new javax.swing.JButton();
+        cmdSendEmail = new javax.swing.JButton();
         lblType = new javax.swing.JLabel();
         detailsContentTaskPane = new org.jdesktop.swingx.JXTaskPane();
         jScrollPane1 = new javax.swing.JScrollPane();
@@ -980,24 +980,6 @@ public class InvolvedPartyEntryPanel extends com.jdimension.jlawyer.client.ui.th
         txtCustom2 = new javax.swing.JTextField();
         txtCustom3 = new javax.swing.JTextField();
         lblUnderage = new javax.swing.JLabel();
-
-        mnuSendEmail.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_send_2.png"))); // NOI18N
-        mnuSendEmail.setText("E-Mail verfassen");
-        mnuSendEmail.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuSendEmailActionPerformed(evt);
-            }
-        });
-        partiesPopup.add(mnuSendEmail);
-
-        mnuSendBea.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/bea16.png"))); // NOI18N
-        mnuSendBea.setText("Nachricht verfassen");
-        mnuSendBea.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuSendBeaActionPerformed(evt);
-            }
-        });
-        partiesPopup.add(mnuSendBea);
 
         mnuShowBeaIdentity.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/bea16.png"))); // NOI18N
         mnuShowBeaIdentity.setText("Identität anzeigen");
@@ -1144,6 +1126,8 @@ public class InvolvedPartyEntryPanel extends com.jdimension.jlawyer.client.ui.th
         jLabel3.setText("Zeichen:");
 
         cmdActions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/14_layer_lowerlayer.png"))); // NOI18N
+        cmdActions.setText("Aktionen");
+        cmdActions.setToolTipText("Kommunikation, Karte und weitere Aktionen zu diesem Beteiligten");
         cmdActions.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mousePressed(java.awt.event.MouseEvent evt) {
                 cmdActionsMousePressed(evt);
@@ -1151,9 +1135,29 @@ public class InvolvedPartyEntryPanel extends com.jdimension.jlawyer.client.ui.th
         });
 
         cmdToAddress.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/vcard.png"))); // NOI18N
+        cmdToAddress.setText("Kontakt");
+        cmdToAddress.setToolTipText("Kontakt in der Adressansicht öffnen");
         cmdToAddress.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdToAddressActionPerformed(evt);
+            }
+        });
+
+        cmdSendBea.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/bea16.png"))); // NOI18N
+        cmdSendBea.setText("beA");
+        cmdSendBea.setToolTipText("beA-Nachricht an diesen Beteiligten verfassen");
+        cmdSendBea.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSendBeaActionPerformed(evt);
+            }
+        });
+
+        cmdSendEmail.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_send_2.png"))); // NOI18N
+        cmdSendEmail.setText("E-Mail");
+        cmdSendEmail.setToolTipText("E-Mail an diesen Beteiligten verfassen");
+        cmdSendEmail.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSendEmailActionPerformed(evt);
             }
         });
 
@@ -1256,6 +1260,10 @@ public class InvolvedPartyEntryPanel extends com.jdimension.jlawyer.client.ui.th
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(cmdToAddress)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdSendBea)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdSendEmail)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdActions)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblAddress)
@@ -1277,6 +1285,8 @@ public class InvolvedPartyEntryPanel extends com.jdimension.jlawyer.client.ui.th
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(cmbRefType)
                     .addComponent(cmdToAddress, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(cmdSendBea, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(cmdSendEmail, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(cmdActions, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(lblAddress)
@@ -1339,7 +1349,7 @@ public class InvolvedPartyEntryPanel extends com.jdimension.jlawyer.client.ui.th
     }//GEN-LAST:event_mnuRemovePartyActionPerformed
 
 
-    private void mnuSendEmailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendEmailActionPerformed
+    private void cmdSendEmailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSendEmailActionPerformed
 
         if (this.a.getAllEmails().isEmpty()) {
             JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine E-Mail-Adresse erfasst.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -1364,9 +1374,9 @@ public class InvolvedPartyEntryPanel extends com.jdimension.jlawyer.client.ui.th
             dlg.setVisible(true);
         }
 
-    }//GEN-LAST:event_mnuSendEmailActionPerformed
+    }//GEN-LAST:event_cmdSendEmailActionPerformed
 
-    private void mnuSendBeaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendBeaActionPerformed
+    private void cmdSendBeaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSendBeaActionPerformed
 
         try {
             if (!BeaAccess.getInstance().ensureLoggedIn()) return;
@@ -1408,7 +1418,7 @@ public class InvolvedPartyEntryPanel extends com.jdimension.jlawyer.client.ui.th
             dlg.setVisible(true);
         }
 
-    }//GEN-LAST:event_mnuSendBeaActionPerformed
+    }//GEN-LAST:event_cmdSendBeaActionPerformed
 
     private void mnuShowBeaIdentityActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuShowBeaIdentityActionPerformed
 
@@ -1744,6 +1754,8 @@ public class InvolvedPartyEntryPanel extends com.jdimension.jlawyer.client.ui.th
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<String> cmbRefType;
     private javax.swing.JButton cmdActions;
+    private javax.swing.JButton cmdSendBea;
+    private javax.swing.JButton cmdSendEmail;
     private javax.swing.JButton cmdToAddress;
     private javax.swing.JTextPane detailsContent;
     private org.jdesktop.swingx.JXTaskPane detailsContentTaskPane;
@@ -1768,8 +1780,6 @@ public class InvolvedPartyEntryPanel extends com.jdimension.jlawyer.client.ui.th
     private javax.swing.JMenuItem mnuFindRouteToAddressOSM;
     private javax.swing.JMenu mnuAddRelatedParty;
     private javax.swing.JMenuItem mnuRemoveParty;
-    private javax.swing.JMenuItem mnuSendBea;
-    private javax.swing.JMenuItem mnuSendEmail;
     private javax.swing.JMenuItem mnuSendFax;
     private javax.swing.JMenuItem mnuSendSms;
     private javax.swing.JMenuItem mnuShowBeaIdentity;
