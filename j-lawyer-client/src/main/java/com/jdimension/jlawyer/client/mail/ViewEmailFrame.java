@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.mail;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.launcher.CaseDocumentStore;
 import com.jdimension.jlawyer.client.launcher.ObservedDocument;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
@@ -861,7 +862,11 @@ public class ViewEmailFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_cmdForwardActionPerformed
 
     private void cmdEditDraftActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEditDraftActionPerformed
-        EmailActionHandler.editDraft(this.emlMsg, this.outlookMsg, this.content, this.contextArchiveFile, this.contextFolder);
+        String documentId = null;
+        if (this.odoc != null && this.odoc.getStore() instanceof CaseDocumentStore) {
+            documentId = this.odoc.getStore().getDocumentIdentifier();
+        }
+        EmailActionHandler.editDraft(this.emlMsg, this.outlookMsg, this.content, this.contextArchiveFile, this.contextFolder, documentId);
 
         if (this.odoc != null) {
             this.odoc.setClosed(true);

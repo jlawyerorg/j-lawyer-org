@@ -810,7 +810,7 @@ public class OutlookMessagePanel extends javax.swing.JPanel implements PreviewPa
         if (this.outlookMsg == null) {
             return;
         }
-        EmailActionHandler.editDraft(null, this.outlookMsg, this.content, this.caseContext, null);
+        EmailActionHandler.editDraft(null, this.outlookMsg, this.content, this.caseContext, null, null);
     }//GEN-LAST:event_cmdEditDraftActionPerformed
 
 

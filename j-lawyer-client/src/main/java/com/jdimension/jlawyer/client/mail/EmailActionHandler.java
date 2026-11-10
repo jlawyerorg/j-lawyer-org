@@ -23,6 +23,7 @@ import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
 import com.jdimension.jlawyer.server.utils.ContentTypes;
@@ -397,10 +398,26 @@ public class EmailActionHandler {
         return dlg;
     }
 
-    public static SendEmailFrame editDraft(MessageContainer emlMsg, OutlookMessage outlookMsg, MailContentUI content, ArchiveFileBean contextArchiveFile, CaseFolder contextFolder) {
+    /**
+     * Opens a message for further editing in a new send dialog.
+     *
+     * @param emlMsg the message (EML), or null
+     * @param outlookMsg the message (Outlook), or null
+     * @param content the content UI showing the message
+     * @param contextArchiveFile the case context, or null
+     * @param contextFolder the case folder context, or null
+     * @param documentId id of the case document the message was opened from,
+     * or null. If it is an auto-saved draft, the send dialog continues to work
+     * on this document (updates it and removes it after sending).
+     * @return the send dialog
+     */
+    public static SendEmailFrame editDraft(MessageContainer emlMsg, OutlookMessage outlookMsg, MailContentUI content, ArchiveFileBean contextArchiveFile, CaseFolder contextFolder, String documentId) {
         SendEmailFrame dlg = new SendEmailFrame(true);
         dlg.setArchiveFile(contextArchiveFile, contextFolder);
         setPartiesToSendDialog(dlg, contextArchiveFile, false);
+        if (isAutoSavedDraft(documentId, contextArchiveFile)) {
+            dlg.setDraftDocumentId(documentId);
+        }
 
         if (emlMsg != null) {
             try {
@@ -574,6 +591,36 @@ public class EmailActionHandler {
 
         showFrame(dlg);
         return dlg;
+    }
+
+    /**
+     * Checks whether the given case document is a draft that has been
+     * auto-saved by the send dialog.
+     *
+     * @param documentId the document id, or null
+     * @param contextArchiveFile the case the document is expected to belong to
+     * @return true if the document is an auto-saved draft of the given case
+     */
+    private static boolean isAutoSavedDraft(String documentId, ArchiveFileBean contextArchiveFile) {
+        if (documentId == null || contextArchiveFile == null) {
+            return false;
+        }
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileDocumentsBean doc = locator.lookupArchiveFileServiceRemote().getDocument(documentId);
+            if (doc == null || doc.getName() == null) {
+                return false;
+            }
+            if (doc.getArchiveFileKey() != null && !contextArchiveFile.getId().equals(doc.getArchiveFileKey().getId())) {
+                return false;
+            }
+            String name = doc.getName();
+            return name.startsWith(SendEmailFrame.DRAFT_FILENAME_PREFIX) && name.toLowerCase().endsWith(".eml");
+        } catch (Throwable t) {
+            log.error("Unable to determine whether document " + documentId + " is a draft", t);
+            return false;
+        }
     }
 
     private static void showFrame(SendEmailFrame dlg) {

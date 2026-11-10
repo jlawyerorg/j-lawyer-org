@@ -811,7 +811,7 @@ public class EmailPanel extends javax.swing.JPanel implements PreviewPanel {
         if (this.msgContainer == null) {
             return;
         }
-        EmailActionHandler.editDraft(this.msgContainer, null, this.content, this.caseContext, null);
+        EmailActionHandler.editDraft(this.msgContainer, null, this.content, this.caseContext, null, this.documentId);
     }//GEN-LAST:event_cmdEditDraftActionPerformed
 
 

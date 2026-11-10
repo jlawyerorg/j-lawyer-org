@@ -786,6 +786,10 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
     // Auto-save draft functionality
     private javax.swing.Timer autoSaveTimer = null;
     private String currentDraftDocumentId = null;
+    /**
+     * File name prefix of draft documents that are auto-saved to the case.
+     */
+    public static final String DRAFT_FILENAME_PREFIX = "ENTWURF - ";
     private static final int AUTO_SAVE_INITIAL_DELAY = 10000; // 10 seconds
     private static final int AUTO_SAVE_INTERVAL = 30000; // 30 seconds
     private volatile boolean autoSaveInProgress = false;
@@ -1338,7 +1342,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                     // Create new draft document with static filename
                     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                     String subjectPart = (subject != null && !subject.trim().isEmpty()) ? subject : "Kein Betreff";
-                    String draftName = "ENTWURF - " + sdf.format(new Date()) + " - " + subjectPart + ".eml";
+                    String draftName = DRAFT_FILENAME_PREFIX + sdf.format(new Date()) + " - " + subjectPart + ".eml";
                     draftName = FileUtils.sanitizeFileName(draftName);
 
                     ArchiveFileDocumentsBean draftDoc = afs.addDocument(
@@ -1420,6 +1424,19 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
             }
         }
         super.dispose();
+    }
+
+    /**
+     * Binds this frame to an existing auto-saved draft document in the case,
+     * e.g. when a previously saved draft is opened again for editing. Further
+     * auto-saves then update this document instead of creating a new one, it
+     * is removed after the message has been sent successfully, and the user is
+     * asked whether to keep it when the frame is closed without sending.
+     *
+     * @param draftDocumentId id of the draft document, or {@code null}
+     */
+    public void setDraftDocumentId(String draftDocumentId) {
+        this.currentDraftDocumentId = draftDocumentId;
     }
 
     public void setSubject(String s) {
