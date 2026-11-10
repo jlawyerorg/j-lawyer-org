@@ -92,3 +92,6 @@
 # Claude skill archives (skills/build-skills.sh)
 /skills/dist/
 /skills/**/__pycache__/
+
+# Claude Code local settings (per developer)
+.claude/settings.local.json
