@@ -873,7 +873,7 @@ public class AssistantAPI {
                 JsonKey key = Jsoner.mintJsonKey("requestId", null);
                 status.setRequestId(result.getString(key));
 
-                key = Jsoner.mintJsonKey("async", null);
+                key = Jsoner.mintJsonKey("async", false);
                 status.setAsync(result.getBooleanOrDefault(key));
 
                 Object statusValue = result.get("status");
@@ -923,18 +923,18 @@ public class AssistantAPI {
                     key = Jsoner.mintJsonKey("statusMessage", null);
                     res.setStatusMessage(r.getString(key));
 
-                    key = Jsoner.mintJsonKey("progress", null);
-                    res.setProgress(r.getFloat(key));
+                    key = Jsoner.mintJsonKey("progress", 0f);
+                    res.setProgress(r.getFloatOrDefault(key));
 
-                    key = Jsoner.mintJsonKey("executionMillis", null);
-                    res.setExecutionMillis(r.getLong(key));
+                    key = Jsoner.mintJsonKey("executionMillis", 0L);
+                    res.setExecutionMillis(r.getLongOrDefault(key));
 
                     JsonArray o = (JsonArray) r.get("outputData");
                     if (o != null) {
                         for (Object outputObj : o) {
                             JsonObject oo = (JsonObject) outputObj;
                             OutputData od = new OutputData();
-                            od.setBase64Encoded(oo.getBoolean(Jsoner.mintJsonKey("base64Encoded", null)));
+                            od.setBase64Encoded(oo.getBooleanOrDefault(Jsoner.mintJsonKey("base64Encoded", false)));
                             if (od.isBase64Encoded()) {
                                 String b64 = oo.getString(Jsoner.mintJsonKey("data", null));
 
@@ -1030,12 +1030,12 @@ public class AssistantAPI {
                     capability.setModelRef(c.getString(stringKey));
                     capability.setModelType(c.getString(stringKey));
 
-                    stringKey = Jsoner.mintJsonKey("asyncRecommended", null);
+                    stringKey = Jsoner.mintJsonKey("asyncRecommended", false);
                     boolean asyncRec = c.getBooleanOrDefault(stringKey);
                     capability.setAsyncRecommended(asyncRec);
                     capability.setAsync(asyncRec);
 
-                    stringKey = Jsoner.mintJsonKey("customPrompts", null);
+                    stringKey = Jsoner.mintJsonKey("customPrompts", false);
                     capability.setCustomPrompts(c.getBooleanOrDefault(stringKey));
 
                     Object promptObj = c.get("prompt");
@@ -1141,7 +1141,7 @@ public class AssistantAPI {
                     model.setName(m.getString(Jsoner.mintJsonKey("name", null)));
                     model.setDescription(m.getString(Jsoner.mintJsonKey("description", null)));
                     model.setProvider(m.getString(Jsoner.mintJsonKey("provider", null)));
-                    model.setLocal(m.getBooleanOrDefault(Jsoner.mintJsonKey("local", null)));
+                    model.setLocal(m.getBooleanOrDefault(Jsoner.mintJsonKey("local", false)));
                     model.setDeductTokens(m.getBooleanOrDefault(Jsoner.mintJsonKey("deductTokens", true)));
                     model.setSupportsTools(m.getBooleanOrDefault(Jsoner.mintJsonKey("supportsTools", false)));
 
@@ -1198,14 +1198,14 @@ public class AssistantAPI {
             JsonKey stringKey = Jsoner.mintJsonKey("username", null);
             userInfo.setUserName(r.getString(stringKey));
             
-            stringKey = Jsoner.mintJsonKey("tokens", null);
-            userInfo.setTokens(r.getInteger(stringKey));
+            stringKey = Jsoner.mintJsonKey("tokens", 0);
+            userInfo.setTokens(r.getIntegerOrDefault(stringKey));
             
-            stringKey = Jsoner.mintJsonKey("tokensPerDay", null);
-            userInfo.setTokensPerDay(r.getInteger(stringKey));
+            stringKey = Jsoner.mintJsonKey("tokensPerDay", 0);
+            userInfo.setTokensPerDay(r.getIntegerOrDefault(stringKey));
             
-            stringKey = Jsoner.mintJsonKey("tokensPerMonth", null);
-            userInfo.setTokensPerMonth(r.getInteger(stringKey));
+            stringKey = Jsoner.mintJsonKey("tokensPerMonth", 0);
+            userInfo.setTokensPerMonth(r.getIntegerOrDefault(stringKey));
 
             
 
@@ -1258,8 +1258,8 @@ public class AssistantAPI {
                         req.setTimestamp(new Date(0));
                     }
 
-                    stringKey = Jsoner.mintJsonKey("tokens_used", null);
-                    req.setTokensUsed(entry.getInteger(stringKey));
+                    stringKey = Jsoner.mintJsonKey("tokens_used", 0);
+                    req.setTokensUsed(entry.getIntegerOrDefault(stringKey));
 
                     stringKey = Jsoner.mintJsonKey("request_type", null);
                     req.setRequestType(entry.getString(stringKey));
@@ -1332,11 +1332,11 @@ public class AssistantAPI {
             stringKey = Jsoner.mintJsonKey("statusMessage", null);
             resp.setStatusMessage(r.getString(stringKey));
 
-            stringKey = Jsoner.mintJsonKey("progress", null);
-            resp.setProgress(r.getFloat(stringKey));
+            stringKey = Jsoner.mintJsonKey("progress", 0f);
+            resp.setProgress(r.getFloatOrDefault(stringKey));
 
-            stringKey = Jsoner.mintJsonKey("executionMillis", null);
-            resp.setExecutionMillis(r.getLong(stringKey));
+            stringKey = Jsoner.mintJsonKey("executionMillis", 0L);
+            resp.setExecutionMillis(r.getLongOrDefault(stringKey));
 
             Object outputData = r.getCollection(Jsoner.mintJsonKey("outputData", null));
             if (outputData != null && outputData instanceof JsonArray) {
@@ -1344,7 +1344,7 @@ public class AssistantAPI {
                 for (Object outputObj : output) {
                     JsonObject oo = (JsonObject) outputObj;
                     OutputData od = new OutputData();
-                    od.setBase64Encoded(oo.getBoolean(Jsoner.mintJsonKey("base64Encoded", null)));
+                    od.setBase64Encoded(oo.getBooleanOrDefault(Jsoner.mintJsonKey("base64Encoded", false)));
                     if (od.isBase64Encoded()) {
                         String b64 = oo.getString(Jsoner.mintJsonKey("data", null));
 
