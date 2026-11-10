@@ -685,7 +685,7 @@ public class TransactionLog implements Serializable {
     
     
     
-    protected static long serialVersionUID = 1L;
+    protected static final long serialVersionUID = 1L;
     
     @Id
     @Basic(optional = false)
@@ -749,13 +749,6 @@ public class TransactionLog implements Serializable {
      */
     public static long getSerialVersionUID() {
         return serialVersionUID;
-    }
-
-    /**
-     * @param aSerialVersionUID the serialVersionUID to set
-     */
-    public static void setSerialVersionUID(long aSerialVersionUID) {
-        serialVersionUID = aSerialVersionUID;
     }
 
     /**

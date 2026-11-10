@@ -1275,6 +1275,19 @@ public interface ArchiveFileServiceRemote {
     List<Timesheet> getOpenTimesheets(String caseId) throws Exception;
     List<Timesheet> getOpenTimesheets() throws Exception;
 
+    /**
+     * Returns the timesheet positions last used by the given user: every
+     * running position plus the most recently stopped position per timesheet.
+     * Only positions of timesheets in status "open" are returned, and only for
+     * cases the caller is allowed to access.
+     *
+     * @param caseId restricts the result to timesheets of this case; null
+     * returns positions across all accessible cases
+     * @param principal the user whose positions are returned; must be the
+     * caller
+     * @return list of positions, running positions first
+     * @throws Exception if the positions cannot be determined
+     */
     List<TimesheetPosition> getLastTimesheetPositions(String caseId, String principal) throws Exception;
 
     TimesheetPosition timesheetPositionStart(String timesheetId, TimesheetPosition position) throws Exception;

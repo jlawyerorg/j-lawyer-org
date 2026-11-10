@@ -902,6 +902,11 @@ public class TimesheetLogDialog extends javax.swing.JDialog {
 
     public final void existingTimesheetLogEntry(TimesheetPosition tsp, Map<String,List<TimesheetPositionTemplate>> positionTemplatesPerTimesheet) {
         List<TimesheetPositionTemplate> posTemplates = positionTemplatesPerTimesheet.get(tsp.getTimesheet().getId());
+        if (posTemplates == null) {
+            // timesheet is not among the open timesheets loaded for this dialog (other case, or case no longer accessible)
+            log.warn("Skipping timesheet position " + tsp.getId() + " - timesheet " + tsp.getTimesheet().getId() + " is not among the open timesheets of this dialog");
+            return;
+        }
         TimesheetLogEntryPanel tlep = new TimesheetLogEntryPanel(this, posTemplates, this.numericInputFormat);
         tlep.setEntry(tsp.getTimesheet().getArchiveFileKey(), tsp.getTimesheet(), tsp);
 

@@ -7735,6 +7735,15 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         //   latest closed position for timesheets that have no open position (provide access to last used log)
         //   project must be in status "open"
         //   position must have been logged by the given user
+        //   case must be accessible by the caller (and match caseId, if given)
+
+        Set<String> allowedCases = null;
+        try {
+            allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
+        } catch (Exception ex) {
+            log.error("Unable to determine allowed cases for user " + context.getCallerPrincipal().getName(), ex);
+            throw new EJBException("Akten für Nutzer " + context.getCallerPrincipal().getName() + "' konnten nicht ermittelt werden.", ex);
+        }
 
         JDBCUtils utils = new JDBCUtils();
         Connection con = null;
@@ -7749,6 +7758,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     + "JOIN timesheets t ON p.timesheet_id = t.id\n"
                     + "WHERE t.status = 10\n"
                     + "  AND p.principal = ?\n"
+                    + (caseId != null ? "  AND t.case_id = ?\n" : "")
                     + "  AND (\n"
                     + "       p.time_stopped IS NULL\n"
                     + "       OR p.time_stopped = (\n"
@@ -7760,13 +7770,20 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     + "  )\n"
                     + "ORDER BY p.time_stopped IS NOT NULL, p.time_stopped DESC, p.time_started DESC");
             st.setString(1, principal);
+            if (caseId != null) {
+                st.setString(2, caseId);
+            }
             rs = st.executeQuery();
 
             while (rs.next()) {
                 String id = rs.getString(1);
 
                 TimesheetPosition dto = this.timesheetPositionsFacade.find(id);
-                list.add(dto);
+                // skip positions of cases the caller may no longer access, e.g. after a change of group permissions
+                if (dto != null && dto.getTimesheet() != null && dto.getTimesheet().getArchiveFileKey() != null
+                        && allowedCases.contains(dto.getTimesheet().getArchiveFileKey().getId())) {
+                    list.add(dto);
+                }
 
             }
         } catch (SQLException sqle) {
