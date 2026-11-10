@@ -2528,7 +2528,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         // Re-render entries on EDT
         javax.swing.SwingUtilities.invokeLater(() -> {
-            renderDueEntries(entriesToDisplay, compactView);
+            renderDueEntries(entriesToDisplay, compactView, false);
         });
     }
 
@@ -2570,12 +2570,22 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
      * Renders the given entries to the Due panel and tabs.
      * This method must be called on the EDT.
      * Package-visible so ReviewsDueTimerTask can call it.
+     *
+     * @param entries the entries to render
+     * @param compactView whether tags are omitted
+     * @param keepScrollPosition whether the vertical scroll position of the selected tab is restored after
+     * rendering, e.g. so that the user stays in place after an entry has been postponed and vanished
      */
-    void renderDueEntries(ArrayList<ReviewDueEntry> entries, boolean compactView) {
-        pnlRevDue.removeAll();
-
+    void renderDueEntries(ArrayList<ReviewDueEntry> entries, boolean compactView, boolean keepScrollPosition) {
         // remember the selected tab so that a refresh does not jump back to "alle"
         String selectedTab = ComponentUtils.getSelectedTabBaseTitle(tabPaneDue);
+        // remember the scroll position of the selected tab - the tabs are rebuilt below
+        int scrollValue = 0;
+        if (tabPaneDue.getSelectedComponent() instanceof javax.swing.JScrollPane) {
+            scrollValue = ((javax.swing.JScrollPane) tabPaneDue.getSelectedComponent()).getVerticalScrollBar().getValue();
+        }
+
+        pnlRevDue.removeAll();
 
         // Remove all tabs except for the first one ("alle")
         for (int i = tabPaneDue.getTabCount() - 1; i > 0; i--) {
@@ -2654,6 +2664,18 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         pnlRevDue.repaint();
         tabPaneDue.revalidate();
         tabPaneDue.repaint();
+
+        // restore the scroll position, but only if the same tab is shown again - otherwise it is a different list
+        if (keepScrollPosition && selectedTab != null && selectedTab.equals(ComponentUtils.getSelectedTabBaseTitle(tabPaneDue))
+                && tabPaneDue.getSelectedComponent() instanceof javax.swing.JScrollPane) {
+            final javax.swing.JScrollPane sp = (javax.swing.JScrollPane) tabPaneDue.getSelectedComponent();
+            final int restoreValue = scrollValue;
+            // after the pending layout, the model clamps the value if the list got shorter
+            javax.swing.SwingUtilities.invokeLater(() -> {
+                sp.validate();
+                sp.getVerticalScrollBar().setValue(restoreValue);
+            });
+        }
     }
 
     /**

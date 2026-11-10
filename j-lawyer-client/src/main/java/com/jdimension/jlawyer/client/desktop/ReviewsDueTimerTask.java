@@ -911,7 +911,7 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                 if (entriesCallback != null) {
                     entriesCallback.accept(entriesCopy);
                 }
-                desktopPanel.renderDueEntries(list, compactView);
+                desktopPanel.renderDueEntries(list, compactView, true);
                 dataLoaded = true;
             });
         }
