@@ -921,6 +921,7 @@ public class TimesheetDialog extends javax.swing.JDialog implements NewEventEntr
         txtTimesheetInvoiceable = new javax.swing.JFormattedTextField();
         jLabel8 = new javax.swing.JLabel();
         cmdChangeRate = new javax.swing.JButton();
+        cmdTimesheetReport = new javax.swing.JButton();
         jScrollPane2 = new javax.swing.JScrollPane();
         pnlTimesheetPositions = new javax.swing.JPanel();
         lblTimesheetTotal = new javax.swing.JLabel();
@@ -1047,6 +1048,14 @@ public class TimesheetDialog extends javax.swing.JDialog implements NewEventEntr
             }
         });
 
+        cmdTimesheetReport.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/pdf.png"))); // NOI18N
+        cmdTimesheetReport.setToolTipText("Stundenauflistung als PDF erstellen (Zeitraum und Person wählbar)");
+        cmdTimesheetReport.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdTimesheetReportActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -1059,7 +1068,9 @@ public class TimesheetDialog extends javax.swing.JDialog implements NewEventEntr
                             .addGroup(jPanel2Layout.createSequentialGroup()
                                 .addComponent(cmdRemoveAllPositions)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cmdChangeRate))
+                                .addComponent(cmdChangeRate)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdTimesheetReport))
                             .addComponent(lblTimesheetPositions))
                         .addGap(0, 242, Short.MAX_VALUE))
                     .addGroup(jPanel2Layout.createSequentialGroup()
@@ -1152,7 +1163,8 @@ public class TimesheetDialog extends javax.swing.JDialog implements NewEventEntr
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(cmdRemoveAllPositions)
-                    .addComponent(cmdChangeRate))
+                    .addComponent(cmdChangeRate)
+                    .addComponent(cmdTimesheetReport))
                 .addGap(240, 240, 240))
         );
 
@@ -1497,6 +1509,32 @@ public class TimesheetDialog extends javax.swing.JDialog implements NewEventEntr
         this.updateTotals(null);
     }//GEN-LAST:event_cmdChangeRateActionPerformed
 
+    private void cmdTimesheetReportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdTimesheetReportActionPerformed
+        List<TimesheetPosition> positions = new ArrayList<>();
+        for (Component c : this.pnlTimesheetPositions.getComponents()) {
+            if (c instanceof TimesheetPositionEntryPanel) {
+                TimesheetPosition pos = ((TimesheetPositionEntryPanel) c).getEntryForReport();
+                if (pos != null) {
+                    positions.add(pos);
+                }
+            }
+        }
+
+        if (positions.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Keine Positionen vorhanden.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        int intervalMinutes = 1;
+        if (this.cmbTimesheetInterval.getSelectedItem() != null) {
+            intervalMinutes = Integer.parseInt(this.cmbTimesheetInterval.getSelectedItem().toString());
+        }
+
+        TimesheetReportDialog dlg = new TimesheetReportDialog(this, true, this.caseDto, this.txtName.getText(), intervalMinutes, positions);
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
+    }//GEN-LAST:event_cmdTimesheetReportActionPerformed
+
     public void updateTotals(TimesheetPositionEntryPanel ep) {
 
         if (ep != null) {
@@ -1618,6 +1656,7 @@ public class TimesheetDialog extends javax.swing.JDialog implements NewEventEntr
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdChangeRate;
     private javax.swing.JButton cmdRemoveAllPositions;
+    private javax.swing.JButton cmdTimesheetReport;
     private javax.swing.JButton cmdSave;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;

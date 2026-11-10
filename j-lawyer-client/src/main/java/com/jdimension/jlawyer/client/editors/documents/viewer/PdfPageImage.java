@@ -700,6 +700,13 @@ public class PdfPageImage extends javax.swing.JPanel {
         this.highlightPage(false);
     }
     
+    /**
+     * @return zero-based index of the page shown
+     */
+    public int getPageIndex() {
+        return this.pageIndex;
+    }
+
     public void setPage(int pageIndex, ImageIcon image) {
         this.pageIndex=pageIndex;
         this.lblPage.setIcon(image);

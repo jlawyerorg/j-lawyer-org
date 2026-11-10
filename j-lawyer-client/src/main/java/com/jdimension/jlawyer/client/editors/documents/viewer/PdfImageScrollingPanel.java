@@ -1186,6 +1186,13 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
 
         this.lastZoomFactorRequest = this.sliderZoom.getValue();
 
+        if (this.orgImage.isEmpty()) {
+            // nothing rendered yet - just remember the zoom factor. Starting the re-render thread here
+            // would reset the rendering flag while an initial rendering is still in progress
+            this.zoomFactor = this.sliderZoom.getValue();
+            return;
+        }
+
         new Thread(() -> {
             rendering = true;
             this.zoomFactor = this.sliderZoom.getValue();
@@ -1354,9 +1361,11 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                 final int dpi = calculateDpi(inputPDF.getNumberOfPages());
                 log.info("rendering PDF with " + dpi + " DPI");
 
+                // claim the flag before the thread starts, so that a concurrent request (e.g. from the
+                // scroll listener) can not start a second rendering of the same pages
+                rendering = true;
                 new Thread(() -> {
 
-                    rendering = true;
                     for (int i = fromIndex; i <= toIndex; i++) {
                         try {
                             BufferedImage buffImg = pdfRenderer.renderImageWithDPI(i, dpi, ImageType.RGB);
@@ -1382,6 +1391,12 @@ public class PdfImageScrollingPanel extends javax.swing.JPanel implements Previe
                             final int iIndex = i;
                             SwingUtilities.invokeAndWait(() -> {
 
+                                for (Component existing : pnlPages.getComponents()) {
+                                    if (existing instanceof PdfPageImage && ((PdfPageImage) existing).getPageIndex() == iIndex) {
+                                        // page has already been added by another rendering
+                                        return;
+                                    }
+                                }
                                 PdfPageImage pnlPage = new PdfPageImage(this, this.readOnly);
                                 pnlPage.setBorder(new EmptyBorder(0, 0, 10, 0));
                                 pnlPage.setPage(iIndex, new ImageIcon(displayImage));

@@ -121,6 +121,8 @@
                                       <Component id="cmdRemoveAllPositions" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="cmdChangeRate" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="cmdTimesheetReport" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <Component id="lblTimesheetPositions" min="-2" max="-2" attributes="0"/>
                               </Group>
@@ -240,6 +242,7 @@
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="cmdRemoveAllPositions" min="-2" max="-2" attributes="0"/>
                           <Component id="cmdChangeRate" min="-2" max="-2" attributes="0"/>
+                          <Component id="cmdTimesheetReport" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace min="-2" pref="240" max="-2" attributes="0"/>
                   </Group>
@@ -527,6 +530,17 @@
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdChangeRateActionPerformed"/>
+              </Events>
+            </Component>
+            <Component class="javax.swing.JButton" name="cmdTimesheetReport">
+              <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/icons16/pdf.png"/>
+                </Property>
+                <Property name="toolTipText" type="java.lang.String" value="Stundenauflistung als PDF erstellen (Zeitraum und Person w&#xe4;hlbar)"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdTimesheetReportActionPerformed"/>
               </Events>
             </Component>
           </SubComponents>
