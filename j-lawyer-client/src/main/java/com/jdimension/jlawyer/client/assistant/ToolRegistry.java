@@ -711,6 +711,24 @@ public class ToolRegistry {
                         new ToolParameter("keywords", "string", "Kommagetrennte Schlagworte für die E-Mail (optional)", false),
                         new ToolParameter("saveAttachments", "string", "true, um die Anhänge (ohne eingebettete Bilder) zusätzlich als eigene Dokumente abzulegen, die der E-Mail als Anlagen zugeordnet sind (Standard: false)", false)),
                 ToolDefinition.RISK_MEDIUM));
+
+        TOOLS.add(new ToolDefinition("send_email",
+                "Sendet eine neue E-Mail aus einem Postfach des Benutzers (keine Antwort auf eine vorhandene Nachricht). mailboxId stammt aus list_mailboxes. Die Signatur des Postfachs wird standardmäßig angehängt. Dokumente einer Akte können als Anhang mitgeschickt werden (attachmentDocumentIds). Mit caseId wird die versandte E-Mail als .eml-Datei in der Akte abgelegt - Bezeichnung = Betreff, Eingang = Sendezeitpunkt, An = erster Empfänger - und im Aktenverlauf vermerkt. Alle Angaben werden vor dem Versand geprüft; höchstens 20 Empfänger, Anhänge zusammen höchstens 20 MB. Eine versandte E-Mail kann nicht zurückgeholt werden: Bei sent=true und savedToCase=false wurde die E-Mail verschickt, aber nicht abgelegt - dann NICHT erneut senden, sondern den Benutzer informieren.",
+                Arrays.asList(
+                        new ToolParameter("mailboxId", "string", "ID des Postfachs, aus dem gesendet wird (aus list_mailboxes)", true),
+                        new ToolParameter("to", "string", "Empfänger, kommagetrennt, z. B. 'Max Muster <max@example.de>, info@example.org'", true),
+                        new ToolParameter("cc", "string", "Kopie-Empfänger, kommagetrennt (optional)", false),
+                        new ToolParameter("bcc", "string", "Blindkopie-Empfänger, kommagetrennt (optional)", false),
+                        new ToolParameter("subject", "string", "Betreff", true),
+                        new ToolParameter("body", "string", "Nachrichtentext, ohne Signatur", true),
+                        new ToolParameter("html", "string", "true, wenn body HTML ist (Standard: false, Klartext)", false),
+                        new ToolParameter("useSignature", "string", "false, um die Signatur des Postfachs nicht anzuhängen (Standard: true)", false),
+                        new ToolParameter("attachmentDocumentIds", "string", "Kommagetrennte IDs von Dokumenten aus Akten, die als Anhang mitgeschickt werden (optional)", false),
+                        new ToolParameter("caseId", "string", "Interne ID der Akte, in der die versandte E-Mail abgelegt wird (optional, aus search_cases). Ohne Angabe wird nichts abgelegt.", false),
+                        new ToolParameter("folderId", "string", "ID des Zielordners in der Akte (optional, nur mit caseId, aus list_case_folders)", false),
+                        new ToolParameter("tags", "string", "Kommagetrennte Dokument-Etiketten für die abgelegte E-Mail (optional, nur mit caseId, aus list_document_tags)", false),
+                        new ToolParameter("keywords", "string", "Kommagetrennte Schlagworte für die abgelegte E-Mail (optional, nur mit caseId)", false)),
+                ToolDefinition.RISK_MEDIUM));
     }
 
     public boolean hasAiAgentRole() {
@@ -907,6 +925,8 @@ public class ToolRegistry {
                     return executeGetEmail(args);
                 case "save_email_to_case":
                     return executeSaveEmailToCase(args);
+                case "send_email":
+                    return executeSendEmail(args);
                 default:
                     return ToolJsonUtils.error("Unbekanntes Werkzeug: " + toolId);
             }
@@ -1159,6 +1179,8 @@ public class ToolRegistry {
                     return "E-Mail lesen";
                 case "save_email_to_case":
                     return "E-Mail in Akte speichern: " + args.getOrDefault("caseId", "");
+                case "send_email":
+                    return "E-Mail senden an " + args.getOrDefault("to", "") + ": " + args.getOrDefault("subject", "");
                 default:
                     return tc.getToolName() + ": " + tc.getArguments();
             }
@@ -6141,6 +6163,258 @@ public class ToolRegistry {
         }
         sb.append("}");
         return sb.toString();
+    }
+
+    private static final int MAX_SEND_RECIPIENTS = 20;
+    private static final long MAX_SEND_ATTACHMENT_BYTES = 20L * 1024L * 1024L;
+
+    /**
+     * Sends a new e-mail and optionally files the sent message into a case. Everything that can
+     * fail is checked before sending, because a sent mail cannot be taken back; once it is out, a
+     * failure to file it is reported as a partial success so that the model does not send again.
+     */
+    private String executeSendEmail(JsonObject args) throws Exception {
+        String mailboxId = trimmedArg(args, "mailboxId");
+        if (mailboxId == null) {
+            return ToolJsonUtils.error("Postfach-ID fehlt");
+        }
+        String to = trimmedArg(args, "to");
+        if (to == null) {
+            return ToolJsonUtils.error("Empfänger (to) fehlt");
+        }
+        String cc = trimmedArg(args, "cc");
+        String bcc = trimmedArg(args, "bcc");
+        String subject = trimmedArg(args, "subject");
+        if (subject == null) {
+            return ToolJsonUtils.error("Betreff (subject) fehlt");
+        }
+        Object bodyArg = args.get("body");
+        String body = bodyArg == null ? "" : bodyArg.toString();
+        if (body.trim().isEmpty()) {
+            return ToolJsonUtils.error("Nachrichtentext (body) fehlt");
+        }
+        boolean html = "true".equalsIgnoreCase(String.valueOf(args.get("html")).trim());
+        boolean useSignature = !"false".equalsIgnoreCase(String.valueOf(args.get("useSignature")).trim());
+
+        MailboxSetup mailbox = findAccessibleMailbox(mailboxId);
+        if (mailbox == null) {
+            return ToolJsonUtils.error("Postfach nicht gefunden oder kein Zugriff: " + mailboxId);
+        }
+
+        // addresses: strict parsing, so that a typo is refused instead of sent to half the list
+        int recipients = 0;
+        for (String[] field : new String[][]{{"to", to}, {"cc", cc}, {"bcc", bcc}}) {
+            if (field[1] == null) {
+                continue;
+            }
+            try {
+                recipients += javax.mail.internet.InternetAddress.parse(field[1], true).length;
+            } catch (javax.mail.internet.AddressException ex) {
+                return ToolJsonUtils.error("Ungültige Adresse in " + field[0] + ": " + ex.getMessage());
+            }
+        }
+        if (recipients == 0) {
+            return ToolJsonUtils.error("Keine gültige Empfängeradresse angegeben");
+        }
+        if (recipients > MAX_SEND_RECIPIENTS) {
+            return ToolJsonUtils.error("Zu viele Empfänger: " + recipients + ", erlaubt sind höchstens " + MAX_SEND_RECIPIENTS);
+        }
+
+        JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
+        ArchiveFileServiceRemote archiveSvc = locator.lookupArchiveFileServiceRemote();
+
+        // attachments from case documents, read before sending
+        List<MailAttachmentDTO> attachments = new ArrayList<>();
+        List<String> attachmentDocumentIds = new ArrayList<>();
+        String attachmentArg = trimmedArg(args, "attachmentDocumentIds");
+        if (attachmentArg != null) {
+            long total = 0;
+            for (String documentId : attachmentArg.split(",")) {
+                documentId = documentId.trim();
+                if (documentId.isEmpty() || attachmentDocumentIds.contains(documentId)) {
+                    continue;
+                }
+                ArchiveFileDocumentsBean attachmentDoc = archiveSvc.getDocument(documentId);
+                if (attachmentDoc == null) {
+                    return ToolJsonUtils.error("Dokument für den Anhang nicht gefunden: " + documentId);
+                }
+                byte[] content = archiveSvc.getDocumentContent(documentId);
+                if (content == null) {
+                    return ToolJsonUtils.error("Inhalt des Dokuments " + attachmentDoc.getName() + " ist nicht lesbar");
+                }
+                total += content.length;
+                if (total > MAX_SEND_ATTACHMENT_BYTES) {
+                    return ToolJsonUtils.error("Die Anhänge sind zusammen größer als 20 MB");
+                }
+                MailAttachmentDTO attachment = new MailAttachmentDTO();
+                attachment.setName(attachmentDoc.getName());
+                String contentType = java.net.URLConnection.guessContentTypeFromName(attachmentDoc.getName());
+                attachment.setContentType(contentType != null ? contentType : "application/octet-stream");
+                attachment.setContent(content);
+                attachment.setSize(content.length);
+                attachments.add(attachment);
+                attachmentDocumentIds.add(documentId);
+            }
+        }
+
+        // the case and everything needed to file into it, checked before sending
+        String caseId = trimmedArg(args, "caseId");
+        ArchiveFileBean caseBean = null;
+        List<String> tagNames = new ArrayList<>();
+        String folderId = null;
+        if (caseId != null) {
+            caseBean = archiveSvc.getArchiveFile(caseId);
+            if (caseBean == null) {
+                return ToolJsonUtils.error("Akte nicht gefunden: " + caseId);
+            }
+            if (caseBean.isArchived()) {
+                return ToolJsonUtils.error("Akte ist archiviert (abgelegt). Bitte die Akte zuerst reaktivieren.");
+            }
+            folderId = trimmedArg(args, "folderId");
+            if (folderId != null && !containsFolder(caseBean.getRootFolder(), folderId)) {
+                return ToolJsonUtils.error("Ordner nicht gefunden in der Akte: " + folderId);
+            }
+            String tagsArg = trimmedArg(args, "tags");
+            if (tagsArg != null) {
+                SystemManagementRemote sys = locator.lookupSystemManagementRemote();
+                AppOptionGroupBean[] boolTags = sys.getOptionGroup(OptionConstants.OPTIONGROUP_DOCUMENTTAGS);
+                HashMap<String, AppOptionGroupBean[]> mvGroups = sys.getOptionGroupsByPrefix(OptionConstants.OPTIONGROUP_DOCUMENTTAGS_MV_PREFIX);
+                for (String tagName : tagsArg.split(",")) {
+                    tagName = tagName.trim();
+                    if (tagName.isEmpty()) {
+                        continue;
+                    }
+                    String validationError = validateTag(tagName, null, boolTags, mvGroups, OptionConstants.OPTIONGROUP_DOCUMENTTAGS_MV_PREFIX);
+                    if (validationError != null) {
+                        return validationError;
+                    }
+                    tagNames.add(tagName);
+                }
+            }
+        } else if (trimmedArg(args, "folderId") != null || trimmedArg(args, "tags") != null || trimmedArg(args, "keywords") != null) {
+            return ToolJsonUtils.error("folderId, tags und keywords gelten nur zusammen mit caseId");
+        }
+
+        // body with the mailbox signature
+        String contentType = html ? "text/html" : "text/plain";
+        String text = body;
+        if (useSignature) {
+            if (html) {
+                String signature = mailbox.getEmailSignature();
+                if (signature != null && !signature.trim().isEmpty()) {
+                    text = body + "<br><br>" + com.jdimension.jlawyer.client.utils.HtmlUtils.stripHeadAndBodyTags(signature);
+                }
+            } else {
+                String signature = mailbox.getEmailSignatureTxt();
+                if (signature != null && !signature.trim().isEmpty()) {
+                    text = body + "\n\n" + signature;
+                }
+            }
+        }
+
+        EmailServiceRemote emailSvc = locator.lookupEmailServiceRemote();
+        byte[] eml;
+        try {
+            eml = emailSvc.sendMailReturningEml(mailboxId, to, cc, bcc, subject, text, contentType, attachments,
+                    "normal", false, false, null, null);
+        } catch (Exception ex) {
+            log.warn("Unable to send email from mailbox " + mailboxId, ex);
+            return ToolJsonUtils.error("Die E-Mail konnte nicht gesendet werden: " + ex.getMessage());
+        }
+
+        // from here on the mail is out: nothing below may turn into an error result
+        MailDocumentOrigins.markDocumentsSent(attachmentDocumentIds, to);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"success\": true, \"sent\": true");
+        sb.append(", \"mailboxId\": \"").append(ToolJsonUtils.escapeJson(mailboxId)).append("\"");
+        sb.append(", \"to\": \"").append(ToolJsonUtils.escapeJson(to)).append("\"");
+        sb.append(", \"subject\": \"").append(ToolJsonUtils.escapeJson(subject)).append("\"");
+        sb.append(", \"attachmentCount\": ").append(attachments.size());
+        if (caseBean != null) {
+            sb.append(", \"caseId\": \"").append(ToolJsonUtils.escapeJson(caseId)).append("\"");
+            sb.append(", \"caseFileNumber\": \"").append(ToolJsonUtils.escapeJson(caseBean.getFileNumber())).append("\"");
+            try {
+                ArchiveFileDocumentsBean stored = fileSentEmail(archiveSvc, caseBean, subject, to, eml, folderId, tagNames, trimmedArg(args, "keywords"));
+                sb.append(", \"savedToCase\": true");
+                sb.append(", \"documentId\": \"").append(ToolJsonUtils.escapeJson(stored.getId())).append("\"");
+                // "name" next to "documentId" makes the chat panel offer the "open document" button
+                sb.append(", \"name\": \"").append(ToolJsonUtils.escapeJson(stored.getName())).append("\"");
+            } catch (Exception ex) {
+                log.warn("Email was sent but could not be filed into case " + caseId, ex);
+                sb.append(", \"savedToCase\": false");
+                sb.append(", \"saveError\": \"").append(ToolJsonUtils.escapeJson(
+                        "Die E-Mail wurde gesendet, konnte aber nicht in der Akte abgelegt werden: " + ex.getMessage()
+                        + ". Bitte NICHT erneut senden - die E-Mail liegt im Ordner Gesendet und kann von dort mit save_email_to_case abgelegt werden.")).append("\"");
+            }
+        }
+        sb.append("}");
+        return sb.toString();
+    }
+
+    /** Files a sent message: template name, outgoing metadata, folder, tags, case history. */
+    private ArchiveFileDocumentsBean fileSentEmail(ArchiveFileServiceRemote archiveSvc, ArchiveFileBean caseBean, String subject, String to,
+            byte[] eml, String folderId, List<String> tagNames, String keywords) throws Exception {
+        String caseId = caseBean.getId();
+        String docName = buildEmlDocumentName(caseBean, subject, new Date());
+        String uniqueName = docName;
+        int index = 2;
+        while (archiveSvc.doesDocumentExist(caseId, uniqueName) && index <= MAX_NAME_CLASH_RETRIES) {
+            uniqueName = appendNameIndex(docName, index);
+            index++;
+        }
+        if (archiveSvc.doesDocumentExist(caseId, uniqueName)) {
+            throw new Exception("es existiert bereits ein Dokument mit dem Namen " + docName);
+        }
+
+        DocumentMetadata metadata = MailDocumentOrigins.outgoing(subject, to).toMetadata(archiveSvc, caseId, DocumentOrigin.newCache());
+        if (keywords != null) {
+            metadata.setKeywords(keywords);
+        }
+        ArchiveFileDocumentsBean doc = archiveSvc.addDocument(caseId, uniqueName, eml, "", null, metadata);
+        if (folderId != null) {
+            archiveSvc.moveDocumentsToFolder(Arrays.asList(doc.getId()), folderId);
+        }
+        for (String tagName : tagNames) {
+            DocumentTagsBean tag = new DocumentTagsBean();
+            tag.setTagName(tagName);
+            archiveSvc.setDocumentTag(doc.getId(), tag, true);
+        }
+
+        ArchiveFileHistoryBean history = new ArchiveFileHistoryBean();
+        history.setChangeDate(new Date());
+        history.setChangeDescription("E-Mail gesendet an " + to + ": " + subject);
+        archiveSvc.addHistory(caseId, history);
+
+        ArchiveFileDocumentsBean stored = archiveSvc.getDocument(doc.getId());
+        EventBroker.getInstance().publishEvent(new DocumentAddedEvent(stored != null ? stored : doc));
+        return stored != null ? stored : doc;
+    }
+
+    private static String trimmedArg(JsonObject args, String name) {
+        Object value = args.get(name);
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.toString().trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private static boolean containsFolder(CaseFolder folder, String folderId) {
+        if (folder == null) {
+            return false;
+        }
+        if (folderId.equals(folder.getId())) {
+            return true;
+        }
+        if (folder.getChildren() != null) {
+            for (CaseFolder child : folder.getChildren()) {
+                if (containsFolder(child, folderId)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**

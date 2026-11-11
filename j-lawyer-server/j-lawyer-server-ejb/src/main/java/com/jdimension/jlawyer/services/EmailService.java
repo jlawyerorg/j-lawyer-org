@@ -1424,6 +1424,29 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         invalidateAllFolderCaches(mailboxId);
     }
 
+    @Override
+    @RolesAllowed({"loginRole"})
+    public byte[] sendMailReturningEml(String mailboxId, String to, String cc, String bcc, String subject, String body, String contentType, List<MailAttachmentDTO> attachments, String priority, boolean readReceipt, boolean deliveryReceipt, String inReplyTo, String references) throws Exception {
+        this.checkMailboxAccess(mailboxId);
+        MailboxSetup ms = getMailboxOrThrow(mailboxId);
+        MimeMessage sent;
+        if (ms.isMsExchange()) {
+            graphSendMail(ms, to, cc, bcc, subject, body, contentType, attachments, priority, readReceipt, deliveryReceipt, inReplyTo, references);
+            // Graph does not return the sent message - rebuild it from the same parts. Message-ID
+            // and date differ from what Exchange put on the wire, the content does not.
+            sent = buildOutgoingMessage(Session.getInstance(new Properties()), ms, to, cc, bcc, subject, body, contentType, attachments, priority, readReceipt, inReplyTo, references);
+            sent.saveChanges();
+        } else {
+            sent = smtpSendMail(ms, to, cc, bcc, subject, body, contentType, attachments, priority, readReceipt, deliveryReceipt, inReplyTo, references);
+        }
+        invalidateAllFolderCaches(mailboxId);
+
+        // writeTo keeps the Bcc header: the copy documents who received the message
+        java.io.ByteArrayOutputStream eml = new java.io.ByteArrayOutputStream();
+        sent.writeTo(eml);
+        return eml.toByteArray();
+    }
+
     private void doMoveMessage(String mailboxId, String messageRef, String targetFolderId) throws Exception {
         MailboxSetup ms = getMailboxOrThrow(mailboxId);
         // Determine source folder for cache invalidation
@@ -2540,7 +2563,8 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         return attachmentPart;
     }
 
-    private void smtpSendMail(MailboxSetup ms, String to, String cc, String bcc, String subject, String body, String contentType, List<MailAttachmentDTO> attachments, String priority, boolean readReceipt, boolean deliveryReceipt, String inReplyTo, String references) throws Exception {
+    /** Sends via SMTP and returns the transported message. */
+    private MimeMessage smtpSendMail(MailboxSetup ms, String to, String cc, String bcc, String subject, String body, String contentType, List<MailAttachmentDTO> attachments, String priority, boolean readReceipt, boolean deliveryReceipt, String inReplyTo, String references) throws Exception {
         Properties props = new Properties();
         String server = ms.getEmailOutServer();
         final String user = ms.getEmailOutUser();
@@ -2577,6 +2601,44 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                 return new PasswordAuthentication(user, pwd);
             }
         });
+        MimeMessage msg = buildOutgoingMessage(session, ms, to, cc, bcc, subject, body, contentType, attachments, priority, readReceipt, inReplyTo, references);
+        msg.saveChanges();
+        Transport.send(msg);
+
+        // Copy sent message to IMAP "Sent" folder
+        try {
+            Store store = imapConnect(ms);
+            List<MailFolderDTO> folders = imapListFolders(ms);
+            String sentFolderId = null;
+            for (MailFolderDTO f : folders) {
+                if (f.isSent()) {
+                    sentFolderId = f.getFolderId();
+                    break;
+                }
+            }
+            if (sentFolderId != null) {
+                Folder sentFolder = store.getFolder(sentFolderId);
+                sentFolder.open(Folder.READ_WRITE);
+                try {
+                    msg.setFlag(Flags.Flag.SEEN, true);
+                    sentFolder.appendMessages(new Message[]{msg});
+                } finally {
+                    sentFolder.close(false);
+                }
+            } else {
+                log.warn("Unable to determine 'Sent' folder for mailbox " + ms.getEmailAddress());
+            }
+        } catch (Exception ex) {
+            log.error("Error copying sent message to 'Sent' folder for mailbox " + ms.getEmailAddress(), ex);
+        }
+        return msg;
+    }
+
+    /**
+     * The outgoing message as SMTP sends it: sender, recipients, subject, date, priority, threading
+     * and receipt headers, body and attachments. Also used to rebuild what a Graph mailbox sent.
+     */
+    private MimeMessage buildOutgoingMessage(Session session, MailboxSetup ms, String to, String cc, String bcc, String subject, String body, String contentType, List<MailAttachmentDTO> attachments, String priority, boolean readReceipt, String inReplyTo, String references) throws Exception {
         MimeMessage msg = new MimeMessage(session);
         String senderName = ms.getEmailSenderName();
         if (senderName != null && !senderName.isEmpty()) {
@@ -2620,35 +2682,7 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
             msg.setHeader("Return-Receipt-To", ms.getEmailAddress());
         }
         msg.setContent(buildMimeMultipart(body, contentType, attachments));
-        msg.saveChanges();
-        Transport.send(msg);
-
-        // Copy sent message to IMAP "Sent" folder
-        try {
-            Store store = imapConnect(ms);
-            List<MailFolderDTO> folders = imapListFolders(ms);
-            String sentFolderId = null;
-            for (MailFolderDTO f : folders) {
-                if (f.isSent()) {
-                    sentFolderId = f.getFolderId();
-                    break;
-                }
-            }
-            if (sentFolderId != null) {
-                Folder sentFolder = store.getFolder(sentFolderId);
-                sentFolder.open(Folder.READ_WRITE);
-                try {
-                    msg.setFlag(Flags.Flag.SEEN, true);
-                    sentFolder.appendMessages(new Message[]{msg});
-                } finally {
-                    sentFolder.close(false);
-                }
-            } else {
-                log.warn("Unable to determine 'Sent' folder for mailbox " + ms.getEmailAddress());
-            }
-        } catch (Exception ex) {
-            log.error("Error copying sent message to 'Sent' folder for mailbox " + ms.getEmailAddress(), ex);
-        }
+        return msg;
     }
 
     private void imapMoveMessage(MailboxSetup ms, String messageRef, String targetFolderId) throws Exception {

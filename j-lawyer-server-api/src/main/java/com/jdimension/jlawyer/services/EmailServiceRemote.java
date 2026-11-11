@@ -805,6 +805,22 @@ public interface EmailServiceRemote {
     void sendMail(String mailboxId, String to, String cc, String bcc, String subject, String body, String contentType, List<MailAttachmentDTO> attachments, String priority, boolean readReceipt, boolean deliveryReceipt, String inReplyTo, String references) throws Exception;
 
     /**
+     * Sends an email exactly like {@link #sendMail} - same backends, permissions and Sent folder
+     * handling - and returns the sent message as RFC 822 bytes, so that it can be filed into a case
+     * as it went out instead of as a reconstruction.
+     * <p>
+     * For SMTP mailboxes this is the transported message itself, including Message-ID, date and
+     * inline image structure. Microsoft Graph does not hand back the sent message; for Exchange
+     * mailboxes the returned message is built from the same recipients, subject, body and
+     * attachments. In both cases the copy carries the Bcc header, like the copy in the Sent folder.
+     *
+     * @return the sent message as .eml bytes
+     * @throws Exception if sending fails - nothing is returned then
+     * @see #sendMail
+     */
+    byte[] sendMailReturningEml(String mailboxId, String to, String cc, String bcc, String subject, String body, String contentType, List<MailAttachmentDTO> attachments, String priority, boolean readReceipt, boolean deliveryReceipt, String inReplyTo, String references) throws Exception;
+
+    /**
      * Moves a message to another folder.
      * @param mailboxId the mailbox ID
      * @param messageRef opaque message reference
