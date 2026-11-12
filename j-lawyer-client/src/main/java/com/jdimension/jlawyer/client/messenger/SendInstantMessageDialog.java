@@ -664,14 +664,32 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.messenger;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.modulebar.SidebarIcon;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.ui.theme.DialogStyle;
+import com.jdimension.jlawyer.client.ui.theme.EntryRowPanel;
+import com.jdimension.jlawyer.client.ui.theme.UiColors;
+import com.jdimension.jlawyer.client.ui.theme.UiFonts;
+import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.InstantMessage;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.event.KeyEvent;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import javax.swing.BorderFactory;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.KeyStroke;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import org.apache.log4j.Logger;
 
 /**
@@ -681,6 +699,9 @@ import org.apache.log4j.Logger;
 public class SendInstantMessageDialog extends javax.swing.JDialog implements NewMessageConsumer {
 
     private static final Logger log = Logger.getLogger(SendInstantMessageDialog.class.getName());
+
+    // documents shown in the context card, further ones are summarized in one line
+    private static final int MAX_DOCUMENT_ROWS = 5;
 
     private ArrayList<ArchiveFileDocumentsBean> documentContexts = null;
     private ArchiveFileBean caseContext=null;
@@ -696,7 +717,7 @@ public class SendInstantMessageDialog extends javax.swing.JDialog implements New
     public SendInstantMessageDialog(java.awt.Frame parent, boolean modal, ArchiveFileBean caseContext, ArrayList<ArchiveFileDocumentsBean> documentContexts) {
         this(parent, modal, caseContext, documentContexts, null);
     }
-    
+
     /**
      * Creates new form SendInstantMessageDialog
      *
@@ -713,22 +734,21 @@ public class SendInstantMessageDialog extends javax.swing.JDialog implements New
         this.caseContext=caseContext;
 
         this.messageSendPanel1.setUsers(UserSettings.getInstance().getMessagingEnabledUsers());
-        if(messageConsumer==null)
+        if(messageConsumer==null) {
             this.messageSendPanel1.setMessageConsumer(this);
-        else
-            this.messageSendPanel1.setMessageConsumer(messageConsumer);
-
-        StringBuilder sb = new StringBuilder();
-        if (documentContexts != null && !documentContexts.isEmpty()) {
-            sb.append("<html><ul>");
-            for (ArchiveFileDocumentsBean doc : documentContexts) {
-                sb.append("\n<li>").append(doc.getName()).append("</li>");
-            }
-            sb.append("</ul></html>");
         } else {
-            sb.append(" ");
+            // the dialog is done once the message has been handed over
+            this.messageSendPanel1.setMessageConsumer(msg -> {
+                messageConsumer.newMessageForSubmission(msg);
+                this.closeDialog();
+            });
         }
-        this.lblProgress.setText(sb.toString());
+
+        this.styleDialog();
+        this.showContext();
+        this.updateSendButton();
+        this.pack();
+        this.setMinimumSize(new java.awt.Dimension(480, this.getHeight()));
     }
 
     /**
@@ -757,38 +777,248 @@ public class SendInstantMessageDialog extends javax.swing.JDialog implements New
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        pnlHeader = new javax.swing.JPanel();
+        lblHeaderIcon = new javax.swing.JLabel();
+        pnlHeaderText = new javax.swing.JPanel();
+        lblHeaderTitle = new javax.swing.JLabel();
+        lblHeaderSummary = new javax.swing.JLabel();
+        pnlPage = new javax.swing.JPanel();
+        cardContext = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
+        cardMessage = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         messageSendPanel1 = new com.jdimension.jlawyer.client.messenger.MessageSendPanel();
-        lblProgress = new javax.swing.JLabel();
+        lblHint = new javax.swing.JLabel();
+        pnlFooter = new javax.swing.JPanel();
+        cmdCancel = new javax.swing.JButton();
+        cmdSend = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Nachricht senden");
 
-        lblProgress.setFont(lblProgress.getFont());
-        lblProgress.setText("jLabel1");
+        pnlHeader.setLayout(new java.awt.BorderLayout(12, 0));
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(messageSendPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 651, Short.MAX_VALUE)
-                    .addComponent(lblProgress, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(messageSendPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 315, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblProgress)
-                .addContainerGap())
-        );
+        lblHeaderIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/chat.png"))); // NOI18N
+        lblHeaderIcon.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        pnlHeader.add(lblHeaderIcon, java.awt.BorderLayout.WEST);
+
+        pnlHeaderText.setOpaque(false);
+        pnlHeaderText.setLayout(new javax.swing.BoxLayout(pnlHeaderText, javax.swing.BoxLayout.Y_AXIS));
+
+        lblHeaderTitle.setText("Nachricht senden");
+        pnlHeaderText.add(lblHeaderTitle);
+
+        lblHeaderSummary.setText("ohne Aktenbezug");
+        pnlHeaderText.add(lblHeaderSummary);
+
+        pnlHeader.add(pnlHeaderText, java.awt.BorderLayout.CENTER);
+
+        getContentPane().add(pnlHeader, java.awt.BorderLayout.NORTH);
+
+        pnlPage.setLayout(new javax.swing.BoxLayout(pnlPage, javax.swing.BoxLayout.Y_AXIS));
+
+        cardContext.setTitle("Bezug");
+        cardContext.setLayout(new javax.swing.BoxLayout(cardContext, javax.swing.BoxLayout.Y_AXIS));
+        pnlPage.add(cardContext);
+
+        cardMessage.setTitle("Nachricht");
+        cardMessage.setLayout(new java.awt.BorderLayout(0, 6));
+        cardMessage.add(messageSendPanel1, java.awt.BorderLayout.CENTER);
+
+        lblHint.setText("@ erwähnt einen Benutzer · Enter sendet · Umschalt+Enter für eine neue Zeile");
+        cardMessage.add(lblHint, java.awt.BorderLayout.SOUTH);
+
+        pnlPage.add(cardMessage);
+
+        getContentPane().add(pnlPage, java.awt.BorderLayout.CENTER);
+
+        pnlFooter.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 8, 10));
+
+        cmdCancel.setText("Abbrechen");
+        cmdCancel.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCancelActionPerformed(evt);
+            }
+        });
+        pnlFooter.add(cmdCancel);
+
+        cmdSend.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_send.png"))); // NOI18N
+        cmdSend.setText("Senden");
+        cmdSend.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSendActionPerformed(evt);
+            }
+        });
+        pnlFooter.add(cmdSend);
+
+        getContentPane().add(pnlFooter, java.awt.BorderLayout.SOUTH);
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
+        this.closeDialog();
+    }//GEN-LAST:event_cmdCancelActionPerformed
+
+    private void cmdSendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSendActionPerformed
+        this.messageSendPanel1.sendMessage();
+    }//GEN-LAST:event_cmdSendActionPerformed
+
+    private void closeDialog() {
+        this.setVisible(false);
+        this.dispose();
+    }
+
+    // header, cards and buttons in the look of the design kit
+    private void styleDialog() {
+        this.getRootPane().putClientProperty(DialogStyle.SKIP, Boolean.TRUE);
+        this.getContentPane().setBackground(DialogStyle.PAGE_BACKGROUND);
+
+        DialogStyle.styleHeader(this.pnlHeader);
+        this.pnlHeader.setBorder(BorderFactory.createEmptyBorder(12, 16, 12, 16));
+        this.lblHeaderIcon.setIcon(new SidebarIcon(this.lblHeaderIcon.getIcon(), UiColors.TEXT_ON_GLASS, 24));
+        this.lblHeaderTitle.setFont(UiFonts.exo2Bold(17f));
+        this.lblHeaderTitle.setForeground(UiColors.TEXT_ON_GLASS);
+        this.lblHeaderSummary.setForeground(UiColors.TEXT_ON_GLASS_SECONDARY);
+        this.lblHeaderSummary.setBorder(BorderFactory.createEmptyBorder(2, 0, 0, 0));
+
+        this.pnlPage.setBackground(DialogStyle.PAGE_BACKGROUND);
+        this.pnlPage.setBorder(BorderFactory.createEmptyBorder(6, 6, 0, 6));
+        this.pnlFooter.setBackground(DialogStyle.PAGE_BACKGROUND);
+        this.pnlFooter.setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 8));
+
+        this.cardContext.setAlignmentX(Component.LEFT_ALIGNMENT);
+        this.cardMessage.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        // the footer button sends, the panel only provides the text area
+        this.messageSendPanel1.setSendButtonVisible(false);
+        this.messageSendPanel1.setPreferredSize(new java.awt.Dimension(560, 150));
+        this.messageSendPanel1.addMessageDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                updateSendButton();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                updateSendButton();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                updateSendButton();
+            }
+        });
+        EntryRowPanel.styleMuted(this.lblHint);
+        this.lblHint.setFont(this.lblHint.getFont().deriveFont(this.lblHint.getFont().getSize2D() - 1f));
+
+        DialogStyle.stylePrimary(this.cmdSend, null);
+        this.cmdCancel.putClientProperty(com.formdev.flatlaf.FlatClientProperties.STYLE, "arc: 10; margin: 4,12,4,12");
+
+        this.getRootPane().registerKeyboardAction(e -> this.closeDialog(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+        this.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowOpened(java.awt.event.WindowEvent e) {
+                messageSendPanel1.requestMessageFocus();
+            }
+        });
+    }
+
+    private void updateSendButton() {
+        this.cmdSend.setEnabled(!this.messageSendPanel1.getMessageText().trim().isEmpty());
+    }
+
+    // the case and documents the message refers to: summary in the header, one row each in the card
+    private void showContext() {
+        this.cardContext.removeAll();
+        int docCount = this.documentContexts == null ? 0 : this.documentContexts.size();
+
+        StringBuilder summary = new StringBuilder();
+        if (docCount > 0) {
+            summary.append(docCount == 1 ? "1 Dokument" : docCount + " Dokumente");
+        }
+        if (this.caseContext != null) {
+            if (summary.length() > 0) {
+                summary.append(" · ");
+            }
+            summary.append("Akte ").append(nvl(this.caseContext.getFileNumber()));
+            if (!nvl(this.caseContext.getName()).isEmpty()) {
+                summary.append(" · ").append(this.caseContext.getName());
+            }
+        }
+        this.lblHeaderSummary.setText(summary.length() == 0 ? "ohne Aktenbezug" : shorten(summary.toString(), 90));
+
+        if (this.caseContext != null) {
+            String title = (nvl(this.caseContext.getFileNumber()) + " " + nvl(this.caseContext.getName())).trim();
+            Icon folder = new SidebarIcon(new ImageIcon(getClass().getResource("/icons/folder.png")), EntryRowPanel.ACCENT_OPEN, 20);
+            EntryRowPanel row = this.addRow(folder, title, this.caseContext.getReason());
+            row.setAccent(EntryRowPanel.ACCENT_OPEN);
+        }
+        if (docCount > 0) {
+            SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+            int shown = docCount > MAX_DOCUMENT_ROWS ? MAX_DOCUMENT_ROWS - 1 : docCount;
+            for (int i = 0; i < shown; i++) {
+                ArchiveFileDocumentsBean doc = this.documentContexts.get(i);
+                StringBuilder detail = new StringBuilder();
+                if (doc.getCreationDate() != null) {
+                    detail.append(df.format(doc.getCreationDate()));
+                }
+                if (doc.getSize() > 0) {
+                    if (detail.length() > 0) {
+                        detail.append(" · ");
+                    }
+                    detail.append(formatSize(doc.getSize()));
+                }
+                this.addRow(FileUtils.getInstance().getFileTypeIcon(nvl(doc.getName())), nvl(doc.getName()), detail.toString());
+            }
+            if (shown < docCount) {
+                JLabel more = new JLabel("… und " + (docCount - shown) + " weitere Dokumente");
+                EntryRowPanel.styleMuted(more);
+                more.setBorder(BorderFactory.createEmptyBorder(4, 12, 2, 0));
+                more.setAlignmentX(Component.LEFT_ALIGNMENT);
+                this.cardContext.add(more);
+            }
+        }
+        this.cardContext.setVisible(this.caseContext != null || docCount > 0);
+    }
+
+    private EntryRowPanel addRow(Icon icon, String title, String detail) {
+        StringBuilder sb = new StringBuilder("<html><b>").append(escape(shorten(title, 70))).append("</b>");
+        if (detail != null && !detail.trim().isEmpty()) {
+            sb.append("<br><span style='color:").append(UiColors.hex(EntryRowPanel.TEXT_MUTED)).append("'>").append(escape(shorten(detail, 80))).append("</span>");
+        }
+        sb.append("</html>");
+        JLabel lbl = new JLabel(sb.toString(), icon, JLabel.LEADING);
+        lbl.setIconTextGap(10);
+        lbl.setToolTipText(title);
+        EntryRowPanel row = new EntryRowPanel();
+        row.setLayout(new BorderLayout());
+        row.add(lbl, BorderLayout.CENTER);
+        row.setAlignmentX(Component.LEFT_ALIGNMENT);
+        this.cardContext.add(row);
+        return row;
+    }
+
+    private static String nvl(String s) {
+        return s == null ? "" : s;
+    }
+
+    private static String shorten(String s, int max) {
+        String t = nvl(s).replace('\n', ' ').trim();
+        return t.length() > max ? t.substring(0, max - 1) + "…" : t;
+    }
+
+    private static String escape(String s) {
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    }
+
+    private static String formatSize(long bytes) {
+        if (bytes < 1024) {
+            return bytes + " Bytes";
+        }
+        if (bytes < 1024L * 1024L) {
+            return Math.round(bytes / 1024d) + " KB";
+        }
+        return String.format(java.util.Locale.GERMANY, "%.1f MB", bytes / (1024d * 1024d));
+    }
 
     /**
      * @param args the command line arguments
@@ -797,7 +1027,7 @@ public class SendInstantMessageDialog extends javax.swing.JDialog implements New
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
         /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html
          */
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
@@ -831,8 +1061,19 @@ public class SendInstantMessageDialog extends javax.swing.JDialog implements New
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel lblProgress;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardContext;
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardMessage;
+    private javax.swing.JButton cmdCancel;
+    private javax.swing.JButton cmdSend;
+    private javax.swing.JLabel lblHeaderIcon;
+    private javax.swing.JLabel lblHeaderSummary;
+    private javax.swing.JLabel lblHeaderTitle;
+    private javax.swing.JLabel lblHint;
     private com.jdimension.jlawyer.client.messenger.MessageSendPanel messageSendPanel1;
+    private javax.swing.JPanel pnlFooter;
+    private javax.swing.JPanel pnlHeader;
+    private javax.swing.JPanel pnlHeaderText;
+    private javax.swing.JPanel pnlPage;
     // End of variables declaration//GEN-END:variables
 
     @Override
@@ -859,8 +1100,7 @@ public class SendInstantMessageDialog extends javax.swing.JDialog implements New
             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Nachricht konnte nicht gesendet werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
-        this.setVisible(false);
-        this.dispose();
+        this.closeDialog();
     }
 
 }

@@ -783,6 +783,38 @@ public class MessageSendPanel extends javax.swing.JPanel {
     }
 
     /**
+     * Hides the send button, e.g. when the surrounding dialog offers its own button that calls
+     * {@link #sendMessage()}.
+     *
+     * @param visible false to hide the send button
+     */
+    public void setSendButtonVisible(boolean visible) {
+        this.cmdSend.setVisible(visible);
+        this.jSeparator1.setVisible(visible);
+    }
+
+    /**
+     * @return the text typed so far
+     */
+    public String getMessageText() {
+        return this.taMessage.getText();
+    }
+
+    /**
+     * @param l listener notified on every change of the message text
+     */
+    public void addMessageDocumentListener(javax.swing.event.DocumentListener l) {
+        this.taMessage.getDocument().addDocumentListener(l);
+    }
+
+    /**
+     * Moves the keyboard focus into the text area.
+     */
+    public void requestMessageFocus() {
+        this.taMessage.requestFocusInWindow();
+    }
+
+    /**
      * Prefills the message text area.
      * @param text initial text to set
      * @param caretPosition initial cursor position
@@ -897,7 +929,14 @@ public class MessageSendPanel extends javax.swing.JPanel {
         this.sendMessage();
     }//GEN-LAST:event_cmdSendActionPerformed
 
-    private void sendMessage() {
+    /**
+     * Hands the typed message to the message consumer and clears the text area; an empty message
+     * is not sent.
+     */
+    public void sendMessage() {
+        if (this.taMessage.getText().trim().isEmpty()) {
+            return;
+        }
         InstantMessage im1 = new InstantMessage();
         im1.setSender(UserSettings.getInstance().getCurrentUser().getPrincipalId());
         im1.setContent(this.taMessage.getText().trim());
