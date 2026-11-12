@@ -763,6 +763,9 @@ public class FormInstancePanel extends javax.swing.JPanel implements AssistantFl
         JPanel ui = new JPanel();
         try {
             ui = plugin.getUi();
+            // kit look for the plugin UI - applied here, so the Groovy scripts need no styling code
+            com.jdimension.jlawyer.client.ui.theme.PluginUiSkin.apply(ui);
+            this.scrollPlugin.getViewport().setBackground(com.jdimension.jlawyer.client.ui.theme.DialogStyle.PAGE_BACKGROUND);
             this.scrollPlugin.setViewportView(ui);
             this.scrollPlugin.getVerticalScrollBar().setUnitIncrement(16);
             this.cmdFormAi.setEnabled(this.plugin.isAiEnabled() && this.extractCapability != null);
