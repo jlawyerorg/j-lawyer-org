@@ -678,6 +678,14 @@ import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import com.jdimension.jlawyer.client.ui.theme.DialogStyle;
+import com.jdimension.jlawyer.client.ui.theme.EntryRowPanel;
+import com.jdimension.jlawyer.client.ui.theme.UiColors;
+import com.jdimension.jlawyer.client.ui.theme.UiFonts;
+import javax.swing.Icon;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTable;
@@ -717,38 +725,14 @@ public class ArchivalDialog extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
 
-        this.cmdArchive.setEnabled(false);
-        
         this.tblReviews=tblReviews;
         this.invoicesPanel=invoicesPanel;
         this.paymentsPanel=paymentsPanel;
         this.timesheetsPanel=timesheetsPanel;
         this.caseId=caseId;
-        
-        this.chkCalendar.setEnabled(false);
-        this.chkInvoices.setEnabled(false);
-        this.chkPayments.setEnabled(false);
-        this.chkTimesheets.setEnabled(false);
-        this.chkEscrow.setEnabled(false);
-        this.chkExpenditures.setEnabled(false);
-        this.chkMessages.setEnabled(false);
-        
-        this.lblCalendar.setText("Keine offenen Kalendereinträge");
-        this.lblInvoices.setText("Keine Belege in Offene Posten-Liste");
-        this.lblPayments.setText("Keine unabgeschlossenen Zahlungen");
-        this.lblTimesheets.setText("Keine offenen Zeiterfassungsprojekte");
-        this.lblEscrow.setText("Aktenkonto: Fremdgelder sind ausgeglichen");
-        this.lblExpenditures.setText("Aktenkonto: Auslagen sind ausgeglichen");
-        this.lblMessages.setText("alle Nachrichten als erledigt markiert");
-        
-        this.lblCalendar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
-        this.lblInvoices.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
-        this.lblPayments.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
-        this.lblTimesheets.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
-        this.lblExpenditures.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
-        this.lblEscrow.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
-        this.lblMessages.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
-        
+
+        this.styleDialog();
+
         ArrayList<ArchiveFileReviewsBean> openCalItems = new ArrayList<>();
         ArchiveFileReviewReasonsTableModel reviewsModel = (ArchiveFileReviewReasonsTableModel) tblReviews.getModel();
         for (int i = 0; i < reviewsModel.getRowCount(); i++) {
@@ -758,23 +742,23 @@ public class ArchivalDialog extends javax.swing.JDialog {
                 openCalItems.add(reviewDTO);
             }
         }
-        if (!openCalItems.isEmpty()) {
-            this.lblCalendar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png")));
-            this.chkCalendar.setEnabled(true);
-            this.lblCalendar.setText("" + openCalItems.size() + " offene Kalendereinträge");
-            
+        if (openCalItems.isEmpty()) {
+            this.showCheck(this.rowCalendar, this.lblCalendar, this.chkCalendar, true, "Keine offenen Kalendereinträge", null);
+        } else {
+            List<String> items = new ArrayList<>();
             StringBuilder sb = new StringBuilder();
             sb.append("<html>Es gibt noch offene Wiedervorlagen / Fristen / Termine.<br/>Sollen offene Kalendereintr&auml;ge automatisch geschlossen werden?");
             sb.append("<ul>");
             for (ArchiveFileReviewsBean a : openCalItems) {
                 sb.append("<li>").append(a.toString()).append(" - ").append(a.getSummary()).append("</li>");
+                items.add(a.getSummary());
             }
             sb.append("</ul>");
             sb.append("</html>");
+            this.showCheck(this.rowCalendar, this.lblCalendar, this.chkCalendar, false, count(openCalItems.size(), "offener Kalendereintrag", "offene Kalendereinträge"), summarize(items));
             this.lblCalendar.setToolTipText(sb.toString());
-
         }
-        
+
         ArrayList<Invoice> openInvoices = new ArrayList<>();
         for(int i=0;i<this.invoicesPanel.getComponentCount();i++) {
             InvoiceEntryPanel ie = (InvoiceEntryPanel) this.invoicesPanel.getComponent(i);
@@ -783,23 +767,23 @@ public class ArchivalDialog extends javax.swing.JDialog {
                 openInvoices.add(inv);
             }
         }
-        if (!openInvoices.isEmpty()) {
-            this.lblInvoices.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png")));
-            this.chkInvoices.setEnabled(true);
-            this.lblInvoices.setText("" + openInvoices.size() + " offene Belege");
-            
+        if (openInvoices.isEmpty()) {
+            this.showCheck(this.rowInvoices, this.lblInvoices, this.chkInvoices, true, "Keine Belege in der Offene-Posten-Liste", null);
+        } else {
+            List<String> items = new ArrayList<>();
             StringBuilder sb = new StringBuilder();
             sb.append("<html>Es gibt noch offene Belege.<br/>Sollen diese Belege unverändert bleiben und ignoriert werden?");
             sb.append("<ul>");
             for (Invoice i : openInvoices) {
                 sb.append("<li>").append(i.getInvoiceNumber()).append(" - ").append(i.getStatusString()).append("</li>");
+                items.add(i.getInvoiceNumber() + " (" + i.getStatusString() + ")");
             }
             sb.append("</ul>");
             sb.append("</html>");
+            this.showCheck(this.rowInvoices, this.lblInvoices, this.chkInvoices, false, count(openInvoices.size(), "offener Beleg", "offene Belege"), summarize(items));
             this.lblInvoices.setToolTipText(sb.toString());
-
         }
-        
+
         ArrayList<Payment> openPayments = new ArrayList<>();
         for(int i=0;i<this.paymentsPanel.getComponentCount();i++) {
             PaymentEntryPanel pe = (PaymentEntryPanel) this.paymentsPanel.getComponent(i);
@@ -808,24 +792,23 @@ public class ArchivalDialog extends javax.swing.JDialog {
                 openPayments.add(p);
             }
         }
-        if (!openPayments.isEmpty()) {
-            this.lblPayments.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png")));
-            this.chkPayments.setEnabled(true);
-            this.lblPayments.setText("" + openPayments.size() + " offene Zahlungen");
-            
+        if (openPayments.isEmpty()) {
+            this.showCheck(this.rowPayments, this.lblPayments, this.chkPayments, true, "Keine unabgeschlossenen Zahlungen", null);
+        } else {
+            List<String> items = new ArrayList<>();
             StringBuilder sb = new StringBuilder();
             sb.append("<html>Es gibt noch offene Zahlungen.<br/>Sollen diese Zahlungen unverändert bleiben und ignoriert werden?");
             sb.append("<ul>");
             for (Payment p : openPayments) {
                 sb.append("<li>").append(p.getPaymentNumber()).append(" - ").append(p.getStatusString()).append("</li>");
+                items.add(p.getPaymentNumber() + " (" + p.getStatusString() + ")");
             }
             sb.append("</ul>");
             sb.append("</html>");
+            this.showCheck(this.rowPayments, this.lblPayments, this.chkPayments, false, count(openPayments.size(), "offene Zahlung", "offene Zahlungen"), summarize(items));
             this.lblPayments.setToolTipText(sb.toString());
-
         }
-        
-        
+
         ArrayList<Timesheet> openSheets = new ArrayList<>();
         for(int i=0;i<this.timesheetsPanel.getComponentCount();i++) {
             TimesheetEntryPanel te = (TimesheetEntryPanel) this.timesheetsPanel.getComponent(i);
@@ -834,59 +817,78 @@ public class ArchivalDialog extends javax.swing.JDialog {
                 openSheets.add(t);
             }
         }
-        if (!openSheets.isEmpty()) {
-            this.lblTimesheets.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png")));
-            this.chkTimesheets.setEnabled(true);
-            this.lblTimesheets.setText("" + openSheets.size() + " offene Zeiterfassungsprojekte");
-            
+        if (openSheets.isEmpty()) {
+            this.showCheck(this.rowTimesheets, this.lblTimesheets, this.chkTimesheets, true, "Keine offenen Zeiterfassungsprojekte", null);
+        } else {
+            List<String> items = new ArrayList<>();
             StringBuilder sb = new StringBuilder();
             sb.append("<html>Es gibt noch offene Zeiterfassungsprojekte.<br/>Sollen diese automatisch geschlossen werden?");
             sb.append("<ul>");
             for (Timesheet t : openSheets) {
                 sb.append("<li>").append(t.getName()).append("</li>");
+                items.add(t.getName());
             }
             sb.append("</ul>");
             sb.append("</html>");
+            this.showCheck(this.rowTimesheets, this.lblTimesheets, this.chkTimesheets, false, count(openSheets.size(), "offenes Zeiterfassungsprojekt", "offene Zeiterfassungsprojekte"), summarize(items));
             this.lblTimesheets.setToolTipText(sb.toString());
-
         }
-        
+
+        java.text.NumberFormat cf = java.text.NumberFormat.getCurrencyInstance(java.util.Locale.GERMANY);
         if(totalEscrowDiff.compareTo(BigDecimal.ZERO)!=0) {
-            this.lblEscrow.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png")));
-            this.chkEscrow.setEnabled(true);
-            this.lblEscrow.setText("Aktenkonto: Fremdgelder nicht ausgeglichen");
+            this.showCheck(this.rowEscrow, this.lblEscrow, this.chkEscrow, false, "Aktenkonto: Fremdgelder nicht ausgeglichen", "Saldo " + cf.format(totalEscrowDiff));
+        } else {
+            this.showCheck(this.rowEscrow, this.lblEscrow, this.chkEscrow, true, "Aktenkonto: Fremdgelder sind ausgeglichen", null);
         }
-        
-        if(totalExpendituresDiff.compareTo(BigDecimal.ZERO)!=0) {
-            this.lblExpenditures.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png")));
-            this.chkExpenditures.setEnabled(true);
-            this.lblExpenditures.setText("Aktenkonto: Auslagen nicht ausgeglichen");
-        }
-        
-        try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
-                this.openMessages=locator.lookupMessagingServiceRemote().getMessagesForCase(caseId, true);
-                SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy HH:mm");
-                if(!openMessages.isEmpty()) {
-                    this.lblMessages.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png")));
-                    this.chkMessages.setEnabled(true);
-                    this.lblMessages.setText("" + openMessages.size() + " unerledigte Nachrichten");
 
-                    StringBuilder sb = new StringBuilder();
-                    sb.append("<html>Es gibt noch unerledigte Nachrichten mit offenen Erw&auml;hnungen.<br/>Sollen diese automatisch auf erledigt gesetzt werden?");
-                    sb.append("<ul>");
-                    for (InstantMessage m : openMessages) {
-                        sb.append("<li>").append(df.format(m.getSent())).append(" ").append(m.getSender()).append(": ").append(m.getContent()).append("</li>");
-                    }
-                    sb.append("</ul>");
-                    sb.append("</html>");
-                    this.lblMessages.setToolTipText(sb.toString());
-                }
-            } catch (Exception ex) {
-                log.error("Error getting messages for case", ex);
+        if(totalExpendituresDiff.compareTo(BigDecimal.ZERO)!=0) {
+            this.showCheck(this.rowExpenditures, this.lblExpenditures, this.chkExpenditures, false, "Aktenkonto: Auslagen nicht ausgeglichen", "Saldo " + cf.format(totalExpendituresDiff));
+        } else {
+            this.showCheck(this.rowExpenditures, this.lblExpenditures, this.chkExpenditures, true, "Aktenkonto: Auslagen sind ausgeglichen", null);
+        }
+
+        this.openMessages = new ArrayList<>();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+            this.openMessages=locator.lookupMessagingServiceRemote().getMessagesForCase(caseId, true);
+        } catch (Exception ex) {
+            log.error("Error getting messages for case", ex);
+        }
+        if (this.openMessages.isEmpty()) {
+            this.showCheck(this.rowMessages, this.lblMessages, this.chkMessages, true, "Alle Nachrichten als erledigt markiert", null);
+        } else {
+            SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy HH:mm");
+            java.util.LinkedHashSet<String> senders = new java.util.LinkedHashSet<>();
+            StringBuilder sb = new StringBuilder();
+            sb.append("<html>Es gibt noch unerledigte Nachrichten mit offenen Erw&auml;hnungen.<br/>Sollen diese automatisch auf erledigt gesetzt werden?");
+            sb.append("<ul>");
+            for (InstantMessage m : openMessages) {
+                sb.append("<li>").append(df.format(m.getSent())).append(" ").append(m.getSender()).append(": ").append(m.getContent()).append("</li>");
+                senders.add(m.getSender());
             }
-        
+            sb.append("</ul>");
+            sb.append("</html>");
+            this.showCheck(this.rowMessages, this.lblMessages, this.chkMessages, false, count(openMessages.size(), "unerledigte Nachricht", "unerledigte Nachrichten"), "von " + summarize(new ArrayList<>(senders)));
+            this.lblMessages.setToolTipText(sb.toString());
+        }
+
+        // the points that need a decision first
+        List<java.awt.Component> rows = new ArrayList<>();
+        for (java.awt.Component c : this.cardChecks.getComponents()) {
+            rows.add(c);
+        }
+        this.cardChecks.removeAll();
+        for (boolean open : new boolean[]{true, false}) {
+            for (java.awt.Component c : rows) {
+                if (checkBoxOf(c).isEnabled() == open) {
+                    this.cardChecks.add(c);
+                }
+            }
+        }
+
         this.enableArchival();
+        this.pack();
+        this.setSize(Math.max(560, this.getWidth()), this.getHeight());
 
     }
 
@@ -899,195 +901,201 @@ public class ArchivalDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        pnlHeader = new javax.swing.JPanel();
+        lblHeaderIcon = new javax.swing.JLabel();
+        pnlHeaderText = new javax.swing.JPanel();
+        lblHeaderTitle = new javax.swing.JLabel();
+        lblHeaderSummary = new javax.swing.JLabel();
+        pnlPage = new javax.swing.JPanel();
+        cardChecks = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
+        rowCalendar = new com.jdimension.jlawyer.client.ui.theme.EntryRowPanel();
         lblCalendar = new javax.swing.JLabel();
+        chkCalendar = new javax.swing.JCheckBox();
+        rowInvoices = new com.jdimension.jlawyer.client.ui.theme.EntryRowPanel();
         lblInvoices = new javax.swing.JLabel();
+        chkInvoices = new javax.swing.JCheckBox();
+        rowPayments = new com.jdimension.jlawyer.client.ui.theme.EntryRowPanel();
+        lblPayments = new javax.swing.JLabel();
+        chkPayments = new javax.swing.JCheckBox();
+        rowTimesheets = new com.jdimension.jlawyer.client.ui.theme.EntryRowPanel();
         lblTimesheets = new javax.swing.JLabel();
+        chkTimesheets = new javax.swing.JCheckBox();
+        rowEscrow = new com.jdimension.jlawyer.client.ui.theme.EntryRowPanel();
+        lblEscrow = new javax.swing.JLabel();
+        chkEscrow = new javax.swing.JCheckBox();
+        rowExpenditures = new com.jdimension.jlawyer.client.ui.theme.EntryRowPanel();
+        lblExpenditures = new javax.swing.JLabel();
+        chkExpenditures = new javax.swing.JCheckBox();
+        rowMessages = new com.jdimension.jlawyer.client.ui.theme.EntryRowPanel();
+        lblMessages = new javax.swing.JLabel();
+        chkMessages = new javax.swing.JCheckBox();
+        pnlFooter = new javax.swing.JPanel();
         cmdCancel = new javax.swing.JButton();
         cmdArchive = new javax.swing.JButton();
-        chkCalendar = new javax.swing.JCheckBox();
-        chkInvoices = new javax.swing.JCheckBox();
-        chkTimesheets = new javax.swing.JCheckBox();
-        chkEscrow = new javax.swing.JCheckBox();
-        chkExpenditures = new javax.swing.JCheckBox();
-        lblEscrow = new javax.swing.JLabel();
-        lblExpenditures = new javax.swing.JLabel();
-        chkMessages = new javax.swing.JCheckBox();
-        lblMessages = new javax.swing.JLabel();
-        chkPayments = new javax.swing.JCheckBox();
-        lblPayments = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Akte archivieren - Prüfergebnis");
 
-        lblCalendar.setFont(lblCalendar.getFont());
+        pnlHeader.setLayout(new java.awt.BorderLayout(12, 0));
+
+        lblHeaderIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/inventory_24dp_FFFFFF.png"))); // NOI18N
+        lblHeaderIcon.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        pnlHeader.add(lblHeaderIcon, java.awt.BorderLayout.WEST);
+
+        pnlHeaderText.setOpaque(false);
+        pnlHeaderText.setLayout(new javax.swing.BoxLayout(pnlHeaderText, javax.swing.BoxLayout.Y_AXIS));
+
+        lblHeaderTitle.setText("Akte archivieren");
+        pnlHeaderText.add(lblHeaderTitle);
+
+        lblHeaderSummary.setText("Prüfergebnis");
+        pnlHeaderText.add(lblHeaderSummary);
+
+        pnlHeader.add(pnlHeaderText, java.awt.BorderLayout.CENTER);
+
+        getContentPane().add(pnlHeader, java.awt.BorderLayout.NORTH);
+
+        pnlPage.setLayout(new java.awt.BorderLayout());
+
+        cardChecks.setTitle("Prüfergebnis");
+        cardChecks.setLayout(new javax.swing.BoxLayout(cardChecks, javax.swing.BoxLayout.Y_AXIS));
+
+        rowCalendar.setLayout(new java.awt.BorderLayout(10, 0));
+
         lblCalendar.setText("offene Kalendereinträge");
+        rowCalendar.add(lblCalendar, java.awt.BorderLayout.CENTER);
 
-        lblInvoices.setFont(lblInvoices.getFont());
+        chkCalendar.setText("auf erledigt setzen");
+        chkCalendar.setOpaque(false);
+        chkCalendar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkCalendarActionPerformed(evt);
+            }
+        });
+        rowCalendar.add(chkCalendar, java.awt.BorderLayout.EAST);
+
+        cardChecks.add(rowCalendar);
+
+        rowInvoices.setLayout(new java.awt.BorderLayout(10, 0));
+
         lblInvoices.setText("Belege in Offene Posten-Liste");
+        rowInvoices.add(lblInvoices, java.awt.BorderLayout.CENTER);
 
-        lblTimesheets.setFont(lblTimesheets.getFont());
+        chkInvoices.setText("ignorieren");
+        chkInvoices.setOpaque(false);
+        chkInvoices.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkInvoicesActionPerformed(evt);
+            }
+        });
+        rowInvoices.add(chkInvoices, java.awt.BorderLayout.EAST);
+
+        cardChecks.add(rowInvoices);
+
+        rowPayments.setLayout(new java.awt.BorderLayout(10, 0));
+
+        lblPayments.setText("nicht abgeschlossene Zahlungen");
+        rowPayments.add(lblPayments, java.awt.BorderLayout.CENTER);
+
+        chkPayments.setText("ignorieren");
+        chkPayments.setOpaque(false);
+        chkPayments.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkPaymentsActionPerformed(evt);
+            }
+        });
+        rowPayments.add(chkPayments, java.awt.BorderLayout.EAST);
+
+        cardChecks.add(rowPayments);
+
+        rowTimesheets.setLayout(new java.awt.BorderLayout(10, 0));
+
         lblTimesheets.setText("offene Zeiterfassungsprojekte");
+        rowTimesheets.add(lblTimesheets, java.awt.BorderLayout.CENTER);
 
-        cmdCancel.setFont(cmdCancel.getFont());
-        cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        chkTimesheets.setText("schließen");
+        chkTimesheets.setOpaque(false);
+        chkTimesheets.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkTimesheetsActionPerformed(evt);
+            }
+        });
+        rowTimesheets.add(chkTimesheets, java.awt.BorderLayout.EAST);
+
+        cardChecks.add(rowTimesheets);
+
+        rowEscrow.setLayout(new java.awt.BorderLayout(10, 0));
+
+        lblEscrow.setText("Aktenkonto: Fremdgeld nicht ausgeglichen");
+        rowEscrow.add(lblEscrow, java.awt.BorderLayout.CENTER);
+
+        chkEscrow.setText("ignorieren");
+        chkEscrow.setOpaque(false);
+        chkEscrow.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkEscrowActionPerformed(evt);
+            }
+        });
+        rowEscrow.add(chkEscrow, java.awt.BorderLayout.EAST);
+
+        cardChecks.add(rowEscrow);
+
+        rowExpenditures.setLayout(new java.awt.BorderLayout(10, 0));
+
+        lblExpenditures.setText("Aktenkonto: Auslagen nicht ausgeglichen");
+        rowExpenditures.add(lblExpenditures, java.awt.BorderLayout.CENTER);
+
+        chkExpenditures.setText("ignorieren");
+        chkExpenditures.setOpaque(false);
+        chkExpenditures.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkExpendituresActionPerformed(evt);
+            }
+        });
+        rowExpenditures.add(chkExpenditures, java.awt.BorderLayout.EAST);
+
+        cardChecks.add(rowExpenditures);
+
+        rowMessages.setLayout(new java.awt.BorderLayout(10, 0));
+
+        lblMessages.setText("Nachrichten: unerledigte Erwähnungen");
+        rowMessages.add(lblMessages, java.awt.BorderLayout.CENTER);
+
+        chkMessages.setText("auf erledigt setzen");
+        chkMessages.setOpaque(false);
+        chkMessages.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkMessagesActionPerformed(evt);
+            }
+        });
+        rowMessages.add(chkMessages, java.awt.BorderLayout.EAST);
+
+        cardChecks.add(rowMessages);
+
+        pnlPage.add(cardChecks, java.awt.BorderLayout.CENTER);
+
+        getContentPane().add(pnlPage, java.awt.BorderLayout.CENTER);
+
+        pnlFooter.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 8, 10));
+
         cmdCancel.setText("Abbrechen");
         cmdCancel.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdCancelActionPerformed(evt);
             }
         });
+        pnlFooter.add(cmdCancel);
 
-        cmdArchive.setFont(cmdArchive.getFont());
-        cmdArchive.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdArchive.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/inventory_24dp_FFFFFF.png"))); // NOI18N
         cmdArchive.setText("Akte archivieren");
         cmdArchive.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdArchiveActionPerformed(evt);
             }
         });
+        pnlFooter.add(cmdArchive);
 
-        chkCalendar.setFont(chkCalendar.getFont());
-        chkCalendar.setText("auf erledigt setzen");
-        chkCalendar.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkCalendarActionPerformed(evt);
-            }
-        });
-
-        chkInvoices.setFont(chkInvoices.getFont());
-        chkInvoices.setText("ignorieren");
-        chkInvoices.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkInvoicesActionPerformed(evt);
-            }
-        });
-
-        chkTimesheets.setFont(chkTimesheets.getFont());
-        chkTimesheets.setText("schließen");
-        chkTimesheets.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkTimesheetsActionPerformed(evt);
-            }
-        });
-
-        chkEscrow.setText("ignorieren");
-        chkEscrow.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkEscrowActionPerformed(evt);
-            }
-        });
-
-        chkExpenditures.setText("ignorieren");
-        chkExpenditures.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkExpendituresActionPerformed(evt);
-            }
-        });
-
-        lblEscrow.setText("Aktenkonto: Fremdgeld nicht ausgeglichen");
-
-        lblExpenditures.setText("Aktenkonto: Auslagen nicht ausgeglichen");
-
-        chkMessages.setText("auf erledigt setzen");
-        chkMessages.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkMessagesActionPerformed(evt);
-            }
-        });
-
-        lblMessages.setText("Nachrichten: unerledigte Erwähnungen");
-
-        chkPayments.setText("ignorieren");
-        chkPayments.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkPaymentsActionPerformed(evt);
-            }
-        });
-
-        lblPayments.setText("nicht abgeschlossene Zahlungen");
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(cmdArchive)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdCancel))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(lblTimesheets, javax.swing.GroupLayout.DEFAULT_SIZE, 585, Short.MAX_VALUE)
-                                .addGap(18, 18, 18))
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(lblEscrow)
-                                    .addComponent(lblExpenditures)
-                                    .addComponent(lblMessages))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(chkEscrow)
-                            .addComponent(chkTimesheets, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(chkExpenditures)
-                            .addComponent(chkMessages)))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(lblCalendar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(lblInvoices, javax.swing.GroupLayout.DEFAULT_SIZE, 585, Short.MAX_VALUE))
-                                .addGap(18, 18, 18))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(lblPayments)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(chkPayments)
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                .addComponent(chkInvoices, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(chkCalendar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
-                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblCalendar)
-                    .addComponent(chkCalendar))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblInvoices)
-                    .addComponent(chkInvoices))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(chkPayments)
-                    .addComponent(lblPayments))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblTimesheets)
-                    .addComponent(chkTimesheets))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(chkEscrow)
-                    .addComponent(lblEscrow))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(chkExpenditures)
-                    .addComponent(lblExpenditures))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(chkMessages)
-                    .addComponent(lblMessages))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cmdCancel)
-                    .addComponent(cmdArchive))
-                .addContainerGap())
-        );
+        getContentPane().add(pnlFooter, java.awt.BorderLayout.SOUTH);
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -1225,6 +1233,174 @@ public class ArchivalDialog extends javax.swing.JDialog {
         boolean messagesOkay=!this.chkMessages.isEnabled() || (this.chkMessages.isSelected() && this.chkMessages.isEnabled());
         
         this.cmdArchive.setEnabled(invoiceOkay && paymentOkay && calendarOkay && timesheetOkay && escrowOkay && expendituresOkay && messagesOkay);
+        this.updateStatus();
+    }
+
+    private static final java.awt.Color ACCENT_PENDING = new java.awt.Color(245, 158, 11);
+    private static final java.awt.Color ACCENT_DECIDED = EntryRowPanel.ACCENT_OPEN;
+
+    // header, rows and buttons in the look of the design kit
+    private void styleDialog() {
+        this.getRootPane().putClientProperty(DialogStyle.SKIP, Boolean.TRUE);
+        this.getContentPane().setBackground(DialogStyle.PAGE_BACKGROUND);
+
+        DialogStyle.styleHeader(this.pnlHeader);
+        this.pnlHeader.setBorder(javax.swing.BorderFactory.createEmptyBorder(12, 16, 12, 16));
+        this.lblHeaderTitle.setFont(UiFonts.exo2Bold(17f));
+        this.lblHeaderTitle.setForeground(UiColors.TEXT_ON_GLASS);
+        this.lblHeaderSummary.setForeground(UiColors.TEXT_ON_GLASS_SECONDARY);
+        this.lblHeaderSummary.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 0, 0, 0));
+
+        this.pnlPage.setBackground(DialogStyle.PAGE_BACKGROUND);
+        this.pnlPage.setBorder(javax.swing.BorderFactory.createEmptyBorder(6, 6, 0, 6));
+        this.pnlFooter.setBackground(DialogStyle.PAGE_BACKGROUND);
+        this.pnlFooter.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 6, 0, 8));
+
+        for (java.awt.Component c : this.cardChecks.getComponents()) {
+            ((JComponent) c).setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
+        }
+
+        DialogStyle.stylePrimary(this.cmdArchive, null);
+        this.cmdCancel.putClientProperty(com.formdev.flatlaf.FlatClientProperties.STYLE, "arc: 10; margin: 4,12,4,12");
+    }
+
+    /**
+     * Shows the result of one check in its row: title and an optional detail line; the decision is
+     * only offered for a check that is not passed.
+     */
+    private void showCheck(EntryRowPanel row, JLabel lbl, JCheckBox chk, boolean passed, String title, String detail) {
+        // passed checks plain, the points that need a decision stand out
+        StringBuilder sb = new StringBuilder("<html>").append(passed ? "" : "<b>").append(escape(title)).append(passed ? "" : "</b>");
+        if (detail != null && !detail.isEmpty()) {
+            sb.append("<br><span style='color:").append(UiColors.hex(EntryRowPanel.TEXT_MUTED)).append("'>").append(escape(detail)).append("</span>");
+        }
+        sb.append("</html>");
+        lbl.setText(sb.toString());
+        lbl.setIconTextGap(10);
+        chk.setEnabled(!passed);
+        chk.setVisible(!passed);
+        chk.setSelected(false);
+        chk.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+        if (!passed) {
+            chk.setFont(chk.getFont().deriveFont(java.awt.Font.BOLD));
+        }
+    }
+
+    // accent and icon of each row, summary in the header
+    private void updateStatus() {
+        int pending = 0;
+        int failed = 0;
+        for (java.awt.Component c : this.cardChecks.getComponents()) {
+            EntryRowPanel row = (EntryRowPanel) c;
+            JCheckBox chk = checkBoxOf(row);
+            JLabel lbl = (JLabel) ((java.awt.BorderLayout) row.getLayout()).getLayoutComponent(java.awt.BorderLayout.CENTER);
+            if (!chk.isEnabled()) {
+                row.setAccent(EntryRowPanel.ACCENT_DONE);
+                lbl.setIcon(statusIcon(EntryRowPanel.ACCENT_DONE, true));
+            } else if (chk.isSelected()) {
+                failed++;
+                row.setAccent(ACCENT_DECIDED);
+                lbl.setIcon(statusIcon(ACCENT_DECIDED, true));
+            } else {
+                failed++;
+                pending++;
+                row.setAccent(ACCENT_PENDING);
+                lbl.setIcon(statusIcon(ACCENT_PENDING, false));
+            }
+        }
+        if (failed == 0) {
+            this.lblHeaderSummary.setText("Alle Prüfungen bestanden - die Akte kann archiviert werden.");
+        } else if (pending == 0) {
+            this.lblHeaderSummary.setText("Alle offenen Punkte sind entschieden - die Akte kann archiviert werden.");
+        } else if (pending == 1) {
+            this.lblHeaderSummary.setText("Noch 1 offener Punkt - bitte entscheiden, wie damit verfahren werden soll.");
+        } else {
+            this.lblHeaderSummary.setText("Noch " + pending + " offene Punkte - bitte jeweils entscheiden, wie damit verfahren werden soll.");
+        }
+    }
+
+    private static JCheckBox checkBoxOf(java.awt.Component row) {
+        return (JCheckBox) ((java.awt.BorderLayout) ((java.awt.Container) row).getLayout()).getLayoutComponent(java.awt.BorderLayout.EAST);
+    }
+
+    private static String count(int n, String singular, String plural) {
+        return n + " " + (n == 1 ? singular : plural);
+    }
+
+    // the first entries of a list in one short line
+    private static String summarize(List<String> items) {
+        StringBuilder sb = new StringBuilder();
+        int shown = 0;
+        for (String item : items) {
+            if (item == null || item.trim().isEmpty()) {
+                continue;
+            }
+            String t = item.trim();
+            if (t.length() > 40) {
+                t = t.substring(0, 39) + "…";
+            }
+            if (shown == 3 || sb.length() + t.length() > 90) {
+                break;
+            }
+            if (shown > 0) {
+                sb.append(" · ");
+            }
+            sb.append(t);
+            shown++;
+        }
+        int more = 0;
+        for (String item : items) {
+            if (item != null && !item.trim().isEmpty()) {
+                more++;
+            }
+        }
+        more -= shown;
+        if (more > 0) {
+            sb.append(" und ").append(more).append(" weitere");
+        }
+        return sb.toString();
+    }
+
+    private static String escape(String s) {
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    }
+
+    /**
+     * @param color colour of the status
+     * @param check true for a check mark, false for an exclamation mark
+     * @return a filled circle with a white symbol
+     */
+    private static Icon statusIcon(java.awt.Color color, boolean check) {
+        return new Icon() {
+            @Override
+            public void paintIcon(java.awt.Component c, java.awt.Graphics g, int x, int y) {
+                java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
+                g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new java.awt.Color(color.getRed(), color.getGreen(), color.getBlue(), 40));
+                g2.fillOval(x, y, 22, 22);
+                g2.setColor(color);
+                g2.fillOval(x + 3, y + 3, 16, 16);
+                g2.setColor(java.awt.Color.WHITE);
+                g2.setStroke(new java.awt.BasicStroke(2f, java.awt.BasicStroke.CAP_ROUND, java.awt.BasicStroke.JOIN_ROUND));
+                if (check) {
+                    g2.drawPolyline(new int[]{x + 7, x + 10, x + 15}, new int[]{y + 11, y + 14, y + 8}, 3);
+                } else {
+                    g2.drawLine(x + 11, y + 7, x + 11, y + 12);
+                    g2.fillOval(x + 10, y + 14, 2, 2);
+                }
+                g2.dispose();
+            }
+
+            @Override
+            public int getIconWidth() {
+                return 22;
+            }
+
+            @Override
+            public int getIconHeight() {
+                return 22;
+            }
+        };
     }
     
     /**
@@ -1268,6 +1444,7 @@ public class ArchivalDialog extends javax.swing.JDialog {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardChecks;
     private javax.swing.JCheckBox chkCalendar;
     private javax.swing.JCheckBox chkEscrow;
     private javax.swing.JCheckBox chkExpenditures;
@@ -1280,10 +1457,24 @@ public class ArchivalDialog extends javax.swing.JDialog {
     private javax.swing.JLabel lblCalendar;
     private javax.swing.JLabel lblEscrow;
     private javax.swing.JLabel lblExpenditures;
+    private javax.swing.JLabel lblHeaderIcon;
+    private javax.swing.JLabel lblHeaderSummary;
+    private javax.swing.JLabel lblHeaderTitle;
     private javax.swing.JLabel lblInvoices;
     private javax.swing.JLabel lblMessages;
     private javax.swing.JLabel lblPayments;
     private javax.swing.JLabel lblTimesheets;
+    private javax.swing.JPanel pnlFooter;
+    private javax.swing.JPanel pnlHeader;
+    private javax.swing.JPanel pnlHeaderText;
+    private javax.swing.JPanel pnlPage;
+    private com.jdimension.jlawyer.client.ui.theme.EntryRowPanel rowCalendar;
+    private com.jdimension.jlawyer.client.ui.theme.EntryRowPanel rowEscrow;
+    private com.jdimension.jlawyer.client.ui.theme.EntryRowPanel rowExpenditures;
+    private com.jdimension.jlawyer.client.ui.theme.EntryRowPanel rowInvoices;
+    private com.jdimension.jlawyer.client.ui.theme.EntryRowPanel rowMessages;
+    private com.jdimension.jlawyer.client.ui.theme.EntryRowPanel rowPayments;
+    private com.jdimension.jlawyer.client.ui.theme.EntryRowPanel rowTimesheets;
     // End of variables declaration//GEN-END:variables
 
     /**
