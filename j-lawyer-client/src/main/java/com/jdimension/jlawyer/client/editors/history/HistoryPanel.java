@@ -667,7 +667,10 @@ import com.formdev.flatlaf.FlatClientProperties;
 import com.jdimension.jlawyer.client.components.AutoWrapLayout;
 import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
 import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
+import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.utils.DateUtils;
+import com.jdimension.jlawyer.client.utils.DesktopDateEntry;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
 import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
@@ -748,6 +751,9 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
     private static final int RANGE_THISYEAR = 6;
     private static final int RANGE_CUSTOM = 7;
 
+    // client property of a date field: its text at the last search
+    private static final String SEARCHED_DATE = "jlawyer.history.searchedDate";
+
     private static final String USER_ME = "Ich";
     private static final String USER_ALL = "Alle Nutzer";
 
@@ -799,8 +805,8 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
         chipLayout.setVgap(2);
         this.pnlCategories.setLayout(chipLayout);
 
-        this.dtFrom.setDateFormatString("dd.MM.yyyy");
-        this.dtTo.setDateFormatString("dd.MM.yyyy");
+        DesktopDateEntry.hint(this.txtFrom);
+        DesktopDateEntry.hint(this.txtTo);
 
         this.initFilterStyles();
         this.initUserCombo();
@@ -956,8 +962,9 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
         }
         boolean wasAdjusting = this.adjusting;
         this.adjusting = true;
-        this.dtFrom.setDate(startOfDay(from.getTime()));
-        this.dtTo.setDate(startOfDay(to.getTime()));
+        SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+        this.txtFrom.setText(df.format(from.getTime()));
+        this.txtTo.setText(df.format(to.getTime()));
         this.adjusting = wasAdjusting;
     }
 
@@ -1016,8 +1023,19 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
         if (this.adjusting) {
             return;
         }
-        Date from = startOfDay(this.dtFrom.getDate());
-        Date to = endOfDay(this.dtTo.getDate());
+        Date from;
+        Date to;
+        try {
+            from = startOfDay(DateUtils.parseDesktopDay(this.txtFrom.getText()));
+            to = endOfDay(DateUtils.parseDesktopDay(this.txtTo.getText()));
+        } catch (IllegalArgumentException iae) {
+            this.lblStatus.setFont(this.lblStatus.getFont().deriveFont(Font.BOLD));
+            this.lblStatus.setText("Ungültiges Datum: " + iae.getMessage());
+            return;
+        }
+        // remembered to search again only when a date field really changes
+        this.txtFrom.putClientProperty(SEARCHED_DATE, this.txtFrom.getText().trim());
+        this.txtTo.putClientProperty(SEARCHED_DATE, this.txtTo.getText().trim());
         if (from != null && to != null && from.after(to)) {
             this.lblStatus.setFont(this.lblStatus.getFont().deriveFont(Font.BOLD));
             this.lblStatus.setText("Das Von-Datum liegt nach dem Bis-Datum.");
@@ -1448,9 +1466,11 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
         lblRange = new javax.swing.JLabel();
         cmbRange = new javax.swing.JComboBox<>();
         lblFrom = new javax.swing.JLabel();
-        dtFrom = new com.toedter.calendar.JDateChooser();
+        txtFrom = new javax.swing.JTextField();
+        cmdSelectFrom = new javax.swing.JButton();
         lblTo = new javax.swing.JLabel();
-        dtTo = new com.toedter.calendar.JDateChooser();
+        txtTo = new javax.swing.JTextField();
+        cmdSelectTo = new javax.swing.JButton();
         lblUser = new javax.swing.JLabel();
         cmbUser = new javax.swing.JComboBox();
         lblCase = new javax.swing.JLabel();
@@ -1541,25 +1561,57 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
         lblFrom.setText("von");
         pnlFilter.add(lblFrom);
 
-        dtFrom.setPreferredSize(new java.awt.Dimension(130, 26));
-        dtFrom.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
-            public void propertyChange(java.beans.PropertyChangeEvent evt) {
-                dtFromPropertyChange(evt);
+        txtFrom.setColumns(8);
+        txtFrom.setToolTipText("Beginn des Zeitraums");
+        txtFrom.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtFromActionPerformed(evt);
             }
         });
-        pnlFilter.add(dtFrom);
+        txtFrom.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                txtFromFocusLost(evt);
+            }
+        });
+        pnlFilter.add(txtFrom);
+
+        cmdSelectFrom.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule.png"))); // NOI18N
+        cmdSelectFrom.setToolTipText("Datum auswählen");
+        cmdSelectFrom.setMargin(new java.awt.Insets(2, 4, 2, 4));
+        cmdSelectFrom.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSelectFromActionPerformed(evt);
+            }
+        });
+        pnlFilter.add(cmdSelectFrom);
 
         lblTo.setForeground(new java.awt.Color(255, 255, 255));
         lblTo.setText("bis");
         pnlFilter.add(lblTo);
 
-        dtTo.setPreferredSize(new java.awt.Dimension(130, 26));
-        dtTo.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
-            public void propertyChange(java.beans.PropertyChangeEvent evt) {
-                dtToPropertyChange(evt);
+        txtTo.setColumns(8);
+        txtTo.setToolTipText("Ende des Zeitraums");
+        txtTo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtToActionPerformed(evt);
             }
         });
-        pnlFilter.add(dtTo);
+        txtTo.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                txtToFocusLost(evt);
+            }
+        });
+        pnlFilter.add(txtTo);
+
+        cmdSelectTo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule.png"))); // NOI18N
+        cmdSelectTo.setToolTipText("Datum auswählen");
+        cmdSelectTo.setMargin(new java.awt.Insets(2, 4, 2, 4));
+        cmdSelectTo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSelectToActionPerformed(evt);
+            }
+        });
+        pnlFilter.add(cmdSelectTo);
 
         lblUser.setForeground(new java.awt.Color(255, 255, 255));
         lblUser.setText("Nutzer:");
@@ -1831,16 +1883,48 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
         this.search();
     }//GEN-LAST:event_cmbRangeActionPerformed
 
-    private void dtFromPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_dtFromPropertyChange
-        this.dateChangedByUser(evt);
-    }//GEN-LAST:event_dtFromPropertyChange
+    private void txtFromActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtFromActionPerformed
+        this.dateChangedByUser(this.txtFrom);
+    }//GEN-LAST:event_txtFromActionPerformed
 
-    private void dtToPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_dtToPropertyChange
-        this.dateChangedByUser(evt);
-    }//GEN-LAST:event_dtToPropertyChange
+    private void txtFromFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtFromFocusLost
+        this.dateChangedByUser(this.txtFrom);
+    }//GEN-LAST:event_txtFromFocusLost
 
-    private void dateChangedByUser(java.beans.PropertyChangeEvent evt) {
-        if (this.adjusting || !"date".equals(evt.getPropertyName())) {
+    private void cmdSelectFromActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSelectFromActionPerformed
+        this.selectDate(this.txtFrom);
+    }//GEN-LAST:event_cmdSelectFromActionPerformed
+
+    private void txtToActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtToActionPerformed
+        this.dateChangedByUser(this.txtTo);
+    }//GEN-LAST:event_txtToActionPerformed
+
+    private void txtToFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtToFocusLost
+        this.dateChangedByUser(this.txtTo);
+    }//GEN-LAST:event_txtToFocusLost
+
+    private void cmdSelectToActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSelectToActionPerformed
+        this.selectDate(this.txtTo);
+    }//GEN-LAST:event_cmdSelectToActionPerformed
+
+    // the calendar of the client, as for the other date fields
+    private void selectDate(JTextField field) {
+        MultiCalDialog dlg = new MultiCalDialog(field, EditorsRegistry.getInstance().getMainWindow(), true, false);
+        dlg.setVisible(true);
+        this.dateChangedByUser(field);
+    }
+
+    /**
+     * Called after a date was typed or picked: switches the range to "Benutzerdefiniert" and searches
+     * again - only if the date actually changed, leaving the field alone does not search.
+     */
+    private void dateChangedByUser(JTextField field) {
+        if (this.adjusting) {
+            return;
+        }
+        DesktopDateEntry.normalizeCompleteDate(field);
+        String text = field.getText() == null ? "" : field.getText().trim();
+        if (text.equals(field.getClientProperty(SEARCHED_DATE))) {
             return;
         }
         if (this.cmbRange.getSelectedIndex() != RANGE_CUSTOM) {
@@ -1965,8 +2049,8 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
     private javax.swing.JButton cmdExport;
     private javax.swing.JButton cmdOpenCase;
     private javax.swing.JButton cmdSearch;
-    private com.toedter.calendar.JDateChooser dtFrom;
-    private com.toedter.calendar.JDateChooser dtTo;
+    private javax.swing.JButton cmdSelectFrom;
+    private javax.swing.JButton cmdSelectTo;
     private javax.swing.JLabel lblCase;
     private javax.swing.JLabel lblDetailCase;
     private javax.swing.JLabel lblDetailCategory;
@@ -2005,8 +2089,10 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
     private javax.swing.JScrollPane scrollDetail;
     private javax.swing.JScrollPane scrollTable;
     private com.jdimension.jlawyer.client.editors.history.HistoryTable tblHistory;
-    private javax.swing.JTextArea txtDetail;
     private javax.swing.JTextField txtCase;
+    private javax.swing.JTextArea txtDetail;
+    private javax.swing.JTextField txtFrom;
     private javax.swing.JTextField txtText;
+    private javax.swing.JTextField txtTo;
     // End of variables declaration//GEN-END:variables
 }
