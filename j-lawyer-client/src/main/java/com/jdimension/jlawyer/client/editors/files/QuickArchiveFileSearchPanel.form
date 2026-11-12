@@ -369,11 +369,12 @@
 
                   <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
                   <SubComponents>
-                    <Component class="javax.swing.JLabel" name="lblSummary">
-                      <Properties>
-                        <Property name="verticalAlignment" type="int" value="1"/>
-                      </Properties>
-                    </Component>
+                    <Container class="com.jdimension.jlawyer.client.editors.files.CaseSummaryPanel" name="pnlSummary">
+
+                      <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBoxLayout">
+                        <Property name="axis" type="int" value="1"/>
+                      </Layout>
+                    </Container>
                   </SubComponents>
                 </Container>
               </SubComponents>

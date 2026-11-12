@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
 import com.jdimension.jlawyer.client.editors.files.ViewArchiveFileDetailsPanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.ui.theme.EntryRowPanel;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.Invoice;
@@ -683,13 +684,12 @@ import java.text.DecimalFormat;
 import java.util.HashMap;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
-import themes.colors.DefaultColorTheme;
 
 /**
  *
  * @author jens
  */
-public class CaseForContactEntryPanel extends javax.swing.JPanel {
+public class CaseForContactEntryPanel extends com.jdimension.jlawyer.client.ui.theme.EntryRowPanel {
 
     private static final Logger log = Logger.getLogger(CaseForContactEntryPanel.class.getName());
     //DecimalFormat df = new DecimalFormat("0.00%");
@@ -709,42 +709,36 @@ public class CaseForContactEntryPanel extends javax.swing.JPanel {
     public void setEntry(CaseForContactEntry entry) {
         this.e = entry;
         //this.lblFileName.setText(sh.getFileName() + " in " + sh.getArchiveFileNumber() + " " + sh.getArchiveFileName());
-        String name=e.getName();
-        if(name==null)
-            name="";
-        if(name.length()>45)
-            name=name.substring(0,45) + "...";
-        
-        String reason=e.getReason();
-        if(reason==null)
-            reason="";
-        if(reason.length()>45)
-            reason=reason.substring(0,45) + "...";
-        
-        
-        String ownReference="";
+        String name=shorten(e.getName(), 60);
+        String reason=shorten(e.getReason(), 70);
+        String muted=com.jdimension.jlawyer.client.ui.theme.UiColors.hex(EntryRowPanel.TEXT_MUTED);
+        StringBuilder text=new StringBuilder("<html><b>").append(escape(e.getFileNumber())).append(" ").append(escape(name)).append("</b>");
+        StringBuilder detail=new StringBuilder(escape(reason));
         if(!StringUtils.isEmpty(e.getOwnReference())) {
-            ownReference="<br/>Zeichen: " + e.getOwnReference();
+            detail.append(detail.length()>0 ? " &middot; " : "").append("Zeichen: ").append(escape(e.getOwnReference()));
         }
-        
-        this.lblDescription.setText("<html><b>" + e.getFileNumber() + " " + name + "</b><br/>" + reason + ownReference + "</html>");
+        if(detail.length()>0) {
+            text.append("<br/><span style='color:").append(muted).append("'>").append(detail).append("</span>");
+        }
+        text.append("</html>");
+        this.lblDescription.setText(text.toString());
         this.lblRole.setText(e.getRole());
-        this.lblRole.setForeground(e.getRoleForeground());
-        
+        this.lblRole.setForeground(e.getRoleForeground()!=null ? e.getRoleForeground() : EntryRowPanel.TEXT_MUTED);
+        this.lblRole.setVisible(!StringUtils.isEmpty(e.getRole()));
         String contactCaption=java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel").getString("role");
-        String tooltip="<html><b>" + e.getFileNumber() + " " + e.getName() + "</b><br/>" + e.getReason() + "<br/>"  + contactCaption + ": " + e.getRole() + "</html>";
+        String tooltip="<html><b>" + escape(e.getFileNumber()) + " " + escape(e.getName()) + "</b><br/>" + escape(e.getReason()) + "<br/>"  + contactCaption + ": " + escape(e.getRole()) + "</html>";
         this.lblDescription.setToolTipText(tooltip);
-        
-        if(e.isArchived()) {
-            this.lblDescription.setForeground(Color.GRAY);
-            this.lblArchived.setText("archiviert");
-        } else {
-            this.lblDescription.setForeground(Color.BLACK);
-            this.lblArchived.setText("");
-        }
-        
+        // open cases blue, archived ones grey
+        Color accent=e.isArchived() ? EntryRowPanel.TEXT_MUTED : EntryRowPanel.ACCENT_OPEN;
+        this.setAccent(accent);
+        this.lblDescription.setIcon(new com.jdimension.jlawyer.client.modulebar.SidebarIcon(FOLDER_ICON, accent, 20));
+        this.lblDescription.setForeground(this.defaultForeground());
+        this.lblArchived.setText(e.isArchived() ? "archiviert" : "");
+        this.lblArchived.setVisible(e.isArchived());
+        EntryRowPanel.styleMuted(this.lblArchived);
         HashMap<Integer,BigDecimal> invoices=e.getInvoicesByStatus();
         this.lblTotal.setText("");
+        this.lblTotal.setVisible(invoices!=null);
         DecimalFormat df=new DecimalFormat("0.00");
         if(invoices!=null) {
             BigDecimal total=invoices.get(Invoice.STATUS_NEW).add(invoices.get(Invoice.STATUS_OPEN)).add(invoices.get(Invoice.STATUS_OPEN_REMINDER1)).add(invoices.get(Invoice.STATUS_OPEN_REMINDER2)).add(invoices.get(Invoice.STATUS_OPEN_REMINDER3).add(invoices.get(Invoice.STATUS_OPEN_NONENFORCEABLE)).subtract(invoices.get(Invoice.STATUS_PAID)).subtract(invoices.get(Invoice.STATUS_CANCELLED)));
@@ -760,12 +754,27 @@ public class CaseForContactEntryPanel extends javax.swing.JPanel {
             sb.append("<tr><td>storniert:</td><td>").append(df.format(invoices.get(Invoice.STATUS_CANCELLED))).append("</td></tr></table></html>");
             this.lblTotal.setText(df.format(total));
             if(total.compareTo(BigDecimal.ZERO)>0)
-                this.lblTotal.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+                this.lblTotal.setForeground(EntryRowPanel.ACCENT_OVERDUE);
             else
-                this.lblTotal.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
+                this.lblTotal.setForeground(EntryRowPanel.ACCENT_DONE);
             this.lblTotal.setToolTipText(sb.toString());
         }
         
+    }
+
+    private static final javax.swing.ImageIcon FOLDER_ICON = new javax.swing.ImageIcon(CaseForContactEntryPanel.class.getResource("/icons/folder.png"));
+
+    private Color defaultForeground() {
+        return this.e != null && this.e.isArchived() ? EntryRowPanel.TEXT_MUTED : com.jdimension.jlawyer.client.ui.theme.UiColors.TEXT_DARK;
+    }
+
+    private static String shorten(String s, int max) {
+        String t = s == null ? "" : s.replace('\n', ' ').trim();
+        return t.length() > max ? t.substring(0, max - 1) + "…" : t;
+    }
+
+    private static String escape(String s) {
+        return s == null ? "" : s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 
     /**
@@ -789,10 +798,12 @@ public class CaseForContactEntryPanel extends javax.swing.JPanel {
 
         jLabel2.setText("jLabel2");
 
-        lblDescription.setFont(lblDescription.getFont().deriveFont(lblDescription.getFont().getStyle() & ~java.awt.Font.BOLD));
+        setLayout(new java.awt.BorderLayout(10, 0));
+
         lblDescription.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
         lblDescription.setText("<html>Akte xxx/yy<br/>Rubrum<br/>Zeichen</html>");
         lblDescription.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        lblDescription.setIconTextGap(10);
         lblDescription.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lblDescriptionMouseClicked(evt);
@@ -804,71 +815,35 @@ public class CaseForContactEntryPanel extends javax.swing.JPanel {
                 lblDescriptionMouseEntered(evt);
             }
         });
+        add(lblDescription, java.awt.BorderLayout.CENTER);
 
         jPanel1.setOpaque(false);
+        jPanel1.setLayout(new javax.swing.BoxLayout(jPanel1, javax.swing.BoxLayout.Y_AXIS));
 
-        lblTotal.setFont(lblTotal.getFont().deriveFont((lblTotal.getFont().getStyle() | java.awt.Font.ITALIC) | java.awt.Font.BOLD));
-        lblTotal.setText("0,00");
-
-        lblRole.setFont(lblRole.getFont().deriveFont((lblRole.getFont().getStyle() | java.awt.Font.ITALIC) | java.awt.Font.BOLD));
-        lblRole.setForeground(new java.awt.Color(0, 0, 255));
+        lblRole.setFont(lblRole.getFont().deriveFont(lblRole.getFont().getStyle() | java.awt.Font.BOLD));
         lblRole.setText("user");
+        lblRole.setAlignmentX(1.0F);
+        jPanel1.add(lblRole);
 
-        lblArchived.setFont(lblArchived.getFont().deriveFont((lblArchived.getFont().getStyle() | java.awt.Font.ITALIC) & ~java.awt.Font.BOLD, lblArchived.getFont().getSize()-2));
+        lblTotal.setFont(lblTotal.getFont().deriveFont(lblTotal.getFont().getStyle() | java.awt.Font.BOLD));
+        lblTotal.setText("0,00");
+        lblTotal.setAlignmentX(1.0F);
+        jPanel1.add(lblTotal);
+
+        lblArchived.setFont(lblArchived.getFont().deriveFont(lblArchived.getFont().getSize()-1f));
         lblArchived.setText("archiviert");
+        lblArchived.setAlignmentX(1.0F);
+        jPanel1.add(lblArchived);
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(0, 24, Short.MAX_VALUE)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblRole, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(lblTotal, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(lblArchived, javax.swing.GroupLayout.Alignment.TRAILING)))
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addComponent(lblRole)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblTotal)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblArchived))
-        );
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(lblDescription, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(231, 231, 231)
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblDescription)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-        );
+        add(jPanel1, java.awt.BorderLayout.EAST);
     }// </editor-fold>//GEN-END:initComponents
 
     private void lblDescriptionMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseEntered
-        this.lblDescription.setForeground(new Color(0, 0, 255));
+        this.lblDescription.setForeground(EntryRowPanel.ACCENT_OPEN);
     }//GEN-LAST:event_lblDescriptionMouseEntered
 
     private void lblDescriptionMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseExited
-        if(e.isArchived()) {
-            this.lblDescription.setForeground(Color.GRAY);
-        } else {
-            this.lblDescription.setForeground(Color.BLACK);
-        }
+        this.lblDescription.setForeground(this.defaultForeground());
     }//GEN-LAST:event_lblDescriptionMouseExited
 
     private void lblDescriptionMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseClicked

@@ -5091,9 +5091,6 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         for (ArchiveFileAddressesBean aFile : allCasesList) {
 
             CaseForContactEntryPanel ep = new CaseForContactEntryPanel(this.getClass().getName());
-            if (i % 2 == 0) {
-                ep.setBackground(ep.getBackground().brighter());
-            }
             CaseForContactEntry lce = new CaseForContactEntry();
             lce.setRoleForeground(new Color(partyTypes.get(aFile.getReferenceType().getName()).getColor()));
             lce.setFileNumber(aFile.getArchiveFileKey().getFileNumber());

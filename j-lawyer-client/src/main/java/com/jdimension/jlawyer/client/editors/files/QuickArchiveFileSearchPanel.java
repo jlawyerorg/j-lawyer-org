@@ -674,7 +674,6 @@ import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.CaseUtils;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
-import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.TableUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.client.utils.UserUtils;
@@ -690,7 +689,6 @@ import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -838,7 +836,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         jScrollPane1 = new javax.swing.JScrollPane();
         tblResults = new javax.swing.JTable();
         jScrollPane2 = new javax.swing.JScrollPane();
-        lblSummary = new javax.swing.JLabel();
+        pnlSummary = new com.jdimension.jlawyer.client.editors.files.CaseSummaryPanel();
 
         mnuOpenSelectedArchiveFile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
         mnuOpenSelectedArchiveFile.setText("öffnen");
@@ -1011,8 +1009,8 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
 
         jSplitPane1.setLeftComponent(jScrollPane1);
 
-        lblSummary.setVerticalAlignment(javax.swing.SwingConstants.TOP);
-        jScrollPane2.setViewportView(lblSummary);
+        pnlSummary.setLayout(new javax.swing.BoxLayout(pnlSummary, javax.swing.BoxLayout.Y_AXIS));
+        jScrollPane2.setViewportView(pnlSummary);
 
         jSplitPane1.setRightComponent(jScrollPane2);
 
@@ -1201,52 +1199,26 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
                 int row = this.tblResults.getSelectedRow();
                 QuickArchiveFileSearchRowIdentifier id = (QuickArchiveFileSearchRowIdentifier) this.tblResults.getValueAt(row, 0);
                 ArchiveFileBean afb = id.getArchiveFileDTO();
-                lblSummary.setText(this.getArchiveFileAsHtml(afb));
+                this.showSummary(afb);
             } else {
-                lblSummary.setText("");
+                this.pnlSummary.showMessage(this.tblResults.getSelectedRowCount() > 1 ? this.tblResults.getSelectedRowCount() + " Akten ausgewählt" : "Akte auswählen, um Details anzuzeigen");
             }
         }
 
     }//GEN-LAST:event_tblResultsMouseClicked
 
-    private String getArchiveFileAsHtml(ArchiveFileBean afb) {
-        StringBuilder html = new StringBuilder();
-        html.append("<html><body>");
-        html.append("<table>");
-        html.append("<tr><td>").append("Aktenzeichen: ").append("</td><td>").append(afb.getFileNumber()).append("</td></tr>");
-        html.append("<tr><td>").append("Kurzrubrum: ").append("</td><td>").append(afb.getName()).append("</td></tr>");
-        if (!StringUtils.isEmpty(afb.getReason())) {
-            html.append("<tr><td>").append("wegen: ").append("</td><td>").append(afb.getReason()).append("</td></tr>");
-        }
-        if (!StringUtils.isEmpty(afb.getNotice())) {
-            html.append("<tr><td>").append("Notiz: ").append("</td><td>").append(afb.getNotice()).append("</td></tr>");
-        }
-        if (!StringUtils.isEmpty(afb.getLawyer())) {
-            html.append("<tr><td>").append("Anwalt: ").append("</td><td>").append(afb.getLawyer()).append("</td></tr>");
-        }
-        if (!StringUtils.isEmpty(afb.getAssistant())) {
-            html.append("<tr><td>").append("Sachbearbeiter: ").append("</td><td>").append(afb.getAssistant()).append("</td></tr>");
-        }
-
+    private void showSummary(ArchiveFileBean afb) {
+        Collection<ArchiveFileReviewsBean> reviews = null;
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            Collection<ArchiveFileReviewsBean> reviews = locator.lookupCalendarServiceRemote().getReviews(afb.getId(), false);
-            if (!reviews.isEmpty()) {
-                html.append("<tr><td>").append("Unerledigte Kalendereintr&auml;ge: ").append("</td><td>").append(reviews.size()).append("</td></tr>");
-                SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
-                for (ArchiveFileReviewsBean r : reviews) {
-                    html.append("<tr><td></td><td>").append(df.format(r.getBeginDate())).append(" ").append(r.getSummary()).append(" (").append(r.getEventTypeName()).append(")").append("</td></tr>");
-                }
-            }
+            reviews = locator.lookupCalendarServiceRemote().getReviews(afb.getId(), false);
         } catch (Exception ex) {
             log.error("Error getting calendar entries", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Kalendereinträge: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
-
-        html.append("</table>");
-        html.append("</body></html>");
-        return html.toString();
+        this.pnlSummary.showCase(afb, reviews);
+        this.jScrollPane2.getVerticalScrollBar().setValue(0);
     }
 
     private void txtSearchStringKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchStringKeyPressed
@@ -1281,9 +1253,9 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             int row = this.tblResults.getSelectedRow();
             QuickArchiveFileSearchRowIdentifier id = (QuickArchiveFileSearchRowIdentifier) this.tblResults.getValueAt(row, 0);
             ArchiveFileBean afb = id.getArchiveFileDTO();
-            lblSummary.setText(this.getArchiveFileAsHtml(afb));
+            this.showSummary(afb);
         } else {
-            lblSummary.setText("");
+            this.pnlSummary.showMessage(this.tblResults.getSelectedRowCount() > 1 ? this.tblResults.getSelectedRowCount() + " Akten ausgewählt" : "Akte auswählen, um Details anzuzeigen");
         }
     }//GEN-LAST:event_tblResultsKeyReleased
 
@@ -1454,20 +1426,18 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardResults;
     private javax.swing.JCheckBox chkIncludeArchive;
     private javax.swing.JButton cmdDocumentTagFilter;
     private javax.swing.JButton cmdExport;
     private javax.swing.JButton cmdQuickSearch;
     private javax.swing.JButton cmdTagFilter;
     private javax.swing.JLabel jLabel2;
-    private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel cardResults;
     private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel jPanel1;
-    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlSearchBar;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JSplitPane jSplitPane1;
     protected javax.swing.JLabel lblPanelTitle;
-    private javax.swing.JLabel lblSummary;
     private javax.swing.JMenuItem mnuDeleteSelectedArchiveFiles;
     private javax.swing.JMenuItem mnuDisableCaseSync;
     private javax.swing.JMenuItem mnuDuplicateSelectedArchiveFiles;
@@ -1475,6 +1445,8 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     private javax.swing.JMenuItem mnuEditPermissions;
     private javax.swing.JMenuItem mnuEnableCaseSync;
     private javax.swing.JMenuItem mnuOpenSelectedArchiveFile;
+    private com.jdimension.jlawyer.client.ui.theme.GlassCardPanel pnlSearchBar;
+    private com.jdimension.jlawyer.client.editors.files.CaseSummaryPanel pnlSummary;
     private javax.swing.JPopupMenu popDocumentTagFilter;
     private javax.swing.JPopupMenu popTagFilter;
     private javax.swing.JPopupMenu popupArchiveFileActions;
