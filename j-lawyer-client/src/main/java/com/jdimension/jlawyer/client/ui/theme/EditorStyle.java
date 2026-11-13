@@ -789,7 +789,6 @@ public final class EditorStyle {
     public static void setContextTitle(JLabel label, String key, String name, String detail) {
         String[] parts = new String[]{nz(key), nz(name), nz(detail)};
         label.putClientProperty(CONTEXT_PARTS, parts);
-        label.setMinimumSize(new java.awt.Dimension(0, label.getMinimumSize().height));
         StringBuilder tip = new StringBuilder();
         for (String p : parts) {
             if (!p.isEmpty()) {
@@ -808,6 +807,12 @@ public final class EditorStyle {
             label.putClientProperty(CONTEXT_LISTENER, l);
         }
         fitContextTitle(label);
+        // never wider than its container, but always the full height of one line: the minimum must
+        // not be taken from the label as it is (often still empty, i.e. 0 high) - layouts would then
+        // shrink the title away when the window is low, e.g. with display scaling
+        java.awt.Insets insets = label.getInsets();
+        int lineHeight = label.getFontMetrics(label.getFont()).getHeight() + insets.top + insets.bottom;
+        label.setMinimumSize(new java.awt.Dimension(0, Math.max(lineHeight, label.getPreferredSize().height)));
     }
 
     private static String nz(String s) {
