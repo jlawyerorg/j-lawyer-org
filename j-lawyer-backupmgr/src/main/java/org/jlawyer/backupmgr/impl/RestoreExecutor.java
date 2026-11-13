@@ -705,6 +705,10 @@ public class RestoreExecutor {
 
     private long validationTempCounter = 0;
 
+    private boolean ignoreDatabaseErrors = false;
+    private DatabaseImport.ErrorHandler databaseErrorHandler = null;
+    private String databaseErrorMessage = null;
+
     public RestoreExecutor(String dataDir, String backupDir, String encryptionPassword, String dbHost, String dbPort, String dbName, String dbUser, String dbPassword) {
 
         this.dbHost=dbHost;
@@ -753,6 +757,29 @@ public class RestoreExecutor {
 
     public String getFilenameEncoding() {
         return this.filenameEncoding;
+    }
+
+    /**
+     * @param ignore true to skip failing statements of the database dump without asking, for unattended restores
+     */
+    public void setIgnoreDatabaseErrors(boolean ignore) {
+        this.ignoreDatabaseErrors = ignore;
+    }
+
+    /**
+     * @param handler asks whether the restore goes on after an error in a statement of the database dump. Without a
+     * handler, such an error aborts the restore.
+     */
+    public void setDatabaseErrorHandler(DatabaseImport.ErrorHandler handler) {
+        this.databaseErrorHandler = handler;
+    }
+
+    /**
+     * @return the message listing the statements of the database dump that the last restore skipped, null if it
+     * skipped none
+     */
+    public String getDatabaseErrorMessage() {
+        return this.databaseErrorMessage;
     }
 
     private void validateDatabaseConnection(BackupProgressCallback progress) throws Exception {
@@ -1248,38 +1275,20 @@ public class RestoreExecutor {
             "-p" + this.dbPassword,
             "-e",
             //"\"drop database if exists jlawyerdb;create database jlawyerdb;use jlawyerdb;source " + backup + "jlawyerdb-dump.sql;commit;\""
-            "drop database if exists " + this.dbName + ";create database " + this.dbName + ";use " + this.dbName + ";source " + backup + "jlawyerdb-dump.sql;commit;"
+            "drop database if exists " + this.dbName + ";create database " + this.dbName + ";"
         //"\"drop database if exists jlawyerdb;quit;\""    
         };
 
-        Runtime shell = Runtime.getRuntime();
-        Process process = null;
-
-        process = shell.exec(cmd);
-
-        //process.waitFor();
-        BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        String line = null;
-
-        while ((line = br.readLine()) != null) {
-            System.out.println(line);
-        }
-        br.close();
-
-        br = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-        line = null;
-
-        while ((line = br.readLine()) != null) {
-            System.out.println(line);
-        }
-        br.close();
-        try {
-            process.waitFor();
-        } catch (Throwable t) {
-            t.printStackTrace();
-        }
-        if (process.exitValue() != 0) {
-            throw new Exception("Datenbankwiederherstellung fehlgeschlagen!");
+        // the dump is the input of a second call: in batch mode, both the MySQL and the MariaDB client stop at the first
+        // failing statement. The files are restored at this point, after such an error the user may let the import go
+        // on to the end.
+        File dump = new File(backup + "jlawyerdb-dump.sql");
+        String[] importCmd = new String[]{path + "mysql", "-h", this.dbHost, "-P", this.dbPort, "-u", this.dbUser, "-p" + this.dbPassword, this.dbName};
+        final String[] prepareCmd = cmd;
+        this.databaseErrorMessage = null;
+        List<String> errors = DatabaseImport.importDump(force -> DatabaseImport.runImport(prepareCmd, importCmd, dump, force), this.ignoreDatabaseErrors, this.databaseErrorHandler, dump.getAbsolutePath(), progress);
+        if (!errors.isEmpty()) {
+            this.databaseErrorMessage = DatabaseImport.completedWithErrorsMessage(errors, dump.getAbsolutePath());
         }
     }
 

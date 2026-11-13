@@ -666,6 +666,7 @@ package org.jlawyer.backupmgr;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.HeadlessException;
+import java.util.NoSuchElementException;
 import java.util.Scanner;
 import org.jlawyer.backupmgr.impl.RestoreExecutor;
 
@@ -682,6 +683,7 @@ public class BackupManagerLauncher {
 
         boolean cmdLineRequested = false;
         boolean force = false;
+        boolean ignoreDatabaseErrors = ignoreDatabaseErrors(args);
         if (args != null) {
             for (String a : args) {
                 if ("-console".equalsIgnoreCase(a)) {
@@ -742,6 +744,8 @@ public class BackupManagerLauncher {
             }
 
             RestoreExecutor re = new RestoreExecutor(dataDir, backupDir, encryptionPwd, dbHost, dbPort, dbName, dbUser, dbPwd);
+            re.setIgnoreDatabaseErrors(ignoreDatabaseErrors);
+            re.setDatabaseErrorHandler(message -> continueAfterDatabaseError(scanner, message));
             BackupProgressConsoleCallback callback = new BackupProgressConsoleCallback();
             boolean failed = false;
             try {
@@ -764,6 +768,10 @@ public class BackupManagerLauncher {
             if (failed) {
                 System.exit(1);
             }
+            if (re.getDatabaseErrorMessage() != null) {
+                System.out.println(re.getDatabaseErrorMessage());
+                System.exit(2);
+            }
             System.out.println("Backup erfolgreich wiederhergestellt.");
         } else {
             System.out.println("j-lawyer.org Backup Manager (grafische Oberflaeche)");
@@ -773,6 +781,39 @@ public class BackupManagerLauncher {
                     javafx.application.Application.launch(BackupManager.class);
                 }
             }.start();
+        }
+    }
+
+    /**
+     * @return true if the arguments contain --ignore-db-errors: failing statements of the database dump are skipped
+     * without asking
+     */
+    static boolean ignoreDatabaseErrors(String[] args) {
+        if (args != null) {
+            for (String a : args) {
+                if ("--ignore-db-errors".equalsIgnoreCase(a) || "-ignore-db-errors".equalsIgnoreCase(a)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Asks on the console whether the restore goes on after an error in the database dump. Without an answer (end of
+     * the input), the restore is aborted.
+     */
+    static boolean continueAfterDatabaseError(Scanner scanner, String message) {
+        System.out.println(message);
+        System.out.println("Ohne diese Rückfrage: Parameter --ignore-db-errors");
+        System.out.print("Fehler ignorieren und fortsetzen J/N: ");
+        try {
+            String answer = scanner.next();
+            System.out.println(answer);
+            return "j".equalsIgnoreCase(answer);
+        } catch (NoSuchElementException ex) {
+            System.out.println("- Abbruch");
+            return false;
         }
     }
 
