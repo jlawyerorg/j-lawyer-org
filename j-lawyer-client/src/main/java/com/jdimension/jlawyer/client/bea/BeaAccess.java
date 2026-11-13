@@ -918,14 +918,27 @@ public class BeaAccess {
      * the given Safe ID is null, and false in all other cases.
      */
     public static boolean isEgvpPostBoxBySafeId(String safeId) {
+        return Boolean.TRUE.equals(getEgvpPostBoxStatusBySafeId(safeId));
+    }
+
+    /**
+     * Checks whether or not a SafeID represents an EGVP postbox, without
+     * hiding a failed check.
+     *
+     * @param safeId the Safe ID
+     * @return TRUE when the given Safe ID represents an EGVP postbox, FALSE if
+     * it does not or if the Safe ID is null, and null if the check itself
+     * failed.
+     */
+    public static Boolean getEgvpPostBoxStatusBySafeId(String safeId) {
         if (safeId == null) {
-            return false;
+            return Boolean.FALSE;
         }
         try {
             return JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties()).lookupBeaServiceRemote().isEgvpPostBox(safeId, null);
         } catch (Exception e) {
             log.error("EGVP check failed for Safe ID " + safeId, e);
-            return false;
+            return null;
         }
     }
 
