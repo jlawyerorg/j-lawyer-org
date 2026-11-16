@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.ai.Message;
 import com.jdimension.jlawyer.client.modulebar.SidebarIcon;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.ui.theme.UiColors;
+import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -698,6 +699,7 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JDialog;
 import javax.swing.SwingUtilities;
+import javax.swing.event.HyperlinkEvent;
 import org.apache.log4j.Logger;
 import org.jmarkdownviewer.jmdviewer.HtmlPane;
 
@@ -800,6 +802,15 @@ public class AiChatMessageMarkdownPanel extends javax.swing.JPanel {
         this.aiCalloutComponent1.setBackground(new Color(0, 0, 0, 0));
         this.aiCalloutComponent1.setForeground(UiColors.TEXT_DARK);
         this.aiCalloutComponent1.setBorder(BorderFactory.createEmptyBorder());
+        // links in the rendered markdown (e.g. sources from legal research tools) open in the browser
+        this.aiCalloutComponent1.addHyperlinkListener(e -> {
+            if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                String url = e.getURL() != null ? e.getURL().toString() : e.getDescription();
+                if (url != null && !url.isBlank()) {
+                    DesktopUtils.openExternalLink(url);
+                }
+            }
+        });
         this.pnlContent.add(this.aiCalloutComponent1);
 
         Font base = this.lblSender.getFont();
