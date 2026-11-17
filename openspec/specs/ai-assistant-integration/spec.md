@@ -337,7 +337,24 @@ the logged-in user, as for the other e-mail tools. The tool SHALL send through
 `EmailServiceRemote.sendMailReturningEml` and file the message it returns.
 
 Parameters: `mailboxId`, `to`, `subject` and `body` are required; `cc`, `bcc`, `html`,
-`useSignature`, `attachmentDocumentIds`, `caseId`, `folderId`, `tags` and `keywords` are optional.
+`useSignature`, `attachmentDocumentIds`, `caseId`, `folderId`, `tags`, `keywords` and
+`saveDraftOnly` are optional.
+
+#### Scenario: Save as draft only
+- **WHEN** the LLM calls `send_email` with `saveDraftOnly: true` and a case id
+- **THEN** the client SHALL NOT send the message; it SHALL build it through
+  `EmailServiceRemote.buildMailAsEml` (same structure as a sent message, header `X-Unsent: 1`) and
+  store it in the case under the name `ENTWURF - <yyyy-MM-dd HH:mm:ss> - <Betreff>.eml`, the naming
+  of the send dialog's auto-saved drafts, so that "edit draft" continues on that document
+- **AND** the document SHALL carry the tag `Entwurf` in addition to the optional tags, and the
+  optional folder and keywords SHALL be applied
+- **AND** the case history SHALL record "E-Mail-Entwurf gespeichert an <Empfänger>: <Betreff>"
+- **AND** attachment documents SHALL NOT be marked as sent
+- **AND** the result SHALL carry `sent: false`, `draft: true`, `savedToCase: true` and the document
+
+#### Scenario: Draft without a case
+- **WHEN** `saveDraftOnly` is `true` and no case id is given
+- **THEN** the client SHALL return an error and neither send nor store anything
 
 #### Scenario: Send without filing
 - **WHEN** the LLM calls `send_email` with a mailbox id, recipients, subject and body and no case id

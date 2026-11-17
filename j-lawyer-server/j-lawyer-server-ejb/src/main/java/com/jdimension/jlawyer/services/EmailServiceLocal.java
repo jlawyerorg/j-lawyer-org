@@ -788,6 +788,27 @@ public interface EmailServiceLocal {
     byte[] sendMailReturningEml(String mailboxId, String to, String cc, String bcc, String subject, String body, String contentType, List<MailAttachmentDTO> attachments, String priority, boolean readReceipt, boolean deliveryReceipt, String inReplyTo, String references) throws Exception;
 
     /**
+     * Builds a new email exactly like {@link #sendMailReturningEml} would send it - same sender,
+     * recipient encoding, subject, body and attachments - but does NOT send it and does not touch
+     * any folder of the mailbox. Used to file an unsent draft into a case.
+     * <p>
+     * The message carries the header {@code X-Unsent: 1}, so that mail clients open it as an
+     * editable draft. Priority is normal, no receipts are requested.
+     *
+     * @param mailboxId the mailbox the draft is written from; the caller needs access to it
+     * @param to comma-separated recipients
+     * @param cc comma-separated copy recipients, or null
+     * @param bcc comma-separated blind copy recipients, or null
+     * @param subject the subject
+     * @param body the message body, including any signature
+     * @param contentType content type of the body, e.g. text/plain or text/html
+     * @param attachments attachments to embed, or null
+     * @return the unsent message as .eml bytes
+     * @throws Exception if the mailbox is not accessible or the message cannot be built
+     */
+    byte[] buildMailAsEml(String mailboxId, String to, String cc, String bcc, String subject, String body, String contentType, List<MailAttachmentDTO> attachments) throws Exception;
+
+    /**
      * Moves a message to another folder.
      * @param mailboxId the mailbox ID
      * @param messageRef opaque message reference

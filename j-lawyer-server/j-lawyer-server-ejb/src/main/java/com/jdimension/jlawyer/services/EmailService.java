@@ -1448,6 +1448,20 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
         return eml.toByteArray();
     }
 
+    @Override
+    @RolesAllowed({"loginRole"})
+    public byte[] buildMailAsEml(String mailboxId, String to, String cc, String bcc, String subject, String body, String contentType, List<MailAttachmentDTO> attachments) throws Exception {
+        this.checkMailboxAccess(mailboxId);
+        MailboxSetup ms = getMailboxOrThrow(mailboxId);
+        MimeMessage draft = buildOutgoingMessage(Session.getInstance(new Properties()), ms, to, cc, bcc, subject, body, contentType, attachments, "normal", false, null, null);
+        // mail clients (Outlook, Thunderbird) open a message with this header as an editable draft
+        draft.setHeader("X-Unsent", "1");
+        draft.saveChanges();
+        java.io.ByteArrayOutputStream eml = new java.io.ByteArrayOutputStream();
+        draft.writeTo(eml);
+        return eml.toByteArray();
+    }
+
     private void doMoveMessage(String mailboxId, String messageRef, String targetFolderId) throws Exception {
         MailboxSetup ms = getMailboxOrThrow(mailboxId);
         // Determine source folder for cache invalidation

@@ -118,6 +118,8 @@ public class ToolRegistry {
     private static final String WEB_USER_AGENT = "Mozilla/5.0 (compatible; j-lawyer.org Legal Assistant)";
 
     private static final int MAX_MAIL_RESULTS = 50;
+    /** Document tag of e-mail drafts filed into a case, same as the send dialog's auto-save. */
+    private static final String DRAFT_TAG = "Entwurf";
     private static final int MAX_SEARCH_FOLDERS = 15;
     private static final int MAX_MAIL_PAGES = 10;
     private static final int MAX_MAIL_BODY_CHARS = 30000;
@@ -713,7 +715,7 @@ public class ToolRegistry {
                 ToolDefinition.RISK_MEDIUM));
 
         TOOLS.add(new ToolDefinition("send_email",
-                "Sendet eine neue E-Mail aus einem Postfach des Benutzers (keine Antwort auf eine vorhandene Nachricht). mailboxId stammt aus list_mailboxes. Die Signatur des Postfachs wird standardmäßig angehängt. Dokumente einer Akte können als Anhang mitgeschickt werden (attachmentDocumentIds). Mit caseId wird die versandte E-Mail als .eml-Datei in der Akte abgelegt - Bezeichnung = Betreff, Eingang = Sendezeitpunkt, An = erster Empfänger - und im Aktenverlauf vermerkt. Alle Angaben werden vor dem Versand geprüft; höchstens 20 Empfänger, Anhänge zusammen höchstens 20 MB. Eine versandte E-Mail kann nicht zurückgeholt werden: Bei sent=true und savedToCase=false wurde die E-Mail verschickt, aber nicht abgelegt - dann NICHT erneut senden, sondern den Benutzer informieren.",
+                "Sendet eine neue E-Mail aus einem Postfach des Benutzers (keine Antwort auf eine vorhandene Nachricht). mailboxId stammt aus list_mailboxes. Die Signatur des Postfachs wird standardmäßig angehängt. Dokumente einer Akte können als Anhang mitgeschickt werden (attachmentDocumentIds). Mit caseId wird die versandte E-Mail als .eml-Datei in der Akte abgelegt - Bezeichnung = Betreff, Eingang = Sendezeitpunkt, An = erster Empfänger - und im Aktenverlauf vermerkt. Alle Angaben werden vor dem Versand geprüft; höchstens 20 Empfänger, Anhänge zusammen höchstens 20 MB. Eine versandte E-Mail kann nicht zurückgeholt werden: Bei sent=true und savedToCase=false wurde die E-Mail verschickt, aber nicht abgelegt - dann NICHT erneut senden, sondern den Benutzer informieren. Mit saveDraftOnly=true wird die E-Mail NICHT gesendet, sondern nur als Entwurf (.eml mit dem Etikett 'Entwurf') in der Akte abgelegt; caseId ist dann Pflicht. Ergebnis: sent=false, draft=true.",
                 Arrays.asList(
                         new ToolParameter("mailboxId", "string", "ID des Postfachs, aus dem gesendet wird (aus list_mailboxes)", true),
                         new ToolParameter("to", "string", "Empfänger, kommagetrennt, z. B. 'Max Muster <max@example.de>, info@example.org'", true),
@@ -724,10 +726,11 @@ public class ToolRegistry {
                         new ToolParameter("html", "string", "true, wenn body HTML ist (Standard: false, Klartext)", false),
                         new ToolParameter("useSignature", "string", "false, um die Signatur des Postfachs nicht anzuhängen (Standard: true)", false),
                         new ToolParameter("attachmentDocumentIds", "string", "Kommagetrennte IDs von Dokumenten aus Akten, die als Anhang mitgeschickt werden (optional)", false),
-                        new ToolParameter("caseId", "string", "Interne ID der Akte, in der die versandte E-Mail abgelegt wird (optional, aus search_cases). Ohne Angabe wird nichts abgelegt.", false),
+                        new ToolParameter("caseId", "string", "Interne ID der Akte, in der die versandte E-Mail abgelegt wird (optional, aus search_cases; Pflicht bei saveDraftOnly=true). Ohne Angabe wird nichts abgelegt.", false),
                         new ToolParameter("folderId", "string", "ID des Zielordners in der Akte (optional, nur mit caseId, aus list_case_folders)", false),
                         new ToolParameter("tags", "string", "Kommagetrennte Dokument-Etiketten für die abgelegte E-Mail (optional, nur mit caseId, aus list_document_tags)", false),
-                        new ToolParameter("keywords", "string", "Kommagetrennte Schlagworte für die abgelegte E-Mail (optional, nur mit caseId)", false)),
+                        new ToolParameter("keywords", "string", "Kommagetrennte Schlagworte für die abgelegte E-Mail (optional, nur mit caseId)", false),
+                        new ToolParameter("saveDraftOnly", "string", "true, um die E-Mail NICHT zu senden, sondern nur als Entwurf in der Akte abzulegen (Etikett 'Entwurf'); caseId ist dann Pflicht (Standard: false)", false)),
                 ToolDefinition.RISK_MEDIUM));
     }
 
@@ -1180,6 +1183,9 @@ public class ToolRegistry {
                 case "save_email_to_case":
                     return "E-Mail in Akte speichern: " + args.getOrDefault("caseId", "");
                 case "send_email":
+                    if ("true".equalsIgnoreCase(String.valueOf(args.get("saveDraftOnly")).trim())) {
+                        return "E-Mail-Entwurf in Akte speichern: " + args.getOrDefault("subject", "");
+                    }
                     return "E-Mail senden an " + args.getOrDefault("to", "") + ": " + args.getOrDefault("subject", "");
                 default:
                     return tc.getToolName() + ": " + tc.getArguments();
@@ -6195,6 +6201,10 @@ public class ToolRegistry {
         }
         boolean html = "true".equalsIgnoreCase(String.valueOf(args.get("html")).trim());
         boolean useSignature = !"false".equalsIgnoreCase(String.valueOf(args.get("useSignature")).trim());
+        boolean saveDraftOnly = "true".equalsIgnoreCase(String.valueOf(args.get("saveDraftOnly")).trim());
+        if (saveDraftOnly && trimmedArg(args, "caseId") == null) {
+            return ToolJsonUtils.error("Bei saveDraftOnly=true muss caseId angegeben werden - der Entwurf wird in der Akte abgelegt");
+        }
 
         MailboxSetup mailbox = findAccessibleMailbox(mailboxId);
         if (mailbox == null) {
@@ -6313,6 +6323,33 @@ public class ToolRegistry {
         }
 
         EmailServiceRemote emailSvc = locator.lookupEmailServiceRemote();
+        if (saveDraftOnly) {
+            // nothing goes out: build the message as it would be sent and file it as a draft
+            byte[] draftEml;
+            ArchiveFileDocumentsBean stored;
+            try {
+                draftEml = emailSvc.buildMailAsEml(mailboxId, to, cc, bcc, subject, text, contentType, attachments);
+                stored = fileDraftEmail(archiveSvc, caseBean, subject, to, draftEml, folderId, tagNames, trimmedArg(args, "keywords"));
+            } catch (Exception ex) {
+                log.warn("Unable to save email draft into case " + caseId, ex);
+                return ToolJsonUtils.error("Der E-Mail-Entwurf konnte nicht in der Akte abgelegt werden: " + ex.getMessage());
+            }
+            StringBuilder sb = new StringBuilder();
+            sb.append("{\"success\": true, \"sent\": false, \"draft\": true");
+            sb.append(", \"mailboxId\": \"").append(ToolJsonUtils.escapeJson(mailboxId)).append("\"");
+            sb.append(", \"to\": \"").append(ToolJsonUtils.escapeJson(to)).append("\"");
+            sb.append(", \"subject\": \"").append(ToolJsonUtils.escapeJson(subject)).append("\"");
+            sb.append(", \"attachmentCount\": ").append(attachments.size());
+            sb.append(", \"caseId\": \"").append(ToolJsonUtils.escapeJson(caseId)).append("\"");
+            sb.append(", \"caseFileNumber\": \"").append(ToolJsonUtils.escapeJson(caseBean.getFileNumber())).append("\"");
+            sb.append(", \"savedToCase\": true");
+            sb.append(", \"documentId\": \"").append(ToolJsonUtils.escapeJson(stored.getId())).append("\"");
+            // "name" next to "documentId" makes the chat panel offer the "open document" button
+            sb.append(", \"name\": \"").append(ToolJsonUtils.escapeJson(stored.getName())).append("\"");
+            sb.append("}");
+            return sb.toString();
+        }
+
         byte[] eml;
         try {
             eml = emailSvc.sendMailReturningEml(mailboxId, to, cc, bcc, subject, text, contentType, attachments,
@@ -6384,6 +6421,59 @@ public class ToolRegistry {
         ArchiveFileHistoryBean history = new ArchiveFileHistoryBean();
         history.setChangeDate(new Date());
         history.setChangeDescription("E-Mail gesendet an " + to + ": " + subject);
+        archiveSvc.addHistory(caseId, history);
+
+        ArchiveFileDocumentsBean stored = archiveSvc.getDocument(doc.getId());
+        EventBroker.getInstance().publishEvent(new DocumentAddedEvent(stored != null ? stored : doc));
+        return stored != null ? stored : doc;
+    }
+
+    /**
+     * Files an unsent draft the way the send dialog auto-saves drafts: name with the
+     * SendEmailFrame.DRAFT_FILENAME_PREFIX (so "edit draft" continues on this document), tag
+     * "Entwurf" plus the requested tags, folder, keywords, case history.
+     */
+    private ArchiveFileDocumentsBean fileDraftEmail(ArchiveFileServiceRemote archiveSvc, ArchiveFileBean caseBean, String subject, String to,
+            byte[] eml, String folderId, List<String> tagNames, String keywords) throws Exception {
+        String caseId = caseBean.getId();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String docName = FileUtils.sanitizeFileName(com.jdimension.jlawyer.client.mail.SendEmailFrame.DRAFT_FILENAME_PREFIX
+                + sdf.format(new Date()) + " - " + subject.trim() + ".eml");
+        docName = limitDocumentNameLength(docName);
+        String uniqueName = docName;
+        int index = 2;
+        while (archiveSvc.doesDocumentExist(caseId, uniqueName) && index <= MAX_NAME_CLASH_RETRIES) {
+            uniqueName = appendNameIndex(docName, index);
+            index++;
+        }
+        if (archiveSvc.doesDocumentExist(caseId, uniqueName)) {
+            throw new Exception("es existiert bereits ein Dokument mit dem Namen " + docName);
+        }
+
+        DocumentMetadata metadata = MailDocumentOrigins.outgoing(subject, to).toMetadata(archiveSvc, caseId, DocumentOrigin.newCache());
+        if (keywords != null) {
+            metadata.setKeywords(keywords);
+        }
+        ArchiveFileDocumentsBean doc = archiveSvc.addDocument(caseId, uniqueName, eml, "", null, metadata);
+        if (folderId != null) {
+            archiveSvc.moveDocumentsToFolder(Arrays.asList(doc.getId()), folderId);
+        }
+        List<String> allTags = new ArrayList<>();
+        allTags.add(DRAFT_TAG);
+        for (String tagName : tagNames) {
+            if (!allTags.contains(tagName)) {
+                allTags.add(tagName);
+            }
+        }
+        for (String tagName : allTags) {
+            DocumentTagsBean tag = new DocumentTagsBean();
+            tag.setTagName(tagName);
+            archiveSvc.setDocumentTag(doc.getId(), tag, true);
+        }
+
+        ArchiveFileHistoryBean history = new ArchiveFileHistoryBean();
+        history.setChangeDate(new Date());
+        history.setChangeDescription("E-Mail-Entwurf gespeichert an " + to + ": " + subject);
         archiveSvc.addHistory(caseId, history);
 
         ArchiveFileDocumentsBean stored = archiveSvc.getDocument(doc.getId());
