@@ -49,6 +49,8 @@ import org.apache.log4j.Logger;
 public class ReadOnlySoundplayerPanel extends javax.swing.JPanel implements PreviewPanel {
 
     private static final Logger log = Logger.getLogger(ReadOnlySoundplayerPanel.class.getName());
+    private static final javax.swing.ImageIcon ICON_PLAY = new javax.swing.ImageIcon(ReadOnlySoundplayerPanel.class.getResource("/icons32/material/baseline_play_circle_black_48dp.png"));
+    private static final javax.swing.ImageIcon ICON_PAUSE = new javax.swing.ImageIcon(ReadOnlySoundplayerPanel.class.getResource("/icons32/material/pause_32dp_0E72B5_FILL0_wght400_GRAD0_opsz40.png"));
 
     private String documentId = null;
     private String documentName = null;
@@ -289,7 +291,7 @@ public class ReadOnlySoundplayerPanel extends javax.swing.JPanel implements Prev
                             timer.stop();
                         }
                         updateTimeLabel();
-                        cmdPlayPause.setText("Play");
+                        showPlayButton(true);
                     });
                 }
             });
@@ -309,6 +311,17 @@ public class ReadOnlySoundplayerPanel extends javax.swing.JPanel implements Prev
         timer = new Timer(1000, (ActionEvent e) -> updateTimeLabel());
     }
 
+    /**
+     * Switches the play/pause button between its two states.
+     *
+     * @param play true to offer "Play" (playback stopped or paused), false to
+     * offer "Pause" (playback running)
+     */
+    private void showPlayButton(boolean play) {
+        this.cmdPlayPause.setText(play ? "Play" : "Pause");
+        this.cmdPlayPause.setIcon(play ? ICON_PLAY : ICON_PAUSE);
+    }
+
     private void togglePlayPause() {
         if (clip == null) {
             return;
@@ -317,7 +330,7 @@ public class ReadOnlySoundplayerPanel extends javax.swing.JPanel implements Prev
             // clip.stop() greift auf die native Audio-Line zu und kann auf
             // Linux/PulseAudio bei großen dekodierten Puffern kurz blockieren
             // — off-EDT laufen lassen, damit die UI reagierbar bleibt.
-            cmdPlayPause.setText("Play");
+            showPlayButton(true);
             if (timer != null) {
                 timer.stop();
             }
@@ -327,7 +340,7 @@ public class ReadOnlySoundplayerPanel extends javax.swing.JPanel implements Prev
             if (timer != null) {
                 timer.start();
             }
-            this.cmdPlayPause.setText("Pause");
+            showPlayButton(false);
         }
     }
 
@@ -335,7 +348,7 @@ public class ReadOnlySoundplayerPanel extends javax.swing.JPanel implements Prev
         if (clip == null) {
             return;
         }
-        cmdPlayPause.setText("Play");
+        showPlayButton(true);
         if (timer != null) {
             timer.stop();
         }

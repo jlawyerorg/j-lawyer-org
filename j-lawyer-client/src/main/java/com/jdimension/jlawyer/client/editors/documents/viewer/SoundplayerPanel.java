@@ -712,6 +712,8 @@ import org.apache.log4j.Logger;
 public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel, AssistantFlowAdapter {
 
     private static final Logger log = Logger.getLogger(SoundplayerPanel.class.getName());
+    private static final javax.swing.ImageIcon ICON_PLAY = new javax.swing.ImageIcon(SoundplayerPanel.class.getResource("/icons32/material/baseline_play_circle_black_48dp.png"));
+    private static final javax.swing.ImageIcon ICON_PAUSE = new javax.swing.ImageIcon(SoundplayerPanel.class.getResource("/icons32/material/pause_32dp_0E72B5_FILL0_wght400_GRAD0_opsz40.png"));
 
     private String documentId = null;
     private String documentName = null;
@@ -719,6 +721,14 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
     private String initialComment = null;
 
     private Clip clip;
+    /**
+     * rewind applied when resuming after a pause, so the last words can be heard again
+     */
+    private static final long RESUME_REWIND_MICROS = 2_000_000L;
+    /**
+     * true while playback has been paused via the play/pause button - cleared by stop, seek and end of clip
+     */
+    private boolean pausedByUser = false;
     private Timer timer;
 
     private boolean readOnly = true;
@@ -1123,6 +1133,7 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
 
             // Continue with playback setup
             clip = AudioSystem.getClip();
+            pausedByUser = false;
             clip.open(audioInputStream);
             
             volumeControl = null;
@@ -1133,9 +1144,10 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
             clip.addLineListener((LineEvent event) -> {
                 if (event.getType() == LineEvent.Type.STOP && (clip.getMicrosecondPosition() == clip.getMicrosecondLength())) {
                     clip.setMicrosecondPosition(0);
+                    pausedByUser = false;
                     timer.stop();
                     updateTimeLabel();
-                    cmdPlayPause.setText("Play");
+                    showPlayButton(true);
                 }
             });
 
@@ -1301,14 +1313,16 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
 
        // Setup playback
        clip = AudioSystem.getClip();
+       pausedByUser = false;
        clip.open(convertedAis);
 
        clip.addLineListener((LineEvent event) -> {
            if (event.getType() == LineEvent.Type.STOP && (clip.getMicrosecondPosition() == clip.getMicrosecondLength())) {
                clip.setMicrosecondPosition(0);
+               pausedByUser = false;
                timer.stop();
                updateTimeLabel();
-               cmdPlayPause.setText("Play");
+               showPlayButton(true);
            }
        });
 
@@ -1326,16 +1340,33 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
         return this.documentId;
     }
 
+    /**
+     * Switches the play/pause button between its two states.
+     *
+     * @param play true to offer "Play" (playback stopped or paused), false to
+     * offer "Pause" (playback running)
+     */
+    private void showPlayButton(boolean play) {
+        this.cmdPlayPause.setText(play ? "Play" : "Pause");
+        this.cmdPlayPause.setIcon(play ? ICON_PLAY : ICON_PAUSE);
+    }
+
     private void togglePlayPause() {
         if (clip != null) {
             if (clip.isRunning()) {
                 clip.stop();
                 timer.stop();
-                this.cmdPlayPause.setText("Play");
+                this.pausedByUser = true;
+                this.showPlayButton(true);
             } else {
+                if (this.pausedByUser) {
+                    clip.setMicrosecondPosition(Math.max(0L, clip.getMicrosecondPosition() - RESUME_REWIND_MICROS));
+                    this.pausedByUser = false;
+                    updateTimeLabel();
+                }
                 clip.start();
                 timer.start();
-                this.cmdPlayPause.setText("Pause");
+                this.showPlayButton(false);
             }
         }
     }
@@ -1344,9 +1375,10 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
         if (clip != null) {
             clip.stop();
             clip.setMicrosecondPosition(0);
+            this.pausedByUser = false;
             timer.stop();
             updateTimeLabel();
-            this.cmdPlayPause.setText("Play");
+            this.showPlayButton(true);
         }
     }
     
@@ -1391,6 +1423,8 @@ public class SoundplayerPanel extends javax.swing.JPanel implements PreviewPanel
                     long target = (long) (clip.getMicrosecondLength() * Math.min(1.0, Math.max(0.0, fraction)));
                     try {
                         clip.setMicrosecondPosition(target);
+                        // an explicit seek position is played as chosen, without the resume rewind
+                        pausedByUser = false;
                         updateTimeLabel();
                     } catch (Throwable t) {
                         // ignore seek errors
