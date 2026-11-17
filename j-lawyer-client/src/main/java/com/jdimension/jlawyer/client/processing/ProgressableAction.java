@@ -822,9 +822,30 @@ public abstract class ProgressableAction {
                     this.pushToFrontWhenFinished.toFront();
                     this.pushToFrontWhenFinished.requestFocus();
                 }
+                // posted once more: closing the modal indicator hands the focus back to its owner
+                // (asynchronously on macOS) - windows opened before that would end up behind it
+                SwingUtilities.invokeLater(() -> {
+                    try {
+                        afterIndicatorClosed(succeeded);
+                    } catch (Throwable t) {
+                        log.error("error after closing progress indicator", t);
+                    }
+                });
             }));
         }).start();
 
+    }
+
+    /**
+     * Called on the event dispatch thread after the progress indicator has been closed and the focus
+     * has returned to its owner - regardless of the outcome. Subclasses that open a window as the
+     * result of the action should do so here instead of in {@link #execute()}: a window shown while
+     * the modal indicator is still open ends up behind the main window (e.g. on macOS).
+     *
+     * @param succeeded whether {@link #execute()} succeeded
+     */
+    protected void afterIndicatorClosed(boolean succeeded) {
+        // nothing by default
     }
 
     public void cancel() {

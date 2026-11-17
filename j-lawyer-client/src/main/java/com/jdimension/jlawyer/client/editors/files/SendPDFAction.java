@@ -678,7 +678,6 @@ import java.util.ArrayList;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 
 /**
@@ -747,22 +746,25 @@ public class SendPDFAction extends ProgressableAction {
 
 
 
-        SwingUtilities.invokeLater(() -> {
-            try {
-                if(dlg instanceof JFrame) {
-                    FrameUtils.centerFrame((JFrame)dlg, null);
-                    EditorsRegistry.getInstance().registerFrame((JFrame)dlg);
-                    ((JFrame)dlg).setVisible(true);
-                } else {
-                    FrameUtils.centerDialog((JDialog)dlg, null);
-                    ((JDialog)dlg).setVisible(true);
-                }
-            } catch (Throwable t) {
-                log.error(t);
-            }
-        });
-
+        // the send window is opened in afterIndicatorClosed - opening it here, while the modal
+        // progress indicator is still showing, put it behind the main window (issue #3799)
         return true;
+    }
 
+    @Override
+    protected void afterIndicatorClosed(boolean succeeded) {
+        // shown in any case - also after a conversion error or cancellation, as before
+        if (dlg instanceof JFrame) {
+            JFrame f = (JFrame) dlg;
+            FrameUtils.centerFrame(f, null);
+            EditorsRegistry.getInstance().registerFrame(f);
+            f.setVisible(true);
+            f.toFront();
+            f.requestFocus();
+        } else if (dlg instanceof JDialog) {
+            JDialog d = (JDialog) dlg;
+            FrameUtils.centerDialog(d, null);
+            d.setVisible(true);
+        }
     }
 }
