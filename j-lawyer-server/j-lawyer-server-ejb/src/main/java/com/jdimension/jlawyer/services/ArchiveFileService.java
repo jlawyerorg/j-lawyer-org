@@ -7074,6 +7074,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (allowed) {
 
             this.enforcePaymentFieldLengths(payment);
+            if (!Payment.isTotalValidForStatus(payment.getStatus(), payment.getTotal())) {
+                throw new Exception(Payment.MSG_ZERO_TOTAL);
+            }
 
             Payment updatedPayment = this.paymentsFacade.find(payment.getId());
             updatedPayment.setContact(payment.getContact());
@@ -8905,6 +8908,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             payment.setCreationDate(new Date());
             payment.setArchiveFileKey(aFile);
             this.enforcePaymentFieldLengths(payment);
+            if (!Payment.isTotalValidForStatus(payment.getStatus(), payment.getTotal())) {
+                throw new Exception(Payment.MSG_ZERO_TOTAL);
+            }
 
             // check for conflicting invoice numbers
             Payment conflictingPayment = this.paymentsFacade.findByPaymentNumber(payment.getPaymentNumber());

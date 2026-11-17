@@ -1025,6 +1025,10 @@ public class ManagePaymentsFrame extends javax.swing.JFrame {
                 if (recipientIban == null || !IbanUtil.isValid(recipientIban)) {
                     errors.add("Ungültige Empfänger-IBAN: " + recipientIban);
                 }
+                // banks reject transfers of 0,00 (issue #3802)
+                if (p.getTotal() == null || p.getTotal().signum() <= 0) {
+                    errors.add("Betrag muss größer als 0,00 sein");
+                }
 
                 // length limits apply to the sanitized values, because umlaut replacement makes them longer
                 List<String> truncated = new ArrayList<>();

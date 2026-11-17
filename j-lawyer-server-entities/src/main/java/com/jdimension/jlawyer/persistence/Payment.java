@@ -717,6 +717,11 @@ public class Payment implements Serializable {
     
     public static final List<String> PAYMENTTYPES=List.of(PAYMENTTYPE_SEPATRANSFER, PAYMENTTYPE_OTHER);
     
+    /**
+     * Error message for a payment without an amount that is to be approved or initiated.
+     */
+    public static final String MSG_ZERO_TOTAL="Zahlungen ohne Betrag (0,00) können nicht freigegeben oder veranlasst werden.";
+    
     
     protected static long serialVersionUID = 1L;
     
@@ -905,6 +910,25 @@ public class Payment implements Serializable {
                 return "unbekannt";
         }
         
+    }
+    
+    /**
+     * Checks whether a payment total is acceptable for the given status. Drafts may have no amount
+     * yet (e.g. generated from an invoice of 0,00), but a payment can only be approved or initiated
+     * with a total greater than zero - banks reject SEPA files containing transfers of 0,00.
+     * Executed, failed and cancelled payments are not checked so existing payments can still be
+     * closed.
+     *
+     * @param status the payment status, one of the STATUS_* constants
+     * @param total the payment total, may be null
+     * @return false if the status is approved or initiated and the total is null or not greater
+     * than zero, true otherwise
+     */
+    public static boolean isTotalValidForStatus(int status, BigDecimal total) {
+        if (status == STATUS_APPROVED || status == STATUS_INITIATED) {
+            return total != null && total.signum() > 0;
+        }
+        return true;
     }
     
     public static int getStatusInt(String statusString) {

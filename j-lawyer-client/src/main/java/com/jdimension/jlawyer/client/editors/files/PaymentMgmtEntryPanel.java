@@ -796,6 +796,13 @@ public class PaymentMgmtEntryPanel extends com.jdimension.jlawyer.client.ui.them
         this.cmdMarkAsPayed.setEnabled(payment.getStatus() != Payment.STATUS_EXECUTED && payment.getStatus() != Payment.STATUS_CANCELLED);
         this.cmdCancel.setEnabled(payment.getStatus() != Payment.STATUS_CANCELLED && payment.getStatus() != Payment.STATUS_FAILED && payment.getStatus() != Payment.STATUS_EXECUTED);
         this.cmdApprove.setEnabled(payment.getStatus() != Payment.STATUS_APPROVED && payment.getStatus() != Payment.STATUS_FAILED && payment.getStatus() != Payment.STATUS_EXECUTED);
+        // a payment without an amount cannot be approved (issue #3802)
+        if (!Payment.isTotalValidForStatus(Payment.STATUS_APPROVED, payment.getTotal())) {
+            this.cmdApprove.setEnabled(false);
+            this.cmdApprove.setToolTipText(Payment.MSG_ZERO_TOTAL);
+        } else {
+            this.cmdApprove.setToolTipText("freigeben");
+        }
 
     }
 

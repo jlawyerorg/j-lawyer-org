@@ -1218,6 +1218,18 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
     }//GEN-LAST:event_cmdCancelActionPerformed
 
     private void fillCurrentEntry() throws Exception {
+        // payments without an amount are rejected by the bank (issue #3802)
+        if (this.txtTotal.getText() == null || this.txtTotal.getText().trim().isEmpty()) {
+            throw new Exception("Bitte einen Betrag angeben.");
+        }
+        try {
+            this.txtTotal.commitEdit();
+        } catch (java.text.ParseException pe) {
+            throw new Exception("Ungültiger Betrag");
+        }
+        if (!(this.txtTotal.getValue() instanceof Number) || ((Number) this.txtTotal.getValue()).doubleValue() <= 0d) {
+            throw new Exception("Der Betrag muss größer als 0,00 sein.");
+        }
         try {
             df.parse(this.dtCreated.getText());
         } catch (Exception ex) {
