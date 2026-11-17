@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.services;
 import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jdimension.jlawyer.email.CommonMailUtils;
+import com.jdimension.jlawyer.email.MailReportInfo;
 import com.jdimension.jlawyer.persistence.MailboxAccessFacadeLocal;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
 import com.jdimension.jlawyer.persistence.MailboxSetupFacadeLocal;
@@ -2222,6 +2223,14 @@ public class EmailService implements EmailServiceRemote, EmailServiceLocal {
                 dto.setTo(addressesToStrings(msg.getRecipients(Message.RecipientType.TO)));
                 dto.setCc(addressesToStrings(msg.getRecipients(Message.RecipientType.CC)));
                 String[] bodyResult = extractBody(msg);
+                if (msg.isMimeType("multipart/*")) {
+                    // read receipts / delivery reports: the subject of the original mail is only in the
+                    // machine-readable report parts, which extractBody skips - append them to the body
+                    MailReportInfo reportInfo = MailReportInfo.extract(msg.getContent());
+                    if (reportInfo != null) {
+                        bodyResult = reportInfo.appendTo(bodyResult[0], bodyResult[1]);
+                    }
+                }
                 dto.setBody(bodyResult[0]);
                 dto.setBodyContentType(bodyResult[1]);
                 return dto;

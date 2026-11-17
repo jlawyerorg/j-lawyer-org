@@ -687,6 +687,7 @@ import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.*;
+import com.jdimension.jlawyer.email.MailReportInfo;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.AssistantConfig;
@@ -1415,6 +1416,9 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         }
 
         if (copiedMsg.isMimeType("multipart/*")) {
+            // read receipts / delivery reports: the subject of the original mail is only in the
+            // machine-readable parts, which are neither text/html nor text/plain - show them below the text
+            MailReportInfo reportInfo = MailReportInfo.extract(copiedMsg.getContent());
             ArrayList<String> partsFound = new ArrayList<>();
             EmailUtils.recursiveFindPart(copiedMsg.getContent(), ContentTypes.TEXT_HTML, partsFound);
             if (!partsFound.isEmpty()) {
@@ -1430,6 +1434,9 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                         pNew = pNew.substring(0, pNew.length() - 7);
                     }
                     sb.append(pNew);
+                }
+                if (reportInfo != null) {
+                    sb.append(reportInfo.toHtml());
                 }
                 sb.append("</html>");
                 String html = sb.toString();
@@ -1453,7 +1460,12 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 EmailUtils.recursiveFindPart(copiedMsg.getContent(), ContentTypes.TEXT_PLAIN, partsFound);
                 if (!partsFound.isEmpty()) {
                     String text = partsFound.get(0);
+                    if (reportInfo != null) {
+                        text = text + reportInfo.toPlainText();
+                    }
                     contentUI.setBody(text, ContentTypes.TEXT_PLAIN);
+                } else if (reportInfo != null) {
+                    contentUI.setBody(reportInfo.toPlainText().trim(), ContentTypes.TEXT_PLAIN);
                 } else {
                     contentUI.setBody("Unbekannter Nachrichteninhalt - E-Mail ggf. per Rechtsklick im externen Mailprogramm öffnen", ContentTypes.TEXT_PLAIN);
                 }
