@@ -3126,6 +3126,8 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private void addMessageToDesktopContainer(InstantMessage msg, JPanel targetPanel) {
         MessagePanel mp = new MessagePanel(UserSettings.getInstance().getLoginEnabledUsers(), UserSettings.getInstance().getCurrentUser().getPrincipalId(), UserSettings.getInstance().getCurrentUser().getPrincipalId().equalsIgnoreCase(msg.getSender()), msg);
         mp.enableCaseDrop();
+        // narrow column: keep the document chip short, like the other compact message lists
+        mp.setMaxDocumentChars(40);
         mp.setAlignmentX(JPanel.LEFT_ALIGNMENT);
         // Insert at correct position: newer messages on top
         int insertIndex = 0;

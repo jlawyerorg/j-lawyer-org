@@ -1204,10 +1204,13 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
         int inner = Math.max(widest + geo.receiptW, headerW);
         boolean hasFooter = this.footer != null && this.footer.isVisible();
         if (hasFooter) {
-            geo.footerH = this.footer.getPreferredSize().height;
             inner = Math.max(inner, this.footer.getPreferredSize().width - 8);
         }
         geo.bubbleW = Math.min(maxBubble, Math.max(inner + 2 * PADDING_H, Math.min(maxBubble, 180)));
+        if (hasFooter) {
+            // in a narrow bubble the chips wrap into further rows - reserve the height they really need
+            geo.footerH = footerHeightFor(footerWidthFor(geo.bubbleW));
+        }
 
         FontMetrics hm = g2d.getFontMetrics(defaultFontBold);
         geo.headerH = Math.max(hm.getHeight(), ACTION_ICON + 8);
@@ -1683,12 +1686,28 @@ public class CalloutPanelComponent extends javax.swing.JPanel {
         this.revalidate();
     }
 
+    /** The width the footer gets inside a bubble of the given width, see placeFooter. */
+    private static int footerWidthFor(int bubbleW) {
+        return bubbleW - 2 * PADDING_H + 12;
+    }
+
+    /**
+     * The footer height for the given width. A footer with a ChipRowLayout reports the height of
+     * its wrapped rows; for any other layout the preferred height is all there is.
+     */
+    private int footerHeightFor(int footerWidth) {
+        if (this.footer.getLayout() instanceof com.jdimension.jlawyer.client.ui.theme.ChipRowLayout) {
+            return ((com.jdimension.jlawyer.client.ui.theme.ChipRowLayout) this.footer.getLayout()).heightForWidth(this.footer, footerWidth);
+        }
+        return this.footer.getPreferredSize().height;
+    }
+
     private void placeFooter(Geometry geo) {
         if (this.footer == null || !this.footer.isVisible()) {
             return;
         }
         // chips have their own padding - align their text with the message text
-        java.awt.Rectangle r = new java.awt.Rectangle(geo.bubbleX + PADDING_H - 6, geo.footerY, geo.bubbleW - 2 * PADDING_H + 12, geo.footerH);
+        java.awt.Rectangle r = new java.awt.Rectangle(geo.bubbleX + PADDING_H - 6, geo.footerY, footerWidthFor(geo.bubbleW), geo.footerH);
         if (!r.equals(this.footer.getBounds())) {
             this.footer.setBounds(r);
             this.footer.validate();

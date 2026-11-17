@@ -719,6 +719,9 @@ public class MessagePanel extends javax.swing.JPanel implements CaseDropTarget {
      */
     public MessagePanel() {
         initComponents();
+        // the chips wrap in a narrow bubble (e.g. on the desktop) - the bubble needs to know how high
+        // they get, a plain FlowLayout always reports a single row and the wrapped chips were cut off
+        this.pnlContext.setLayout(new com.jdimension.jlawyer.client.ui.theme.ChipRowLayout(6, 0));
         this.calloutPanelComponent1.setFooter(this.pnlContext);
 
         this.calloutPanelComponent1.setMessage(new InstantMessage());
@@ -726,6 +729,9 @@ public class MessagePanel extends javax.swing.JPanel implements CaseDropTarget {
 
     public MessagePanel(List<AppUserBean> principals, String ownPrincipal, boolean ownMessage, InstantMessage im) {
         initComponents();
+        // the chips wrap in a narrow bubble (e.g. on the desktop) - the bubble needs to know how high
+        // they get, a plain FlowLayout always reports a single row and the wrapped chips were cut off
+        this.pnlContext.setLayout(new com.jdimension.jlawyer.client.ui.theme.ChipRowLayout(6, 0));
 
         this.im = im;
         this.ownMessage = ownMessage;
