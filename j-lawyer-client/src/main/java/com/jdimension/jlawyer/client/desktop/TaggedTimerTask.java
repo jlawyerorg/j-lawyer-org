@@ -1183,6 +1183,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
                                 te.setCaseId(aDoc.getArchiveFileKey().getId());
                                 te.setDocumentId(aDoc.getId());
                                 te.setDocumentName(aDoc.getName());
+                                te.setDocumentTitle(aDoc.getTitle());
                                 te.setLawyer(aDoc.getArchiveFileKey().getLawyer());
                                 te.setAssistant(aDoc.getArchiveFileKey().getAssistant());
                                 te.setName(aDoc.getArchiveFileKey().getName());

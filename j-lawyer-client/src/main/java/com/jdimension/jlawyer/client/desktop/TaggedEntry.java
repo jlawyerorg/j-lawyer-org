@@ -683,6 +683,7 @@ public class TaggedEntry {
     private ArrayList<String> tags=null;
     private HashMap<String,Date> tagDates=null;
     private String documentName=null;
+    private String documentTitle=null;
     private boolean archived=false;
     
     
@@ -788,6 +789,30 @@ public class TaggedEntry {
      */
     public void setDocumentName(String documentName) {
         this.documentName = documentName;
+    }
+
+    /**
+     * @return the document title / description, may be null
+     */
+    public String getDocumentTitle() {
+        return documentTitle;
+    }
+
+    /**
+     * @param documentTitle the document title / description to set
+     */
+    public void setDocumentTitle(String documentTitle) {
+        this.documentTitle = documentTitle;
+    }
+
+    /**
+     * @return the document title if set, otherwise the file name
+     */
+    public String getDocumentDisplayTitle() {
+        if (this.documentTitle != null && !this.documentTitle.isBlank()) {
+            return this.documentTitle;
+        }
+        return this.documentName;
     }
 
     /**

@@ -958,7 +958,15 @@ public class SendInstantMessageDialog extends javax.swing.JDialog implements New
             for (int i = 0; i < shown; i++) {
                 ArchiveFileDocumentsBean doc = this.documentContexts.get(i);
                 StringBuilder detail = new StringBuilder();
+                // title / description shown prominently, the file name moves into the detail line
+                String displayTitle = nvl(doc.getDisplayTitle());
+                if (!displayTitle.equals(nvl(doc.getName()))) {
+                    detail.append(nvl(doc.getName()));
+                }
                 if (doc.getCreationDate() != null) {
+                    if (detail.length() > 0) {
+                        detail.append(" · ");
+                    }
                     detail.append(df.format(doc.getCreationDate()));
                 }
                 if (doc.getSize() > 0) {
@@ -967,7 +975,7 @@ public class SendInstantMessageDialog extends javax.swing.JDialog implements New
                     }
                     detail.append(formatSize(doc.getSize()));
                 }
-                this.addRow(FileUtils.getInstance().getFileTypeIcon(nvl(doc.getName())), nvl(doc.getName()), detail.toString());
+                this.addRow(FileUtils.getInstance().getFileTypeIcon(nvl(doc.getName())), displayTitle, detail.toString());
             }
             if (shown < docCount) {
                 JLabel more = new JLabel("… und " + (docCount - shown) + " weitere Dokumente");

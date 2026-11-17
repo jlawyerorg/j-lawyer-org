@@ -676,6 +676,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.ui.folders.DocumentDisplayUtils;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.InstantMessage;
@@ -807,16 +808,23 @@ public class MessagePanel extends javax.swing.JPanel implements CaseDropTarget {
     private void displayDocumentContext() {
         if (im.getDocumentContext() != null) {
 
-            String docContextValue = im.getDocumentContext().getName();
+            // show the document title / description prominently if present, otherwise the file name
+            String fileName = im.getDocumentContext().getName();
+            String displayTitle = im.getDocumentContext().getDisplayTitle();
+            String docContextValue = displayTitle;
             if (docContextValue.length() > this.maxDocumentChars) {
                 docContextValue = docContextValue.substring(0, this.maxDocumentChars - 1) + "...";
             }
 
             this.lblDocumentContext.setText(docContextValue);
             FileUtils fu = FileUtils.getInstance();
-            Icon icon = fu.getFileTypeIcon(im.getDocumentContext().getName());
+            Icon icon = fu.getFileTypeIcon(fileName);
             this.lblDocumentContext.setIcon(icon);
-            this.lblDocumentContext.setToolTipText(im.getDocumentContext().getName());
+            if (displayTitle.equals(fileName)) {
+                this.lblDocumentContext.setToolTipText(fileName);
+            } else {
+                this.lblDocumentContext.setToolTipText("<html><b>" + DocumentDisplayUtils.escapeHtml(displayTitle) + "</b><br/>" + DocumentDisplayUtils.escapeHtml(fileName) + "</html>");
+            }
         } else {
             this.lblDocumentContext.setText("");
             this.lblDocumentContext.setToolTipText("");
@@ -976,7 +984,7 @@ public class MessagePanel extends javax.swing.JPanel implements CaseDropTarget {
 
         if (EditorsRegistry.getInstance().getCurrentEditor() instanceof ArchiveFilePanel && toDocument) {
             // clicked from within a case
-            ((ArchiveFilePanel)EditorsRegistry.getInstance().getCurrentEditor()).selectDocument(this.lblDocumentContext.getToolTipText());
+            ((ArchiveFilePanel)EditorsRegistry.getInstance().getCurrentEditor()).selectDocument(this.im.getDocumentContext() != null ? this.im.getDocumentContext().getName() : null);
         } else {
             // clicked from within the message center
             try {
@@ -1014,8 +1022,8 @@ public class MessagePanel extends javax.swing.JPanel implements CaseDropTarget {
                     return;
                 }
 
-                if (this.lblDocumentContext.getText() != null && !"".equals(this.lblDocumentContext.getText()) && toDocument) {
-                    ((ArchiveFilePanel) editor).setArchiveFileDTO(aFile, this.lblDocumentContext.getToolTipText());
+                if (this.im.getDocumentContext() != null && toDocument) {
+                    ((ArchiveFilePanel) editor).setArchiveFileDTO(aFile, this.im.getDocumentContext().getName());
                 } else {
                     ((ArchiveFilePanel) editor).setArchiveFileDTO(aFile);
                 }

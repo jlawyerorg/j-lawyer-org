@@ -675,6 +675,7 @@ import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.ui.folders.DocumentDisplayUtils;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import java.awt.Color;
 import java.awt.Component;
@@ -806,14 +807,19 @@ public class TaggedEntryPanelTransparent extends javax.swing.JPanel implements C
 
         if (e.getDocumentName() != null) {
 
-            String docName = e.getDocumentName();
+            // show the document title / description prominently if present, otherwise the file name
+            String docName = e.getDocumentDisplayTitle();
             if (docName.length() > 90) {
                 docName = docName.substring(0, 90) + "...";
             }
-            
-            this.lblDocument.setText("<html><b>" + docName + "</b></html>");
+
+            this.lblDocument.setText("<html><b>" + DocumentDisplayUtils.escapeHtml(docName) + "</b></html>");
             this.lblDocument.setIcon(FileUtils.getInstance().getFileTypeIcon(e.getDocumentName()));
-            this.lblDocument.setToolTipText(e.getDocumentName());
+            if (e.getDocumentDisplayTitle().equals(e.getDocumentName())) {
+                this.lblDocument.setToolTipText(e.getDocumentName());
+            } else {
+                this.lblDocument.setToolTipText("<html><b>" + DocumentDisplayUtils.escapeHtml(e.getDocumentDisplayTitle()) + "</b><br/>" + DocumentDisplayUtils.escapeHtml(e.getDocumentName()) + "</html>");
+            }
 
         } else {
             this.lblDocument.setText(null);
@@ -1035,8 +1041,8 @@ public class TaggedEntryPanelTransparent extends javax.swing.JPanel implements C
                 return;
             }
 
-            if (this.lblDocument.getToolTipText() != null && !"".equals(this.lblDocument.getToolTipText())) {
-                ((ArchiveFilePanel) editor).setArchiveFileDTO(aFile, this.lblDocument.getToolTipText());
+            if (this.e.getDocumentName() != null && !"".equals(this.e.getDocumentName())) {
+                ((ArchiveFilePanel) editor).setArchiveFileDTO(aFile, this.e.getDocumentName());
             } else {
                 ((ArchiveFilePanel) editor).setArchiveFileDTO(aFile);
             }
