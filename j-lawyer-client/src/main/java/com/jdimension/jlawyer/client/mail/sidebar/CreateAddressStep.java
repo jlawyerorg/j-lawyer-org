@@ -904,9 +904,14 @@ public class CreateAddressStep extends javax.swing.JPanel implements WizardStepI
             text = this.taBody.getText();
         }
 
+        // the sender's address is often only in the mail header, not in the text - give it to the
+        // assistant as context (the text area itself stays unchanged)
+        String senderAddress = this.getSenderAddress();
+        String aiText = this.buildHeaderContext(senderAddress) + text;
+
         List<InputData> inputs = new ArrayList<>();
         InputData stringInput = new InputData();
-        stringInput.setStringData(text);
+        stringInput.setStringData(aiText);
         stringInput.setType(InputData.TYPE_STRING);
         inputs.add(stringInput);
 
@@ -935,6 +940,7 @@ public class CreateAddressStep extends javax.swing.JPanel implements WizardStepI
                 
                 Map<String,String> contactAttributes=AssistantAccess.jsonStringToMap(resultText);
                 
+                boolean emailFound = false;
                 for(String key: contactAttributes.keySet()) {
                     String mappingKey=null;
                     if(key.equalsIgnoreCase("company")) {
@@ -965,8 +971,16 @@ public class CreateAddressStep extends javax.swing.JPanel implements WizardStepI
                     if(mappingKey!=null) {
                         String value=contactAttributes.get(key);
                         tm.addRow(new String[]{value, mappingKey});
+                        if (AttributeCellEditor.ATTRIBUTE_EMAIL.equals(mappingKey) && value != null && !value.trim().isEmpty()) {
+                            emailFound = true;
+                        }
                     }
                     
+                }
+
+                // as in the manual path: no e-mail extracted - use the one of the sender
+                if (!emailFound && senderAddress != null) {
+                    tm.addRow(new String[]{senderAddress, AttributeCellEditor.ATTRIBUTE_EMAIL});
                 }
 
             }
@@ -976,6 +990,61 @@ public class CreateAddressStep extends javax.swing.JPanel implements WizardStepI
             JOptionPane.showMessageDialog(this, "Kontaktdaten konnten nicht extrahiert werden: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_cmdExtractActionPerformed
+
+    private boolean isMailSource() {
+        Object source = this.data.get("newcase.source");
+        return source == null || !"scanner".equalsIgnoreCase(source.toString());
+    }
+
+    /**
+     * @return the sender's e-mail address if the wizard was started from an e-mail, otherwise null
+     */
+    private String getSenderAddress() {
+        if (!this.isMailSource()) {
+            return null;
+        }
+        Object addr = this.data.get("newcase.senderaddress");
+        if (addr == null || addr.toString().trim().isEmpty()) {
+            return null;
+        }
+        return addr.toString().trim();
+    }
+
+    /**
+     * Builds the header lines (sender, subject) of the e-mail to prepend to the text sent to the
+     * assistant, so it can use e.g. the sender's address that is not part of the mail text.
+     *
+     * @param senderAddress the sender's e-mail address, may be null
+     * @return the header block followed by a blank line, or an empty string for non-mail sources
+     */
+    private String buildHeaderContext(String senderAddress) {
+        if (!this.isMailSource()) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        Object senderName = this.data.get("newcase.sendername");
+        String name = senderName != null ? senderName.toString().trim() : "";
+        if (senderAddress != null || !name.isEmpty()) {
+            sb.append("Absender: ");
+            if (!name.isEmpty()) {
+                sb.append(name);
+                if (senderAddress != null) {
+                    sb.append(" <").append(senderAddress).append(">");
+                }
+            } else {
+                sb.append(senderAddress);
+            }
+            sb.append(System.lineSeparator());
+        }
+        Object subject = this.data.get("newcase.subject");
+        if (subject != null && !subject.toString().trim().isEmpty()) {
+            sb.append("Betreff: ").append(subject.toString().trim()).append(System.lineSeparator());
+        }
+        if (sb.length() > 0) {
+            sb.append(System.lineSeparator());
+        }
+        return sb.toString();
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox chkGenerateAddress;
