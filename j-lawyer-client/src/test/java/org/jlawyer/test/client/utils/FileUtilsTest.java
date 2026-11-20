@@ -735,4 +735,76 @@ public class FileUtilsTest {
          
          
      }
+
+     @Test
+     public void testKeepFileNameUnlessTaken() {
+         java.util.Set<String> taken = new java.util.HashSet<>(java.util.Arrays.asList("brief.pdf", "brief-2.pdf"));
+         java.util.List<String> asked = new java.util.ArrayList<>();
+
+         // a free name is kept without asking
+         Assert.assertEquals("klage.pdf", FileUtils.keepFileNameUnlessTaken("klage.pdf", taken::contains, n -> {
+             asked.add(n);
+             return "anders.pdf";
+         }));
+         Assert.assertTrue(asked.isEmpty());
+
+         // a taken name is asked for again until the answer is free
+         java.util.Iterator<String> answers = java.util.Arrays.asList("brief-2.pdf", "brief-3.pdf").iterator();
+         Assert.assertEquals("brief-3.pdf", FileUtils.keepFileNameUnlessTaken("brief.pdf", taken::contains, n -> {
+             asked.add(n);
+             return answers.next();
+         }));
+         Assert.assertEquals(java.util.Arrays.asList("brief.pdf", "brief-2.pdf"), asked);
+
+         // cancelling the question cancels
+         Assert.assertNull(FileUtils.keepFileNameUnlessTaken("brief.pdf", taken::contains, n -> null));
+         Assert.assertNull(FileUtils.keepFileNameUnlessTaken("brief.pdf", taken::contains, n -> " "));
+     }
+
+     @Test
+     public void testKeepFileNamesReservesEarlierNames() {
+         java.util.List<String> asked = new java.util.ArrayList<>();
+         // the target has x.pdf, the first document is renamed to y.pdf, so the second document (y.pdf) must be renamed as well
+         java.util.Iterator<String> answers = java.util.Arrays.asList("y.pdf", "y-2.pdf").iterator();
+         java.util.List<String> result = FileUtils.keepFileNames(java.util.Arrays.asList("x.pdf", "y.pdf", "z.pdf"), "x.pdf"::equals, n -> {
+             asked.add(n);
+             return answers.next();
+         });
+         Assert.assertEquals(java.util.Arrays.asList("y.pdf", "y-2.pdf", "z.pdf"), result);
+         Assert.assertEquals(java.util.Arrays.asList("x.pdf", "y.pdf"), asked);
+
+         // names differing only in case are the same name
+         asked.clear();
+         result = FileUtils.keepFileNames(java.util.Arrays.asList("brief.pdf", "BRIEF.PDF"), n -> false, n -> {
+             asked.add(n);
+             return "brief-2.pdf";
+         });
+         Assert.assertEquals(java.util.Arrays.asList("brief.pdf", "brief-2.pdf"), result);
+         Assert.assertEquals(java.util.Arrays.asList("BRIEF.PDF"), asked);
+     }
+
+     @Test
+     public void testKeepFileNamesUnicodeCaseIndependentOfLocale() {
+         java.util.Locale before = java.util.Locale.getDefault();
+         try {
+             // in Turkish, "I".toLowerCase() is a dotless i - the comparison must still match equalsIgnoreCase
+             java.util.Locale.setDefault(new java.util.Locale("tr", "TR"));
+             Assert.assertTrue("I.pdf".equalsIgnoreCase("i.pdf"));
+             java.util.List<String> asked = new java.util.ArrayList<>();
+             java.util.List<String> result = FileUtils.keepFileNames(java.util.Arrays.asList("I.pdf", "i.pdf", "Ärger.pdf", "ärger.pdf"), n -> false, n -> {
+                 asked.add(n);
+                 return "neu-" + asked.size() + ".pdf";
+             });
+             Assert.assertEquals(java.util.Arrays.asList("I.pdf", "neu-1.pdf", "Ärger.pdf", "neu-2.pdf"), result);
+             Assert.assertEquals(java.util.Arrays.asList("i.pdf", "ärger.pdf"), asked);
+         } finally {
+             java.util.Locale.setDefault(before);
+         }
+     }
+
+     @Test
+     public void testKeepFileNamesCancel() {
+         Assert.assertNull(FileUtils.keepFileNames(java.util.Arrays.asList("a.pdf", "b.pdf"), "b.pdf"::equals, n -> null));
+         Assert.assertEquals(java.util.Arrays.asList("a.pdf", "b.pdf"), FileUtils.keepFileNames(java.util.Arrays.asList("a.pdf", "b.pdf"), n -> false, n -> null));
+     }
 }

@@ -2953,22 +2953,63 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             CaseUtils.optionalUnarchiveCase(sel, this);
 
-            // file names are asked for as before, one document after the other
-            HashMap<String, String> newNames = new HashMap<>();
-            ArrayList<String> ids = new ArrayList<>();
-            for (ArchiveFileDocumentsBean doc : selected) {
-                String newName = FileUtils.getNewFileName(sel, doc.getName(), new Date(), move, EditorsRegistry.getInstance().getMainWindow(), action);
-                if (newName == null || newName.trim().isEmpty()) {
-                    this.lastPopupClosed = System.currentTimeMillis();
-                    return;
-                }
-                newNames.put(doc.getId(), newName);
-                ids.add(doc.getId());
-            }
-
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+
+            Object[] nameOptions = {"Beibehalten", "Neu benennen", "Abbrechen"};
+            int nameMode = JOptionPane.showOptionDialog(this, "Sollen die vorhandenen Dateinamen beibehalten werden?\nNach einem neuen Namen wird dann nur gefragt, wenn es ihn in der Zielakte schon gibt.", action, JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, nameOptions, nameOptions[0]);
+            if (nameMode != JOptionPane.YES_OPTION && nameMode != JOptionPane.NO_OPTION) {
+                this.lastPopupClosed = System.currentTimeMillis();
+                return;
+            }
+            boolean keepNames = nameMode == JOptionPane.YES_OPTION;
+
+            HashMap<String, String> newNames = new HashMap<>();
+            ArrayList<String> ids = new ArrayList<>();
+            if (keepNames) {
+                // keep the names, ask for another one only if the target case (or an earlier document of this batch) already has it
+                ArrayList<String> names = new ArrayList<>();
+                for (ArchiveFileDocumentsBean doc : selected) {
+                    names.add(doc.getName());
+                }
+                // the names of all documents are checked against the target case (and its trash) in one background run
+                Set<String> takenNames = ThreadUtils.callWithProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), "Dateinamen in der Zielakte werden geprüft...", () -> {
+                    Set<String> taken = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+                    for (String name : names) {
+                        if (remote.doesDocumentExist(sel.getId(), name)) {
+                            taken.add(name);
+                        }
+                    }
+                    return taken;
+                });
+                Set<String> checkedNames = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+                checkedNames.addAll(names);
+                List<String> keptNames = FileUtils.keepFileNames(names,
+                        // a name typed in the conflict dialog is checked right after it was entered
+                        name -> takenNames.contains(name) || (!checkedNames.contains(name) && remote.doesDocumentExist(sel.getId(), name)),
+                        name -> FileUtils.getNewFileName(sel, name, new Date(), false, EditorsRegistry.getInstance().getMainWindow(), action + " - Name in der Zielakte bereits vorhanden", true));
+                if (keptNames == null) {
+                    this.lastPopupClosed = System.currentTimeMillis();
+                    return;
+                }
+                for (int i = 0; i < selected.size(); i++) {
+                    newNames.put(selected.get(i).getId(), keptNames.get(i));
+                    ids.add(selected.get(i).getId());
+                }
+            } else {
+                // file names are asked for as before, one document after the other
+                for (ArchiveFileDocumentsBean doc : selected) {
+                    String newName = FileUtils.getNewFileName(sel, doc.getName(), new Date(), move, EditorsRegistry.getInstance().getMainWindow(), action);
+                    if (newName == null || newName.trim().isEmpty()) {
+                        this.lastPopupClosed = System.currentTimeMillis();
+                        return;
+                    }
+                    newNames.put(doc.getId(), newName);
+                    ids.add(doc.getId());
+                }
+            }
+
             String folderId = folder == null ? null : folder.getId();
             HashMap<String, ArchiveFileDocumentsBean> copies = move
                     ? remote.moveDocumentsToCase(ids, sel.getId(), folderId, newNames)
