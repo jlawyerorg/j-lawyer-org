@@ -771,6 +771,25 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
 
     private static final Logger log = Logger.getLogger(SendEmailFrame.class.getName());
     private static final String LABEL_SEND_UNENCRYPTED = "unverschlüsselt senden";
+    /**
+     * Empty line between template, signature and quoted mail in the HTML editor. The editor (SunEditor) wraps a bare
+     * &lt;br/&gt; between block elements into a paragraph, which adds the paragraph spacing - a div is a normal line.
+     */
+    private static final String HTML_EMPTY_LINE = "<div><br></div>";
+
+    /**
+     * Joins a template and the signature for the HTML editor, with one empty line between them, and between them and
+     * the text before the signature if there is one.
+     *
+     * @param text the text from the template
+     * @param preSignature the text before the signature (in a reply usually empty), may be null
+     * @param signature the signature
+     * @return the joined HTML
+     */
+    static String withSignatureHtml(String text, String preSignature, String signature) {
+        String pre = preSignature == null || preSignature.isEmpty() ? "" : preSignature + HTML_EMPTY_LINE;
+        return text + HTML_EMPTY_LINE + pre + signature;
+    }
 
     private Collection<String> allMailTemplates = null;
 
@@ -3655,7 +3674,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                                 Document doc = Jsoup.parse(this.initialPostSignatureHtml);
                                 Element body = doc.body();
                                 if (body != null) {
-                                    body.prepend(EmailUtils.text2Html(t) + "<br/>" + this.initialPreSignatureHtml + "<br/>" + StringUtils.nonEmpty(ms.getEmailSignature()) + "<br/>");
+                                    body.prepend(withSignatureHtml(EmailUtils.text2Html(t), this.initialPreSignatureHtml, StringUtils.nonEmpty(ms.getEmailSignature())) + HTML_EMPTY_LINE);
                                 }
                                 // Disable pretty-printing: otherwise Jsoup inserts newlines/indentation between
                                 // block elements, which the HTML editor (SunEditor) turns into empty <p> </p>
@@ -3688,7 +3707,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                         }
                         if (!this.replyOrForward) {
                             // initial mail - adjust the html vs text setting of the mail according to the selected template
-                            this.hp.setText(t + "<br/>" + HtmlUtils.stripHeadAndBodyTags(StringUtils.nonEmpty(ms.getEmailSignature())));
+                            this.hp.setText(withSignatureHtml(t, null, HtmlUtils.stripHeadAndBodyTags(StringUtils.nonEmpty(ms.getEmailSignature()))));
                             this.hp.setCaretPosition(Math.max(0, cursorIndex));
                             this.tp.setText("");
                             this.html.setSelected(true);
@@ -3701,7 +3720,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                                 Document doc = Jsoup.parse(this.initialPostSignatureHtml);
                                 Element body = doc.body();
                                 if (body != null) {
-                                    body.prepend(t + "<br/>" + this.initialPreSignatureHtml + "<br/>" + HtmlUtils.stripHeadAndBodyTags(StringUtils.nonEmpty(ms.getEmailSignature())));
+                                    body.prepend(withSignatureHtml(t, this.initialPreSignatureHtml, HtmlUtils.stripHeadAndBodyTags(StringUtils.nonEmpty(ms.getEmailSignature()))));
                                 }
                                 // Disable pretty-printing: otherwise Jsoup inserts newlines/indentation between
                                 // block elements, which the HTML editor (SunEditor) turns into empty <p> </p>
