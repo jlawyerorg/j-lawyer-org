@@ -665,6 +665,7 @@ package org.jlawyer.backupmgr.impl;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.nio.file.Files;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -673,6 +674,8 @@ import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -1057,9 +1060,78 @@ public class RestoreExecutor {
 
     public void restore(BackupProgressCallback progress) throws Exception {
         fileFailures = 0;
-        this.clearDataDirectory(progress);
-        this.restoreFiles(progress);
-        this.restoreDatabase(this.dbPassword, progress);
+        // the database dump is unpacked into a new directory and prepared before anything is changed: if that fails
+        // (e.g. the disk is full), the data directory and the database are both left as they were. A dump left over
+        // from an earlier restore can not be taken for the one of this backup.
+        File staging = Files.createTempDirectory(new File(this.backupDirectory).toPath(), "jlawyerdb-restore-").toFile();
+        try {
+            File dump = this.prepareDatabaseDump(staging, progress);
+            this.clearDataDirectory(progress);
+            this.restoreFiles(progress);
+            this.restoreDatabase(this.dbPassword, dump, progress);
+        } finally {
+            // the unpacked dump holds the whole database
+            this.deleteQuietly(staging);
+            if (staging.exists()) {
+                String message = "Das Verzeichnis " + staging.getAbsolutePath() + " mit der ausgepackten Datenbanksicherung konnte nicht gelöscht werden.";
+                System.err.println(message);
+                if (progress != null) {
+                    progress.onProgress(message);
+                }
+            }
+        }
+    }
+
+    /**
+     * Unpacks the database dump from the archive of the database backup (and no other archive) into the staging
+     * directory and, if the target database server does not know the default collation of MySQL 8 and the dump uses
+     * it, writes a copy with a collation the server knows.
+     *
+     * @return the dump to import, in the staging directory
+     */
+    private File prepareDatabaseDump(File staging, BackupProgressCallback progress) throws Exception {
+        File archive = new File(this.backupDirectory, "jlawyerdb-dump.sql.zip");
+        File encrypted = new File(this.backupDirectory, "jlawyerdb-dump-encrypted.sql.zip");
+        if (archive.isFile() == encrypted.isFile()) {
+            throw new Exception("Im Sicherungsverzeichnis muss genau eine Datenbanksicherung liegen (jlawyerdb-dump.sql.zip oder jlawyerdb-dump-encrypted.sql.zip). Die Wiederherstellung wurde abgebrochen, es wurde nichts verändert.");
+        }
+        if (encrypted.isFile()) {
+            archive = encrypted;
+        }
+        if (progress != null) {
+            progress.onProgress("Wiederherstellung: " + archive.getName());
+        }
+        int failuresBefore = fileFailures;
+        if ("".equals(this.encryptionPassword) || this.encryptionPassword == null) {
+            this.unzip(archive, staging.getAbsolutePath());
+        } else {
+            this.unzipWithPassword(archive, staging.getAbsolutePath(), this.encryptionPassword);
+        }
+        File dump = new File(staging, "jlawyerdb-dump.sql");
+        if (fileFailures > failuresBefore || !dump.isFile()) {
+            // e.g. the disk is full - an incomplete dump must not replace the database
+            throw new Exception("Die Datenbanksicherung konnte nicht vollständig ausgepackt werden. Die Wiederherstellung wurde abgebrochen, es wurde nichts verändert.");
+        }
+        if (this.isCollationUnknown(SqlDumpUtils.MYSQL8_DEFAULT_COLLATION)) {
+            // e.g. MariaDB before 11.4.5 does not know the default collation of MySQL 8, dumps created on MySQL 8 can not be imported otherwise
+            long found = SqlDumpUtils.countCollationUsages(dump, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION);
+            if (found > 0) {
+                File copy = new File(staging, "jlawyerdb-dump-restore.sql");
+                long replaced = SqlDumpUtils.writeWithReplacedCollation(dump, copy, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION, SqlDumpUtils.PORTABLE_COLLATION);
+                if (replaced > 0) {
+                    if (progress != null) {
+                        progress.onProgress("Kollation " + SqlDumpUtils.MYSQL8_DEFAULT_COLLATION + " ist auf dem Datenbankserver unbekannt und wird beim Einspielen durch " + SqlDumpUtils.PORTABLE_COLLATION + " ersetzt (" + replaced + " Stellen)");
+                    }
+                    return copy;
+                }
+            } else if (found < 0 && SqlDumpUtils.containsText(dump, SqlDumpUtils.MYSQL8_DEFAULT_COLLATION)) {
+                // importing it unchanged would fail on the unknown collation, after the data directory and the database were deleted
+                throw new Exception("Der Datenbankserver kennt die Kollation " + SqlDumpUtils.MYSQL8_DEFAULT_COLLATION + " nicht, die die Datenbanksicherung verwendet. "
+                        + "Die Sicherung enthält SQL, das nicht so aussieht, wie mysqldump es schreibt, deshalb kann die Kollation darin nicht sicher ersetzt werden. "
+                        + "Die Wiederherstellung wurde abgebrochen, es wurde nichts verändert.");
+            }
+        }
+        return dump;
     }
 
     private void restoreFiles(BackupProgressCallback progress) throws Exception {
@@ -1215,21 +1287,16 @@ public class RestoreExecutor {
         }
     }
 
-    private void restoreDatabase(String password, BackupProgressCallback progress) throws Exception {
+    private void restoreDatabase(String password, File dump, BackupProgressCallback progress) throws Exception {
         if (progress != null) {
             progress.onProgress("Wiederherstellung der Datenbank...");
         }
 
-        this.restoreFromTo(this.backupDirectory, this.backupDirectory, progress);
-        String backup = this.backupDirectory;
-        if (!backup.endsWith(File.separator)) {
-            backup = backup + File.separator;
-        }
-
+        String dumpPath = dump.getAbsolutePath();
         String osName = System.getProperty("os.name").toLowerCase();
         String path = "";
         if (osName.contains("win")) {
-            backup = backup.replace("\\", "/");
+            dumpPath = dumpPath.replace("\\", "/");
         } else if (osName.contains("linux")) {
 
         } else if (osName.startsWith("mac")) {
@@ -1248,7 +1315,7 @@ public class RestoreExecutor {
             "-p" + this.dbPassword,
             "-e",
             //"\"drop database if exists jlawyerdb;create database jlawyerdb;use jlawyerdb;source " + backup + "jlawyerdb-dump.sql;commit;\""
-            "drop database if exists " + this.dbName + ";create database " + this.dbName + ";use " + this.dbName + ";source " + backup + "jlawyerdb-dump.sql;commit;"
+            "drop database if exists " + this.dbName + ";create database " + this.dbName + ";use " + this.dbName + ";source " + dumpPath + ";commit;"
         //"\"drop database if exists jlawyerdb;quit;\""    
         };
 
@@ -1280,6 +1347,29 @@ public class RestoreExecutor {
         }
         if (process.exitValue() != 0) {
             throw new Exception("Datenbankwiederherstellung fehlgeschlagen!");
+        }
+    }
+
+    /**
+     * Asks the target database server whether it knows a collation. Only an explicit "unknown collation" error (1273)
+     * counts - if the check itself fails, the dump is restored unchanged as before.
+     */
+    private boolean isCollationUnknown(String collation) {
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            try (Connection con = DriverManager.getConnection("jdbc:mysql://" + this.dbHost + ":" + this.dbPort + "/?user=" + this.dbUser + "&serverTimezone=Europe/Berlin&sslMode=DISABLED&password=" + dbPassword);
+                    Statement st = con.createStatement()) {
+                st.executeQuery("SELECT _utf8mb4'a' COLLATE " + collation).close();
+                return false;
+            }
+        } catch (SQLException ex) {
+            if (ex.getErrorCode() != 1273) {
+                System.err.println("Unable to check collation " + collation + " on the database server: " + ex.getMessage());
+            }
+            return ex.getErrorCode() == 1273;
+        } catch (Throwable t) {
+            System.err.println("Unable to check collation " + collation + " on the database server: " + t.getMessage());
+            return false;
         }
     }
 
