@@ -689,6 +689,17 @@ public class DunningStageDialog extends javax.swing.JDialog {
     private boolean saved = false;
 
     /**
+     * Compares two template folder paths regardless of their separators - a path stored by a Windows
+     * client uses "\", one built on Linux or macOS "/".
+     */
+    private static boolean samePath(String a, String b) {
+        if (a == null || b == null) {
+            return a == b;
+        }
+        return a.replace('\\', '/').equals(b.replace('\\', '/'));
+    }
+
+    /**
      * Wraps a template folder so the combo box shows its path.
      */
     private static class FolderItem {
@@ -817,7 +828,8 @@ public class DunningStageDialog extends javax.swing.JDialog {
         if (this.stage.getTemplateFolder() != null) {
             for (int i = 0; i < this.cmbTemplateFolder.getItemCount(); i++) {
                 FolderItem item = (FolderItem) this.cmbTemplateFolder.getItemAt(i);
-                if (item.path().equals(this.stage.getTemplateFolder())) {
+                // the stored path carries the separators of the client that configured the stage
+                if (samePath(item.path(), this.stage.getTemplateFolder())) {
                     this.cmbTemplateFolder.setSelectedIndex(i);
                     break;
                 }

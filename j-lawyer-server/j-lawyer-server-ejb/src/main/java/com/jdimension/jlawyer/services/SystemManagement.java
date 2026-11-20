@@ -2579,8 +2579,9 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
         localBaseDir = localBaseDir + getTypedFolderName(templateType);
         if (!ServerStringUtils.isEmpty(appendDirectories)) {
-            // folders come from the caller - they must not lead out of the template directory
-            return ServerFileUtils.requireWithin(localBaseDir, localBaseDir + appendDirectories);
+            // folders come from the caller - they must not lead out of the template directory. A
+            // client builds the path with the separators of its own operating system.
+            return ServerFileUtils.requireWithin(localBaseDir, localBaseDir + ServerFileUtils.normalizeSeparators(appendDirectories));
         } else {
             return localBaseDir + System.getProperty("file.separator");
         }

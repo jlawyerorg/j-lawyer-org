@@ -5177,7 +5177,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
 
         // template folder and name come from the caller - they must not lead out of the template directory
-        String src = localBaseDir + "templates" + templateFolder + System.getProperty("file.separator") + ServerFileUtils.requireSimpleName(templateName);
+        // the folder path is built by the client, with the separators of its operating system
+        String src = localBaseDir + "templates" + ServerFileUtils.normalizeSeparators(templateFolder) + System.getProperty("file.separator") + ServerFileUtils.requireSimpleName(templateName);
         ServerFileUtils.requireWithin(localBaseDir + "templates", src);
         String dst = localBaseDir + "archivefiles" + System.getProperty("file.separator") + aFile.getId() + System.getProperty("file.separator");
 

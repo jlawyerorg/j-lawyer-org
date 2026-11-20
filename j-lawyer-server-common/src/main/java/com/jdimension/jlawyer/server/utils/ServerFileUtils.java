@@ -852,6 +852,25 @@ public class ServerFileUtils {
      * @return the candidate path, unchanged
      * @throws Exception if the path is outside of the base directory
      */
+    /**
+     * Unifies the separators of a relative folder path to the separator of this server. A client
+     * builds template folder paths with the separator of its own operating system - a Windows
+     * client sends "\Briefe\Mahnung", which a Linux server would read as a single name and reject
+     * as outside of the template directory. Folder and file names never contain a backslash (see
+     * {@link #isSimpleName(String)}), so it is always a separator here.
+     * <p>
+     * This only converts separators - check the result with {@link #requireWithin(String, String)}.
+     *
+     * @param path a relative folder path with "/" or "\" as separators, may be null
+     * @return the path with the separator of this server, or null
+     */
+    public static String normalizeSeparators(String path) {
+        if (path == null) {
+            return null;
+        }
+        return path.replace('\\', '/').replace('/', File.separatorChar);
+    }
+
     public static String requireWithin(String baseDir, String candidate) throws Exception {
         requireWithin(new File(baseDir), new File(candidate));
         return candidate;
