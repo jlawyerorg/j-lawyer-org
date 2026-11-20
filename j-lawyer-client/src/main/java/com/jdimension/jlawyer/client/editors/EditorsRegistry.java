@@ -672,6 +672,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.function.IntSupplier;
 import javax.swing.*;
 import org.apache.log4j.Logger;
 
@@ -692,6 +693,9 @@ public class EditorsRegistry {
 
     private Timer timer = null;
     private JFrame mainWindow = null;
+
+    // asks whether to save before an editor that is selected again gets reset - package-private so tests can answer it
+    IntSupplier reselectSaveQuestion = () -> JOptionPane.showConfirmDialog(this.getMainWindow(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("dialog.savebeforeexit"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("dialog.savebeforeexit.title"), JOptionPane.YES_NO_OPTION);
 
     /**
      * Creates a new instance of EditorsRegistry
@@ -787,7 +791,9 @@ public class EditorsRegistry {
 
         if (c != null && this.pane.getComponentCount() == 1) {
             if (c == this.pane.getComponent(0)) {
-
+                if (!skipReset && c instanceof ResetOnDisplayEditor && ((ResetOnDisplayEditor) c).needsResetOnReselect()) {
+                    this.resetOnReselect(c);
+                }
                 return;
             }
         }
@@ -839,6 +845,23 @@ public class EditorsRegistry {
                 }
             }
         }
+    }
+
+    // the displayed editor has been selected again: offer to save pending changes, then reset it
+    private void resetOnReselect(Component c) {
+        if (c instanceof SaveableEditor) {
+            SaveableEditor se = (SaveableEditor) c;
+            if (se.isDirty()) {
+                int ret = this.reselectSaveQuestion.getAsInt();
+                if (ret == JOptionPane.CLOSED_OPTION) {
+                    return;
+                }
+                if (ret == JOptionPane.YES_OPTION && !se.save()) {
+                    return;
+                }
+            }
+        }
+        ((ResetOnDisplayEditor) c).reset();
     }
 
     public void setStatusLabel(JLabel status) {
