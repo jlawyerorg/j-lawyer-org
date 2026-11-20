@@ -702,7 +702,7 @@ public class SaveScanToCasePanel extends com.jdimension.jlawyer.client.mail.side
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        lblDescription = new javax.swing.JLabel();
+        lblDescription = new com.jdimension.jlawyer.client.ui.theme.WrappingLabel();
         lblRole = new com.jdimension.jlawyer.client.ui.theme.ChipLabel();
         cmdSaveMessageAttachmentsOnly = new javax.swing.JButton();
 
@@ -743,7 +743,7 @@ public class SaveScanToCasePanel extends com.jdimension.jlawyer.client.mail.side
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lblDescription)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 146, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(lblRole))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(cmdSaveMessageAttachmentsOnly)
@@ -787,7 +787,7 @@ public class SaveScanToCasePanel extends com.jdimension.jlawyer.client.mail.side
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdSaveMessageAttachmentsOnly;
-    private javax.swing.JLabel lblDescription;
+    private com.jdimension.jlawyer.client.ui.theme.WrappingLabel lblDescription;
     private com.jdimension.jlawyer.client.ui.theme.ChipLabel lblRole;
     // End of variables declaration//GEN-END:variables
 }

@@ -702,7 +702,7 @@ public class SaveToCasePanel extends com.jdimension.jlawyer.client.mail.sidebar.
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        lblDescription = new javax.swing.JLabel();
+        lblDescription = new com.jdimension.jlawyer.client.ui.theme.WrappingLabel();
         lblRole = new com.jdimension.jlawyer.client.ui.theme.ChipLabel();
         cmdSaveFullMessage = new javax.swing.JButton();
         cmdSaveMessageWithoutAttachments = new javax.swing.JButton();
@@ -839,7 +839,7 @@ public class SaveToCasePanel extends com.jdimension.jlawyer.client.mail.sidebar.
     private javax.swing.JButton cmdSaveMessageAttachmentsOnly;
     private javax.swing.JButton cmdSaveMessageWithoutAttachments;
     private javax.swing.JButton cmdSaveSeparate;
-    private javax.swing.JLabel lblDescription;
+    private com.jdimension.jlawyer.client.ui.theme.WrappingLabel lblDescription;
     private com.jdimension.jlawyer.client.ui.theme.ChipLabel lblRole;
     // End of variables declaration//GEN-END:variables
 }
