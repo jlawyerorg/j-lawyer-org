@@ -415,6 +415,18 @@
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdSaveActionPerformed"/>
               </Events>
             </Component>
+            <Component class="javax.swing.JButton" name="cmdSaveAndOpenCase">
+              <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/icons/folder.png"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="Speichern &amp; zur Akte"/>
+                <Property name="toolTipText" type="java.lang.String" value="Speichern und zur Akte wechseln"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdSaveAndOpenCaseActionPerformed"/>
+              </Events>
+            </Component>
             <Component class="javax.swing.JButton" name="cmdCancel">
               <Properties>
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">

@@ -1089,6 +1089,7 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
         lblHints = new javax.swing.JLabel();
         pnlButtons = new javax.swing.JPanel();
         cmdSave = new javax.swing.JButton();
+        cmdSaveAndOpenCase = new javax.swing.JButton();
         cmdCancel = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -1233,6 +1234,16 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
         });
         pnlButtons.add(cmdSave);
 
+        cmdSaveAndOpenCase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
+        cmdSaveAndOpenCase.setText("Speichern & zur Akte");
+        cmdSaveAndOpenCase.setToolTipText("Speichern und zur Akte wechseln");
+        cmdSaveAndOpenCase.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSaveAndOpenCaseActionPerformed(evt);
+            }
+        });
+        pnlButtons.add(cmdSaveAndOpenCase);
+
         cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
         cmdCancel.setText("Abbrechen");
         cmdCancel.addActionListener(new java.awt.event.ActionListener() {
@@ -1250,6 +1261,19 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
+        this.save(false);
+    }//GEN-LAST:event_cmdSaveActionPerformed
+
+    private void cmdSaveAndOpenCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveAndOpenCaseActionPerformed
+        this.save(true);
+    }//GEN-LAST:event_cmdSaveAndOpenCaseActionPerformed
+
+    /**
+     * Saves the selected entries into the case.
+     *
+     * @param openCaseAfterSave true to switch to the case once all entries were saved
+     */
+    private void save(boolean openCaseAfterSave) {
 
         if (this.saving) {
             return;
@@ -1274,7 +1298,9 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
         }
 
         this.saving = true;
-        this.cmdSave.setEnabled(false);
+        this.updateSaveButtons(false);
+        // the editor the dialog was opened from, to inherit its background and to navigate back
+        final Object openerEditor = EditorsRegistry.getInstance().getCurrentEditor();
 
         Thread worker = new Thread(() -> {
             try {
@@ -1299,6 +1325,8 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
                 }
 
                 int fails = 0;
+                // documents saved in this run, in the order of the list - the first one is shown when switching to the case
+                List<String> savedDocumentIds = new ArrayList<>();
                 Map<String, DocumentMetadata> correspondentCache = DocumentOrigin.newCache();
                 for (BulkSaveEntry e : entryList) {
                     if (e.isSelected()) {
@@ -1332,6 +1360,9 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
                                 newDocId = newlyAddedDocument.getId();
                             }
                             e.setSavedDocumentId(newDocId);
+                            if (newDocId != null) {
+                                savedDocumentIds.add(newDocId);
+                            }
 
                             if (getEntryProcessor() != null && getEntryProcessor().isPostSaveProcessor()) {
                                 getEntryProcessor().postSave(e);
@@ -1393,6 +1424,9 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
                     SwingUtilities.invokeAndWait(() -> {
                         setVisible(false);
                         dispose();
+                        if (openCaseAfterSave) {
+                            openCase(openerEditor, savedDocumentIds.isEmpty() ? null : savedDocumentIds.get(0));
+                        }
                     });
 
                 } else {
@@ -1414,7 +1448,72 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
         });
         worker.start();
 
-    }//GEN-LAST:event_cmdSaveActionPerformed
+    }
+
+    /**
+     * Enables or disables both save buttons.
+     *
+     * @param enabled true to enable
+     */
+    private void updateSaveButtons(boolean enabled) {
+        this.cmdSave.setEnabled(enabled);
+        this.cmdSaveAndOpenCase.setEnabled(enabled);
+    }
+
+    /**
+     * Switches the main window to the case the entries were saved to, freshly loaded from the
+     * server, with the documents tab showing the given document.
+     *
+     * @param openerEditor the editor the dialog was opened from, may be null
+     * @param documentId the saved document to select, or null to just open the case
+     */
+    private void openCase(Object openerEditor, String documentId) {
+        if (this.selectedCase == null) {
+            return;
+        }
+        try {
+            Object editor;
+            if (UserSettings.getInstance().isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
+                editor = EditorsRegistry.getInstance().getEditor(EditArchiveFileDetailsPanel.class.getName());
+            } else {
+                editor = EditorsRegistry.getInstance().getEditor(ViewArchiveFileDetailsPanel.class.getName());
+            }
+            if (editor instanceof com.jdimension.jlawyer.client.editors.ThemeableEditor && openerEditor instanceof com.jdimension.jlawyer.client.editors.ThemeableEditor) {
+                // inherit the background to newly created child editors
+                ((com.jdimension.jlawyer.client.editors.ThemeableEditor) editor).setBackgroundImage(((com.jdimension.jlawyer.client.editors.ThemeableEditor) openerEditor).getBackgroundImage());
+            }
+            if (editor instanceof com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor) {
+                ((com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor) editor).populateOptions();
+            }
+
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+            ArchiveFileBean aFile = afs.getArchiveFile(this.selectedCase.getId());
+            if (aFile == null) {
+                return;
+            }
+            // the document is selected by file name; take it from the server, a save processor may have named the document
+            String documentName = null;
+            if (documentId != null) {
+                try {
+                    ArchiveFileDocumentsBean doc = afs.getDocument(documentId);
+                    documentName = doc != null ? doc.getName() : null;
+                } catch (Exception ex) {
+                    log.warn("Unable to load saved document " + documentId + " - opening the case without selecting it", ex);
+                }
+            }
+            // with a file name the case opens on the documents tab, the document selected
+            ((ArchiveFilePanel) editor).setArchiveFileDTO(aFile, documentName);
+            if (openerEditor != null) {
+                ((ArchiveFilePanel) editor).setOpenedFromEditorClass(openerEditor.getClass().getName());
+            }
+            EditorsRegistry.getInstance().setMainEditorsPaneView((java.awt.Component) editor);
+        } catch (Exception ex) {
+            log.error("Unable to switch to case " + this.selectedCase.getFileNumber(), ex);
+            javax.swing.JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Die Akte konnte nicht geöffnet werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
+    }
 
     private void cmdFolderAllActionPerformed(java.awt.event.ActionEvent evt) {
         this.bulkUpdate = true;
@@ -1656,6 +1755,7 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdCaseTags;
     private javax.swing.JButton cmdSave;
+    private javax.swing.JButton cmdSaveAndOpenCase;
     private javax.swing.JPanel extensionsPanel;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblByFileTypes;
@@ -2076,7 +2176,7 @@ public class BulkSaveDialog extends javax.swing.JDialog implements NewEventEntry
             }
         }
 
-        this.cmdSave.setEnabled(!activeConflicts && !this.saving);
+        this.updateSaveButtons(!activeConflicts && !this.saving);
         this.updateHints();
 
     }
