@@ -1760,10 +1760,13 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         jLabel15 = new javax.swing.JLabel();
         txtInsuranceNumber = new javax.swing.JTextField();
         chkLegalProtection = new javax.swing.JCheckBox();
-        cmbInsurance = new javax.swing.JComboBox();
+        pnlInsurance = new javax.swing.JPanel();
+        pnlInsuranceCompany = new javax.swing.JPanel();
         jLabel20 = new javax.swing.JLabel();
-        txtInsurant = new javax.swing.JTextField();
+        cmbInsurance = new javax.swing.JComboBox();
+        pnlInsurant = new javax.swing.JPanel();
         jLabel57 = new javax.swing.JLabel();
+        txtInsurant = new javax.swing.JTextField();
         jPanel4 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jLabel12 = new javax.swing.JLabel();
         jLabel13 = new javax.swing.JLabel();
@@ -1784,18 +1787,24 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         jLabel21 = new javax.swing.JLabel();
         txtTrafficInsuranceNumber = new javax.swing.JTextField();
         chkTrafficLegalProtection = new javax.swing.JCheckBox();
+        pnlTrafficInsurance = new javax.swing.JPanel();
+        pnlTrafficInsuranceCompany = new javax.swing.JPanel();
         jLabel22 = new javax.swing.JLabel();
         txtTrafficInsurance = new javax.swing.JTextField();
-        txtTrafficInsurant = new javax.swing.JTextField();
+        pnlTrafficInsurant = new javax.swing.JPanel();
         jLabel58 = new javax.swing.JLabel();
+        txtTrafficInsurant = new javax.swing.JTextField();
         jPanel12 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jLabel23 = new javax.swing.JLabel();
         txtMotorInsuranceNumber = new javax.swing.JTextField();
-        cmbMotorInsurance = new javax.swing.JComboBox();
-        jLabel24 = new javax.swing.JLabel();
         chkMotorLegalProtection = new javax.swing.JCheckBox();
-        txtMotorInsurant = new javax.swing.JTextField();
+        pnlMotorInsurance = new javax.swing.JPanel();
+        pnlMotorInsuranceCompany = new javax.swing.JPanel();
+        jLabel24 = new javax.swing.JLabel();
+        cmbMotorInsurance = new javax.swing.JComboBox();
+        pnlMotorInsurant = new javax.swing.JPanel();
         jLabel59 = new javax.swing.JLabel();
+        txtMotorInsurant = new javax.swing.JTextField();
         jPanel21 = new com.jdimension.jlawyer.client.ui.theme.SectionCardPanel();
         jLabel34 = new javax.swing.JLabel();
         txtVatId = new javax.swing.JTextField();
@@ -2862,11 +2871,26 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         chkLegalProtection.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
         chkLegalProtection.setMargin(new java.awt.Insets(0, 0, 0, 0));
 
-        cmbInsurance.setEditable(true);
+        pnlInsurance.setLayout(new java.awt.GridLayout(1, 2, 12, 0));
+
+        pnlInsuranceCompany.setLayout(new java.awt.BorderLayout(6, 0));
 
         jLabel20.setText("Versicherungsunternehmen:");
+        pnlInsuranceCompany.add(jLabel20, java.awt.BorderLayout.WEST);
+
+        cmbInsurance.setEditable(true);
+        pnlInsuranceCompany.add(cmbInsurance, java.awt.BorderLayout.CENTER);
+
+        pnlInsurance.add(pnlInsuranceCompany);
+
+        pnlInsurant.setLayout(new java.awt.BorderLayout(6, 0));
 
         jLabel57.setText("Versicherungsnehmer:");
+        pnlInsurant.add(jLabel57, java.awt.BorderLayout.WEST);
+
+        pnlInsurant.add(txtInsurant, java.awt.BorderLayout.CENTER);
+
+        pnlInsurance.add(pnlInsurant);
 
         org.jdesktop.layout.GroupLayout jPanel5Layout = new org.jdesktop.layout.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
@@ -2874,18 +2898,13 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
             jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel5Layout.createSequentialGroup()
                 .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jLabel20)
-                    .add(jLabel57))
-                .add(19, 19, 19)
-                .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(cmbInsurance, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(jPanel5Layout.createSequentialGroup()
                         .add(chkLegalProtection)
                         .add(18, 18, 18)
                         .add(jLabel15, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 176, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(txtInsuranceNumber))
-                    .add(txtInsurant))
+                    .add(pnlInsurance, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel5Layout.setVerticalGroup(
@@ -2896,13 +2915,7 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
                     .add(jLabel15, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 15, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(txtInsuranceNumber, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(cmbInsurance, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jLabel20))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(txtInsurant, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jLabel57))
+                .add(pnlInsurance, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
 
@@ -3020,9 +3033,25 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
         chkTrafficLegalProtection.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
         chkTrafficLegalProtection.setMargin(new java.awt.Insets(0, 0, 0, 0));
 
+        pnlTrafficInsurance.setLayout(new java.awt.GridLayout(1, 2, 12, 0));
+
+        pnlTrafficInsuranceCompany.setLayout(new java.awt.BorderLayout(6, 0));
+
         jLabel22.setText("Versicherungsunternehmen:");
+        pnlTrafficInsuranceCompany.add(jLabel22, java.awt.BorderLayout.WEST);
+
+        pnlTrafficInsuranceCompany.add(txtTrafficInsurance, java.awt.BorderLayout.CENTER);
+
+        pnlTrafficInsurance.add(pnlTrafficInsuranceCompany);
+
+        pnlTrafficInsurant.setLayout(new java.awt.BorderLayout(6, 0));
 
         jLabel58.setText("Versicherungsnehmer:");
+        pnlTrafficInsurant.add(jLabel58, java.awt.BorderLayout.WEST);
+
+        pnlTrafficInsurant.add(txtTrafficInsurant, java.awt.BorderLayout.CENTER);
+
+        pnlTrafficInsurance.add(pnlTrafficInsurant);
 
         org.jdesktop.layout.GroupLayout jPanel11Layout = new org.jdesktop.layout.GroupLayout(jPanel11);
         jPanel11.setLayout(jPanel11Layout);
@@ -3030,18 +3059,13 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
             jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel11Layout.createSequentialGroup()
                 .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jLabel22)
-                    .add(jLabel58))
-                .add(19, 19, 19)
-                .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(txtTrafficInsurance)
                     .add(jPanel11Layout.createSequentialGroup()
                         .add(chkTrafficLegalProtection)
                         .add(18, 18, 18)
                         .add(jLabel21, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 176, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(txtTrafficInsuranceNumber))
-                    .add(txtTrafficInsurant))
+                    .add(pnlTrafficInsurance, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel11Layout.setVerticalGroup(
@@ -3052,27 +3076,36 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
                     .add(jLabel21, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 15, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(txtTrafficInsuranceNumber, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(jLabel22)
-                    .add(txtTrafficInsurance, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(txtTrafficInsurant, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jLabel58))
-                .addContainerGap(7, Short.MAX_VALUE))
+                .add(pnlTrafficInsurance, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
 
         jPanel12.setTitle("Kraftfahrtversicherung");
 
         jLabel23.setText("Versicherungsschein:");
 
-        cmbMotorInsurance.setEditable(true);
-
-        jLabel24.setText("Versicherungsunternehmen:");
-
         chkMotorLegalProtection.setText("vorhanden");
 
+        pnlMotorInsurance.setLayout(new java.awt.GridLayout(1, 2, 12, 0));
+
+        pnlMotorInsuranceCompany.setLayout(new java.awt.BorderLayout(6, 0));
+
+        jLabel24.setText("Versicherungsunternehmen:");
+        pnlMotorInsuranceCompany.add(jLabel24, java.awt.BorderLayout.WEST);
+
+        cmbMotorInsurance.setEditable(true);
+        pnlMotorInsuranceCompany.add(cmbMotorInsurance, java.awt.BorderLayout.CENTER);
+
+        pnlMotorInsurance.add(pnlMotorInsuranceCompany);
+
+        pnlMotorInsurant.setLayout(new java.awt.BorderLayout(6, 0));
+
         jLabel59.setText("Versicherungsnehmer:");
+        pnlMotorInsurant.add(jLabel59, java.awt.BorderLayout.WEST);
+
+        pnlMotorInsurant.add(txtMotorInsurant, java.awt.BorderLayout.CENTER);
+
+        pnlMotorInsurance.add(pnlMotorInsurant);
 
         org.jdesktop.layout.GroupLayout jPanel12Layout = new org.jdesktop.layout.GroupLayout(jPanel12);
         jPanel12.setLayout(jPanel12Layout);
@@ -3080,35 +3113,24 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
             jPanel12Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel12Layout.createSequentialGroup()
                 .add(jPanel12Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jLabel24)
-                    .add(jLabel59))
-                .add(19, 19, 19)
-                .add(jPanel12Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(cmbMotorInsurance, 0, 975, Short.MAX_VALUE)
                     .add(jPanel12Layout.createSequentialGroup()
                         .add(chkMotorLegalProtection)
                         .add(18, 18, 18)
                         .add(jLabel23, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 176, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(txtMotorInsuranceNumber))
-                    .add(txtMotorInsurant))
+                    .add(pnlMotorInsurance, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel12Layout.setVerticalGroup(
             jPanel12Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel12Layout.createSequentialGroup()
+            .add(jPanel12Layout.createSequentialGroup()
                 .add(jPanel12Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(chkMotorLegalProtection)
                     .add(jLabel23, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 15, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(txtMotorInsuranceNumber, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 7, Short.MAX_VALUE)
-                .add(jPanel12Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(cmbMotorInsurance, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jLabel24))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel12Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(txtMotorInsurant, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jLabel59))
+                .add(pnlMotorInsurance, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
 
@@ -5307,6 +5329,15 @@ public class AddressPanel extends javax.swing.JPanel implements ThemeableEditor,
     private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel pnlRelationsTab;
     private com.jdimension.jlawyer.client.ui.theme.SectionCardPanel pnlDocuments;
     private javax.swing.JPanel pnlInvoicesChart;
+    private javax.swing.JPanel pnlInsurance;
+    private javax.swing.JPanel pnlInsuranceCompany;
+    private javax.swing.JPanel pnlInsurant;
+    private javax.swing.JPanel pnlMotorInsurance;
+    private javax.swing.JPanel pnlMotorInsuranceCompany;
+    private javax.swing.JPanel pnlMotorInsurant;
+    private javax.swing.JPanel pnlTrafficInsurance;
+    private javax.swing.JPanel pnlTrafficInsuranceCompany;
+    private javax.swing.JPanel pnlTrafficInsurant;
     private javax.swing.JPopupMenu popDocuments;
     private javax.swing.JPopupMenu popHeader;
     private javax.swing.JRadioButton rdGenderDivers;
