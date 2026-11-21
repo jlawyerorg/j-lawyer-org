@@ -66,6 +66,53 @@ public class HtmlSanitizerTest {
     }
 
     @Test
+    public void oversizedImagesAreFittedToTheView() {
+        // as embedded by Outlook: full pixel size as attribute and in inches as style
+        String out = HtmlSanitizer.sanitize("<img border=\"0\" width=\"4000\" height=\"2670\" src=\"cid:a\" style=\"width:41.6666in; height:27.8125in\">");
+        Assert.assertTrue(out, out.contains("style=\"width:41.6666in; height:27.8125in;max-width:100%;height:auto\""));
+
+        out = HtmlSanitizer.sanitize("<img width=\"1200\" height=\"800\" src=\"cid:b\">");
+        Assert.assertTrue(out, out.contains("style=\"max-width:100%;height:auto\""));
+
+        out = HtmlSanitizer.sanitize("<img src=\"cid:c\" style=\"width: 30cm\">");
+        Assert.assertTrue(out, out.contains("style=\"width: 30cm;max-width:100%;height:auto\""));
+    }
+
+    @Test
+    public void imagesWithoutSizeAreFittedToTheView() {
+        String out = HtmlSanitizer.sanitize("<img src=\"cid:a\">");
+        Assert.assertTrue(out, out.contains("style=\"max-width:100%;height:auto\""));
+    }
+
+    @Test
+    public void smallAndSpacerImagesAreKept() {
+        // height:auto would turn a 1x1 spacer at width 600 into a 600px square
+        String[] kept = {
+            "<img width=\"600\" height=\"1\" src=\"cid:spacer\">",
+            "<img width=\"23\" height=\"60\" src=\"cid:icon\" style=\"width:.2361in; height:.625in\">",
+            "<img src=\"cid:x\" style=\"width:100%\">",
+            "<img src=\"cid:y\" width=\"50%\">",
+            "<img src=\"cid:z\" style=\"max-width:2000px;width:700px\">",
+            "<img src=\"cid:h\" height=\"40\">"
+        };
+        for (String html : kept) {
+            String out = HtmlSanitizer.sanitize(html);
+            assertNotContains(out, "height:auto");
+        }
+    }
+
+    @Test
+    public void cssLengths() {
+        Assert.assertEquals(4000d, HtmlSanitizer.cssLength("4000"), 0.001d);
+        Assert.assertEquals(600d, HtmlSanitizer.cssLength(" 600px "), 0.001d);
+        Assert.assertEquals(4000d, HtmlSanitizer.cssLength("41.6666in"), 0.1d);
+        Assert.assertEquals(96d, HtmlSanitizer.cssLength("72pt !important"), 0.001d);
+        Assert.assertTrue(Double.isNaN(HtmlSanitizer.cssLength("100%")));
+        Assert.assertTrue(Double.isNaN(HtmlSanitizer.cssLength("auto")));
+        Assert.assertTrue(Double.isNaN(HtmlSanitizer.cssLength(null)));
+    }
+
+    @Test
     public void webLinks() {
         Assert.assertTrue(HtmlSanitizer.isWebLink("https://www.j-lawyer.org"));
         Assert.assertTrue(HtmlSanitizer.isWebLink(" HTTP://example.com/a"));

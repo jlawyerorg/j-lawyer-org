@@ -1738,7 +1738,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                                 byte[] tempBuffer = new byte[4096];// 4 KB
                                 int numRead;
                                 while ((numRead = inStream.read(tempBuffer)) != -1) {
-                                    outStream.write(tempBuffer);
+                                    outStream.write(tempBuffer, 0, numRead);
                                 }
                                 inStream.close();
                                 outStream.close();
@@ -1791,7 +1791,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                     byte[] tempBuffer = new byte[4096];// 4 KB
                     int numRead;
                     while ((numRead = inStream.read(tempBuffer)) != -1) {
-                        outStream.write(tempBuffer);
+                        outStream.write(tempBuffer, 0, numRead);
                     }
                     inStream.close();
                     outStream.close();

@@ -30,7 +30,7 @@ import org.jsoup.nodes.Element;
 /**
  * Prepares HTML from external sources (e-mails, beA messages, HTML documents) for display: removes
  * scripts, embedded frames and objects, forms, redirects and event handlers. Layout (styles,
- * tables, fonts, images) is kept.
+ * tables, fonts, images) is kept; oversized images are shrunk to the width of the view.
  *
  * @author jens
  */
@@ -41,6 +41,9 @@ public final class HtmlSanitizer {
     // elements that are removed including their content
     private static final String REMOVED_ELEMENTS = "script, iframe, frame, frameset, object, embed, applet, base, portal, "
             + "noembed, animate, set, animatemotion, animatetransform, handler, listener";
+
+    // images declared wider than this (CSS pixels) are shrunk to the width of the view
+    static final double FIT_IMAGE_MIN_WIDTH_PX = 800d;
 
     private HtmlSanitizer() {
     }
@@ -81,11 +84,102 @@ public final class HtmlSanitizer {
                     e.removeAttr(name);
                 }
             }
+            for (Element img : doc.select("img")) {
+                fitImage(img);
+            }
             doc.outputSettings().prettyPrint(false);
             return doc.outerHtml();
         } catch (Throwable t) {
             log.error("Unable to sanitize HTML - showing it as text", t);
             return "<html><body><pre>" + escape(html) + "</pre></body></html>";
+        }
+    }
+
+    /**
+     * Lets an image shrink to the width of the view instead of being shown 1:1 - mail clients
+     * such as Outlook embed photos with their full pixel size (e.g. width="4000" plus
+     * style="width:41.6666in"), of which the view would only show the upper left corner. Only images
+     * without any size and images declared wider than {@link #FIT_IMAGE_MIN_WIDTH_PX} are touched:
+     * "height:auto" scales by the image's own proportions, which would distort images whose declared
+     * size deliberately differs from them (spacers, e.g. a 1x1 GIF at width="600" height="1") - the
+     * WebView does not support "aspect-ratio" to keep the declared proportions instead.
+     *
+     * @param img an img element
+     */
+    static void fitImage(Element img) {
+        String style = img.attr("style");
+        double width = cssLength(lastDeclaration(style, "width"));
+        if (Double.isNaN(width)) {
+            width = cssLength(img.attr("width"));
+        }
+        boolean sizeDeclared = img.hasAttr("width") || img.hasAttr("height")
+                || lastDeclaration(style, "width") != null || lastDeclaration(style, "height") != null;
+        if (!sizeDeclared || (!Double.isNaN(width) && width > FIT_IMAGE_MIN_WIDTH_PX)) {
+            String s = style.trim();
+            if (!s.isEmpty() && !s.endsWith(";")) {
+                s = s + ";";
+            }
+            img.attr("style", s + "max-width:100%;height:auto");
+        }
+    }
+
+    /**
+     * @param style an inline style
+     * @param property a CSS property name
+     * @return the value of the last declaration of the property, null if there is none
+     */
+    private static String lastDeclaration(String style, String property) {
+        if (style == null) {
+            return null;
+        }
+        String value = null;
+        for (String declaration : style.split(";")) {
+            int colon = declaration.indexOf(':');
+            if (colon > 0 && property.equalsIgnoreCase(declaration.substring(0, colon).trim())) {
+                value = declaration.substring(colon + 1).trim();
+            }
+        }
+        return value;
+    }
+
+    /**
+     * @param value a CSS length or HTML width attribute, e.g. "4000", "600px", "41.6666in"
+     * @return the length in CSS pixels, NaN if the value is missing, relative (%, em, ...) or invalid
+     */
+    static double cssLength(String value) {
+        if (value == null) {
+            return Double.NaN;
+        }
+        String v = value.toLowerCase(Locale.ROOT).replace("!important", "").trim();
+        int unitStart = 0;
+        while (unitStart < v.length() && (Character.isDigit(v.charAt(unitStart)) || v.charAt(unitStart) == '.')) {
+            unitStart++;
+        }
+        if (unitStart == 0) {
+            return Double.NaN;
+        }
+        double number;
+        try {
+            number = Double.parseDouble(v.substring(0, unitStart));
+        } catch (NumberFormatException ex) {
+            return Double.NaN;
+        }
+        switch (v.substring(unitStart).trim()) {
+            case "":
+            case "px":
+                return number;
+            case "in":
+                return number * 96d;
+            case "cm":
+                return number * 96d / 2.54d;
+            case "mm":
+                return number * 96d / 25.4d;
+            case "pt":
+                return number * 96d / 72d;
+            case "pc":
+                return number * 16d;
+            default:
+                return Double.NaN;
         }
     }
 
