@@ -1183,7 +1183,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(jLabel41))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                    .add(txtTaxNr)
+                    .add(txtTaxNr, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
                     .add(txtUstId)
                     .add(txtIban)
                     .add(txtBic)

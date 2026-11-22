@@ -254,7 +254,7 @@
                       </Group>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                          <Component id="txtTaxNr" max="32767" attributes="0"/>
+                          <Component id="txtTaxNr" pref="300" max="32767" attributes="0"/>
                           <Component id="txtUstId" alignment="0" max="32767" attributes="0"/>
                           <Component id="txtIban" alignment="0" max="32767" attributes="0"/>
                           <Component id="txtBic" alignment="0" max="32767" attributes="0"/>
