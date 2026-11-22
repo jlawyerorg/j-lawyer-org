@@ -1348,6 +1348,18 @@ public interface ArchiveFileServiceRemote {
 
     Payment copyPayment(String paymentId, String toCaseId) throws Exception;
     
+    /**
+     * Performs OCR on a case document (PDF only) and replaces its content with the
+     * OCRed equivalent. The OCR itself runs without a surrounding transaction and
+     * may take several minutes for large documents; the result is stored in a
+     * separate, short transaction. Lock and case permissions are checked before
+     * OCR is started.
+     *
+     * @param docId document id
+     * @return true if OCR was performed and the result was stored successfully
+     * @throws Exception if the document is locked by another user, the caller lacks
+     * permissions for the case, or the result could not be stored
+     */
     boolean performOcr(String docId) throws Exception;
 
     List<ClaimLedger> getClaimLedgers(String caseId);

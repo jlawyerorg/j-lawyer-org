@@ -683,14 +683,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
 import javax.ejb.EJBException;
 import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
-import org.jboss.ejb3.annotation.TransactionTimeout;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import org.apache.log4j.Logger;
 import org.jlawyer.utils.ocr.OcrUtils;
 
@@ -1083,7 +1083,10 @@ public class AddressDocumentService implements AddressDocumentServiceRemote, Add
 
     @Override
     @RolesAllowed({"writeAddressRole"})
-    @TransactionTimeout(value = 15, unit = TimeUnit.MINUTES)
+    // OCR runs an external process (ocrmypdf / Stirling PDF) that may take far longer than the transaction
+    // timeout for large documents - no transaction must be open while it runs. Reads before and the save
+    // afterwards run in their own short transactions (facades / container proxy).
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public boolean performOcr(String docId) throws Exception {
         AddressDocumentsBean doc = this.addressDocumentsFacade.find(docId);
         if (doc == null) {
@@ -1101,6 +1104,9 @@ public class AddressDocumentService implements AddressDocumentServiceRemote, Add
         if (s != null && s.getSettingValue().length() > 0) {
             cmd = s.getSettingValue().split(" ");
         }
+
+        // calls through the container proxy, so that each of them gets its own transaction
+        AddressDocumentServiceLocal self = this.context.getBusinessObject(AddressDocumentServiceLocal.class);
 
         if (cmd != null) {
             log.info("performing OCR on address document " + docId + " " + doc.getName() + " using ocrmypdf");
@@ -1125,20 +1131,20 @@ public class AddressDocumentService implements AddressDocumentServiceRemote, Add
                     log.error("OCR failed for file " + srcFile.getAbsolutePath() + ", exit code is " + exitCode);
                     return false;
                 } else {
-                    return this.setDocumentContent(docId, ocrFile);
+                    return this.saveOcrResult(self, docId, doc.getName(), ocrFile, "ocrmypdf (exit code " + exitCode + ")");
                 }
             }
         } else {
             StirlingPdfAPI pdfApi = getStirlingApi();
             if (pdfApi != null) {
                 log.info("performing OCR on address document " + docId + " " + doc.getName() + " using Stirling PDF");
-                byte[] docContent = this.getDocumentContent(docId);
+                byte[] docContent = self.getDocumentContent(docId);
                 if (docContent == null) {
                     return false;
                 }
                 byte[] ocred = pdfApi.ocrPdf(doc.getName(), docContent);
                 if (ocred != null) {
-                    return this.setDocumentContent(docId, ocred);
+                    return this.saveOcrResult(self, docId, doc.getName(), ocred, "Stirling PDF");
                 }
             } else {
                 log.info("performing OCR on address document " + docId + " " + doc.getName() + " failed because OCR tooling is not configured");
@@ -1147,6 +1153,15 @@ public class AddressDocumentService implements AddressDocumentServiceRemote, Add
         }
         log.info("performing OCR on address document " + docId + " " + doc.getName() + " failed");
         return false;
+    }
+
+    private boolean saveOcrResult(AddressDocumentServiceLocal self, String docId, String docName, byte[] content, String tool) throws Exception {
+        try {
+            return self.setDocumentContent(docId, content);
+        } catch (Exception ex) {
+            log.error("OCR of address document " + docId + " " + docName + " using " + tool + " succeeded, but saving the result failed", ex);
+            throw ex;
+        }
     }
 
     @Override

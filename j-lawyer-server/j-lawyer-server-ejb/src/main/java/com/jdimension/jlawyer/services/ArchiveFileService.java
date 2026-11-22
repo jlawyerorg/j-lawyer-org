@@ -717,7 +717,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
@@ -725,6 +724,7 @@ import javax.ejb.EJBException;
 import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
+import static javax.ejb.TransactionAttributeType.NOT_SUPPORTED;
 import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -732,7 +732,6 @@ import javax.jms.JMSConnectionFactory;
 import javax.jms.JMSContext;
 import javax.jms.ObjectMessage;
 import org.apache.log4j.Logger;
-import org.jboss.ejb3.annotation.TransactionTimeout;
 import org.jlawyer.data.tree.GenericNode;
 import org.jlawyer.data.tree.TreeNodeUtils;
 import org.jlawyer.databucket.DataBucketUtils;
@@ -2699,7 +2698,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
-    @TransactionTimeout(value = 15, unit = TimeUnit.MINUTES)
+    // OCR runs an external process (ocrmypdf / Stirling PDF) that may take far longer than the transaction
+    // timeout for large documents - no transaction must be open while it runs. Reads before and the save
+    // afterwards run in their own short transactions (facades / container proxy).
+    @TransactionAttribute(NOT_SUPPORTED)
     public boolean performOcr(String docId) throws Exception {
 
         ArchiveFileDocumentsBean doc = this.archiveFileDocumentsFacade.find(docId);
@@ -2714,6 +2716,17 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (!doc.getName().toLowerCase().endsWith(".pdf")) {
             return false;
         }
+
+        // check lock and permissions before starting a potentially long-running OCR, not only when saving
+        String principalId = context.getCallerPrincipal().getName();
+        if (doc.isLocked() && !principalId.equals(doc.getLockedBy())) {
+            throw new Exception(doc.getName() + " ist gesperrt für Nutzer '" + doc.getLockedBy() + "'");
+        }
+        String aId = doc.getArchiveFileKey().getId();
+        SecurityUtils.checkGroupsForCase(principalId, doc.getArchiveFileKey(), this.securityFacade, this.getAllowedGroups(aId));
+
+        // calls through the container proxy, so that each of them gets its own transaction
+        ArchiveFileServiceLocal self = this.context.getBusinessObject(ArchiveFileServiceLocal.class);
 
         ServerSettingsBean s = this.settingsFacade.find("jlawyer.server.observe.ocrcmd");
         String[] cmd = null;
@@ -2759,7 +2772,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     log.error("OCR failed for file " + srcFile.getAbsolutePath() + ", exit code is " + exitCode);
                     return false;
                 } else {
-                    return this.setDocumentContent(docId, ocrFile);
+                    return this.saveOcrResult(self, docId, doc.getName(), ocrFile, "ocrmypdf (exit code " + exitCode + ")");
                 }
             }
         } else {
@@ -2771,14 +2784,14 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 log.info("performing OCR on document " + docId + " " + doc.getName() + " using Stirling PDF");
 
                 pdfApi = new StirlingPdfAPI(sb.getSettingValue(), 5000, 120000);
-                byte[] docContent = this.getDocumentContent(docId);
+                byte[] docContent = self.getDocumentContent(docId);
                 if (docContent == null) {
                     return false;
                 }
 
                 byte[] ocred = pdfApi.ocrPdf(doc.getName(), docContent);
                 if (ocred != null) {
-                    return this.setDocumentContent(docId, ocred);
+                    return this.saveOcrResult(self, docId, doc.getName(), ocred, "Stirling PDF");
                 }
             } else {
                 log.info("performing OCR on document " + docId + " " + doc.getName() + " failed because OCR tooling is not configured");
@@ -2789,6 +2802,15 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         log.info("performing OCR on document " + docId + " " + doc.getName() + " failed");
         return false;
 
+    }
+
+    private boolean saveOcrResult(ArchiveFileServiceLocal self, String docId, String docName, byte[] content, String tool) throws Exception {
+        try {
+            return self.setDocumentContent(docId, content);
+        } catch (Exception ex) {
+            log.error("OCR of document " + docId + " " + docName + " using " + tool + " succeeded, but saving the result failed", ex);
+            throw ex;
+        }
     }
 
     @Override

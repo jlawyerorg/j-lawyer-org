@@ -812,7 +812,9 @@ public interface AddressDocumentServiceRemote {
 
     /**
      * Performs OCR on an address document (PDF only) and stores the recognized
-     * content back on the document.
+     * content back on the document. The OCR itself runs without a surrounding
+     * transaction and may take several minutes for large documents; the result is
+     * stored in a separate, short transaction.
      *
      * @param docId document id
      * @return true if OCR was performed successfully
