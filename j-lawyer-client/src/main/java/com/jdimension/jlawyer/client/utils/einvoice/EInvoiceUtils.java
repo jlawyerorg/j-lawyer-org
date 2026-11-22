@@ -899,7 +899,7 @@ public class EInvoiceUtils {
         if (sender != null) {
             html.append("<p>&nbsp;</p><h2>Rechnungsabsender</h2>");
             html.append("<p>").append(sender.getName()).append("</p>");
-            html.append("<p>").append(sender.getStreet()).append(" ").append(sender.getZIP()).append(" ").append(sender.getLocation()).append("</p>");
+            html.append("<p>").append(sender.getStreet()).append(" ").append(sender.getZIP()).append(" ").append(sender.getLocation()).append(countryToHTML(sender.getCountry())).append("</p>");
             if (sender.getTaxID() != null) {
                 html.append("<p>Steuernummer: ").append(sender.getTaxID()).append("</p>");
             }
@@ -919,7 +919,7 @@ public class EInvoiceUtils {
         if (recipient != null) {
             html.append("<p>&nbsp;</p><h2>Rechnungsempf&auml;nger</h2>");
             html.append("<p>").append(recipient.getName()).append("</p>");
-            html.append("<p>").append(recipient.getStreet()).append(" ").append(recipient.getZIP()).append(" ").append(recipient.getLocation()).append("</p>");
+            html.append("<p>").append(recipient.getStreet()).append(" ").append(recipient.getZIP()).append(" ").append(recipient.getLocation()).append(countryToHTML(recipient.getCountry())).append("</p>");
             if (recipient.getTaxID() != null) {
                 html.append("<p>Steuernummer: ").append(recipient.getTaxID()).append("</p>");
             }
@@ -1016,6 +1016,25 @@ public class EInvoiceUtils {
         html.append("</body></html>");
 
         return html.toString();
+    }
+
+    /**
+     * Formats an ISO 3166-1 country code of an e-invoice trade party for the
+     * HTML view, e.g. ", Deutschland (DE)".
+     *
+     * @param countryCode ISO country code, may be null or empty
+     * @return the formatted country incl. leading separator, or an empty string
+     */
+    private static String countryToHTML(String countryCode) {
+        if (StringUtils.isEmpty(countryCode)) {
+            return "";
+        }
+        String code = countryCode.trim().toUpperCase();
+        String name = new java.util.Locale("", code).getDisplayCountry(java.util.Locale.GERMAN);
+        if (StringUtils.isEmpty(name) || name.equalsIgnoreCase(code)) {
+            return ", " + code;
+        }
+        return ", " + name + " (" + code + ")";
     }
 
 }
