@@ -694,7 +694,10 @@ import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.text.AbstractDocument;
+import com.formdev.flatlaf.FlatClientProperties;
 import org.apache.log4j.Logger;
 import com.jdimension.jlawyer.client.utils.IbanUtils;
 import org.iban4j.IbanUtil;
@@ -823,8 +826,50 @@ public class PaymentDialog extends javax.swing.JDialog implements EventConsumer 
             this.updatePaymentMethodsForSender(UserSettings.getInstance().getUser(this.cmbPaymentSender.getSelectedItem().toString()));
         });
 
-        this.setEntry(entry);
+        // red outline while the amount is empty, unparseable or not greater than 0,00 (issue #3802)
+        this.txtTotal.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                updateTotalOutline();
+            }
 
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                updateTotalOutline();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                updateTotalOutline();
+            }
+        });
+
+        this.setEntry(entry);
+        this.updateTotalOutline();
+
+    }
+
+    private boolean isTotalTextValid() {
+        String text = this.txtTotal.getText();
+        if (text == null || text.trim().isEmpty() || this.txtTotal.getFormatter() == null) {
+            return false;
+        }
+        try {
+            Object value = this.txtTotal.getFormatter().stringToValue(text);
+            return value instanceof Number && ((Number) value).doubleValue() > 0d;
+        } catch (java.text.ParseException pe) {
+            return false;
+        }
+    }
+
+    private void updateTotalOutline() {
+        if (this.isTotalTextValid()) {
+            this.txtTotal.putClientProperty(FlatClientProperties.OUTLINE, null);
+            this.txtTotal.setToolTipText(null);
+        } else {
+            this.txtTotal.putClientProperty(FlatClientProperties.OUTLINE, FlatClientProperties.OUTLINE_ERROR);
+            this.txtTotal.setToolTipText("Der Betrag muss größer als 0,00 sein.");
+        }
     }
 
     private void updatePaymentMethodsForSender(AppUserBean usr) {
