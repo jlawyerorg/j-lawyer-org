@@ -12215,18 +12215,32 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }
 
     public void checkTimesheetLimits() {
+        // also called by the background thread that loads a case (ArchiveFileDetailLoadAction,
+        // TimesheetEntryPanel.setEntry). setForegroundAt computes the tab bounds and therefore
+        // validates the whole case tab pane: off the event dispatch thread this holds the AWT tree
+        // lock while waiting for the document lock of a text area, and deadlocks with the event
+        // dispatch thread updating that text area (it holds the document lock and waits for the
+        // tree lock), e.g. the document preview
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(this::checkTimesheetLimits);
+            return;
+        }
+        // snapshot - the loading thread may still be adding timesheet entries, and getComponents()
+        // leaves the synchronization to the caller
+        Component[] timesheetEntries;
+        synchronized (this.pnlTimesheets.getTreeLock()) {
+            timesheetEntries = this.pnlTimesheets.getComponents();
+        }
         // cases without timesheet: regular (white) tab caption
         Color tabForeGround = com.jdimension.jlawyer.client.ui.theme.UiColors.TEXT_ON_GLASS;
-        for (int i = 0; i < this.pnlTimesheets.getComponentCount(); i++) {
-            Component c = this.pnlTimesheets.getComponent(i);
+        for (Component c : timesheetEntries) {
             if (c instanceof TimesheetEntryPanel) {
                 // cases with at least one timesheet: green tab caption
                 tabForeGround=DefaultColorTheme.COLOR_LOGO_GREEN;
                 break;
             }
         }
-        for (int i = 0; i < this.pnlTimesheets.getComponentCount(); i++) {
-            Component c = this.pnlTimesheets.getComponent(i);
+        for (Component c : timesheetEntries) {
             if (c instanceof TimesheetEntryPanel) {
                 Timesheet t = ((TimesheetEntryPanel) c).getTimesheet();
                 if (t.isLimited() && t.getStatus() == Timesheet.STATUS_OPEN && t.getPercentageDone() > 100f) {
