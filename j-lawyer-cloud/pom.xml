@@ -73,15 +73,23 @@
             <artifactId>log4j</artifactId>
             <version>1.2.17</version>
         </dependency -->
+        <!-- log4j2 comes from the host: the client ships its own log4j-api/-core, the server gets
+             it from the EAR lib / WildFly. Do not bundle it into the shaded jar: a bundled and
+             relocated copy (shaded.org.apache.logging.*) looks for its provider under the relocated
+             service name, finds none and logs "Log4j2 could not find a logging implementation"
+             (issue #3810); an unrelocated bundled copy made the NetBeans GUI builder fail, which is
+             why it had been relocated. -->
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-api</artifactId>
             <version>2.17.1</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
             <version>2.17.1</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.jackrabbit</groupId>
@@ -184,13 +192,6 @@
                                     <excludes>
                                         <exclude>junit.*</exclude>
                                         
-                                    </excludes>
-                                </relocation>
-                                <relocation>
-                                    <pattern>org.apache.logging</pattern>
-                                    <shadedPattern>shaded.org.apache.logging</shadedPattern>
-                                    <excludes>
-                                        <exclude>org.apache.logging.*</exclude>
                                     </excludes>
                                 </relocation>
                                 <!-- Relocate the jackson that nextcloud-api uses into shaded.* so this
