@@ -9665,6 +9665,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             TimesheetEntryPanel tp = new TimesheetEntryPanel(this);
             tp.setEntry(this.dto, dlg.getEntry());
             this.pnlTimesheets.add(tp);
+            // setEntry checked the limits before the new entry was added
+            this.checkTimesheetLimits();
         }
 
     }//GEN-LAST:event_cmdNewTimesheetActionPerformed

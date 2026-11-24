@@ -840,6 +840,7 @@ public class TimesheetEntryPanel extends com.jdimension.jlawyer.client.ui.theme.
                 parent.remove(this);
                 parent.invalidate();
                 parent.repaint();
+                this.caseView.checkTimesheetLimits();
             } catch (Exception ex) {
                 log.error("Error deleting invoice", ex);
                 JOptionPane.showMessageDialog(this, "Fehler beim Löschen des Projektes: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
