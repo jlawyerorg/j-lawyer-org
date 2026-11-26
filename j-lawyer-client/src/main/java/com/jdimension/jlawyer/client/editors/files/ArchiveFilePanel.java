@@ -9809,7 +9809,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         for (int r = 0; r < this.tblAccountEntries.getRowCount(); r++) {
             CaseAccountEntry cae = ((AccountEntryRowIdentifier) this.tblAccountEntries.getValueAt(r, 0)).getAccountEntry();
             if (cae.getInvoice() != null) {
-                invoiceTotals.merge(cae.getInvoice().getId(), cae.calculateEarningsTotal(), BigDecimal::add);
+                invoiceTotals.merge(cae.getInvoice().getId(), cae.calculateInvoicePaymentTotal(), BigDecimal::add);
             }
         }
 

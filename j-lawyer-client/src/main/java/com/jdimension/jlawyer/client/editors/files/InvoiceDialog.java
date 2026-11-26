@@ -1174,7 +1174,7 @@ public class InvoiceDialog extends javax.swing.JDialog implements EventConsumer 
                 TableUtils.clearModel(tblPayments);
                 BigDecimal paymentsTotal = BigDecimal.ZERO;
                 for (CaseAccountEntry ae : payments) {
-                    BigDecimal aeTotal = ae.calculateEarningsTotal();
+                    BigDecimal aeTotal = ae.calculateInvoicePaymentTotal();
                     paymentsTotal = paymentsTotal.add(aeTotal);
                     ((DefaultTableModel) this.tblPayments.getModel()).addRow(new Object[]{ae.getEntryDate(), aeTotal, ae.getDescription()});
                 }

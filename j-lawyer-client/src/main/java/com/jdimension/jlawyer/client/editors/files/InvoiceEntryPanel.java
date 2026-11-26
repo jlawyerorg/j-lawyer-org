@@ -1078,7 +1078,7 @@ public class InvoiceEntryPanel extends com.jdimension.jlawyer.client.ui.theme.En
             List<CaseAccountEntry> payments = locator.lookupArchiveFileServiceRemote().getAccountEntriesForInvoice(invoice.getId());
 
             for (CaseAccountEntry ce : payments) {
-                currentPaid = currentPaid.add(ce.getEarnings()).subtract(ce.getSpendings());
+                currentPaid = currentPaid.add(ce.calculateInvoicePaymentTotal());
             }
 
             this.setEntry(caseDto, this.invoice, addresses);
@@ -1104,7 +1104,7 @@ public class InvoiceEntryPanel extends com.jdimension.jlawyer.client.ui.theme.En
                     // the amount may have been changed to a partial payment in the booking dialog - show what has actually been booked
                     BigDecimal paidAfterBooking = BigDecimal.ZERO;
                     for (CaseAccountEntry ce : locator.lookupArchiveFileServiceRemote().getAccountEntriesForInvoice(invoice.getId())) {
-                        paidAfterBooking = paidAfterBooking.add(ce.calculateEarningsTotal());
+                        paidAfterBooking = paidAfterBooking.add(ce.calculateInvoicePaymentTotal());
                     }
                     if(invoice.isSmallBusiness())
                         this.setPaidTotal(invoice.getTotalGross(), paidAfterBooking, invoice.getCurrency());

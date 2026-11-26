@@ -746,6 +746,18 @@ public class CaseAccountEntry implements Serializable {
         return getEarnings().subtract(getSpendings());
     }
 
+    /**
+     * Calculates the amount this entry contributes to the payment of the
+     * linked invoice: earnings minus spendings plus incoming expenditures
+     * (e.g. court fees that are part of the invoice and reimbursed by the
+     * recipient). Escrow and outgoing expenditures are not considered.
+     *
+     * @return the amount paid towards the linked invoice
+     */
+    public BigDecimal calculateInvoicePaymentTotal() {
+        return getEarnings().subtract(getSpendings()).add(getExpendituresIn());
+    }
+
     @Override
     public int hashCode() {
         int hash = 0;
