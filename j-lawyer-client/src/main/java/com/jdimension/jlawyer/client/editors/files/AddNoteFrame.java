@@ -696,6 +696,7 @@ import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.mail.EditorImplementation;
 import com.jdimension.jlawyer.client.utils.AudioUtils;
+import com.jdimension.jlawyer.client.utils.HtmlUtils;
 import com.jdimension.jlawyer.client.utils.SystemUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.email.CommonMailUtils;
@@ -1605,7 +1606,7 @@ public class AddNoteFrame extends javax.swing.JFrame implements AssistantFlowAda
                         }
 
                         // Insert transcribed text at the caret position
-                        htmlNoteEditor.insert(resultText, -1);
+                        htmlNoteEditor.insert(HtmlUtils.plainTextToHtml(resultText), -1);
                     }
                 }
             };

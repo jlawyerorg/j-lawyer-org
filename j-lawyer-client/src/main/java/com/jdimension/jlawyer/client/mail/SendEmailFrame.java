@@ -1987,7 +1987,7 @@ public class SendEmailFrame extends javax.swing.JFrame implements SendCommunicat
                         }
 
                         tp.insert(resultText, tp.getCaretPosition());
-                        hp.insert(resultText, hp.getCaretPosition());
+                        hp.insert(HtmlUtils.plainTextToHtml(resultText), hp.getCaretPosition());
 
                     }
                 }

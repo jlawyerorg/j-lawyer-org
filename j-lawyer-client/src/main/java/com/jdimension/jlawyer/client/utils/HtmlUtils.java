@@ -785,4 +785,21 @@ public class HtmlUtils {
         return doc.body().html();
     }
 
+    /**
+     * Converts plain text (e.g. the result of a transcription) into an HTML fragment that can be
+     * inserted into an HTML editor: characters that are significant in HTML are escaped and line
+     * breaks are converted to &lt;br&gt; tags, so that they are not collapsed into a single
+     * whitespace.
+     *
+     * @param text plain text, may be null
+     * @return HTML fragment, never null
+     */
+    public static String plainTextToHtml(String text) {
+        if (text == null) {
+            return "";
+        }
+        String normalized = text.replace("\r\n", "\n").replace('\r', '\n');
+        return ComponentUtils.escapeHtml(normalized).replace("\n", "<br>");
+    }
+
 }

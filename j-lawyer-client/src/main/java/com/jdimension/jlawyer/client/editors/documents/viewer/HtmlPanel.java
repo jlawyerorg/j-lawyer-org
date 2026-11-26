@@ -676,6 +676,7 @@ import com.jdimension.jlawyer.client.editors.webview.WebViewHtmlEditorPanel;
 import com.jdimension.jlawyer.client.mail.EditorImplementation;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.AudioUtils;
+import com.jdimension.jlawyer.client.utils.HtmlUtils;
 import com.jdimension.jlawyer.client.utils.SystemUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AssistantConfig;
@@ -1170,7 +1171,7 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel, Assis
                         }
 
                         // Insert transcribed text at the caret position
-                        htmlEditor.insert(resultText, -1);
+                        htmlEditor.insert(HtmlUtils.plainTextToHtml(resultText), -1);
                         
                     }
                 }
