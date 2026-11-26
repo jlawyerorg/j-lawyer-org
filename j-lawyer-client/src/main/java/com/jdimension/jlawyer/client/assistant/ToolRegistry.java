@@ -695,11 +695,16 @@ public class ToolRegistry {
                         new ToolParameter("maxResults", "integer", "Maximale Trefferzahl. Standard und Obergrenze: 50", false))));
 
         TOOLS.add(new ToolDefinition("get_email",
-                "Lädt eine einzelne E-Mail mit Nachrichtentext und Liste der Anhänge. mailboxId und messageRef stammen aus search_emails oder aus den Kopfdaten einer im Kontext übergebenen E-Mail.",
+                "Lädt eine einzelne E-Mail mit Nachrichtentext und Liste der Anhänge. mailboxId und messageRef stammen aus search_emails oder aus den Kopfdaten einer im Kontext übergebenen E-Mail. "
+                + "Mit includeAttachments=true wird zusätzlich der Text der Anhänge ausgegeben (PDF, Text, HTML, Kalender, Office-Dokumente, weitergeleitete E-Mails; Bilder, Archive und Signaturen werden übersprungen, keine Texterkennung für Scans). "
+                + "Pro Anhang zeigt textStatus das Ergebnis: ok, truncated (gekürzt), noText (kein Text, z. B. gescanntes PDF), encrypted, skipped, budgetExceeded (Gesamtlimit von " + MailAttachmentTextSupport.TOTAL_BUDGET_CHARS + " Zeichen bzw. " + MailAttachmentTextSupport.MAX_EXTRACTED_ATTACHMENTS + " Anhängen erreicht) oder error. "
+                + "Wird der vollständige Text eines gekürzten oder nicht ausgewerteten Anhangs benötigt, die E-Mail mit save_email_to_case (saveAttachments=true) ablegen und get_document_text verwenden.",
                 Arrays.asList(
                         new ToolParameter("mailboxId", "string", "ID des Postfachs", true),
                         new ToolParameter("messageRef", "string", "Referenz der Nachricht aus search_emails oder aus dem Kontext (messageRef)", true),
-                        new ToolParameter("maxChars", "integer", "Optional: maximale Zeichenzahl des Nachrichtentexts. Standard und Obergrenze: 30000", false))));
+                        new ToolParameter("maxChars", "integer", "Optional: maximale Zeichenzahl des Nachrichtentexts. Standard und Obergrenze: 30000", false),
+                        new ToolParameter("includeAttachments", "string", "true, um zusätzlich den Text der Anhänge auszugeben (Standard: false). Langsamer; nur verwenden, wenn der Inhalt der Anhänge benötigt wird.", false),
+                        new ToolParameter("attachmentMaxChars", "integer", "Optional, nur mit includeAttachments=true: maximale Zeichenzahl je Anhang. Standard: " + MailAttachmentTextSupport.DEFAULT_CHARS_PER_ATTACHMENT + ", Obergrenze: " + MailAttachmentTextSupport.MAX_CHARS_PER_ATTACHMENT, false))));
 
         TOOLS.add(new ToolDefinition("save_email_to_case",
                 "Speichert eine E-Mail als .eml-Datei in einer Akte. mailboxId und messageRef stammen aus search_emails oder aus den Kopfdaten einer im Kontext übergebenen E-Mail, die caseId aus search_cases. Der Dateiname wird aus dem Betreff nach der konfigurierten Dateinamensvorschrift der Kanzlei gebildet; existiert der Name bereits, wird automatisch eine Nummer angehängt. Wie beim Speichern im Client erhält das Dokument den Betreff als Bezeichnung, das Datum der E-Mail als Eingang und Absender bzw. Empfänger als Von/An (einem Kontakt zugeordnet, soweit vorhanden). Anhänge bleiben in der .eml enthalten; mit saveAttachments=true werden sie zusätzlich als Anlagen der E-Mail abgelegt.",
@@ -1179,7 +1184,7 @@ public class ToolRegistry {
                             + (args.containsKey("folder") ? " (Ordner: " + args.get("folder") + ")" : "")
                             + ("all".equalsIgnoreCase(String.valueOf(args.getOrDefault("scope", ""))) ? " (alle Ordner)" : "");
                 case "get_email":
-                    return "E-Mail lesen";
+                    return "true".equalsIgnoreCase(String.valueOf(args.get("includeAttachments")).trim()) ? "E-Mail lesen (mit Anlagen)" : "E-Mail lesen";
                 case "save_email_to_case":
                     return "E-Mail in Akte speichern: " + args.getOrDefault("caseId", "");
                 case "send_email":
@@ -5911,6 +5916,16 @@ public class ToolRegistry {
             effectiveMax = Math.min(maxChars, MAX_MAIL_BODY_CHARS);
         }
 
+        boolean includeAttachments = "true".equalsIgnoreCase(String.valueOf(args.get("includeAttachments")).trim());
+        int attachmentMax = MailAttachmentTextSupport.DEFAULT_CHARS_PER_ATTACHMENT;
+        Integer attachmentMaxChars = ToolJsonUtils.toInteger(args.get("attachmentMaxChars"));
+        if (attachmentMaxChars != null) {
+            if (attachmentMaxChars <= 0) {
+                return ToolJsonUtils.error("attachmentMaxChars muss größer als 0 sein, angegeben: " + attachmentMaxChars);
+            }
+            attachmentMax = Math.min(attachmentMaxChars, MailAttachmentTextSupport.MAX_CHARS_PER_ATTACHMENT);
+        }
+
         JLawyerServiceLocator locator = ToolJsonUtils.getLocator();
         EmailServiceRemote svc = locator.lookupEmailServiceRemote();
         MailMessageDTO m = svc.getMessage(mailbox.getId(), messageRef.trim(), true);
@@ -5949,6 +5964,9 @@ public class ToolRegistry {
         sb.append(", \"attachments\": [");
         List<MailAttachmentDTO> attachments = m.getAttachments();
         if (attachments != null) {
+            MailAttachmentTextSupport.Budget budget = new MailAttachmentTextSupport.Budget(
+                    MailAttachmentTextSupport.TOTAL_BUDGET_CHARS, MailAttachmentTextSupport.MAX_EXTRACTED_ATTACHMENTS);
+            MailAttachmentTextSupport.ServerExtractor serverExtractor = (data, name, max) -> locator.lookupIntegrationServiceRemote().extractText(data, name, max);
             for (int i = 0; i < attachments.size(); i++) {
                 if (i > 0) {
                     sb.append(", ");
@@ -5958,11 +5976,71 @@ public class ToolRegistry {
                 sb.append(", \"name\": \"").append(ToolJsonUtils.escapeJson(a.getName())).append("\"");
                 sb.append(", \"contentType\": \"").append(ToolJsonUtils.escapeJson(a.getContentType())).append("\"");
                 sb.append(", \"size\": ").append(a.getSize());
+                if (includeAttachments) {
+                    appendAttachmentTextJson(sb, extractAttachmentText(svc, mailbox.getId(), m.getMessageRef(), a, attachmentMax, budget, serverExtractor));
+                }
                 sb.append("}");
             }
         }
         sb.append("]}");
         return sb.toString();
+    }
+
+    /**
+     * Extracts the text of one e-mail attachment for get_email with includeAttachments=true. The
+     * attachment content is only downloaded if the format is supported and the size and the
+     * overall budget allow it.
+     */
+    private MailAttachmentTextSupport.Result extractAttachmentText(EmailServiceRemote svc, String mailboxId, String messageRef, MailAttachmentDTO a,
+            int attachmentMax, MailAttachmentTextSupport.Budget budget, MailAttachmentTextSupport.ServerExtractor serverExtractor) {
+        if (a.isInline()) {
+            return MailAttachmentTextSupport.notExtracted(MailAttachmentTextSupport.STATUS_SKIPPED, "In den Nachrichtentext eingebettet");
+        }
+        MailAttachmentTextSupport.Classification c = MailAttachmentTextSupport.classify(a.getName(), a.getContentType());
+        if (c.getKind() == MailAttachmentTextSupport.Kind.SKIP) {
+            return MailAttachmentTextSupport.notExtracted(MailAttachmentTextSupport.STATUS_SKIPPED, c.getReason());
+        }
+        if (a.getSize() > MailAttachmentTextSupport.MAX_ATTACHMENT_BYTES) {
+            return MailAttachmentTextSupport.notExtracted(MailAttachmentTextSupport.STATUS_SKIPPED,
+                    "Anhang ist größer als " + (MailAttachmentTextSupport.MAX_ATTACHMENT_BYTES / (1024L * 1024L)) + " MB");
+        }
+        if (!budget.hasRoom()) {
+            return MailAttachmentTextSupport.notExtracted(MailAttachmentTextSupport.STATUS_BUDGET_EXCEEDED,
+                    "Gesamtlimit für Anhangstexte erreicht");
+        }
+        try {
+            byte[] data = a.getContent();
+            if (data == null) {
+                MailAttachmentDTO loaded = svc.getAttachmentContent(mailboxId, messageRef, a.getAttachmentId());
+                data = loaded == null ? null : loaded.getContent();
+            }
+            if (data != null && data.length > MailAttachmentTextSupport.MAX_ATTACHMENT_BYTES) {
+                return MailAttachmentTextSupport.notExtracted(MailAttachmentTextSupport.STATUS_SKIPPED,
+                        "Anhang ist größer als " + (MailAttachmentTextSupport.MAX_ATTACHMENT_BYTES / (1024L * 1024L)) + " MB");
+            }
+            MailAttachmentTextSupport.Result r = MailAttachmentTextSupport.extract(c.getKind(), a.getName(), data, budget.allowance(attachmentMax), serverExtractor);
+            budget.consume(r.getText() == null ? 0 : r.getText().length());
+            return r;
+        } catch (Exception ex) {
+            log.warn("Unable to load attachment " + a.getName() + " of message " + messageRef, ex);
+            return MailAttachmentTextSupport.notExtracted(MailAttachmentTextSupport.STATUS_ERROR, "Anhang konnte nicht geladen werden: " + ex.getMessage());
+        }
+    }
+
+    private static void appendAttachmentTextJson(StringBuilder sb, MailAttachmentTextSupport.Result r) {
+        sb.append(", \"textStatus\": \"").append(r.getStatus()).append("\"");
+        if (r.getText() != null) {
+            sb.append(", \"text\": \"").append(ToolJsonUtils.escapeJson(r.getText())).append("\"");
+        }
+        if (r.isTruncated()) {
+            sb.append(", \"truncated\": true");
+            if (r.getTotalChars() > 0) {
+                sb.append(", \"totalChars\": ").append(r.getTotalChars());
+            }
+        }
+        if (r.getNote() != null) {
+            sb.append(", \"textNote\": \"").append(ToolJsonUtils.escapeJson(r.getNote())).append("\"");
+        }
     }
 
     private String executeSaveEmailToCase(JsonObject args) throws Exception {
