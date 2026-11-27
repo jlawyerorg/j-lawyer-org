@@ -1169,32 +1169,47 @@ public class PartyTypesDialog extends javax.swing.JDialog {
         this.updateSequence(1);
     }//GEN-LAST:event_cmdSequenceDownActionPerformed
 
+    /**
+     * Moves the selected party type one row up or down and persists the new order. Only rows
+     * whose sequence number actually changed are saved - for a single step that is just the
+     * swapped pair, instead of one server round trip per party type.
+     */
     private void updateSequence(int offset) {
         int row = this.tblPartyTypes.getSelectedRow();
         if (row < 0) {
             return;
-        } else {
-            
-            if(offset<0)
-                TableUtils.moveUpwards(tblPartyTypes);
-            else
-                TableUtils.moveDownwards(tblPartyTypes);
+        }
 
-            ClientSettings settings = ClientSettings.getInstance();
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
-                
-                for(int r=0;r<this.tblPartyTypes.getRowCount();r++) {
-                    PartyTypeBean ptb = (PartyTypeBean) this.tblPartyTypes.getValueAt(r, 0);
-                    ptb.setSequenceNumber(r+1);
-                    PartyTypeBean savedParty = mgmt.updatePartyType(ptb);
+        int destination = row + offset;
+        if (destination < 0 || destination >= this.tblPartyTypes.getRowCount()) {
+            return;
+        }
+
+        if (offset < 0) {
+            TableUtils.moveUpwards(tblPartyTypes);
+        } else {
+            TableUtils.moveDownwards(tblPartyTypes);
+        }
+
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
+
+            DefaultTableModel model = (DefaultTableModel) this.tblPartyTypes.getModel();
+            for (int r = 0; r < this.tblPartyTypes.getRowCount(); r++) {
+                PartyTypeBean ptb = (PartyTypeBean) this.tblPartyTypes.getValueAt(r, 0);
+                if (ptb.getSequenceNumber() == r + 1) {
+                    continue;
                 }
-                
-            } catch (Exception ex) {
-                log.error("Error creating new party type", ex);
-                JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                ptb.setSequenceNumber(r + 1);
+                PartyTypeBean savedParty = mgmt.updatePartyType(ptb);
+                model.setValueAt(savedParty, this.tblPartyTypes.convertRowIndexToModel(r), 0);
             }
+
+        } catch (Exception ex) {
+            log.error("Error updating party type sequence", ex);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }
     
