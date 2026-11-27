@@ -795,6 +795,10 @@ public class EInvoiceUtils {
             recipientCountry = CountryCodes.getDefaultCountry().getCode();
         }
         TradeParty recipient = new TradeParty(caseInvoice.getContact().toDisplayName(), recipientStreet, caseInvoice.getContact().getZipCode(), caseInvoice.getContact().getCity(), recipientCountry);
+        // VAT identifier of the buyer (BT-48)
+        if (!StringUtils.isEmpty(caseInvoice.getContact().getVatId())) {
+            recipient.addVATID(caseInvoice.getContact().getVatId().trim());
+        }
         // electronic address of the buyer (BT-49)
         String recipientEmail = null;
         if (!StringUtils.isEmpty(caseInvoice.getContact().getEmail())) {
