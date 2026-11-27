@@ -761,6 +761,12 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.Icon beaStatusIcon = null;
 
     private Image backgroundImage = null;
+    // cross fade to another background: the new image is drawn with fadeAlpha over the old one
+    private Image fadeTargetImage = null;
+    private float fadeAlpha = 0f;
+    private transient javax.swing.Timer fadeTimer = null;
+    private static final int FADE_DURATION_MS = 700;
+    private static final int FADE_INTERVAL_MS = 16;
 
     private transient Timer reviewsTimer=null;
     private transient Timer lastChangedTimer=null;
@@ -1563,7 +1569,48 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
     @Override
     public void setBackgroundImage(Image image) {
+        this.stopFade();
         this.backgroundImage = image;
+    }
+
+    /**
+     * Cross fades from the current background to another one. Must be called on the event
+     * dispatch thread.
+     *
+     * @param image the new background image
+     */
+    public void fadeToBackgroundImage(Image image) {
+        this.stopFade();
+        if (this.backgroundImage == null || !this.isShowing()) {
+            this.backgroundImage = image;
+            this.repaint();
+            return;
+        }
+        this.fadeTargetImage = image;
+        this.fadeAlpha = 0f;
+        final long startTime = System.currentTimeMillis();
+        this.fadeTimer = new javax.swing.Timer(FADE_INTERVAL_MS, e -> {
+            float progress = Math.min(1f, (float) (System.currentTimeMillis() - startTime) / FADE_DURATION_MS);
+            // ease in / ease out
+            this.fadeAlpha = progress * progress * (3f - 2f * progress);
+            if (progress >= 1f) {
+                this.stopFade();
+            }
+            this.repaint();
+        });
+        this.fadeTimer.start();
+    }
+
+    private void stopFade() {
+        if (this.fadeTimer != null) {
+            this.fadeTimer.stop();
+            this.fadeTimer = null;
+        }
+        if (this.fadeTargetImage != null) {
+            this.backgroundImage = this.fadeTargetImage;
+            this.fadeTargetImage = null;
+        }
+        this.fadeAlpha = 0f;
     }
 
     @Override
@@ -1576,6 +1623,13 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         super.paintComponent(g);
         if (this.backgroundImage != null) {
             g.drawImage(this.backgroundImage, 0, 0, this.getWidth(), this.getHeight(), this);
+        }
+        if (this.fadeTargetImage != null && this.fadeAlpha > 0f) {
+            java.awt.Graphics2D g2d = (java.awt.Graphics2D) g.create();
+            g2d.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION, java.awt.RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            g2d.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, this.fadeAlpha));
+            g2d.drawImage(this.fadeTargetImage, 0, 0, this.getWidth(), this.getHeight(), this);
+            g2d.dispose();
         }
     }
 

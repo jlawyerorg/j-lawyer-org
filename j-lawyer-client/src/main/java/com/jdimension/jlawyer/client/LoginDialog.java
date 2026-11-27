@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.RandomBackgrounds;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
@@ -695,22 +696,12 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.ejb.EJBAccessException;
 import javax.naming.Context;
 import javax.swing.DefaultComboBoxModel;
@@ -1315,46 +1306,16 @@ public class LoginDialog extends javax.swing.JFrame {
 
             @Override
             protected ImageIcon doInBackground() throws Exception {
-                FileSystem fileSystem = null;
-                try {
-                    URI uri = Main.class.getResource("/themes/default/backgroundsrandom").toURI();
-                    Path path;
-                    if (uri.getScheme().equals("jar")) {
-                        fileSystem = FileSystems.newFileSystem(uri, Collections.<String, Object>emptyMap());
-                        path = fileSystem.getPath("/themes/default/backgroundsrandom");
-                    } else {
-                        path = Paths.get(uri);
-                    }
+                loadedBackgrounds = RandomBackgrounds.listShuffled();
 
-                    Predicate<String> con1 = s -> s.endsWith(".jpg");
-                    Predicate<String> con2 = s -> s.endsWith(".png");
+                if (!loadedBackgrounds.isEmpty()) {
+                    selectedBackground = loadedBackgrounds.get(0);
 
-                    try (Stream<Path> walk = Files.walk(path)) {
-                        loadedBackgrounds = walk
-                                .map(Path::getFileName)
-                                .map(Path::toString)
-                                .filter(con1.or(con2))
-                                .collect(Collectors.toList());
-                    }
-
-                    if (!loadedBackgrounds.isEmpty()) {
-                        Collections.shuffle(loadedBackgrounds, ThreadLocalRandom.current());
-                        selectedBackground = loadedBackgrounds.get(0);
-
-                        // Load the actual image
-                        URL resource = getClass().getResource("/themes/default/backgroundsrandom/" + selectedBackground);
-                        if (resource != null) {
-                            Image scaled = scaledBackground(new ImageIcon(resource), targetSize);
-                            return scaled == null ? null : new ImageIcon(scaled);
-                        }
-                    }
-                } finally {
-                    if (fileSystem != null) {
-                        try {
-                            fileSystem.close();
-                        } catch (Exception ex) {
-                            log.warn("Could not close filesystem object", ex);
-                        }
+                    // Load the actual image
+                    URL resource = getClass().getResource(RandomBackgrounds.RESOURCE_FOLDER + "/" + selectedBackground);
+                    if (resource != null) {
+                        Image scaled = scaledBackground(new ImageIcon(resource), targetSize);
+                        return scaled == null ? null : new ImageIcon(scaled);
                     }
                 }
                 return null;

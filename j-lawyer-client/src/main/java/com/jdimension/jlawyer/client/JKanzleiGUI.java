@@ -2915,9 +2915,72 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         } else {
             settings.setSetting(UserSettings.CONF_DESKTOP_RANDOM_BACKGROUND, "0");
         }
-        JOptionPane.showMessageDialog(this, "Die Einstellung erfordert einen Neustart des j-lawyer.org Clients.", "Neustart erforderlich", JOptionPane.INFORMATION_MESSAGE);
+        this.applyDesktopBackground(this.mnuChkRandomBackground.isSelected());
 
     }//GEN-LAST:event_mnuChkRandomBackgroundActionPerformed
+
+    /**
+     * Switches the desktop background at runtime and cross fades to it. A random background shows
+     * the photo of this session's login dialog; a new random one is only picked if that is unknown.
+     *
+     * @param random true for a random photo, false for the default background
+     */
+    private void applyDesktopBackground(boolean random) {
+        ClientSettings clientSettings = ClientSettings.getInstance();
+        // same rule as on startup: demo systems always use the default background
+        boolean useRandom = random && !"1".equalsIgnoreCase(clientSettings.getConfiguration("runtime.isdemosystem", "0"));
+        String themeName = clientSettings.getConfiguration(ClientSettings.CONF_THEME, "default");
+
+        new javax.swing.SwingWorker<Image, Void>() {
+            private String randomFile = null;
+
+            @Override
+            protected Image doInBackground() throws Exception {
+                if (useRandom) {
+                    this.randomFile = com.jdimension.jlawyer.client.SplashThread.getLoginBackgroundFile();
+                    if (this.randomFile == null) {
+                        this.randomFile = com.jdimension.jlawyer.client.utils.RandomBackgrounds.pickRandom();
+                    }
+                    if (this.randomFile != null) {
+                        java.net.URL resource = getClass().getResource("/themes/" + themeName + "/backgroundsrandom/" + this.randomFile);
+                        if (resource != null) {
+                            return new ImageIcon(resource).getImage();
+                        }
+                        log.error("random background " + this.randomFile + " not found - falling back to default");
+                        this.randomFile = null;
+                    }
+                }
+                return com.jdimension.jlawyer.client.settings.ThemeBackgrounds.get("archivefiles.jpg");
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    Image image = get();
+                    if (image == null) {
+                        return;
+                    }
+                    ModuleMetadata rootModule = clientSettings.getRootModule();
+                    if (this.randomFile != null) {
+                        rootModule.setBackgroundImage(null);
+                        rootModule.setRandomBackgroundImage(this.randomFile);
+                    } else {
+                        rootModule.setBackgroundImage("archivefiles.jpg");
+                        rootModule.setRandomBackgroundImage(null);
+                    }
+                    com.jdimension.jlawyer.client.settings.ThemeSettings.getInstance().addBackground(rootModule, image);
+
+                    Object desktop = EditorsRegistry.getInstance().getEditor(com.jdimension.jlawyer.client.desktop.DesktopPanel.class.getName());
+                    if (desktop instanceof com.jdimension.jlawyer.client.desktop.DesktopPanel) {
+                        ((com.jdimension.jlawyer.client.desktop.DesktopPanel) desktop).fadeToBackgroundImage(image);
+                    }
+                } catch (Exception ex) {
+                    log.error("Could not switch desktop background", ex);
+                    JOptionPane.showMessageDialog(JKanzleiGUI.this, "Der Desktophintergrund konnte nicht gewechselt werden. Die Einstellung wird nach einem Neustart wirksam.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
+    }
 
     private void mnuAddressOptionsNationalityActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAddressOptionsNationalityActionPerformed
         OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, true);

@@ -736,6 +736,12 @@ public class SplashThread implements Runnable {
     private String randomBackgroundFile=null;
 
     /**
+     * The background photo the login dialog showed last. Kept for the running session only, so
+     * that enabling random desktop backgrounds at runtime shows the very same photo.
+     */
+    private static String loginBackgroundFile=null;
+
+    /**
      * Creates a new instance of SplashThread
      * @param splash
      * @param settings
@@ -747,6 +753,19 @@ public class SplashThread implements Runnable {
         this.settings = settings;
         this.owner = owner;
         this.randomBackgroundFile=randomBackgroundFile;
+        setLoginBackgroundFile(randomBackgroundFile);
+    }
+
+    private static synchronized void setLoginBackgroundFile(String file) {
+        loginBackgroundFile=file;
+    }
+
+    /**
+     * @return file name (relative to the random backgrounds folder) of the photo shown in the
+     * login dialog of this session, or null if none was shown
+     */
+    public static synchronized String getLoginBackgroundFile() {
+        return loginBackgroundFile;
     }
 
     @Override
