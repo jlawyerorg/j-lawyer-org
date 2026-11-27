@@ -3118,11 +3118,13 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuInvoiceTypesActionPerformed
 
     private void mnuInvoiceCurrenciesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuInvoiceCurrenciesActionPerformed
-        OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, true);
-        dlg.setTitle("Währungen");
-        dlg.setOptionGroup(OptionConstants.OPTIONGROUP_INVOICECURRENCIES);
-        FrameUtils.centerDialog(dlg, this);
-        dlg.setVisible(true);
+        if (checkAdmin()) {
+            OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, true);
+            dlg.setTitle("Währungen");
+            dlg.setOptionGroup(OptionConstants.OPTIONGROUP_INVOICECURRENCIES);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
     }//GEN-LAST:event_mnuInvoiceCurrenciesActionPerformed
 
     private void formComponentMoved(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentMoved
@@ -3337,7 +3339,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuCourtsActionPerformed
 
     private void mnuDunningStagesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDunningStagesActionPerformed
-        if (checkSysAdmin()) {
+        if (checkAdmin()) {
             DunningStagesConfigurationDialog dlg = new DunningStagesConfigurationDialog(this, true);
             FrameUtils.centerDialog(dlg, this);
             dlg.setVisible(true);
@@ -3345,7 +3347,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuDunningStagesActionPerformed
 
     private void mnuEnforcementFormsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuEnforcementFormsActionPerformed
-        if (checkSysAdmin()) {
+        if (checkAdmin()) {
             EnforcementFormsConfigurationDialog dlg = new EnforcementFormsConfigurationDialog(this, true);
             FrameUtils.centerDialog(dlg, this);
             dlg.setVisible(true);
@@ -3353,7 +3355,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuEnforcementFormsActionPerformed
 
     private void mnuEnforcementMeasureTypesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuEnforcementMeasureTypesActionPerformed
-        if (checkSysAdmin()) {
+        if (checkAdmin()) {
             EnforcementMeasureTypesConfigurationDialog dlg = new EnforcementMeasureTypesConfigurationDialog(this, true);
             FrameUtils.centerDialog(dlg, this);
             dlg.setVisible(true);
