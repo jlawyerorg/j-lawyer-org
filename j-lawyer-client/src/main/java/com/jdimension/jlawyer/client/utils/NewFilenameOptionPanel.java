@@ -829,7 +829,8 @@ public class NewFilenameOptionPanel extends javax.swing.JPanel {
             @Override
             public void focusLost(java.awt.event.FocusEvent evt) {
                 if (documentFilename != null) {
-                    documentFilenameNew = FileUtils.preserveExtension(documentFilename, txtNewName.getText());
+                    String committed = FileUtils.sanitizeFileName(txtNewName.getText());
+                    documentFilenameNew = FileUtils.preserveExtension(documentFilename, committed);
                     txtNewName.setText(documentFilenameNew);
                     txtNewName.putClientProperty(FlatClientProperties.OUTLINE, null);
                     txtNewName.setToolTipText(null);
@@ -848,8 +849,9 @@ public class NewFilenameOptionPanel extends javax.swing.JPanel {
     private void fileNameChanged() {
         this.documentFilenameNew = this.txtNewName.getText();
 
-        // use may have typed invalid characters
-        String checkedName = FileUtils.sanitizeFileName(this.documentFilenameNew);
+        // user may have typed invalid characters - lenient variant keeps spaces
+        // intact while typing; final trim/collapse runs on focus loss / getFilename()
+        String checkedName = FileUtils.sanitizeFileNameForInput(this.documentFilenameNew);
         if (!checkedName.equals(this.txtNewName.getText())) {
             int caretPosition = this.txtNewName.getCaretPosition();
             this.txtNewName.setText(checkedName);
@@ -892,10 +894,11 @@ public class NewFilenameOptionPanel extends javax.swing.JPanel {
     }
 
     public String getFilename() {
-        if (StringUtils.isEmpty(this.txtNewName.getText())) {
+        String committed = FileUtils.sanitizeFileName(this.txtNewName.getText());
+        if (StringUtils.isEmpty(committed)) {
             return null;
         } else {
-            return FileUtils.preserveExtension(this.documentFilename, this.txtNewName.getText());
+            return FileUtils.preserveExtension(this.documentFilename, committed);
         }
     }
 
