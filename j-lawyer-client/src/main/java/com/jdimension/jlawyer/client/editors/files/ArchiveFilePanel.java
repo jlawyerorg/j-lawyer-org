@@ -1660,27 +1660,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
                 // collect multi-value tag names
                 HashMap<String, AppOptionGroupBean[]> mvTagDefs = settings.getDocumentMvTagDefs();
-                ArrayList<String> mvTagNames = new ArrayList<>();
-                if (mvTagDefs != null) {
-                    for (String groupName : mvTagDefs.keySet()) {
-                        mvTagNames.add(groupName.substring(OptionConstants.OPTIONGROUP_DOCUMENTTAGS_MV_PREFIX.length()));
-                    }
-                }
+                ArrayList<String> mvTagNames = getDocumentMvTagNames(mvTagDefs);
 
                 // add multi-value document tags first
                 if (mvTagDefs != null) {
-                    ArrayList<String> mvTagNamesSorted = new ArrayList<>(mvTagNames);
-                    StringUtils.sortIgnoreCase(mvTagNamesSorted);
-                    for (String mvTagName : mvTagNamesSorted) {
-                        AppOptionGroupBean[] values = mvTagDefs.get(OptionConstants.OPTIONGROUP_DOCUMENTTAGS_MV_PREFIX + mvTagName);
-                        String[] valueStrings = new String[values != null ? values.length : 0];
-                        if (values != null) {
-                            for (int i = 0; i < values.length; i++) {
-                                valueStrings[i] = values[i].getValue();
-                            }
-                            java.util.Arrays.sort(valueStrings, String.CASE_INSENSITIVE_ORDER);
-                        }
-                        MultiValueTag mvTag = new MultiValueTag(mvTagName, valueStrings);
+                    for (String mvTagName : mvTagNames) {
+                        MultiValueTag mvTag = new MultiValueTag(mvTagName, getDocumentMvTagValues(mvTagDefs, mvTagName));
                         if (activeTagValues.containsKey(mvTagName)) {
                             mvTag.setSelectedValue(activeTagValues.get(mvTagName));
                         }
@@ -1749,6 +1734,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     }
                 }
 
+                // Listen-Etiketten: werden als Auswahlliste dargestellt, nicht als Umschalter
+                HashMap<String, AppOptionGroupBean[]> mvTagDefs = settings.getDocumentMvTagDefs();
+                ArrayList<String> mvTagNames = getDocumentMvTagNames(mvTagDefs);
+                allTags.removeAll(mvTagNames);
+                // Listen-Etikett -> Dokument-ID -> Wert
+                Map<String, Map<String, String>> mvValuesByTag = new java.util.HashMap<>();
+                // Listen-Etikett -> Wert -> Dokumentnamen (für Tooltip)
+                Map<String, Map<String, ArrayList<String>>> mvDocNamesByTag = new java.util.HashMap<>();
+
                 // Bestehende Tags der Auswahl sammeln (für Darstellung gemischt/alle/keine)
                 Map<String, Integer> tagUsageCount = new java.util.HashMap<>();
                 Map<String, ArrayList<String>> tagToDocNames = new java.util.HashMap<>();
@@ -1763,6 +1757,19 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             continue;
                         }
                         for (String tagName : t) {
+                            // Listen-Etiketten kommen als "Name: Wert" - nicht als einfaches Etikett behandeln
+                            String mvTagName = getMvTagNameForEntry(tagName, mvTagNames);
+                            if (mvTagName != null) {
+                                String mvValue = tagName.length() > mvTagName.length() + 2 ? tagName.substring(mvTagName.length() + 2) : "";
+                                mvValuesByTag.computeIfAbsent(mvTagName, k -> new java.util.HashMap<>()).put(docId, mvValue);
+                                mvDocNamesByTag.computeIfAbsent(mvTagName, k -> new java.util.TreeMap<>(String.CASE_INSENSITIVE_ORDER))
+                                        .computeIfAbsent(mvValue, k -> new ArrayList<>()).add(docName);
+                                continue;
+                            }
+                            if (mvTagNames.contains(tagName)) {
+                                // Listen-Etikett ohne Wert - kein einfaches Etikett
+                                continue;
+                            }
                             // zur Gesamtliste hinzufügen, falls noch nicht enthalten
                             if (!allTags.contains(tagName)) {
                                 allTags.add(tagName);
@@ -1785,6 +1792,44 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 StringUtils.sortIgnoreCase(allTags);
 
                 int selectionSize = selectedDocs.size();
+
+                // Listen-Etiketten zuerst, wie bei der Einzelauswahl
+                if (mvTagDefs != null) {
+                    for (String mvTagName : mvTagNames) {
+                        MultiValueTag mvTag = new MultiValueTag(mvTagName, getDocumentMvTagValues(mvTagDefs, mvTagName));
+                        Map<String, String> docValues = mvValuesByTag.getOrDefault(mvTagName, new java.util.HashMap<>());
+                        java.util.HashSet<String> distinctValues = new java.util.HashSet<>(docValues.values());
+                        if (docValues.size() == selectionSize && distinctValues.size() == 1) {
+                            // alle haben denselben Wert
+                            mvTag.setSelectedValue(distinctValues.iterator().next());
+                            mvTag.setToolTipText("gleicher Wert in allen ausgewählten Dokumenten");
+                        } else if (docValues.isEmpty()) {
+                            mvTag.setSelectedValue(null);
+                            mvTag.setToolTipText("nicht vergeben in der Auswahl");
+                        } else {
+                            mvTag.setMixedState(buildMixedMvTagTooltip(mvDocNamesByTag.get(mvTagName), docValues.size(), selectionSize));
+                        }
+                        mvTag.setEnabled(!this.readOnly);
+                        mvTag.addValueChangeListener(e -> {
+                            if (mvTag.isMixedSelected()) {
+                                return;
+                            }
+                            String selectedValue = mvTag.getSelectedValue();
+                            DocumentTagsBean tagBean = new DocumentTagsBean();
+                            tagBean.setTagName(mvTag.getTagName());
+                            tagBean.setTagValue(selectedValue);
+                            try {
+                                remote.setDocumentTags(selectedDocIds, tagBean, selectedValue != null);
+                                this.updateDocumentTagsOverview();
+                            } catch (Throwable ex) {
+                                log.error("Error setting multi-value tag '" + mvTag.getTagName() + "' for multiple documents", ex);
+                                JOptionPane.showMessageDialog(this, "Fehler beim Setzen des Dokumentetiketts: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                            }
+                        });
+                        target.add(mvTag);
+                    }
+                }
+
                 for (String tagString : allTags) {
                     TagToggleButton tb = new TagToggleButton(tagString, null);
                     Integer usedIn = tagUsageCount.getOrDefault(tagString, 0);
@@ -1853,6 +1898,100 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             log.error(t);
         }
 
+    }
+
+    /**
+     * @param mvTagDefs the multi-value document tag definitions, may be null
+     * @return the names of the multi-value document tags, sorted ignoring case
+     */
+    private static ArrayList<String> getDocumentMvTagNames(HashMap<String, AppOptionGroupBean[]> mvTagDefs) {
+        ArrayList<String> mvTagNames = new ArrayList<>();
+        if (mvTagDefs != null) {
+            for (String groupName : mvTagDefs.keySet()) {
+                mvTagNames.add(groupName.substring(OptionConstants.OPTIONGROUP_DOCUMENTTAGS_MV_PREFIX.length()));
+            }
+        }
+        StringUtils.sortIgnoreCase(mvTagNames);
+        return mvTagNames;
+    }
+
+    /**
+     * @param mvTagDefs the multi-value document tag definitions
+     * @param mvTagName name of the multi-value tag
+     * @return the allowed values of the tag, sorted ignoring case
+     */
+    private static String[] getDocumentMvTagValues(HashMap<String, AppOptionGroupBean[]> mvTagDefs, String mvTagName) {
+        AppOptionGroupBean[] values = mvTagDefs.get(OptionConstants.OPTIONGROUP_DOCUMENTTAGS_MV_PREFIX + mvTagName);
+        String[] valueStrings = new String[values != null ? values.length : 0];
+        if (values != null) {
+            for (int i = 0; i < values.length; i++) {
+                valueStrings[i] = values[i].getValue();
+            }
+            java.util.Arrays.sort(valueStrings, String.CASE_INSENSITIVE_ORDER);
+        }
+        return valueStrings;
+    }
+
+    /**
+     * Maps an entry of {@code getDocumentTagsForCase} to its multi-value tag. Multi-value tags
+     * are returned as "name: value", boolean tags just as "name".
+     *
+     * @param entry the tag entry
+     * @param mvTagNames names of all multi-value tags
+     * @return the multi-value tag name, or null if the entry is a boolean tag
+     */
+    private static String getMvTagNameForEntry(String entry, List<String> mvTagNames) {
+        if (entry == null) {
+            return null;
+        }
+        String match = null;
+        for (String mvTagName : mvTagNames) {
+            // prefer the longest name in case one tag name is a prefix of another
+            if (entry.startsWith(mvTagName + ": ") && (match == null || mvTagName.length() > match.length())) {
+                match = mvTagName;
+            }
+        }
+        return match;
+    }
+
+    /**
+     * Builds the tooltip of a multi-value tag whose value differs within a selection.
+     *
+     * @param docNamesByValue value -> names of the documents carrying it
+     * @param usedIn number of selected documents carrying the tag
+     * @param selectionSize number of selected documents
+     * @return HTML tooltip
+     */
+    private static String buildMixedMvTagTooltip(Map<String, ArrayList<String>> docNamesByValue, int usedIn, int selectionSize) {
+        int maxDocs = 15;
+        StringBuilder tooltip = new StringBuilder("<html><b>verschieden (");
+        tooltip.append(usedIn).append("/").append(selectionSize).append(" vergeben)</b>");
+        int shown = 0;
+        int hidden = 0;
+        if (docNamesByValue != null) {
+            for (Map.Entry<String, ArrayList<String>> e : docNamesByValue.entrySet()) {
+                StringBuilder line = new StringBuilder();
+                for (String docName : e.getValue()) {
+                    if (shown >= maxDocs) {
+                        hidden++;
+                        continue;
+                    }
+                    if (line.length() > 0) {
+                        line.append(", ");
+                    }
+                    line.append(docName);
+                    shown++;
+                }
+                if (line.length() > 0) {
+                    tooltip.append("<br/>").append(e.getKey()).append(": ").append(line);
+                }
+            }
+        }
+        if (hidden > 0) {
+            tooltip.append("<br/>... und ").append(hidden).append(" weitere");
+        }
+        tooltip.append("</html>");
+        return tooltip.toString();
     }
 
     public void updateDocumentTagsOverview() {

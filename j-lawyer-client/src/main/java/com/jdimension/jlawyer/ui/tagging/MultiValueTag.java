@@ -676,7 +676,14 @@ import themes.colors.DefaultColorTheme;
  */
 public class MultiValueTag extends javax.swing.JPanel {
 
+    /**
+     * Placeholder entry shown while the selected documents carry different values (or only some
+     * of them carry the tag). Choosing it writes nothing.
+     */
+    public static final String MIXED_CAPTION = "<verschieden>";
+
     private String tagName;
+    private boolean mixed = false;
 
     /**
      * Creates new form MultiValueTag
@@ -739,7 +746,14 @@ public class MultiValueTag extends javax.swing.JPanel {
             return;
         }
         Object selected = jComboBox1.getSelectedItem();
-        if (selected == null || "".equals(selected)) {
+        if (this.isMixedSelected()) {
+            setBackground(Color.WHITE);
+            jComboBox1.setBackground(Color.WHITE);
+            jComboBox1.putClientProperty(FlatClientProperties.STYLE, "buttonBackground: #0000; buttonArrowColor: " + String.format("#%06x", DefaultColorTheme.COLOR_DARK_GREY.getRGB() & 0xFFFFFF));
+            jLabel1.setFont(jLabel1.getFont().deriveFont(Font.BOLD | Font.ITALIC));
+            jLabel1.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
+            jComboBox1.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
+        } else if (selected == null || "".equals(selected)) {
             setBackground(Color.WHITE);
             jComboBox1.setBackground(Color.WHITE);
             jComboBox1.putClientProperty(FlatClientProperties.STYLE, "buttonBackground: #0000; buttonArrowColor: " + String.format("#%06x", DefaultColorTheme.COLOR_DARK_GREY.getRGB() & 0xFFFFFF));
@@ -811,8 +825,40 @@ public class MultiValueTag extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
+        if (this.mixed && !MIXED_CAPTION.equals(this.jComboBox1.getSelectedItem())) {
+            // a real value has been chosen - the placeholder is no longer meaningful
+            this.mixed = false;
+            this.setToolTipText(null);
+            this.jLabel1.setToolTipText(null);
+            this.jComboBox1.setToolTipText(null);
+            javax.swing.SwingUtilities.invokeLater(() -> this.jComboBox1.removeItem(MIXED_CAPTION));
+        }
         applyValueStyle();
     }//GEN-LAST:event_jComboBox1ActionPerformed
+
+    /**
+     * Puts the tag into the "mixed" state used when editing several documents at once: a
+     * placeholder entry is inserted at the top and selected. It disappears as soon as a real
+     * entry (a value or the empty entry) is chosen. Must be called before listeners are added.
+     *
+     * @param tooltip tooltip describing which documents carry which value, may be null
+     */
+    public void setMixedState(String tooltip) {
+        this.mixed = true;
+        this.jComboBox1.insertItemAt(MIXED_CAPTION, 0);
+        this.jComboBox1.setSelectedIndex(0);
+        this.setToolTipText(tooltip);
+        this.jLabel1.setToolTipText(tooltip);
+        this.jComboBox1.setToolTipText(tooltip);
+        applyValueStyle();
+    }
+
+    /**
+     * @return true while the "mixed" placeholder is selected
+     */
+    public boolean isMixedSelected() {
+        return this.mixed && MIXED_CAPTION.equals(this.jComboBox1.getSelectedItem());
+    }
 
 
     public String getTagName() {
@@ -821,7 +867,7 @@ public class MultiValueTag extends javax.swing.JPanel {
 
     public String getSelectedValue() {
         Object selected = this.jComboBox1.getSelectedItem();
-        if (selected == null || "".equals(selected)) {
+        if (selected == null || "".equals(selected) || this.isMixedSelected()) {
             return null;
         }
         return (String) selected;
