@@ -1292,7 +1292,21 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
         }
         return ids;
     }
-    
+
+    // removes the recipients that already received the message - including further entries for the same postbox,
+    // the list may contain one postbox twice. Entries without a Safe ID are only removed if they are the same object
+    private static void removeSentRecipients(DefaultListModel model, List<BeaIdentity> sentTo) {
+        for (int k = model.size() - 1; k >= 0; k--) {
+            Object entry = model.get(k);
+            for (BeaIdentity sent : sentTo) {
+                if (entry == sent || (entry instanceof BeaIdentity && !StringUtils.isEmpty(sent.getSafeId()) && sent.getSafeId().equals(((BeaIdentity) entry).getSafeId()))) {
+                    model.remove(k);
+                    break;
+                }
+            }
+        }
+    }
+
     private ArrayList<BeaAttachmentMetadata> getAttachmentMetdata() {
 
         ArrayList<BeaAttachmentMetadata> attachmentMetadata = new ArrayList<>();
@@ -2433,6 +2447,8 @@ public class SendBeaMessageFrame extends javax.swing.JFrame implements SendCommu
             });
         }
         a.setSentDocumentIds(this.getSentDocumentIds());
+        // when sending failed for some recipients, the ones that already received the message must not get it again on a retry
+        a.setPartialSendListener(sentTo -> SwingUtilities.invokeLater(() -> removeSentRecipients((DefaultListModel) this.lstTo.getModel(), sentTo)));
         a.start();
 
         UserSettings uset = UserSettings.getInstance();
