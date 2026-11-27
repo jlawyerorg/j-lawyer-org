@@ -691,7 +691,7 @@ public class CalculationPluginDialog extends javax.swing.JDialog {
      */
     public CalculationPluginDialog(java.awt.Frame parent, boolean modal, JPanel pluginUi) {
         this(parent, modal);
-        this.scrollMain.setViewportView(pluginUi);
+        setPluginUi(pluginUi);
         // pack after injecting content so width follows content's preferred size
         this.pack();
         // adjust size within screen limits and allow scrolling as needed
@@ -707,12 +707,26 @@ public class CalculationPluginDialog extends javax.swing.JDialog {
     public CalculationPluginDialog(JDialog parent, boolean modal, JPanel pluginUi) {
         super(parent, modal);
         initComponents();
-        this.scrollMain.setViewportView(pluginUi);
-        this.scrollMain.getVerticalScrollBar().setUnitIncrement(16);
+        setPluginUi(pluginUi);
         // pack after injecting content so width follows content's preferred size
         this.pack();
         // adjust size within screen limits and allow scrolling as needed
         adjustSizeToScreen();
+    }
+
+    /**
+     * Shows the plugin UI with the look of the design kit, the same way as the form plugins
+     * (Falldaten). The dialog frame is styled before the plugin UI is added, so the later
+     * DialogStyle call when centering the dialog does not style the plugin UI a second time.
+     *
+     * @param pluginUi the panel returned by the plugin's getUi()
+     */
+    private void setPluginUi(JPanel pluginUi) {
+        com.jdimension.jlawyer.client.ui.theme.DialogStyle.apply(this);
+        com.jdimension.jlawyer.client.ui.theme.PluginUiSkin.apply(pluginUi);
+        this.scrollMain.getViewport().setBackground(com.jdimension.jlawyer.client.ui.theme.DialogStyle.PAGE_BACKGROUND);
+        this.scrollMain.setViewportView(pluginUi);
+        this.scrollMain.getVerticalScrollBar().setUnitIncrement(16);
     }
 
     private void adjustSizeToScreen() {
